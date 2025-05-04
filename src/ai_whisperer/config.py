@@ -2,12 +2,15 @@ import yaml
 from pathlib import Path
 import os
 from dotenv import load_dotenv # Import load_dotenv
+from typing import Optional # Import Optional
 
 from .exceptions import ConfigError
 
 # Default values for optional config settings
 DEFAULT_SITE_URL = "http://localhost:8000" # Or some generic placeholder
 DEFAULT_APP_NAME = "AIWhisperer"
+DEFAULT_OUTPUT_DIR = "./output/"
+
 
 def load_config(config_path: str) -> dict:
     """
@@ -17,14 +20,15 @@ def load_config(config_path: str) -> dict:
     1. Loads environment variables from a .env file (if present).
     2. Checks if the configuration file exists.
     3. Parses the YAML file.
-    4. Validates the presence of top-level keys ('openrouter', 'prompts').
-    5. Validates the structure of the 'openrouter' and 'prompts' sections.
+    4. Validates the presence of top-level keys ('openrouter').
+    5. Validates the structure of the 'openrouter' section.
     6. Determines the OpenRouter API key, prioritizing the 'OPENROUTER_API_KEY'
        environment variable over the 'api_key' in the config file.
-    7. Adds default values for optional 'site_url' and 'app_name' if not present.
+    7. Adds default values for optional 'site_url', 'app_name', 'output_dir',
+       and handles optional 'prompt_override_path'.
     8. Validates the presence and non-emptiness of required keys within 'openrouter'
        ('api_key', 'model').
-    9. Validates that the 'prompts' section is not empty.
+    9. Ensures 'prompts' section exists, defaulting to an empty dictionary if missing.
 
     Args:
         config_path: The path to the configuration file.
@@ -60,7 +64,8 @@ def load_config(config_path: str) -> dict:
 
     # --- Basic Validation ---
     # Check for essential top-level keys expected by the application core
-    required_keys = ['openrouter', 'prompts']
+    # 'prompts' is now optional
+    required_keys = ['openrouter']
     missing_keys = [key for key in required_keys if key not in config]
     if missing_keys:
         raise ConfigError(f"Missing required configuration keys in {config_path}: {', '.join(missing_keys)}")
@@ -85,28 +90,26 @@ def load_config(config_path: str) -> dict:
         raise ConfigError(f"Missing required key 'api_key' in 'openrouter' section of {config_path} and OPENROUTER_API_KEY environment variable not set.")
     # If only in config, it's already loaded, no action needed.
 
-    # --- Load Optional OpenRouter Settings with Defaults ---
+    # --- Load Optional Settings with Defaults ---
+    # OpenRouter specific optional settings
     openrouter_config['site_url'] = openrouter_config.get('site_url', DEFAULT_SITE_URL)
     openrouter_config['app_name'] = openrouter_config.get('app_name', DEFAULT_APP_NAME)
 
-    # --- Continue Validation ---
-    required_openrouter_keys = ['api_key', 'model'] # api_key is now guaranteed to exist if no error raised
-    missing_openrouter_keys = [key for key in required_openrouter_keys if key not in openrouter_config or not openrouter_config[key]] # Also check if value is non-empty
-    if missing_openrouter_keys:
-        # Refine error message based on whether it was missing entirely or just empty
-        missing_details = []
-        for key in missing_openrouter_keys:
-            if key not in openrouter_config:
-                missing_details.append(f"'{key}' is missing")
-            else:
-                missing_details.append(f"'{key}' is empty")
-        raise ConfigError(f"Invalid 'openrouter' section in {config_path}: {', '.join(missing_details)}.")
+    # General application optional settings (add them to the top-level config dict)
+    config['output_dir'] = config.get('output_dir', DEFAULT_OUTPUT_DIR)
+    config['prompt_override_path'] = config.get('prompt_override_path', None) # Default to None if not present
 
-    # Check prompts structure (basic check)
-    prompts_config = config.get('prompts')
-    if not isinstance(prompts_config, dict):
-        raise ConfigError(f"Invalid 'prompts' section in {config_path}. Expected a dictionary.")
-    if not prompts_config: # Ensure prompts dictionary is not empty if it exists
-         raise ConfigError(f"'prompts' section in {config_path} cannot be empty.")
+    # Ensure 'prompts' section exists, defaulting to empty dict if missing
+    config.setdefault('prompts', {})
+    # Validate that 'prompts' is a dictionary if it exists
+    if not isinstance(config['prompts'], dict):
+        raise ConfigError(f"Invalid 'prompts' section in {config_path}. Expected a dictionary, got {type(config['prompts']).__name__}.")
+
+    # --- Continue Validation ---
+    # Validate required keys within 'openrouter'
+    required_openrouter_keys = ['api_key', 'model']
+    missing_openrouter_keys = [key for key in required_openrouter_keys if key not in openrouter_config or not openrouter_config[key]]
+    if missing_openrouter_keys:
+        raise ConfigError(f"Missing or empty required keys in 'openrouter' section of {config_path}: {', '.join(missing_openrouter_keys)}")
 
     return config

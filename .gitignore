@@ -124,3 +124,4 @@ dmypy.json
 .vscode/
 test.yaml
 test_output.yaml
+output/

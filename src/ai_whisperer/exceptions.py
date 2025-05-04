@@ -46,3 +46,35 @@ class OpenRouterConnectionError(AIWhispererError):
 class ProcessingError(AIWhispererError):
     """Exception raised for errors during file processing (reading MD, writing YAML, etc.)."""
     pass
+
+# --- Orchestrator Errors ---
+
+class OrchestratorError(AIWhispererError):
+    """Base class for errors specific to the Orchestrator."""
+    pass
+
+class HashMismatchError(OrchestratorError):
+    """Error raised when input hashes in the API response do not match calculated hashes."""
+    def __init__(self, expected_hashes: dict, received_hashes: dict):
+        self.expected_hashes = expected_hashes
+        self.received_hashes = received_hashes
+        message = (
+            f"Input hash mismatch detected.\n"
+            f"  Expected: {expected_hashes}\n"
+            f"  Received: {received_hashes}"
+        )
+        super().__init__(message)
+
+class YAMLValidationError(OrchestratorError):
+    """Error raised when the generated YAML fails schema validation."""
+    def __init__(self, validation_errors):
+        self.validation_errors = validation_errors
+        # Format the jsonschema errors for better readability
+        # Ensure e.path is handled correctly (it's often a deque)
+        error_details = "\n".join([f"- {e.message} (path: {' -> '.join(map(str, e.path))})" for e in validation_errors])
+        message = f"Generated YAML failed schema validation:\n{error_details}"
+        super().__init__(message)
+
+class PromptError(OrchestratorError):
+    """Errors related to loading or processing prompt files."""
+    pass

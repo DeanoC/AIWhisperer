@@ -4,11 +4,10 @@ import logging
 
 # Import necessary components from the application
 from .config import load_config
-from .processing import read_markdown, format_prompt, process_response, save_yaml
-from .openrouter_api import call_openrouter
-from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, OpenRouterConnectionError
+from .orchestrator import Orchestrator # Import Orchestrator
+from .exceptions import AIWhispererError, ConfigError # Keep relevant exceptions
 from .utils import setup_logging, setup_rich_output
-from rich.console import Console # Import Console for type hinting if needed
+from rich.console import Console
 
 # Get a logger for this module
 logger = logging.getLogger(__name__)
@@ -16,9 +15,8 @@ logger = logging.getLogger(__name__)
 def main():
     """Main entry point for the AI Whisperer CLI application.
 
-    Parses command-line arguments, loads configuration, reads requirements,
-    formats a prompt, calls the OpenRouter API, processes the response,
-    and saves the result as a YAML file.
+    Parses command-line arguments, loads configuration, initializes the orchestrator,
+    and generates the task YAML file.
     """
     # Setup logging and rich console output first
     setup_logging() # Basic logging setup
@@ -56,47 +54,23 @@ def main():
         config = load_config(args.config)
         logger.debug("Configuration loaded successfully.")
 
-        # --- Restore original processing logic ---
-        console.print(f"Reading requirements from: {args.requirements}")
-        md_content = read_markdown(args.requirements)
-        logger.debug("Markdown requirements read successfully.")
+        # --- Use Orchestrator ---
+        console.print("Initializing orchestrator...")
+        orchestrator = Orchestrator(config)
+        logger.info("Orchestrator initialized.")
 
-        prompt_template = config['prompts']['task_generation']
-        # Pass the openrouter section as config_vars, plus any other top-level vars if needed
-        prompt_config_vars = config.get('openrouter', {})
-        logger.info("Formatting prompt...")
-        formatted_prompt = format_prompt(prompt_template, md_content, prompt_config_vars)
-        logger.debug(f"Formatted prompt: {formatted_prompt[:100]}...") # Log truncated prompt
+        console.print(f"Generating initial task plan from: {args.requirements}")
+        # Call the orchestrator method with corrected argument names
+        generated_yaml_path = orchestrator.generate_initial_yaml(
+            requirements_md_path_str=args.requirements,
+            config_path_str=args.config # Corrected argument name
+        )
 
-        console.print(f"Calling OpenRouter API (model: {config.get('openrouter', {}).get('model', 'N/A')})...")
-        try:
-            # Use the new call_openrouter function signature
-            api_response = call_openrouter(
-                prompt_text=formatted_prompt, # Use keyword arg for clarity
-                config=config # Pass the whole config dict
-            )
-            logger.info("Received response from API.")
-            logger.debug(f"API Response: {api_response[:100]}...") # Log truncated response
+        # Use the returned path in the success message
+        console.print(f"[green]Successfully generated task YAML: {generated_yaml_path}[/green]")
+        # --- End Orchestrator Logic ---
 
-        except (OpenRouterAPIError, OpenRouterConnectionError) as e: # Catch specific OpenRouter errors
-            logger.error(f"OpenRouter API call failed: {e}", exc_info=False)
-            logger.debug(f"OpenRouter API error details:", exc_info=True)
-            console.print(f"[bold red]OpenRouter API Error:[/bold red] {e}")
-            sys.exit(1)
-        # End API call section
-
-        console.print("Processing API response...")
-        processed_data = process_response(api_response)
-        logger.debug("API response processed successfully.")
-
-        console.print(f"Saving generated YAML to: {args.output}")
-        save_yaml(processed_data, args.output)
-        logger.info(f"Task YAML saved successfully to {args.output}.")
-
-        console.print(f"[green]Successfully generated task YAML: {args.output}[/green]")
-        # --- End Restore original processing logic ---
-
-    except ConfigError as e: # Keep ConfigError handling separate
+    except ConfigError as e: # Keep ConfigError handling
         logger.error(f"Configuration error: {e}", exc_info=False)
         logger.debug(f"Configuration error details:", exc_info=True)
         console.print(f"[bold red]Configuration Error:[/bold red] {e}")

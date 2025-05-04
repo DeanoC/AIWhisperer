@@ -73,7 +73,7 @@ def format_prompt(template: str, md_content: str, config_vars: dict) -> str:
     try:
         # Combine md_content with other config variables for formatting
         format_data = config_vars.copy()
-        format_data['markdown_content'] = md_content
+        format_data['md_content'] = md_content # Correct key to match template placeholder
         return template.format(**format_data)
     except KeyError as e:
         raise ProcessingError(f"Missing variable in config/markdown for prompt template placeholder: {e}") from e

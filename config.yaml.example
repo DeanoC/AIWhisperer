@@ -39,7 +39,11 @@ prompts:
     Generate the YAML output representing the tasks derived from these requirements below:
 
 # --- Other Application Settings (Optional) ---
-# Add other sections as needed for future features (e.g., logging, output formatting).
+
+# output_dir: "./generated_tasks/" # Optional: Directory where generated YAML task files will be saved. Defaults to "./output/".
+
+# prompt_override_path: "./custom_prompts/my_orchestrator_prompt.md" # Optional: Path to a custom markdown file to use as the orchestrator prompt instead of the default.
+
 # logging:
 #   level: "INFO" # Example: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 #   file: "ai_whisperer.log" # Example: Log to a file instead of/in addition to console
