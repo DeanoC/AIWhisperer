@@ -1,6 +1,7 @@
 import pytest
 import requests
 import requests_mock
+from unittest.mock import patch, Mock
 # Import specific exceptions
 from src.ai_whisperer.exceptions import (
     OpenRouterAPIError,
@@ -9,8 +10,8 @@ from src.ai_whisperer.exceptions import (
     OpenRouterConnectionError,
     ConfigError # Import ConfigError for testing missing keys
 )
-# Import the actual function
-from src.ai_whisperer.openrouter_api import call_openrouter
+# Import the actual function and class
+from src.ai_whisperer.openrouter_api import call_openrouter, OpenRouterAPI, MODELS_API_URL
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 # Define test config data
@@ -191,3 +192,92 @@ def test_call_openrouter_missing_openrouter_section():
     }
     with pytest.raises(ConfigError, match="Missing expected configuration key: 'openrouter'"):
         call_openrouter(PROMPT, bad_config)
+
+# Tests for the OpenRouterAPI class and list_models method
+def test_openrouter_api_init_success():
+    """Test successful initialization of OpenRouterAPI class."""
+    client = OpenRouterAPI(TEST_CONFIG)
+    assert client.api_key == TEST_CONFIG['openrouter']['api_key']
+    assert client.model == TEST_CONFIG['openrouter']['model']
+    assert client.params == TEST_CONFIG['openrouter']['params']
+    assert client.site_url == TEST_CONFIG['openrouter']['site_url']
+    assert client.app_name == TEST_CONFIG['openrouter']['app_name']
+
+def test_openrouter_api_init_config_error():
+    """Test OpenRouterAPI initialization with missing config raises ConfigError."""
+    bad_config = {}
+    with pytest.raises(ConfigError, match="Missing expected configuration key: 'openrouter'"):
+        OpenRouterAPI(bad_config)
+
+def test_list_models_success(mock_requests):
+    """Test successful call to list_models."""
+    # Set up mock response
+    sample_models = {
+        "data": [
+            {"id": "model1", "name": "Model One"},
+            {"id": "model2", "name": "Model Two"},
+        ]
+    }
+    mock_requests.get(MODELS_API_URL, json=sample_models, status_code=200)
+    
+    # Call the method
+    client = OpenRouterAPI(TEST_CONFIG)
+    models = client.list_models()
+    
+    # Verify results
+    assert models == ["model1", "model2"]
+    
+    # Verify request was made correctly
+    history = mock_requests.request_history
+    assert len(history) == 1
+    request = history[0]
+    assert request.method == "GET"
+    assert request.url == MODELS_API_URL
+
+def test_list_models_auth_error(mock_requests):
+    """Test list_models handles 401 authentication errors."""
+    mock_requests.get(MODELS_API_URL, status_code=401, json={"error": {"message": "Unauthorized"}})
+    
+    client = OpenRouterAPI(TEST_CONFIG)
+    with pytest.raises(OpenRouterAuthError):
+        client.list_models()
+
+def test_list_models_rate_limit_error(mock_requests):
+    """Test list_models handles 429 rate limit errors."""
+    mock_requests.get(MODELS_API_URL, status_code=429, json={"error": {"message": "Rate limit exceeded"}})
+    
+    client = OpenRouterAPI(TEST_CONFIG)
+    with pytest.raises(OpenRouterRateLimitError):
+        client.list_models()
+
+def test_list_models_server_error(mock_requests):
+    """Test list_models handles 500 server errors."""
+    mock_requests.get(MODELS_API_URL, status_code=500, json={"error": {"message": "Internal server error"}})
+    
+    client = OpenRouterAPI(TEST_CONFIG)
+    with pytest.raises(OpenRouterAPIError):
+        client.list_models()
+
+def test_list_models_connection_error(mock_requests):
+    """Test list_models handles network connection errors."""
+    mock_requests.get(MODELS_API_URL, exc=requests.exceptions.ConnectionError("Connection failed"))
+    
+    client = OpenRouterAPI(TEST_CONFIG)
+    with pytest.raises(OpenRouterConnectionError):
+        client.list_models()
+
+def test_list_models_invalid_json(mock_requests):
+    """Test list_models handles invalid JSON responses."""
+    mock_requests.get(MODELS_API_URL, text="Not a valid JSON", status_code=200)
+    
+    client = OpenRouterAPI(TEST_CONFIG)
+    with pytest.raises(OpenRouterAPIError):
+        client.list_models()
+        
+def test_list_models_empty_data(mock_requests):
+    """Test list_models handles empty data array."""
+    mock_requests.get(MODELS_API_URL, json={"data": []}, status_code=200)
+    
+    client = OpenRouterAPI(TEST_CONFIG)
+    models = client.list_models()
+    assert models == []

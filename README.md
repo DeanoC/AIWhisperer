@@ -92,6 +92,12 @@ python -m src.ai_whisperer.main --requirements requirements.md --config config.y
 
 This will read `requirements.md`, use the settings in `config.yaml`, call the OpenRouter API, and save the resulting task list to `generated_tasks.yaml`.
 
+* **`--list-models`**: Displays a list of available models from the OpenRouter API. Requires the `--config` argument to be specified as well.
+
+    ```bash
+    python -m src.ai_whisperer.main --list-models --config config.yaml
+    ```
+
 ## Development
 
 To run tests:

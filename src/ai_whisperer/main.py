@@ -5,8 +5,9 @@ import logging
 # Import necessary components from the application
 from .config import load_config
 from .orchestrator import Orchestrator # Import Orchestrator
-from .exceptions import AIWhispererError, ConfigError # Keep relevant exceptions
+from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError # Import needed exceptions
 from .utils import setup_logging, setup_rich_output
+from .openrouter_api import OpenRouterAPI # Import the OpenRouterAPI class
 from rich.console import Console
 
 # Get a logger for this module
@@ -29,26 +30,70 @@ def main():
     )
     parser.add_argument(
         "--requirements",
-        required=True,
-        help="Path to the requirements Markdown file."
+        required=False, # Changed to False, will check manually
+        help="Path to the requirements Markdown file. Required for main operation."
     )
     parser.add_argument(
         "--config",
-        required=True,
-        help="Path to the configuration YAML file."
+        required=False, # Changed to False, will check manually where needed
+        help="Path to the configuration YAML file. Required for most operations."
     )
     parser.add_argument(
         "--output",
-        required=True,
-        help="Path to save the generated task YAML file."
+        required=False, # Changed to False, will check manually
+        help="Path to save the generated task YAML file. Required for main operation."
+    )
+    parser.add_argument(
+        "--list-models",
+        action="store_true",
+        help="List available OpenRouter models and exit."
     )
     # Add optional arguments later if needed (e.g., --verbose, --prompt-name)
 
     # Use parse_known_args to avoid conflicts with pytest arguments during testing
     args, unknown = parser.parse_known_args()
 
+    if args.list_models:
+        try:
+            # Check if config path is provided
+            if not args.config:
+                print("Error: --config argument is required when using --list-models.", file=sys.stderr)
+                sys.exit(1)
+
+            # Load configuration to get API key
+            console.print(f"Loading configuration from: {args.config}")
+            config = load_config(args.config)
+            logger.debug("Configuration loaded successfully for listing models.")
+
+            # Instantiate OpenRouterAPI client
+            client = OpenRouterAPI(config)
+
+            # Fetch and print models
+            console.print("Fetching available OpenRouter models...")
+            models = client.list_models()
+            console.print("[bold green]Available OpenRouter Models:[/bold green]")
+            for model in models:
+                console.print(f"- {model}")
+            sys.exit(0) # Exit after listing models
+
+        except ConfigError as e:
+            print(f"Configuration error: {e}", file=sys.stderr)
+            sys.exit(1)
+        except OpenRouterAPIError as e:
+            print(f"Error fetching models: {e}", file=sys.stderr)
+            sys.exit(1)
+        except Exception as e:
+            print(f"An unexpected error occurred while listing models: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    # --- Core Application Logic ---
     try:
-        # --- Core Application Logic ---
+        # Check for required arguments for core logic
+        if not args.requirements or not args.config or not args.output:
+             parser.print_usage(file=sys.stderr)
+             print("Error: --requirements, --config, and --output are required for the main operation.", file=sys.stderr)
+             sys.exit(1)
+
         logger.info("Starting AI Whisperer process...")
         console.print(f"Loading configuration from: {args.config}")
         config = load_config(args.config)
