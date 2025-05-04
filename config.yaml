@@ -1,0 +1,20 @@
+# AI Whisperer Configuration
+# Minimal configuration for testing
+
+# --- OpenRouter API Settings ---
+openrouter:
+  api_key: "test-api-key"  # This will be mocked in tests
+  model: "mistralai/mistral-7b-instruct"
+  params:
+    temperature: 0.7
+    max_tokens: 2048
+  site_url: "http://localhost:8000"
+  app_name: "AIWhisperer"
+
+# --- Prompt Templates ---
+prompts:
+  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
+
+# --- Other Application Settings ---
+output_dir: "./output/"

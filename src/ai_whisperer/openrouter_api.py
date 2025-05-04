@@ -20,29 +20,25 @@ class OpenRouterAPI:
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize the OpenRouter API client with configuration.
-        
+
         Args:
-            config: The application configuration dictionary, expected to contain
-                   'openrouter': {
-                       'api_key': str,
-                       'model': str,
-                       'params': dict (optional),
-                       'site_url': str (optional),
-                       'app_name': str (optional)
-                   }.
-                   
+            config: The 'openrouter' section of the application configuration dictionary,
+                   expected to contain 'api_key', 'model', etc.
+
         Raises:
             ConfigError: If required configuration keys are missing.
         """
         try:
-            self.openrouter_config = config['openrouter']
+            self.openrouter_config = config  # Use the passed dict directly
             self.api_key = self.openrouter_config['api_key']
             self.model = self.openrouter_config.get('model')
             self.params = self.openrouter_config.get('params', {})
             self.site_url = self.openrouter_config.get('site_url', 'https://github.com/yourusername/AIWhisperer')
             self.app_name = self.openrouter_config.get('app_name', 'AIWhisperer')
         except KeyError as e:
-            raise ConfigError(f"Missing expected configuration key: {e}") from e
+            raise ConfigError(f"Missing expected configuration key within 'openrouter' section: {e}") from e
+        except Exception as e:
+            raise ConfigError(f"Error initializing OpenRouterAPI from config: {e}") from e
     
     def list_models(self) -> List[str]:
         """

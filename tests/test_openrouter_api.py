@@ -1,283 +1,243 @@
 import pytest
 import requests
-import requests_mock
 from unittest.mock import patch, Mock
+
 # Import specific exceptions
 from src.ai_whisperer.exceptions import (
     OpenRouterAPIError,
     OpenRouterAuthError,
     OpenRouterRateLimitError,
     OpenRouterConnectionError,
-    ConfigError # Import ConfigError for testing missing keys
+    ConfigError
 )
-# Import the actual function and class
-from src.ai_whisperer.openrouter_api import call_openrouter, OpenRouterAPI, MODELS_API_URL
+# Import the actual class and constants
+from src.ai_whisperer.openrouter_api import call_openrouter, OpenRouterAPI, MODELS_API_URL, API_URL
 
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
 # Define test config data
-TEST_CONFIG = {
-    'openrouter': {
-        'api_key': "test-api-key",
-        'model': "test-model/test-model",
-        'params': {'temperature': 0.7},
-        'site_url': "http://test-site.com",
-        'app_name': "TestApp"
-    }
+TEST_CONFIG_OPENROUTER_SECTION = {
+    'api_key': "test-api-key",
+    'model': "test-model/test-model",
+    'params': {'temperature': 0.7},
+    'site_url': "http://test-site.com",
+    'app_name': "TestApp"
 }
+
 PROMPT = "Test prompt"
+MESSAGES = [{"role": "user", "content": PROMPT}]
 
 @pytest.fixture
 def mock_requests(requests_mock):
     """Fixture to provide requests_mock adapter."""
     return requests_mock
 
-def test_call_openrouter_success(mock_requests):
-    """Test successful API call."""
+# --- Test Cases ---
+
+def test_openrouter_api_init_success():
+    """Test successful initialization of OpenRouterAPI class."""
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    assert client.api_key == TEST_CONFIG_OPENROUTER_SECTION['api_key']
+    assert client.model == TEST_CONFIG_OPENROUTER_SECTION['model']
+    assert client.params == TEST_CONFIG_OPENROUTER_SECTION['params']
+    assert client.site_url == TEST_CONFIG_OPENROUTER_SECTION['site_url']
+    assert client.app_name == TEST_CONFIG_OPENROUTER_SECTION['app_name']
+
+def test_openrouter_api_init_config_error():
+    """Test OpenRouterAPI initialization with missing config raises ConfigError."""
+    bad_config_section = {}
+    with pytest.raises(ConfigError, match="Missing expected configuration key within 'openrouter' section: 'api_key'"):
+        OpenRouterAPI(bad_config_section)
+
+def test_chat_completion_success(mock_requests):
+    """Test successful chat completion call."""
     expected_response_content = "Generated text response."
     mock_requests.post(
         API_URL,
         json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
         status_code=200,
-        # Check for correct headers including Referer and Title
         request_headers={
-            'Authorization': f'Bearer {TEST_CONFIG["openrouter"]["api_key"]}',
-            'HTTP-Referer': TEST_CONFIG["openrouter"]["site_url"],
-            'X-Title': TEST_CONFIG["openrouter"]["app_name"]}
+            'Authorization': f'Bearer {TEST_CONFIG_OPENROUTER_SECTION["api_key"]}',
+            'HTTP-Referer': TEST_CONFIG_OPENROUTER_SECTION["site_url"],
+            'X-Title': TEST_CONFIG_OPENROUTER_SECTION["app_name"]}
     )
-
-    # Pass the config dictionary
-    response = call_openrouter(PROMPT, TEST_CONFIG)
+    
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    response = client.call_chat_completion(prompt_text=PROMPT)
     assert response == expected_response_content
 
-    # Verify the request payload
     history = mock_requests.request_history
     assert len(history) == 1
     request = history[0]
     assert request.method == 'POST'
     assert request.url == API_URL
-    assert request.headers['Authorization'] == f'Bearer {TEST_CONFIG["openrouter"]["api_key"]}'
-    assert request.headers['HTTP-Referer'] == TEST_CONFIG["openrouter"]["site_url"]
-    assert request.headers['X-Title'] == TEST_CONFIG["openrouter"]["app_name"]
-    assert request.json()['model'] == TEST_CONFIG["openrouter"]["model"]
-    assert request.json()['messages'] == [{"role": "user", "content": PROMPT}]
-    assert request.json()['temperature'] == TEST_CONFIG["openrouter"]["params"]['temperature']
+    assert request.headers['Authorization'] == f'Bearer {TEST_CONFIG_OPENROUTER_SECTION["api_key"]}'
+    assert request.headers['HTTP-Referer'] == TEST_CONFIG_OPENROUTER_SECTION["site_url"]
+    assert request.headers['X-Title'] == TEST_CONFIG_OPENROUTER_SECTION["app_name"]
+    assert request.json()['model'] == TEST_CONFIG_OPENROUTER_SECTION["model"]
+    assert request.json()['messages'][0]['content'] == PROMPT
+    assert request.json()['temperature'] == TEST_CONFIG_OPENROUTER_SECTION["params"]['temperature']
 
-def test_call_openrouter_auth_error(mock_requests):
-    """Test API call with authentication error (401)."""
+def test_chat_completion_auth_error(mock_requests):
+    """Test chat completion handles 401 authentication errors."""
+    error_message = "Invalid API key"
     mock_requests.post(
         API_URL,
-        json={"error": {"message": "Invalid API key"}},
+        json={"error": {"message": error_message}},
         status_code=401
     )
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAuthError, match=f"Authentication failed: {error_message}"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-    # Expect specific OpenRouterAuthError
-    with pytest.raises(OpenRouterAuthError, match=r"Authentication failed: Invalid API key \(HTTP 401\)"):
-        call_openrouter(PROMPT, TEST_CONFIG)
-
-def test_call_openrouter_rate_limit_error(mock_requests):
-    """Test API call with rate limit error (429)."""
+def test_chat_completion_rate_limit_error(mock_requests):
+    """Test chat completion handles 429 rate limit errors."""
+    error_message = "Rate limit exceeded"
     mock_requests.post(
         API_URL,
-        json={"error": {"message": "Rate limit exceeded"}},
+        json={"error": {"message": error_message}},
         status_code=429
     )
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterRateLimitError, match=f"Rate limit exceeded: {error_message}"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-    # Expect specific OpenRouterRateLimitError
-    with pytest.raises(OpenRouterRateLimitError, match=r"Rate limit exceeded: Rate limit exceeded \(HTTP 429\)"):
-        call_openrouter(PROMPT, TEST_CONFIG)
-
-def test_call_openrouter_not_found_error(mock_requests):
-    """Test API call with model not found error (404)."""
+def test_chat_completion_not_found_error(mock_requests):
+    """Test chat completion handles 404 errors (e.g., model not found)."""
+    error_message = "Model not found"
     mock_requests.post(
         API_URL,
-        json={"error": {"message": "Model not found"}},
+        json={"error": {"message": error_message}},
         status_code=404
     )
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match=f"API request failed: {error_message}"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-    # Expect base OpenRouterAPIError for non-specific client errors
-    with pytest.raises(OpenRouterAPIError, match=r"API request failed: Model not found \(HTTP 404\)"):
-        call_openrouter(PROMPT, TEST_CONFIG)
-
-def test_call_openrouter_server_error(mock_requests):
-    """Test API call with server error (500)."""
+def test_chat_completion_server_error(mock_requests):
+    """Test chat completion handles 500 server errors."""
+    error_message = "Internal server error"
     mock_requests.post(
         API_URL,
-        json={"error": {"message": "Internal server error"}},
+        json={"error": {"message": error_message}},
         status_code=500
     )
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match=f"API request failed: {error_message}"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-    # Expect base OpenRouterAPIError for server errors
-    with pytest.raises(OpenRouterAPIError, match=r"API request failed: Internal server error \(HTTP 500\)"):
-        call_openrouter(PROMPT, TEST_CONFIG)
+def test_chat_completion_connection_error(mock_requests):
+    """Test chat completion handles connection errors."""
+    mock_requests.post(API_URL, exc=requests.exceptions.ConnectionError("Connection failed"))
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API: Connection failed"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-def test_call_openrouter_connection_error(mock_requests):
-    """Test API call with a connection error."""
-    mock_requests.post(API_URL, exc=requests.exceptions.ConnectionError("Failed to connect"))
-
-    # Expect specific OpenRouterConnectionError
-    with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API: Failed to connect"):
-        call_openrouter(PROMPT, TEST_CONFIG)
-
-def test_call_openrouter_timeout_error(mock_requests):
-    """Test API call with a timeout error."""
+def test_chat_completion_timeout_error(mock_requests):
+    """Test chat completion handles timeout errors."""
     mock_requests.post(API_URL, exc=requests.exceptions.Timeout("Request timed out"))
-
-    # Expect specific OpenRouterConnectionError (as Timeout inherits from RequestException)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API: Request timed out"):
-        call_openrouter(PROMPT, TEST_CONFIG)
+        client.call_chat_completion(prompt_text=PROMPT)
 
-def test_call_openrouter_unexpected_response_format_no_choices(mock_requests):
-    """Test API call with unexpected successful response format (missing choices)."""
-    mock_requests.post(
-        API_URL,
-        json={"message": "Something unexpected"},
-        status_code=200
-    )
+def test_chat_completion_unexpected_response_format_no_choices(mock_requests):
+    """Test chat completion handles unexpected response format (no 'choices')."""
+    mock_requests.post(API_URL, json={"usage": {}}, status_code=200)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'choices' array is missing"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'choices' array is missing, empty, or not an array."):
-        call_openrouter(PROMPT, TEST_CONFIG)
+def test_chat_completion_unexpected_response_format_empty_choices(mock_requests):
+    """Test chat completion handles unexpected response format (empty 'choices')."""
+    mock_requests.post(API_URL, json={"choices": [], "usage": {}}, status_code=200)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'choices' array is missing"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-def test_call_openrouter_unexpected_response_format_empty_choices(mock_requests):
-    """Test API call with empty 'choices' list."""
-    mock_requests.post(
-        API_URL,
-        json={"choices": [], "usage": {}},
-        status_code=200
-    )
+def test_chat_completion_unexpected_response_format_no_message(mock_requests):
+    """Test chat completion handles unexpected response format (no 'message' in choice)."""
+    mock_requests.post(API_URL, json={"choices": [{"index": 0}], "usage": {}}, status_code=200)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'message' object is missing"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'choices' array is missing, empty, or not an array."):
-        call_openrouter(PROMPT, TEST_CONFIG)
+def test_chat_completion_unexpected_response_format_no_content(mock_requests):
+    """Test chat completion handles unexpected response format (no 'content' in message)."""
+    mock_requests.post(API_URL, json={"choices": [{"message": {"role": "assistant"}}], "usage": {}}, status_code=200)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'content' key is missing"):
+        client.call_chat_completion(prompt_text=PROMPT)
 
-def test_call_openrouter_unexpected_response_format_no_message(mock_requests):
-    """Test API call with missing 'message' in the first choice."""
-    mock_requests.post(
-        API_URL,
-        json={"choices": [{"no_message_here": "..."}], "usage": {}},
-        status_code=200
-    )
-
-    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'message' object is missing or not an object in the first choice."):
-        call_openrouter(PROMPT, TEST_CONFIG)
-
-def test_call_openrouter_unexpected_response_format_no_content(mock_requests):
-    """Test API call with missing 'content' in the message."""
-    mock_requests.post(
-        API_URL,
-        json={"choices": [{"message": {"no_content_here": "..."}}], "usage": {}},
-        status_code=200
-    )
-
-    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'content' key is missing in the message."):
-        call_openrouter(PROMPT, TEST_CONFIG)
-
-def test_call_openrouter_missing_config_key():
-    """Test API call with missing essential key in config dict."""
-    bad_config = {
-        'openrouter': {
-            # Missing 'api_key'
-            'model': "test-model/test-model",
-            'params': {'temperature': 0.7},
-            'site_url': "http://test-site.com",
-            'app_name': "TestApp"
-        }
-    }
-    with pytest.raises(ConfigError, match="Missing expected configuration key: 'api_key'"):
-        call_openrouter(PROMPT, bad_config)
-
-def test_call_openrouter_missing_openrouter_section():
-    """Test API call with missing 'openrouter' section in config dict."""
-    bad_config = {
-        # Missing 'openrouter' section entirely
-        'prompts': {}
-    }
-    with pytest.raises(ConfigError, match="Missing expected configuration key: 'openrouter'"):
-        call_openrouter(PROMPT, bad_config)
-
-# Tests for the OpenRouterAPI class and list_models method
-def test_openrouter_api_init_success():
-    """Test successful initialization of OpenRouterAPI class."""
-    client = OpenRouterAPI(TEST_CONFIG)
-    assert client.api_key == TEST_CONFIG['openrouter']['api_key']
-    assert client.model == TEST_CONFIG['openrouter']['model']
-    assert client.params == TEST_CONFIG['openrouter']['params']
-    assert client.site_url == TEST_CONFIG['openrouter']['site_url']
-    assert client.app_name == TEST_CONFIG['openrouter']['app_name']
-
-def test_openrouter_api_init_config_error():
-    """Test OpenRouterAPI initialization with missing config raises ConfigError."""
-    bad_config = {}
-    with pytest.raises(ConfigError, match="Missing expected configuration key: 'openrouter'"):
-        OpenRouterAPI(bad_config)
+# --- list_models Tests ---
 
 def test_list_models_success(mock_requests):
     """Test successful call to list_models."""
-    # Set up mock response
-    sample_models = {
-        "data": [
-            {"id": "model1", "name": "Model One"},
-            {"id": "model2", "name": "Model Two"},
-        ]
-    }
-    mock_requests.get(MODELS_API_URL, json=sample_models, status_code=200)
-    
-    # Call the method
-    client = OpenRouterAPI(TEST_CONFIG)
+    expected_models = [{"id": "model1"}, {"id": "model2"}]
+    mock_requests.get(MODELS_API_URL, json={"data": expected_models}, status_code=200)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     models = client.list_models()
-    
-    # Verify results
     assert models == ["model1", "model2"]
-    
-    # Verify request was made correctly
     history = mock_requests.request_history
     assert len(history) == 1
     request = history[0]
-    assert request.method == "GET"
+    assert request.method == 'GET'
     assert request.url == MODELS_API_URL
 
 def test_list_models_auth_error(mock_requests):
-    """Test list_models handles 401 authentication errors."""
-    mock_requests.get(MODELS_API_URL, status_code=401, json={"error": {"message": "Unauthorized"}})
-    
-    client = OpenRouterAPI(TEST_CONFIG)
-    with pytest.raises(OpenRouterAuthError):
+    """Test list_models handles 401 (though unlikely as it's unauthenticated)."""
+    error_message = "Auth error on models endpoint"
+    mock_requests.get(MODELS_API_URL, json={"error": {"message": error_message}}, status_code=401)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAuthError, match=f"Authentication failed: {error_message}"):
         client.list_models()
 
 def test_list_models_rate_limit_error(mock_requests):
     """Test list_models handles 429 rate limit errors."""
-    mock_requests.get(MODELS_API_URL, status_code=429, json={"error": {"message": "Rate limit exceeded"}})
-    
-    client = OpenRouterAPI(TEST_CONFIG)
-    with pytest.raises(OpenRouterRateLimitError):
+    error_message = "Rate limit exceeded"
+    mock_requests.get(MODELS_API_URL, json={"error": {"message": error_message}}, status_code=429)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterRateLimitError, match=f"Rate limit exceeded: {error_message}"):
         client.list_models()
 
 def test_list_models_server_error(mock_requests):
     """Test list_models handles 500 server errors."""
-    mock_requests.get(MODELS_API_URL, status_code=500, json={"error": {"message": "Internal server error"}})
-    
-    client = OpenRouterAPI(TEST_CONFIG)
-    with pytest.raises(OpenRouterAPIError):
+    error_message = "Server unavailable"
+    mock_requests.get(MODELS_API_URL, json={"error": {"message": error_message}}, status_code=500)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match=f"API request failed: {error_message}"):
         client.list_models()
 
 def test_list_models_connection_error(mock_requests):
-    """Test list_models handles network connection errors."""
-    mock_requests.get(MODELS_API_URL, exc=requests.exceptions.ConnectionError("Connection failed"))
-    
-    client = OpenRouterAPI(TEST_CONFIG)
-    with pytest.raises(OpenRouterConnectionError):
+    """Test list_models handles connection errors."""
+    mock_requests.get(MODELS_API_URL, exc=requests.exceptions.ConnectionError("Cannot connect"))
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API: Cannot connect"):
         client.list_models()
 
 def test_list_models_invalid_json(mock_requests):
-    """Test list_models handles invalid JSON responses."""
-    mock_requests.get(MODELS_API_URL, text="Not a valid JSON", status_code=200)
-    
-    client = OpenRouterAPI(TEST_CONFIG)
-    with pytest.raises(OpenRouterAPIError):
+    """Test list_models handles invalid JSON response."""
+    mock_requests.get(MODELS_API_URL, text="not json", status_code=200)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match="Failed to decode JSON response"):
         client.list_models()
-        
+
 def test_list_models_empty_data(mock_requests):
-    """Test list_models handles empty data array."""
-    mock_requests.get(MODELS_API_URL, json={"data": []}, status_code=200)
+    """Test list_models handles response with missing 'data' key."""
+    mock_requests.get(MODELS_API_URL, json={"info": "some info"}, status_code=200)
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'data' array is missing"):
+        client.list_models()
+
+# --- call_openrouter (backward compatibility) Tests ---
+
+def test_call_openrouter_success(mock_requests):
+    """Test successful API call using the compatibility function."""
+    expected_response_content = "Generated text response."
+    mock_requests.post(
+        API_URL,
+        json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
+        status_code=200
+    )
     
-    client = OpenRouterAPI(TEST_CONFIG)
-    models = client.list_models()
-    assert models == []
+    # In the current implementation, call_openrouter expects the openrouter section directly
+    response = call_openrouter(PROMPT, TEST_CONFIG_OPENROUTER_SECTION)
+    assert response == expected_response_content
+

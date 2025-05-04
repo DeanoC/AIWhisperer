@@ -1,0 +1,7 @@
+﻿step_id: test_step_1
+description: Implement the core logic for feature X.
+depends_on: []
+context:
+  relevant_files:
+    - src/feature_x.py
+    - tests/test_feature_x.py

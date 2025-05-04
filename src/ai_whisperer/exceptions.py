@@ -87,3 +87,17 @@ class YAMLValidationError(AIWhispererError):
 class PromptError(OrchestratorError):
     """Errors related to loading or processing prompt files."""
     pass
+
+class OrchestrationError(AIWhispererError):
+    """Exception raised for errors during the orchestration process."""
+    pass
+
+# --- Add the missing exceptions ---
+
+class SubtaskGenerationError(AIWhispererError):
+    """Exception raised for errors during the subtask generation process."""
+    pass
+
+class SchemaValidationError(AIWhispererError):
+    """Exception raised when generated data fails schema validation."""
+    pass

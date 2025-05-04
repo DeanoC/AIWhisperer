@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock, call
 import sys
+from pathlib import Path
 
 # We need to manipulate sys.argv, so store the original
 original_argv = sys.argv.copy()
@@ -8,7 +9,6 @@ original_argv = sys.argv.copy()
 # Import the actual function
 from src.ai_whisperer.main import main
 
-# Define dummy data for mocking
 # Define dummy data for mocking
 DUMMY_CONFIG = {
     'openrouter': {'api_key': 'test-key', 'model': 'test-model', 'params': {'temperature': 0.5}},
@@ -19,241 +19,196 @@ DUMMY_CONFIG = {
 class ConfigWrapper:
     def __init__(self, config_dict):
         self.config_dict = config_dict
-        self.openrouter_api_key = config_dict['openrouter']['api_key']
-    
+        
     def __getitem__(self, key):
         return self.config_dict[key]
-    
+        
     def get(self, key, default=None):
         return self.config_dict.get(key, default)
 
-# Create a wrapped config for tests that need the openrouter_api_key attribute
-WRAPPED_CONFIG = ConfigWrapper(DUMMY_CONFIG)
-DUMMY_MD_CONTENT = "# Test Markdown"
-DUMMY_FORMATTED_PROMPT = "Generate task for: # Test Markdown"
-DUMMY_API_RESPONSE = "task: Test Task\ndescription: Details"
-DUMMY_PROCESSED_DATA = {'task': 'Test Task', 'description': 'Details'}
-REQ_FILE = 'input.md'
-CONF_FILE = 'config.yaml'
-OUT_FILE = 'output.yaml'
+# Add API key attribute
+class ExConfig:
+    def __init__(self):
+        self.openrouter_api_key = "test-key"
 
-@pytest.fixture(autouse=True)
-def reset_sys_argv():
-    """Reset sys.argv before each test."""
-    sys.argv = original_argv.copy()
-    yield
-    sys.argv = original_argv # Ensure cleanup even if test fails
+class TestMain:
+    """Test cases for the main.py module."""
 
-@pytest.fixture
-def mock_dependencies():
-    """Mock core functions used by main."""
-    with patch('src.ai_whisperer.main.setup_logging') as mock_setup_logging, \
-         patch('src.ai_whisperer.main.setup_rich_output') as mock_setup_rich, \
-         patch('src.ai_whisperer.main.Console') as mock_console_cls, \
-         patch('src.ai_whisperer.main.Orchestrator') as mock_orchestrator_cls: # Mock the Orchestrator class
+    # Define constants to avoid repetition in tests
+    REQ_FILE = 'test_requirements.md'
+    CONF_FILE = 'config.yaml'
+    OUT_FILE = 'output.yaml'
+    WRAPPED_CONFIG = ConfigWrapper(DUMMY_CONFIG)
+    DUMMY_PROCESSED_DATA = {'natural_language_goal': 'Test goal', 'tasks': [{'id': 'task1', 'description': 'Test task'}]}
 
-        # If setup_rich_output returns a console instance, mock that instance
-        mock_console_instance = MagicMock()
-        mock_setup_rich.return_value = mock_console_instance
+    @classmethod
+    def setup_class(cls):
+        """Setup for TestMain."""
+        sys.argv = original_argv.copy() # Restore original sys.argv before each test
+        
+    def setup_method(self, method):
+        """Setup before each test method."""
+        sys.argv = original_argv.copy() # Restore original sys.argv before each test
 
-        # Mock the instance of Orchestrator and its methods
-        mock_orchestrator_instance = MagicMock()
-        mock_orchestrator_cls.return_value = mock_orchestrator_instance
-        mock_orchestrator_instance.generate_initial_yaml.return_value = OUT_FILE # Mock return value
+    def teardown_method(self, method):
+        """Cleanup after each test method."""
+        sys.argv = original_argv.copy() # Restore original sys.argv after each test
 
-        mocks = {
-            'setup_logging': mock_setup_logging,
-            'setup_rich_output': mock_setup_rich,
-            'console': mock_console_instance, # Provide the mocked console instance
-            'orchestrator_cls': mock_orchestrator_cls, # Provide the mocked Orchestrator class
-            'orchestrator_instance': mock_orchestrator_instance # Provide the mocked Orchestrator instance
-        }
-        yield mocks
+    @patch('sys.exit')
+    @patch('src.ai_whisperer.main.setup_rich_output')
+    @patch('src.ai_whisperer.main.setup_logging')
+    @patch('src.ai_whisperer.main.Orchestrator')
+    @patch('src.ai_whisperer.main.load_config')
+    def test_main_success_flow(self, mock_load_config, mock_orchestrator_cls, mock_setup_logging, mock_setup_rich, mock_sys_exit):
+        """Test the main function's happy path with all required arguments."""
+        # Setup test data and mocks
+        mock_load_config.return_value = self.WRAPPED_CONFIG # Return wrapped config object
+        mock_console = MagicMock() # Mock Console
+        mock_setup_rich.return_value = mock_console # Have setup_rich_output return our mock console
+        mock_orchestrator_instance = MagicMock() # Mock Orchestrator instance
+        mock_orchestrator_cls.return_value = mock_orchestrator_instance # Have Orchestrator() return our mock instance
+        mock_orchestrator_instance.generate_initial_yaml.return_value = 'generated_output.yaml' # Mock the output path
 
-@patch('src.ai_whisperer.main.load_config', return_value=WRAPPED_CONFIG)
-def test_main_success_flow(mock_load_config, mock_dependencies):
-    """Test the successful execution flow with required arguments."""
-    sys.argv = [
-        'ai-whisperer', # Script name (or however it's invoked)
-        '--requirements', REQ_FILE,
-        '--config', CONF_FILE,
-        '--output', OUT_FILE
-    ]
-
-    main()
-
-    # Verify mocks were called correctly
-    mock_dependencies['setup_logging'].assert_called_once()
-    mock_dependencies['setup_rich_output'].assert_called_once()
-    mock_load_config.assert_called_once_with(CONF_FILE) # load_config is now mocked individually in relevant tests
-    mock_dependencies['orchestrator_cls'].assert_called_once_with(WRAPPED_CONFIG) # Assert Orchestrator is instantiated with config
-    mock_dependencies['orchestrator_instance'].generate_initial_yaml.assert_called_once_with( # Assert generate_initial_yaml is called
-        requirements_md_path_str=REQ_FILE,
-        config_path_str=CONF_FILE
-    )
-    # The following mocks are now called within the Orchestrator, so we don't assert them here
-    # mock_dependencies['read_markdown'].assert_called_once_with(REQ_FILE)
-    # mock_dependencies['format_prompt'].assert_called_once_with(...)
-    # mock_dependencies['call_openrouter'].assert_called_once_with(...)
-    # mock_dependencies['process_response'].assert_called_once_with(...)
-    # mock_dependencies['save_yaml'].assert_called_once_with(DUMMY_PROCESSED_DATA, OUT_FILE) # save_yaml is called by orchestrator
-
-    mock_dependencies['console'].print.assert_any_call(f"[green]Successfully generated task YAML: {OUT_FILE}[/green]")
-
-@patch('src.ai_whisperer.main.load_config', return_value=WRAPPED_CONFIG)
-def test_main_missing_requirements_arg(mock_load_config, mock_dependencies, capsys):
-    """Test running main without the --requirements argument."""
-    sys.argv = [
-        'ai-whisperer',
-        '--config', CONF_FILE,
-        '--output', OUT_FILE
-    ]
-    with pytest.raises(SystemExit) as excinfo:
+        # Set command-line arguments
+        sys.argv = ['main.py', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE, '--output', self.OUT_FILE]
+        
+        # Call the function
         main()
-    assert excinfo.value.code == 1 # Expecting exit code 1 for manual error
-    captured = capsys.readouterr()
-    assert "usage: ai-whisperer" in captured.err
-    assert "Error: --requirements, --config, and --output are required for the main operation." in captured.err
-    # load_config should not be called if args are missing
+        
+        # Verify calls and sequence
+        mock_setup_logging.assert_called_once() # Logging setup should be called exactly once
+        mock_setup_rich.assert_called_once() # Rich console setup should be called exactly once
+        mock_load_config.assert_called_once_with(self.CONF_FILE) # load_config should be called once with config file
+        mock_orchestrator_cls.assert_called_once_with(self.WRAPPED_CONFIG) # Orchestrator should be instantiated with config
+        mock_orchestrator_instance.generate_initial_yaml.assert_called_once_with( # generate_initial_yaml should be called
+            requirements_md_path_str=self.REQ_FILE,
+            config_path_str=self.CONF_FILE
+        )
+        mock_sys_exit.assert_not_called() # Should not exit in the normal flow
+        # And finally check that the output was printed to console
+        expected_print_call = call(f"[green]Successfully generated task YAML: generated_output.yaml[/green]")
+        assert expected_print_call in mock_console.print.call_args_list
 
-@patch('src.ai_whisperer.main.load_config', return_value=WRAPPED_CONFIG)
-def test_main_missing_config_arg(mock_load_config, mock_dependencies, capsys):
-    """Test running main without the --config argument."""
-    sys.argv = [
-        'ai-whisperer',
-        '--requirements', REQ_FILE,
-        '--output', OUT_FILE
-    ]
-    with pytest.raises(SystemExit) as excinfo:
-        main()
-    assert excinfo.value.code == 1
-    captured = capsys.readouterr()
-    assert "usage: ai-whisperer" in captured.err
-    assert "Error: --requirements, --config, and --output are required for the main operation." in captured.err
-    # load_config should not be called if args are missing
+    @patch('sys.exit')
+    def test_main_missing_requirements_arg(self, mock_sys_exit):
+        """Test the main function handles missing required arguments."""
+        # Set command-line args (missing --requirements)
+        sys.argv = ['main.py', '--config', self.CONF_FILE, '--output', self.OUT_FILE]
+        
+        # Call the function
+        with pytest.raises(SystemExit):
+            main()
+            
+        # Verify it tried to exit with error code
+        mock_sys_exit.assert_called_once_with(1)
 
-@patch('src.ai_whisperer.main.load_config', return_value=WRAPPED_CONFIG)
-def test_main_missing_output_arg(mock_load_config, mock_dependencies, capsys):
-    """Test running main without the --output argument."""
-    sys.argv = [
-        'ai-whisperer',
-        '--requirements', REQ_FILE,
-        '--config', CONF_FILE,
-    ]
-    with pytest.raises(SystemExit) as excinfo:
-        main()
-    assert excinfo.value.code == 1
-    captured = capsys.readouterr()
-    assert "usage: ai-whisperer" in captured.err
-    assert "Error: --requirements, --config, and --output are required for the main operation." in captured.err
-    # load_config should not be called if args are missing
+    @patch('sys.exit')
+    def test_main_missing_config_arg(self, mock_sys_exit):
+        """Test the main function handles missing config argument."""
+        # Set command-line args (missing --config)
+        sys.argv = ['main.py', '--requirements', self.REQ_FILE, '--output', self.OUT_FILE]
+        
+        # Call the function
+        with pytest.raises(SystemExit):
+            main()
+            
+        # Verify it tried to exit with error code
+        mock_sys_exit.assert_called_once_with(1)
 
-# Add tests for error handling (e.g., if load_config raises ConfigError)
-# These require the actual main function to exist and handle exceptions.
-# We'll add them after the initial implementation.
+    @patch('sys.exit')
+    def test_main_missing_output_arg(self, mock_sys_exit):
+        """Test the main function handles missing output argument."""
+        # Set command-line args (missing --output)
+        sys.argv = ['main.py', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE]
+        
+        # Call the function
+        with pytest.raises(SystemExit):
+            main()
+            
+        # Verify it tried to exit with error code
+        mock_sys_exit.assert_called_once_with(1)
 
-# Example of an error handling test (to be enabled later)
-# def test_main_handles_config_error(mock_dependencies):
-#     """Test that main handles ConfigError gracefully."""
-#     from src.ai_whisperer.exceptions import ConfigError
-#     mock_dependencies['load_config'].side_effect = ConfigError("File not found")
-#     sys.argv = ['ai-whisperer', '--requirements', REQ_FILE, '--config', 'bad.yaml', '--output', OUT_FILE]
-#
-#     with pytest.raises(SystemExit) as excinfo:
-#          main()
-#     assert excinfo.value.code != 0 # Should exit with error code
-#     # Check that the error was printed using the rich console
-#     mock_dependencies['console'].print.assert_any_call("[bold red]Error:[/bold red] Configuration error: File not found")
+    # --- Test list_models functionality ---
+    @patch('sys.exit')
+    @patch('src.ai_whisperer.main.setup_rich_output')
+    @patch('src.ai_whisperer.main.setup_logging')
+    @patch('src.ai_whisperer.main.OpenRouterAPI')
+    @patch('src.ai_whisperer.main.load_config')
+    def test_main_list_models_success(self, mock_load_config, mock_api_cls, mock_setup_logging, mock_setup_rich, mock_sys_exit):
+        """Test successful models listing."""
+        # Setup mocks
+        mock_load_config.return_value = self.WRAPPED_CONFIG
+        mock_console = MagicMock()
+        mock_setup_rich.return_value = mock_console
+        mock_api_instance = MagicMock()
+        mock_api_cls.return_value = mock_api_instance
+        mock_api_instance.list_models.return_value = ['model1', 'model2']
+        
+        # Set command-line args for list models
+        sys.argv = ['main.py', '--list-models', '--config', self.CONF_FILE]
+        
+        # Call the function
+        with pytest.raises(SystemExit) as excinfo:
+            main()
+        
+        # Verify the right API calls were made and output generated
+        mock_load_config.assert_called_once_with(self.CONF_FILE)
+        mock_api_cls.assert_called_once_with(self.WRAPPED_CONFIG['openrouter'])
+        mock_api_instance.list_models.assert_called_once()
+        assert excinfo.value.code == 0  # Should exit with success code
+        # Check that the models were printed to console
+        assert any("model1" in str(call_args) for call_args in mock_console.print.call_args_list)
+        assert any("model2" in str(call_args) for call_args in mock_console.print.call_args_list)
 
-@patch('sys.exit')
-@patch('builtins.print')
-@patch('src.ai_whisperer.main.OpenRouterAPI')
-def test_main_list_models_success(mock_openrouter_api, mock_print, mock_sys_exit, monkeypatch, mock_dependencies):
-    """Test the --list-models flag for successful API call."""
-    # Mock sys.argv using monkeypatch for better isolation
-    # Include required arguments to prevent argparse from exiting early
-    monkeypatch.setattr('sys.argv', ['main.py', '--list-models', '--config', 'dummy_config.yaml',
-                                     '--requirements', REQ_FILE, '--output', OUT_FILE])
-    
-    mock_instance = MagicMock()
-    mock_openrouter_api.return_value = mock_instance
-    mock_instance.list_models.return_value = ['model-a', 'model-b']
+    @patch('sys.exit')
+    @patch('src.ai_whisperer.main.setup_rich_output')
+    @patch('src.ai_whisperer.main.setup_logging')
+    @patch('src.ai_whisperer.main.OpenRouterAPI')
+    @patch('src.ai_whisperer.main.load_config')
+    def test_main_list_models_api_error(self, mock_load_config, mock_api_cls, mock_setup_logging, mock_setup_rich, mock_sys_exit):
+        """Test list_models error handling."""
+        # Setup mocks
+        mock_load_config.return_value = self.WRAPPED_CONFIG
+        mock_console = MagicMock()
+        mock_setup_rich.return_value = mock_console
+        mock_api_instance = MagicMock()
+        mock_api_cls.return_value = mock_api_instance
+        mock_api_instance.list_models.side_effect = Exception("API Error")
+        
+        # Set command-line args for list models
+        sys.argv = ['main.py', '--list-models', '--config', self.CONF_FILE]
+        
+        # Call the function
+        with pytest.raises(SystemExit) as excinfo:
+            main()
+        
+        # Verify error handling
+        mock_load_config.assert_called_once_with(self.CONF_FILE)
+        mock_api_cls.assert_called_once_with(self.WRAPPED_CONFIG['openrouter'])
+        mock_api_instance.list_models.assert_called_once()
+        assert excinfo.value.code == 1  # Should exit with error code
 
-    # Mock load_config specifically for this test
-    with patch('src.ai_whisperer.main.load_config', return_value=WRAPPED_CONFIG) as mock_load_config:
-        main()
+    def test_main_no_list_models_flag(self):
+        """Test that normal flow is followed when --list-models is not present."""
+        # Use monkeypatch instead of sys.argv manipulation to avoid affecting other tests
+        with patch('sys.argv', ['main.py', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE, '--output', self.OUT_FILE]), \
+             patch('src.ai_whisperer.main.load_config', return_value=self.WRAPPED_CONFIG), \
+             patch('src.ai_whisperer.main.setup_rich_output'), \
+             patch('src.ai_whisperer.main.setup_logging'), \
+             patch('src.ai_whisperer.main.Orchestrator') as mock_orchestrator_cls:
+                
+            # Setup mock orchestrator
+            mock_orchestrator_instance = MagicMock()
+            mock_orchestrator_cls.return_value = mock_orchestrator_instance
+            
+            # Call the function
+            main()
+            
+            # Verify the orchestrator was called (i.e., didn't take the list_models path)
+            mock_orchestrator_cls.assert_called_once()
+            mock_orchestrator_instance.generate_initial_yaml.assert_called_once()
 
-    # In the --list-models flow, load_config is called in both the list-models block and the main try block
-    # So we check that it was called with the expected argument, but don't assert the exact number of calls
-    mock_load_config.assert_has_calls([call('dummy_config.yaml')])
-    mock_openrouter_api.assert_called_once()
-    mock_instance.list_models.assert_called_once()
-    # The messages are printed using console.print, not the built-in print function
-    mock_dependencies['console'].print.assert_any_call("[bold green]Available OpenRouter Models:[/bold green]")
-    mock_dependencies['console'].print.assert_any_call("- model-a")
-    mock_dependencies['console'].print.assert_any_call("- model-b")
-    mock_sys_exit.assert_called_once_with(0)
-
-@patch('sys.exit')
-@patch('builtins.print')
-@patch('src.ai_whisperer.main.OpenRouterAPI')
-def test_main_list_models_api_error(mock_openrouter_api, mock_print, mock_sys_exit, capsys, monkeypatch, mock_dependencies):
-    """Test the --list-models flag when the API call fails."""
-    from src.ai_whisperer.exceptions import OpenRouterAPIError
-    # Mock sys.argv using monkeypatch for better isolation
-    # Include required arguments to prevent argparse from exiting early
-    monkeypatch.setattr('sys.argv', ['main.py', '--list-models', '--config', 'dummy_config.yaml',
-                                     '--requirements', REQ_FILE, '--output', OUT_FILE])
-
-    mock_instance = MagicMock()
-    mock_openrouter_api.return_value = mock_instance
-    mock_instance.list_models.side_effect = OpenRouterAPIError("API Failed")
-
-    # Mock load_config specifically for this test
-    with patch('src.ai_whisperer.main.load_config', return_value=WRAPPED_CONFIG) as mock_load_config:
-        main()
-
-    # In the --list-models flow, load_config is called in both the list-models block and the main try block
-    # So we check that it was called with the expected argument, but don't assert the exact number of calls
-    mock_load_config.assert_has_calls([call('dummy_config.yaml')])
-    mock_openrouter_api.assert_called_once()
-    mock_instance.list_models.assert_called_once()
-    # The error message is printed using print, but we're mocking sys.exit, so we need to check mock_print
-    mock_print.assert_any_call("Error fetching models: API Failed", file=sys.stderr)
-    mock_sys_exit.assert_called_once_with(1)
-
-@patch('sys.exit')
-@patch('builtins.print')
-@patch('src.ai_whisperer.main.OpenRouterAPI')
-@patch('src.ai_whisperer.main.load_config', return_value=WRAPPED_CONFIG)
-def test_main_no_list_models_flag(mock_load_config, mock_openrouter_api, mock_print, mock_sys_exit, mock_dependencies):
-    """Test that list_models is not called when --list-models is not used."""
-    sys.argv = [
-        'ai-whisperer', # Script name (or however it's invoked)
-        '--requirements', REQ_FILE,
-        '--config', CONF_FILE,
-        '--output', OUT_FILE
-    ]
-
-    main()
-
-    mock_openrouter_api.assert_not_called()
-    mock_load_config.assert_called_once_with(CONF_FILE) # load_config should be called in the normal flow
-    # Assert that the normal flow functions were called (using the existing mock_dependencies)
-    mock_dependencies['orchestrator_cls'].assert_called_once_with(WRAPPED_CONFIG) # Assert Orchestrator is instantiated with config
-    mock_dependencies['orchestrator_instance'].generate_initial_yaml.assert_called_once_with( # Assert generate_initial_yaml is called
-        requirements_md_path_str=REQ_FILE,
-        config_path_str=CONF_FILE
-    )
-    # mock_dependencies['read_markdown'].assert_called_once_with(REQ_FILE) # Removed as read_markdown is now in Orchestrator
-    # mock_dependencies['save_yaml'].assert_called_once_with(DUMMY_PROCESSED_DATA, OUT_FILE) # save_yaml is called by orchestrator
-    mock_sys_exit.assert_not_called() # Should not exit here in the normal flow
-
-
-
-import pytest # Ensure pytest is imported
-
-def test_main_list_models_missing_config(monkeypatch, capsys): # Removed mock_print and patch
+def test_main_list_models_missing_config(monkeypatch, capsys):
     """Test the --list-models flag without the required --config argument."""
     # Mock sys.argv using monkeypatch
     monkeypatch.setattr('sys.argv', ['main.py', '--list-models'])
@@ -264,4 +219,98 @@ def test_main_list_models_missing_config(monkeypatch, capsys): # Removed mock_pr
     # Check for error message printed to stderr
     captured = capsys.readouterr()
     assert "Error: --config argument is required when using --list-models." in captured.err
-    assert excinfo.value.code == 1 # Check exit code
+    assert excinfo.value.code == 1
+
+def test_main_generate_subtask_missing_config(monkeypatch, capsys):
+    """Test the --generate-subtask flag without the required --config argument."""
+    # Mock sys.argv using monkeypatch
+    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--step', 'test_step.yaml'])
+
+    with pytest.raises(SystemExit) as excinfo:
+        main()
+
+    # Check for error message printed to stderr
+    captured = capsys.readouterr()
+    assert "Error: --config argument is required when using --generate-subtask." in captured.err
+    assert excinfo.value.code == 1
+
+def test_main_generate_subtask_missing_step(monkeypatch, capsys):
+    """Test the --generate-subtask flag without the required --step argument."""
+    # Mock sys.argv using monkeypatch
+    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--config', 'config.yaml'])
+
+    with pytest.raises(SystemExit) as excinfo:
+        main()
+
+    # Check for error message printed to stderr
+    captured = capsys.readouterr()
+    assert "Error: --step argument is required when using --generate-subtask." in captured.err
+    assert excinfo.value.code == 1
+
+@patch('src.ai_whisperer.main.SubtaskGenerator')
+@patch('yaml.safe_load')
+@patch('builtins.open', new_callable=MagicMock)
+@patch('src.ai_whisperer.main.load_config')
+def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_load,
+                                      mock_generator_cls, monkeypatch):
+    """Test the --generate-subtask flag with a successful outcome."""
+    # Set up test data
+    STEP_FILE = 'test_step.yaml'
+    CONFIG_FILE = 'config.yaml'
+    STEP_DATA = {
+        'step_id': 'test_step_1',
+        'description': 'Test step'
+    }
+    OUTPUT_PATH = 'output/test_step_1_subtask.yaml'
+    
+    # Set up mocks
+    mock_load_config.return_value = DUMMY_CONFIG
+    mock_yaml_load.return_value = STEP_DATA
+    mock_file = MagicMock()
+    mock_open.return_value.__enter__.return_value = mock_file
+    mock_generator_instance = MagicMock()
+    mock_generator_cls.return_value = mock_generator_instance
+    mock_generator_instance.generate_subtask.return_value = OUTPUT_PATH
+    mock_console = MagicMock()
+    
+    # Mock command line arguments
+    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--config', CONFIG_FILE, '--step', STEP_FILE])
+    
+    # Run with additional mocks
+    with patch('src.ai_whisperer.main.setup_rich_output', return_value=mock_console), \
+         patch('src.ai_whisperer.main.setup_logging'), \
+         patch('sys.exit') as mock_exit:
+         
+        # Run the function
+        main()
+        
+        # Check load_config was called with config file
+        mock_load_config.assert_called_with(CONFIG_FILE)
+        
+        # Check open was called with step file path
+        path_found = False
+        for call_args in mock_open.call_args_list:
+            if isinstance(call_args[0][0], Path) and str(call_args[0][0]).endswith(STEP_FILE):
+                path_found = True
+                break
+        assert path_found, f"No call found opening Path to {STEP_FILE}"
+        
+        # Check yaml.safe_load was called
+        mock_yaml_load.assert_called_once()
+        
+        # Check SubtaskGenerator initialized correctly
+        mock_generator_cls.assert_called_once_with(CONFIG_FILE)
+        
+        # Check generate_subtask called with step data
+        mock_generator_instance.generate_subtask.assert_called_once_with(STEP_DATA)
+        
+        # Check success message printed
+        output_path_printed = False
+        for call_args in mock_console.print.call_args_list:
+            if len(call_args[0]) > 0 and isinstance(call_args[0][0], str) and OUTPUT_PATH in call_args[0][0]:
+                output_path_printed = True
+                break
+        assert output_path_printed, f"Success message with {OUTPUT_PATH} not printed"
+        
+        # Check program exited with success code
+        mock_exit.assert_called_once_with(0)

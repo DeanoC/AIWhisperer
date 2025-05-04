@@ -98,6 +98,14 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
     python -m src.ai_whisperer.main --list-models --config config.yaml
     ```
 
+* **`--generate-subtask`**: Generates a detailed task implementation YAML from a step definition file. Requires both `--config` and `--step` arguments.
+
+    ```bash
+    python -m src.ai_whisperer.main --generate-subtask --config config.yaml --step path/to/step.yaml
+    ```
+
+    This will process the step definition from `step.yaml`, refine it into a detailed implementation plan, and save the result to a file in the output directory.
+
 ## Development
 
 To run tests:
