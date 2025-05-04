@@ -1,114 +1,149 @@
 import yaml
 from pathlib import Path
 import os
-from dotenv import load_dotenv # Import load_dotenv
-from typing import Optional # Import Optional
+from dotenv import load_dotenv
+from typing import Optional, Dict, Any
 
 from .exceptions import ConfigError
 
 # Default values for optional config settings
-DEFAULT_SITE_URL = "http://localhost:8000" # Or some generic placeholder
+DEFAULT_SITE_URL = "http://localhost:8000"
 DEFAULT_APP_NAME = "AIWhisperer"
 DEFAULT_OUTPUT_DIR = "./output/"
+DEFAULT_ORCHESTRATOR_PROMPT_PATH = "prompts/orchestrator_default.md"
+DEFAULT_SUBTASK_GENERATOR_PROMPT_PATH = "prompts/subtask_generator_default.md"
 
 
-def load_config(config_path: str) -> dict:
+def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, config_dir: Path) -> str:
+    """Loads prompt content from a given path or its default, relative to the config directory."""
+    resolved_path: Optional[Path] = None
+    error_msg: Optional[str] = None
+
+    if prompt_path_str:
+        # If a specific path is given, it MUST exist.
+        prompt_path = config_dir / prompt_path_str
+        if prompt_path.is_file():
+            resolved_path = prompt_path
+        else:
+            # Specified path not found, raise error immediately.
+            error_msg = f"Specified prompt file not found: {prompt_path_str} (relative to {config_dir})"
+            raise ConfigError(error_msg)
+    else:
+        # No specific path given, try the default.
+        default_path = config_dir / default_path_str
+        if default_path.is_file():
+            resolved_path = default_path
+        else:
+            # Default path not found.
+            error_msg = f"Default prompt file not found: {default_path_str} (relative to {config_dir})"
+            raise ConfigError(error_msg)
+
+    # This check should technically be redundant now if logic above is correct, but kept for safety.
+    if not resolved_path:
+         raise ConfigError(error_msg or "Could not determine prompt file path.") # Should not happen
+
+    try:
+        with open(resolved_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        raise ConfigError(f"Error reading prompt file {resolved_path}: {e}") from e
+
+
+def load_config(config_path: str) -> Dict[str, Any]:
     """
-    Loads configuration from a YAML file, validates required keys, and handles API key precedence.
+    Loads configuration from a YAML file, validates required keys, handles API key precedence,
+    and loads prompt file contents.
 
     The function performs the following steps:
     1. Loads environment variables from a .env file (if present).
     2. Checks if the configuration file exists.
     3. Parses the YAML file.
-    4. Validates the presence of top-level keys ('openrouter').
-    5. Validates the structure of the 'openrouter' section.
-    6. Determines the OpenRouter API key, prioritizing the 'OPENROUTER_API_KEY'
-       environment variable over the 'api_key' in the config file.
-    7. Adds default values for optional 'site_url', 'app_name', 'output_dir',
-       and handles optional 'prompt_override_path'.
-    8. Validates the presence and non-emptiness of required keys within 'openrouter'
-       ('api_key', 'model').
-    9. Ensures 'prompts' section exists, defaulting to an empty dictionary if missing.
+    4. Validates the presence of top-level keys ('openrouter', 'prompts').
+    5. Validates the structure of the 'openrouter' and 'prompts' sections.
+    6. Determines the OpenRouter API key from the 'OPENROUTER_API_KEY' environment variable.
+    7. Adds default values for optional 'site_url', 'app_name', 'output_dir'.
+    8. Loads orchestrator and subtask generator prompt content based on paths specified
+       in the 'prompts' section, falling back to defaults if necessary.
+    9. Validates the presence and non-emptiness of required keys within 'openrouter'
+       ('model').
 
     Args:
         config_path: The path to the configuration file.
 
     Returns:
-        A dictionary containing the loaded and validated configuration.
+        A dictionary containing the loaded and validated configuration, including prompt content.
 
     Raises:
         ConfigError: If the configuration file does not exist, is invalid YAML,
                      is missing required keys/sections, contains empty required values,
-                     or if the API key is missing from both the config file and
-                     the environment variable.
+                     if the API key is missing, or if prompt files cannot be loaded.
     """
-    load_dotenv() # Load environment variables from .env file
+    load_dotenv()  # Load .env file first
 
+    # --- Get API Key from Environment --- Required Early ---
+    api_key_from_env = os.getenv('OPENROUTER_API_KEY')
+    if not api_key_from_env:
+        raise ConfigError("Required environment variable OPENROUTER_API_KEY is not set.")
+
+    # --- Load and Parse Config File ---
     path = Path(config_path)
     if not path.is_file():
-        # Raise ConfigError as expected by the test
         raise ConfigError(f"Configuration file not found: {config_path}")
+
+    config_dir = path.parent  # Get the directory containing the config file
 
     try:
         with open(path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
-            # Handle empty file case (yaml.safe_load returns None)
             if config is None:
                 config = {}
             if not isinstance(config, dict):
                 raise ConfigError(f"Invalid configuration format in {config_path}. Expected a dictionary, got {type(config).__name__}.")
     except yaml.YAMLError as e:
         raise ConfigError(f"Error parsing YAML file {config_path}: {e}") from e
-    except Exception as e: # Catch other potential file reading errors
+    except Exception as e:
         raise ConfigError(f"Error reading configuration file {config_path}: {e}") from e
 
     # --- Basic Validation ---
-    # Check for essential top-level keys expected by the application core
-    # 'prompts' is now optional
-    required_keys = ['openrouter']
+    required_keys = ['openrouter', 'prompts']
     missing_keys = [key for key in required_keys if key not in config]
     if missing_keys:
         raise ConfigError(f"Missing required configuration keys in {config_path}: {', '.join(missing_keys)}")
 
-    # Check nested keys for openrouter
     openrouter_config = config.get('openrouter')
     if not isinstance(openrouter_config, dict):
-         raise ConfigError(f"Invalid 'openrouter' section in {config_path}. Expected a dictionary.")
+        raise ConfigError(f"Invalid 'openrouter' section in {config_path}. Expected a dictionary.")
 
-    # --- API Key Handling (Prioritize Environment Variable) ---
-    # Check for api_key in config first, but prioritize environment variable
-    api_key_from_env = os.getenv('OPENROUTER_API_KEY')
-    api_key_from_config = openrouter_config.get('api_key')
+    prompts_config = config.get('prompts')
+    if not isinstance(prompts_config, dict):
+        raise ConfigError(f"Invalid 'prompts' section in {config_path}. Expected a dictionary, got {type(prompts_config).__name__}.")
 
-    if api_key_from_env:
-        # Use environment variable if available, overriding config file
-        openrouter_config['api_key'] = api_key_from_env
-        # Optional: Log that env var is being used
-        # print("Using OpenRouter API key from environment variable.")
-    elif not api_key_from_config:
-        # If not in env and not in config, raise error
-        raise ConfigError(f"Missing required key 'api_key' in 'openrouter' section of {config_path} and OPENROUTER_API_KEY environment variable not set.")
-    # If only in config, it's already loaded, no action needed.
+    # --- API Key Handling (Simplified) ---
+    # Assign the key from environment (already validated)
+    openrouter_config['api_key'] = api_key_from_env
 
     # --- Load Optional Settings with Defaults ---
-    # OpenRouter specific optional settings
     openrouter_config['site_url'] = openrouter_config.get('site_url', DEFAULT_SITE_URL)
     openrouter_config['app_name'] = openrouter_config.get('app_name', DEFAULT_APP_NAME)
 
-    # General application optional settings (add them to the top-level config dict)
     config['output_dir'] = config.get('output_dir', DEFAULT_OUTPUT_DIR)
-    config['prompt_override_path'] = config.get('prompt_override_path', None) # Default to None if not present
+    config.pop('prompt_override_path', None)
 
-    # Ensure 'prompts' section exists, defaulting to empty dict if missing
-    config.setdefault('prompts', {})
-    # Validate that 'prompts' is a dictionary if it exists
-    if not isinstance(config['prompts'], dict):
-        raise ConfigError(f"Invalid 'prompts' section in {config_path}. Expected a dictionary, got {type(config['prompts']).__name__}.")
+    # --- Load Prompt Contents ---
+    orchestrator_prompt_path = prompts_config.get('orchestrator_prompt_path')
+    prompts_config['orchestrator_prompt_content'] = _load_prompt_content(
+        orchestrator_prompt_path, DEFAULT_ORCHESTRATOR_PROMPT_PATH, config_dir  # Pass config_dir
+    )
 
-    # --- Continue Validation ---
-    # Validate required keys within 'openrouter'
-    required_openrouter_keys = ['api_key', 'model']
-    missing_openrouter_keys = [key for key in required_openrouter_keys if key not in openrouter_config or not openrouter_config[key]]
+    subtask_generator_prompt_path = prompts_config.get('subtask_generator_prompt_path')
+    prompts_config['subtask_generator_prompt_content'] = _load_prompt_content(
+        subtask_generator_prompt_path, DEFAULT_SUBTASK_GENERATOR_PROMPT_PATH, config_dir  # Pass config_dir
+    )
+
+    # --- Final Validation (Simplified) ---
+    # Validate only 'model' is present in openrouter config, as api_key is handled via env var
+    required_openrouter_keys = ['model']  # Only model is required *in the file*
+    missing_openrouter_keys = [key for key in required_openrouter_keys if not openrouter_config.get(key)]
     if missing_openrouter_keys:
         raise ConfigError(f"Missing or empty required keys in 'openrouter' section of {config_path}: {', '.join(missing_openrouter_keys)}")
 
