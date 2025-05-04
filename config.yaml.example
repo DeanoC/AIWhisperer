@@ -1,0 +1,30 @@
+# AI Whisperer Configuration Example
+
+# OpenRouter API Settings
+openrouter:
+  api_key: "YOUR_OPENROUTER_API_KEY"  # Replace with your actual key
+  model: "openai/gpt-3.5-turbo"       # Default model to use
+  # Optional parameters for the model
+  params:
+    temperature: 0.7
+    max_tokens: 1500
+    # Add other parameters supported by the chosen model/API endpoint
+
+# Prompt Templates (Stored here initially)
+prompts:
+  task_generation: |
+    You are an AI assistant. Your task is to convert the following user requirements into a structured YAML format suitable for task processing.
+    Analyze the requirements provided below and generate a YAML output containing a list of tasks, dependencies, and any other relevant details.
+
+    Requirements:
+    ```markdown
+    {markdown_content}
+    ```
+
+    Generate the YAML output below:
+
+# Application Settings (Example)
+output:
+  # Default output file path (can be overridden by CLI argument)
+  # default_path: "output/tasks.yaml"
+  log_level: "INFO" # Logging level (e.g., DEBUG, INFO, WARNING, ERROR)
