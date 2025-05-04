@@ -1,4 +1,4 @@
- import pytest
+import pytest
 from unittest.mock import patch, MagicMock
 import sys
 
@@ -80,10 +80,8 @@ def test_main_success_flow(mock_dependencies):
         DUMMY_CONFIG['openrouter'] # Pass the openrouter sub-dict as config_vars
     )
     mock_dependencies['call_openrouter'].assert_called_once_with(
-        DUMMY_CONFIG['openrouter']['api_key'],
-        DUMMY_CONFIG['openrouter']['model'],
-        DUMMY_FORMATTED_PROMPT,
-        DUMMY_CONFIG['openrouter']['params']
+        prompt_text=DUMMY_FORMATTED_PROMPT,
+        config=DUMMY_CONFIG # Pass the whole config dict
     )
     mock_dependencies['process_response'].assert_called_once_with(DUMMY_API_RESPONSE)
     mock_dependencies['save_yaml'].assert_called_once_with(DUMMY_PROCESSED_DATA, OUT_FILE)

@@ -3,6 +3,7 @@
 
 import pytest
 import yaml
+import os  # Import os for monkeypatching environment variables
 from pathlib import Path
 from src.ai_whisperer.config import load_config
 from src.ai_whisperer.exceptions import ConfigError
@@ -70,7 +71,14 @@ def test_load_config_success(create_test_config_file):
     """Tests loading a valid configuration file."""
     config_path = create_test_config_file("valid_config.yaml", VALID_CONFIG_DATA)
     config = load_config(str(config_path))
-    assert config == VALID_CONFIG_DATA
+
+    # Create expected config including defaults added by load_config
+    from src.ai_whisperer.config import DEFAULT_SITE_URL, DEFAULT_APP_NAME
+    expected_config = VALID_CONFIG_DATA.copy()
+    expected_config['openrouter']['site_url'] = DEFAULT_SITE_URL
+    expected_config['openrouter']['app_name'] = DEFAULT_APP_NAME
+
+    assert config == expected_config # Compare against expected structure with defaults
     assert config['openrouter']['api_key'] == 'test_api_key'
     assert 'task_generation' in config['prompts']
 
@@ -93,9 +101,11 @@ def test_load_config_missing_required_key(create_test_config_file):
         load_config(str(config_path))
 
 def test_load_config_missing_nested_required_key(create_test_config_file):
-    """Tests loading a config file missing a required nested key."""
+    """Tests loading a config file missing a required nested key (api_key)."""
     config_path = create_test_config_file("missing_nested_key.yaml", CONFIG_MISSING_NESTED_KEY)
-    with pytest.raises(ConfigError, match=r"Missing required keys in 'openrouter' section.*api_key"):
+    # Update regex to match the specific error when key is missing from file AND env var
+    expected_error_pattern = r"Missing required key 'api_key' in 'openrouter' section.*and OPENROUTER_API_KEY environment variable not set"
+    with pytest.raises(ConfigError, match=expected_error_pattern):
         load_config(str(config_path))
 
 def test_load_config_empty_file(create_test_config_file):
@@ -116,3 +126,76 @@ def test_load_config_not_a_dictionary(create_test_config_file):
     config_path = create_test_config_file("not_dict.yaml", CONFIG_NOT_DICT)
     with pytest.raises(ConfigError, match=r"Invalid configuration format.*Expected a dictionary"):
         load_config(str(config_path))
+
+def test_load_config_api_key_precedence(create_test_config_file, monkeypatch):
+    """Tests API key loading precedence (Env Var > Config File) and missing key error."""
+    env_api_key = "env_key_123"
+    config_api_key = "config_key_456"
+
+    # --- Case 1: API Key only in Environment Variable ---
+    monkeypatch.setenv("OPENROUTER_API_KEY", env_api_key)
+    config_data_no_key = {
+        'openrouter': {'model': 'test_model'},
+        'prompts': {'task_generation': 'prompt'}
+    }
+    config_path_no_key = create_test_config_file("config_no_key.yaml", config_data_no_key)
+    config = load_config(str(config_path_no_key))
+    assert config['openrouter']['api_key'] == env_api_key
+    monkeypatch.delenv("OPENROUTER_API_KEY") # Clean up env var
+
+    # --- Case 2: API Key only in Config File ---
+    # Ensure env var is not set (cleaned up above)
+    config_data_with_key = {
+        'openrouter': {'api_key': config_api_key, 'model': 'test_model'},
+        'prompts': {'task_generation': 'prompt'}
+    }
+    config_path_with_key = create_test_config_file("config_with_key.yaml", config_data_with_key)
+    config = load_config(str(config_path_with_key))
+    assert config['openrouter']['api_key'] == config_api_key
+
+    # --- Case 3: API Key in Both Env Var and Config File (Env Var should win) ---
+    monkeypatch.setenv("OPENROUTER_API_KEY", env_api_key)
+    # Use the same config file as Case 2 (config_path_with_key)
+    config = load_config(str(config_path_with_key))
+    assert config['openrouter']['api_key'] == env_api_key # Env var takes precedence
+    monkeypatch.delenv("OPENROUTER_API_KEY") # Clean up env var
+
+    # --- Case 4: API Key Missing in Both ---
+    # Ensure env var is not set (cleaned up above)
+    # Use the same config file as Case 1 (config_path_no_key)
+    with pytest.raises(ConfigError, match=r"Missing required key 'api_key' in 'openrouter' section.*and OPENROUTER_API_KEY environment variable not set"):
+        load_config(str(config_path_no_key))
+
+def test_load_config_optional_keys(create_test_config_file):
+    """Tests loading config with and without optional keys (site_url, app_name)."""
+    # Config with optional keys provided
+    config_data_with_optional = {
+        'openrouter': {
+            'api_key': 'test_key',
+            'model': 'test_model',
+            'site_url': 'https://mytestsite.com',
+            'app_name': 'MyTestApp'
+        },
+        'prompts': {'task_generation': 'prompt'}
+    }
+    config_path_with = create_test_config_file("config_with_opt.yaml", config_data_with_optional)
+    config = load_config(str(config_path_with))
+    assert config['openrouter']['site_url'] == 'https://mytestsite.com'
+    assert config['openrouter']['app_name'] == 'MyTestApp'
+
+    # Config without optional keys (should use defaults)
+    config_data_without_optional = {
+        'openrouter': {
+            'api_key': 'test_key',
+            'model': 'test_model'
+            # site_url and app_name missing
+        },
+        'prompts': {'task_generation': 'prompt'}
+    }
+    config_path_without = create_test_config_file("config_without_opt.yaml", config_data_without_optional)
+    config = load_config(str(config_path_without))
+    # Assuming DEFAULT_SITE_URL and DEFAULT_APP_NAME are defined in config.py
+    # You might need to import them or check against expected default values
+    from src.ai_whisperer.config import DEFAULT_SITE_URL, DEFAULT_APP_NAME
+    assert config['openrouter']['site_url'] == DEFAULT_SITE_URL
+    assert config['openrouter']['app_name'] == DEFAULT_APP_NAME

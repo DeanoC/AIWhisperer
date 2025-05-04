@@ -73,7 +73,7 @@ def format_prompt(template: str, md_content: str, config_vars: dict) -> str:
     try:
         # Combine md_content with other config variables for formatting
         format_data = config_vars.copy()
-        format_data['md_content'] = md_content
+        format_data['markdown_content'] = md_content
         return template.format(**format_data)
     except KeyError as e:
         raise ProcessingError(f"Missing variable in config/markdown for prompt template placeholder: {e}") from e
@@ -96,11 +96,26 @@ def process_response(response_text: str) -> dict | list:
     """
     if not response_text or response_text.isspace():
         raise ProcessingError("Error parsing API response YAML: Empty response")
+
+    # Strip potential markdown code fences
+    cleaned_text = response_text.strip()
+    if cleaned_text.startswith("```yaml") and cleaned_text.endswith("```"):
+        cleaned_text = cleaned_text[len("```yaml"): -len("```")]
+    elif cleaned_text.startswith("```") and cleaned_text.endswith("```"):
+        cleaned_text = cleaned_text[len("```"): -len("```")]
+
+    # Strip leading/trailing whitespace again after removing fences
+    cleaned_text = cleaned_text.strip()
+
+    # Check if the cleaned text is now empty
+    if not cleaned_text:
+        raise ProcessingError("Error parsing API response YAML: Response contained only markdown fences or whitespace.")
+
     try:
-        # Use safe_load to avoid arbitrary code execution
-        parsed_data = yaml.safe_load(response_text)
-        if parsed_data is None and not response_text.strip().startswith('---'):
-            is_only_comments = all(line.strip().startswith('#') or not line.strip() for line in response_text.splitlines())
+        # Use safe_load on the cleaned text
+        parsed_data = yaml.safe_load(cleaned_text)
+        if parsed_data is None and not cleaned_text.strip().startswith('---'):
+            is_only_comments = all(line.strip().startswith('#') or not line.strip() for line in cleaned_text.splitlines())
             if not is_only_comments:
                 raise ProcessingError("Error parsing API response YAML: Resulted in None, possibly invalid structure.")
             else:

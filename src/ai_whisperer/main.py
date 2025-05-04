@@ -6,7 +6,7 @@ import logging
 from .config import load_config
 from .processing import read_markdown, format_prompt, process_response, save_yaml
 from .openrouter_api import call_openrouter
-from .exceptions import AIWhispererError, ConfigError, ProcessingError, APIError
+from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, OpenRouterConnectionError
 from .utils import setup_logging, setup_rich_output
 from rich.console import Console # Import Console for type hinting if needed
 
@@ -14,7 +14,12 @@ from rich.console import Console # Import Console for type hinting if needed
 logger = logging.getLogger(__name__)
 
 def main():
-    """Main entry point for the AI Whisperer CLI application."""
+    """Main entry point for the AI Whisperer CLI application.
+
+    Parses command-line arguments, loads configuration, reads requirements,
+    formats a prompt, calls the OpenRouter API, processes the response,
+    and saves the result as a YAML file.
+    """
     # Setup logging and rich console output first
     setup_logging() # Basic logging setup
     console = setup_rich_output()
@@ -51,14 +56,7 @@ def main():
         config = load_config(args.config)
         logger.debug("Configuration loaded successfully.")
 
-        # Validate required config sections (add more specific checks if needed)
-        if 'openrouter' not in config or 'prompts' not in config:
-            raise ConfigError("Configuration file must contain 'openrouter' and 'prompts' sections.")
-        if 'task_generation' not in config['prompts']:
-             raise ConfigError("Configuration file must contain 'task_generation' prompt under 'prompts'.")
-        if 'api_key' not in config['openrouter'] or 'model' not in config['openrouter']:
-             raise ConfigError("Configuration file must contain 'api_key' and 'model' under 'openrouter'.")
-
+        # --- Restore original processing logic ---
         console.print(f"Reading requirements from: {args.requirements}")
         md_content = read_markdown(args.requirements)
         logger.debug("Markdown requirements read successfully.")
@@ -68,16 +66,24 @@ def main():
         prompt_config_vars = config.get('openrouter', {})
         logger.info("Formatting prompt...")
         formatted_prompt = format_prompt(prompt_template, md_content, prompt_config_vars)
-        logger.debug(f"Formatted prompt: {{formatted_prompt[:100]}}...") # Log truncated prompt
+        logger.debug(f"Formatted prompt: {formatted_prompt[:100]}...") # Log truncated prompt
 
-        api_key = config['openrouter']['api_key']
-        model = config['openrouter']['model']
-        api_params = config['openrouter'].get('params', {}) # Get optional params
+        console.print(f"Calling OpenRouter API (model: {config.get('openrouter', {}).get('model', 'N/A')})...")
+        try:
+            # Use the new call_openrouter function signature
+            api_response = call_openrouter(
+                prompt_text=formatted_prompt, # Use keyword arg for clarity
+                config=config # Pass the whole config dict
+            )
+            logger.info("Received response from API.")
+            logger.debug(f"API Response: {api_response[:100]}...") # Log truncated response
 
-        console.print(f"Calling OpenRouter API (model: {model})...")
-        api_response = call_openrouter(api_key, model, formatted_prompt, api_params)
-        logger.info("Received response from API.")
-        logger.debug(f"API Response: {{api_response[:100]}}...") # Log truncated response
+        except (OpenRouterAPIError, OpenRouterConnectionError) as e: # Catch specific OpenRouter errors
+            logger.error(f"OpenRouter API call failed: {e}", exc_info=False)
+            logger.debug(f"OpenRouter API error details:", exc_info=True)
+            console.print(f"[bold red]OpenRouter API Error:[/bold red] {e}")
+            sys.exit(1)
+        # End API call section
 
         console.print("Processing API response...")
         processed_data = process_response(api_response)
@@ -88,10 +94,16 @@ def main():
         logger.info(f"Task YAML saved successfully to {args.output}.")
 
         console.print(f"[green]Successfully generated task YAML: {args.output}[/green]")
+        # --- End Restore original processing logic ---
 
-    except AIWhispererError as e:
-        logger.error(f"Application error: {e}", exc_info=False) # Log error message
-        logger.debug(f"Application error details:", exc_info=True) # Log traceback at debug level
+    except ConfigError as e: # Keep ConfigError handling separate
+        logger.error(f"Configuration error: {e}", exc_info=False)
+        logger.debug(f"Configuration error details:", exc_info=True)
+        console.print(f"[bold red]Configuration Error:[/bold red] {e}")
+        sys.exit(1)
+    except AIWhispererError as e: # Catch other potential app errors
+        logger.error(f"Application error: {e}", exc_info=False)
+        logger.debug(f"Application error details:", exc_info=True)
         console.print(f"[bold red]Error:[/bold red] {e}")
         sys.exit(1)
     except SystemExit as e: # Catch SystemExit from argparse
@@ -104,7 +116,7 @@ def main():
     except Exception as e:
         # Catch any other unexpected errors
         logger.critical(f"An unexpected error occurred: {e}", exc_info=True)
-        console.print(f"[bold red]Unexpected Error:[/bold red] {e}")
+        console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
         sys.exit(1)
 
 if __name__ == "__main__":

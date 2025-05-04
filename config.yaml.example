@@ -1,30 +1,45 @@
 # AI Whisperer Configuration Example
+# This file shows an example structure. Create your own 'config.yaml'
+# or provide the path to your configuration file via the --config argument.
 
-# OpenRouter API Settings
+# --- OpenRouter API Settings --- Required Section ---
 openrouter:
-  api_key: "YOUR_OPENROUTER_API_KEY"  # Replace with your actual key
-  model: "openai/gpt-3.5-turbo"       # Default model to use
-  # Optional parameters for the model
-  params:
-    temperature: 0.7
-    max_tokens: 1500
-    # Add other parameters supported by the chosen model/API endpoint
+  # api_key: "sk-or-v1-abc...xyz" # Strongly recommended: Set the OPENROUTER_API_KEY environment variable instead of putting your key here for security.
+  model: "mistralai/mistral-7b-instruct" # Required: Specify the model identifier from OpenRouter (e.g., "mistralai/mistral-7b-instruct", "openai/gpt-4o").
 
-# Prompt Templates (Stored here initially)
+  # Optional: Parameters to pass to the OpenRouter API for chat completions.
+  # Refer to the specific model's documentation on OpenRouter for available parameters.
+  params:
+    temperature: 0.7 # Example: Controls randomness (0.0 to 2.0). Higher values = more creative, lower = more deterministic.
+    max_tokens: 2048 # Example: Maximum number of tokens to generate in the response.
+    # top_p: 1.0
+    # frequency_penalty: 0.0
+    # presence_penalty: 0.0
+
+  # Optional: Used for identifying your app in OpenRouter logs (sent as headers).
+  # Defaults are provided if these are omitted.
+  site_url: "http://localhost:8000" # Example: Your project's URL (sent as HTTP-Referer).
+  app_name: "AIWhisperer"           # Example: Your application's name (sent as X-Title).
+
+# --- Prompt Templates --- Required Section ---
 prompts:
+  # Required: The template used for generating tasks from requirements.
+  # The '{markdown_content}' placeholder will be replaced with the content of the requirements file.
   task_generation: |
-    You are an AI assistant. Your task is to convert the following user requirements into a structured YAML format suitable for task processing.
-    Analyze the requirements provided below and generate a YAML output containing a list of tasks, dependencies, and any other relevant details.
+    You are an AI assistant specialized in software project management and task breakdown.
+    Your goal is to analyze the provided software requirements, written in Markdown, and convert them into a structured YAML format.
+    The YAML should represent a list of actionable tasks, including descriptions, potential dependencies (if inferrable), and estimated effort (e.g., small, medium, large) if possible.
+    Focus on clarity and creating tasks that can be tracked in a project management tool.
 
     Requirements:
     ```markdown
     {markdown_content}
     ```
 
-    Generate the YAML output below:
+    Generate the YAML output representing the tasks derived from these requirements below:
 
-# Application Settings (Example)
-output:
-  # Default output file path (can be overridden by CLI argument)
-  # default_path: "output/tasks.yaml"
-  log_level: "INFO" # Logging level (e.g., DEBUG, INFO, WARNING, ERROR)
+# --- Other Application Settings (Optional) ---
+# Add other sections as needed for future features (e.g., logging, output formatting).
+# logging:
+#   level: "INFO" # Example: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+#   file: "ai_whisperer.log" # Example: Log to a file instead of/in addition to console
