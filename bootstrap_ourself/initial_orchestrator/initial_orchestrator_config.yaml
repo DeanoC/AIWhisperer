@@ -5,13 +5,13 @@
 # --- OpenRouter API Settings --- Required Section ---
 openrouter:
   # api_key: "sk-or-v1-abc...xyz" # Recommended: Set the OPENROUTER_API_KEY in a .env file (and ensure .env is in .gitignore) instead of putting your key here.
-  model: "mistralai/mistral-7b-instruct" # Required: Specify the model identifier from OpenRouter (e.g., "mistralai/mistral-7b-instruct", "openai/gpt-4o").
+  model: "google/gemini-2.5-flash-preview" # Required: Specify the model identifier from OpenRouter (e.g., "mistralai/mistral-7b-instruct", "openai/gpt-4o").
 
   # Optional: Parameters to pass to the OpenRouter API for chat completions.
   # Refer to the specific model's documentation on OpenRouter for available parameters.
   params:
     temperature: 0.7 # Example: Controls randomness (0.0 to 2.0). Higher values = more creative, lower = more deterministic.
-    max_tokens: 2048 # Example: Maximum number of tokens to generate in the response.
+    max_tokens: 4096 # Example: Maximum number of tokens to generate in the response.
     # top_p: 1.0
     # frequency_penalty: 0.0
     # presence_penalty: 0.0

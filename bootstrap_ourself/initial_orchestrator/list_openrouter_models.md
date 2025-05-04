@@ -3,6 +3,10 @@
 ## Goal
 
 Enhance the `ai_whisperer` command-line interface (CLI) to allow users to easily discover which models are available for use via the OpenRouter API.
+The goal is be provide a run-time list of model, so the user can see the exact name
+of models to use for various purposes.
+
+`ai_whisperer` is a python 3.12 based project and follows a strict Test Driven Design methodology
 
 ## Requirements
 
