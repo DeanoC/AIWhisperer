@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Custom exception types for the AI Whisperer application."""
 import requests # Import requests to potentially include response info in errors
+import jsonschema # Import jsonschema for validation error handling
 
 class AIWhispererError(Exception):
     """Base class for all application-specific errors."""
@@ -65,14 +66,22 @@ class HashMismatchError(OrchestratorError):
         )
         super().__init__(message)
 
-class YAMLValidationError(OrchestratorError):
-    """Error raised when the generated YAML fails schema validation."""
-    def __init__(self, validation_errors):
-        self.validation_errors = validation_errors
-        # Format the jsonschema errors for better readability
-        # Ensure e.path is handled correctly (it's often a deque)
-        error_details = "\n".join([f"- {e.message} (path: {' -> '.join(map(str, e.path))})" for e in validation_errors])
-        message = f"Generated YAML failed schema validation:\n{error_details}"
+class YAMLValidationError(AIWhispererError):
+    """Custom exception for YAML validation errors."""
+    def __init__(self, validation_errors: list):
+        # Ensure validation_errors is a list of ValidationError objects
+        if not isinstance(validation_errors, list) or not all(isinstance(err, jsonschema.exceptions.ValidationError) for err in validation_errors):
+            message = "Invalid input for YAMLValidationError. Expected a list of ValidationError objects."
+            super().__init__(message)
+            return
+
+        # Format the error messages from the validation errors
+        error_details = "\n".join([
+            f"- {e.message} (path: {' -> '.join(map(str, e.path)) if e.path else 'N/A'})\n"
+            f"  Schema path: {' -> '.join(map(str, e.schema_path)) if e.schema_path else 'N/A'}"
+            for e in validation_errors
+        ])
+        message = f"YAML validation failed:\n{error_details}"
         super().__init__(message)
 
 class PromptError(OrchestratorError):

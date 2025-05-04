@@ -2,6 +2,7 @@ import yaml
 import json
 import jsonschema
 import logging
+import traceback # Added import
 from pathlib import Path
 from typing import Dict, Any, Tuple
 
@@ -160,14 +161,15 @@ class Orchestrator:
         try:
             jsonschema.validate(instance=yaml_data, schema=self.task_schema)
             logger.info("YAML structure validation successful.")
-        except jsonschema.ValidationError as e:
-            logger.error(f"YAML schema validation failed: {e}")
-            # Extract relevant details for a cleaner error message if needed
-            # simplified_errors = [err.message for err in e.context] # Example
-            raise YAMLValidationError(list(e.path) if hasattr(e, 'path') else 'N/A') from e # Pass validation errors
-        except Exception as e: # Catch other potential jsonschema errors
-            logger.error(f"An unexpected error occurred during schema validation: {e}")
-            raise OrchestratorError(f"Schema validation failed unexpectedly: {e}") from e
+        except jsonschema.exceptions.ValidationError as e:
+            # Log the detailed validation error
+            error_path_str = ' -> '.join(map(str, e.path)) if hasattr(e, 'path') and e.path else 'N/A'
+            logger.error(f"YAML schema validation failed: {e.message} at path: {error_path_str}\n{traceback.format_exc()}")
+            # Raise our custom exception, passing the original error in a list for context
+            raise YAMLValidationError(validation_errors=[e]) from e
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during YAML validation: {e}\n{traceback.format_exc()}")
+            raise
 
 
     def generate_initial_yaml(self, requirements_md_path_str: str, config_path_str: str) -> Path:

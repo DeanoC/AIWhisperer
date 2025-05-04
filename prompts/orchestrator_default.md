@@ -77,7 +77,7 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
 1. Analyze the provided **User Requirements**.
 2. Generate a unique `task_id` (e.g., a UUID).
 3. Set the `natural_language_goal` field to a concise summary of the user's main objective based on the requirements.
-4. If applicable, populate the `overall_context` field with any shared background information, constraints, or style guides relevant to the entire task. If not applicable, omit this field or set it to an empty string.
+4. If applicable, populate the `overall_context` field with a **single string** containing any shared background information, constraints, or style guides relevant to the entire task. Do not use complex objects or nested structures here. If not applicable, omit this field or set it to an empty string.
 5. **Crucially:** Include the exact **Input Hashes** dictionary provided below within the `input_hashes` field of the output YAML. Do not modify it.
 6. Decompose the requirements into a logical sequence of steps (`plan`). Define `step_id`, `description`, `depends_on` (if any), and `agent_spec` for each step.
 7. Populate the `agent_spec` with appropriate `type`, `input_artifacts`, `output_artifacts`, detailed `instructions`, and optionally `constraints` and `validation_criteria`.
