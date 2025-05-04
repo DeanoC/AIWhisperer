@@ -132,14 +132,14 @@ rich>=13.0,<14.0
 * [x] Install dependencies (`pip install -r requirements.txt`)
 * [x] Implement `exceptions.py`
 * [x] Write tests for `config.py`
-* [ ] Implement `config.py`
-* [ ] Write tests for `processing.py` (file I/O)
-* [ ] Implement `processing.py` (file I/O)
-* [ ] Write tests for `processing.py` (core logic)
-* [ ] Implement `processing.py` (core logic)
-* [ ] Write tests for `openrouter_api.py` (mocking needed)
-* [ ] Implement `openrouter_api.py`
-* [ ] Implement `utils.py`
-* [ ] Write tests for `main.py` (integration/mocking)
-* [ ] Implement `main.py`
-* [ ] Create basic `README.md`
+* [x] Implement `config.py`
+* [x] Write tests for `processing.py` (file I/O)
+* [x] Implement `processing.py` (file I/O)
+* [x] Write tests for `processing.py` (core logic)
+* [x] Implement `processing.py` (core logic)
+* [x] Write tests for `openrouter_api.py` (mocking needed)
+* [x] Implement `openrouter_api.py`
+* [x] Implement `utils.py`
+* [x] Write tests for `main.py` (integration/mocking)
+* [x] Implement `main.py`
+* [x] Create basic `README.md`
