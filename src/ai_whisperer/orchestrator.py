@@ -360,11 +360,11 @@ class Orchestrator:
         
         # Generate subtask for each step
         subtask_paths = []
-        if 'steps' in task_data and task_data['steps']:
-            steps_count = len(task_data['steps'])
+        if 'plan' in task_data and task_data['plan']:  # Changed from 'steps' to 'plan'
+            steps_count = len(task_data['plan'])
             logger.info(f"Generating subtasks for {steps_count} steps")
             
-            for i, step in enumerate(task_data['steps'], 1):
+            for i, step in enumerate(task_data['plan'], 1):
                 try:
                     step_id = step.get('step_id', f"step_{i}")
                     logger.info(f"Generating subtask {i}/{steps_count}: {step_id}")
