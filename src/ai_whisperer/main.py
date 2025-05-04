@@ -26,7 +26,7 @@ def main():
     """Main entry point for the AI Whisperer CLI application.
 
     Parses command-line arguments, loads configuration, initializes components,
-    and performs the requested operation (generate task YAML, list models, or generate subtask).
+    and performs the requested operation (generate task YAML, list models, generate subtask, or full project plan).
     """
     # Setup logging and rich console output first
     setup_logging()
@@ -66,17 +66,20 @@ def main():
         "--step",
         help="Path to the input step YAML file. Required when using --generate-subtask."
     )
+    parser.add_argument(
+        "--full-project",
+        action="store_true",
+        help="Generate a complete project plan with task YAML and all subtasks."
+    )
     
     # Use parse_known_args to avoid conflicts with pytest arguments during testing
-    args, unknown = parser.parse_known_args()
-
-    # --- Handle OpenRouter Models Listing ---
+    args, unknown = parser.parse_known_args()    # --- Handle OpenRouter Models Listing ---
     if args.list_models:
         try:
             # Check if config path is provided
             if not args.config:
                 print("Error: --config argument is required when using --list-models.", file=sys.stderr)
-                sys.exit(1)
+                raise SystemExit(1)
 
             # Load configuration to get API key
             console.print(f"Loading configuration from: {args.config}")
@@ -92,28 +95,26 @@ def main():
             console.print("[bold green]Available OpenRouter Models:[/bold green]")
             for model in models:
                 console.print(f"- {model}")
-            sys.exit(0)
+            raise SystemExit(0)
 
         except ConfigError as e:
             print(f"Configuration error: {e}", file=sys.stderr)
-            sys.exit(1)
+            raise SystemExit(1)
         except OpenRouterAPIError as e:
             print(f"Error fetching models: {e}", file=sys.stderr)
-            sys.exit(1)
+            raise SystemExit(1)
         except Exception as e:
             print(f"An unexpected error occurred while listing models: {e}", file=sys.stderr)
-            sys.exit(1)
-
-    # --- Handle Subtask Generation ---
+            raise SystemExit(1)    # --- Handle Subtask Generation ---
     if args.generate_subtask:
         try:
             # Check required arguments
             if not args.config:
                 print("Error: --config argument is required when using --generate-subtask.", file=sys.stderr)
-                sys.exit(1)
+                raise SystemExit(1)
             if not args.step:
                 print("Error: --step argument is required when using --generate-subtask.", file=sys.stderr)
-                sys.exit(1)
+                raise SystemExit(1)
 
             # Load configuration
             console.print(f"Loading configuration from: {args.config}")
@@ -131,10 +132,10 @@ def main():
                         raise ValueError("Step definition must be a YAML dictionary/object")
             except FileNotFoundError:
                 console.print(f"[bold red]Error:[/bold red] Step file not found: {step_path}")
-                sys.exit(1)
+                raise SystemExit(1)
             except (yaml.YAMLError, ValueError) as e:
                 console.print(f"[bold red]Error:[/bold red] Invalid step YAML: {e}")
-                sys.exit(1)
+                raise SystemExit(1)
 
             # Initialize subtask generator
             console.print("Initializing subtask generator...")
@@ -166,57 +167,92 @@ def main():
             console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
             sys.exit(1)
 
-    # --- Handle Main Task YAML Generation ---
-    try:
+    # --- Handle Full Project Plan Generation ---
+    if args.full_project:
+        try:            # Check for required arguments for full project generation
+            if not args.requirements or not args.config:
+                print("Error: --requirements and --config are required for full project generation.", file=sys.stderr)
+                raise SystemExit(1)
+
+            logger.info("Starting AI Whisperer full project generation...")
+            console.print(f"Loading configuration from: {args.config}")
+            config = load_config(args.config)
+            logger.debug("Configuration loaded successfully.")
+
+            # Initialize Orchestrator
+            console.print("Initializing orchestrator...")
+            orchestrator = Orchestrator(config)
+            logger.info("Orchestrator initialized.")
+
+            # Generate full project plan
+            console.print(f"Generating full project plan from requirements: {args.requirements}")
+            result = orchestrator.generate_full_project_plan(
+                requirements_md_path_str=args.requirements,
+                config_path_str=args.config
+            )
+
+            # Report success
+            console.print(f"[green]Successfully generated project plan:[/green]")
+            console.print(f"- Task plan: {result['task_plan']}")
+            console.print(f"- Subtasks generated: {len(result['subtasks'])}")
+            for i, subtask_path in enumerate(result['subtasks'], 1):
+                console.print(f"  {i}. {subtask_path}")
+            
+            sys.exit(0)       
+        except ConfigError as e:
+            logger.error(f"Configuration error: {e}", exc_info=False)
+            console.print(f"[bold red]Configuration Error:[/bold red] {e}")
+            raise SystemExit(1)
+        except AIWhispererError as e:
+            logger.error(f"Application error: {e}", exc_info=False)
+            console.print(f"[bold red]Error:[/bold red] {e}")
+            raise SystemExit(1)
+        except Exception as e:
+            logger.critical(f"An unexpected error occurred during project generation: {e}", exc_info=True)
+            console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
+            raise SystemExit(1)# --- Handle Main Task YAML Generation ---
+    # Only proceed to main logic if no special flags were active
+    if not (args.list_models or args.generate_subtask or args.full_project):
         # Check for required arguments for core logic
         if not args.requirements or not args.config or not args.output:
-             parser.print_usage(file=sys.stderr)
-             print("Error: --requirements, --config, and --output are required for the main operation.", file=sys.stderr)
-             sys.exit(1)
+            parser.print_help(file=sys.stderr)
+            print("Error: --requirements, --config, and --output are required for the main operation.", file=sys.stderr)
+            sys.exit(1)
 
-        logger.info("Starting AI Whisperer process...")
-        console.print(f"Loading configuration from: {args.config}")
-        config = load_config(args.config)
-        logger.debug("Configuration loaded successfully.")
+        try:
+            logger.info("Starting AI Whisperer process...")
+            console.print(f"Loading configuration from: {args.config}")
+            config = load_config(args.config)
+            logger.debug("Configuration loaded successfully.")
 
-        # --- Use Orchestrator ---
-        console.print("Initializing orchestrator...")
-        orchestrator = Orchestrator(config)
-        logger.info("Orchestrator initialized.")
+            # --- Use Orchestrator ---
+            console.print("Initializing orchestrator...")
+            orchestrator = Orchestrator(config)
+            logger.info("Orchestrator initialized.")
 
-        console.print(f"Generating initial task plan from: {args.requirements}")
-        # Call the orchestrator method with corrected argument names
-        generated_yaml_path = orchestrator.generate_initial_yaml(
-            requirements_md_path_str=args.requirements,
-            config_path_str=args.config
-        )
-
-        # Use the returned path in the success message
-        console.print(f"[green]Successfully generated task YAML: {generated_yaml_path}[/green]")
-        # --- End Orchestrator Logic ---
-
-    except ConfigError as e:
-        logger.error(f"Configuration error: {e}", exc_info=False)
-        logger.debug(f"Configuration error details:", exc_info=True)
-        console.print(f"[bold red]Configuration Error:[/bold red] {e}")
-        sys.exit(1)
-    except AIWhispererError as e:
-        logger.error(f"Application error: {e}", exc_info=False)
-        logger.debug(f"Application error details:", exc_info=True)
-        console.print(f"[bold red]Error:[/bold red] {e}")
-        sys.exit(1)
-    except SystemExit as e:
-        # Catch SystemExit from argparse
-        # Re-raise if needed for testing frameworks to catch it
-        if "pytest" in sys.modules:
-             raise e
-        else:
-             sys.exit(e.code) # Ensure correct exit code
-    except Exception as e:
-        # Catch any other unexpected errors
-        logger.critical(f"An unexpected error occurred: {e}", exc_info=True)
-        console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
-        sys.exit(1)
+            console.print(f"Generating initial task plan from: {args.requirements}")
+            # Call the orchestrator method with corrected argument names
+            generated_yaml_path = orchestrator.generate_initial_yaml(
+                requirements_md_path_str=args.requirements,
+                config_path_str=args.config
+            )            # Use the returned path in the success message
+            console.print(f"[green]Successfully generated task YAML: {generated_yaml_path}[/green]")
+            # --- End Orchestrator Logic ---
+        except ConfigError as e:
+            logger.error(f"Configuration error: {e}", exc_info=False)
+            logger.debug(f"Configuration error details:", exc_info=True)
+            console.print(f"[bold red]Configuration Error:[/bold red] {e}")
+            raise SystemExit(1)
+        except AIWhispererError as e:
+            logger.error(f"Application error: {e}", exc_info=False)
+            logger.debug(f"Application error details:", exc_info=True)
+            console.print(f"[bold red]Error:[/bold red] {e}")
+            raise SystemExit(1)
+        except Exception as e:
+            # Catch any other unexpected errors
+            logger.critical(f"An unexpected error occurred: {e}", exc_info=True)
+            console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
+            raise SystemExit(1)
 
 if __name__ == "__main__":
     main()

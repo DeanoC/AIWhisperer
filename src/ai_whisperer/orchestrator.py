@@ -319,3 +319,69 @@ class Orchestrator:
             logger.exception(f"An unexpected error occurred during orchestration: {e}")
             raise OrchestratorError(f"An unexpected error occurred during orchestration: {e}") from e
 
+    def generate_full_project_plan(self, requirements_md_path_str: str, config_path_str: str) -> Dict[str, Any]:
+        """
+        Generates a complete project plan including initial task YAML and all subtasks.
+        
+        This method:
+        1. First generates the initial task plan YAML
+        2. For each step in the task plan, generates a detailed subtask YAML
+        3. Returns paths to all generated files
+        
+        Args:
+            requirements_md_path_str: Path string to the input requirements markdown file.
+            config_path_str: Path string to the configuration file used.
+            
+        Returns:
+            Dict with task_plan (Path) and subtasks (list of Paths)
+            
+        Raises:
+            All exceptions from generate_initial_yaml plus:
+            OrchestratorError: For issues during subtask generation
+        """
+        logger.info("Starting full project plan generation")
+        
+        # First generate the initial task plan
+        task_plan_path = self.generate_initial_yaml(requirements_md_path_str, config_path_str)
+        logger.info(f"Initial task plan generated: {task_plan_path}")
+        
+        # Load the generated task plan to extract steps
+        try:
+            with open(task_plan_path, 'r', encoding='utf-8') as f:
+                task_data = yaml.safe_load(f)
+        except Exception as e:
+            logger.error(f"Failed to read generated task plan: {e}")
+            raise OrchestratorError(f"Failed to read generated task plan: {e}") from e
+        
+        # Initialize subtask generator
+        from .subtask_generator import SubtaskGenerator
+        subtask_generator = SubtaskGenerator(config_path_str)
+        logger.info("Initialized subtask generator")
+        
+        # Generate subtask for each step
+        subtask_paths = []
+        if 'steps' in task_data and task_data['steps']:
+            steps_count = len(task_data['steps'])
+            logger.info(f"Generating subtasks for {steps_count} steps")
+            
+            for i, step in enumerate(task_data['steps'], 1):
+                try:
+                    step_id = step.get('step_id', f"step_{i}")
+                    logger.info(f"Generating subtask {i}/{steps_count}: {step_id}")
+                    subtask_path = subtask_generator.generate_subtask(step)
+                    subtask_paths.append(subtask_path)
+                    logger.info(f"Generated subtask: {subtask_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to generate subtask for step {step.get('step_id', i)}: {e}")
+                    # Continue with other steps instead of failing completely
+        else:
+            logger.warning("No steps found in task plan, no subtasks will be generated")
+        
+        result = {
+            'task_plan': task_plan_path,
+            'subtasks': subtask_paths
+        }
+        
+        logger.info(f"Full project plan generation completed with {len(subtask_paths)} subtasks")
+        return result
+
