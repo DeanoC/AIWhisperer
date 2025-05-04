@@ -1,28 +1,22 @@
-# Find the Python executable in the virtual environment
-$pythonExecutable = Resolve-Path "..\..\.venv\Scripts\python.exe" # Corrected path resolution
-
-# Define script directory and project root
+# Navigate to the project root first
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$projectRoot = Resolve-Path (Join-Path $scriptDir "..\..") # Go up two levels
+$projectRoot = Resolve-Path (Join-Path -Path $scriptDir -ChildPath "..\..")
+Set-Location $projectRoot
 
-# Define file paths relative to the project root for the python command
-# Use the shared bootstrap config
-$configRelativePath = Join-Path "bootstrap_ourself" "bootstrap_config.yaml"
-# Use the requirements file copied into this directory
-$requirementsRelativePath = Join-Path "bootstrap_ourself\subtask_generator" "subtask_generator_requirements.md"
-# Output within the subtask generator directory for testing purposes
-$outputRelativePath = Join-Path "bootstrap_ourself\subtask_generator" "test_output.yaml"
-$promptRelativePath = Join-Path "prompts" "orchestrator_default.md" # Prompt from the main prompts dir
+# Find the Python executable in the virtual environment
+$pythonExecutable = Join-Path -Path ".\.venv\Scripts" -ChildPath "python.exe"
 
-Write-Host "Running AI Whisperer test..."
+# Rest of your script remains unchanged
+# Define file paths consistently relative to the project root 
+$configPath = "bootstrap_ourself\bootstrap_config.yaml"
+$requirementsPath = "bootstrap_ourself\subtask_generator\subtask_generator_requirements.md"
+$outputPath = "bootstrap_ourself\subtask_generator\test_output.yaml"
 
-# Execute the Python script ensuring the project root is the working directory
-Push-Location $projectRoot
-Write-Host "Running AI Whisperer test from $projectRoot..."
-# Corrected argument names: --config, --requirements, --output
-& $pythonExecutable -m src.ai_whisperer.main --config "$configRelativePath" --requirements "$requirementsRelativePath" --output "$outputRelativePath" --prompt-file "$promptRelativePath"
+Write-Host "Running AI Whisperer from project root: $projectRoot"
+
+# Execute the Python script directly from the project root
+& $pythonExecutable -m src.ai_whisperer.main --config "$configPath" --requirements "$requirementsPath" --output "$outputPath" --full-project
 $exitCode = $LASTEXITCODE
-Pop-Location
 
 # Check the exit code
 if ($exitCode -ne 0) {
@@ -32,16 +26,12 @@ if ($exitCode -ne 0) {
     Write-Host "AI Whisperer script completed successfully."
 }
 
-# Optional: Add further checks, e.g., verify output file content
-# Construct the expected output path based on Python script's behavior
-# Use the requirements filename base and the hardcoded suffix from the orchestrator
+# Check the generated output
 $expectedOutputFileName = "subtask_generator_requirements_bootstrap_config.yaml"
-# Correctly join the path components
-$expectedOutputPath = Join-Path -Path (Join-Path -Path $projectRoot -ChildPath "output") -ChildPath $expectedOutputFileName
+$expectedOutputPath = Join-Path -Path "output" -ChildPath $expectedOutputFileName
 
 if (Test-Path $expectedOutputPath) {
     Write-Host "Output file generated: $expectedOutputPath"
-    # Get-Content $expectedOutputPath
 } else {
     Write-Warning "Expected output file not found: $expectedOutputPath"
 }

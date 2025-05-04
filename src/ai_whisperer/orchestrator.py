@@ -249,7 +249,7 @@ class Orchestrator:
             try:
                 api_response_content = openrouter_api.call_openrouter(
                     prompt_text=final_prompt,
-                    config=self.config # Pass the entire config dict
+                    config=self.openrouter_config
                 )
                 logger.info("Received response from OpenRouter API.")
                 logger.debug(f"API Response content:\n{api_response_content}")

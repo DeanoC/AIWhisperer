@@ -15,12 +15,16 @@ DEFAULT_SUBTASK_GENERATOR_PROMPT_PATH = "prompts/subtask_generator_default.md"
 
 
 def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, config_dir: Path) -> str:
-    """Loads prompt content from a given path or its default, relative to the config directory."""
+    """Loads prompt content from a given path or its default.
+    
+    User-specified paths (prompt_path_str) are resolved relative to the config directory.
+    Default paths (default_path_str) are resolved relative to the project root.
+    """
     resolved_path: Optional[Path] = None
     error_msg: Optional[str] = None
 
     if prompt_path_str:
-        # If a specific path is given, it MUST exist.
+        # If a specific path is given, it MUST exist - relative to the config directory
         prompt_path = config_dir / prompt_path_str
         if prompt_path.is_file():
             resolved_path = prompt_path
@@ -29,13 +33,15 @@ def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, 
             error_msg = f"Specified prompt file not found: {prompt_path_str} (relative to {config_dir})"
             raise ConfigError(error_msg)
     else:
-        # No specific path given, try the default.
-        default_path = config_dir / default_path_str
+        # No specific path given, use the default - relative to the PROJECT ROOT, not config dir
+        # Determine the project root directory (2 levels up from the source file)
+        project_root = Path(__file__).parent.parent.parent
+        default_path = project_root / default_path_str
         if default_path.is_file():
             resolved_path = default_path
         else:
             # Default path not found.
-            error_msg = f"Default prompt file not found: {default_path_str} (relative to {config_dir})"
+            error_msg = f"Default prompt file not found: {default_path_str} (relative to project root: {project_root})"
             raise ConfigError(error_msg)
 
     # This check should technically be redundant now if logic above is correct, but kept for safety.
@@ -49,26 +55,15 @@ def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, 
         raise ConfigError(f"Error reading prompt file {resolved_path}: {e}") from e
 
 
-def load_config(config_path: str) -> Dict[str, Any]:
+def load_config(config_path: str, env_vars: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """
     Loads configuration from a YAML file, validates required keys, handles API key precedence,
     and loads prompt file contents.
 
-    The function performs the following steps:
-    1. Loads environment variables from a .env file (if present).
-    2. Checks if the configuration file exists.
-    3. Parses the YAML file.
-    4. Validates the presence of top-level keys ('openrouter', 'prompts').
-    5. Validates the structure of the 'openrouter' and 'prompts' sections.
-    6. Determines the OpenRouter API key from the 'OPENROUTER_API_KEY' environment variable.
-    7. Adds default values for optional 'site_url', 'app_name', 'output_dir'.
-    8. Loads orchestrator and subtask generator prompt content based on paths specified
-       in the 'prompts' section, falling back to defaults if necessary.
-    9. Validates the presence and non-emptiness of required keys within 'openrouter'
-       ('model').
-
     Args:
         config_path: The path to the configuration file.
+        env_vars: Optional dictionary of environment variables for testing purposes.
+                  If provided, these override any environment variables loaded from .env file.
 
     Returns:
         A dictionary containing the loaded and validated configuration, including prompt content.
@@ -78,10 +73,13 @@ def load_config(config_path: str) -> Dict[str, Any]:
                      is missing required keys/sections, contains empty required values,
                      if the API key is missing, or if prompt files cannot be loaded.
     """
-    load_dotenv()  # Load .env file first
+    # Load .env file first (only if env_vars not provided)
+    if env_vars is None:
+        load_dotenv()
+        env_vars = os.environ
 
     # --- Get API Key from Environment --- Required Early ---
-    api_key_from_env = os.getenv('OPENROUTER_API_KEY')
+    api_key_from_env = env_vars.get('OPENROUTER_API_KEY')
     if not api_key_from_env:
         raise ConfigError("Required environment variable OPENROUTER_API_KEY is not set.")
 
