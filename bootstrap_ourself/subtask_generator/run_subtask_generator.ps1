@@ -8,8 +8,10 @@ $projectRoot = Resolve-Path (Join-Path $scriptDir "..\..") # Go up two levels
 # Define file paths relative to the project root for the python command
 # Use the shared bootstrap config
 $configRelativePath = Join-Path "bootstrap_ourself" "bootstrap_config.yaml"
-$requirementsRelativePath = Join-Path "bootstrap_ourself\initial_orchestrator" "list_openrouter_models.md"
-$outputRelativePath = Join-Path "bootstrap_ourself\initial_orchestrator" "test_output.yaml" # Output within the test dir
+# Use the requirements file copied into this directory
+$requirementsRelativePath = Join-Path "bootstrap_ourself\subtask_generator" "subtask_generator_requirements.md"
+# Output within the subtask generator directory for testing purposes
+$outputRelativePath = Join-Path "bootstrap_ourself\subtask_generator" "test_output.yaml"
 $promptRelativePath = Join-Path "prompts" "orchestrator_default.md" # Prompt from the main prompts dir
 
 Write-Host "Running AI Whisperer test..."
@@ -32,8 +34,8 @@ if ($exitCode -ne 0) {
 
 # Optional: Add further checks, e.g., verify output file content
 # Construct the expected output path based on Python script's behavior
-# Use the requirements filename base and the shared bootstrap config base for the expected output
-$expectedOutputFileName = "list_openrouter_models_bootstrap.yaml"
+# Use the requirements filename base and the hardcoded suffix from the orchestrator
+$expectedOutputFileName = "subtask_generator_requirements_bootstrap_config.yaml"
 # Correctly join the path components
 $expectedOutputPath = Join-Path -Path (Join-Path -Path $projectRoot -ChildPath "output") -ChildPath $expectedOutputFileName
 

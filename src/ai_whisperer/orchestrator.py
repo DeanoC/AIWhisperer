@@ -291,7 +291,8 @@ class Orchestrator:
             
             # 8. Save Output YAML
             # Create output filename based on the input requirements file
-            output_filename = f"{requirements_md_path.stem}_initial_orchestrator.yaml"
+            config_stem = config_path.stem # Get the stem of the config file path
+            output_filename = f"{requirements_md_path.stem}_{config_stem}.yaml" # Combine stems
             output_path = self.output_dir / output_filename
             
             logger.info(f"Saving validated YAML to: {output_path}")
