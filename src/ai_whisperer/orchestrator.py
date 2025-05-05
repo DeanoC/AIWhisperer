@@ -4,6 +4,7 @@ import jsonschema
 import logging
 import traceback # Added import
 import os
+import uuid
 from pathlib import Path
 from typing import Dict, Any, Tuple
 
@@ -21,6 +22,7 @@ from .exceptions import (
 )
 from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
+from src.postprocessing.add_items_postprocessor import add_items_postprocessor
 
 # Determine the package root directory to locate default files relative to the package
 try:
@@ -340,11 +342,25 @@ class Orchestrator:
             try:
                 # Extract YAML content from potential markdown code blocks
                 yaml_string = api_response_content
+                
+                # Create result_data with items to add
+                result_data = {
+                    "items_to_add": {
+                        "top_level": {
+                            "task_id": str(uuid.uuid4()),  # Generate a unique task ID
+                            "input_hashes": input_hashes
+                        }
+                    }
+                }
+                
                 pipeline = PostprocessingPipeline(
-                    scripted_steps=[clean_backtick_wrapper]  # Add any other scripted steps here,
+                    scripted_steps=[
+                        clean_backtick_wrapper,
+                        add_items_postprocessor
+                    ]
                 ) 
                 # Pass the YAML data through the postprocessing pipeline
-                yaml_string, postprocessing_result = pipeline.process(yaml_string)
+                yaml_string, postprocessing_result = pipeline.process(yaml_string, result_data)
 
                 # Log the postprocessing results
                 logger.info("Postprocessing completed successfully.")
