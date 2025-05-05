@@ -171,12 +171,15 @@ agent_spec:
                     yaml_written = False
                     for call in mock_open.mock_calls:
                         if call[0] == '().__enter__().write':
-                            # Convert the written string back to YAML
-                            written_yaml = yaml.safe_load(call[1][0])
+                            # The written content is a YAML string
+                            yaml_content = call[1][0]
                                 
-                            # Verify that subtask_id was added
-                            assert isinstance(written_yaml, dict), f"Expected dict, got {type(written_yaml)}: {written_yaml}"
-                            assert 'subtask_id' in written_yaml
+                            # Convert the written string back to YAML
+                            written_yaml = yaml.safe_load(yaml_content)
+                                
+                            # Debug the content if there's an issue
+                            assert isinstance(written_yaml, dict), f"Expected dict, got {type(written_yaml)}: {written_yaml}\nOriginal content: {yaml_content}"
+                            assert 'subtask_id' in written_yaml, f"subtask_id not found in: {written_yaml.keys() if isinstance(written_yaml, dict) else written_yaml}"
                             assert written_yaml['subtask_id'] == "test-subtask-uuid"
                             yaml_written = True
                             break
