@@ -27,6 +27,7 @@ This phase focuses on rule-based corrections that can be programmatically define
 - Type conversion
 - Schema validation
 - Structural fixing
+- Adding required items (new functionality)
 
 #### AI Improvements Phase
 
@@ -87,7 +88,16 @@ Each scripted step follows a consistent interface:
             "warnings": list  # List of warnings
         }
     },
-    "logs": list  # General processing logs
+    "logs": list,  # General processing logs
+    "items_to_add": {  # New field for the add_items_postprocessor
+        "top_level": {  # Items to add at the top level of the YAML
+            "task_id": "abc-123",
+            "input_hashes": {"file1": "hash1", "file2": "hash2"}
+        },
+        "step_level": {  # Items to add to each step/subtask
+            "subtask_id": "xyz-789"
+        }
+    }
 }
 ```
 
@@ -136,3 +146,106 @@ The design emphasizes modularity and extensibility:
 2. Create a simple identity transform as the first scripted step
 3. Implement the dummy AI improvements phase
 4. Build tests to verify the pipeline correctness
+
+## New Postprocessing Step: Add Items to AI Output
+
+### `add_items_postprocessor` Function
+
+We will implement a new scripted step function that can be added to the `PostprocessingPipeline`:
+
+```python
+def add_items_postprocessor(yaml_string: str, result_data: Dict) -> Tuple[str, Dict]:
+    """
+    Adds specified items to the YAML string at designated positions.
+    
+    Args:
+        yaml_string: The YAML string to process
+        result_data: Dictionary containing processing results and metadata
+        
+    Returns:
+        Tuple containing:
+        - The modified YAML string with items added
+        - The updated result_data dictionary
+    """
+```
+
+### Input Parameters
+
+The function will receive items to add through a configuration dictionary passed in the `result_data` parameter:
+
+```python
+result_data = {
+    # ... existing fields ...
+    'items_to_add': {
+        'top_level': {  # Items to add at the top level of the YAML
+            'task_id': 'abc-123',
+            'input_hashes': {'file1': 'hash1', 'file2': 'hash2'}
+        },
+        'step_level': {  # Items to add to each step/subtask
+            'subtask_id': 'xyz-789'
+        }
+    }
+}
+```
+
+### Insertion Logic
+
+The postprocessor will:
+
+1. Parse the input YAML string into a Python dictionary
+2. Add the specified items at their designated locations:
+   - Top-level items will be added to the root of the YAML structure
+   - Step-level items will be added to each step/subtask in the YAML
+3. Convert the modified dictionary back to a YAML string
+4. Return the modified string and updated result_data
+
+### Error Handling
+
+The postprocessor will handle the following error cases:
+
+1. Invalid YAML input (cannot be parsed)
+2. Missing expected structure in the YAML (e.g., no 'plan' section for step-level items)
+3. Conflicts between existing keys and items to add
+
+Errors will be logged and added to the `result_data['logs']` list, following the pattern of existing postprocessors.
+
+### Integration with Pipeline
+
+The new postprocessor will be added to the `PostprocessingPipeline` as a scripted step:
+
+```python
+pipeline = PostprocessingPipeline(
+    scripted_steps=[
+        clean_backtick_wrapper,
+        add_items_postprocessor,
+        # other steps...
+    ]
+)
+```
+
+### Configuration
+
+The items to add will be configured by the calling code (Orchestrator or SubtaskGenerator) before invoking the pipeline:
+
+```python
+# Example in Orchestrator
+result_data = {
+    'items_to_add': {
+        'top_level': {
+            'task_id': task_id,
+            'input_hashes': input_hashes
+        }
+    }
+}
+yaml_string, result = pipeline.process(yaml_string, result_data)
+
+# Example in SubtaskGenerator
+result_data = {
+    'items_to_add': {
+        'top_level': {
+            'subtask_id': subtask_id
+        }
+    }
+}
+yaml_string, result = pipeline.process(yaml_string, result_data)
+```
