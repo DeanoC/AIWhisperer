@@ -15,19 +15,23 @@ The postprocessing pipeline consists of two sequential phases:
 
 The postprocessing pipeline executes in the following order:
 
-```
+``` mermaid
 [Input YAML] → [Scripted Phase] → [AI Improvements Phase] → [Final YAML Output]
 ```
 
 #### Scripted Phase
+
 This phase focuses on rule-based corrections that can be programmatically defined, such as:
+
 - Format standardization
 - Type conversion
 - Schema validation
 - Structural fixing
 
 #### AI Improvements Phase
+
 This phase (initially implemented as a dummy transform) will eventually apply more nuanced improvements that require AI reasoning, such as:
+
 - Content enhancement
 - Field completion
 - Logic validation
@@ -42,11 +46,12 @@ The scripted phase implements a chain-of-responsibility pattern where:
 3. The output of one step becomes the input to the next step
 4. A processing status/result object is passed between steps to accumulate information
 
-```
+``` mermaid
 [Step 1] → [Step 2] → [Step 3] → ... → [Step N]
 ```
 
-#### Step Execution Flow:
+#### Step Execution Flow
+
 1. The pipeline starts with the input YAML and an empty result object
 2. For each step in the chain:
    - Call the step function with the current YAML and result object
@@ -59,15 +64,18 @@ The scripted phase implements a chain-of-responsibility pattern where:
 
 Each scripted step follows a consistent interface:
 
-#### Input:
+#### Input
+
 - `yaml_data`: The YAML data object to be processed (dict or other parsed YAML structure)
 - `result`: A dictionary containing processing status, logs, and other metadata
 
-#### Output:
+#### Output
+
 - `yaml_data`: The processed YAML data object
 - `result`: The updated result dictionary with additional information about this step
 
-#### Result Object Structure:
+#### Result Object Structure
+
 ```python
 {
     "success": bool,  # Overall success status
@@ -97,16 +105,19 @@ This placeholder structure allows for future integration of AI capabilities with
 
 The design emphasizes modularity and extensibility:
 
-#### Adding New Scripted Steps:
+#### Adding New Scripted Steps
+
 1. Create a new Python module in `src/postprocessing/scripted_steps/`
 2. Implement the standard step interface (accepting and returning `yaml_data` and `result`)
 3. Add the step to the configuration or step list in the pipeline
 
-#### Enabling the AI Improvements Phase:
+#### Enabling the AI Improvements Phase
+
 1. The dummy implementation will be replaced with an actual AI implementation
 2. No changes will be required to the pipeline structure or interfaces
 
-#### Configuration Options:
+#### Configuration Options
+
 1. Enable/disable individual scripted steps
 2. Enable/disable the AI improvements phase
 3. Configure parameters for specific steps

@@ -99,6 +99,7 @@ Generated subtasks are validated against a JSON schema (`src/ai_whisperer/schema
 ## Error Handling
 
 The Subtask Generator handles various error scenarios:
+
 - Missing or invalid configuration
 - File access issues
 - AI model response errors
@@ -109,6 +110,7 @@ Errors are logged and displayed to the user with appropriate context.
 ## Customization
 
 You can customize the Subtask Generator's behavior by:
+
 - Modifying the prompt template in `prompts/subtask_generator_default.md`
 - Adjusting the AI model parameters in `config.yaml`
 - Enhancing the context gathering logic for more specialized information retrieval
@@ -129,6 +131,7 @@ pytest tests/test_subtask_generator.py tests/test_subtask_integration.py -v
 ## Future Enhancements
 
 Planned enhancements for the Subtask Generator include:
+
 - Enhanced context gathering from version control history
 - Better integration with external documentation sources
 - Support for multi-step dependency analysis
