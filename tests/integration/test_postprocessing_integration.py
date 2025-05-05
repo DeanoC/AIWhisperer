@@ -152,8 +152,9 @@ agent_spec:
                 }
             }
             
-            # Create subtask generator
-            subtask_generator = SubtaskGenerator(str(config_path), output_dir=str(tmp_dir))
+            # Create subtask generator with the mocked API client
+            with patch.object(SubtaskGenerator, 'openrouter_client', mock_api_instance):
+                subtask_generator = SubtaskGenerator(str(config_path), output_dir=str(tmp_dir))
         
             # Mock the validate_against_schema method to avoid validation
             with patch('src.ai_whisperer.subtask_generator.validate_against_schema'):
