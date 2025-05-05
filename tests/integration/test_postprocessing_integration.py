@@ -115,6 +115,10 @@ agent_spec:
   type: test
   instructions: Test instructions
 """
+        # Set model and params attributes on the mock
+        mock_api_instance.model = "test-model"
+        mock_api_instance.params = {}
+        
         # Ensure the mock is used instead of making real API calls
         with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI', return_value=mock_api_instance):
             # Create a test config
