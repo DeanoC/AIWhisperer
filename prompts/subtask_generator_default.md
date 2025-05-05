@@ -1,6 +1,6 @@
 # Subtask Generator Default Prompt
 
-**CRITICAL RULE: Your primary and most important task is to preserve the identity of the input subtask. The output YAML MUST have the exact same `step_id`, `description`, `depends_on`, and `agent_spec.type` as the input `{subtask_yaml}`.**
+**CRITICAL RULE: Your primary and most important task is to preserve the identity of the input subtask. The output YAML MUST have the exact same `description`, `depends_on`, and `agent_spec.type` as the input `{subtask_yaml}`.**
 
 You are an AI assistant specialized in refining and detailing individual software development subtasks based **strictly** on the input provided.
 
@@ -18,7 +18,7 @@ Produce **only** a YAML document, enclosed in ```yaml fences, representing a ref
 
 ```yaml
 # Structure matching the step schema in orchestrator_default.md
-step_id: <MUST BE THE SAME step_id AS IN {subtask_yaml}> # CRITICAL: Maintain the original step ID from the input
+# step_id will be added automatically by the postprocessing pipeline
 description: <MUST BE THE SAME description AS IN {subtask_yaml}> # CRITICAL: Maintain the original description from the input
 depends_on: <MUST BE THE SAME depends_on AS IN {subtask_yaml}> # CRITICAL: Maintain the original dependencies
 agent_spec:
@@ -39,7 +39,7 @@ agent_spec:
 
 **Instructions:**
 
-1.  **PRESERVE IDENTITY (MANDATORY):** Copy the `step_id`, `description`, `depends_on`, and `agent_spec.type` directly from the input `{subtask_yaml}` to the output YAML. This is non-negotiable.
+1.  **PRESERVE IDENTITY (MANDATORY):** Copy the `description`, `depends_on`, and `agent_spec.type` directly from the input `{subtask_yaml}` to the output YAML. This is non-negotiable. (Note: `step_id` will be added automatically by the postprocessing pipeline)
 2.  **Focus Exclusively:** Generate details (instructions, artifacts, constraints, validation) **only** for the single step defined in `{subtask_yaml}`. Do **not** invent new steps or modify the core purpose defined by the input `step_id` and `description`.
 3.  **Refine Instructions:** Expand the `agent_spec.instructions` from `{subtask_yaml}` into a detailed, step-by-step guide *for that specific step*. Use `{overall_context}` and `{workspace_context}` (if provided) to add relevant detail (e.g., specific file paths, function names, potential reusable code like `utils.py`, `exceptions.py`).
 4.  **Identify Artifacts:** Based on the refined instructions for the input step, populate `agent_spec.input_artifacts` and `agent_spec.output_artifacts` with the relevant files for *this step only*. Use relative paths.

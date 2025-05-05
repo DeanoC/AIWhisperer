@@ -15,20 +15,8 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
 {{  # Start escaping JSON schema
   "type": "object",
   "properties": {{
-    "task_id": {{ "type": "string", "description": "Unique identifier for the overall task (e.g., UUID)" }},
     "natural_language_goal": {{ "type": "string", "description": "A concise summary of the user's main objective" }},
     "overall_context": {{ "type": "string", "description": "Shared background information, constraints, style guides, etc., applicable to all steps" }},
-    "input_hashes": {{
-      "type": "object",
-      "properties": {{
-        "requirements_md": {{ "type": "string" }},
-        "config_yaml": {{ "type": "string" }},
-        "prompt_file": {{ "type": "string" }}
-      }},
-      "required": ["requirements_md", "config_yaml", "prompt_file"],
-      "description": "SHA-256 hashes of the input files used for generation.",
-      "additionalProperties": false
-    }},
     "plan": {{
       "type": "array",
       "items": {{
@@ -67,7 +55,7 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
       }}
     }}
   }},
-  "required": ["task_id", "natural_language_goal", "input_hashes", "plan"],
+  "required": ["natural_language_goal", "plan"],
   "additionalProperties": false
 }} # End escaping JSON schema
 ```
@@ -78,14 +66,10 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
    * **Your entire response MUST be based SOLELY on the requirements detailed in the `{md_content}` section.**
    * **DO NOT invent, hallucinate, or generate plans for features or tasks NOT explicitly described in the `{md_content}`.**
    * **If the `{md_content}` describes Feature X, the generated plan MUST implement Feature X and ONLY Feature X.**
-2. Generate a unique `task_id` (e.g., a UUID).
+2. Focus on the core task requirements and structure.
 3. Set the `natural_language_goal` field to a concise summary of the user's main objective **based *only* on the requirements in `{md_content}`**.
 4. If applicable, populate the `overall_context` field with a **single string** containing any shared background information, constraints, or style guides relevant to the entire task **as derived from `{md_content}`**. Do not use complex objects or nested structures here. If not applicable, omit this field or set it to an empty string.
-5. **Crucially:** The `input_hashes` field in the output YAML **MUST** contain the following dictionary exactly as shown, without any modification:
-   ```json
-   {input_hashes_dict}
-   ```
-   **This must be a verbatim, character-for-character copy. Do NOT modify, recalculate, reformat, or alter these hashes in any way.**
+5. **Note:** The `input_hashes` field will be added automatically by the postprocessing pipeline. You do not need to include it in your output.
 6. Decompose the requirements **from `{md_content}`** into a logical sequence of steps (`plan`). Define `step_id`, `description`, `depends_on` (if any), and `agent_spec` for each step. **The entire `plan` must directly implement the requirements specified in `{md_content}`.** **Use concise, descriptive, `snake_case` names for `step_id` (e.g., `generate_tests`, `implement_feature`). Avoid hyphens.** Ensure `depends_on` is always present, using an empty list `[]` for initial steps.
 7. Populate the `agent_spec` with appropriate `type`, `input_artifacts`, `output_artifacts`, detailed `instructions`, and optionally `constraints` and `validation_criteria`, **all derived from the analysis of `{md_content}`**.
    * **Include meaningful `validation_criteria` for all step types, including `planning` and `documentation`, to clearly verify step completion.**
