@@ -16,7 +16,7 @@ from src.postprocessing.add_items_postprocessor import add_items_postprocessor
 class TestOrchestratorPostprocessingIntegration:
     """Test the integration of the add_items_postprocessor with the Orchestrator."""
 
-    @patch('src.ai_whisperer.orchestrator.OpenRouterAPI')
+    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI')
     @patch('src.ai_whisperer.orchestrator.uuid.uuid4')
     def test_orchestrator_adds_task_id_and_hashes(self, mock_uuid4, mock_api):
         """Test that the orchestrator adds task_id and input_hashes via the postprocessor."""
@@ -97,7 +97,7 @@ plan:
 class TestSubtaskGeneratorPostprocessingIntegration:
     """Test the integration of the add_items_postprocessor with the SubtaskGenerator."""
 
-    @patch('src.ai_whisperer.subtask_generator.OpenRouterAPI')
+    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI')
     @patch('src.ai_whisperer.subtask_generator.uuid.uuid4')
     def test_subtask_generator_adds_subtask_id(self, mock_uuid4, mock_api):
         """Test that the subtask generator adds subtask_id via the postprocessor."""
