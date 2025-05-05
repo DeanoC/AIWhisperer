@@ -24,8 +24,17 @@ openrouter:
 # --- Prompt Templates --- Required Section ---
 prompts: {} # Explicitly set to an empty dictionary
 
-# --- Other Application Settings (Optional) ---
-# Add other sections as needed for future features (e.g., logging, output formatting).
-# logging:
-#   level: "INFO" # Example: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-#   file: "ai_whisperer.log" # Example: Log to a file instead of/in addition to console
+# --- Task-Specific Model Settings ---
+task_models:
+  "Subtask Generation":
+    provider: "openrouter"
+    model: "google/gemini-2.5-flash-preview"
+    params:
+      temperature: 0.5
+      max_tokens: 8000
+  "Orchestrator":
+    provider: "openrouter"
+    model: "google/gemini-2.5-flash-preview"
+    params:
+      temperature: 0.8
+      max_tokens: 16000

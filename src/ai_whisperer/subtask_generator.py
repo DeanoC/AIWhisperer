@@ -40,6 +40,8 @@ class SubtaskGenerator:
             self.config = load_config(config_path)
             # Get the model configuration for the "Subtask Generation" task
             model_config = get_model_for_task(self.config, "Subtask Generation")
+            logger.info(f"Subtask Generation Model: {model_config.get('model')}, Params: {model_config.get('params')}")
+
             # Pass the task-specific model configuration to the OpenRouterAPI client
             self.openrouter_client = OpenRouterAPI(
                 config=model_config

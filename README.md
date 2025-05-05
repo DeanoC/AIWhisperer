@@ -75,6 +75,33 @@ AI Whisperer is a Python command-line tool that takes your project requirements 
        YAML Output:
    ```
 
+### Task-Specific Model Configuration
+
+AI Whisperer now supports configuring different AI models for different tasks. This allows you to optimize performance and cost by selecting the most suitable model for each task type.
+
+To configure task-specific models, add a `task_models` section to your `config.yaml`:
+
+```yaml
+# --- Task-Specific Model Settings ---
+task_models:
+  "Subtask Generation":
+    provider: "openrouter"
+    model: "anthropic/claude-3-opus"
+    params:
+      temperature: 0.5
+      max_tokens: 4096
+  "Orchestrator":
+    provider: "openrouter"
+    model: "mistralai/mistral-large"
+    params:
+      temperature: 0.8
+      max_tokens: 8192
+```
+
+If a task-specific model is not defined, the system will fall back to the default model configuration in the `openrouter` section.
+
+See [Configuration Examples](docs/config_examples.md) for more detailed examples and options.
+
 ## Usage
 
 Run the tool from the project's root directory:

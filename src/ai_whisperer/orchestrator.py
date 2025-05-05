@@ -62,7 +62,9 @@ class Orchestrator:
         # Get the model configuration for the "Orchestrator" task
         model_config = get_model_for_task(config, "Orchestrator")
 
-        # Initialize OpenRouterAPI client with the task-specific model configuration
+        logger.info(f"Orchestrator Model: {model_config.get('model')}, Params: {model_config.get('params')}")
+
+        # Initialize the OpenRouterAPI client with the task-specific model configuration
         from .openrouter_api import OpenRouterAPI
         self.openrouter_client = OpenRouterAPI(config=model_config)
 
