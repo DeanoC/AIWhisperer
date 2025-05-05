@@ -13,6 +13,10 @@ AI Whisperer is a Python command-line tool that takes your project requirements 
 * Uses `rich` for colored console output and basic logging.
 * Includes custom exceptions for error handling.
 * Developed using TDD with `pytest`.
+* Postprocessing pipeline for enhancing AI-generated content:
+  * Clean backtick wrappers from YAML content
+  * Add required items (task_id, input_hashes, subtask_id) automatically
+  * More postprocessing steps can be added as needed
 
 ## Project development
 The project_dev folder is used to track new features (rfc), done feature(done) and in progress (in_progress).
