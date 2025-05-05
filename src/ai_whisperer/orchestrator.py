@@ -350,7 +350,10 @@ class Orchestrator:
                             "task_id": str(uuid.uuid4()),  # Generate a unique task ID
                             "input_hashes": input_hashes
                         }
-                    }
+                    },
+                    "success": True,
+                    "steps": {},
+                    "logs": []
                 }
                 
                 pipeline = PostprocessingPipeline(

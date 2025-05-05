@@ -162,7 +162,10 @@ class SubtaskGenerator:
                             "subtask_id": str(uuid.uuid4()),  # Generate a unique subtask ID
                         },
                         "step_level": {}  # No step-level items for subtasks
-                    }
+                    },
+                    "success": True,
+                    "steps": {},
+                    "logs": []
                 }
                 
                 pipeline = PostprocessingPipeline(

@@ -202,7 +202,10 @@ plan:
                 "step_level": {
                     "subtask_id": "test-subtask-id"
                 }
-            }
+            },
+            "success": True,
+            "steps": {},
+            "logs": []
         }
         
         # Create pipeline with the add_items_postprocessor
