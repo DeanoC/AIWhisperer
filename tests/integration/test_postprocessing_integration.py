@@ -170,35 +170,37 @@ agent_spec:
                     # We need to find the call where the YAML was written
                     yaml_written = False
                     all_yaml_contents = []
+                    full_yaml_content = ""
                         
+                    # Collect all write calls to reconstruct the full YAML
                     for call in mock_open.mock_calls:
                         if call[0] == '().__enter__().write':
-                            # The written content is a YAML string
-                            yaml_content = call[1][0]
-                            all_yaml_contents.append(yaml_content)
+                            content = call[1][0]
+                            all_yaml_contents.append(content)
+                            full_yaml_content += content
+                        
+                    # Now try to parse the complete YAML content
+                    if full_yaml_content.strip():
+                        try:
+                            written_yaml = yaml.safe_load(full_yaml_content)
                                 
-                            # Convert the written string back to YAML
-                            # First check if the content is valid YAML
-                            if not yaml_content.strip():
-                                continue  # Skip empty content
+                            # Debug the content if there's an issue
+                            assert isinstance(written_yaml, dict), f"Expected dict, got {type(written_yaml)}: {written_yaml}\nOriginal content: {full_yaml_content}"
                                 
-                            try:
-                                written_yaml = yaml.safe_load(yaml_content)
-                                    
-                                # Debug the content if there's an issue
-                                assert isinstance(written_yaml, dict), f"Expected dict, got {type(written_yaml)}: {written_yaml}\nOriginal content: {yaml_content}"
-                                    
-                                # If we get here, we found valid YAML
-                                if 'subtask_id' in written_yaml:
-                                    assert written_yaml['subtask_id'] == "test-subtask-uuid"
-                                    yaml_written = True
-                                    break
-                            except Exception as e:
-                                # This might not be the YAML content we're looking for
-                                continue
+                            # Check for step_id and subtask_id
+                            assert 'step_id' in written_yaml, f"step_id not found in: {written_yaml.keys()}"
+                            assert written_yaml['step_id'] == "test_step"
+                                
+                            assert 'subtask_id' in written_yaml, f"subtask_id not found in: {written_yaml.keys()}"
+                            assert written_yaml['subtask_id'] == "test-subtask-uuid"
+                            yaml_written = True
+                        except Exception as e:
+                            # Log the exception for debugging
+                            print(f"Error parsing YAML: {e}")
+                            print(f"Full YAML content: {full_yaml_content}")
                         
                     # Make sure we actually found and checked a YAML write
-                    assert yaml_written, f"No YAML write operation with subtask_id was found. All contents: {all_yaml_contents}"
+                    assert yaml_written, f"No valid YAML with subtask_id was found. All contents: {all_yaml_contents}"
             
             # Clean up
             import shutil
