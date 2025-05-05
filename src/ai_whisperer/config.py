@@ -16,7 +16,7 @@ DEFAULT_SUBTASK_GENERATOR_PROMPT_PATH = "prompts/subtask_generator_default.md"
 
 def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, config_dir: Path) -> str:
     """Loads prompt content from a given path or its default.
-    
+
     User-specified paths (prompt_path_str) are resolved relative to the config directory.
     Default paths (default_path_str) are resolved relative to the project root.
     """
@@ -126,6 +126,11 @@ def load_config(config_path: str, env_vars: Optional[Dict[str, str]] = None) -> 
 
     config['output_dir'] = config.get('output_dir', DEFAULT_OUTPUT_DIR)
     config.pop('prompt_override_path', None)
+
+    # --- Handle Task-Specific Model Settings ---
+    # Initialize task_models as an empty dict if not present or if it's None
+    if 'task_models' not in config or config['task_models'] is None:
+        config['task_models'] = {}
 
     # --- Load Prompt Contents ---
     orchestrator_prompt_path = prompts_config.get('orchestrator_prompt_path')
