@@ -16,6 +16,7 @@ from .config import load_config
 from .openrouter_api import OpenRouterAPI
 from .exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
 from .utils import validate_against_schema # Assuming this will be created in utils
+from .model_selector import get_model_for_task
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,11 @@ class SubtaskGenerator:
         """
         try:
             self.config = load_config(config_path)
-            # Pass the openrouter config section directly
+            # Get the model configuration for the "Subtask Generation" task
+            model_config = get_model_for_task(self.config, "Subtask Generation")
+            # Pass the task-specific model configuration to the OpenRouterAPI client
             self.openrouter_client = OpenRouterAPI(
-                config=self.config['openrouter'] # Pass the relevant config dict
+                config=model_config
             )
             self.subtask_prompt_template = self.config['prompts']['subtask_generator_prompt_content']
             self.output_dir = Path(self.config['output_dir'])
@@ -75,31 +78,31 @@ class SubtaskGenerator:
     def _sanitize_yaml_content(self, yaml_string: str) -> str:
         """
         Sanitize YAML content before parsing to handle common issues.
-        
+
         Args:
             yaml_string: The raw YAML string to sanitize
-            
+
         Returns:
             The sanitized YAML string
         """
         import re
-        
+
         # Look for validation criteria with problematic quoted strings and escape them
         pattern = r'(-\s.*)"(.+?)"(.*)'
         sanitized = re.sub(pattern, r'\1"\2"\3', yaml_string)
-        
+
         # Look for colon characters in list items that might be confused for mapping keys
         pattern = r'(-\s.*:.+)'
-        
+
         def escape_colon_in_list_item(match):
             # Wrap the entire list item in quotes if it contains a colon but isn't already quoted
             item = match.group(1)
             if '"' not in item:
                 return f'- "{item[2:]}"'
             return match.group(0)
-            
+
         sanitized = re.sub(pattern, escape_colon_in_list_item, sanitized)
-        
+
         return sanitized
 
     def generate_subtask(self, input_step: Dict[str, Any]) -> str:
@@ -136,10 +139,10 @@ class SubtaskGenerator:
                 model=self.openrouter_client.model,  # Get model from client
                 params=self.openrouter_client.params # Get params from client
             )
-            
+
             if not ai_response_yaml:
                 raise SubtaskGenerationError("Received empty response from AI.")
-                 
+
             # Extract the YAML content (will be done in parsing step)
 
             # 3. Parse AI Response YAML
@@ -155,10 +158,10 @@ class SubtaskGenerator:
                 # Log the postprocessing results
                 logger.info("Postprocessing completed successfully.")
                 logger.debug(f"Postprocessing result logs: {postprocessing_result.get('logs', [])}")
-            
+
                 # Sanitize the YAML content
                 # TODO replace with postprocessing stages for future reuse, yaml_string = self._sanitize_yaml_content(yaml_string)
-                
+
                 # Parse the YAML content
                 generated_data = yaml.safe_load(yaml_string)
                 if not isinstance(generated_data, dict):

@@ -202,13 +202,13 @@ class TestOrchestratorSubtasks:
             'output_dir': '/tmp/output',
             'prompts': {'orchestrator': 'test prompt', 'subtask': 'test subtask prompt'}
         }
-    
+
     @pytest.fixture
     def orchestrator(self, mock_config, setup_orchestrator_files):
         with patch('src.ai_whisperer.orchestrator.json.load') as mock_json_load:
             mock_json_load.return_value = {'type': 'object'} # Simplified schema
             return Orchestrator(mock_config)
-            
+
     @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI.call_chat_completion')
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
@@ -259,8 +259,8 @@ class TestOrchestratorSubtasks:
                 assert 'prompt_text' in call_args[1]
                 assert 'model' in call_args[1]
                 assert 'params' in call_args[1]
-                assert call_args[1]['model'] == orchestrator.openrouter_config.get('model')
-                assert call_args[1]['params'] == orchestrator.openrouter_config.get('params')
+                assert call_args[1]['model'] == orchestrator.openrouter_client.model
+                assert call_args[1]['params'] == orchestrator.openrouter_client.params
                 # Assertions
                 assert result is not None
                 assert 'task_plan' in result
@@ -298,24 +298,19 @@ class TestOrchestratorSubtasks:
             with patch('src.ai_whisperer.subtask_generator.SubtaskGenerator') as mock_subtask_gen:
                 mock_generator = MagicMock()
                 mock_subtask_gen.return_value = mock_generator
-                
+
                 # Call the method under test
                 result = orchestrator.generate_full_project_plan('requirements.md', 'config.yaml')
-                
+
                 # Check that the openrouter call had the correct arguments
                 mock_api_call.assert_called_once()
                 call_args = mock_api_call.call_args
                 assert 'prompt_text' in call_args[1]
                 assert 'model' in call_args[1]
                 assert 'params' in call_args[1]
-                assert call_args[1]['model'] == orchestrator.openrouter_config.get('model')
-                
-                # Fix: Check if params exists in openrouter_config before comparing
-                if 'params' in orchestrator.openrouter_config:
-                    assert call_args[1]['params'] == orchestrator.openrouter_config.get('params')
-                else:
-                    assert call_args[1]['params'] == {}
-                
+                assert call_args[1]['model'] == orchestrator.openrouter_client.model
+                assert call_args[1]['params'] == orchestrator.openrouter_client.params
+
         # Assertions
         assert result is not None
         assert 'task_plan' in result

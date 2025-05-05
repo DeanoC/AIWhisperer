@@ -8,6 +8,7 @@ from typing import Dict, Any, Tuple
 
 from . import openrouter_api
 from .utils import calculate_sha256
+from .model_selector import get_model_for_task
 from .exceptions import (
     OrchestratorError,
     PromptError,
@@ -51,16 +52,19 @@ class Orchestrator:
             json.JSONDecodeError: If the schema file is invalid JSON.
         """
         self.config = config
-        self.openrouter_config = config.get('openrouter')
         self.output_dir = Path(config.get('output_dir', './output/')) # Use default if missing
         self.prompt_override_path = config.get('prompt_override_path')
 
-        if not self.openrouter_config:
+        # Check if openrouter configuration is present
+        if 'openrouter' not in config:
             raise ConfigError("'openrouter' configuration section is missing.")
-            
-        # Initialize OpenRouterAPI client
+
+        # Get the model configuration for the "Orchestrator" task
+        model_config = get_model_for_task(config, "Orchestrator")
+
+        # Initialize OpenRouterAPI client with the task-specific model configuration
         from .openrouter_api import OpenRouterAPI
-        self.openrouter_client = OpenRouterAPI(config=self.openrouter_config)
+        self.openrouter_client = OpenRouterAPI(config=model_config)
 
         logger.info(f"Orchestrator initialized. Output directory: {self.output_dir}")
 
@@ -162,7 +166,7 @@ class Orchestrator:
             logger.error(f"Hash mismatch detected. Expected: {expected_hashes}, Received: {received_hashes}")
             raise HashMismatchError(expected_hashes=expected_hashes, received_hashes=received_hashes)
         logger.info("Input hashes match.")        
-        
+
         # 2. Validate Schema
         try:
             jsonschema.validate(instance=yaml_data, schema=self.task_schema)
@@ -182,25 +186,25 @@ class Orchestrator:
         Sanitizes string fields in YAML data that might contain special YAML characters.
         Focuses on specific text fields that commonly contain natural language with colons and other
         YAML special characters.
-        
+
         Args:
             yaml_data: The parsed YAML dictionary.
-            
+
         Returns:
             The sanitized YAML dictionary.
         """
         if not isinstance(yaml_data, dict):
             return yaml_data
-            
+
         # Fields that commonly contain natural language with YAML special characters
         text_fields = ['natural_language_goal', 'overall_context']
-        
+
         for field in text_fields:
             if field in yaml_data and isinstance(yaml_data[field], str):
                 # Make the field a proper YAML string by using the '|' character for literal block scalar
                 # This preserves line breaks and handles special characters
                 yaml_data[field] = yaml_data[field]
-        
+
         # Process any nested dictionaries in the plan
         if 'plan' in yaml_data and isinstance(yaml_data['plan'], list):
             for step in yaml_data['plan']:
@@ -211,7 +215,7 @@ class Orchestrator:
                         if 'instructions' in agent_spec and isinstance(agent_spec['instructions'], str):
                             # Already properly formatted as a literal block scalar with pipe character
                             pass
-        
+
         return yaml_data
 
     def generate_initial_yaml(self, requirements_md_path_str: str, config_path_str: str) -> Path:
@@ -248,10 +252,10 @@ class Orchestrator:
         # Convert string paths to Path objects
         requirements_md_path = Path(requirements_md_path_str).resolve()
         config_path = Path(config_path_str).resolve()
-        
+
         logger.info(f"Starting initial YAML generation for: {requirements_md_path}")
         logger.info(f"Using configuration file: {config_path}")
-        
+
         # Ensure requirements file exists before proceeding
         if not requirements_md_path.is_file():
             logger.error(f"Requirements file not found: {requirements_md_path}")
@@ -260,10 +264,10 @@ class Orchestrator:
         try:
             # 1. Load Prompt Template
             prompt_template, prompt_path = self._load_prompt_template()
-            
+
             # 2. Calculate Input Hashes
             input_hashes = self._calculate_input_hashes(requirements_md_path, config_path, prompt_path)
-            
+
             # 3. Read Requirements Content
             logger.info(f"Reading requirements file: {requirements_md_path}")
             try:
@@ -276,7 +280,7 @@ class Orchestrator:
             except IOError as e:
                 logger.error(f"Error reading requirements file {requirements_md_path}: {e}")
                 raise ProcessingError(f"Error reading requirements file {requirements_md_path}: {e}") from e
-            
+
             # 4. Construct Final Prompt
             logger.info("Constructing prompt for OpenRouter API...")
             hashes_json_string = json.dumps(input_hashes, indent=2)
@@ -291,7 +295,7 @@ class Orchestrator:
                 # Get model and params from the openrouter_client
                 model = self.openrouter_client.model
                 params = self.openrouter_client.params
-                
+
                 api_response_content = self.openrouter_client.call_chat_completion(
                     prompt_text=final_prompt,
                     model=model,
@@ -302,7 +306,7 @@ class Orchestrator:
             except OpenRouterAPIError as e:
                 logger.error(f"OpenRouter API call failed: {e}")
                 raise
-                
+
             # 6. Parse YAML Response
             logger.info("Parsing YAML response from API...")
             try:
@@ -331,21 +335,21 @@ class Orchestrator:
             except Exception as e:
                 logger.error(f"An error occurred during YAML postprocessing: {e}")
                 raise OrchestratorError(f"YAML postprocessing failed: {e}") from e
-                
+
             # 7. Validate YAML Response (Schema & Hashes)
             self._validate_yaml_response(yaml_data, input_hashes)
-            
+
             # 8. Save Output YAML
             # Create output filename based on the input requirements file
             config_stem = config_path.stem # Get the stem of the config file path
             output_filename = f"{requirements_md_path.stem}_{config_stem}.yaml" # Combine stems
             output_path = self.output_dir / output_filename
-            
+
             logger.info(f"Saving validated YAML to: {output_path}")
             try:
                 # Ensure output directory exists
                 self.output_dir.mkdir(parents=True, exist_ok=True)
-                
+
                 # Write the YAML file
                 with open(output_path, 'w', encoding='utf-8') as f:
                     yaml.dump(yaml_data, f, sort_keys=False, allow_unicode=True, indent=2)
@@ -354,7 +358,7 @@ class Orchestrator:
             except IOError as e:
                 logger.error(f"Error writing output YAML file {output_path}: {e}")
                 raise ProcessingError(f"Error writing output YAML file {output_path}: {e}") from e
-                
+
         except (FileNotFoundError, PromptError, ConfigError, OpenRouterAPIError,
                 HashMismatchError, YAMLValidationError, ProcessingError, OrchestratorError) as e:
             # Log and re-raise specific errors that have already been handled and logged
@@ -368,29 +372,29 @@ class Orchestrator:
     def generate_full_project_plan(self, requirements_md_path_str: str, config_path_str: str) -> Dict[str, Any]:
         """
         Generates a complete project plan including initial task YAML and all subtasks.
-        
+
         This method:
         1. First generates the initial task plan YAML
         2. For each step in the task plan, generates a detailed subtask YAML
         3. Returns paths to all generated files
-        
+
         Args:
             requirements_md_path_str: Path string to the input requirements markdown file.
             config_path_str: Path string to the configuration file used.
-            
+
         Returns:
             Dict with task_plan (Path) and subtasks (list of Paths)
-            
+
         Raises:
             All exceptions from generate_initial_yaml plus:
             OrchestratorError: For issues during subtask generation
         """
         logger.info("Starting full project plan generation")
-        
+
         # First generate the initial task plan
         task_plan_path = self.generate_initial_yaml(requirements_md_path_str, config_path_str)
         logger.info(f"Initial task plan generated: {task_plan_path}")
-        
+
         # Load the generated task plan to extract steps
         try:
             with open(task_plan_path, 'r', encoding='utf-8') as f:
@@ -398,7 +402,7 @@ class Orchestrator:
         except Exception as e:
             logger.error(f"Failed to read generated task plan: {e}")
             raise OrchestratorError(f"Failed to read generated task plan: {e}") from e
-        
+
         # Initialize subtask generator
         from .subtask_generator import SubtaskGenerator
         # Extract overall_context from the loaded task data
@@ -411,13 +415,13 @@ class Orchestrator:
             workspace_context=workspace_context
         )
         logger.info("Initialized subtask generator with overall context.")
-        
+
         # Generate subtask for each step
         subtask_paths = []
         if 'plan' in task_data and isinstance(task_data['plan'], list):  # Changed from 'steps' to 'plan'
             steps_count = len(task_data['plan'])
             logger.info(f"Generating subtasks for {steps_count} steps")
-            
+
             for i, step in enumerate(task_data['plan'], 1):
                 try:
                     step_id = step.get('step_id', f"step_{i}")
@@ -430,12 +434,11 @@ class Orchestrator:
                     # Continue with other steps instead of failing completely
         else:
             logger.warning("No steps found in task plan, no subtasks will be generated")
-        
+
         result = {
             'task_plan': task_plan_path,
             'subtasks': subtask_paths
         }
-        
+
         logger.info(f"Full project plan generation completed with {len(subtask_paths)} subtasks")
         return result
-
