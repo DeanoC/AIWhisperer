@@ -6,6 +6,7 @@ Generates detailed subtask definitions based on high-level steps using an AI mod
 import logging
 import yaml
 import os
+import uuid
 from pathlib import Path
 from typing import Dict, Any
 
@@ -24,7 +25,7 @@ class SubtaskGenerator:
     """
     Handles the generation of detailed subtask YAML definitions from input steps.
     """
-    def __init__(self, config_path: str, overall_context: str = "", workspace_context: str = ""):
+    def __init__(self, config_path: str, overall_context: str = "", workspace_context: str = "", output_dir: str = 'output'):
         """
         Initializes the SubtaskGenerator.
 
@@ -32,6 +33,7 @@ class SubtaskGenerator:
             config_path: Path to the configuration file.
             overall_context: The overall context string from the main task plan.
             workspace_context: A string representing relevant workspace context (optional).
+            output_dir: Directory where output files will be saved.
 
         Raises:
             ConfigError: If configuration loading fails.
@@ -47,7 +49,7 @@ class SubtaskGenerator:
                 config=model_config
             )
             self.subtask_prompt_template = self.config['prompts']['subtask_generator_prompt_content']
-            self.output_dir = Path(self.config['output_dir'])
+            self.output_dir = output_dir  # Store the output directory
             self.overall_context = overall_context
             self.workspace_context = workspace_context # Store context
         except ConfigError as e:
@@ -185,19 +187,19 @@ class SubtaskGenerator:
                 raise SubtaskGenerationError(f"Error during schema validation: {e}") from e
 
             # 5. Save Output YAML
-            output_filename = f"{step_id}_subtask.yaml"
-            output_path = self.output_dir / output_filename
+            os.makedirs(self.output_dir, exist_ok=True)
+            output_filename = f"subtask_{step_id}.yaml"
+            output_path = os.path.join(self.output_dir, output_filename)
 
             try:
                 # Ensure output directory exists
-                self.output_dir.mkdir(parents=True, exist_ok=True)
                 with open(output_path, 'w', encoding='utf-8') as f:
                     yaml.dump(generated_data, f, sort_keys=False, default_flow_style=False)
             except IOError as e:
                 raise SubtaskGenerationError(f"Failed to write output file {output_path}: {e}") from e
 
-
-            return str(output_path.resolve()) # Return absolute path
+            logger.info(f"Generated subtask YAML at: {output_path}")
+            return Path(output_path).resolve() # Return absolute path
 
         except OpenRouterAPIError as e:
             raise SubtaskGenerationError(f"AI interaction failed: {e}") from e

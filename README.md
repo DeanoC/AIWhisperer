@@ -2,7 +2,7 @@
 
 AI Whisperer is a Python command-line tool that takes your project requirements written in Markdown and uses an AI model (via OpenRouter) to generate structured task definitions in YAML format.
 
-## Features (Initial Shell)
+## Features
 
 * Parses command-line arguments for requirements file, configuration file, and output file.
 * Loads configuration (API keys, model details, prompts) from a YAML file.
@@ -13,6 +13,13 @@ AI Whisperer is a Python command-line tool that takes your project requirements 
 * Uses `rich` for colored console output and basic logging.
 * Includes custom exceptions for error handling.
 * Developed using TDD with `pytest`.
+
+## Project development
+The project_dev folder is used to track new features (rfc), done feature(done) and in progress (in_progress).
+This structure is delibrately structured to assist AI in the development process.
+
+AI Whisperer is a dog food tool, almost (so far all!) features and improvements go through its own system. This both improves and identifies issues and provides the benefits of controlled AI development process.
+
 
 ## Installation
 

@@ -3,6 +3,7 @@ import json
 import jsonschema
 import logging
 import traceback # Added import
+import os
 from pathlib import Path
 from typing import Dict, Any, Tuple
 
@@ -39,12 +40,13 @@ class Orchestrator:
     Handles prompt loading, hashing, API calls, validation, and output saving.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], output_dir='output'):
         """
         Initializes the Orchestrator with application configuration.
 
         Args:
             config: The loaded application configuration dictionary.
+            output_dir: Directory where output files will be saved.
 
         Raises:
             ConfigError: If essential configuration parts are missing or invalid.
@@ -52,7 +54,7 @@ class Orchestrator:
             json.JSONDecodeError: If the schema file is invalid JSON.
         """
         self.config = config
-        self.output_dir = Path(config.get('output_dir', './output/')) # Use default if missing
+        self.output_dir = output_dir
         self.prompt_override_path = config.get('prompt_override_path')
 
         # Check if openrouter configuration is present
@@ -220,6 +222,30 @@ class Orchestrator:
 
         return yaml_data
 
+    def save_yaml(self, yaml_content, output_filename):
+        """
+        Saves the YAML content to a file in the specified output directory.
+
+        Args:
+            yaml_content: The YAML content to save.
+            output_filename: The name of the output file.
+
+        Returns:
+            The path to the saved file.
+        """
+        # Ensure the output directory exists
+        os.makedirs(self.output_dir, exist_ok=True)
+        
+        # Construct the file path using self.output_dir
+        output_path = os.path.join(self.output_dir, output_filename)
+        
+        # Save the file
+        with open(output_path, 'w', encoding='utf-8') as f:
+            yaml.dump(yaml_content, f, sort_keys=False, allow_unicode=True, indent=2)
+        
+        logger.info(f"Successfully saved initial orchestrator YAML to {output_path}")
+        return output_path
+
     def generate_initial_yaml(self, requirements_md_path_str: str, config_path_str: str) -> Path:
         """
         Generates the initial task plan YAML file based on input requirements markdown.
@@ -345,21 +371,14 @@ class Orchestrator:
             # Create output filename based on the input requirements file
             config_stem = config_path.stem # Get the stem of the config file path
             output_filename = f"{requirements_md_path.stem}_{config_stem}.yaml" # Combine stems
-            output_path = self.output_dir / output_filename
 
-            logger.info(f"Saving validated YAML to: {output_path}")
+            logger.info(f"Saving validated YAML to: {self.output_dir}")
             try:
-                # Ensure output directory exists
-                self.output_dir.mkdir(parents=True, exist_ok=True)
-
-                # Write the YAML file
-                with open(output_path, 'w', encoding='utf-8') as f:
-                    yaml.dump(yaml_data, f, sort_keys=False, allow_unicode=True, indent=2)
-                logger.info(f"Successfully saved initial orchestrator YAML to {output_path}")
+                output_path = self.save_yaml(yaml_data, output_filename)
                 return output_path
             except IOError as e:
-                logger.error(f"Error writing output YAML file {output_path}: {e}")
-                raise ProcessingError(f"Error writing output YAML file {output_path}: {e}") from e
+                logger.error(f"Error writing output YAML file {output_filename}: {e}")
+                raise ProcessingError(f"Error writing output YAML file {output_filename}: {e}") from e
 
         except (FileNotFoundError, PromptError, ConfigError, OpenRouterAPIError,
                 HashMismatchError, YAMLValidationError, ProcessingError, OrchestratorError) as e:
@@ -414,7 +433,8 @@ class Orchestrator:
         subtask_generator = SubtaskGenerator(
             config_path=config_path_str, 
             overall_context=overall_context, 
-            workspace_context=workspace_context
+            workspace_context=workspace_context,
+            output_dir=self.output_dir  # Pass the output_dir from Orchestrator
         )
         logger.info("Initialized subtask generator with overall context.")
 
