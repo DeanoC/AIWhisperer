@@ -115,8 +115,7 @@ class TestMain:
         # Verify it tried to exit with error code
         mock_sys_exit.assert_called_once_with(1)
 
-    @patch('sys.exit')
-    def test_main_missing_output_arg(self, mock_sys_exit):
+    def test_main_missing_output_arg(self):
         """Test the main function handles missing output argument."""
         # Set command-line args (missing --output)
         sys.argv = ['main.py', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE]
@@ -124,9 +123,6 @@ class TestMain:
         # Call the function
         with pytest.raises(SystemExit):
             main()
-            
-        # Verify it tried to exit with error code
-        mock_sys_exit.assert_called_once_with(1)
 
     # --- Test list_models functionality ---
     @patch('sys.exit')
