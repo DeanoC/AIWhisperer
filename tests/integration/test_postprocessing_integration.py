@@ -116,7 +116,7 @@ agent_spec:
   instructions: Test instructions
 """
         # Ensure the mock is used instead of making real API calls
-        with patch('src.ai_whisperer.subtask_generator.openrouter_api.OpenRouterAPI', return_value=mock_api_instance):
+        with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI', return_value=mock_api_instance):
             # Create a test config
             test_config = {
             'openrouter': {
