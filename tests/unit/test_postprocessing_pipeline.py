@@ -7,7 +7,7 @@ ensuring that the scripted and AI improvement phases work together correctly.
 import pytest
 from src.postprocessing.pipeline import PostprocessingPipeline
 from src.postprocessing.scripted_steps.identity_transform import identity_transform
-
+from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 
 def test_pipeline_with_identity_step():
     """
@@ -35,13 +35,6 @@ def test_pipeline_with_identity_step():
         ]
     }
     
-    # Initial empty result object
-    initial_result = {
-        "success": True,
-        "steps": {},
-        "logs": []
-    }
-    
     # Create a pipeline with identity_transform as the only scripted step
     # Note: The pipeline implementation will handle the AI phase internally,
     # which is also initially an identity transform
@@ -51,8 +44,8 @@ def test_pipeline_with_identity_step():
     )
     
     # Process the YAML data through the pipeline
-    output_yaml_data, output_result = pipeline.process(sample_yaml_data, initial_result)
-    
+    output_yaml_data, output_result = pipeline.process(sample_yaml_data)
+
     # Assert that the output YAML is identical to the input
     assert output_yaml_data == sample_yaml_data
     
@@ -111,3 +104,14 @@ def test_pipeline_with_multiple_identity_steps():
     # Ensure overall success
     assert output_result["success"] is True
 
+def test_clean_backtick_wrapper():
+    """
+    Test that clean_backtick_wrapper removes code block wrappers correctly.
+    """
+    yaml_data = "```yaml\ntask: example\n```"
+    result_data = {"success": True, "steps": {}, "logs": []}
+    
+    cleaned_yaml, updated_result = clean_backtick_wrapper(yaml_data, result_data)
+    
+    assert cleaned_yaml == "task: example\n"
+    assert updated_result["success"] is True

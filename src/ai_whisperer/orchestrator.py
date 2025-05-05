@@ -17,6 +17,8 @@ from .exceptions import (
     ProcessingError,
     OpenRouterAPIError,
 )
+from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
+from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 
 # Determine the package root directory to locate default files relative to the package
 try:
@@ -306,66 +308,29 @@ class Orchestrator:
             try:
                 # Extract YAML content from potential markdown code blocks
                 yaml_string = api_response_content
-                if "```yaml" in api_response_content:
-                    parts = api_response_content.split("```yaml", 1)
-                    if len(parts) > 1:
-                        yaml_string = parts[1].split("```", 1)[0].strip()
-                elif "```" in api_response_content:
-                    parts = api_response_content.split("```", 1)
-                    if len(parts) > 1:
-                        yaml_string = parts[1].split("```", 1)[0].strip()
-                
-                # Parse the YAML content
-                try:
-                    yaml_data = yaml.safe_load(yaml_string)
-                    if not isinstance(yaml_data, dict):
-                        logger.error(f"Parsed YAML is not a dictionary. Type: {type(yaml_data).__name__}")
-                        raise OrchestratorError(f"API response did not yield a valid YAML dictionary. Content: {api_response_content[:200]}...")
-                    
-                    # Sanitize text fields that may contain problematic characters
-                    yaml_data = self._sanitize_yaml_text_fields(yaml_data)
-                    
-                    logger.info("YAML response parsed successfully.")
-                except yaml.YAMLError as e:
-                    # If normal parsing fails, try a more robust approach with quotes around problematic fields
-                    logger.warning(f"Initial YAML parsing failed: {e}")
-                    logger.info("Attempting to manually sanitize the YAML content...")
-                    
-                    # Try to fix common YAML issues in the string before parsing
-                    sanitized_yaml = yaml_string
-                    
-                    # Look for the overall_context field and ensure it's properly formatted with a block scalar indicator
-                    import re
-                    
-                    # Match the overall_context line and its content
-                    context_match = re.search(r'overall_context:\s*(.*?)(?=\n[a-z_]+:|$)', sanitized_yaml, re.DOTALL)
-                    if context_match:
-                        # Extract the matched content
-                        context_content = context_match.group(1).strip()
-                        # Replace with a properly formatted multi-line block
-                        replacement = f"overall_context: |\n  {context_content.replace(chr(10), chr(10) + '  ')}"
-                        # Replace in the original string
-                        sanitized_yaml = sanitized_yaml.replace(context_match.group(0), replacement)
-                    
-                    try:
-                        yaml_data = yaml.safe_load(sanitized_yaml)
-                        if not isinstance(yaml_data, dict):
-                            logger.error(f"Parsed sanitized YAML is not a dictionary. Type: {type(yaml_data).__name__}")
-                            raise OrchestratorError(f"API response did not yield a valid YAML dictionary after sanitization. Content: {api_response_content[:200]}...")
-                        
-                        logger.info("YAML response parsed successfully after sanitization.")
-                    except yaml.YAMLError as e2:
-                        logger.error(f"Failed to parse sanitized YAML response: {e2}")
-                        logger.error(f"Sanitized content that failed parsing:\n{sanitized_yaml}")
-                        raise OrchestratorError(f"Invalid YAML received from API even after sanitization: {e2}") from e2
-                
+                pipeline = PostprocessingPipeline(
+                    scripted_steps=[clean_backtick_wrapper]  # Add any other scripted steps here,
+                ) 
+                # Pass the YAML data through the postprocessing pipeline
+                yaml_string, postprocessing_result = pipeline.process(yaml_string)
+
+                # Log the postprocessing results
+                logger.info("Postprocessing completed successfully.")
+                logger.debug(f"Postprocessing result logs: {postprocessing_result.get('logs', [])}")
+
+               # Parse the YAML content
+                yaml_data = yaml.safe_load(yaml_string)
+                if not isinstance(yaml_data, dict):
+                    logger.error(f"Parsed YAML is not a dictionary. Type: {type(yaml_data).__name__}")
+                    raise OrchestratorError(f"API response did not yield a valid YAML dictionary. Content: {api_response_content[:200]}...")
+
             except yaml.YAMLError as e:
                 logger.error(f"Failed to parse YAML response: {e}")
                 logger.error(f"Response content that failed parsing:\n{api_response_content}")
                 raise OrchestratorError(f"Invalid YAML received from API: {e}") from e
-            except IndexError:
-                logger.error(f"Could not extract YAML block from API response. Response:\n{api_response_content}")
-                raise OrchestratorError(f"Could not extract YAML block from API response") from e
+            except Exception as e:
+                logger.error(f"An error occurred during YAML postprocessing: {e}")
+                raise OrchestratorError(f"YAML postprocessing failed: {e}") from e
                 
             # 7. Validate YAML Response (Schema & Hashes)
             self._validate_yaml_response(yaml_data, input_hashes)

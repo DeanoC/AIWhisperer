@@ -3,15 +3,21 @@
 Generates detailed subtask definitions based on high-level steps using an AI model.
 """
 
+import logging
 import yaml
 import os
 from pathlib import Path
 from typing import Dict, Any
 
+from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
+from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
+
 from .config import load_config
 from .openrouter_api import OpenRouterAPI
 from .exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
 from .utils import validate_against_schema # Assuming this will be created in utils
+
+logger = logging.getLogger(__name__)
 
 class SubtaskGenerator:
     """
@@ -140,17 +146,18 @@ class SubtaskGenerator:
             try:
                 # Extract YAML content from potential markdown code blocks
                 yaml_string = ai_response_yaml
-                if "```yaml" in ai_response_yaml:
-                    parts = ai_response_yaml.split("```yaml", 1)
-                    if len(parts) > 1:
-                        yaml_string = parts[1].split("```", 1)[0].strip()
-                elif "```" in ai_response_yaml:
-                    parts = ai_response_yaml.split("```", 1)
-                    if len(parts) > 1:
-                        yaml_string = parts[1].split("```", 1)[0].strip()
-                
+                pipeline = PostprocessingPipeline(
+                    scripted_steps=[clean_backtick_wrapper]  # Add any other scripted steps here,
+                ) 
+                # Pass the YAML data through the postprocessing pipeline
+                yaml_string, postprocessing_result = pipeline.process(yaml_string)
+
+                # Log the postprocessing results
+                logger.info("Postprocessing completed successfully.")
+                logger.debug(f"Postprocessing result logs: {postprocessing_result.get('logs', [])}")
+            
                 # Sanitize the YAML content
-                yaml_string = self._sanitize_yaml_content(yaml_string)
+                # TODO replace with postprocessing stages for future reuse, yaml_string = self._sanitize_yaml_content(yaml_string)
                 
                 # Parse the YAML content
                 generated_data = yaml.safe_load(yaml_string)

@@ -6,7 +6,10 @@ through unchanged. It serves as the simplest possible implementation of a script
 postprocessing step and can be used as a template for more complex transforms.
 """
 
-def identity_transform(yaml_data, result_data):
+from typing import Dict, Tuple
+
+
+def identity_transform(yaml_data: str, result_data: Dict) -> Tuple[str, Dict]:
     """
     A simple identity transform that returns the input data unchanged.
     
@@ -14,7 +17,7 @@ def identity_transform(yaml_data, result_data):
     it accepts YAML data and a result tracking object and returns both unchanged.
     
     Args:
-        yaml_data (dict): The parsed YAML data structure to process
+        yaml_data (str): The YAML data as a string
         result_data (dict): A dictionary containing processing status and logs
         
     Returns:
@@ -28,4 +31,4 @@ def identity_transform(yaml_data, result_data):
         >>> assert output_result == result_data
     """
     # Simply return the inputs unchanged
-    return yaml_data, result_data
+    return (yaml_data, result_data)

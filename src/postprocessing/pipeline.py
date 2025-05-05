@@ -6,10 +6,12 @@ consists of a scripted phase (with configurable processing steps) and an
 AI improvements phase (initially implemented as a dummy identity transform).
 """
 import inspect
+import logging
 from typing import Dict, List, Callable, Tuple, Any
 
 # Import the identity transform for use in the dummy AI phase
 from src.postprocessing.scripted_steps.identity_transform import identity_transform
+logger = logging.getLogger(__name__)
 
 
 class PostprocessingPipeline:
@@ -33,28 +35,38 @@ class PostprocessingPipeline:
                             If None, an empty list is used.
         """
         self.scripted_steps = scripted_steps or []
-    
-    def _execute_scripted_phase(self, yaml_data: Dict, result: Dict) -> Tuple[Dict, Dict]:
+
+    def _execute_scripted_phase(self, yaml_string: str, result: Dict = None) -> Tuple[Dict, Dict]:
         """
         Execute all scripted steps in sequence.
-        
+
         Args:
-            yaml_data: The initial YAML data as a dictionary
+            yaml_string: The initial YAML data as a string
             result: The initial result/status dictionary
-            
+
         Returns:
             tuple: (processed_yaml_data, updated_result)
         """
-        current_yaml = yaml_data
+        logger.info("Executing scripted phase")
+
+        # Initialize the result object if not provided
+        if result is None:
+            result = {
+                "success": True,
+                "steps": {},
+                "logs": []
+            }
+
+        current_yaml = yaml_string
         current_result = result
-        
+
         for step in self.scripted_steps:
             # Get the step name from the function for logging/tracking
             step_name = step.__name__
-            
+
             # Execute the step
             current_yaml, current_result = step(current_yaml, current_result)
-            
+
             # If this is the first time we've seen this step in the result, initialize it
             if step_name not in current_result["steps"]:
                 current_result["steps"][step_name] = {
@@ -63,15 +75,15 @@ class PostprocessingPipeline:
                     "errors": [],
                     "warnings": []
                 }
-        
+
         return current_yaml, current_result
-    
-    def _execute_ai_phase(self, yaml_data: Dict, result: Dict) -> Tuple[Dict, Dict]:
+
+    def _execute_ai_phase(self, yaml_string: str, result: Dict) -> Tuple[Dict, Dict]:
         """
         Execute the AI improvements phase (currently a dummy identity transform).
         
         Args:
-            yaml_data: The YAML data after the scripted phase
+            yaml_string: The YAML data after the scripted phase
             result: The result/status after the scripted phase
             
         Returns:
@@ -81,7 +93,7 @@ class PostprocessingPipeline:
         # In the future, this will be replaced with actual AI processing logic
         
         # Use the identity_transform but track it separately in the results
-        yaml_data, result = identity_transform(yaml_data, result)
+        yaml_data, result = identity_transform(yaml_string, result)
         
         # Add an entry for the AI phase in the result
         if "ai_improvement_phase" not in result["steps"]:
@@ -97,13 +109,13 @@ class PostprocessingPipeline:
             result["logs"].append("AI improvements phase executed (dummy implementation)")
         
         return yaml_data, result
-    
-    def process(self, yaml_data: Dict, result: Dict = None) -> Tuple[Dict, Dict]:
+
+    def process(self, yaml_data: str, result: Dict = None) -> Tuple[Dict, Dict]:
         """
         Process the input YAML data through the entire pipeline.
         
         Args:
-            yaml_data: The input YAML data as a dictionary
+            yaml_data: The input YAML data as a string
             result: An initial result/status dictionary. If None, a new one is created.
             
         Returns:
