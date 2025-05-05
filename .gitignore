@@ -125,3 +125,4 @@ dmypy.json
 test.yaml
 test_output.yaml
 output/
+.aider*

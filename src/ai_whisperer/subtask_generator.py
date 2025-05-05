@@ -127,8 +127,8 @@ class SubtaskGenerator:
               # Call the API with full context
             ai_response_yaml = self.openrouter_client.call_chat_completion(
                 prompt_text=prompt_content,
-                model=model,
-                params=params
+                model=self.openrouter_client.model,  # Get model from client
+                params=self.openrouter_client.params # Get params from client
             )
             
             if not ai_response_yaml:

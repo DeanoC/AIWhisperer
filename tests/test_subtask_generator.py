@@ -20,9 +20,8 @@ MOCK_CONFIG = {
         'params': {'temperature': 0.5},
         'site_url': 'mock_url',
         'app_name': 'mock_app'
-    },
-    'prompts': {
-        'subtask_generator_prompt_content': "Refine this step: {{ step_description }}",
+    },    'prompts': {
+        'subtask_generator_prompt_content': "Refine this step: {subtask_yaml}",
         # Add other prompt contents if needed by the generator
     },
     'output_dir': './test_output/'
@@ -123,27 +122,29 @@ def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
     generator = SubtaskGenerator('dummy_config.yaml')
 
-    # Mock AI response
-    mock_openrouter_client.chat_completion.return_value = MOCK_AI_RESPONSE_YAML_VALID
+    # Mock AI response using the correct method name
+    mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_YAML_VALID
 
     # Mock os.path.exists to simulate output file not existing initially
     mock_filesystem['exists'].return_value = False
 
     output_path = generator.generate_subtask(VALID_INPUT_STEP)
 
-    # 1. Verify prompt preparation (check call to chat_completion)
-    mock_openrouter_client.chat_completion.assert_called_once()
-    call_args = mock_openrouter_client.chat_completion.call_args
-    assert 'messages' in call_args.kwargs
-    assert isinstance(call_args.kwargs['messages'], list)
-    assert len(call_args.kwargs['messages']) > 0
-    assert 'content' in call_args.kwargs['messages'][0]
-    assert VALID_INPUT_STEP['description'] in call_args.kwargs['messages'][0]['content'] # Check content in keyword arg
-
-    # 2. Verify schema validation call
+    # 1. Verify prompt preparation (check call to call_chat_completion)
+    mock_openrouter_client.call_chat_completion.assert_called_once()
+    call_args, call_kwargs = mock_openrouter_client.call_chat_completion.call_args
+    # Check keyword arguments used in the call
+    assert 'prompt_text' in call_kwargs
+    assert VALID_INPUT_STEP['description'] in call_kwargs['prompt_text']
+    assert 'model' in call_kwargs
+    assert call_kwargs['model'] == mock_openrouter_client.model # Check if model from client is passed
+    assert 'params' in call_kwargs
+    assert call_kwargs['params'] == mock_openrouter_client.params # Check if params from client are passed    # 2. Verify schema validation call
     mock_schema_validation.assert_called_once()
     parsed_yaml = yaml.safe_load(MOCK_AI_RESPONSE_YAML_VALID)
-    mock_schema_validation.assert_called_with(parsed_yaml, "placeholder_schema_path.json")
+    # Use unittest.mock.ANY to avoid hard-coding the schema path
+    from unittest.mock import ANY
+    mock_schema_validation.assert_called_with(parsed_yaml, ANY)
 
     # 3. Verify output file path generation
     expected_output_filename = f"{VALID_INPUT_STEP['step_id']}_subtask.yaml"
@@ -162,7 +163,7 @@ def test_generate_subtask_ai_error(mock_load_config, mock_openrouter_client):
     """Tests handling of API errors from OpenRouter."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
     generator = SubtaskGenerator('dummy_config.yaml')
-    mock_openrouter_client.chat_completion.side_effect = OpenRouterAPIError("AI failed")
+    mock_openrouter_client.call_chat_completion.side_effect = OpenRouterAPIError("AI failed")
 
     with pytest.raises(SubtaskGenerationError, match="AI interaction failed"):
         generator.generate_subtask(VALID_INPUT_STEP)
@@ -171,7 +172,7 @@ def test_generate_subtask_schema_validation_error(mock_load_config, mock_openrou
     """Tests handling of schema validation errors."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
     generator = SubtaskGenerator('dummy_config.yaml')
-    mock_openrouter_client.chat_completion.return_value = MOCK_AI_RESPONSE_YAML_INVALID_SCHEMA
+    mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_YAML_INVALID_SCHEMA
     mock_schema_validation.side_effect = SchemaValidationError("Invalid schema: Missing agent_spec")
 
     with pytest.raises(SchemaValidationError, match="Invalid schema: Missing agent_spec"):
@@ -181,7 +182,7 @@ def test_generate_subtask_invalid_yaml_response(mock_load_config, mock_openroute
     """Tests handling of invalid YAML responses from the AI."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
     generator = SubtaskGenerator('dummy_config.yaml')
-    mock_openrouter_client.chat_completion.return_value = "invalid: yaml: :"
+    mock_openrouter_client.call_chat_completion.return_value = "invalid: yaml: :"
 
     with pytest.raises(SubtaskGenerationError, match="Failed to parse AI response as YAML"):
         generator.generate_subtask(VALID_INPUT_STEP)

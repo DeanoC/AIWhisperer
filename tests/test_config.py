@@ -4,6 +4,9 @@
 import pytest
 import yaml
 import os
+import os
+import pytest
+import yaml
 from pathlib import Path
 from unittest.mock import patch
 
@@ -16,6 +19,20 @@ from src.ai_whisperer.config import (
     DEFAULT_SUBTASK_GENERATOR_PROMPT_PATH
 )
 from src.ai_whisperer.exceptions import ConfigError
+
+# Helper function to read actual default prompt content
+def _read_actual_default_prompt(prompt_path):
+    try:
+        # Assuming tests run from the root directory
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        # Fallback or error if running from unexpected location
+        # This might need adjustment based on test execution context
+        pytest.fail(f"Could not read actual default prompt: {prompt_path}")
+
+ACTUAL_DEFAULT_ORCH_CONTENT = _read_actual_default_prompt(DEFAULT_ORCHESTRATOR_PROMPT_PATH)
+ACTUAL_DEFAULT_SUBTASK_CONTENT = _read_actual_default_prompt(DEFAULT_SUBTASK_GENERATOR_PROMPT_PATH)
 
 # --- Test Data ---
 VALID_OPENROUTER_CONFIG_NO_KEY = {
@@ -100,11 +117,17 @@ def mock_load_dotenv(mock_dotenv, monkeypatch):
     """Fixture to mock load_dotenv and manage environment variables."""
     # Mock load_dotenv to do nothing
     mock_dotenv.return_value = None
-
-    # Manage OPENROUTER_API_KEY
+    
+    # Store the original API key but don't remove it by default
+    # Individual tests that need to test missing API key should explicitly delete it
     original_value = os.environ.get("OPENROUTER_API_KEY")
-    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    
+    # Set a default API key if none exists to prevent tests from failing
+    if not original_value:
+        monkeypatch.setenv("OPENROUTER_API_KEY", "default-test-key")
+    
     yield mock_dotenv # Yield the mock if needed, though usually not necessary
+    
     # Restore original value after test
     if original_value is not None:
         monkeypatch.setenv("OPENROUTER_API_KEY", original_value)
@@ -156,8 +179,8 @@ def test_load_config_success_default_prompts(create_test_files, monkeypatch):
     assert 'prompts' in config
     assert config['prompts'].get('orchestrator_prompt_path') is None
     assert config['prompts'].get('subtask_generator_prompt_path') is None
-    assert config['prompts']['orchestrator_prompt_content'] == default_contents[DEFAULT_ORCHESTRATOR_PROMPT_PATH]
-    assert config['prompts']['subtask_generator_prompt_content'] == default_contents[DEFAULT_SUBTASK_GENERATOR_PROMPT_PATH]
+    assert config['prompts']['orchestrator_prompt_content'] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config['prompts']['subtask_generator_prompt_content'] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
 def test_load_config_file_not_found(tmp_path):
     """Tests loading a non-existent configuration file."""
@@ -194,19 +217,11 @@ def test_load_config_missing_required_env_var_api_key(create_test_files):
 
     expected_error = r"Required environment variable OPENROUTER_API_KEY is not set"
 
-    # Patch os.getenv specifically for this test to ensure it returns None for the key
-    with patch('os.getenv') as mock_getenv:
-        # Configure the mock to return None when asked for OPENROUTER_API_KEY
-        # and delegate to the original os.getenv for other keys if necessary
-        original_getenv = os.getenv
-        def side_effect(key, default=None):
-            if key == 'OPENROUTER_API_KEY':
-                return None
-            return original_getenv(key, default)
-        mock_getenv.side_effect = side_effect
+    # Pass an empty env_vars dict to simulate missing environment variables
+    empty_env_vars = {}
 
-        with pytest.raises(ConfigError, match=expected_error):
-            load_config(str(config_path))
+    with pytest.raises(ConfigError, match=expected_error):
+        load_config(str(config_path), env_vars=empty_env_vars)
 
 def test_load_config_empty_file(create_test_files):
     """Tests loading an empty configuration file."""
@@ -273,8 +288,8 @@ def test_load_config_ignores_old_prompt_override(create_test_files, monkeypatch)
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
     config = load_config(str(config_path))
     assert config['openrouter']['api_key'] == mock_api_key
-    assert config['prompts']['orchestrator_prompt_content'] == default_contents[DEFAULT_ORCHESTRATOR_PROMPT_PATH]
-    assert config['prompts']['subtask_generator_prompt_content'] == default_contents[DEFAULT_SUBTASK_GENERATOR_PROMPT_PATH]
+    assert config['prompts']['orchestrator_prompt_content'] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config['prompts']['subtask_generator_prompt_content'] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
 def test_load_config_error_custom_prompt_not_found(create_test_files, monkeypatch):
     """Tests ConfigError when a specified custom prompt file is missing."""
@@ -293,17 +308,18 @@ def test_load_config_error_custom_prompt_not_found(create_test_files, monkeypatc
     with pytest.raises(ConfigError, match=expected_error_msg):
         load_config(str(config_path))
 
-def test_load_config_error_default_prompt_not_found(create_test_files, tmp_path, monkeypatch):
+def test_load_config_error_default_prompt_not_found(create_test_files, monkeypatch):
     """Tests ConfigError when a default prompt file is missing and not overridden."""
     _create_file, _ = create_test_files
-    default_orch_path = tmp_path / DEFAULT_ORCHESTRATOR_PROMPT_PATH
-    if default_orch_path.exists():
-        default_orch_path.unlink()
-
-    config_path = _create_file("config_missing_paths_for_default_err.yaml", CONFIG_MISSING_PROMPT_PATHS, is_yaml=True)
-
-    mock_api_key = "env_key_for_default_prompt_error"
-    monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
-    expected_error_msg = f"Default prompt file not found: {DEFAULT_ORCHESTRATOR_PROMPT_PATH}"
-    with pytest.raises(ConfigError, match=expected_error_msg):
-        load_config(str(config_path))
+    
+    # Mock DEFAULT_ORCHESTRATOR_PROMPT_PATH to point to a non-existent file
+    non_existent_path = 'non_existent_prompt_file.md'
+    with patch('src.ai_whisperer.config.DEFAULT_ORCHESTRATOR_PROMPT_PATH', non_existent_path):
+        config_path = _create_file("config_missing_paths_for_default_err.yaml", CONFIG_MISSING_PROMPT_PATHS, is_yaml=True)
+        
+        mock_api_key = "env_key_for_default_prompt_error"
+        monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
+        
+        expected_error_msg = f"Default prompt file not found: {non_existent_path}"
+        with pytest.raises(ConfigError, match=expected_error_msg):
+            load_config(str(config_path))

@@ -55,6 +55,10 @@ class Orchestrator:
 
         if not self.openrouter_config:
             raise ConfigError("'openrouter' configuration section is missing.")
+            
+        # Initialize OpenRouterAPI client
+        from .openrouter_api import OpenRouterAPI
+        self.openrouter_client = OpenRouterAPI(config=self.openrouter_config)
 
         logger.info(f"Orchestrator initialized. Output directory: {self.output_dir}")
 
@@ -279,17 +283,15 @@ class Orchestrator:
                 input_hashes_dict=hashes_json_string
             )
             logger.debug(f"Constructed final prompt (first 500 chars):\n{final_prompt[:500]}...")
-            
-            # 5. Call OpenRouter API
+              # 5. Call OpenRouter API
             logger.info("Calling OpenRouter API...")
             try:
-                # Get model and params from the openrouter_config if available
-                model = self.openrouter_config.get('model')
-                params = self.openrouter_config.get('params')
+                # Get model and params from the openrouter_client
+                model = self.openrouter_client.model
+                params = self.openrouter_client.params
                 
-                api_response_content = openrouter_api.call_openrouter(
+                api_response_content = self.openrouter_client.call_chat_completion(
                     prompt_text=final_prompt,
-                    config=self.openrouter_config,
                     model=model,
                     params=params
                 )

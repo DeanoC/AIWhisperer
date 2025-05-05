@@ -31,6 +31,7 @@ class OpenRouterAPI:
         try:
             self.openrouter_config = config  # Use the passed dict directly
             self.api_key = self.openrouter_config['api_key']
+            # Re-add model and params attributes
             self.model = self.openrouter_config.get('model')
             self.params = self.openrouter_config.get('params', {})
             self.site_url = self.openrouter_config.get('site_url', 'https://github.com/yourusername/AIWhisperer')
@@ -125,19 +126,18 @@ class OpenRouterAPI:
                 original_exception=e
             ) from e
     
-    def call_chat_completion(self, prompt_text: str, model: str = None, params: Dict[str, Any] = None) -> str:
+    def call_chat_completion(self, prompt_text: str, model: str, params: Dict[str, Any]) -> str:
         """
-        Calls the OpenRouter Chat Completions API with the provided prompt.
-        
+        Calls the OpenRouter Chat Completions API with the provided prompt, model, and parameters.
+
         Args:
             prompt_text: The user's prompt content.
-            model: Optional model override. If not provided, uses the model from config.
-            params: Optional parameters override. If provided, these parameters will be
-                   merged with (and take precedence over) the default parameters from config.
-            
+            model: The model identifier to use for the completion.
+            params: The parameters to pass to the API (e.g., temperature, max_tokens).
+
         Returns:
             The content string from the 'message' object in the API response's first choice.
-            
+
         Raises:
             OpenRouterConnectionError: If there's a network issue connecting to the API.
             OpenRouterAuthError: If authentication fails (HTTP 401).
@@ -150,16 +150,10 @@ class OpenRouterAPI:
             "HTTP-Referer": self.site_url,
             "X-Title": self.app_name,
         }
-        
-        # Use provided model or fall back to config
-        model_to_use = model if model is not None else self.model
-        
-        # Start with default params from config
-        request_params = dict(self.params)
-        
-        # Update with override params if provided
-        if params:
-            request_params.update(params)
+
+        # Use provided model and params directly as they are now required
+        model_to_use = model
+        request_params = params
 
         payload = {
             "model": model_to_use,
@@ -249,32 +243,3 @@ class OpenRouterAPI:
                 f"Network error connecting to OpenRouter API: {e}",
                 original_exception=e
             ) from e
-
-
-# Keep the original call_openrouter function for backward compatibility
-def call_openrouter(prompt_text: str, config: Dict[str, Any], model: str = None, params: Dict[str, Any] = None) -> str:
-    """
-    Calls the OpenRouter Chat Completions API using configuration settings.
-    
-    This is a backward-compatibility wrapper around the OpenRouterAPI class.
-
-    Args:
-        prompt_text: The user's prompt content.
-        config: The application configuration dictionary.
-        model: Optional model override. If not provided, uses the model from config.
-        params: Optional parameters override. If provided, these parameters will
-               be merged with (and take precedence over) the default parameters from config.
-
-    Returns:
-        The content string from the 'message' object in the API response's first choice.
-
-    Raises:
-        ConfigError: If required configuration keys are missing.
-        OpenRouterConnectionError: If there's a network issue connecting to the API.
-        OpenRouterAuthError: If authentication fails (HTTP 401).
-        OpenRouterRateLimitError: If rate limits are exceeded (HTTP 429).
-        OpenRouterAPIError: For other API-related errors.
-    """
-    # Create an instance of OpenRouterAPI and delegate the call
-    client = OpenRouterAPI(config)
-    return client.call_chat_completion(prompt_text=prompt_text, model=model, params=params)

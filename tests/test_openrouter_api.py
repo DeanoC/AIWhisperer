@@ -11,13 +11,13 @@ from src.ai_whisperer.exceptions import (
     ConfigError
 )
 # Import the actual class and constants
-from src.ai_whisperer.openrouter_api import call_openrouter, OpenRouterAPI, MODELS_API_URL, API_URL
+from src.ai_whisperer.openrouter_api import OpenRouterAPI, MODELS_API_URL, API_URL
 
 # Define test config data
 TEST_CONFIG_OPENROUTER_SECTION = {
     'api_key': "test-api-key",
     'model': "test-model/test-model",
-    'params': {'temperature': 0.7},
+    'params': {'temperature': 0.7, 'max_tokens': 1024},  # Added max_tokens here
     'site_url': "http://test-site.com",
     'app_name': "TestApp"
 }
@@ -61,7 +61,11 @@ def test_chat_completion_success(mock_requests):
     )
     
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
-    response = client.call_chat_completion(prompt_text=PROMPT)
+    response = client.call_chat_completion(
+        prompt_text=PROMPT,
+        model=client.model,
+        params=client.params
+    )
     assert response == expected_response_content
 
     history = mock_requests.request_history
@@ -75,6 +79,7 @@ def test_chat_completion_success(mock_requests):
     assert request.json()['model'] == TEST_CONFIG_OPENROUTER_SECTION["model"]
     assert request.json()['messages'][0]['content'] == PROMPT
     assert request.json()['temperature'] == TEST_CONFIG_OPENROUTER_SECTION["params"]['temperature']
+    assert request.json()['max_tokens'] == TEST_CONFIG_OPENROUTER_SECTION["params"]['max_tokens']  # Added this assertion
     
     # Reset history for next test
     mock_requests.reset()
@@ -86,7 +91,11 @@ def test_chat_completion_success(mock_requests):
         json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
         status_code=200
     )
-    response = client.call_chat_completion(prompt_text=PROMPT, model=override_model)
+    response = client.call_chat_completion(
+        prompt_text=PROMPT,
+        model=override_model,
+        params=client.params
+    )
     assert response == expected_response_content
     
     history = mock_requests.request_history
@@ -105,7 +114,11 @@ def test_chat_completion_success(mock_requests):
         json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
         status_code=200
     )
-    response = client.call_chat_completion(prompt_text=PROMPT, params=override_params)
+    response = client.call_chat_completion(
+        prompt_text=PROMPT,
+        model=client.model,
+        params=override_params
+    )
     assert response == expected_response_content
     
     history = mock_requests.request_history
@@ -113,7 +126,7 @@ def test_chat_completion_success(mock_requests):
     request = history[0]
     assert request.json()['model'] == TEST_CONFIG_OPENROUTER_SECTION["model"]  # Default model
     assert request.json()['temperature'] == override_params['temperature']  # Override temp
-    assert request.json()['max_tokens'] == override_params['max_tokens']  # New param
+    assert request.json()['max_tokens'] == override_params['max_tokens']  # Override max_tokens
 
 def test_chat_completion_auth_error(mock_requests):
     """Test chat completion handles 401 authentication errors."""
@@ -125,7 +138,7 @@ def test_chat_completion_auth_error(mock_requests):
     )
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterAuthError, match=f"Authentication failed: {error_message}"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_rate_limit_error(mock_requests):
     """Test chat completion handles 429 rate limit errors."""
@@ -137,7 +150,7 @@ def test_chat_completion_rate_limit_error(mock_requests):
     )
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterRateLimitError, match=f"Rate limit exceeded: {error_message}"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_not_found_error(mock_requests):
     """Test chat completion handles 404 errors (e.g., model not found)."""
@@ -149,7 +162,7 @@ def test_chat_completion_not_found_error(mock_requests):
     )
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterAPIError, match=f"API request failed: {error_message}"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_server_error(mock_requests):
     """Test chat completion handles 500 server errors."""
@@ -161,49 +174,49 @@ def test_chat_completion_server_error(mock_requests):
     )
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterAPIError, match=f"API request failed: {error_message}"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_connection_error(mock_requests):
     """Test chat completion handles connection errors."""
     mock_requests.post(API_URL, exc=requests.exceptions.ConnectionError("Connection failed"))
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API: Connection failed"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_timeout_error(mock_requests):
     """Test chat completion handles timeout errors."""
     mock_requests.post(API_URL, exc=requests.exceptions.Timeout("Request timed out"))
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API: Request timed out"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_unexpected_response_format_no_choices(mock_requests):
     """Test chat completion handles unexpected response format (no 'choices')."""
     mock_requests.post(API_URL, json={"usage": {}}, status_code=200)
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'choices' array is missing"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_unexpected_response_format_empty_choices(mock_requests):
     """Test chat completion handles unexpected response format (empty 'choices')."""
     mock_requests.post(API_URL, json={"choices": [], "usage": {}}, status_code=200)
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'choices' array is missing"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_unexpected_response_format_no_message(mock_requests):
     """Test chat completion handles unexpected response format (no 'message' in choice)."""
     mock_requests.post(API_URL, json={"choices": [{"index": 0}], "usage": {}}, status_code=200)
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'message' object is missing"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 def test_chat_completion_unexpected_response_format_no_content(mock_requests):
     """Test chat completion handles unexpected response format (no 'content' in message)."""
     mock_requests.post(API_URL, json={"choices": [{"message": {"role": "assistant"}}], "usage": {}}, status_code=200)
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'content' key is missing"):
-        client.call_chat_completion(prompt_text=PROMPT)
+        client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
 
 # --- list_models Tests ---
 
@@ -265,24 +278,35 @@ def test_list_models_empty_data(mock_requests):
     with pytest.raises(OpenRouterAPIError, match="Unexpected response format: 'data' array is missing"):
         client.list_models()
 
-# --- call_openrouter (backward compatibility) Tests ---
+# --- call_openrouter (backward compatibility) Tests --- # Refactored
 
-def test_call_openrouter_success(mock_requests):
-    """Test successful API call using the compatibility function."""
+def test_call_openrouter_success_refactored(mock_requests):
+    """Test successful API call using the OpenRouterAPI class (Refactored)."""
     expected_response_content = "Generated text response."
     mock_requests.post(
         API_URL,
         json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
         status_code=200
     )
-    
-    # In the current implementation, call_openrouter expects the openrouter section directly
-    response = call_openrouter(PROMPT, TEST_CONFIG_OPENROUTER_SECTION)
+
+    client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
+    response = client.call_chat_completion(
+        prompt_text=PROMPT,
+        model=client.model,
+        params=client.params
+    )
     assert response == expected_response_content
-    
+
+    history = mock_requests.request_history
+    assert len(history) == 1
+    request = history[0]
+    assert request.json()['model'] == TEST_CONFIG_OPENROUTER_SECTION['model']
+    assert request.json()['temperature'] == TEST_CONFIG_OPENROUTER_SECTION['params']['temperature']
+    assert request.json()['max_tokens'] == TEST_CONFIG_OPENROUTER_SECTION['params']['max_tokens']
+
     # Reset history
     mock_requests.reset()
-    
+
     # Test with model override
     override_model = "different-model/test"
     mock_requests.post(
@@ -290,30 +314,43 @@ def test_call_openrouter_success(mock_requests):
         json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
         status_code=200
     )
-    response = call_openrouter(PROMPT, TEST_CONFIG_OPENROUTER_SECTION, model=override_model)
+    response = client.call_chat_completion(
+        prompt_text=PROMPT,
+        model=override_model,
+        params=client.params
+    )
     assert response == expected_response_content
-    
+
     history = mock_requests.request_history
     assert len(history) == 1
     request = history[0]
     assert request.json()['model'] == override_model
-    
+    # Ensure default params are still sent when only model is overridden
+    assert request.json()['temperature'] == TEST_CONFIG_OPENROUTER_SECTION['params']['temperature']
+    assert request.json()['max_tokens'] == TEST_CONFIG_OPENROUTER_SECTION['params']['max_tokens']
+
     # Reset history
     mock_requests.reset()
-    
+
     # Test with params override
-    override_params = {'temperature': 0.3, 'top_p': 0.9}
+    override_params = {'temperature': 0.3, 'top_p': 0.9, 'max_tokens': 512} # Ensure max_tokens override is tested
     mock_requests.post(
         API_URL,
         json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
         status_code=200
     )
-    response = call_openrouter(PROMPT, TEST_CONFIG_OPENROUTER_SECTION, params=override_params)
+    response = client.call_chat_completion(
+        prompt_text=PROMPT,
+        model=client.model, # Pass default model
+        params=override_params
+    )
     assert response == expected_response_content
-    
+
     history = mock_requests.request_history
     assert len(history) == 1
     request = history[0]
+    assert request.json()['model'] == TEST_CONFIG_OPENROUTER_SECTION['model'] # Default model
     assert request.json()['temperature'] == override_params['temperature']
     assert request.json()['top_p'] == override_params['top_p']
+    assert request.json()['max_tokens'] == override_params['max_tokens'] # Check overridden max_tokens
 
