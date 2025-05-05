@@ -125,12 +125,15 @@ class OpenRouterAPI:
                 original_exception=e
             ) from e
     
-    def call_chat_completion(self, prompt_text: str) -> str:
+    def call_chat_completion(self, prompt_text: str, model: str = None, params: Dict[str, Any] = None) -> str:
         """
         Calls the OpenRouter Chat Completions API with the provided prompt.
         
         Args:
             prompt_text: The user's prompt content.
+            model: Optional model override. If not provided, uses the model from config.
+            params: Optional parameters override. If provided, these parameters will be
+                   merged with (and take precedence over) the default parameters from config.
             
         Returns:
             The content string from the 'message' object in the API response's first choice.
@@ -147,13 +150,23 @@ class OpenRouterAPI:
             "HTTP-Referer": self.site_url,
             "X-Title": self.app_name,
         }
+        
+        # Use provided model or fall back to config
+        model_to_use = model if model is not None else self.model
+        
+        # Start with default params from config
+        request_params = dict(self.params)
+        
+        # Update with override params if provided
+        if params:
+            request_params.update(params)
 
         payload = {
-            "model": self.model,
+            "model": model_to_use,
             "messages": [
                 {"role": "user", "content": prompt_text}
             ],
-            **self.params
+            **request_params
         }
 
         try:
@@ -239,7 +252,7 @@ class OpenRouterAPI:
 
 
 # Keep the original call_openrouter function for backward compatibility
-def call_openrouter(prompt_text: str, config: Dict[str, Any]) -> str:
+def call_openrouter(prompt_text: str, config: Dict[str, Any], model: str = None, params: Dict[str, Any] = None) -> str:
     """
     Calls the OpenRouter Chat Completions API using configuration settings.
     
@@ -248,6 +261,9 @@ def call_openrouter(prompt_text: str, config: Dict[str, Any]) -> str:
     Args:
         prompt_text: The user's prompt content.
         config: The application configuration dictionary.
+        model: Optional model override. If not provided, uses the model from config.
+        params: Optional parameters override. If provided, these parameters will
+               be merged with (and take precedence over) the default parameters from config.
 
     Returns:
         The content string from the 'message' object in the API response's first choice.
@@ -261,4 +277,4 @@ def call_openrouter(prompt_text: str, config: Dict[str, Any]) -> str:
     """
     # Create an instance of OpenRouterAPI and delegate the call
     client = OpenRouterAPI(config)
-    return client.call_chat_completion(prompt_text)
+    return client.call_chat_completion(prompt_text=prompt_text, model=model, params=params)

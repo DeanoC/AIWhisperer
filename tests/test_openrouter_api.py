@@ -75,6 +75,45 @@ def test_chat_completion_success(mock_requests):
     assert request.json()['model'] == TEST_CONFIG_OPENROUTER_SECTION["model"]
     assert request.json()['messages'][0]['content'] == PROMPT
     assert request.json()['temperature'] == TEST_CONFIG_OPENROUTER_SECTION["params"]['temperature']
+    
+    # Reset history for next test
+    mock_requests.reset()
+    
+    # Test with model override
+    override_model = "different-model/test"
+    mock_requests.post(
+        API_URL,
+        json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
+        status_code=200
+    )
+    response = client.call_chat_completion(prompt_text=PROMPT, model=override_model)
+    assert response == expected_response_content
+    
+    history = mock_requests.request_history
+    assert len(history) == 1
+    request = history[0]
+    assert request.json()['model'] == override_model  # Should use the override model
+    assert request.json()['temperature'] == TEST_CONFIG_OPENROUTER_SECTION["params"]['temperature']  # Default params
+    
+    # Reset history for next test
+    mock_requests.reset()
+    
+    # Test with params override
+    override_params = {'temperature': 0.2, 'max_tokens': 500}
+    mock_requests.post(
+        API_URL,
+        json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
+        status_code=200
+    )
+    response = client.call_chat_completion(prompt_text=PROMPT, params=override_params)
+    assert response == expected_response_content
+    
+    history = mock_requests.request_history
+    assert len(history) == 1
+    request = history[0]
+    assert request.json()['model'] == TEST_CONFIG_OPENROUTER_SECTION["model"]  # Default model
+    assert request.json()['temperature'] == override_params['temperature']  # Override temp
+    assert request.json()['max_tokens'] == override_params['max_tokens']  # New param
 
 def test_chat_completion_auth_error(mock_requests):
     """Test chat completion handles 401 authentication errors."""
@@ -240,4 +279,41 @@ def test_call_openrouter_success(mock_requests):
     # In the current implementation, call_openrouter expects the openrouter section directly
     response = call_openrouter(PROMPT, TEST_CONFIG_OPENROUTER_SECTION)
     assert response == expected_response_content
+    
+    # Reset history
+    mock_requests.reset()
+    
+    # Test with model override
+    override_model = "different-model/test"
+    mock_requests.post(
+        API_URL,
+        json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
+        status_code=200
+    )
+    response = call_openrouter(PROMPT, TEST_CONFIG_OPENROUTER_SECTION, model=override_model)
+    assert response == expected_response_content
+    
+    history = mock_requests.request_history
+    assert len(history) == 1
+    request = history[0]
+    assert request.json()['model'] == override_model
+    
+    # Reset history
+    mock_requests.reset()
+    
+    # Test with params override
+    override_params = {'temperature': 0.3, 'top_p': 0.9}
+    mock_requests.post(
+        API_URL,
+        json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}},
+        status_code=200
+    )
+    response = call_openrouter(PROMPT, TEST_CONFIG_OPENROUTER_SECTION, params=override_params)
+    assert response == expected_response_content
+    
+    history = mock_requests.request_history
+    assert len(history) == 1
+    request = history[0]
+    assert request.json()['temperature'] == override_params['temperature']
+    assert request.json()['top_p'] == override_params['top_p']
 

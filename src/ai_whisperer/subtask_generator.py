@@ -17,12 +17,14 @@ class SubtaskGenerator:
     """
     Handles the generation of detailed subtask YAML definitions from input steps.
     """
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str, overall_context: str = "", workspace_context: str = ""):
         """
         Initializes the SubtaskGenerator.
 
         Args:
             config_path: Path to the configuration file.
+            overall_context: The overall context string from the main task plan.
+            workspace_context: A string representing relevant workspace context (optional).
 
         Raises:
             ConfigError: If configuration loading fails.
@@ -35,6 +37,8 @@ class SubtaskGenerator:
             )
             self.subtask_prompt_template = self.config['prompts']['subtask_generator_prompt_content']
             self.output_dir = Path(self.config['output_dir'])
+            self.overall_context = overall_context
+            self.workspace_context = workspace_context # Store context
         except ConfigError as e:
             # Re-raise ConfigError to be handled by the caller
             raise e
@@ -45,11 +49,22 @@ class SubtaskGenerator:
             raise SubtaskGenerationError(f"Failed to initialize SubtaskGenerator: {e}") from e
 
     def _prepare_prompt(self, input_step: Dict[str, Any]) -> str:
-        """Prepares the prompt for the AI model."""
-        # Basic substitution for now, might need more complex templating (e.g., Jinja2) later
-        prompt = self.subtask_prompt_template.replace("{{ step_description }}", input_step.get('description', ''))
-        # TODO: Incorporate more context from input_step if needed
-        return prompt
+        """Prepares the prompt for the AI model using all context placeholders."""
+        try:
+            # Convert the input step dictionary to a YAML string
+            subtask_yaml_str = yaml.dump(input_step, sort_keys=False, default_flow_style=False, indent=2)
+
+            # Replace all placeholders in the template
+            prompt = self.subtask_prompt_template
+            prompt = prompt.replace("{subtask_yaml}", subtask_yaml_str)
+            # Use stored context
+            prompt = prompt.replace("{overall_context}", self.overall_context)
+            prompt = prompt.replace("{workspace_context}", self.workspace_context)
+
+            return prompt
+        except Exception as e:
+            # Catch potential errors during YAML dumping or string replacement
+            raise SubtaskGenerationError(f"Failed to prepare prompt: {e}") from e
 
     def generate_subtask(self, input_step: Dict[str, Any]) -> str:
         """
@@ -71,19 +86,35 @@ class SubtaskGenerator:
         step_id = input_step['step_id']
 
         try:
-            # 1. Prepare Prompt
+            # 1. Prepare Prompt (now uses stored context via self)
             prompt_content = self._prepare_prompt(input_step)
-            messages = [{"role": "user", "content": prompt_content}]
+            # messages = [{"role": "user", "content": prompt_content}] # Keep if switching to messages format
 
             # 2. Call AI Model
-            ai_response_yaml = self.openrouter_client.chat_completion(
-                messages=messages,
-                model=self.config['openrouter']['model'],
-                params=self.config['openrouter'].get('params', {})
+            # Get model and params from config
+            model = self.config['openrouter'].get('model')
+            params = self.config['openrouter'].get('params', {})
+            
+            # Call the API with full context
+            ai_response_yaml = self.openrouter_client.call_chat_completion(
+                prompt_text=prompt_content,
+                model=model,
+                params=params
             )
 
             if not ai_response_yaml:
                 raise SubtaskGenerationError("Received empty response from AI.")
+            # for now, let's always write the output to a file
+            output_filename = f"{step_id}_subtask_test.yaml"
+            output_path = self.output_dir / output_filename
+
+            try:
+                # Ensure output directory exists
+                self.output_dir.mkdir(parents=True, exist_ok=True)
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    f.write(ai_response_yaml)
+            except IOError as e:
+                raise SubtaskGenerationError(f"Failed to write output file {output_path}: {e}") from e
 
             # 3. Parse AI Response YAML
             try:
@@ -106,7 +137,6 @@ class SubtaskGenerator:
                 # Catch other potential validation errors
                 raise SubtaskGenerationError(f"Error during schema validation: {e}") from e
 
-
             # 5. Save Output YAML
             output_filename = f"{step_id}_subtask.yaml"
             output_path = self.output_dir / output_filename
@@ -118,6 +148,7 @@ class SubtaskGenerator:
                     yaml.dump(generated_data, f, sort_keys=False, default_flow_style=False)
             except IOError as e:
                 raise SubtaskGenerationError(f"Failed to write output file {output_path}: {e}") from e
+
 
             return str(output_path.resolve()) # Return absolute path
 

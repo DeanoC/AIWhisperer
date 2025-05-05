@@ -88,8 +88,8 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
    **This must be a verbatim, character-for-character copy. Do NOT modify, recalculate, reformat, or alter these hashes in any way.**
 6. Decompose the requirements **from `{md_content}`** into a logical sequence of steps (`plan`). Define `step_id`, `description`, `depends_on` (if any), and `agent_spec` for each step. **The entire `plan` must directly implement the requirements specified in `{md_content}`.** **Use concise, descriptive, `snake_case` names for `step_id` (e.g., `generate_tests`, `implement_feature`). Avoid hyphens.** Ensure `depends_on` is always present, using an empty list `[]` for initial steps.
 7. Populate the `agent_spec` with appropriate `type`, `input_artifacts`, `output_artifacts`, detailed `instructions`, and optionally `constraints` and `validation_criteria`, **all derived from the analysis of `{md_content}`**.
-   - **Include meaningful `validation_criteria` for all step types, including `planning` and `documentation`, to clearly verify step completion.**
-       - For `planning` steps, consider adding an output artifact (e.g., `docs/analysis_summary.md`) and validating its creation and content clarity. Example:
+   * **Include meaningful `validation_criteria` for all step types, including `planning` and `documentation`, to clearly verify step completion.**
+       * For `planning` steps, consider adding an output artifact (e.g., `docs/analysis_summary.md`) and validating its creation and content clarity. Example:
 
            ```yaml
            output_artifacts:
@@ -100,7 +100,7 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
              - docs/analysis_summary.md outlines a high-level implementation plan.
            ```
 
-       - For `documentation` steps, ensure criteria explicitly cover all documented items separately. Example:
+       * For `documentation` steps, ensure criteria explicitly cover all documented items separately. Example:
 
            ```yaml
            validation_criteria:
@@ -108,32 +108,36 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
              - CLI help message clearly documents the new CLI option.
            ```
 
-   - **Use explicit and consistent relative paths for artifacts** (e.g., `src/module/file.py`, `tests/unit/test_file.py`, `docs/feature.md`). Ensure consistency in path structure (e.g., always use `tests/unit/` for unit tests).
+   * **Use explicit and consistent relative paths for artifacts** (e.g., `src/module/file.py`, `tests/unit/test_file.py`, `docs/feature.md`). Ensure consistency in path structure (e.g., always use `tests/unit/` for unit tests).
 
 8. **Prioritize Agent Types:** When assigning the `agent_spec.type`, prioritize using types from the following list where applicable:
-   - `planning`: For steps involving breaking down tasks, analyzing requirements, or designing approaches.
-   - `code_generation`: For steps that write new code files or significant code blocks.
-   - `test_generation`: Specifically for generating unit tests or test cases.
-   - `file_edit`: For steps that modify existing files (code, configuration, documentation). Use this instead of `code_generation` for modifications.
-   - `validation`: For steps that check code quality, run tests, or verify outputs against criteria (e.g., linting, testing execution, schema validation).
-   - `documentation`: For steps focused on writing or updating documentation (READMEs, docstrings, comments).
-   - `file_io`: For basic file operations like creating directories, moving files, etc., if needed as separate steps.
-   - `analysis`: For steps focused on understanding existing code or data before modification or generation.
-   - `refinement`: For steps specifically designed to improve or correct the output of a previous step based on feedback or validation results.
+   * `planning`: For steps involving breaking down tasks, analyzing requirements, or designing approaches.
+   * `code_generation`: For steps that write new code files or significant code blocks.
+   * `test_generation`: Specifically for generating unit tests or test cases.
+   * `file_edit`: For steps that modify existing files (code, configuration, documentation). Use this instead of `code_generation` for modifications.
+   * `validation`: For steps that check code quality, run tests, or verify outputs against criteria (e.g., linting, testing execution, schema validation).
+   * `documentation`: For steps focused on writing or updating documentation (READMEs, docstrings, comments).
+   * `file_io`: For basic file operations like creating directories, moving files, etc., if needed as separate steps.
+   * `analysis`: For steps focused on understanding existing code or data before modification or generation.
+   * `refinement`: For steps specifically designed to improve or correct the output of a previous step based on feedback or validation results.
    If none of these fit well, you may use another descriptive type.
-9. **Test-Driven Development (TDD):** This project follows a TDD methodology. For any step involving code generation (`type: 'code_generation'` or similar) **required by `{md_content}`**:
-   - The plan must include a preceding or associated step (`type: 'test_generation'` or similar) to generate unit tests for the code *before* the code itself is generated.
-   - These tests should be designed to verify the requirements thoroughly and avoid special casing (e.g., use randomized or varied inputs/identifiers where appropriate, not just fixed examples).
-   - The validation criteria for the test generation step should ensure tests are created.
-   - The validation criteria for the code generation step must include verification that the previously generated tests, which should initially fail against non-existent or placeholder code, now pass using the newly generated code.
-   - The instructions for the code generation agent must explicitly forbid implementing code that *only* passes the specific generated tests (i.e., no special-case logic tailored solely to the tests). The code must correctly implement the required functionality.
+9. **Strict Test-Driven Development (TDD):** This project MANDATES a strict TDD methodology. For **any** step involving the creation or modification of executable code (i.e., `type: 'code_generation'` or `type: 'file_edit'`) **required by `{md_content}`**:
+   * **Test Generation First:** The plan **must** include a dedicated step (`type: 'test_generation'`) that **strictly precedes** the corresponding `code_generation` or `file_edit` step in the plan sequence. This test step must generate tests specifically for the code that will be created or modified in the subsequent step.
+   * **Dependency on Tests:** The `code_generation` or `file_edit` step **must** list the corresponding `test_generation` step ID in its `depends_on` list.
+   * **Validation After:** Following the `code_generation` or `file_edit` step, the plan **must** include a dedicated step (`type: 'validation'`) responsible for executing the specific tests generated in the preceding `test_generation` step. This validation step **must** depend on the `code_generation` or `file_edit` step.
+   * **Test Generation Instructions:** The `test_generation` step's instructions should emphasize creating tests that thoroughly verify the requirements for the *specific code being generated/modified in the next step*. Avoid special casing (e.g., use randomized or varied inputs/identifiers where appropriate, not just fixed examples). Its `validation_criteria` must ensure the test file(s) are created or updated appropriately (e.g., `tests/unit/test_my_feature.py exists`, `tests/unit/test_my_feature.py contains test_new_functionality`).
+   * **Validation Instructions:** The `validation` step's instructions must specify running the relevant tests generated in the preceding test step (e.g., using `pytest tests/unit/test_my_feature.py::test_new_functionality`). Its `validation_criteria` must confirm that the test execution command runs successfully and that the specific tests pass (e.g., `pytest tests/unit/test_my_feature.py::test_new_functionality executes successfully`, `Test test_new_functionality in tests/unit/test_my_feature.py passes`).
+   * **Code/Edit Agent Instructions:** The instructions for the `code_generation` or `file_edit` agent **must** explicitly forbid implementing code that *only* passes the specific generated tests (i.e., no special-case logic tailored solely to the tests). The code must correctly implement the required functionality as described in the requirements.
 10. **Code Reuse:** For steps with `type: 'code_generation'` or `type: 'file_edit'` **required by `{md_content}`**, ensure the `agent_spec.instructions` explicitly directs the executor agent to:
-   - First, examine the existing codebase (especially potentially relevant utility modules like `utils.py`, `config.py`, `exceptions.py`, etc.) for functions, classes, constants, or custom exceptions that can be reused to fulfill the task. **Mention specific potentially relevant modules (including `exceptions.py` if error handling is involved) in the instructions.**
-   - Only implement new logic if suitable existing code cannot be found or adapted.
-   - If reusing code, ensure it's imported and used correctly according to project conventions.
-11. **YAML Syntax for Strings:** Pay close attention to valid YAML syntax. **ABSOLUTELY DO NOT use markdown-style backticks (`) within simple YAML string values.** This applies especially to list items in fields like `validation_criteria`, `constraints`, `input_artifacts`, and `output_artifacts`.
-   - **Correct:** Use plain strings (e.g., `README.md`) or standard YAML single/double quotes (`'README.md'`, `"src/main.py"`) when referring to files or code elements in these lists.
-   - **Incorrect (DO NOT DO THIS):**
+
+* First, examine the existing codebase (especially potentially relevant utility modules like `utils.py`, `config.py`, `exceptions.py`, etc.) for functions, classes, constants, or custom exceptions that can be reused to fulfill the task. **Mention specific potentially relevant modules (including `exceptions.py` if error handling is involved) in the instructions.**
+* Only implement new logic if suitable existing code cannot be found or adapted.
+* If reusing code, ensure it's imported and used correctly according to project conventions.
+
+11. **YAML Syntax for Strings:** Pay close attention to valid YAML syntax. **ABSOLUTELY DO NOT use markdown-style backticks (`) within simple YAML string values.** This applies especially to list items in fields like`validation_criteria`,`constraints`,`input_artifacts`, and`output_artifacts`.
+
+* **Correct:** Use plain strings (e.g., `README.md`) or standard YAML single/double quotes (`'README.md'`, `"src/main.py"`) when referring to files or code elements in these lists.
+* **Incorrect (DO NOT DO THIS):**
 
        ```yaml
        validation_criteria:
@@ -141,7 +145,7 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
          - Check `src/main.py` for changes # INVALID YAML
        ```
 
-   - **Correct Example:**
+* **Correct Example:**
 
        ```yaml
        validation_criteria:
@@ -150,10 +154,11 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
          - Output file output/result.txt exists
        ```
 
-   - Backticks (`) are ONLY acceptable when they are part of the *content* of a properly formatted YAML multi-line block scalar (like the `instructions` field, which uses `|` or `>`).
+* Backticks (`) are ONLY acceptable when they are part of the *content* of a properly formatted YAML multi-line block scalar (like the`instructions` field, which uses `|` or `>`).
 
 12. Format the `description` and `instructions` fields clearly and actionably. **Crucially, the `instructions` field MUST be a single YAML string.** Use YAML multi-line string syntax (`|` or `>`) and internal markdown formatting (e.g., bullet points, numbered lists, and backticks for code elements *within this block*) within that single string for clarity, similar to the project's planning documents.
-   - **Example of correct multi-line instructions string:**
+
+* **Example of correct multi-line instructions string:**
 
        ```yaml
        instructions: |
@@ -165,17 +170,10 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
          Generate the second file using Y.
        ```
 
-   - **Do NOT generate a YAML list like `instructions: ['Line 1', 'Line 2']`.**
+* **Do NOT generate a YAML list like `instructions: ['Line 1', 'Line 2']`.**
+
+13. **YAML Structure:** Ensure the generated YAML is perfectly valid. Each top-level key (`task_id`, `natural_language_goal`, `overall_context`, `input_hashes`, `plan`) **MUST** start on a new line. Do not place multiple top-level keys on the same line. Indentation must be consistent (typically 2 spaces).
 
 **User Requirements Provided:**
 
 **(Remember: The following requirements are the ONLY source for the generated plan. Do NOT invent other tasks.)**
-
-```markdown
-{md_content}
-```
-
-**Generate the YAML output now:**
-
-```yaml
-```

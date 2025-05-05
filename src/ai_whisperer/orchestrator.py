@@ -247,9 +247,15 @@ class Orchestrator:
             # 5. Call OpenRouter API
             logger.info("Calling OpenRouter API...")
             try:
+                # Get model and params from the openrouter_config if available
+                model = self.openrouter_config.get('model')
+                params = self.openrouter_config.get('params')
+                
                 api_response_content = openrouter_api.call_openrouter(
                     prompt_text=final_prompt,
-                    config=self.openrouter_config
+                    config=self.openrouter_config,
+                    model=model,
+                    params=params
                 )
                 logger.info("Received response from OpenRouter API.")
                 logger.debug(f"API Response content:\n{api_response_content}")
@@ -355,8 +361,16 @@ class Orchestrator:
         
         # Initialize subtask generator
         from .subtask_generator import SubtaskGenerator
-        subtask_generator = SubtaskGenerator(config_path_str)
-        logger.info("Initialized subtask generator")
+        # Extract overall_context from the loaded task data
+        overall_context = task_data.get('overall_context', '') # Default to empty string if missing
+        # TODO: Implement workspace context gathering if needed
+        workspace_context = "" # Placeholder for now
+        subtask_generator = SubtaskGenerator(
+            config_path=config_path_str, 
+            overall_context=overall_context, 
+            workspace_context=workspace_context
+        )
+        logger.info("Initialized subtask generator with overall context.")
         
         # Generate subtask for each step
         subtask_paths = []

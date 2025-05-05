@@ -215,11 +215,9 @@ class TestOrchestratorSubtasks:
     @patch('src.ai_whisperer.orchestrator.yaml.safe_load')
     @patch('builtins.open', new_callable=mock_open, read_data="test content")
     def test_generate_full_project_plan(self, mock_file_open, mock_yaml_load, mock_hash, 
-                                       mock_is_file, mock_api_call, orchestrator):
-        # Setup mocks
-        mock_api_call.return_value = "```yaml\ninput_hashes:\n  requirements_md: test_hash\n  config_yaml: test_hash\n  prompt_file: test_hash\nsteps:\n- step_id: step1\n```"
-        
-        # Mock yaml loads for task plan
+                                       mock_is_file, mock_api_call, orchestrator):        # Setup mocks
+        mock_api_call.return_value = "```yaml\ninput_hashes:\n  requirements_md: test_hash\n  config_yaml: test_hash\n  prompt_file: test_hash\nplan:\n- step_id: step1\n```"
+          # Mock yaml loads for task plan
         mock_yaml_load.side_effect = [
             # First for API response parsing
             {
@@ -228,11 +226,11 @@ class TestOrchestratorSubtasks:
                     'config_yaml': 'test_hash',
                     'prompt_file': 'test_hash'
                 },
-                'steps': [{'step_id': 'step1'}, {'step_id': 'step2'}]
+                'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}]
             },
             # Second for reading back the task plan
             {
-                'steps': [{'step_id': 'step1'}, {'step_id': 'step2'}]
+                'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}]
             }
         ]
         
@@ -250,13 +248,23 @@ class TestOrchestratorSubtasks:
                 # Call the method under test
                 result = orchestrator.generate_full_project_plan('requirements.md', 'config.yaml')
                 
-        # Assertions
-        assert result is not None
-        assert 'task_plan' in result
-        assert 'subtasks' in result
-        assert len(result['subtasks']) == 2
-        assert result['subtasks'][0] == Path('/tmp/output/subtask_step1.yaml')
-        assert mock_generator.generate_subtask.call_count == 2
+                # Check that the openrouter call had the correct arguments
+                mock_api_call.assert_called_once()
+                call_args = mock_api_call.call_args
+                assert 'prompt_text' in call_args[1]
+                assert 'config' in call_args[1]
+                assert 'model' in call_args[1]
+                assert 'params' in call_args[1]
+                assert call_args[1]['model'] == orchestrator.openrouter_config.get('model')
+                assert call_args[1]['params'] == orchestrator.openrouter_config.get('params')
+                
+                # Assertions
+                assert result is not None
+                assert 'task_plan' in result
+                assert 'subtasks' in result
+                assert len(result['subtasks']) == 2
+                assert result['subtasks'][0] == Path('/tmp/output/subtask_step1.yaml')
+                assert mock_generator.generate_subtask.call_count == 2
     
     @patch('src.ai_whisperer.orchestrator.openrouter_api.call_openrouter')
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
@@ -264,9 +272,8 @@ class TestOrchestratorSubtasks:
     @patch('src.ai_whisperer.orchestrator.yaml.safe_load')
     @patch('builtins.open', new_callable=mock_open, read_data="test content")
     def test_generate_full_project_plan_no_steps(self, mock_file_open, mock_yaml_load, 
-                                               mock_hash, mock_is_file, mock_api_call, orchestrator):
-        # Setup mocks
-        mock_api_call.return_value = "```yaml\ninput_hashes:\n  requirements_md: test_hash\n  config_yaml: test_hash\n  prompt_file: test_hash\nsteps: []\n```"
+                                               mock_hash, mock_is_file, mock_api_call, orchestrator):        # Setup mocks
+        mock_api_call.return_value = "```yaml\ninput_hashes:\n  requirements_md: test_hash\n  config_yaml: test_hash\n  prompt_file: test_hash\nplan: []\n```"
         
         # Mock yaml loads for empty task plan
         mock_yaml_load.side_effect = [
@@ -277,11 +284,11 @@ class TestOrchestratorSubtasks:
                     'config_yaml': 'test_hash',
                     'prompt_file': 'test_hash'
                 },
-                'steps': []
+                'plan': []
             },
             # Second for reading back the task plan
             {
-                'steps': []
+                'plan': []
             }
         ]
         
@@ -294,6 +301,16 @@ class TestOrchestratorSubtasks:
                 
                 # Call the method under test
                 result = orchestrator.generate_full_project_plan('requirements.md', 'config.yaml')
+                
+                # Check that the openrouter call had the correct arguments
+                mock_api_call.assert_called_once()
+                call_args = mock_api_call.call_args
+                assert 'prompt_text' in call_args[1]
+                assert 'config' in call_args[1]
+                assert 'model' in call_args[1]
+                assert 'params' in call_args[1]
+                assert call_args[1]['model'] == orchestrator.openrouter_config.get('model')
+                assert call_args[1]['params'] == orchestrator.openrouter_config.get('params')
                 
         # Assertions
         assert result is not None
