@@ -231,6 +231,13 @@ class TestOrchestratorSubtasks:
             # Second for reading back the task plan
             {
                 'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}]
+            },
+            # Additional mocks for any other yaml.safe_load calls
+            {
+                'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}]
+            },
+            {
+                'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}]
             }
         ]
         # Mock jsonschema validation
@@ -244,9 +251,7 @@ class TestOrchestratorSubtasks:
                     Path('/tmp/output/subtask_step3.yaml')
                 ]
                 mock_subtask_gen.return_value = mock_generator
-                mock_subtask_gen.return_value = mock_generator
                 # Call the method under test
-                result = orchestrator.generate_full_project_plan('requirements.md', 'config.yaml')
                 result = orchestrator.generate_full_project_plan('requirements.md', 'config.yaml')
                 # Check that the openrouter call had the correct arguments
                 mock_api_call.assert_called_once()
@@ -256,15 +261,13 @@ class TestOrchestratorSubtasks:
                 assert 'params' in call_args[1]
                 assert call_args[1]['model'] == orchestrator.openrouter_config.get('model')
                 assert call_args[1]['params'] == orchestrator.openrouter_config.get('params')
-                # Fix: Check if params exists in openrouter_config before comparing
-                # Assertionsin orchestrator.openrouter_config:
+                # Assertions
                 assert result is not None
                 assert 'task_plan' in result
                 assert 'subtasks' in result
                 assert len(result['subtasks']) == 2
                 assert result['subtasks'][0] == Path('/tmp/output/subtask_step1.yaml')
                 assert mock_generator.generate_subtask.call_count == 2
-                assert 'task_plan' in result
     @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI.call_chat_completion')
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
