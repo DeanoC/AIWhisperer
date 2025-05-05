@@ -168,13 +168,21 @@ agent_spec:
                     # Get the YAML content that would have been written
                     # This is a bit tricky since we're mocking open
                     # We need to find the call where the YAML was written
+                    yaml_written = False
                     for call in mock_open.mock_calls:
                         if call[0] == '().__enter__().write':
                             # Convert the written string back to YAML
                             written_yaml = yaml.safe_load(call[1][0])
-                            
+                                
                             # Verify that subtask_id was added
+                            assert isinstance(written_yaml, dict), f"Expected dict, got {type(written_yaml)}: {written_yaml}"
                             assert 'subtask_id' in written_yaml
+                            assert written_yaml['subtask_id'] == "test-subtask-uuid"
+                            yaml_written = True
+                            break
+                        
+                    # Make sure we actually found and checked a YAML write
+                    assert yaml_written, "No YAML write operation was found in the mock calls"
                             assert written_yaml['subtask_id'] == "test-subtask-uuid"
                             break
             
