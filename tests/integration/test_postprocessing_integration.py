@@ -38,9 +38,8 @@ plan:
         # Ensure the mock is used instead of making real API calls
         orchestrator_module = 'src.ai_whisperer.orchestrator'
         with patch(f'{orchestrator_module}.OpenRouterAPI', return_value=mock_api_instance):
-        
-        # Create a test config
-        test_config = {
+            # Create a test config
+            test_config = {
             'openrouter': {
                 'api_key': 'test-key',
                 'model': 'test-model',
@@ -52,49 +51,49 @@ plan:
             }
         }
         
-        # Create temporary files for testing
-        tmp_dir = Path("./tmp_test")
-        tmp_dir.mkdir(exist_ok=True)
+            # Create temporary files for testing
+            tmp_dir = Path("./tmp_test")
+            tmp_dir.mkdir(exist_ok=True)
+            
+            requirements_path = tmp_dir / "test_requirements.md"
+            with open(requirements_path, 'w') as f:
+                f.write("Test requirements")
+            
+            config_path = tmp_dir / "test_config.yaml"
+            with open(config_path, 'w') as f:
+                yaml.dump(test_config, f)
+            
+            # Create orchestrator and call generate_initial_yaml
+            orchestrator = Orchestrator(test_config, output_dir=str(tmp_dir))
         
-        requirements_path = tmp_dir / "test_requirements.md"
-        with open(requirements_path, 'w') as f:
-            f.write("Test requirements")
-        
-        config_path = tmp_dir / "test_config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(test_config, f)
-        
-        # Create orchestrator and call generate_initial_yaml
-        orchestrator = Orchestrator(test_config, output_dir=str(tmp_dir))
-        
-        # Mock the _calculate_input_hashes method to return a fixed hash
-        with patch.object(orchestrator, '_calculate_input_hashes', return_value={
-            'requirements_md': 'test-hash-1',
-            'config_yaml': 'test-hash-2',
-            'prompt_file': 'test-hash-3'
-        }):
-            # Mock the _validate_yaml_response method to avoid validation
-            with patch.object(orchestrator, '_validate_yaml_response'):
-                # Mock the save_yaml method to capture the YAML content
-                with patch.object(orchestrator, 'save_yaml', return_value=tmp_dir / "output.yaml") as mock_save:
-                    orchestrator.generate_initial_yaml(str(requirements_path), str(config_path))
-                    
-                    # Get the YAML content that would have been saved
-                    saved_yaml = mock_save.call_args[0][0]
-                    
-                    # Verify that task_id and input_hashes were added
-                    assert 'task_id' in saved_yaml
-                    assert saved_yaml['task_id'] == "test-uuid"
-                    assert 'input_hashes' in saved_yaml
-                    assert saved_yaml['input_hashes'] == {
-                        'requirements_md': 'test-hash-1',
-                        'config_yaml': 'test-hash-2',
-                        'prompt_file': 'test-hash-3'
-                    }
-        
-        # Clean up
-        import shutil
-        shutil.rmtree(tmp_dir)
+            # Mock the _calculate_input_hashes method to return a fixed hash
+            with patch.object(orchestrator, '_calculate_input_hashes', return_value={
+                'requirements_md': 'test-hash-1',
+                'config_yaml': 'test-hash-2',
+                'prompt_file': 'test-hash-3'
+            }):
+                # Mock the _validate_yaml_response method to avoid validation
+                with patch.object(orchestrator, '_validate_yaml_response'):
+                    # Mock the save_yaml method to capture the YAML content
+                    with patch.object(orchestrator, 'save_yaml', return_value=tmp_dir / "output.yaml") as mock_save:
+                        orchestrator.generate_initial_yaml(str(requirements_path), str(config_path))
+                        
+                        # Get the YAML content that would have been saved
+                        saved_yaml = mock_save.call_args[0][0]
+                        
+                        # Verify that task_id and input_hashes were added
+                        assert 'task_id' in saved_yaml
+                        assert saved_yaml['task_id'] == "test-uuid"
+                        assert 'input_hashes' in saved_yaml
+                        assert saved_yaml['input_hashes'] == {
+                            'requirements_md': 'test-hash-1',
+                            'config_yaml': 'test-hash-2',
+                            'prompt_file': 'test-hash-3'
+                        }
+            
+            # Clean up
+            import shutil
+            shutil.rmtree(tmp_dir)
 
 
 class TestSubtaskGeneratorPostprocessingIntegration:
@@ -120,9 +119,8 @@ agent_spec:
         # Ensure the mock is used instead of making real API calls
         subtask_generator_module = 'src.ai_whisperer.subtask_generator'
         with patch(f'{subtask_generator_module}.OpenRouterAPI', return_value=mock_api_instance):
-        
-        # Create a test config
-        test_config = {
+            # Create a test config
+            test_config = {
             'openrouter': {
                 'api_key': 'test-key',
                 'model': 'test-model',
@@ -134,50 +132,50 @@ agent_spec:
             }
         }
         
-        # Create temporary directory for testing
-        tmp_dir = Path("./tmp_test")
-        tmp_dir.mkdir(exist_ok=True)
-        
-        config_path = tmp_dir / "test_config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(test_config, f)
-        
-        # Create input step
-        input_step = {
-            'step_id': 'test_step',
-            'description': 'Test step',
-            'agent_spec': {
-                'type': 'test',
-                'instructions': 'Test instructions'
+            # Create temporary directory for testing
+            tmp_dir = Path("./tmp_test")
+            tmp_dir.mkdir(exist_ok=True)
+            
+            config_path = tmp_dir / "test_config.yaml"
+            with open(config_path, 'w') as f:
+                yaml.dump(test_config, f)
+            
+            # Create input step
+            input_step = {
+                'step_id': 'test_step',
+                'description': 'Test step',
+                'agent_spec': {
+                    'type': 'test',
+                    'instructions': 'Test instructions'
+                }
             }
-        }
+            
+            # Create subtask generator
+            subtask_generator = SubtaskGenerator(str(config_path), output_dir=str(tmp_dir))
         
-        # Create subtask generator
-        subtask_generator = SubtaskGenerator(str(config_path), output_dir=str(tmp_dir))
-        
-        # Mock the validate_against_schema method to avoid validation
-        with patch('src.ai_whisperer.subtask_generator.validate_against_schema'):
-            # Patch open to capture the written YAML
-            with patch('builtins.open', create=True) as mock_open:
-                # Call generate_subtask
-                subtask_generator.generate_subtask(input_step)
-                
-                # Get the YAML content that would have been written
-                # This is a bit tricky since we're mocking open
-                # We need to find the call where the YAML was written
-                for call in mock_open.mock_calls:
-                    if call[0] == '().__enter__().write':
-                        # Convert the written string back to YAML
-                        written_yaml = yaml.safe_load(call[1][0])
-                        
-                        # Verify that subtask_id was added
-                        assert 'subtask_id' in written_yaml
-                        assert written_yaml['subtask_id'] == "test-subtask-uuid"
-                        break
-        
-        # Clean up
-        import shutil
-        shutil.rmtree(tmp_dir)
+            # Mock the validate_against_schema method to avoid validation
+            with patch('src.ai_whisperer.subtask_generator.validate_against_schema'):
+                # Patch open to capture the written YAML
+                with patch('builtins.open', create=True) as mock_open:
+                    # Call generate_subtask
+                    subtask_generator.generate_subtask(input_step)
+                    
+                    # Get the YAML content that would have been written
+                    # This is a bit tricky since we're mocking open
+                    # We need to find the call where the YAML was written
+                    for call in mock_open.mock_calls:
+                        if call[0] == '().__enter__().write':
+                            # Convert the written string back to YAML
+                            written_yaml = yaml.safe_load(call[1][0])
+                            
+                            # Verify that subtask_id was added
+                            assert 'subtask_id' in written_yaml
+                            assert written_yaml['subtask_id'] == "test-subtask-uuid"
+                            break
+            
+            # Clean up
+            import shutil
+            shutil.rmtree(tmp_dir)
 
 
 class TestPostprocessorDirectIntegration:
