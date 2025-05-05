@@ -35,6 +35,9 @@ plan:
       type: test
       instructions: Test instructions
 """
+        # Ensure the mock is used instead of making real API calls
+        orchestrator_module = 'src.ai_whisperer.orchestrator'
+        with patch(f'{orchestrator_module}.OpenRouterAPI', return_value=mock_api_instance):
         
         # Create a test config
         test_config = {
@@ -114,6 +117,9 @@ agent_spec:
   type: test
   instructions: Test instructions
 """
+        # Ensure the mock is used instead of making real API calls
+        subtask_generator_module = 'src.ai_whisperer.subtask_generator'
+        with patch(f'{subtask_generator_module}.OpenRouterAPI', return_value=mock_api_instance):
         
         # Create a test config
         test_config = {
