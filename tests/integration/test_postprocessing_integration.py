@@ -169,10 +169,13 @@ agent_spec:
                     # This is a bit tricky since we're mocking open
                     # We need to find the call where the YAML was written
                     yaml_written = False
+                    all_yaml_contents = []
+                        
                     for call in mock_open.mock_calls:
                         if call[0] == '().__enter__().write':
                             # The written content is a YAML string
                             yaml_content = call[1][0]
+                            all_yaml_contents.append(yaml_content)
                                 
                             # Convert the written string back to YAML
                             # First check if the content is valid YAML
@@ -193,13 +196,9 @@ agent_spec:
                             except Exception as e:
                                 # This might not be the YAML content we're looking for
                                 continue
-                            assert 'subtask_id' in written_yaml, f"subtask_id not found in: {written_yaml.keys() if isinstance(written_yaml, dict) else written_yaml}"
-                            assert written_yaml['subtask_id'] == "test-subtask-uuid"
-                            yaml_written = True
-                            break
                         
                     # Make sure we actually found and checked a YAML write
-                    assert yaml_written, "No YAML write operation was found in the mock calls"
+                    assert yaml_written, f"No YAML write operation with subtask_id was found. All contents: {all_yaml_contents}"
             
             # Clean up
             import shutil

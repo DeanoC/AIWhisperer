@@ -160,6 +160,7 @@ class SubtaskGenerator:
                     "items_to_add": {
                         "top_level": {
                             "subtask_id": str(uuid.uuid4()),  # Generate a unique subtask ID
+                            "step_id": step_id  # Preserve the original step_id
                         },
                         "step_level": {}  # No step-level items for subtasks
                     },
