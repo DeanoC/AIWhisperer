@@ -66,6 +66,36 @@ class SubtaskGenerator:
             # Catch potential errors during YAML dumping or string replacement
             raise SubtaskGenerationError(f"Failed to prepare prompt: {e}") from e
 
+    def _sanitize_yaml_content(self, yaml_string: str) -> str:
+        """
+        Sanitize YAML content before parsing to handle common issues.
+        
+        Args:
+            yaml_string: The raw YAML string to sanitize
+            
+        Returns:
+            The sanitized YAML string
+        """
+        import re
+        
+        # Look for validation criteria with problematic quoted strings and escape them
+        pattern = r'(-\s.*)"(.+?)"(.*)'
+        sanitized = re.sub(pattern, r'\1"\2"\3', yaml_string)
+        
+        # Look for colon characters in list items that might be confused for mapping keys
+        pattern = r'(-\s.*:.+)'
+        
+        def escape_colon_in_list_item(match):
+            # Wrap the entire list item in quotes if it contains a colon but isn't already quoted
+            item = match.group(1)
+            if '"' not in item:
+                return f'- "{item[2:]}"'
+            return match.group(0)
+            
+        sanitized = re.sub(pattern, escape_colon_in_list_item, sanitized)
+        
+        return sanitized
+
     def generate_subtask(self, input_step: Dict[str, Any]) -> str:
         """
         Generates a detailed subtask YAML definition for the given input step.
@@ -94,31 +124,36 @@ class SubtaskGenerator:
             # Get model and params from config
             model = self.config['openrouter'].get('model')
             params = self.config['openrouter'].get('params', {})
-            
-            # Call the API with full context
+              # Call the API with full context
             ai_response_yaml = self.openrouter_client.call_chat_completion(
                 prompt_text=prompt_content,
                 model=model,
                 params=params
             )
-
+            
             if not ai_response_yaml:
                 raise SubtaskGenerationError("Received empty response from AI.")
-            # for now, let's always write the output to a file
-            output_filename = f"{step_id}_subtask_test.yaml"
-            output_path = self.output_dir / output_filename
-
-            try:
-                # Ensure output directory exists
-                self.output_dir.mkdir(parents=True, exist_ok=True)
-                with open(output_path, 'w', encoding='utf-8') as f:
-                    f.write(ai_response_yaml)
-            except IOError as e:
-                raise SubtaskGenerationError(f"Failed to write output file {output_path}: {e}") from e
+                 
+            # Extract the YAML content (will be done in parsing step)
 
             # 3. Parse AI Response YAML
             try:
-                generated_data = yaml.safe_load(ai_response_yaml)
+                # Extract YAML content from potential markdown code blocks
+                yaml_string = ai_response_yaml
+                if "```yaml" in ai_response_yaml:
+                    parts = ai_response_yaml.split("```yaml", 1)
+                    if len(parts) > 1:
+                        yaml_string = parts[1].split("```", 1)[0].strip()
+                elif "```" in ai_response_yaml:
+                    parts = ai_response_yaml.split("```", 1)
+                    if len(parts) > 1:
+                        yaml_string = parts[1].split("```", 1)[0].strip()
+                
+                # Sanitize the YAML content
+                yaml_string = self._sanitize_yaml_content(yaml_string)
+                
+                # Parse the YAML content
+                generated_data = yaml.safe_load(yaml_string)
                 if not isinstance(generated_data, dict):
                      raise ValueError("Parsed YAML is not a dictionary.")
             except (yaml.YAMLError, ValueError) as e:

@@ -110,7 +110,25 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
 
    * **Use explicit and consistent relative paths for artifacts** (e.g., `src/module/file.py`, `tests/unit/test_file.py`, `docs/feature.md`). Ensure consistency in path structure (e.g., always use `tests/unit/` for unit tests).
 
-8. **Prioritize Agent Types:** When assigning the `agent_spec.type`, prioritize using types from the following list where applicable:
+8. **IMPORTANT YAML FORMATTING GUIDELINES:** For text fields that might contain colons or other special YAML characters:
+   
+   * For `overall_context`, always use block scalar format with pipe:
+   
+   ```yaml
+   overall_context: |
+     This is text with special characters: colons, dashes, etc.
+     The pipe character ensures proper parsing.
+   ```
+   
+   * Similarly for `agent_spec.instructions`:
+   
+   ```yaml
+   instructions: |
+     Step 1: Do this first.
+     Step 2: Then do this next.
+   ```
+
+9. **Prioritize Agent Types:** When assigning the `agent_spec.type`, prioritize using types from the following list where applicable:
    * `planning`: For steps involving breaking down tasks, analyzing requirements, or designing approaches.
    * `code_generation`: For steps that write new code files or significant code blocks.
    * `test_generation`: Specifically for generating unit tests or test cases.
@@ -121,20 +139,20 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
    * `analysis`: For steps focused on understanding existing code or data before modification or generation.
    * `refinement`: For steps specifically designed to improve or correct the output of a previous step based on feedback or validation results.
    If none of these fit well, you may use another descriptive type.
-9. **Strict Test-Driven Development (TDD):** This project MANDATES a strict TDD methodology. For **any** step involving the creation or modification of executable code (i.e., `type: 'code_generation'` or `type: 'file_edit'`) **required by `{md_content}`**:
+10. **Strict Test-Driven Development (TDD):** This project MANDATES a strict TDD methodology. For **any** step involving the creation or modification of executable code (i.e., `type: 'code_generation'` or `type: 'file_edit'`) **required by `{md_content}`**:
    * **Test Generation First:** The plan **must** include a dedicated step (`type: 'test_generation'`) that **strictly precedes** the corresponding `code_generation` or `file_edit` step in the plan sequence. This test step must generate tests specifically for the code that will be created or modified in the subsequent step.
    * **Dependency on Tests:** The `code_generation` or `file_edit` step **must** list the corresponding `test_generation` step ID in its `depends_on` list.
    * **Validation After:** Following the `code_generation` or `file_edit` step, the plan **must** include a dedicated step (`type: 'validation'`) responsible for executing the specific tests generated in the preceding `test_generation` step. This validation step **must** depend on the `code_generation` or `file_edit` step.
    * **Test Generation Instructions:** The `test_generation` step's instructions should emphasize creating tests that thoroughly verify the requirements for the *specific code being generated/modified in the next step*. Avoid special casing (e.g., use randomized or varied inputs/identifiers where appropriate, not just fixed examples). Its `validation_criteria` must ensure the test file(s) are created or updated appropriately (e.g., `tests/unit/test_my_feature.py exists`, `tests/unit/test_my_feature.py contains test_new_functionality`).
    * **Validation Instructions:** The `validation` step's instructions must specify running the relevant tests generated in the preceding test step (e.g., using `pytest tests/unit/test_my_feature.py::test_new_functionality`). Its `validation_criteria` must confirm that the test execution command runs successfully and that the specific tests pass (e.g., `pytest tests/unit/test_my_feature.py::test_new_functionality executes successfully`, `Test test_new_functionality in tests/unit/test_my_feature.py passes`).
    * **Code/Edit Agent Instructions:** The instructions for the `code_generation` or `file_edit` agent **must** explicitly forbid implementing code that *only* passes the specific generated tests (i.e., no special-case logic tailored solely to the tests). The code must correctly implement the required functionality as described in the requirements.
-10. **Code Reuse:** For steps with `type: 'code_generation'` or `type: 'file_edit'` **required by `{md_content}`**, ensure the `agent_spec.instructions` explicitly directs the executor agent to:
+11. **Code Reuse:** For steps with `type: 'code_generation'` or `type: 'file_edit'` **required by `{md_content}`**, ensure the `agent_spec.instructions` explicitly directs the executor agent to:
 
 * First, examine the existing codebase (especially potentially relevant utility modules like `utils.py`, `config.py`, `exceptions.py`, etc.) for functions, classes, constants, or custom exceptions that can be reused to fulfill the task. **Mention specific potentially relevant modules (including `exceptions.py` if error handling is involved) in the instructions.**
 * Only implement new logic if suitable existing code cannot be found or adapted.
 * If reusing code, ensure it's imported and used correctly according to project conventions.
 
-11. **YAML Syntax for Strings:** Pay close attention to valid YAML syntax. **ABSOLUTELY DO NOT use markdown-style backticks (`) within simple YAML string values.** This applies especially to list items in fields like`validation_criteria`,`constraints`,`input_artifacts`, and`output_artifacts`.
+12. **YAML Syntax for Strings:** Pay close attention to valid YAML syntax. **ABSOLUTELY DO NOT use markdown-style backticks (`) within simple YAML string values.** This applies especially to list items in fields like`validation_criteria`,`constraints`,`input_artifacts`, and`output_artifacts`.
 
 * **Correct:** Use plain strings (e.g., `README.md`) or standard YAML single/double quotes (`'README.md'`, `"src/main.py"`) when referring to files or code elements in these lists.
 * **Incorrect (DO NOT DO THIS):**
@@ -156,7 +174,7 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
 
 * Backticks (`) are ONLY acceptable when they are part of the *content* of a properly formatted YAML multi-line block scalar (like the`instructions` field, which uses `|` or `>`).
 
-12. Format the `description` and `instructions` fields clearly and actionably. **Crucially, the `instructions` field MUST be a single YAML string.** Use YAML multi-line string syntax (`|` or `>`) and internal markdown formatting (e.g., bullet points, numbered lists, and backticks for code elements *within this block*) within that single string for clarity, similar to the project's planning documents.
+13. Format the `description` and `instructions` fields clearly and actionably. **Crucially, the `instructions` field MUST be a single YAML string.** Use YAML multi-line string syntax (`|` or `>`) and internal markdown formatting (e.g., bullet points, numbered lists, and backticks for code elements *within this block*) within that single string for clarity, similar to the project's planning documents.
 
 * **Example of correct multi-line instructions string:**
 
@@ -172,7 +190,7 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
 
 * **Do NOT generate a YAML list like `instructions: ['Line 1', 'Line 2']`.**
 
-13. **YAML Structure:** Ensure the generated YAML is perfectly valid. Each top-level key (`task_id`, `natural_language_goal`, `overall_context`, `input_hashes`, `plan`) **MUST** start on a new line. Do not place multiple top-level keys on the same line. Indentation must be consistent (typically 2 spaces).
+14. **YAML Structure:** Ensure the generated YAML is perfectly valid. Each top-level key (`task_id`, `natural_language_goal`, `overall_context`, `input_hashes`, `plan`) **MUST** start on a new line. Do not place multiple top-level keys on the same line. Indentation must be consistent (typically 2 spaces).
 
 **User Requirements Provided:**
 

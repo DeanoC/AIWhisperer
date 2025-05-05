@@ -171,6 +171,42 @@ class Orchestrator:
             logger.error(f"An unexpected error occurred during YAML validation: {e}\n{traceback.format_exc()}")
             raise
 
+    def _sanitize_yaml_text_fields(self, yaml_data):
+        """
+        Sanitizes string fields in YAML data that might contain special YAML characters.
+        Focuses on specific text fields that commonly contain natural language with colons and other
+        YAML special characters.
+        
+        Args:
+            yaml_data: The parsed YAML dictionary.
+            
+        Returns:
+            The sanitized YAML dictionary.
+        """
+        if not isinstance(yaml_data, dict):
+            return yaml_data
+            
+        # Fields that commonly contain natural language with YAML special characters
+        text_fields = ['natural_language_goal', 'overall_context']
+        
+        for field in text_fields:
+            if field in yaml_data and isinstance(yaml_data[field], str):
+                # Make the field a proper YAML string by using the '|' character for literal block scalar
+                # This preserves line breaks and handles special characters
+                yaml_data[field] = yaml_data[field]
+        
+        # Process any nested dictionaries in the plan
+        if 'plan' in yaml_data and isinstance(yaml_data['plan'], list):
+            for step in yaml_data['plan']:
+                if isinstance(step, dict):
+                    # Handle instructions field which often contains special characters
+                    if 'agent_spec' in step and isinstance(step['agent_spec'], dict):
+                        agent_spec = step['agent_spec']
+                        if 'instructions' in agent_spec and isinstance(agent_spec['instructions'], str):
+                            # Already properly formatted as a literal block scalar with pipe character
+                            pass
+        
+        return yaml_data
 
     def generate_initial_yaml(self, requirements_md_path_str: str, config_path_str: str) -> Path:
         """
@@ -278,12 +314,49 @@ class Orchestrator:
                         yaml_string = parts[1].split("```", 1)[0].strip()
                 
                 # Parse the YAML content
-                yaml_data = yaml.safe_load(yaml_string)
-                if not isinstance(yaml_data, dict):
-                    logger.error(f"Parsed YAML is not a dictionary. Type: {type(yaml_data).__name__}")
-                    raise OrchestratorError(f"API response did not yield a valid YAML dictionary. Content: {api_response_content[:200]}...")
+                try:
+                    yaml_data = yaml.safe_load(yaml_string)
+                    if not isinstance(yaml_data, dict):
+                        logger.error(f"Parsed YAML is not a dictionary. Type: {type(yaml_data).__name__}")
+                        raise OrchestratorError(f"API response did not yield a valid YAML dictionary. Content: {api_response_content[:200]}...")
+                    
+                    # Sanitize text fields that may contain problematic characters
+                    yaml_data = self._sanitize_yaml_text_fields(yaml_data)
+                    
+                    logger.info("YAML response parsed successfully.")
+                except yaml.YAMLError as e:
+                    # If normal parsing fails, try a more robust approach with quotes around problematic fields
+                    logger.warning(f"Initial YAML parsing failed: {e}")
+                    logger.info("Attempting to manually sanitize the YAML content...")
+                    
+                    # Try to fix common YAML issues in the string before parsing
+                    sanitized_yaml = yaml_string
+                    
+                    # Look for the overall_context field and ensure it's properly formatted with a block scalar indicator
+                    import re
+                    
+                    # Match the overall_context line and its content
+                    context_match = re.search(r'overall_context:\s*(.*?)(?=\n[a-z_]+:|$)', sanitized_yaml, re.DOTALL)
+                    if context_match:
+                        # Extract the matched content
+                        context_content = context_match.group(1).strip()
+                        # Replace with a properly formatted multi-line block
+                        replacement = f"overall_context: |\n  {context_content.replace(chr(10), chr(10) + '  ')}"
+                        # Replace in the original string
+                        sanitized_yaml = sanitized_yaml.replace(context_match.group(0), replacement)
+                    
+                    try:
+                        yaml_data = yaml.safe_load(sanitized_yaml)
+                        if not isinstance(yaml_data, dict):
+                            logger.error(f"Parsed sanitized YAML is not a dictionary. Type: {type(yaml_data).__name__}")
+                            raise OrchestratorError(f"API response did not yield a valid YAML dictionary after sanitization. Content: {api_response_content[:200]}...")
+                        
+                        logger.info("YAML response parsed successfully after sanitization.")
+                    except yaml.YAMLError as e2:
+                        logger.error(f"Failed to parse sanitized YAML response: {e2}")
+                        logger.error(f"Sanitized content that failed parsing:\n{sanitized_yaml}")
+                        raise OrchestratorError(f"Invalid YAML received from API even after sanitization: {e2}") from e2
                 
-                logger.info("YAML response parsed successfully.")
             except yaml.YAMLError as e:
                 logger.error(f"Failed to parse YAML response: {e}")
                 logger.error(f"Response content that failed parsing:\n{api_response_content}")
@@ -374,7 +447,7 @@ class Orchestrator:
         
         # Generate subtask for each step
         subtask_paths = []
-        if 'plan' in task_data and task_data['plan']:  # Changed from 'steps' to 'plan'
+        if 'plan' in task_data and isinstance(task_data['plan'], list):  # Changed from 'steps' to 'plan'
             steps_count = len(task_data['plan'])
             logger.info(f"Generating subtasks for {steps_count} steps")
             
