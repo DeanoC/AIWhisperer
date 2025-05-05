@@ -183,8 +183,6 @@ agent_spec:
                         
                     # Make sure we actually found and checked a YAML write
                     assert yaml_written, "No YAML write operation was found in the mock calls"
-                            assert written_yaml['subtask_id'] == "test-subtask-uuid"
-                            break
             
             # Clean up
             import shutil
