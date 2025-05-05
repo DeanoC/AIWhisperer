@@ -7,13 +7,17 @@ param (
     [string]$RfcFile,
 
     [Parameter(HelpMessage = "Switch to skip generating subtasks and only create the main plan.")]
-    [switch]$NoSubtasks
+    [switch]$NoSubtasks,
+    
+    [Parameter(HelpMessage = "Switch to clean the output directory before generating new content.")]
+    [switch]$Clean
 )
 
 # --- Script Initialization ---
 Write-Verbose "Script starting. PowerShell version: $($PSVersionTable.PSVersion)"
 Write-Verbose "Raw RFC File Parameter: '$RfcFile'"
 Write-Verbose "NoSubtasks switch set: $NoSubtasks"
+Write-Verbose "Clean switch set: $Clean"
 
 # Use the automatic variable $PSScriptRoot for the script's directory
 $ScriptDir = $PSScriptRoot
@@ -83,6 +87,31 @@ try {
     $InDevBaseFolder = Join-Path -Path $ScriptDir -ChildPath "in_dev"
     $OutputFolder = Join-Path -Path $InDevBaseFolder -ChildPath $RfcBaseName
     Write-Verbose "Target output folder: $OutputFolder"
+
+    # Handle the Clean option if output directory exists
+    if ($Clean -and (Test-Path $OutputFolder -PathType Container)) {
+        # Check if there are any files in the directory
+        $existingFiles = Get-ChildItem -Path $OutputFolder -Recurse
+        if ($existingFiles.Count -gt 0) {
+            Write-Host "The output directory contains files: $OutputFolder"
+            $confirmation = Read-Host "Do you want to clean the directory? (Y/N)"
+            
+            if ($confirmation -eq 'Y' -or $confirmation -eq 'y') {
+                Write-Verbose "Cleaning output directory: $OutputFolder"
+                try {
+                    Remove-Item -Path "$OutputFolder\*" -Recurse -Force -ErrorAction Stop
+                    Write-Host "Output directory cleaned successfully."
+                } catch {
+                    Write-Error "Failed to clean output directory: $_"
+                    exit 1
+                }
+            } else {
+                Write-Host "Clean operation cancelled by user."
+            }
+        } else {
+            Write-Verbose "Output directory exists but is empty. No cleaning needed."
+        }
+    }
 
     if (-not (Test-Path $OutputFolder -PathType Container)) {
         try {
