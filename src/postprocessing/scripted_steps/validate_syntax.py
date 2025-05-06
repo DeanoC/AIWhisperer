@@ -1,119 +1,106 @@
-from ruamel.yaml import YAML
-from ruamel.yaml.parser import ParserError
-from ruamel.yaml.scanner import ScannerError
-from io import StringIO
+"""
+Validate JSON Syntax Postprocessing Step
 
-def validate_syntax(yaml_content: str | dict, data: dict = None) -> tuple:
+This module provides a function to validate the syntax of JSON content.
+It checks if the input is well-formed JSON and if the root is an object or array.
+"""
+
+import json
+from typing import Tuple, Union
+
+def validate_syntax(content: Union[str, dict, list], data: dict = None) -> tuple:
     """
-    Validate and correct basic YAML syntax issues.
+    Validates the JSON content.
 
-   Args:
-        yaml_content (str | dict): The input YAML content as a string or dictionary.
-        data (dict): The input parameter dictionary and where results are also stored
+    Args:
+        content (str | dict | list): The input JSON content as a string, dictionary, or list.
+        data (dict): The input parameter dictionary; results and logs are stored here.
 
     Returns:
-        The processed_yaml_content must be in the same format as the input (str | dict).
-        tuple: (processed_yaml_content (str | dict), updated_result (dict))
+        tuple: A tuple containing:
+            - processed_content (str | dict | list): The original content if valid.
+            - updated_data (dict): The updated data dictionary with processing logs.
 
     Raises:
-        ValueError: If the YAML content contains unresolvable syntax errors.
-    """
-    # Initialize data if it's None
-    if data is None:
-        data = {
-            "success": True,
-            "steps": {},
-            "logs": []
-        }
+        ValueError: If the JSON content is invalid, not an object/array at the root,
+                    or if the input string is empty/whitespace.
 
-    # Ensure data has a logs key
+    Note:
+        This function follows the required signature for all scripted processing steps.
+    """
+    if data is None:
+        data = {}
     if "logs" not in data:
         data["logs"] = []
+    if "errors" not in data:
+        data["errors"] = []
 
-    # If yaml_content is a dictionary, it's already valid YAML
-    if isinstance(yaml_content, dict):
-        data["logs"].append("Input is a dictionary, syntax is valid.")
-        return yaml_content, data
+    if isinstance(content, (dict, list)):
+        data["logs"].append(f"Input is a {type(content).__name__}, syntax is considered valid.")
+        return content, data
 
-    if not yaml_content.strip():
-        data["logs"].append("YAML content is empty or whitespace-only.")
-        return yaml_content, data
+    if not isinstance(content, str):
+        err_msg = f"Unsupported content type: {type(content)}. Expected str, dict, or list."
+        data["logs"].append(f"ERROR: {err_msg}")
+        data["errors"].append(err_msg)
+        raise ValueError(err_msg)
 
-    # Pre-validation: Check for common syntax issues
-    lines = yaml_content.splitlines()
-
-    # Track if we're inside a multi-line string (indicated by |)
-    in_multiline_string = False
-    indentation_level = 0
-
-    for i, line in enumerate(lines):
-        # Skip empty lines and comments
-        if not line.strip() or line.strip().startswith("#"):
-            continue
-
-        # Check if this line starts a multi-line string
-        if "|" in line and line.rstrip().endswith("|"):
-            in_multiline_string = True
-            indentation_level = len(line) - len(line.lstrip())
-            continue
-
-        # If we're in a multi-line string, check if we've exited it
-        if in_multiline_string:
-            # If this line has less indentation than the multi-line string,
-            # we've exited the multi-line string
-            current_indent = len(line) - len(line.lstrip())
-            if current_indent <= indentation_level:
-                in_multiline_string = False
-            else:
-                # Skip colon check for lines in a multi-line string
-                continue
-
-        # Only check for missing colons if we're not in a multi-line string and not a list item
-        stripped_line = line.strip()
-        if (not in_multiline_string and 
-            ":" not in line and 
-            stripped_line and 
-            not stripped_line.startswith("-")):  # Skip list items
-
-            # Add more context to the error message
-            context = f"Line {i+1}: {stripped_line}"
-            if i > 0:
-                context += f"\nPrevious line: {lines[i-1].strip()}"
-            if i < len(lines) - 1:
-                context += f"\nNext line: {lines[i+1].strip()}"
-
-            data["logs"].append(f"Invalid YAML syntax: Missing colon in line '{stripped_line}'. Context: {context}")
-
-            # Try to parse with PyYAML before giving up
-            try:
-                import yaml as pyyaml
-                parsed_yaml = pyyaml.safe_load(yaml_content)
-                data["logs"].append("YAML syntax validated with PyYAML despite missing colon warning.")
-                return yaml_content, data
-            except Exception as pyyaml_error:
-                data["logs"].append(f"PyYAML validation also failed: {pyyaml_error}")
-
-                # One more attempt: if PyYAML fails, just return the content as is
-                # This is a last resort to avoid blocking the pipeline
-                data["logs"].append("Returning content as is despite syntax warnings.")
-                return yaml_content, data
-
-    yaml = YAML()
-    yaml.preserve_quotes = True
+    if not content.strip():
+        err_msg = "Empty or whitespace-only content is not valid JSON."
+        data["logs"].append(f"ERROR: {err_msg}")
+        data["errors"].append(err_msg)
+        raise ValueError(err_msg)
 
     try:
-        parsed_yaml = yaml.load(yaml_content)
-        if parsed_yaml is None:  # Handle cases with only comments
-            data["logs"].append("YAML contains only comments or is empty.")
-            return yaml_content.strip() + "\n", data
+        parsed_json = json.loads(content)
+        if not isinstance(parsed_json, (dict, list)):
+            err_msg = "JSON root is not an object or array."
+            data["logs"].append(f"ERROR: {err_msg} (Actual type: {type(parsed_json).__name__})")
+            data["errors"].append(err_msg)
+            raise ValueError(err_msg)
+        
+        data["logs"].append("JSON syntax validated successfully.")
+        # Return the parsed JSON content as a dictionary or list
+        return parsed_json, data
 
-        output = StringIO()
-        yaml.dump(parsed_yaml, output)
-        data["logs"].append("YAML syntax validated successfully.")
-        return output.getvalue(), data
-    except (ParserError, ScannerError) as e:
-        data["logs"].append(f"YAML syntax error: {e}")
-        raise ValueError(f"Invalid YAML content: {e}")
-    except Exception as e:
-        data["logs"].append(f"Unexpected error while processing YAML: {e}")
-        raise ValueError(f"Unexpected error while processing YAML: {e}")
+    except json.JSONDecodeError as e:
+        err_msg = f"Invalid JSON syntax: {e}"
+        data["logs"].append(f"ERROR: {err_msg}")
+        data["errors"].append(err_msg)
+        raise ValueError(err_msg) from e
+    except Exception as e: # Catch any other unexpected errors
+        err_msg = f"An unexpected error occurred during JSON syntax validation: {e}"
+        data["logs"].append(f"ERROR: {err_msg}")
+        data["errors"].append(err_msg)
+        raise ValueError(err_msg) from e
+
+if __name__ == '__main__':
+    # Example Usage (for local testing)
+    test_cases = [
+        ('{"key": "value"}', "Valid JSON object"),
+        ('[1, "two"]', "Valid JSON array"),
+        ({"already": "dict"}, "Input is a dictionary"),
+        (["already_list"], "Input is a list"),
+        ('{"key": "value"', "Invalid JSON: Missing closing brace"),
+        ('{"key1": "value1",}', "Invalid JSON: Trailing comma in object"),
+        ('"just a string"', "Invalid JSON root: string literal"),
+        ('123', "Invalid JSON root: number literal"),
+        ('', "Empty string"),
+        ('   ', "Whitespace-only string"),
+        ('{"name": "テスト"}', "Valid JSON with unicode")
+    ]
+
+    for i, (test_content, desc) in enumerate(test_cases):
+        print(f"\n--- Test Case {i+1}: {desc} ---")
+        current_data = {"logs": [], "errors": []}
+        try:
+            output_content, output_data = validate_syntax(test_content, current_data)
+            print("Status: Valid")
+            print("Output Content:", output_content)
+        except ValueError as ve:
+            print(f"Status: Invalid (ValueError: {ve})")
+        finally:
+            print("Logs:", json.dumps(output_data.get("logs", []), indent=2))
+            if output_data.get("errors"):
+                print("Errors:", json.dumps(output_data.get("errors", []), indent=2))
+    print("\nAll validate_syntax examples executed.")

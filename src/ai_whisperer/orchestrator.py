@@ -1,4 +1,3 @@
-import yaml
 import json
 import jsonschema
 import logging
@@ -8,6 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Dict, Any, Tuple
 
+
 from . import openrouter_api
 from .utils import calculate_sha256
 from .model_selector import get_model_for_task
@@ -15,18 +15,17 @@ from .exceptions import (
     OrchestratorError,
     PromptError,
     HashMismatchError,
-    YAMLValidationError,
     ConfigError,
     ProcessingError,
     OpenRouterAPIError,
 )
-from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
+from src.postprocessing.pipeline import PostprocessingPipeline
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
-from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
-from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
-from src.postprocessing.scripted_steps.normalize_indentation import normalize_indentation
-from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
 from src.postprocessing.scripted_steps.escape_text_fields import escape_text_fields
+from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
+from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
+from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
+
 
 # Determine the package root directory to locate default files relative to the package
 try:
@@ -37,6 +36,9 @@ except NameError:
 
 DEFAULT_PROMPT_PATH = PACKAGE_ROOT.parent.parent / "prompts" / "orchestrator_default.md"
 DEFAULT_SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "task_schema.json"
+
+# Configure basic logging to display debug messages
+logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +152,7 @@ class Orchestrator:
         try:
             hashes = {
                 "requirements_md": calculate_sha256(requirements_md_path),
-                "config_yaml": calculate_sha256(config_path),
+                "config_json": calculate_sha256(config_path),
                 "prompt_file": calculate_sha256(prompt_path),
             }
             logger.info(f"Calculated hashes: {hashes}")
@@ -159,110 +161,13 @@ class Orchestrator:
             logger.error(f"Error calculating input hashes: {e}")
             raise  # Re-raise the original error
 
-    def _validate_yaml_response(
-        self, yaml_data: Dict[str, Any], expected_hashes: Dict[str, str]
-    ):
+
+    def save_json(self, json_content, output_filename):
         """
-        Validates the received YAML data against the schema and checks input hashes.
+        Saves the JSON content to a file in the specified output directory.
 
         Args:
-            yaml_data: The parsed YAML data from the API response.
-            expected_hashes: The dictionary of calculated input hashes.
-
-        Raises:
-            HashMismatchError: If the hashes in the response don't match expected hashes.
-            YAMLValidationError: If the YAML data fails schema validation.
-            OrchestratorError: If the 'input_hashes' key is missing in the response.
-        """
-        logger.info("Validating YAML response...")
-
-        # 1. Validate Hashes
-        received_hashes = yaml_data.get("input_hashes")
-        if not received_hashes:
-            raise OrchestratorError(
-                "Generated YAML is missing the required 'input_hashes' field."
-            )
-        if not isinstance(received_hashes, dict):
-            raise OrchestratorError(
-                f"Generated YAML 'input_hashes' field is not a dictionary (got {type(received_hashes).__name__})."
-            )
-
-        if received_hashes != expected_hashes:
-            logger.error(
-                f"Hash mismatch detected. Expected: {expected_hashes}, Received: {received_hashes}"
-            )
-            raise HashMismatchError(
-                expected_hashes=expected_hashes, received_hashes=received_hashes
-            )
-        logger.info("Input hashes match.")
-
-        # 2. Validate Schema
-        try:
-            jsonschema.validate(instance=yaml_data, schema=self.task_schema)
-            logger.info("YAML structure validation successful.")
-        except jsonschema.exceptions.ValidationError as e:
-            # Log the detailed validation error
-            error_path_str = (
-                " -> ".join(map(str, e.path))
-                if hasattr(e, "path") and e.path
-                else "N/A"
-            )
-            logger.error(
-                f"YAML schema validation failed: {e.message} at path: {error_path_str}\n{traceback.format_exc()}"
-            )
-            # Raise our custom exception, passing the original error in a list for context
-            raise YAMLValidationError(validation_errors=[e]) from e
-        except Exception as e:
-            logger.error(
-                f"An unexpected error occurred during YAML validation: {e}\n{traceback.format_exc()}"
-            )
-            raise
-
-    def _sanitize_yaml_text_fields(self, yaml_data):
-        """
-        Sanitizes string fields in YAML data that might contain special YAML characters.
-        Focuses on specific text fields that commonly contain natural language with colons and other
-        YAML special characters.
-
-        Args:
-            yaml_data: The parsed YAML dictionary.
-
-        Returns:
-            The sanitized YAML dictionary.
-        """
-        if not isinstance(yaml_data, dict):
-            return yaml_data
-
-        # Fields that commonly contain natural language with YAML special characters
-        text_fields = ["natural_language_goal", "overall_context"]
-
-        for field in text_fields:
-            if field in yaml_data and isinstance(yaml_data[field], str):
-                # Make the field a proper YAML string by using the '|' character for literal block scalar
-                # This preserves line breaks and handles special characters
-                yaml_data[field] = yaml_data[field]
-
-        # Process any nested dictionaries in the plan
-        if "plan" in yaml_data and isinstance(yaml_data["plan"], list):
-            for step in yaml_data["plan"]:
-                if isinstance(step, dict):
-                    # Handle instructions field which often contains special characters
-                    if "agent_spec" in step and isinstance(step["agent_spec"], dict):
-                        agent_spec = step["agent_spec"]
-                        if "instructions" in agent_spec and isinstance(
-                            agent_spec["instructions"], str
-                        ):
-                            # Already properly formatted as a literal block scalar with pipe character
-                            pass
-
-        return yaml_data
-
-    def save_yaml(self, yaml_content, output_filename):
-        """
-        Saves the YAML content to a file in the specified output directory.
-
-        Args:
-            yaml_content: The YAML content to save.
+            json_content: The JSON content to save.
             output_filename: The name of the output file.
 
         Returns:
@@ -274,18 +179,18 @@ class Orchestrator:
         # Construct the file path using self.output_dir
         output_path = os.path.join(self.output_dir, output_filename)
 
-        # Save the file
+        # Save the file using json.dump
         with open(output_path, "w", encoding="utf-8") as f:
-            yaml.dump(yaml_content, f, sort_keys=False, allow_unicode=True, indent=2)
+            json.dump(json_content, f, indent=2)
 
-        logger.info(f"Successfully saved initial orchestrator YAML to {output_path}")
+        logger.info(f"Successfully saved initial orchestrator JSON to {output_path}")
         return output_path
 
-    def generate_initial_yaml(
+    def generate_initial_json(
         self, requirements_md_path_str: str, config_path_str: str
     ) -> Path:
         """
-        Generates the initial task plan YAML file based on input requirements markdown.
+        Generates the initial task plan JSON file based on input requirements markdown.
 
         This method orchestrates the end-to-end process:
         1. Loads the prompt template
@@ -318,7 +223,7 @@ class Orchestrator:
         requirements_md_path = Path(requirements_md_path_str).resolve()
         config_path = Path(config_path_str).resolve()
 
-        logger.info(f"Starting initial YAML generation for: {requirements_md_path}")
+        logger.info(f"Starting initial JSON generation for: {requirements_md_path}")
         logger.info(f"Using configuration file: {config_path}")
 
         # Ensure requirements file exists before proceeding
@@ -379,12 +284,9 @@ class Orchestrator:
                 logger.error(f"OpenRouter API call failed: {e}")
                 raise
 
-            # 6. Parse YAML Response
-            logger.info("Parsing YAML response from API...")
+            # 6. Parse JSON Response and apply postprocessing
+            logger.info("Parsing JSON response from API and applying postprocessing...")
             try:
-                # Extract YAML content from potential markdown code blocks
-                yaml_string = api_response_content
-
                 # Create result_data with items to add
                 result_data = {
                     "items_to_add": {
@@ -396,32 +298,32 @@ class Orchestrator:
                     "success": True,
                     "steps": {},
                     "logs": [],
+                    "schema": self.task_schema # Add the schema here
                 }
-                # Save YAML string to temp file for debugging
-                logger.debug("Saving YAML string to temporary file for debugging")
+                # Save JSON string to temp file for debugging
+                logger.debug("Saving JSON string to temporary file for debugging")
                 try:
                     with open("./temp.txt", "w", encoding="utf-8") as f:
-                        f.write(yaml_string)
-                    logger.debug("Successfully saved YAML string to ./temp.txt")
+                        f.write(api_response_content)
+                    logger.debug("Successfully saved JSON string to ./temp.txt")
                 except IOError as e:
-                    logger.warning(f"Failed to save debug YAML file: {e}")
+                    logger.warning(f"Failed to save debug JSON file: {e}")
 
                 pipeline = PostprocessingPipeline(
                     scripted_steps=[
                         clean_backtick_wrapper,
                         escape_text_fields,
-                        normalize_indentation,
                         validate_syntax,
                         handle_required_fields,
                         add_items_postprocessor
                     ]
                 )
-                # Pass the YAML data through the postprocessing pipeline
-                yaml_string, postprocessing_result = pipeline.process(
-                    yaml_string, result_data
+                # Pass the JSON data through the postprocessing pipeline
+                processed_data, postprocessing_result = pipeline.process(
+                    api_response_content, result_data
                 )
 
-                print(f"YAML string after postprocessing:\n{yaml_string}")
+                print(f"JSON data after postprocessing:\n{processed_data}")
 
                 # Log the postprocessing results
                 logger.info("Postprocessing completed successfully.")
@@ -429,47 +331,52 @@ class Orchestrator:
                     f"Postprocessing result logs: {postprocessing_result.get('logs', [])}"
                 )
 
-                # Parse the YAML content
-                yaml_data = yaml.safe_load(yaml_string)
-                if not isinstance(yaml_data, dict):
+                # The pipeline should return a dictionary if successful
+                if not isinstance(processed_data, dict):
                     logger.error(
-                        f"Parsed YAML is not a dictionary. Type: {type(yaml_data).__name__}"
+                        f"Postprocessing pipeline did not return a dictionary. Type: {type(processed_data).__name__}"
                     )
                     raise OrchestratorError(
-                        f"API response did not yield a valid YAML dictionary. Content: {api_response_content[:200]}..."
+                        f"API response postprocessing did not yield a valid dictionary. Content: {api_response_content[:200]}..."
                     )
 
-            except yaml.YAMLError as e:
-                logger.error(f"Failed to parse YAML response: {e}")
+                json_data = processed_data # Use the processed data
+
+            except (json.JSONDecodeError, ValueError) as e:
+                logger.error(f"Failed to parse or process JSON response: {e}")
                 logger.error(
                     f"Response content that failed parsing:\n{api_response_content}"
                 )
-                raise OrchestratorError(f"Invalid YAML received from API: {e}") from e
+                raise OrchestratorError(f"Invalid JSON received from API or postprocessing failed: {e}") from e
+            except ProcessingError as e: # Catch errors from within the pipeline steps
+                 logger.error(f"An error occurred during JSON postprocessing: {e}")
+                 raise OrchestratorError(f"JSON postprocessing failed: {e}") from e
             except Exception as e:
-                logger.error(f"An error occurred during YAML postprocessing: {e}")
-                raise OrchestratorError(f"YAML postprocessing failed: {e}") from e
+                logger.error(f"An unexpected error occurred during JSON postprocessing: {e}")
+                raise OrchestratorError(f"JSON postprocessing failed: {e}") from e
 
-            print(f"YAML data after parsing:\n{yaml_data}")
 
-            # 7. Validate YAML Response (Schema & Hashes)
-            self._validate_yaml_response(yaml_data, input_hashes)
+            print(f"JSON data after parsing:\n{json_data}")
 
-            # 8. Save Output YAML
+            # 7. Save Output JSON
             # Create output filename based on the input requirements file
             config_stem = config_path.stem  # Get the stem of the config file path
             output_filename = (
-                f"{requirements_md_path.stem}_{config_stem}.yaml"  # Combine stems
+                f"{requirements_md_path.stem}_{config_stem}.json"  # Combine stems, change extension
             )
 
-            logger.info(f"Saving validated YAML to: {self.output_dir}")
+            logger.info(f"Saving validated JSON to: {self.output_dir}")
             try:
-                output_path = self.save_yaml(yaml_data, output_filename)
+                output_path = self.save_json(json_data, output_filename)
                 return output_path
             except IOError as e:
-                logger.error(f"Error writing output YAML file {output_filename}: {e}")
+                logger.error(f"Error writing output JSON file {output_filename}: {e}")
                 raise ProcessingError(
-                    f"Error writing output YAML file {output_filename}: {e}"
+                    f"Error writing output JSON file {output_filename}: {e}"
                 ) from e
+            except TypeError as e: # Catch JSON serialization errors
+                 logger.error(f"Error serializing data to JSON for file {output_filename}: {e}")
+                 raise ProcessingError(f"Error serializing data to JSON for file {output_filename}: {e}") from e
 
         except (
             FileNotFoundError,
@@ -477,7 +384,6 @@ class Orchestrator:
             ConfigError,
             OpenRouterAPIError,
             HashMismatchError,
-            YAMLValidationError,
             ProcessingError,
             OrchestratorError,
         ) as e:
@@ -495,7 +401,7 @@ class Orchestrator:
         self, requirements_md_path_str: str, config_path_str: str
     ) -> Dict[str, Any]:
         """
-        Generates a complete project plan including initial task YAML and all subtasks.
+        Generates a complete project plan including initial task JSON and all subtasks.
 
         This method:
         1. First generates the initial task plan YAML
@@ -516,18 +422,18 @@ class Orchestrator:
         logger.info("Starting full project plan generation")
 
         # First generate the initial task plan
-        task_plan_path = self.generate_initial_yaml(
+        task_plan_path = self.generate_initial_json(
             requirements_md_path_str, config_path_str
         )
         logger.info(f"Initial task plan generated: {task_plan_path}")
 
-        # Load the generated task plan to extract steps
+        # Load the generated task plan JSON to extract steps
         try:
             with open(task_plan_path, "r", encoding="utf-8") as f:
-                task_data = yaml.safe_load(f)
+                task_data = json.load(f)
         except Exception as e:
-            logger.error(f"Failed to read generated task plan: {e}")
-            raise OrchestratorError(f"Failed to read generated task plan: {e}") from e
+            logger.error(f"Failed to read generated task plan JSON: {e}")
+            raise OrchestratorError(f"Failed to read generated task plan JSON: {e}") from e
 
         # Initialize subtask generator
         from .subtask_generator import SubtaskGenerator

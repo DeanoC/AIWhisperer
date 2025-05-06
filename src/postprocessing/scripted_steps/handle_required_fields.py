@@ -1,103 +1,201 @@
-from ruamel.yaml import YAML
-from io import StringIO
-import yaml as pyyaml  # Import PyYAML as a fallback
+"""
+Handle Required Fields Postprocessing Step
 
-def handle_required_fields(yaml_content: str | dict, data: dict = None) -> tuple:
+This module provides a function to ensure required fields are present with default values
+and optionally remove invalid fields based on a provided schema.
+This version is compatible with JSON data.
+"""
+
+import json
+import logging
+from typing import Union, Tuple, Dict
+
+logger = logging.getLogger(__name__)
+
+def handle_required_fields(content: Union[str, dict, list], data: dict = None) -> Tuple[Union[str, dict, list], Dict]:
     """
-    Ensure required fields are present with default values and optionally remove invalid fields.
+    Ensure required fields are present with default values based on a schema.
 
-   Args:
-        yaml_content (str | dict): The input YAML content as a string or dictionary.
-        data (dict): The input parameter dictionary and where results are also stored
-            If data contains a 'preserve_extra_fields' key set to True, fields not in the schema will be preserved.
-            Otherwise, only fields in the schema will be included in the output.
+    Args:
+        content (str | dict | list): The input content as a string, dictionary, or list.
+        data (dict): The input parameter dictionary; results and logs are stored here.
+                     Must contain a 'schema' key with the expected structure and defaults.
 
     Returns:
-        The processed_yaml_content must be in the same format as the input (str | dict).
-        tuple: (processed_yaml_content (str | dict), updated_result (dict))
-   """
-    # Initialize data if it's None
+        tuple: A tuple containing:
+            - processed_content (str | dict | list): The content with required fields handled.
+              If input was a valid string, output is a formatted JSON string.
+              If input was a dict/list, output is the processed dict/list.
+              If input was an invalid string, output is the original string.
+            - updated_data (dict): The updated data dictionary with processing logs.
+
+    Raises:
+        ValueError: If the input type is unsupported or if the 'schema' is missing from data.
+    """
     if data is None:
-        data = {
-            "success": True,
-            "steps": {},
-            "logs": []
-        }
-
-    yaml = YAML()
-    yaml.preserve_quotes = True
-
-    # Ensure data has a logs key
+        data = {}
     if "logs" not in data:
         data["logs"] = []
+    if "errors" not in data:
+        data["errors"] = []
 
-    try:
-        # Parse the YAML content into a dictionary if it's a string
-        if isinstance(yaml_content, str):
-            try:
-                # First try with ruamel.yaml
-                parsed_yaml = yaml.load(yaml_content)
-            except Exception as ruamel_error:
-                data["logs"].append(f"ruamel.yaml parsing failed: {ruamel_error}")
-                data["logs"].append("Falling back to PyYAML for parsing.")
+    schema = data.get("schema")
+    if schema is None:
+        err_msg = "Schema is missing from the 'data' dictionary."
+        logger.error(err_msg)
+        data["logs"].append(f"ERROR: {err_msg}")
+        data["errors"].append(err_msg)
+        raise ValueError(err_msg)
 
-                try:
-                    # Try with PyYAML as a fallback
-                    parsed_yaml = pyyaml.safe_load(yaml_content)
-                    data["logs"].append("Successfully parsed with PyYAML fallback.")
-                except Exception as pyyaml_error:
-                    data["logs"].append(f"PyYAML fallback also failed: {pyyaml_error}")
-                    # If both fail, just return the content as is
-                    data["logs"].append("Returning content as is due to parsing failures.")
-                    return yaml_content, data
-        elif isinstance(yaml_content, dict):
-            parsed_yaml = yaml_content
+    parsed_content = None
+    original_type_was_str = isinstance(content, str)
+
+    if original_type_was_str:
+        if not content.strip():
+            # Treat empty/whitespace string as an empty object for processing
+            parsed_content = {}
+            data["logs"].append("Input string is empty or whitespace-only, treating as empty object.")
         else:
-            raise ValueError("Invalid input type. Expected a YAML string or dictionary.")
+            try:
+                parsed_content = json.loads(content)
+                data["logs"].append("Successfully parsed JSON string.")
+            except json.JSONDecodeError as e:
+                err_msg = f"Error parsing JSON string for required fields: {e}"
+                logger.warning(f"{err_msg} - Content: '{content[:100]}...'")
+                data["logs"].append(f"WARNING: {err_msg}")
+                data["errors"].append(err_msg)
+                # If parsing fails, return original content and log error
+                return content, data
+            except Exception as e:
+                err_msg = f"An unexpected error occurred during JSON parsing: {e}"
+                logger.error(err_msg)
+                data["logs"].append(f"ERROR: {err_msg}")
+                data["errors"].append(err_msg)
+                # Return original content and log error
+                return content, data
+    elif isinstance(content, (dict, list)):
+        parsed_content = content
+        data["logs"].append(f"Input is a {type(content).__name__}, processing directly.")
+    else:
+        err_msg = f"Unsupported content type: {type(content)}. Expected str, dict, or list."
+        logger.error(err_msg)
+        data["logs"].append(f"ERROR: {err_msg}")
+        data["errors"].append(err_msg)
+        raise ValueError(err_msg)
 
-        # Check if we should preserve extra fields
-        preserve_extra_fields = data.get("preserve_extra_fields", False)
+    # Ensure parsed_content is a dictionary for field processing, if schema is for a dict
+    if isinstance(schema, dict) and not isinstance(parsed_content, dict):
+         # If schema is a dict but parsed content is not (e.g., a list or scalar from JSON string),
+         # we cannot apply a dictionary schema directly. This might indicate an issue
+         # with the input structure relative to the expected schema.
+         # For now, we'll log a warning and return the parsed content as is.
+         # A later validation step against the full schema should catch this.
+         warn_msg = f"Schema is for a dictionary, but parsed content is {type(parsed_content).__name__}. Skipping field processing."
+         logger.warning(warn_msg)
+         data["logs"].append(f"WARNING: {warn_msg}")
+         # Return the parsed content (which might be a list or scalar)
+         processed_content = parsed_content
+    elif isinstance(schema, dict):
+        # Process fields based on the schema
+        def process_fields(content_part, schema_part):
+            # Start with a copy of the content part if it's a dictionary, otherwise an empty dict
+            result = content_part.copy() if isinstance(content_part, dict) else {}
 
-        def process_fields(content, schema):
-            if not isinstance(content, dict):
-                return schema  # Replace invalid content with the default schema
-
-            # Start with a copy of the original content if preserving extra fields, otherwise start with an empty dict
-            result = content.copy() if preserve_extra_fields else {}
-
-            # Add or update fields from the schema
-            for key, default_value in schema.items():
+            # Iterate through the schema to add missing required fields or replace nulls with defaults
+            for key, default_value in schema_part.items():
                 if isinstance(default_value, dict):  # Handle nested structures
-                    if key in content and isinstance(content[key], dict):
-                        # Process nested dictionaries
-                        result[key] = process_fields(content[key], default_value)
+                    if key in result and isinstance(result.get(key), dict):
+                        # Recursively process nested dictionaries
+                        result[key] = process_fields(result[key], default_value)
                     else:
-                        # Add missing nested structure
-                        result[key] = process_fields({}, default_value)
+                        # Add missing nested structure or replace non-dict value with processed default
+                        result[key] = process_fields({}, default_value) # Start with empty dict for recursion
                 else:
-                    # Use the content value if it exists and is valid, otherwise use default
-                    if key in content and content[key] is not None and isinstance(content[key], type(default_value)):
-                        result[key] = content[key]
-                    else:
-                        result[key] = default_value
+                    # Add the field if it's missing or if the content value is None
+                    if key not in result or result[key] is None:
+                         result[key] = default_value
+                    # Note: We are not enforcing type based on schema default here,
+                    # only ensuring presence and handling None. Full schema validation
+                    # should be done by a separate step.
+
+            # Optional: Remove fields not in schema? The current YAML version preserves them.
+            # Sticking to preserving extra fields for now.
+
             return result
 
-        # Get the schema from the data dictionary
-        schema = data.get("schema", {})
+        processed_content = process_fields(parsed_content, schema)
+        data["logs"].append("Required fields processed based on schema.")
+    else:
+        # If schema is not a dictionary (e.g., schema for a list or scalar),
+        # this step doesn't apply in the same way. Return parsed content as is.
+        warn_msg = f"Schema is not a dictionary (type: {type(schema).__name__}). Skipping field processing."
+        logger.warning(warn_msg)
+        data["logs"].append(f"WARNING: {warn_msg}")
+        processed_content = parsed_content
 
-        # Process the fields based on the schema
-        processed_yaml = process_fields(parsed_yaml, schema)
 
-        data["logs"].append("Required fields processed.")
+    # Return the same type as the original input if possible
+    if original_type_was_str and isinstance(processed_content, (dict, list)):
+        # If input was a valid string and processing resulted in a dict/list,
+        # convert back to a formatted JSON string.
+        try:
+            output_string = json.dumps(processed_content, indent=4, ensure_ascii=False)
+            data["logs"].append("Converted processed content back to formatted JSON string.")
+            return output_string, data
+        except Exception as e:
+            err_msg = f"Error dumping processed content to JSON string: {e}"
+            logger.error(err_msg)
+            data["logs"].append(f"ERROR: {err_msg}")
+            data["errors"].append(err_msg)
+            # If dumping fails, return the processed content as is (dict/list)
+            return processed_content, data
+    else:
+        # Otherwise, return the processed content as is (dict, list, or original invalid string)
+        return processed_content, data
 
-        # Return the same type as the input
-        if isinstance(yaml_content, dict):
-            return processed_yaml, data
-        else:
-            # Convert the processed dictionary back to a YAML string
-            output = StringIO()
-            yaml.dump(processed_yaml, output)
-            return output.getvalue(), data
-    except Exception as e:
-        data["logs"].append(f"Error processing required fields: {e}")
-        raise ValueError(f"Error processing required fields: {e}")
+if __name__ == '__main__':
+    # Example Usage (for local testing)
+    SCHEMA_EXAMPLE = {
+        "name": "Untitled",
+        "version": 1,
+        "details": {
+            "author": "Unknown",
+            "date": None # Example of a field that might be None and we don't set a default
+        },
+        "items": [] # Example of a required list
+    }
+
+    test_cases = [
+        ('{"name": "My Plan", "details": {"author": "Roo"}}', "Valid JSON string, missing fields"),
+        ('{}', "Empty JSON string"),
+        ('   ', "Whitespace only JSON string"),
+        ({"name": "My Plan Dict", "items": [1, 2]}, "Dictionary input, missing fields"),
+        ([], "List input (schema is for dict)"), # This case should log a warning
+        ('{"name": "My Plan", "details": null}', "JSON string with null nested field"),
+        ('{"name": "My Plan", "extra": "field"}', "JSON string with extra field"),
+        ('{"name": "My Plan", "version": "invalid_type"}', "JSON string with incorrect type (should preserve)"),
+        ('{"name": "My Plan", "details": {"author": "Roo", "date": "today"}}', "Valid JSON string, all fields present"),
+        ('{"name": "My Plan", "details": {"author": "Roo", "date": null}}', "Valid JSON string, nested field is null"),
+        ('{"key": "value"', "Invalid JSON string"), # Should return original string
+    ]
+
+    for i, (test_content, desc) in enumerate(test_cases):
+        print(f"\n--- Test Case {i+1}: {desc} ---")
+        current_data = {"schema": SCHEMA_EXAMPLE, "logs": [], "errors": []}
+        try:
+            output_content, output_data = handle_required_fields(test_content, current_data)
+            print("Output Content:", output_content)
+        except ValueError as ve:
+            print(f"Status: Error (ValueError: {ve})")
+        finally:
+            print("Logs:", json.dumps(output_data.get("logs", []), indent=2))
+            if output_data.get("errors"):
+                print("Errors:", json.dumps(output_data.get("errors", []), indent=2))
+            # For string outputs, try parsing to show the structure
+            if isinstance(output_content, str) and output_content.strip() and not output_data.get("errors"):
+                 try:
+                     print("Parsed Output:", json.loads(output_content))
+                 except:
+                     print("Could not parse output string as JSON.")
+
+    print("\nAll handle_required_fields examples executed.")

@@ -7,10 +7,10 @@ from src.postprocessing.scripted_steps.identity_transform import identity_transf
 
 def test_identity_transform():
     """
-    Test that the identity transform returns the input YAML data unchanged.
+    Test that the identity transform returns the input JSON data unchanged.
     """
-    # Sample YAML input represented as a Python dictionary
-    sample_yaml_data = {
+    # Sample JSON input represented as a Python dictionary
+    sample_json_data = {
         "task_id": "sample-task-123",
         "natural_language_goal": "Test the identity transform",
         "overall_context": "Ensuring our postprocessing pipeline works correctly",
@@ -36,16 +36,16 @@ def test_identity_transform():
     }
     
     # Call the identity transform function
-    output_yaml_data, output_result_data = identity_transform(sample_yaml_data, sample_result_data)
-    
-    # Assert that the output YAML is identical to the input
-    assert output_yaml_data == sample_yaml_data
+    output_json_data, output_result_data = identity_transform(sample_json_data, sample_result_data)
+
+    # Assert that the output JSON is identical to the input
+    assert output_json_data == sample_json_data
     
     # Assert that the output result data is identical to the input
     assert output_result_data == sample_result_data
     
     # Additionally, check that they are the same objects (identity)
-    assert output_yaml_data is sample_yaml_data
+    assert output_json_data is sample_json_data
     assert output_result_data is sample_result_data
 
 
@@ -53,8 +53,8 @@ def test_identity_transform_with_empty_input():
     """
     Test that the identity transform handles empty input correctly.
     """
-    # Empty YAML data
-    empty_yaml_data = {}
+    # Empty JSON data
+    empty_json_data = {}
     
     # Empty result data
     empty_result_data = {
@@ -64,10 +64,10 @@ def test_identity_transform_with_empty_input():
     }
     
     # Call the identity transform function
-    output_yaml_data, output_result_data = identity_transform(empty_yaml_data, empty_result_data)
-    
+    output_json_data, output_result_data = identity_transform(empty_json_data, empty_result_data)
+
     # Assert that the outputs match the inputs
-    assert output_yaml_data == empty_yaml_data
+    assert output_json_data == empty_json_data
     assert output_result_data == empty_result_data
 
 
@@ -75,8 +75,8 @@ def test_identity_transform_with_complex_nested_structure():
     """
     Test that the identity transform handles complex nested structures correctly.
     """
-    # More complex nested YAML structure
-    complex_yaml_data = {
+    # More complex nested JSON structure
+    complex_json_data = {
         "task_id": "complex-task-456",
         "metadata": {
             "created_at": "2025-05-05T10:00:00Z",
@@ -122,8 +122,8 @@ def test_identity_transform_with_complex_nested_structure():
     }
     
     # Call the identity transform function
-    output_yaml_data, output_result_data = identity_transform(complex_yaml_data, complex_result_data)
-    
+    output_json_data, output_result_data = identity_transform(complex_json_data, complex_result_data)
+
     # Assert that the outputs match the inputs
-    assert output_yaml_data == complex_yaml_data
+    assert output_json_data == complex_json_data
     assert output_result_data == complex_result_data

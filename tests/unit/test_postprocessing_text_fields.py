@@ -1,111 +1,71 @@
 import pytest
-import os
+import json
 from src.postprocessing.scripted_steps.escape_text_fields import escape_text_fields
 
-@pytest.mark.parametrize("input_yaml, expected_yaml, expected_changes", [
-    # Case: Valid YAML - no changes needed
-    ("key: value\n", "key: value\n", 0),
+@pytest.mark.parametrize("description, input_content, expected_content_after_parse, log_message_part, is_error_case", [
+    # Case: Valid JSON string - no changes needed by this step
+    ("Valid JSON string", '{"key": "value", "text": "This is a string: with a colon."}', {"key": "value", "text": "This is a string: with a colon."}, "Input is a valid JSON string. No escaping applied by this step.", False),
+    ("Valid JSON array string", '[1, "string with spaces", {"nested": "value: more text"}]', [1, "string with spaces", {"nested": "value: more text"}], "Input is a valid JSON string. No escaping applied by this step.", False),
 
-    # Case: Missing colon in a line that looks like natural language
-    ("key: value\nmodel information and an optional CSV output parameter.\n",
-     "key: value\n\"model information and an optional CSV output parameter.\"\n", 1),
+    # Case: Input is already a dictionary or list
+    ("Input is dictionary", {"key": "value", "text": "A string: with colon"}, {"key": "value", "text": "A string: with colon"}, "Input is a dict, no escaping performed by this step.", False),
+    ("Input is list", [1, "string with colon:", {"nested": "value"}], [1, "string with colon:", {"nested": "value"}], "Input is a list, no escaping performed by this step.", False),
 
-    # Case: Multiple lines with missing colons
-    ("key: value\nThis is a line without a colon\nAnother problematic line here\nkey2: value2\n",
-     "key: value\n\"This is a line without a colon\"\n\"Another problematic line here\"\nkey2: value2\n", 2),
+    # Case: Invalid JSON string - should be returned as is, error logged
+    ("Invalid JSON string (missing quote)", '{"key": "value, "text": "missing end quote}', '{"key": "value, "text": "missing end quote}', "Failed to parse content as JSON in escape_text_fields", True),
+    ("Invalid JSON string (trailing comma)", '{"key": "value",}', '{"key": "value",}', "Failed to parse content as JSON in escape_text_fields", True),
 
-    # Case: Line with special YAML characters
-    ("key: value\nThis has a colon: but no proper YAML format\n",
-     "key: value\n\"This has a colon: but no proper YAML format\"\n", 1),
+    # Case: Empty or whitespace string
+    ("Empty string", "", "", "Input content is empty or whitespace-only.", False), # No error, just a log
+    ("Whitespace string", "   \n\t  ", "   \n\t  ", "Input content is empty or whitespace-only.", False), # No error
 
-    # Case: Indented line that should be part of a multiline field
-    ("key:\n  subkey: value\n  this line is indented but has no colon\n",
-     "key:\n  subkey: value\n  \"this line is indented but has no colon\"\n", 1),
-
-    # Case: Already properly quoted string
-    ('key: "This is already quoted"\n', 'key: "This is already quoted"\n', 0),
-
-    # Case: Empty file
-    ("", "", 0),
-
-    # Case: Only comments
-    ("# This is a comment\n", "# This is a comment\n", 0),
+    # Case: JSON string that is not an object or list at root (but still valid JSON)
+    # This step doesn't care about root type, only if it's parsable JSON.
+    # The validate_syntax step would catch if root is not object/list.
+    ("JSON string literal", '"a string literal"', "a string literal", "Input is a valid JSON string. No escaping applied by this step.", False),
+    ("JSON number literal", '123', 123, "Input is a valid JSON string. No escaping applied by this step.", False),
 ])
-def test_escape_text_fields(input_yaml, expected_yaml, expected_changes):
-    output_yaml, result = escape_text_fields(input_yaml)
+def test_escape_text_fields_json(description, input_content, expected_content_after_parse, log_message_part, is_error_case):
+    """
+    Tests the escape_text_fields function with JSON content.
+    For JSON, this step primarily checks if a string input is valid JSON.
+    Actual escaping is handled by json.dumps during final serialization.
+    """
+    data = {"logs": [], "errors": []}
+    output_content, result_data = escape_text_fields(input_content, data)
 
-    assert output_yaml == expected_yaml
-    assert "logs" in result
-    assert len(result["logs"]) > 0
+    # The output content should be the same as input if it's a string or dict/list
+    assert output_content == input_content, f"Test: {description} - Output content mismatch"
 
-    # Check if the log correctly reflects the number of changes made
-    if expected_changes > 0:
-        assert f"Escaped {expected_changes}" in result["logs"][-1]
+    assert "logs" in result_data, f"Test: {description} - Missing logs"
+    assert any(log_message_part in log for log in result_data["logs"]), \
+        f"Test: {description} - Expected log message part '{log_message_part}' not found in logs: {result_data['logs']}"
+
+    if is_error_case:
+        assert "errors" in result_data, f"Test: {description} - Missing errors array for an error case"
+        assert len(result_data["errors"]) > 0, f"Test: {description} - Errors array is empty for an error case"
+        assert any(log_message_part in err for err in result_data["errors"]), \
+            f"Test: {description} - Expected error message part '{log_message_part}' not found in errors: {result_data['errors']}"
     else:
-        assert "No text fields requiring" in result["logs"][-1] or "Input is a dictionary" in result["logs"][-1]
+        # For non-error string cases, try to parse the output_content to verify it's still valid
+        if isinstance(output_content, str) and output_content.strip() and not is_error_case:
+            try:
+                parsed_output = json.loads(output_content)
+                assert parsed_output == expected_content_after_parse, f"Test: {description} - Parsed output does not match expected"
+            except json.JSONDecodeError:
+                pytest.fail(f"Test: {description} - Output content was not valid JSON after processing: {output_content}")
+        elif isinstance(output_content, (dict,list)):
+             assert output_content == expected_content_after_parse, f"Test: {description} - Dict/List output does not match expected"
 
-def test_escape_text_fields_with_dictionary_input():
-    yaml_dict = {"key": "value"}
-    output, result = escape_text_fields(yaml_dict)
 
-    assert output == yaml_dict
-    assert "Input is a dictionary" in result["logs"][-1]
-
-def test_escape_text_fields_with_existing_quotes():
-    input_yaml = 'key: value\nText with "quotes" that needs escaping\n'
-    expected_yaml = 'key: value\n"Text with \\"quotes\\" that needs escaping"\n'
-
-    output_yaml, result = escape_text_fields(input_yaml)
-    assert output_yaml == expected_yaml
-    assert "Escaped 1" in result["logs"][-1]
-
-def test_escape_text_fields_with_real_world_example():
+def test_escape_text_fields_unsupported_type():
     """
-    Test the escape_text_fields function with a real-world example
-    that was causing YAML parsing issues.
-
-    This test ensures that our function can handle complex YAML with nested structures,
-    backticks, and natural language text that might contain colons.
+    Test that an unsupported input type logs an error and returns content as is.
     """
-    # Create a test file with problematic lines
-    test_file_path = os.path.join(os.path.dirname(__file__), 'test_yaml_example.txt')
+    input_content = 12345  # Integer, not str, dict, or list
+    data = {"logs": [], "errors": []}
+    output_content, result_data = escape_text_fields(input_content, data)
 
-    # Write a simplified version with just the problematic parts
-    with open(test_file_path, 'w', encoding='utf-8') as f:
-        f.write("""
-natural_language_goal: Enhance the `--list-models` command to provide detailed model information and an option to export it to a CSV file.
-description: Analyze requirements and outline the necessary changes in `main.py` and the OpenRouter API integration to support detailed model listing and CSV export.
-instructions: Outline the specific modifications needed in `main.py` to handle the new `--output-csv` argument and integrate with the enhanced API call.
-Detail the structure of the data expected from the API and how it should be formatted for both console output and CSV export.
-Identify potential utility functions needed for data formatting or CSV writing.
-Document the plan in `docs/list_models_enhancement_plan.md`.
-""")
-
-    try:
-        # Read the test file
-        with open(test_file_path, 'r', encoding='utf-8') as f:
-            input_yaml = f.read()
-
-        # Process the YAML content
-        output_yaml, result = escape_text_fields(input_yaml)
-
-        # Verify that the function processed the content without errors
-        assert "logs" in result
-        assert len(result["logs"]) > 0
-
-        # The function should have made changes to properly escape text fields
-        assert "Escaped" in result["logs"][-1]
-
-        # Check that specific problematic lines were properly escaped
-        assert '`--list-models`' in output_yaml
-        assert '`main.py`' in output_yaml
-
-        # Check that lines with natural language and colons are properly quoted
-        assert '"Detail the structure of the data expected from the API' in output_yaml
-        assert '"Identify potential utility functions needed for data formatting' in output_yaml
-        assert '"Document the plan in' in output_yaml
-
-    finally:
-        # Clean up the test file
-        if os.path.exists(test_file_path):
-            os.remove(test_file_path)
+    assert output_content == input_content
+    assert any("Unsupported content type" in log for log in result_data["logs"] if "ERROR" in log.upper())
+    assert any("Unsupported content type" in err for err in result_data["errors"])

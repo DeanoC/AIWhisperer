@@ -16,13 +16,25 @@ def identity_transform(yaml_content: str | dict, data: dict) -> tuple:
     This function follows the standard interface for scripted postprocessing steps:
     it accepts YAML data and a result tracking object and returns both unchanged.
 
-   Args:
+     Args:
         yaml_content (str | dict): The input YAML content as a string or dictionary.
         data (dict): The input parameter dictionary and where results are also stored
 
     Returns:
-        The processed_yaml_content must be in the same format as the input (str | dict).
-        tuple: (processed_yaml_content (str | dict), updated_result (dict))
+        tuple: A tuple containing:
+            - processed_yaml_content (str | dict): The YAML content with backtick wrappers removed.
+              Must be in the same format as the input.
+            - updated_data (dict): The updated data dictionary with processing logs.
+
+    Note:
+        This function follows the required signature for all scripted processing steps:
+        - Takes (yaml_content, data) as input
+        - Returns a tuple of (processed_yaml_content, updated_data)
+        - The parameter and return types are fixed and cannot be changed:
+          * yaml_content: str | dict
+          * data: dict
+          * return: tuple[str | dict, dict]
+        - Preserves the input format (str or dict) in the output
 
     Example:
         >>> yaml_content = {"task": "example"}

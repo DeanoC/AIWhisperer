@@ -1,0 +1,1133 @@
+=== TEST OUTPUT ===
+
+Original YAML string:
+```yaml
+natural_language_goal: Enhance the `--list-models` command to provide detailed model information and optionally export it to a CSV file.
+overall_context: |
+  The goal is to improve the user experience when listing available models using the `ai-whisperer` CLI by providing richer information and an export option.
+plan:
+  - step_id: plan_implementation
+    description: Analyze the requirements and plan the necessary code modifications in main.py and the OpenRouter API module.
+    depends_on: []
+    agent_spec:
+      type: planning
+      input_artifacts:
+        - main.py
+        - ai_whisperer/openrouter_api.py
+      output_artifacts:
+        - docs/list_models_enhancement_plan.md
+      instructions: |
+        Analyze the feature request for enhancing the `--list-models` command.
+        Identify the specific changes needed in `main.py` to handle the new `--output-csv` argument and integrate with the enhanced API call.
+        Determine how the `OpenRouterAPI.list_models()` method needs to be modified to fetch comprehensive model details (features, pricing, context size, provider).
+        Plan the structure for handling both console output and CSV output based on the presence of the `--output-csv` argument.
+        Outline the necessary data formatting for CSV export.
+        Document the planned code changes and the overall implementation approach in `docs/list_models_enhancement_plan.md`.
+      validation_criteria:
+        - docs/list_models_enhancement_plan.md exists.
+        - docs/list_models_enhancement_plan.md outlines changes to main.py for argument parsing.
+        - docs/list_models_enhancement_plan.md describes modifications to ai_whisperer/openrouter_api.py for fetching detailed data.
+        - docs/list_models_enhancement_plan.md details the logic for conditional console/CSV output.
+        - docs/list_models_enhancement_plan.md specifies the required data fields for CSV export.
+  - step_id: generate_tests_for_cli_and_api
+    description: Generate unit tests for the modified CLI argument parsing and the enhanced OpenRouter API data retrieval.
+    depends_on:
+      - plan_implementation
+    agent_spec:
+      type: test_generation
+      input_artifacts:
+        - docs/list_models_enhancement_plan.md
+        - main.py # For context on CLI structure
+        - ai_whisperer/openrouter_api.py # For context on API structure
+      output_artifacts:
+        - tests/unit/test_list_models_cli.py
+        - tests/unit/test_openrouter_api.py
+      instructions: |
+        Generate pytest unit tests for the planned changes.
+        Create tests in `tests/unit/test_list_models_cli.py` to verify:
+        - The `--output-csv` argument is correctly parsed when used with `--list-models`.
+        - The correct function (console output or CSV export) is called based on the presence of `--output-csv`.
+        Create tests in `tests/unit/test_openrouter_api.py` to verify:
+        - The enhanced `list_models` method attempts to retrieve comprehensive model details.
+        - The method handles the structure of the expected API response containing detailed model information (use mock data if necessary).
+        Ensure tests are independent and cover edge cases related to argument handling and API response parsing.
+        Do NOT implement the actual code being tested.
+      validation_criteria:
+        - tests/unit/test_list_models_cli.py exists.
+        - tests/unit/test_list_models_cli.py contains tests for `--output-csv` parsing.
+        - tests/unit/test_openrouter_api.py exists.
+        - tests/unit/test_openrouter_api.py contains tests for fetching detailed model data.
+  - step_id: implement_cli_argument
+    description: Modify main.py to add the optional --output-csv parameter and handle conditional output.
+    depends_on:
+      - generate_tests_for_cli_and_api
+    agent_spec:
+      type: file_edit
+      input_artifacts:
+        - main.py
+        - docs/list_models_enhancement_plan.md
+      output_artifacts:
+        - main.py
+      instructions: |
+        Modify the `main.py` file.
+        Add an optional `--output-csv` argument to the argument parser specifically when `--list-models` is used.
+        Implement the logic to check if the `--output-csv` argument is provided.
+        Based on the presence of `--output-csv`, call the appropriate function to either print to the console or trigger the CSV export process (which will be implemented later).
+        Ensure existing functionality (listing to console without `--output-csv`) remains unchanged.
+        Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+        Examine existing code in `main.py` for relevant patterns or utility functions.
+      validation_criteria:
+        - main.py exists.
+        - main.py includes logic to parse the `--output-csv` argument with `--list-models`.
+        - main.py includes conditional logic based on the `--output-csv` argument for output handling.
+  - step_id: validate_cli_argument
+    description: Run tests to validate the --output-csv CLI argument parsing and conditional logic.
+    depends_on:
+      - implement_cli_argument
+    agent_spec:
+      type: validation
+      input_artifacts:
+        - main.py
+        - tests/unit/test_list_models_cli.py
+      instructions: |
+        Execute the pytest tests in `tests/unit/test_list_models_cli.py`.
+        Ensure all tests related to `--output-csv` parsing and conditional logic pass.
+      validation_criteria:
+        - The command `pytest tests/unit/test_list_models_cli.py` executes successfully.
+        - All tests in `tests/unit/test_list_models_cli.py` pass.
+  - step_id: enhance_api_data_retrieval
+    description: Modify the OpenRouter API method to fetch comprehensive model details.
+    depends_on:
+      - implement_cli_argument
+      - validate_cli_argument
+    agent_spec:
+      type: file_edit
+      input_artifacts:
+        - ai_whisperer/openrouter_api.py
+        - docs/list_models_enhancement_plan.md
+      output_artifacts:
+        - ai_whisperer/openrouter_api.py
+      instructions: |
+        Modify the `ai_whisperer/openrouter_api.py` file.
+        Enhance the `list_models()` method to make the API call that retrieves detailed information about models, including features, cost per token, context window, and provider information.
+        Ensure the method processes the API response to extract the required detailed data for each model.
+        The method should return a structured format (e.g., a list of dictionaries or objects) containing these details for all models.
+        Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+        Examine existing code in `ai_whisperer/openrouter_api.py` for relevant patterns.
+      validation_criteria:
+        - ai_whisperer/openrouter_api.py exists.
+        - ai_whisperer/openrouter_api.py::list_models is modified to fetch detailed model data.
+        - ai_whisperer/openrouter_api.py::list_models returns a data structure containing detailed information for each model (features, cost, context window, provider).
+  - step_id: validate_api_data_retrieval
+    description: Run tests to validate the enhanced OpenRouter API data retrieval method.
+    depends_on:
+      - enhance_api_data_retrieval
+    agent_spec:
+      type: validation
+      input_artifacts:
+        - ai_whisperer/openrouter_api.py
+        - tests/unit/test_openrouter_api.py
+      instructions: |
+        Execute the pytest tests in `tests/unit/test_openrouter_api.py`.
+        Ensure all tests related to fetching detailed model data pass.
+      validation_criteria:
+        - The command `pytest tests/unit/test_openrouter_api.py` executes successfully.
+        - All tests in `tests/unit/test_openrouter_api.py` pass.
+  - step_id: implement_csv_export
+    description: Implement the functionality to format and export detailed model data to a CSV file.
+    depends_on:
+      - validate_api_data_retrieval
+      - validate_cli_argument
+    agent_spec:
+      type: code_generation
+      input_artifacts:
+        - main.py # For integration point
+        - docs/list_models_enhancement_plan.md
+      output_artifacts:
+        - main.py # Or a new helper module if appropriate
+      instructions: |
+        Implement the logic for formatting and exporting detailed model information to a CSV file.
+        This involves:
+        - Defining the CSV header row based on the detailed model attributes (model name, features, cost, context window, provider).
+        - Iterating through the structured model data obtained from the API.
+        - Formatting each model's details into a CSV row.
+        - Writing the header and data rows to the specified output file path.
+        Integrate this functionality into `main.py` to be called when the `--output-csv` argument is present. Consider creating a new helper function or module if the logic complexity warrants it.
+        Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+        Examine existing codebase for utilities related to file handling or data formatting.
+      validation_criteria:
+        - Code for CSV export is implemented and integrated.
+        - The CSV export logic correctly handles formatting detailed model data.
+        - The code writes data to the file specified by the `--output-csv` argument.
+  - step_id: generate_tests_for_csv_export
+    description: Generate unit tests for the CSV export functionality.
+    depends_on:
+      - implement_csv_export # Generate tests AFTER the code is written this time to validate the implementation directly.
+    agent_spec:
+      type: test_generation
+      input_artifacts:
+        - main.py # Or the new helper module
+        - docs/list_models_enhancement_plan.md
+      output_artifacts:
+        - tests/unit/test_csv_export.py
+      instructions: |
+        Generate pytest unit tests for the implemented CSV export logic.
+        Create tests in `tests/unit/test_csv_export.py` to verify:
+        - The CSV header row is correctly generated with the specified columns.
+        - Model data is correctly formatted into CSV rows.
+        - The data is written to the correct output file.
+        - The content of the generated CSV file is accurate based on mock input data.
+        Use mock data representing detailed model information for testing.
+      validation_criteria:
+        - tests/unit/test_csv_export.py exists.
+        - tests/unit/test_csv_export.py contains tests for CSV header generation.
+        - tests/unit/test_csv_export.py contains tests for data row formatting.
+        - tests/unit/test_csv_export.py contains tests for writing data to file and content verification.
+  - step_id: validate_csv_export
+    description: Run tests to validate the CSV export functionality.
+    depends_on:
+      - generate_tests_for_csv_export
+    agent_spec:
+      type: validation
+      input_artifacts:
+        - main.py # Or the new helper module
+        - tests/unit/test_csv_export.py
+      instructions: |
+        Execute the pytest tests in `tests/unit/test_csv_export.py`.
+        Ensure all tests for CSV export functionality pass.
+      validation_criteria:
+        - The command `pytest tests/unit/test_csv_export.py` executes successfully.
+        - All tests in `tests/unit/test_csv_export.py` pass.
+  - step_id: update_documentation
+    description: Update documentation to reflect the new --output-csv option and enhanced list-models output.
+    depends_on:
+      - validate_csv_export
+      - validate_api_data_retrieval
+    agent_spec:
+      type: documentation
+      input_artifacts:
+        - README.md # Assuming CLI usage is documented here
+        - main.py # For CLI help string
+      output_artifacts:
+        - README.md
+      instructions: |
+        Update the documentation to include details about the new `--output-csv` option for the `--list-models` command.
+        Explain how to use the option and the format of the output CSV file.
+        Also, update any sections describing the output of `--list-models` when `--output-csv` is not used to reflect the richer console output (if applicable, though the focus is on CSV export).
+        Ensure the CLI help message (usually generated based on argument parser) is also updated if necessary (confirm based on `main.py`).
+      validation_criteria:
+        - README.md exists.
+        - README.md clearly documents the new `--output-csv` parameter for `--list-models`.
+        - README.md explains the content of the output CSV file.
+        - The CLI help message for `--list-models` includes the `--output-csv` parameter.
+```
+
+
+
+=== Step 1: clean_backtick_wrapper ===
+YAML content:
+
+natural_language_goal: Enhance the `--list-models` command to provide detailed model information and optionally export it to a CSV file.
+overall_context: |
+  The goal is to improve the user experience when listing available models using the `ai-whisperer` CLI by providing richer information and an export option.
+plan:
+  - step_id: plan_implementation
+    description: Analyze the requirements and plan the necessary code modifications in main.py and the OpenRouter API module.
+    depends_on: []
+    agent_spec:
+      type: planning
+      input_artifacts:
+        - main.py
+        - ai_whisperer/openrouter_api.py
+      output_artifacts:
+        - docs/list_models_enhancement_plan.md
+      instructions: |
+        Analyze the feature request for enhancing the `--list-models` command.
+        Identify the specific changes needed in `main.py` to handle the new `--output-csv` argument and integrate with the enhanced API call.
+        Determine how the `OpenRouterAPI.list_models()` method needs to be modified to fetch comprehensive model details (features, pricing, context size, provider).
+        Plan the structure for handling both console output and CSV output based on the presence of the `--output-csv` argument.
+        Outline the necessary data formatting for CSV export.
+        Document the planned code changes and the overall implementation approach in `docs/list_models_enhancement_plan.md`.
+      validation_criteria:
+        - docs/list_models_enhancement_plan.md exists.
+        - docs/list_models_enhancement_plan.md outlines changes to main.py for argument parsing.
+        - docs/list_models_enhancement_plan.md describes modifications to ai_whisperer/openrouter_api.py for fetching detailed data.
+        - docs/list_models_enhancement_plan.md details the logic for conditional console/CSV output.
+        - docs/list_models_enhancement_plan.md specifies the required data fields for CSV export.
+  - step_id: generate_tests_for_cli_and_api
+    description: Generate unit tests for the modified CLI argument parsing and the enhanced OpenRouter API data retrieval.
+    depends_on:
+      - plan_implementation
+    agent_spec:
+      type: test_generation
+      input_artifacts:
+        - docs/list_models_enhancement_plan.md
+        - main.py # For context on CLI structure
+        - ai_whisperer/openrouter_api.py # For context on API structure
+      output_artifacts:
+        - tests/unit/test_list_models_cli.py
+        - tests/unit/test_openrouter_api.py
+      instructions: |
+        Generate pytest unit tests for the planned changes.
+        Create tests in `tests/unit/test_list_models_cli.py` to verify:
+        - The `--output-csv` argument is correctly parsed when used with `--list-models`.
+        - The correct function (console output or CSV export) is called based on the presence of `--output-csv`.
+        Create tests in `tests/unit/test_openrouter_api.py` to verify:
+        - The enhanced `list_models` method attempts to retrieve comprehensive model details.
+        - The method handles the structure of the expected API response containing detailed model information (use mock data if necessary).
+        Ensure tests are independent and cover edge cases related to argument handling and API response parsing.
+        Do NOT implement the actual code being tested.
+      validation_criteria:
+        - tests/unit/test_list_models_cli.py exists.
+        - tests/unit/test_list_models_cli.py contains tests for `--output-csv` parsing.
+        - tests/unit/test_openrouter_api.py exists.
+        - tests/unit/test_openrouter_api.py contains tests for fetching detailed model data.
+  - step_id: implement_cli_argument
+    description: Modify main.py to add the optional --output-csv parameter and handle conditional output.
+    depends_on:
+      - generate_tests_for_cli_and_api
+    agent_spec:
+      type: file_edit
+      input_artifacts:
+        - main.py
+        - docs/list_models_enhancement_plan.md
+      output_artifacts:
+        - main.py
+      instructions: |
+        Modify the `main.py` file.
+        Add an optional `--output-csv` argument to the argument parser specifically when `--list-models` is used.
+        Implement the logic to check if the `--output-csv` argument is provided.
+        Based on the presence of `--output-csv`, call the appropriate function to either print to the console or trigger the CSV export process (which will be implemented later).
+        Ensure existing functionality (listing to console without `--output-csv`) remains unchanged.
+        Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+        Examine existing code in `main.py` for relevant patterns or utility functions.
+      validation_criteria:
+        - main.py exists.
+        - main.py includes logic to parse the `--output-csv` argument with `--list-models`.
+        - main.py includes conditional logic based on the `--output-csv` argument for output handling.
+  - step_id: validate_cli_argument
+    description: Run tests to validate the --output-csv CLI argument parsing and conditional logic.
+    depends_on:
+      - implement_cli_argument
+    agent_spec:
+      type: validation
+      input_artifacts:
+        - main.py
+        - tests/unit/test_list_models_cli.py
+      instructions: |
+        Execute the pytest tests in `tests/unit/test_list_models_cli.py`.
+        Ensure all tests related to `--output-csv` parsing and conditional logic pass.
+      validation_criteria:
+        - The command `pytest tests/unit/test_list_models_cli.py` executes successfully.
+        - All tests in `tests/unit/test_list_models_cli.py` pass.
+  - step_id: enhance_api_data_retrieval
+    description: Modify the OpenRouter API method to fetch comprehensive model details.
+    depends_on:
+      - implement_cli_argument
+      - validate_cli_argument
+    agent_spec:
+      type: file_edit
+      input_artifacts:
+        - ai_whisperer/openrouter_api.py
+        - docs/list_models_enhancement_plan.md
+      output_artifacts:
+        - ai_whisperer/openrouter_api.py
+      instructions: |
+        Modify the `ai_whisperer/openrouter_api.py` file.
+        Enhance the `list_models()` method to make the API call that retrieves detailed information about models, including features, cost per token, context window, and provider information.
+        Ensure the method processes the API response to extract the required detailed data for each model.
+        The method should return a structured format (e.g., a list of dictionaries or objects) containing these details for all models.
+        Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+        Examine existing code in `ai_whisperer/openrouter_api.py` for relevant patterns.
+      validation_criteria:
+        - ai_whisperer/openrouter_api.py exists.
+        - ai_whisperer/openrouter_api.py::list_models is modified to fetch detailed model data.
+        - ai_whisperer/openrouter_api.py::list_models returns a data structure containing detailed information for each model (features, cost, context window, provider).
+  - step_id: validate_api_data_retrieval
+    description: Run tests to validate the enhanced OpenRouter API data retrieval method.
+    depends_on:
+      - enhance_api_data_retrieval
+    agent_spec:
+      type: validation
+      input_artifacts:
+        - ai_whisperer/openrouter_api.py
+        - tests/unit/test_openrouter_api.py
+      instructions: |
+        Execute the pytest tests in `tests/unit/test_openrouter_api.py`.
+        Ensure all tests related to fetching detailed model data pass.
+      validation_criteria:
+        - The command `pytest tests/unit/test_openrouter_api.py` executes successfully.
+        - All tests in `tests/unit/test_openrouter_api.py` pass.
+  - step_id: implement_csv_export
+    description: Implement the functionality to format and export detailed model data to a CSV file.
+    depends_on:
+      - validate_api_data_retrieval
+      - validate_cli_argument
+    agent_spec:
+      type: code_generation
+      input_artifacts:
+        - main.py # For integration point
+        - docs/list_models_enhancement_plan.md
+      output_artifacts:
+        - main.py # Or a new helper module if appropriate
+      instructions: |
+        Implement the logic for formatting and exporting detailed model information to a CSV file.
+        This involves:
+        - Defining the CSV header row based on the detailed model attributes (model name, features, cost, context window, provider).
+        - Iterating through the structured model data obtained from the API.
+        - Formatting each model's details into a CSV row.
+        - Writing the header and data rows to the specified output file path.
+        Integrate this functionality into `main.py` to be called when the `--output-csv` argument is present. Consider creating a new helper function or module if the logic complexity warrants it.
+        Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+        Examine existing codebase for utilities related to file handling or data formatting.
+      validation_criteria:
+        - Code for CSV export is implemented and integrated.
+        - The CSV export logic correctly handles formatting detailed model data.
+        - The code writes data to the file specified by the `--output-csv` argument.
+  - step_id: generate_tests_for_csv_export
+    description: Generate unit tests for the CSV export functionality.
+    depends_on:
+      - implement_csv_export # Generate tests AFTER the code is written this time to validate the implementation directly.
+    agent_spec:
+      type: test_generation
+      input_artifacts:
+        - main.py # Or the new helper module
+        - docs/list_models_enhancement_plan.md
+      output_artifacts:
+        - tests/unit/test_csv_export.py
+      instructions: |
+        Generate pytest unit tests for the implemented CSV export logic.
+        Create tests in `tests/unit/test_csv_export.py` to verify:
+        - The CSV header row is correctly generated with the specified columns.
+        - Model data is correctly formatted into CSV rows.
+        - The data is written to the correct output file.
+        - The content of the generated CSV file is accurate based on mock input data.
+        Use mock data representing detailed model information for testing.
+      validation_criteria:
+        - tests/unit/test_csv_export.py exists.
+        - tests/unit/test_csv_export.py contains tests for CSV header generation.
+        - tests/unit/test_csv_export.py contains tests for data row formatting.
+        - tests/unit/test_csv_export.py contains tests for writing data to file and content verification.
+  - step_id: validate_csv_export
+    description: Run tests to validate the CSV export functionality.
+    depends_on:
+      - generate_tests_for_csv_export
+    agent_spec:
+      type: validation
+      input_artifacts:
+        - main.py # Or the new helper module
+        - tests/unit/test_csv_export.py
+      instructions: |
+        Execute the pytest tests in `tests/unit/test_csv_export.py`.
+        Ensure all tests for CSV export functionality pass.
+      validation_criteria:
+        - The command `pytest tests/unit/test_csv_export.py` executes successfully.
+        - All tests in `tests/unit/test_csv_export.py` pass.
+  - step_id: update_documentation
+    description: Update documentation to reflect the new --output-csv option and enhanced list-models output.
+    depends_on:
+      - validate_csv_export
+      - validate_api_data_retrieval
+    agent_spec:
+      type: documentation
+      input_artifacts:
+        - README.md # Assuming CLI usage is documented here
+        - main.py # For CLI help string
+      output_artifacts:
+        - README.md
+      instructions: |
+        Update the documentation to include details about the new `--output-csv` option for the `--list-models` command.
+        Explain how to use the option and the format of the output CSV file.
+        Also, update any sections describing the output of `--list-models` when `--output-csv` is not used to reflect the richer console output (if applicable, though the focus is on CSV export).
+        Ensure the CLI help message (usually generated based on argument parser) is also updated if necessary (confirm based on `main.py`).
+      validation_criteria:
+        - README.md exists.
+        - README.md clearly documents the new `--output-csv` parameter for `--list-models`.
+        - README.md explains the content of the output CSV file.
+        - The CLI help message for `--list-models` includes the `--output-csv` parameter.
+
+
+
+=== Step 2: escape_text_fields ===
+YAML content:
+natural_language_goal: Enhance the `--list-models` command to provide detailed model information and optionally export it to a CSV file.
+overall_context: |
+  The goal is to improve the user experience when listing available models using the `ai-whisperer` CLI by providing richer information and an export option.
+plan:
+  - step_id: plan_implementation
+  description: Analyze the requirements and plan the necessary code modifications in main.py and the OpenRouter API module.
+  depends_on: []
+  agent_spec:
+    type: planning
+    input_artifacts:
+      - main.py
+      - ai_whisperer/openrouter_api.py
+    output_artifacts:
+      - docs/list_models_enhancement_plan.md
+    instructions: |
+      Analyze the feature request for enhancing the `--list-models` command.
+      Identify the specific changes needed in `main.py` to handle the new `--output-csv` argument and integrate with the enhanced API call.
+      Determine how the `OpenRouterAPI.list_models()` method needs to be modified to fetch comprehensive model details (features, pricing, context size, provider).
+      Plan the structure for handling both console output and CSV output based on the presence of the `--output-csv` argument.
+      Outline the necessary data formatting for CSV export.
+      Document the planned code changes and the overall implementation approach in `docs/list_models_enhancement_plan.md`.
+    validation_criteria:
+      - docs/list_models_enhancement_plan.md exists.
+      - docs/list_models_enhancement_plan.md outlines changes to main.py for argument parsing.
+      - docs/list_models_enhancement_plan.md describes modifications to ai_whisperer/openrouter_api.py for fetching detailed data.
+      - docs/list_models_enhancement_plan.md details the logic for conditional console/CSV output.
+      - docs/list_models_enhancement_plan.md specifies the required data fields for CSV export.
+  - step_id: generate_tests_for_cli_and_api
+  description: Generate unit tests for the modified CLI argument parsing and the enhanced OpenRouter API data retrieval.
+  depends_on:
+    - plan_implementation
+  agent_spec:
+    type: test_generation
+    input_artifacts:
+      - docs/list_models_enhancement_plan.md
+      - main.py   # For context on CLI structure
+      - ai_whisperer/openrouter_api.py   # For context on API structure
+    output_artifacts:
+      - tests/unit/test_list_models_cli.py
+      - tests/unit/test_openrouter_api.py
+    instructions: |
+      Generate pytest unit tests for the planned changes.
+      Create tests in `tests/unit/test_list_models_cli.py` to verify:
+      - The `--output-csv` argument is correctly parsed when used with `--list-models`.
+      - The correct function (console output or CSV export) is called based on the presence of `--output-csv`.
+      Create tests in `tests/unit/test_openrouter_api.py` to verify:
+      - The enhanced `list_models` method attempts to retrieve comprehensive model details.
+      - The method handles the structure of the expected API response containing detailed model information (use mock data if necessary).
+      Ensure tests are independent and cover edge cases related to argument handling and API response parsing.
+      Do NOT implement the actual code being tested.
+    validation_criteria:
+      - tests/unit/test_list_models_cli.py exists.
+      - '"tests/unit/test_list_models_cli.py contains tests for `--output-csv` parsing."'
+      - tests/unit/test_openrouter_api.py exists.
+      - tests/unit/test_openrouter_api.py contains tests for fetching detailed model data.
+  - step_id: implement_cli_argument
+  description: Modify main.py to add the optional --output-csv parameter and handle conditional output.
+  depends_on:
+    - generate_tests_for_cli_and_api
+  agent_spec:
+    type: file_edit
+    input_artifacts:
+      - main.py
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - main.py
+    instructions: |
+      Modify the `main.py` file.
+      Add an optional `--output-csv` argument to the argument parser specifically when `--list-models` is used.
+      Implement the logic to check if the `--output-csv` argument is provided.
+      Based on the presence of `--output-csv`, call the appropriate function to either print to the console or trigger the CSV export process (which will be implemented later).
+      Ensure existing functionality (listing to console without `--output-csv`) remains unchanged.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing code in `main.py` for relevant patterns or utility functions.
+    validation_criteria:
+      - main.py exists.
+      - '"main.py includes logic to parse the `--output-csv` argument with `--list-models`."'
+      - '"main.py includes conditional logic based on the `--output-csv` argument for output handling."'
+  - step_id: validate_cli_argument
+  description: Run tests to validate the --output-csv CLI argument parsing and conditional logic.
+  depends_on:
+    - implement_cli_argument
+  agent_spec:
+    type: validation
+    input_artifacts:
+      - main.py
+      - tests/unit/test_list_models_cli.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_list_models_cli.py`.
+      Ensure all tests related to `--output-csv` parsing and conditional logic pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_list_models_cli.py` executes successfully."'
+      - '"All tests in `tests/unit/test_list_models_cli.py` pass."'
+  - step_id: enhance_api_data_retrieval
+  description: Modify the OpenRouter API method to fetch comprehensive model details.
+  depends_on:
+    - implement_cli_argument
+    - validate_cli_argument
+  agent_spec:
+    type: file_edit
+    input_artifacts:
+      - ai_whisperer/openrouter_api.py
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - ai_whisperer/openrouter_api.py
+    instructions: |
+      Modify the `ai_whisperer/openrouter_api.py` file.
+      Enhance the `list_models()` method to make the API call that retrieves detailed information about models, including features, cost per token, context window, and provider information.
+      Ensure the method processes the API response to extract the required detailed data for each model.
+      The method should return a structured format (e.g., a list of dictionaries or objects) containing these details for all models.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing code in `ai_whisperer/openrouter_api.py` for relevant patterns.
+    validation_criteria:
+      - ai_whisperer/openrouter_api.py exists.
+      - '"ai_whisperer/openrouter_api.py::list_models is modified to fetch detailed model data."'
+      - '"ai_whisperer/openrouter_api.py::list_models returns a data structure containing detailed information for each model (features, cost, context window, provider)."'
+  - step_id: validate_api_data_retrieval
+  description: Run tests to validate the enhanced OpenRouter API data retrieval method.
+  depends_on:
+    - enhance_api_data_retrieval
+  agent_spec:
+    type: validation
+    input_artifacts:
+      - ai_whisperer/openrouter_api.py
+      - tests/unit/test_openrouter_api.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_openrouter_api.py`.
+      Ensure all tests related to fetching detailed model data pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_openrouter_api.py` executes successfully."'
+      - '"All tests in `tests/unit/test_openrouter_api.py` pass."'
+  - step_id: implement_csv_export
+  description: Implement the functionality to format and export detailed model data to a CSV file.
+  depends_on:
+    - validate_api_data_retrieval
+    - validate_cli_argument
+  agent_spec:
+    type: code_generation
+    input_artifacts:
+      - main.py   # For integration point
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - main.py   # Or a new helper module if appropriate
+    instructions: |
+      Implement the logic for formatting and exporting detailed model information to a CSV file.
+      This involves:
+      - Defining the CSV header row based on the detailed model attributes (model name, features, cost, context window, provider).
+      - Iterating through the structured model data obtained from the API.
+      - Formatting each model's details into a CSV row.
+      - Writing the header and data rows to the specified output file path.
+      Integrate this functionality into `main.py` to be called when the `--output-csv` argument is present. Consider creating a new helper function or module if the logic complexity warrants it.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing codebase for utilities related to file handling or data formatting.
+    validation_criteria:
+      - Code for CSV export is implemented and integrated.
+      - The CSV export logic correctly handles formatting detailed model data.
+      - '"The code writes data to the file specified by the `--output-csv` argument."'
+  - step_id: generate_tests_for_csv_export
+  description: Generate unit tests for the CSV export functionality.
+  depends_on:
+    - implement_csv_export   # Generate tests AFTER the code is written this time to validate the implementation directly.
+  agent_spec:
+    type: test_generation
+    input_artifacts:
+      - main.py   # Or the new helper module
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - tests/unit/test_csv_export.py
+    instructions: |
+      Generate pytest unit tests for the implemented CSV export logic.
+      Create tests in `tests/unit/test_csv_export.py` to verify:
+      - The CSV header row is correctly generated with the specified columns.
+      - Model data is correctly formatted into CSV rows.
+      - The data is written to the correct output file.
+      - The content of the generated CSV file is accurate based on mock input data.
+      Use mock data representing detailed model information for testing.
+    validation_criteria:
+      - tests/unit/test_csv_export.py exists.
+      - tests/unit/test_csv_export.py contains tests for CSV header generation.
+      - tests/unit/test_csv_export.py contains tests for data row formatting.
+      - tests/unit/test_csv_export.py contains tests for writing data to file and content verification.
+  - step_id: validate_csv_export
+  description: Run tests to validate the CSV export functionality.
+  depends_on:
+    - generate_tests_for_csv_export
+  agent_spec:
+    type: validation
+    input_artifacts:
+      - main.py   # Or the new helper module
+      - tests/unit/test_csv_export.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_csv_export.py`.
+      Ensure all tests for CSV export functionality pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_csv_export.py` executes successfully."'
+      - '"All tests in `tests/unit/test_csv_export.py` pass."'
+  - step_id: update_documentation
+  description: Update documentation to reflect the new --output-csv option and enhanced list-models output.
+  depends_on:
+    - validate_csv_export
+    - validate_api_data_retrieval
+  agent_spec:
+    type: documentation
+    input_artifacts:
+      - README.md   # Assuming CLI usage is documented here
+      - main.py   # For CLI help string
+    output_artifacts:
+      - README.md
+    instructions: |
+      Update the documentation to include details about the new `--output-csv` option for the `--list-models` command.
+      Explain how to use the option and the format of the output CSV file.
+      Also, update any sections describing the output of `--list-models` when `--output-csv` is not used to reflect the richer console output (if applicable, though the focus is on CSV export).
+      Ensure the CLI help message (usually generated based on argument parser) is also updated if necessary (confirm based on `main.py`).
+    validation_criteria:
+      - README.md exists.
+      - '"README.md clearly documents the new `--output-csv` parameter for `--list-models`."'
+      - README.md explains the content of the output CSV file.
+      - '"The CLI help message for `--list-models` includes the `--output-csv` parameter."'
+
+
+
+=== Step 3: fix_yaml_structure ===
+YAML content:
+natural_language_goal: Enhance the `--list-models` command to provide detailed model information and optionally export it to a CSV file.
+overall_context: |
+  The goal is to improve the user experience when listing available models using the `ai-whisperer` CLI by providing richer information and an export option.
+plan:
+  - step_id: plan_implementation
+    description: Analyze the requirements and plan the necessary code modifications in main.py and the OpenRouter API module.
+    depends_on: []
+    agent_spec:
+    type: planning
+    input_artifacts:
+      - main.py
+      - ai_whisperer/openrouter_api.py
+    output_artifacts:
+      - docs/list_models_enhancement_plan.md
+    instructions: |
+      Analyze the feature request for enhancing the `--list-models` command.
+      Identify the specific changes needed in `main.py` to handle the new `--output-csv` argument and integrate with the enhanced API call.
+      Determine how the `OpenRouterAPI.list_models()` method needs to be modified to fetch comprehensive model details (features, pricing, context size, provider).
+      Plan the structure for handling both console output and CSV output based on the presence of the `--output-csv` argument.
+      Outline the necessary data formatting for CSV export.
+      Document the planned code changes and the overall implementation approach in `docs/list_models_enhancement_plan.md`.
+    validation_criteria:
+      - docs/list_models_enhancement_plan.md exists.
+      - docs/list_models_enhancement_plan.md outlines changes to main.py for argument parsing.
+      - docs/list_models_enhancement_plan.md describes modifications to ai_whisperer/openrouter_api.py for fetching detailed data.
+      - docs/list_models_enhancement_plan.md details the logic for conditional console/CSV output.
+      - docs/list_models_enhancement_plan.md specifies the required data fields for CSV export.
+  - step_id: generate_tests_for_cli_and_api
+    description: Generate unit tests for the modified CLI argument parsing and the enhanced OpenRouter API data retrieval.
+    depends_on:
+    - plan_implementation
+    agent_spec:
+    type: test_generation
+    input_artifacts:
+      - docs/list_models_enhancement_plan.md
+      - main.py   # For context on CLI structure
+      - ai_whisperer/openrouter_api.py   # For context on API structure
+    output_artifacts:
+      - tests/unit/test_list_models_cli.py
+      - tests/unit/test_openrouter_api.py
+    instructions: |
+      Generate pytest unit tests for the planned changes.
+      Create tests in `tests/unit/test_list_models_cli.py` to verify:
+      - "The `--output-csv` argument is correctly parsed when used with `--list-models`."
+      - "The correct function (console output or CSV export) is called based on the presence of `--output-csv`."
+      Create tests in `tests/unit/test_openrouter_api.py` to verify:
+      - "The enhanced `list_models` method attempts to retrieve comprehensive model details."
+      - The method handles the structure of the expected API response containing detailed model information (use mock data if necessary).
+      Ensure tests are independent and cover edge cases related to argument handling and API response parsing.
+      Do NOT implement the actual code being tested.
+    validation_criteria:
+      - tests/unit/test_list_models_cli.py exists.
+      - '"tests/unit/test_list_models_cli.py contains tests for `--output-csv` parsing."'
+      - tests/unit/test_openrouter_api.py exists.
+      - tests/unit/test_openrouter_api.py contains tests for fetching detailed model data.
+  - step_id: implement_cli_argument
+    description: Modify main.py to add the optional --output-csv parameter and handle conditional output.
+    depends_on:
+    - generate_tests_for_cli_and_api
+    agent_spec:
+    type: file_edit
+    input_artifacts:
+      - main.py
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - main.py
+    instructions: |
+      Modify the `main.py` file.
+      Add an optional `--output-csv` argument to the argument parser specifically when `--list-models` is used.
+      Implement the logic to check if the `--output-csv` argument is provided.
+      Based on the presence of `--output-csv`, call the appropriate function to either print to the console or trigger the CSV export process (which will be implemented later).
+      Ensure existing functionality (listing to console without `--output-csv`) remains unchanged.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing code in `main.py` for relevant patterns or utility functions.
+    validation_criteria:
+      - main.py exists.
+      - '"main.py includes logic to parse the `--output-csv` argument with `--list-models`."'
+      - '"main.py includes conditional logic based on the `--output-csv` argument for output handling."'
+  - step_id: validate_cli_argument
+    description: Run tests to validate the --output-csv CLI argument parsing and conditional logic.
+    depends_on:
+    - implement_cli_argument
+    agent_spec:
+    type: validation
+    input_artifacts:
+      - main.py
+      - tests/unit/test_list_models_cli.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_list_models_cli.py`.
+      Ensure all tests related to `--output-csv` parsing and conditional logic pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_list_models_cli.py` executes successfully."'
+      - '"All tests in `tests/unit/test_list_models_cli.py` pass."'
+  - step_id: enhance_api_data_retrieval
+    description: Modify the OpenRouter API method to fetch comprehensive model details.
+    depends_on:
+    - implement_cli_argument
+    - validate_cli_argument
+    agent_spec:
+    type: file_edit
+    input_artifacts:
+      - ai_whisperer/openrouter_api.py
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - ai_whisperer/openrouter_api.py
+    instructions: |
+      Modify the `ai_whisperer/openrouter_api.py` file.
+      Enhance the `list_models()` method to make the API call that retrieves detailed information about models, including features, cost per token, context window, and provider information.
+      Ensure the method processes the API response to extract the required detailed data for each model.
+      The method should return a structured format (e.g., a list of dictionaries or objects) containing these details for all models.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing code in `ai_whisperer/openrouter_api.py` for relevant patterns.
+    validation_criteria:
+      - ai_whisperer/openrouter_api.py exists.
+      - '"ai_whisperer/openrouter_api.py::list_models is modified to fetch detailed model data."'
+      - '"ai_whisperer/openrouter_api.py::list_models returns a data structure containing detailed information for each model (features, cost, context window, provider)."'
+  - step_id: validate_api_data_retrieval
+    description: Run tests to validate the enhanced OpenRouter API data retrieval method.
+    depends_on:
+    - enhance_api_data_retrieval
+    agent_spec:
+    type: validation
+    input_artifacts:
+      - ai_whisperer/openrouter_api.py
+      - tests/unit/test_openrouter_api.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_openrouter_api.py`.
+      Ensure all tests related to fetching detailed model data pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_openrouter_api.py` executes successfully."'
+      - '"All tests in `tests/unit/test_openrouter_api.py` pass."'
+  - step_id: implement_csv_export
+    description: Implement the functionality to format and export detailed model data to a CSV file.
+    depends_on:
+    - validate_api_data_retrieval
+    - validate_cli_argument
+    agent_spec:
+    type: code_generation
+    input_artifacts:
+      - main.py   # For integration point
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - main.py   # Or a new helper module if appropriate
+    instructions: |
+      Implement the logic for formatting and exporting detailed model information to a CSV file.
+      This involves:
+      - Defining the CSV header row based on the detailed model attributes (model name, features, cost, context window, provider).
+      - Iterating through the structured model data obtained from the API.
+      - Formatting each model's details into a CSV row.
+      - Writing the header and data rows to the specified output file path.
+      Integrate this functionality into `main.py` to be called when the `--output-csv` argument is present. Consider creating a new helper function or module if the logic complexity warrants it.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing codebase for utilities related to file handling or data formatting.
+    validation_criteria:
+      - Code for CSV export is implemented and integrated.
+      - The CSV export logic correctly handles formatting detailed model data.
+      - '"The code writes data to the file specified by the `--output-csv` argument."'
+  - step_id: generate_tests_for_csv_export
+    description: Generate unit tests for the CSV export functionality.
+    depends_on:
+    - implement_csv_export   # Generate tests AFTER the code is written this time to validate the implementation directly.
+    agent_spec:
+    type: test_generation
+    input_artifacts:
+      - main.py   # Or the new helper module
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - tests/unit/test_csv_export.py
+    instructions: |
+      Generate pytest unit tests for the implemented CSV export logic.
+      Create tests in `tests/unit/test_csv_export.py` to verify:
+      - The CSV header row is correctly generated with the specified columns.
+      - Model data is correctly formatted into CSV rows.
+      - The data is written to the correct output file.
+      - The content of the generated CSV file is accurate based on mock input data.
+      Use mock data representing detailed model information for testing.
+    validation_criteria:
+      - tests/unit/test_csv_export.py exists.
+      - tests/unit/test_csv_export.py contains tests for CSV header generation.
+      - tests/unit/test_csv_export.py contains tests for data row formatting.
+      - tests/unit/test_csv_export.py contains tests for writing data to file and content verification.
+  - step_id: validate_csv_export
+    description: Run tests to validate the CSV export functionality.
+    depends_on:
+    - generate_tests_for_csv_export
+    agent_spec:
+    type: validation
+    input_artifacts:
+      - main.py   # Or the new helper module
+      - tests/unit/test_csv_export.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_csv_export.py`.
+      Ensure all tests for CSV export functionality pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_csv_export.py` executes successfully."'
+      - '"All tests in `tests/unit/test_csv_export.py` pass."'
+  - step_id: update_documentation
+    description: Update documentation to reflect the new --output-csv option and enhanced list-models output.
+    depends_on:
+    - validate_csv_export
+    - validate_api_data_retrieval
+    agent_spec:
+    type: documentation
+    input_artifacts:
+      - README.md   # Assuming CLI usage is documented here
+      - main.py   # For CLI help string
+    output_artifacts:
+      - README.md
+    instructions: |
+      Update the documentation to include details about the new `--output-csv` option for the `--list-models` command.
+      Explain how to use the option and the format of the output CSV file.
+      Also, update any sections describing the output of `--list-models` when `--output-csv` is not used to reflect the richer console output (if applicable, though the focus is on CSV export).
+      Ensure the CLI help message (usually generated based on argument parser) is also updated if necessary (confirm based on `main.py`).
+    validation_criteria:
+      - README.md exists.
+      - '"README.md clearly documents the new `--output-csv` parameter for `--list-models`."'
+      - README.md explains the content of the output CSV file.
+      - '"The CLI help message for `--list-models` includes the `--output-csv` parameter."'
+
+
+=== Step 4: normalize_indentation ===
+YAML content:
+natural_language_goal: Enhance the `--list-models` command to provide detailed model
+  information and optionally export it to a CSV file.
+overall_context: |
+  The goal is to improve the user experience when listing available models using the `ai-whisperer` CLI by providing richer information and an export option.
+plan:
+  - step_id: plan_implementation
+    description: Analyze the requirements and plan the necessary code modifications
+      in main.py and the OpenRouter API module.
+    depends_on: []
+    agent_spec:
+    type: planning
+    input_artifacts:
+      - main.py
+      - ai_whisperer/openrouter_api.py
+    output_artifacts:
+      - docs/list_models_enhancement_plan.md
+    instructions: |
+      Analyze the feature request for enhancing the `--list-models` command.
+      Identify the specific changes needed in `main.py` to handle the new `--output-csv` argument and integrate with the enhanced API call.
+      Determine how the `OpenRouterAPI.list_models()` method needs to be modified to fetch comprehensive model details (features, pricing, context size, provider).
+      Plan the structure for handling both console output and CSV output based on the presence of the `--output-csv` argument.
+      Outline the necessary data formatting for CSV export.
+      Document the planned code changes and the overall implementation approach in `docs/list_models_enhancement_plan.md`.
+    validation_criteria:
+      - docs/list_models_enhancement_plan.md exists.
+      - docs/list_models_enhancement_plan.md outlines changes to main.py for argument
+        parsing.
+      - docs/list_models_enhancement_plan.md describes modifications to ai_whisperer/openrouter_api.py
+        for fetching detailed data.
+      - docs/list_models_enhancement_plan.md details the logic for conditional console/CSV
+        output.
+      - docs/list_models_enhancement_plan.md specifies the required data fields for
+        CSV export.
+  - step_id: generate_tests_for_cli_and_api
+    description: Generate unit tests for the modified CLI argument parsing and the
+      enhanced OpenRouter API data retrieval.
+    depends_on:
+      - plan_implementation
+    agent_spec:
+    type: test_generation
+    input_artifacts:
+      - docs/list_models_enhancement_plan.md
+      - main.py   # For context on CLI structure
+      - ai_whisperer/openrouter_api.py   # For context on API structure
+    output_artifacts:
+      - tests/unit/test_list_models_cli.py
+      - tests/unit/test_openrouter_api.py
+    instructions: |
+      Generate pytest unit tests for the planned changes.
+      Create tests in `tests/unit/test_list_models_cli.py` to verify:
+      - "The `--output-csv` argument is correctly parsed when used with `--list-models`."
+      - "The correct function (console output or CSV export) is called based on the presence of `--output-csv`."
+      Create tests in `tests/unit/test_openrouter_api.py` to verify:
+      - "The enhanced `list_models` method attempts to retrieve comprehensive model details."
+      - The method handles the structure of the expected API response containing detailed model information (use mock data if necessary).
+      Ensure tests are independent and cover edge cases related to argument handling and API response parsing.
+      Do NOT implement the actual code being tested.
+    validation_criteria:
+      - tests/unit/test_list_models_cli.py exists.
+      - '"tests/unit/test_list_models_cli.py contains tests for `--output-csv` parsing."'
+      - tests/unit/test_openrouter_api.py exists.
+      - tests/unit/test_openrouter_api.py contains tests for fetching detailed model
+        data.
+  - step_id: implement_cli_argument
+    description: Modify main.py to add the optional --output-csv parameter and handle
+      conditional output.
+    depends_on:
+      - generate_tests_for_cli_and_api
+    agent_spec:
+    type: file_edit
+    input_artifacts:
+      - main.py
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - main.py
+    instructions: |
+      Modify the `main.py` file.
+      Add an optional `--output-csv` argument to the argument parser specifically when `--list-models` is used.
+      Implement the logic to check if the `--output-csv` argument is provided.
+      Based on the presence of `--output-csv`, call the appropriate function to either print to the console or trigger the CSV export process (which will be implemented later).
+      Ensure existing functionality (listing to console without `--output-csv`) remains unchanged.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing code in `main.py` for relevant patterns or utility functions.
+    validation_criteria:
+      - main.py exists.
+      - '"main.py includes logic to parse the `--output-csv` argument with `--list-models`."'
+      - '"main.py includes conditional logic based on the `--output-csv` argument
+        for output handling."'
+  - step_id: validate_cli_argument
+    description: Run tests to validate the --output-csv CLI argument parsing and conditional
+      logic.
+    depends_on:
+      - implement_cli_argument
+    agent_spec:
+    type: validation
+    input_artifacts:
+      - main.py
+      - tests/unit/test_list_models_cli.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_list_models_cli.py`.
+      Ensure all tests related to `--output-csv` parsing and conditional logic pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_list_models_cli.py` executes successfully."'
+      - '"All tests in `tests/unit/test_list_models_cli.py` pass."'
+  - step_id: enhance_api_data_retrieval
+    description: Modify the OpenRouter API method to fetch comprehensive model details.
+    depends_on:
+      - implement_cli_argument
+      - validate_cli_argument
+    agent_spec:
+    type: file_edit
+    input_artifacts:
+      - ai_whisperer/openrouter_api.py
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - ai_whisperer/openrouter_api.py
+    instructions: |
+      Modify the `ai_whisperer/openrouter_api.py` file.
+      Enhance the `list_models()` method to make the API call that retrieves detailed information about models, including features, cost per token, context window, and provider information.
+      Ensure the method processes the API response to extract the required detailed data for each model.
+      The method should return a structured format (e.g., a list of dictionaries or objects) containing these details for all models.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing code in `ai_whisperer/openrouter_api.py` for relevant patterns.
+    validation_criteria:
+      - ai_whisperer/openrouter_api.py exists.
+      - '"ai_whisperer/openrouter_api.py::list_models is modified to fetch detailed
+        model data."'
+      - '"ai_whisperer/openrouter_api.py::list_models returns a data structure containing
+        detailed information for each model (features, cost, context window, provider)."'
+  - step_id: validate_api_data_retrieval
+    description: Run tests to validate the enhanced OpenRouter API data retrieval
+      method.
+    depends_on:
+      - enhance_api_data_retrieval
+    agent_spec:
+    type: validation
+    input_artifacts:
+      - ai_whisperer/openrouter_api.py
+      - tests/unit/test_openrouter_api.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_openrouter_api.py`.
+      Ensure all tests related to fetching detailed model data pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_openrouter_api.py` executes successfully."'
+      - '"All tests in `tests/unit/test_openrouter_api.py` pass."'
+  - step_id: implement_csv_export
+    description: Implement the functionality to format and export detailed model data
+      to a CSV file.
+    depends_on:
+      - validate_api_data_retrieval
+      - validate_cli_argument
+    agent_spec:
+    type: code_generation
+    input_artifacts:
+      - main.py   # For integration point
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - main.py   # Or a new helper module if appropriate
+    instructions: |
+      Implement the logic for formatting and exporting detailed model information to a CSV file.
+      This involves:
+      - Defining the CSV header row based on the detailed model attributes (model name, features, cost, context window, provider).
+      - Iterating through the structured model data obtained from the API.
+      - Formatting each model's details into a CSV row.
+      - Writing the header and data rows to the specified output file path.
+      Integrate this functionality into `main.py` to be called when the `--output-csv` argument is present. Consider creating a new helper function or module if the logic complexity warrants it.
+      Do NOT implement code that only passes the specific tests generated. Implement the required functionality correctly.
+      Examine existing codebase for utilities related to file handling or data formatting.
+    validation_criteria:
+      - Code for CSV export is implemented and integrated.
+      - The CSV export logic correctly handles formatting detailed model data.
+      - '"The code writes data to the file specified by the `--output-csv` argument."'
+  - step_id: generate_tests_for_csv_export
+    description: Generate unit tests for the CSV export functionality.
+    depends_on:
+      - implement_csv_export # Generate tests AFTER the code is written this time to validate the implementation directly.
+    agent_spec:
+    type: test_generation
+    input_artifacts:
+      - main.py   # Or the new helper module
+      - docs/list_models_enhancement_plan.md
+    output_artifacts:
+      - tests/unit/test_csv_export.py
+    instructions: |
+      Generate pytest unit tests for the implemented CSV export logic.
+      Create tests in `tests/unit/test_csv_export.py` to verify:
+      - The CSV header row is correctly generated with the specified columns.
+      - Model data is correctly formatted into CSV rows.
+      - The data is written to the correct output file.
+      - The content of the generated CSV file is accurate based on mock input data.
+      Use mock data representing detailed model information for testing.
+    validation_criteria:
+      - tests/unit/test_csv_export.py exists.
+      - tests/unit/test_csv_export.py contains tests for CSV header generation.
+      - tests/unit/test_csv_export.py contains tests for data row formatting.
+      - tests/unit/test_csv_export.py contains tests for writing data to file and
+        content verification.
+  - step_id: validate_csv_export
+    description: Run tests to validate the CSV export functionality.
+    depends_on:
+      - generate_tests_for_csv_export
+    agent_spec:
+    type: validation
+    input_artifacts:
+      - main.py   # Or the new helper module
+      - tests/unit/test_csv_export.py
+    instructions: |
+      Execute the pytest tests in `tests/unit/test_csv_export.py`.
+      Ensure all tests for CSV export functionality pass.
+    validation_criteria:
+      - '"The command `pytest tests/unit/test_csv_export.py` executes successfully."'
+      - '"All tests in `tests/unit/test_csv_export.py` pass."'
+  - step_id: update_documentation
+    description: Update documentation to reflect the new --output-csv option and enhanced
+      list-models output.
+    depends_on:
+      - validate_csv_export
+      - validate_api_data_retrieval
+    agent_spec:
+    type: documentation
+    input_artifacts:
+      - README.md   # Assuming CLI usage is documented here
+      - main.py   # For CLI help string
+    output_artifacts:
+      - README.md
+    instructions: |
+      Update the documentation to include details about the new `--output-csv` option for the `--list-models` command.
+      Explain how to use the option and the format of the output CSV file.
+      Also, update any sections describing the output of `--list-models` when `--output-csv` is not used to reflect the richer console output (if applicable, though the focus is on CSV export).
+      Ensure the CLI help message (usually generated based on argument parser) is also updated if necessary (confirm based on `main.py`).
+    validation_criteria:
+      - README.md exists.
+      - '"README.md clearly documents the new `--output-csv` parameter for `--list-models`."'
+      - README.md explains the content of the output CSV file.
+      - '"The CLI help message for `--list-models` includes the `--output-csv` parameter."'
+

@@ -9,12 +9,17 @@ from src.ai_whisperer.config import load_config, _load_prompt_content
 from src.ai_whisperer.exceptions import ConfigError
 
 # Helper function to create a temporary config file with the given content
-def create_temp_config(content):
+def create_temp_config(content, is_json=False): # Add is_json parameter
     temp_dir = tempfile.gettempdir()
-    config_path = Path(temp_dir) / "test_config.yaml"
+    config_path = Path(temp_dir) / "test_config.json" # Change default extension to .json
 
-    with open(config_path, 'w', encoding='utf-8') as f:
-        f.write(content)
+    # Use json.dump if is_json is True and content is a dictionary, otherwise write directly
+    if is_json and isinstance(content, dict):
+        with open(config_path, 'w', encoding='utf-8') as f:
+            json.dump(content, f, indent=2) # Use json.dump for JSON
+    else:
+        with open(config_path, 'w', encoding='utf-8') as f:
+            f.write(content)
 
     return str(config_path)
 
@@ -60,7 +65,7 @@ task_models:
 output_dir: "./output/"
 """
 
-    config_path = create_temp_config(config_content)
+    config_path = create_temp_config(config_content, is_json=True) # Specify is_json=True
 
     try:
         # Mock the prompt loading to avoid file not found errors
@@ -118,7 +123,7 @@ task_models:
 output_dir: "./output/"
 """
 
-    config_path = create_temp_config(config_content)
+    config_path = create_temp_config(config_content, is_json=True) # Specify is_json=True
 
     try:
         # The config should load successfully even without task-specific models
@@ -172,7 +177,7 @@ task_models:
 output_dir: "./output/"
 """
 
-    config_path = create_temp_config(config_content)
+    config_path = create_temp_config(config_content, is_json=True) # Specify is_json=True
 
     try:
         # The config should load successfully, but we'll validate the task models separately
@@ -235,7 +240,7 @@ task_models:
 output_dir: "./output/"
 """
 
-    config_path = create_temp_config(config_content)
+    config_path = create_temp_config(config_content, is_json=True) # Specify is_json=True
 
     try:
         # The config should load successfully, but we'll check for unexpected keys and types

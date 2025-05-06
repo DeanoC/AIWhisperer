@@ -1,112 +1,98 @@
 """
-Escape Text Fields for YAML Postprocessing
+Escape Text Fields for JSON Postprocessing (Simplified)
 
-This module provides a function to escape or properly quote text fields in YAML data that
-might contain YAML special characters like colons, which would otherwise cause parsing errors.
-It identifies lines that look like natural language descriptions without proper YAML formatting
-and ensures they are properly quoted or escaped.
+This module provides a function to primarily validate if string input is parsable JSON.
+For JSON, actual string escaping is handled by json.dumps during serialization.
+This step ensures that if string content is provided, it's valid JSON,
+otherwise, it passes through dictionaries and lists.
 """
 
-import re
-from typing import Dict, Tuple
+import json
+from typing import Union, Tuple, Dict
+import logging
 
-def escape_text_fields(yaml_content: str | dict, data: dict = None) -> Tuple[str | dict, Dict]:
+logger = logging.getLogger(__name__)
+
+def escape_text_fields(content: Union[str, dict, list], data: dict = None) -> Tuple[Union[str, dict, list], Dict]:
     """
-    Escapes or properly quotes text fields in YAML that contain special characters
-    like colons that might cause parsing errors.
+    For string input, checks if it's valid JSON. For dict/list, passes through.
+    Actual JSON string escaping is handled by json.dumps().
 
     Args:
-        yaml_content (str | dict): The input YAML content as a string or dictionary
-        data (dict): The input parameter dictionary and where results are also stored
+        content (str | dict | list): The input content.
+        data (dict): The input parameter dictionary; results and logs are stored here.
 
     Returns:
-        The processed_yaml_content in the same format as the input (str | dict).
-        tuple: (processed_yaml_content (str | dict), updated_result (dict))
+        tuple: A tuple containing:
+            - processed_content (str | dict | list): The original content.
+            - updated_data (dict): The updated data dictionary with processing logs.
     """
-    # Initialize data if it's None
     if data is None:
-        data = {
-            "success": True,
-            "steps": {},
-            "logs": []
-        }
-
-    # Ensure data has a logs key
+        data = {}
     if "logs" not in data:
         data["logs"] = []
+    if "errors" not in data: # Ensure errors list exists
+        data["errors"] = []
 
-    # If yaml_content is a dictionary, it's already parsed YAML, so return it as is
-    if isinstance(yaml_content, dict):
-        data["logs"].append("Input is a dictionary, no text field escaping needed.")
-        return yaml_content, data
+    logger.debug(f"escape_text_fields input type: {type(content)}")
 
-    if not yaml_content.strip():
-        data["logs"].append("No text fields requiring escaping were found.")
-        return yaml_content, data
+    if isinstance(content, (dict, list)):
+        data["logs"].append(f"Input is a {type(content).__name__}, no escaping performed by this step.")
+        return content, data
 
-    # Process line by line
-    lines = yaml_content.splitlines()
-    processed_lines = []
-    changes_made = 0
+    if not isinstance(content, str):
+        err_msg = f"Unsupported content type: {type(content)}. Expected str, dict, or list."
+        logger.error(err_msg)
+        data["logs"].append(f"ERROR: {err_msg}")
+        data["errors"].append(err_msg)
+        # Return original content as per current test expectations for unsupported types
+        return content, data
 
-    for line in lines:
-        stripped_line = line.strip()
+    if not content.strip():
+        data["logs"].append("Input content is empty or whitespace-only.")
+        return content, data
 
-        # Skip empty lines or comments
-        if not stripped_line or stripped_line.startswith("#"):
-            processed_lines.append(line)
-            continue
+    try:
+        # Attempt to parse the string to see if it's valid JSON
+        json.loads(content)
+        data["logs"].append("Input is a valid JSON string. No escaping applied by this step.")
+    except json.JSONDecodeError as e:
+        err_msg = f"Failed to parse content as JSON in escape_text_fields: {e}"
+        logger.warning(f"{err_msg} - Content: '{content[:100]}...'") # Log part of content for context
+        data["logs"].append(f"WARNING: {err_msg}") # Log as warning, not breaking error
+        data["errors"].append(err_msg) # Also add to errors for testability
+        # Return original content; subsequent validation step should catch this.
+    
+    return content, data
 
-        # Check if this is a properly formatted YAML line with key-value pairs
-        # Valid YAML key-value format: key: value or key:
-        # More strict pattern to identify valid YAML key-value pairs
-        if re.match(r'^\s*[a-zA-Z0-9_-]+\s*:(\s.*)?$', line) and not re.search(r'^\s*[^:]+:[^:]+:.*$', line):
-            # Additional check for lines that might look like YAML but contain natural language
-            value_part = re.sub(r'^\s*[a-zA-Z0-9_-]+\s*:\s*', '', line).strip()
-            if not value_part or re.match(r'^["\'].*["\']$', value_part) or not re.search(r'[.!?]', value_part):
-                processed_lines.append(line)
-                continue
+if __name__ == '__main__':
+    # Example Usage
+    test_cases = [
+        ('{"key": "value", "text": "This is a string: with a colon."}', "Valid JSON string"),
+        ('[1, "string with spaces", {"nested": "value: more text"}]', "Valid JSON array string"),
+        ({"key": "value", "text": "A string: with colon"}, "Input is dictionary"),
+        ([1, "string with colon:", {"nested": "value"}], "Input is list"),
+        ('{"key": "value, "text": "missing end quote}', "Invalid JSON string (missing quote)"),
+        ('{"key": "value",}', "Invalid JSON string (trailing comma)"),
+        ("", "Empty string"),
+        ("   \n\t  ", "Whitespace string"),
+        ('"a string literal"', "JSON string literal"),
+        (12345, "Unsupported type (int)"),
+    ]
 
-            # If the value part contains sentence-like text, quote it
-            indent = len(line) - len(line.lstrip())
-            key_part = re.match(r'^\s*([a-zA-Z0-9_-]+\s*:)\s*', line).group(1)
-            indentation = line[:indent]
-            content = value_part.replace('"', '\\"')
-            quoted_line = f'{indentation}{key_part} "{content}"'
-            processed_lines.append(quoted_line)
-            changes_made += 1
-            continue
+    for i, (test_content, desc) in enumerate(test_cases):
+        print(f"\n--- Test Case {i+1}: {desc} ---")
+        current_data = {"logs": [], "errors": []}
+        output_content, output_data = escape_text_fields(test_content, current_data)
+        
+        print("Output Content:", output_content)
+        print("Logs:", json.dumps(output_data.get("logs", []), indent=2))
+        if output_data.get("errors"):
+            print("Errors:", json.dumps(output_data.get("errors", []), indent=2))
+        if isinstance(output_content, str) and output_content.strip() and not output_data.get("errors"):
+            try:
+                print("Parsed output (if string):", json.loads(output_content))
+            except:
+                print("Could not parse output string as JSON.")
 
-        # Check if line contains a colon but not in a valid YAML key-value format
-        # These are often natural language descriptions that need quoting
-        if ":" in line:
-            indent = len(line) - len(line.lstrip())
-            indentation = line[:indent]
-            content = stripped_line.replace('"', '\\"')
-            quoted_line = f'{indentation}"{content}"'
-            processed_lines.append(quoted_line)
-            changes_made += 1
-            continue
-
-        # Handle regular text without colons that needs quoting
-        if stripped_line:
-            indent = len(line) - len(line.lstrip())
-            indentation = line[:indent]
-            content = stripped_line.replace('"', '\\"')
-            quoted_line = f'{indentation}"{content}"'
-            processed_lines.append(quoted_line)
-            changes_made += 1
-        else:
-            processed_lines.append(line)
-
-    if changes_made > 0:
-        data["logs"].append(f"Escaped {changes_made} text fields with potential YAML special characters.")
-    else:
-        data["logs"].append("No text fields requiring escaping were found.")
-
-    # Add a newline at the end to match expected output
-    result = "\n".join(processed_lines)
-    if yaml_content.endswith("\n"):
-        result += "\n"
-
-    return result, data
+    print("\nAll escape_text_fields examples executed.")

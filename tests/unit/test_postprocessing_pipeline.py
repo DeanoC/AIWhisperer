@@ -1,5 +1,5 @@
 """
-Unit tests for the YAML postprocessing pipeline.
+Unit tests for the JSON postprocessing pipeline.
 
 This module tests the overall structure and execution flow of the postprocessing pipeline,
 ensuring that the scripted and AI improvement phases work together correctly.
@@ -11,13 +11,13 @@ from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backt
 
 def test_pipeline_with_identity_step():
     """
-    Test that the pipeline correctly chains steps and processes YAML data.
+    Test that the pipeline correctly chains steps and processes JSON data.
     
     This test uses the identity transform for both the scripted phase and the AI phase,
     which means the output should be identical to the input.
     """
-    # Sample YAML input represented as a Python dictionary
-    sample_yaml_data = {
+    # Sample JSON input represented as a Python dictionary
+    sample_json_data = {
         "task_id": "pipeline-test-123",
         "natural_language_goal": "Test the postprocessing pipeline",
         "overall_context": "Ensuring our chain of processing steps works correctly",
@@ -43,11 +43,11 @@ def test_pipeline_with_identity_step():
         # The dummy AI phase is handled internally in the pipeline
     )
     
-    # Process the YAML data through the pipeline
-    output_yaml_data, output_result = pipeline.process(sample_yaml_data)
+    # Process the JSON data through the pipeline
+    output_json_data, output_result = pipeline.process(sample_json_data)
 
-    # Assert that the output YAML is identical to the input
-    assert output_yaml_data == sample_yaml_data
+    # Assert that the output JSON is identical to the input
+    assert output_json_data == sample_json_data
     
     # Assert that the pipeline execution was successful
     assert output_result["success"] is True
@@ -64,8 +64,8 @@ def test_pipeline_with_multiple_identity_steps():
     This test uses multiple identity transforms in the scripted phase to ensure
     the chaining mechanism works correctly.
     """
-    # Sample YAML input
-    sample_yaml_data = {
+    # Sample JSON input
+    sample_json_data = {
         "task_id": "multi-step-test-456",
         "description": "Testing multiple scripted steps"
     }
@@ -84,11 +84,11 @@ def test_pipeline_with_multiple_identity_steps():
         # The AI phase is handled internally
     )
     
-    # Process the YAML data
-    output_yaml_data, output_result = pipeline.process(sample_yaml_data, initial_result)
+    # Process the JSON data
+    output_json_data, output_result = pipeline.process(sample_json_data, initial_result)
     
     # Assert output matches input
-    assert output_yaml_data == sample_yaml_data
+    assert output_json_data == sample_json_data
 
     # Check that the result object tracks all steps correctly
     # We expect to see entries for the identity transform steps and the AI phase
@@ -108,10 +108,10 @@ def test_clean_backtick_wrapper():
     """
     Test that clean_backtick_wrapper removes code block wrappers correctly.
     """
-    yaml_data = "```yaml\ntask: example\n```"
+    json_data = "```json\n{\n  \"task\": \"example\"\n}\n```"
     result_data = {"success": True, "steps": {}, "logs": []}
     
-    cleaned_yaml, updated_result = clean_backtick_wrapper(yaml_data, result_data)
+    cleaned_json, updated_result = clean_backtick_wrapper(json_data, result_data)
     
-    assert cleaned_yaml == "task: example\n"
+    assert cleaned_json == "{\n  \"task\": \"example\"\n}\n"
     assert updated_result["success"] is True

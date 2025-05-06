@@ -1,9 +1,9 @@
 import pytest
-import yaml
+import json
 from pathlib import Path
 from src.ai_whisperer.exceptions import ProcessingError
 # Import the actual functions
-from src.ai_whisperer.processing import read_markdown, save_yaml, format_prompt, process_response
+from src.ai_whisperer.processing import read_markdown, save_json, format_prompt, process_response
 
 
 # --- Tests for read_markdown ---
@@ -37,44 +37,43 @@ def test_read_markdown_encoding_error(tmp_path):
         read_markdown(str(md_file))
 
 
-# --- Tests for save_yaml ---
+# --- Tests for save_json ---
 
-def test_save_yaml_success(tmp_path):
-    """Test saving a dictionary to a YAML file."""
+def test_save_json_success(tmp_path):
+    """Test saving a dictionary to a JSON file."""
     data = {'key1': 'value1', 'list': [1, 2, 3], 'nested': {'nk': 'nv'}}
-    yaml_file = tmp_path / "output.yaml"
-    save_yaml(data, str(yaml_file))
+    json_file = tmp_path / "output.json"
+    save_json(data, str(json_file))
 
-    assert yaml_file.exists()
-    with open(yaml_file, 'r', encoding='utf-8') as f:
-        loaded_data = yaml.safe_load(f)
+    assert json_file.exists()
+    with open(json_file, 'r', encoding='utf-8') as f:
+        loaded_data = json.load(f)
     assert loaded_data == data
 
-def test_save_yaml_empty_dict(tmp_path):
+def test_save_json_empty_dict(tmp_path):
     """Test saving an empty dictionary."""
     data = {}
-    yaml_file = tmp_path / "empty_output.yaml"
-    save_yaml(data, str(yaml_file))
+    json_file = tmp_path / "empty_output.json"
+    save_json(data, str(json_file))
 
-    assert yaml_file.exists()
-    with open(yaml_file, 'r', encoding='utf-8') as f:
-        loaded_data = yaml.safe_load(f)
-    # yaml.safe_load might return None for an empty file representing an empty dict
-    assert loaded_data == {} or loaded_data is None
+    assert json_file.exists()
+    with open(json_file, 'r', encoding='utf-8') as f:
+        loaded_data = json.load(f)
+    assert loaded_data == {}
 
-def test_save_yaml_overwrite(tmp_path):
-    """Test overwriting an existing YAML file."""
+def test_save_json_overwrite(tmp_path):
+    """Test overwriting an existing JSON file."""
     initial_data = {'old': 'data'}
-    yaml_file = tmp_path / "overwrite.yaml"
-    with open(yaml_file, 'w', encoding='utf-8') as f:
-        yaml.dump(initial_data, f)
+    json_file = tmp_path / "overwrite.json"
+    with open(json_file, 'w', encoding='utf-8') as f:
+        json.dump(initial_data, f)
 
     new_data = {'new': 'content'}
-    save_yaml(new_data, str(yaml_file))
+    save_json(new_data, str(json_file))
 
-    assert yaml_file.exists()
-    with open(yaml_file, 'r', encoding='utf-8') as f:
-        loaded_data = yaml.safe_load(f)
+    assert json_file.exists()
+    with open(json_file, 'r', encoding='utf-8') as f:
+        loaded_data = json.load(f)
     assert loaded_data == new_data
     assert loaded_data != initial_data
 
@@ -108,37 +107,33 @@ def test_format_prompt_no_vars_in_template():
 
 # --- Tests for process_response ---
 
-def test_process_response_valid_yaml():
-    """Test processing a valid YAML string response."""
-    response_text = "task: Generate code\ndescription: Implement feature X."
-    expected = {'task': 'Generate code', 'description': 'Implement feature X.'}
-    assert process_response(response_text) == expected
+def test_process_response_valid_json():
+    """Test processing a valid JSON string response."""
+    response_str = "{\"key\": \"value\", \"list\": [\"item1\", \"item2\"]}"
+    expected_dict = {'key': 'value', 'list': ['item1', 'item2']}
+    assert process_response(response_str) == expected_dict
 
-def test_process_response_nested_yaml():
-    """Test processing valid YAML with nested structure."""
-    response_text = "-\n  step: 1\n  action: Read file\n-\n  step: 2\n  action: Analyze content"
-    expected = [
-        {'step': 1, 'action': 'Read file'},
-        {'step': 2, 'action': 'Analyze content'}
-    ]
-    assert process_response(response_text) == expected
-
-def test_process_response_invalid_yaml():
-    """Test processing an invalid YAML string."""
-    response_text = "task: Generate code\n description: Invalid indentation"
-    with pytest.raises(ProcessingError, match="Error parsing API response YAML"):
-        process_response(response_text)
+def test_process_response_nested_json():
+    """Test processing valid JSON with nested structure."""
+    response_str = "{\"outer\": {\"inner\": {\"key\": \"value\", \"num\": 123}}}"
+    expected_dict = {'outer': {'inner': {'key': 'value', 'num': 123}}}
+    assert process_response(response_str) == expected_dict
 
 def test_process_response_empty_string():
     """Test processing an empty string response."""
-    response_text = ""
-    # Expecting an error because empty string is not valid YAML for a dict/list
-    with pytest.raises(ProcessingError, match="Error parsing API response YAML: Empty response"):
-        process_response(response_text)
+    with pytest.raises(ProcessingError, match="Error parsing API response JSON: Empty response"):
+        process_response("")
 
-def test_process_response_non_yaml_string():
-    """Test processing a string that isn't YAML."""
-    response_text = "This is just plain text, not YAML."
-    with pytest.raises(ProcessingError, match="Error parsing API response YAML"):
-        process_response(response_text)
+def test_process_response_invalid_json():
+    """Test processing an invalid JSON string."""
+    response_str = "{\"key\": \"value\", \"extra_indent\": \"problem\"" # Missing closing brace
+    with pytest.raises(ProcessingError, match="Error parsing API response JSON:"):
+        process_response(response_str)
+
+
+def test_process_response_non_json_string():
+    """Test processing a string that isn't JSON."""
+    response_str = "This is just plain text, not JSON."
+    with pytest.raises(ProcessingError, match="Error parsing API response JSON:"):
+        process_response(response_str)
 

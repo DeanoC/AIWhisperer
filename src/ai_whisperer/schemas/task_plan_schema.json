@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Unique identifier for the task plan (e.g., UUID)",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "description": "A short, descriptive name for the task plan."
+    },
+    "description": {
+      "type": "string",
+      "description": "A detailed description of the task plan's purpose and goals."
+    },
+    "goal": {
+      "type": "string",
+      "description": "The overall objective of the task plan."
+    },
+    "status": {
+      "type": "string",
+      "description": "The current status of the task plan (e.g., 'pending', 'in_progress', 'completed', 'failed').",
+      "enum": ["pending", "in_progress", "completed", "failed"]
+    },
+    "created_at": {
+      "type": "string",
+      "description": "Timestamp indicating when the task plan was created.",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "description": "Timestamp indicating when the task plan was last updated.",
+      "format": "date-time"
+    },
+    "subtasks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid",
+        "description": "Array of subtask IDs associated with this task plan."
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata associated with the task plan. Can store arbitrary key-value pairs.",
+      "additionalProperties": true
+    }
+  },
+  "required": ["task_id", "name", "description", "goal", "status", "created_at", "updated_at"],
+  "additionalProperties": false
+}

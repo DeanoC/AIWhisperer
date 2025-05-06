@@ -1,4 +1,4 @@
-import yaml
+import json
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -92,13 +92,11 @@ def load_config(config_path: str, env_vars: Optional[Dict[str, str]] = None) -> 
 
     try:
         with open(path, 'r', encoding='utf-8') as f:
-            config = yaml.safe_load(f)
-            if config is None:
-                config = {}
+            config = json.load(f)
             if not isinstance(config, dict):
                 raise ConfigError(f"Invalid configuration format in {config_path}. Expected a dictionary, got {type(config).__name__}.")
-    except yaml.YAMLError as e:
-        raise ConfigError(f"Error parsing YAML file {config_path}: {e}") from e
+    except json.JSONDecodeError as e:
+        raise ConfigError(f"Error parsing JSON file {config_path}: {e}") from e
     except Exception as e:
         raise ConfigError(f"Error reading configuration file {config_path}: {e}") from e
 

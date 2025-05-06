@@ -1,5 +1,4 @@
 import pytest
-import yaml
 import json
 import jsonschema
 from pathlib import Path
@@ -10,7 +9,6 @@ from src.ai_whisperer.exceptions import (
     ConfigError,
     PromptError,
     HashMismatchError,
-    YAMLValidationError,
     OrchestratorError,
     ProcessingError,
     OpenRouterAPIError
@@ -47,10 +45,10 @@ def mock_schema_content():
                 "type": "object",
                 "properties": {
                     "requirements_md": {"type": "string"},
-                    "config_yaml": {"type": "string"},
+                    "config_json": {"type": "string"},
                     "prompt_file": {"type": "string"}
                 },
-                "required": ["requirements_md", "config_yaml", "prompt_file"]
+                "required": ["requirements_md", "config_json", "prompt_file"]
             },
             "plan": {"type": "array"}
         },
@@ -68,13 +66,13 @@ def mock_requirements_content():
     return "# Project Requirements\n- Do the thing"
 
 @pytest.fixture
-def mock_valid_api_response_yaml():
-    """Provides a basic valid YAML structure matching the mock schema."""
+def mock_valid_api_response_json():
+    """Provides a basic valid JSON structure matching the mock schema."""
     return {
         "task_id": "task-123",
         "input_hashes": {
             "requirements_md": "req_hash",
-            "config_yaml": "config_hash",
+            "config_json": "config_hash",
             "prompt_file": "prompt_hash"
         },
         "plan": [{"step_id": "step-1", "description": "First step"}]
@@ -211,10 +209,10 @@ class TestOrchestratorSubtasks:
     @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI.call_chat_completion')
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
-    @patch('src.ai_whisperer.orchestrator.yaml.safe_load')
-    def test_generate_full_project_plan(self, mock_yaml_load, mock_hash,
+    @patch('src.ai_whisperer.orchestrator.json.loads')
+    def test_generate_full_project_plan(self, mock_json_loads, mock_hash,
                                        mock_is_file, mock_api_call, orchestrator):
-        mock_api_call.return_value = "```yaml\nplan:\n  - step_id: step1\n```"
+        mock_api_call.return_value = "```json\n{\n  \"plan\": [\n    {\n      \"step_id\": \"step1\"\n    },\n    {\n      \"step_id\": \"step2\"\n    }\n  ]\n}\n```"
 
         # Define the raw data expected before postprocessing adds hashes/id
         raw_plan_data = {
@@ -225,36 +223,41 @@ class TestOrchestratorSubtasks:
             'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}],
             'input_hashes': {
                 'requirements_md': 'test_hash',
-                'config_yaml': 'test_hash',
+                'config_json': 'test_hash',
                 'prompt_file': 'test_hash'
             },
             'task_id': 'mock_task_id_1'
         }
-        # Convert to YAML string for mock_open
-        expected_yaml_content = yaml.dump(expected_plan_data)
+        # Convert to JSON string for mock_open
+        expected_json_content = json.dumps(expected_plan_data)
 
-        # Mock yaml loads
-        mock_yaml_load.side_effect = [
+        # Mock json loads - ensure we provide enough mock returns
+        # The StopIteration error indicates we need more return values
+        mock_json_loads.side_effect = [
             # Call 1: Inside add_items_postprocessor
             raw_plan_data,
-            # Call 2: After postprocessing in generate_initial_yaml
+            # Call 2: After postprocessing in generate_initial_json
             expected_plan_data,
             # Call 3: Reading file back in generate_full_project_plan
+            expected_plan_data,
+            # Call 4: Add extra return value for any additional calls
+            expected_plan_data,
+            # Call 5: Add another value just to be safe
             expected_plan_data
         ]
 
         # Mock jsonschema validation and subtask generator within a new mock_open context
-        with patch('builtins.open', new_callable=mock_open, read_data=expected_yaml_content) as mock_file_open:
+        with patch('builtins.open', new_callable=mock_open, read_data=expected_json_content) as mock_file_open:
             with patch('src.ai_whisperer.orchestrator.jsonschema.validate'):
                 with patch('src.ai_whisperer.subtask_generator.SubtaskGenerator') as mock_subtask_gen:
                     mock_generator = MagicMock()
                     mock_generator.generate_subtask.side_effect = [
-                        Path('/tmp/output/subtask_step1.yaml'),
-                        Path('/tmp/output/subtask_step2.yaml')
+                        Path('/tmp/output/subtask_step1.json'),
+                        Path('/tmp/output/subtask_step2.json')
                     ]
                     mock_subtask_gen.return_value = mock_generator
                     # Call the method under test
-                    result = orchestrator.generate_full_project_plan('requirements.md', 'config.yaml')
+                    result = orchestrator.generate_full_project_plan('requirements.md', 'config.json')
                     # Check that the openrouter call had the correct arguments
                     mock_api_call.assert_called_once()
                     call_args = mock_api_call.call_args
@@ -268,18 +271,19 @@ class TestOrchestratorSubtasks:
                     assert 'task_plan' in result
                     assert 'subtasks' in result
                     assert len(result['subtasks']) == 2
-                    assert result['subtasks'][0] == Path('/tmp/output/subtask_step1.yaml')
+                    assert result['subtasks'][0] == Path('/tmp/output/subtask_step1.json')
                     assert mock_generator.generate_subtask.call_count == 2
 
     @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI.call_chat_completion')
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
-    @patch('src.ai_whisperer.orchestrator.yaml.safe_load')
+    @patch('src.ai_whisperer.orchestrator.json.loads')
     @patch('builtins.open', new_callable=mock_open, read_data="test content")
-    def test_generate_full_project_plan_no_steps(self, mock_file_open, mock_yaml_load,
+    def test_generate_full_project_plan_no_steps(self, mock_file_open, mock_json_loads,
                                                mock_hash, mock_is_file, mock_api_call, orchestrator):
-        mock_api_call.return_value = "```yaml\nplan: []\n```"
-        # Mock yaml loads for empty task plan
+        initial_result = {}
+        mock_api_call.return_value = "```json\n{\n  \"plan\": []\n}\n```"
+        # Mock json loads for empty task plan
         raw_empty_plan_data = {
             'plan': []
         }
@@ -287,17 +291,22 @@ class TestOrchestratorSubtasks:
             'plan': [],
             'input_hashes': {
                 'requirements_md': 'test_hash',
-                'config_yaml': 'test_hash',
+                'config_json': 'test_hash',
                 'prompt_file': 'test_hash'
             },
             'task_id': 'mock_task_id_2'
         }
-        mock_yaml_load.side_effect = [
+        # Add extra mock returns to prevent StopIteration
+        mock_json_loads.side_effect = [
             # Call 1: Inside add_items_postprocessor
             raw_empty_plan_data,
-            # Call 2: After postprocessing in generate_initial_yaml
+            # Call 2: After postprocessing in generate_initial_json
             expected_empty_plan_data,
             # Call 3: Reading file back in generate_full_project_plan
+            expected_empty_plan_data,
+            # Call 4: Add extra return value for any additional calls
+            expected_empty_plan_data,
+            # Call 5: Add another value just to be safe
             expected_empty_plan_data
         ]
         # Mock jsonschema validation
@@ -308,7 +317,9 @@ class TestOrchestratorSubtasks:
                 mock_subtask_gen.return_value = mock_generator
 
                 # Call the method under test
-                result = orchestrator.generate_full_project_plan('requirements.md', 'config.yaml')
+                # Add schema to result_data before calling pipeline.process
+                result_data_with_schema = {**initial_result, "schema": orchestrator.task_schema}
+                result = orchestrator.generate_full_project_plan('requirements.md', 'config.json')
 
                 # Check that the openrouter call had the correct arguments
                 mock_api_call.assert_called_once()

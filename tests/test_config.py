@@ -2,13 +2,12 @@
 """Tests for the configuration loading functionality."""
 
 import pytest
-import yaml
+import json
 import os
-import os
-import pytest
-import yaml
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
+import logging
 
 from src.ai_whisperer.config import (
     load_config,
@@ -73,7 +72,7 @@ CONFIG_WITH_OLD_PROMPT_OVERRIDE = {
     'prompt_override_path': 'old_override.md'
 }
 
-INVALID_YAML_CONTENT = ": invalid_yaml : :"
+INVALID_JSON_CONTENT = ": invalid_json : :"
 CONFIG_NOT_DICT = "- item1\n- item2"
 
 # --- Fixtures ---
@@ -84,16 +83,16 @@ def create_test_files(tmp_path):
     files_created = {}
     default_prompt_contents = {}
 
-    def _create_file(filename, content, is_yaml=False):
+    def _create_file(filename, content, is_json=False):
         file_path = tmp_path / filename
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if is_yaml:
+        if is_json:
             if isinstance(content, dict):
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    yaml.dump(content, f)
+                    json.dump(content, f)
             else:
-                file_path.write_text(str(content), encoding='utf-8') # Handle non-dict YAML content
+                file_path.write_text(str(content), encoding='utf-8') # Handle non-dict JSON content
         else:
             file_path.write_text(str(content), encoding='utf-8')
         files_created[filename] = file_path
@@ -146,7 +145,7 @@ def test_load_config_success_new_prompts(create_test_files, monkeypatch):
     _create_file(custom_orch_path_str, custom_orch_content)
     _create_file(custom_subtask_path_str, custom_subtask_content)
 
-    config_path = _create_file("valid_config_new.yaml", VALID_CONFIG_DATA_NEW, is_yaml=True)
+    config_path = _create_file("valid_config_new.json", VALID_CONFIG_DATA_NEW, is_json=True)
 
     mock_api_key = "env_key_for_success_test"
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
@@ -169,7 +168,7 @@ def test_load_config_success_new_prompts(create_test_files, monkeypatch):
 def test_load_config_success_default_prompts(create_test_files, monkeypatch):
     """Tests loading config using default prompt paths when keys are missing."""
     _create_file, default_contents = create_test_files
-    config_path = _create_file("config_missing_paths.yaml", CONFIG_MISSING_PROMPT_PATHS, is_yaml=True)
+    config_path = _create_file("config_missing_paths.json", CONFIG_MISSING_PROMPT_PATHS, is_json=True)
 
     mock_api_key = "env_key_for_default_prompts"
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
@@ -184,28 +183,28 @@ def test_load_config_success_default_prompts(create_test_files, monkeypatch):
 
 def test_load_config_file_not_found(tmp_path):
     """Tests loading a non-existent configuration file."""
-    non_existent_file = tmp_path / "non_existent.yaml"
+    non_existent_file = tmp_path / "non_existent.json"
     with pytest.raises(ConfigError, match=r"Configuration file not found"):
         load_config(str(non_existent_file))
 
-def test_load_config_invalid_yaml(create_test_files):
-    """Tests loading a file with invalid YAML syntax."""
+def test_load_config_invalid_json(create_test_files):
+    """Tests loading a file with invalid JSON syntax."""
     _create_file, _ = create_test_files
-    config_path = _create_file("invalid.yaml", INVALID_YAML_CONTENT, is_yaml=True)
-    with pytest.raises(ConfigError, match=r"Error parsing YAML file"):
+    config_path = _create_file("invalid.json", INVALID_JSON_CONTENT, is_json=True)
+    with pytest.raises(ConfigError, match=r"Error parsing JSON file"):
         load_config(str(config_path))
 
 def test_load_config_missing_required_section_prompts(create_test_files):
     """Tests loading config missing the required 'prompts' section."""
     _create_file, _ = create_test_files
-    config_path = _create_file("missing_prompts_section.yaml", CONFIG_MISSING_PROMPTS_SECTION, is_yaml=True)
+    config_path = _create_file("missing_prompts_section.json", CONFIG_MISSING_PROMPTS_SECTION, is_json=True)
     with pytest.raises(ConfigError, match=r"Missing required configuration keys.*prompts"):
         load_config(str(config_path))
 
 def test_load_config_prompts_not_dict(create_test_files):
     """Tests loading config where 'prompts' is not a dictionary."""
     _create_file, _ = create_test_files
-    config_path = _create_file("prompts_not_dict.yaml", CONFIG_PROMPTS_NOT_DICT, is_yaml=True)
+    config_path = _create_file("prompts_not_dict.json", CONFIG_PROMPTS_NOT_DICT, is_json=True)
     with pytest.raises(ConfigError, match=r"Invalid 'prompts' section.*Expected a dictionary"):
         load_config(str(config_path))
 
@@ -213,7 +212,7 @@ def test_load_config_missing_required_env_var_api_key(create_test_files):
     """Tests ConfigError when OPENROUTER_API_KEY environment variable is not set."""
     _create_file, _ = create_test_files
     config_data = {'openrouter': {'model': 'test_model'}, 'prompts': {}}
-    config_path = _create_file("missing_api_key.yaml", config_data, is_yaml=True)
+    config_path = _create_file("missing_api_key.json", config_data, is_json=True)
 
     expected_error = r"Required environment variable OPENROUTER_API_KEY is not set"
 
@@ -226,15 +225,15 @@ def test_load_config_missing_required_env_var_api_key(create_test_files):
 def test_load_config_empty_file(create_test_files):
     """Tests loading an empty configuration file."""
     _create_file, _ = create_test_files
-    config_path = _create_file("empty.yaml", "", is_yaml=True)
-    with pytest.raises(ConfigError, match=r"Missing required configuration keys"):
+    config_path = _create_file("empty.json", "", is_json=True)
+    with pytest.raises(ConfigError, match=r"Error parsing JSON file"):
         load_config(str(config_path))
 
 def test_load_config_not_a_dictionary(create_test_files):
     """Tests loading a config file where the top level is not a dictionary."""
     _create_file, _ = create_test_files
-    config_path = _create_file("not_dict.yaml", CONFIG_NOT_DICT, is_yaml=True)
-    with pytest.raises(ConfigError, match=r"Invalid configuration format.*Expected a dictionary"):
+    config_path = _create_file("not_dict.json", CONFIG_NOT_DICT, is_json=True)
+    with pytest.raises(ConfigError, match=r"Error parsing JSON file"):
         load_config(str(config_path))
 
 def test_load_config_optional_keys_openrouter(create_test_files, monkeypatch):
@@ -247,14 +246,14 @@ def test_load_config_optional_keys_openrouter(create_test_files, monkeypatch):
         'openrouter': {'model': 'test_model', 'site_url': 'site_url', 'app_name': 'app_name'},
         'prompts': {}
     }
-    config_path_with = _create_file("config_opt_or_with.yaml", config_data_with, is_yaml=True)
+    config_path_with = _create_file("config_opt_or_with.json", config_data_with, is_json=True)
     config = load_config(str(config_path_with))
     assert config['openrouter']['api_key'] == mock_api_key
     assert config['openrouter']['site_url'] == 'site_url'
     assert config['openrouter']['app_name'] == 'app_name'
 
     config_data_without = {'openrouter': {'model': 'test_model'}, 'prompts': {}}
-    config_path_without = _create_file("config_opt_or_without.yaml", config_data_without, is_yaml=True)
+    config_path_without = _create_file("config_opt_or_without.json", config_data_without, is_json=True)
     config = load_config(str(config_path_without))
     assert config['openrouter']['api_key'] == mock_api_key
     assert config['openrouter']['site_url'] == DEFAULT_SITE_URL
@@ -268,13 +267,13 @@ def test_load_config_optional_key_output_dir(create_test_files, monkeypatch):
 
     custom_output = "./custom_out"
     config_data_with = {'openrouter': VALID_OPENROUTER_CONFIG_NO_KEY, 'prompts': {}, 'output_dir': custom_output}
-    config_path_with = _create_file("config_opt_out_with.yaml", config_data_with, is_yaml=True)
+    config_path_with = _create_file("config_opt_out_with.json", config_data_with, is_json=True)
     config = load_config(str(config_path_with))
     assert config['output_dir'] == custom_output
     assert config['openrouter']['api_key'] == mock_api_key
 
     config_data_without = {'openrouter': VALID_OPENROUTER_CONFIG_NO_KEY, 'prompts': {}}
-    config_path_without = _create_file("config_opt_out_without.yaml", config_data_without, is_yaml=True)
+    config_path_without = _create_file("config_opt_out_without.json", config_data_without, is_json=True)
     config = load_config(str(config_path_without))
     assert config['output_dir'] == DEFAULT_OUTPUT_DIR
     assert config['openrouter']['api_key'] == mock_api_key
@@ -282,7 +281,7 @@ def test_load_config_optional_key_output_dir(create_test_files, monkeypatch):
 def test_load_config_ignores_old_prompt_override(create_test_files, monkeypatch):
     """Tests that the old top-level prompt_override_path is ignored."""
     _create_file, default_contents = create_test_files
-    config_path = _create_file("config_old_override.yaml", CONFIG_WITH_OLD_PROMPT_OVERRIDE, is_yaml=True)
+    config_path = _create_file("config_old_override.json", CONFIG_WITH_OLD_PROMPT_OVERRIDE, is_json=True)
 
     mock_api_key = "env_key_for_old_override_test"
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
@@ -299,7 +298,7 @@ def test_load_config_error_custom_prompt_not_found(create_test_files, monkeypatc
         'openrouter': {'model': 'm'}, # Need model to pass initial validation
         'prompts': {'orchestrator_prompt_path': missing_prompt_path_str}
     }
-    config_path = _create_file("config_missing_custom_prompt.yaml", config_data, is_yaml=True)
+    config_path = _create_file("config_missing_custom_prompt.json", config_data, is_json=True)
 
     mock_api_key = "env_key_for_prompt_error_test"
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
@@ -315,7 +314,7 @@ def test_load_config_error_default_prompt_not_found(create_test_files, monkeypat
     # Mock DEFAULT_ORCHESTRATOR_PROMPT_PATH to point to a non-existent file
     non_existent_path = 'non_existent_prompt_file.md'
     with patch('src.ai_whisperer.config.DEFAULT_ORCHESTRATOR_PROMPT_PATH', non_existent_path):
-        config_path = _create_file("config_missing_paths_for_default_err.yaml", CONFIG_MISSING_PROMPT_PATHS, is_yaml=True)
+        config_path = _create_file("config_missing_paths_for_default_err.json", CONFIG_MISSING_PROMPT_PATHS, is_json=True)
         
         mock_api_key = "env_key_for_default_prompt_error"
         monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
