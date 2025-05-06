@@ -1,35 +1,75 @@
 from ruamel.yaml import YAML
 from io import StringIO
 
-def normalize_indentation(yaml_content: str, indent: int = 2) -> str:
+def normalize_indentation(yaml_content: str | dict, data: dict = None) -> tuple:
     """
     Normalize the indentation of a YAML string to a consistent number of spaces.
 
     Args:
-        yaml_content (str): The input YAML content as a string.
-        indent (int): The number of spaces for indentation (default is 2).
+        yaml_content (str | dict): The input YAML content as a string or dictionary.
+        data (dict): The input parameter dictionary and where results are also stored
 
     Returns:
-        str: The YAML content with normalized indentation.
-    """
+        The processed_yaml_content must be in the same format as the input (str | dict).
+        tuple: (processed_yaml_content (str | dict), updated_result (dict))
+   """
+    # Initialize data if it's None
+    if data is None:
+        data = {
+            "success": True,
+            "steps": {},
+            "logs": []
+        }
+
+    # Default indentation value
+    indent = 2
+
+    # Get custom indentation from data if available
+    if "indent" in data:
+        indent = data["indent"]
+
+    # Ensure data has a logs key
+    if "logs" not in data:
+        data["logs"] = []
+
+    # Store the original input type
+    is_dict_input = isinstance(yaml_content, dict)
+
+    # If yaml_content is a dictionary, convert it to a string for processing
+    if is_dict_input:
+        # Create a temporary YAML instance to convert dict to string
+        temp_yaml = YAML()
+        temp_yaml.preserve_quotes = True
+        temp_output = StringIO()
+        temp_yaml.dump(yaml_content, temp_output)
+        yaml_content = temp_output.getvalue()
+
     if not yaml_content.strip():
-        return yaml_content  # Return as is for empty or whitespace-only content
+        return yaml_content, data  # Return as is for empty or whitespace-only content
+
+    # Check if the content contains only comments or empty lines
+    if all(line.strip().startswith('#') or not line.strip() for line in yaml_content.splitlines()):
+        data["logs"].append("Content contains only comments, preserving as is.")
+        return yaml_content, data
 
     # Replace tabs with spaces
     yaml_content = yaml_content.replace('\t', ' ' * indent)
 
     yaml = YAML()
-    yaml.preserve_quotes = True  # Preserve quotes
+    yaml.preserve_quotes = True
     yaml.indent(mapping=indent, sequence=indent, offset=indent)
-    yaml.allow_duplicate_keys = True  # Allow duplicate keys to avoid parsing errors
-    yaml.default_flow_style = False  # Ensure block style for YAML
 
     try:
-        parsed_yaml = yaml.load(yaml_content)  # Parse the YAML content
-        if parsed_yaml is None:  # Handle cases with only comments
-            return yaml_content.strip() + "\n"  # Preserve comments as-is
+        parsed_yaml = yaml.load(yaml_content)
         output = StringIO()
         yaml.dump(parsed_yaml, output)
-        return output.getvalue()  # Keep trailing newline for consistency
+        data["logs"].append("Indentation normalized.")
+
+        # Return the same type as the input
+        if is_dict_input:
+            return parsed_yaml, data
+        else:
+            return output.getvalue(), data
     except Exception as e:
-        raise ValueError(f"Invalid YAML content: {e}")
+        data["logs"].append(f"Error normalizing indentation: {e}")
+        raise ValueError(f"Error normalizing indentation: {e}")

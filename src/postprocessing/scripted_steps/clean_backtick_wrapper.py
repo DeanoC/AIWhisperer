@@ -10,29 +10,36 @@ from typing import Dict, Tuple
 import re
 
 
-def clean_backtick_wrapper(yaml_data: str, result_data: Dict) -> Tuple[str, Dict]:
+def clean_backtick_wrapper(yaml_content: str | dict, data: dict) -> tuple:
     """
     Removes code block wrappers (e.g., ```yaml) from the YAML data.
-    
+
     Args:
-        yaml_data (str): The YAML data as a string, potentially wrapped in backticks.
-        result_data (dict): A dictionary containing processing status and logs.
-        
+        yaml_content (str | dict): The input YAML content as a string or dictionary.
+        data (dict): The input parameter dictionary and where results are also stored
+
     Returns:
-        tuple: A tuple containing the cleaned YAML data and the result_data.
-    
+        The processed_yaml_content must be in the same format as the input (str | dict).
+        tuple: (processed_yaml_content (str | dict), updated_result (dict))
+
     Example:
-        >>> yaml_data = "```yaml\\ntask: example\\n```"
-        >>> result_data = {"success": True, "steps": {}, "logs": []}
-        >>> output_yaml, output_result = clean_backtick_wrapper(yaml_data, result_data)
+        >>> yaml_content = "```yaml\\ntask: example\\n```"
+        >>> data = {"logs": []}
+        >>> output_yaml, output_data = clean_backtick_wrapper(yaml_content, data)
         >>> assert output_yaml == "task: example\\n"
-        >>> assert output_result == result_data
+        >>> assert output_data == data
     """
+    # If yaml_content is a dictionary, return it as is
+    if isinstance(yaml_content, dict):
+        if "logs" in data:
+            data["logs"].append("Input is a dictionary, no backtick wrappers to remove.")
+        return yaml_content, data
+
     # Use regex to remove opening and closing backtick wrappers
-    cleaned_yaml = re.sub(r"^```[a-zA-Z]*\n|```$", "", yaml_data, flags=re.MULTILINE)
-    
+    cleaned_yaml = re.sub(r"^```[a-zA-Z]*\n|```$", "", yaml_content, flags=re.MULTILINE)
+
     # Log the cleaning step
-    if "logs" in result_data:
-        result_data["logs"].append("Removed backtick wrappers from YAML data.")
-    
-    return cleaned_yaml, result_data
+    if "logs" in data:
+        data["logs"].append("Removed backtick wrappers from YAML data.")
+
+    return cleaned_yaml, data

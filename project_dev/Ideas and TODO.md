@@ -53,3 +53,4 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 
 ---
 We need to tell the subtask generated to create a failing scaffold of files during the test_generation phase.
+A unit test should NEVER require the function its testing to be modified to pass its test. Tests must always be the same as if real code was using the function

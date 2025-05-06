@@ -11,23 +11,22 @@ from typing import Dict, Any, Tuple, List, Optional
 
 logger = logging.getLogger(__name__)
 
-def add_items_postprocessor(yaml_string: str, result_data: Dict) -> Tuple[str, Dict]:
+def add_items_postprocessor(yaml_content: str | dict, data: dict) -> tuple:
     """
     Adds specified items to the YAML string at designated positions.
-    
+
     Args:
-        yaml_string: The YAML string to process
-        result_data: Dictionary containing processing results and metadata
-        
+        yaml_content (str | dict): The input YAML content as a string or dictionary.
+        data (dict): The input parameter dictionary and where results are also stored
+
     Returns:
-        Tuple containing:
-        - The modified YAML string with items added
-        - The updated result_data dictionary
-    """
+        The processed_yaml_content must be in the same format as the input (str | dict).
+        tuple: (processed_yaml_content (str | dict), updated_result (dict))
+   """
     # Initialize step result in the result_data dictionary
-    if "steps" not in result_data:
-        result_data["steps"] = {}
-    
+    if "steps" not in data:
+        data["steps"] = {}
+
     step_result = {
         "success": True,
         "changes": [],
@@ -35,34 +34,39 @@ def add_items_postprocessor(yaml_string: str, result_data: Dict) -> Tuple[str, D
         "warnings": [],
         "logs": []
     }
-    
+
     # Check if there are items to add
-    if not result_data.get("items_to_add"):
+    if not data.get("items_to_add"):
         step_result["logs"].append("No items to add specified")
-        result_data["steps"]["add_items_postprocessor"] = step_result
-        result_data["success"] = True
-        return yaml_string, result_data
-    
-    # Parse the YAML string
+        data["steps"]["add_items_postprocessor"] = step_result
+        data["success"] = True
+        return yaml_content, data
+
+    # Parse the YAML content into a dictionary if it's a string
     try:
-        if not yaml_string.strip():
-            raise ValueError("Empty YAML string provided")
-        
-        yaml_dict = yaml.safe_load(yaml_string)
-        if yaml_dict is None:
-            yaml_dict = {}  # Handle case where yaml_string is empty but valid
-        
+        if isinstance(yaml_content, str):
+            if not yaml_content.strip():
+                raise ValueError("Empty YAML string provided")
+
+            yaml_dict = yaml.safe_load(yaml_content)
+            if yaml_dict is None:
+                yaml_dict = {}  # Handle case where yaml_content is empty but valid
+        elif isinstance(yaml_content, dict):
+            yaml_dict = yaml_content
+        else:
+            raise ValueError(f"Invalid input type. Expected a YAML string or dictionary, got {type(yaml_content).__name__}")
+
         if not isinstance(yaml_dict, dict):
             raise ValueError(f"Parsed YAML is not a dictionary (got {type(yaml_dict).__name__})")
     except Exception as e:
         step_result["success"] = False
         step_result["errors"].append(f"Failed to parse YAML: {str(e)}")
-        result_data["steps"]["add_items_postprocessor"] = step_result
-        result_data["success"] = False
-        return yaml_string, result_data
-    
+        data["steps"]["add_items_postprocessor"] = step_result
+        data["success"] = False
+        return yaml_content, data
+
     # Add top-level items
-    top_level_items = result_data.get("items_to_add", {}).get("top_level", {})
+    top_level_items = data.get("items_to_add", {}).get("top_level", {})
     if top_level_items:
         for key, value in top_level_items.items():
             if key in yaml_dict:
@@ -70,13 +74,13 @@ def add_items_postprocessor(yaml_string: str, result_data: Dict) -> Tuple[str, D
             else:
                 yaml_dict[key] = value
                 step_result["changes"].append(f"Added top-level item: {key}")
-    
+
     # Add step-level items
-    step_level_items = result_data.get("items_to_add", {}).get("step_level", {})
+    step_level_items = data.get("items_to_add", {}).get("step_level", {})
     if step_level_items:
         # Determine the container key for steps
-        step_container = result_data.get("items_to_add", {}).get("step_container", "plan")
-        
+        step_container = data.get("items_to_add", {}).get("step_container", "plan")
+
         if step_container in yaml_dict and isinstance(yaml_dict[step_container], list):
             for step in yaml_dict[step_container]:
                 if isinstance(step, dict):
@@ -88,7 +92,7 @@ def add_items_postprocessor(yaml_string: str, result_data: Dict) -> Tuple[str, D
                             step_result["changes"].append(f"Added step-level item: {key}")
         elif step_level_items:
             step_result["warnings"].append(f"Step container '{step_container}' not found or not a list")
-    
+
     # Convert the modified dictionary back to YAML
     try:
         modified_yaml_string = yaml.dump(yaml_dict, sort_keys=False, default_flow_style=False)
@@ -96,12 +100,16 @@ def add_items_postprocessor(yaml_string: str, result_data: Dict) -> Tuple[str, D
     except Exception as e:
         step_result["success"] = False
         step_result["errors"].append(f"Failed to convert modified dictionary back to YAML: {str(e)}")
-        result_data["steps"]["add_items_postprocessor"] = step_result
-        result_data["success"] = False
-        return yaml_string, result_data
-    
+        data["steps"]["add_items_postprocessor"] = step_result
+        data["success"] = False
+        return yaml_content, data
+
     # Update result_data
-    result_data["steps"]["add_items_postprocessor"] = step_result
-    result_data["success"] = step_result["success"]
-    
-    return modified_yaml_string, result_data
+    data["steps"]["add_items_postprocessor"] = step_result
+    data["success"] = step_result["success"]
+
+    # If the input was a dictionary, return the modified dictionary
+    if isinstance(yaml_content, dict):
+        return yaml_dict, data
+    else:
+        return modified_yaml_string, data
