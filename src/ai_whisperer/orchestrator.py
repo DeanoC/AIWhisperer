@@ -26,6 +26,7 @@ from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_
 from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
 from src.postprocessing.scripted_steps.normalize_indentation import normalize_indentation
 from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
+from src.postprocessing.scripted_steps.escape_text_fields import escape_text_fields
 
 # Determine the package root directory to locate default files relative to the package
 try:

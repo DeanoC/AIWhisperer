@@ -49,7 +49,7 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 * Provide cleaner output whilst running
 * Include generated planning docs into other subtasks context
 * after generated subtasks, replace the subtask descriptions in the main file with file reference to the generated ones.
-
+* Add the script environemt to context (bash, powershell, etc. as AI agents often assume bash)
 
 ---
 We need to tell the subtask generated to create a failing scaffold of files during the test_generation phase.
