@@ -11,7 +11,7 @@ from typing import Dict, List, Callable, Tuple, Any
 
 # Import the identity transform for use in the dummy AI phase
 from src.postprocessing.scripted_steps.identity_transform import identity_transform
-from src.postprocessing.add_items_postprocessor import add_items_postprocessor
+from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 logger = logging.getLogger(__name__)
 
 

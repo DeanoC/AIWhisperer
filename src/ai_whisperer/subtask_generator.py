@@ -12,7 +12,7 @@ from typing import Dict, Any
 
 from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
-from src.postprocessing.add_items_postprocessor import add_items_postprocessor
+from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 
 from .config import load_config
 from .openrouter_api import OpenRouterAPI

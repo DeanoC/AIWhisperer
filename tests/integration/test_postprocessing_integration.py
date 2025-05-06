@@ -10,7 +10,7 @@ from pathlib import Path
 
 from src.ai_whisperer.orchestrator import Orchestrator
 from src.ai_whisperer.subtask_generator import SubtaskGenerator
-from src.postprocessing.add_items_postprocessor import add_items_postprocessor
+from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 
 
 class TestOrchestratorPostprocessingIntegration:

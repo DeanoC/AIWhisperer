@@ -4,7 +4,7 @@ from typing import Dict, Any, Tuple
 
 # Import the function we'll be testing (this will exist later)
 # This import will fail until we implement the function, which is expected in TDD
-from src.postprocessing.add_items_postprocessor import add_items_postprocessor
+from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 
 
 class TestAddItemsPostprocessor:
