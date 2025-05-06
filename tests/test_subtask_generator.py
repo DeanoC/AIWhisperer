@@ -4,11 +4,10 @@
 import pytest
 import yaml
 from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock, mock_open, call
 
 # Assuming the core logic will be in src.ai_whisperer.subtask_generator
 # Import necessary exceptions and potentially the class/functions once they exist
-# from src.ai_whisperer.subtask_generator import SubtaskGenerator # Placeholder
 from src.ai_whisperer.exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError
 from src.ai_whisperer.openrouter_api import OpenRouterAPIError
 
@@ -20,7 +19,8 @@ MOCK_CONFIG = {
         'params': {'temperature': 0.5},
         'site_url': 'mock_url',
         'app_name': 'mock_app'
-    },    'prompts': {
+    },
+    'prompts': {
         'subtask_generator_prompt_content': "Refine this step: {subtask_yaml}",
         # Add other prompt contents if needed by the generator
     },
@@ -75,6 +75,9 @@ def mock_openrouter_client():
     # Adjust the patch target based on where OpenRouterAPI will be instantiated
     with patch('src.ai_whisperer.subtask_generator.OpenRouterAPI') as mock_cls:
         mock_instance = MagicMock()
+        # Set attributes on the mock instance if they are accessed directly
+        mock_instance.model = MOCK_CONFIG['openrouter']['model']
+        mock_instance.params = MOCK_CONFIG['openrouter']['params']
         mock_cls.return_value = mock_instance
         yield mock_instance
 
@@ -83,25 +86,24 @@ def mock_filesystem():
     """Fixture to mock file system operations (open, write, exists, etc.)."""
     # Using mock_open for basic file writing simulation
     m_open = mock_open()
+    # Patch pathlib.Path.mkdir as the code now uses it
     with patch('builtins.open', m_open), \
-         patch('os.makedirs') as mock_makedirs, \
          patch('pathlib.Path.mkdir') as mock_path_mkdir, \
          patch('pathlib.Path.exists') as mock_exists:
         # Default behavior: pretend files don't exist unless specifically handled
         mock_exists.return_value = False
         # Ensure Path.mkdir is also mocked for consistency
-        mock_path_mkdir.return_value = None 
+        mock_path_mkdir.return_value = None
         yield {
             'open': m_open,
-            'makedirs': mock_makedirs, # For os.makedirs if used
-            'path_mkdir': mock_path_mkdir, # For Path().mkdir
+            'path_mkdir': mock_path_mkdir, # Use this key now
             'exists': mock_exists
         }
 
 @pytest.fixture
 def mock_schema_validation():
     """Fixture to mock schema validation."""
-    # Adjust the patch target based on where validation will be called from
+    # Patch where the function is imported/used by the class under test
     with patch('src.ai_whisperer.subtask_generator.validate_against_schema') as mock_validate:
         # Default: Assume valid unless side_effect is set in test
         mock_validate.return_value = None
@@ -120,7 +122,11 @@ def test_subtask_generator_initialization(mock_load_config):
 def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock_filesystem, mock_schema_validation):
     """Tests successful generation and saving of a subtask YAML."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
-    generator = SubtaskGenerator('dummy_config.yaml')
+    from unittest.mock import ANY
+    from pathlib import Path
+
+    # Pass the output_dir from MOCK_CONFIG during instantiation
+    generator = SubtaskGenerator('dummy_config.yaml', output_dir=MOCK_CONFIG['output_dir'])
 
     # Mock AI response using the correct method name
     mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_YAML_VALID
@@ -139,21 +145,34 @@ def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock
     assert 'model' in call_kwargs
     assert call_kwargs['model'] == mock_openrouter_client.model # Check if model from client is passed
     assert 'params' in call_kwargs
-    assert call_kwargs['params'] == mock_openrouter_client.params # Check if params from client are passed    # 2. Verify schema validation call
-    mock_schema_validation.assert_called_once()
+    assert call_kwargs['params'] == mock_openrouter_client.params # Check if params from client are passed
+    # 2. Verify schema validation call
     parsed_yaml = yaml.safe_load(MOCK_AI_RESPONSE_YAML_VALID)
-    # Use unittest.mock.ANY to avoid hard-coding the schema path
-    from unittest.mock import ANY
-    mock_schema_validation.assert_called_with(parsed_yaml, ANY)
+
+    # Define the expected schema path relative to the project root
+    expected_schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
+
+    # Update the assertion to include subtask_id and the correct schema path
+    mock_schema_validation.assert_called_with(
+        {
+            **parsed_yaml, # Use dictionary unpacking
+            'subtask_id': ANY # Expect the subtask_id key
+        },
+        expected_schema_path # Expect the actual schema path
+    )
 
     # 3. Verify output file path generation
-    expected_output_filename = f"{VALID_INPUT_STEP['step_id']}_subtask.yaml"
+    # Match the generator's filename format
+    expected_output_filename = f"subtask_{VALID_INPUT_STEP['step_id']}.yaml"
     expected_output_dir = Path(MOCK_CONFIG['output_dir'])
     expected_path = expected_output_dir / expected_output_filename
-    assert output_path == str(expected_path.resolve()) # Compare resolved paths
+    # Compare Path objects directly
+    assert output_path == expected_path.resolve()
 
     # 4. Verify directory creation and file writing
+    # Check Path.mkdir call
     mock_filesystem['path_mkdir'].assert_called_once_with(parents=True, exist_ok=True)
+    # Check open call (expects Path object, which is correct now)
     mock_filesystem['open'].assert_called_once_with(expected_path, 'w', encoding='utf-8')
     handle = mock_filesystem['open']()
     written_content = "".join(call.args[0] for call in handle.write.call_args_list)
@@ -175,19 +194,25 @@ def test_generate_subtask_schema_validation_error(mock_load_config, mock_openrou
     mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_YAML_INVALID_SCHEMA
     mock_schema_validation.side_effect = SchemaValidationError("Invalid schema: Missing agent_spec")
 
+    # Expect the error message defined in the mock's side_effect
     with pytest.raises(SchemaValidationError, match="Invalid schema: Missing agent_spec"):
         generator.generate_subtask(VALID_INPUT_STEP)
 
-def test_generate_subtask_invalid_yaml_response(mock_load_config, mock_openrouter_client):
+def test_generate_subtask_file_write_error(mock_load_config, mock_openrouter_client, mock_filesystem, mock_schema_validation):
+    """Tests handling of errors during file writing."""
+    from src.ai_whisperer.subtask_generator import SubtaskGenerator
+    generator = SubtaskGenerator('dummy_config.yaml', output_dir=MOCK_CONFIG['output_dir'])
+    mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_YAML_VALID
+    mock_filesystem['open'].side_effect = IOError("Disk full")
+
+    with pytest.raises(SubtaskGenerationError, match="Failed to write output file"):
+        generator.generate_subtask(VALID_INPUT_STEP)
+
+def test_generate_subtask_yaml_parsing_error(mock_load_config, mock_openrouter_client):
     """Tests handling of invalid YAML responses from the AI."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
     generator = SubtaskGenerator('dummy_config.yaml')
-    mock_openrouter_client.call_chat_completion.return_value = "invalid: yaml: :"
+    mock_openrouter_client.call_chat_completion.return_value = "invalid: yaml: content"
 
     with pytest.raises(SubtaskGenerationError, match="Failed to parse AI response as YAML"):
         generator.generate_subtask(VALID_INPUT_STEP)
-
-@pytest.mark.skip(reason="Context gathering/mocking not fully defined")
-def test_generate_subtask_with_context_gathering(mock_load_config, mock_openrouter_client):
-    """Placeholder test for context gathering logic (if any)."""
-    pytest.skip("Context gathering logic and mocking needs implementation.")

@@ -79,10 +79,10 @@ class TestMain:
         mock_setup_logging.assert_called_once() # Logging setup should be called exactly once
         mock_setup_rich.assert_called_once() # Rich console setup should be called exactly once
         mock_load_config.assert_called_once_with(self.CONF_FILE) # load_config should be called once with config file
-        mock_orchestrator_cls.assert_called_once_with(self.WRAPPED_CONFIG) # Orchestrator should be instantiated with config
+        mock_orchestrator_cls.assert_called_once_with(self.WRAPPED_CONFIG, self.OUT_FILE) # Orchestrator should be instantiated with config and output_dir
         mock_orchestrator_instance.generate_initial_yaml.assert_called_once_with( # generate_initial_yaml should be called
-            requirements_md_path_str=self.REQ_FILE,
-            config_path_str=self.CONF_FILE
+            self.REQ_FILE,
+            self.CONF_FILE
         )
         mock_sys_exit.assert_not_called() # Should not exit in the normal flow
         # And finally check that the output was printed to console
@@ -295,7 +295,7 @@ def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_lo
         mock_yaml_load.assert_called_once()
         
         # Check SubtaskGenerator initialized correctly
-        mock_generator_cls.assert_called_once_with(CONFIG_FILE)
+        mock_generator_cls.assert_called_once_with(CONFIG_FILE, 'output')
         
         # Check generate_subtask called with step data
         mock_generator_instance.generate_subtask.assert_called_once_with(STEP_DATA)

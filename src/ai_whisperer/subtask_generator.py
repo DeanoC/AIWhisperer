@@ -194,10 +194,9 @@ class SubtaskGenerator:
 
             # 4. Validate Schema (using placeholder function)
             try:
-                # Assuming schema path might be configurable or fixed
-                # For now, let's assume a fixed path relative to src or passed via config
-                # schema_path = Path(__file__).parent / "schemas" / "task_schema.json" # Example
-                validate_against_schema(generated_data, "placeholder_schema_path.json") # Pass placeholder path
+                # Define the schema path relative to the project root
+                schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
+                validate_against_schema(generated_data, schema_path)
             except SchemaValidationError as e:
                 # Re-raise schema validation errors specifically
                 raise e
@@ -206,19 +205,20 @@ class SubtaskGenerator:
                 raise SubtaskGenerationError(f"Error during schema validation: {e}") from e
 
             # 5. Save Output YAML
-            os.makedirs(self.output_dir, exist_ok=True)
+            output_dir_path = Path(self.output_dir)
             output_filename = f"subtask_{step_id}.yaml"
-            output_path = os.path.join(self.output_dir, output_filename)
+            output_path = output_dir_path / output_filename # Use Path object
 
             try:
-                # Ensure output directory exists
-                with open(output_path, 'w', encoding='utf-8') as f:
+                # Ensure output directory exists using Path
+                output_dir_path.mkdir(parents=True, exist_ok=True) # Use Path.mkdir
+                with open(output_path, 'w', encoding='utf-8') as f: # Pass Path object to open
                     yaml.dump(generated_data, f, sort_keys=False, default_flow_style=False)
             except IOError as e:
                 raise SubtaskGenerationError(f"Failed to write output file {output_path}: {e}") from e
 
             logger.info(f"Generated subtask YAML at: {output_path}")
-            return Path(output_path).resolve() # Return absolute path
+            return output_path.resolve() # Return resolved Path object
 
         except OpenRouterAPIError as e:
             raise SubtaskGenerationError(f"AI interaction failed: {e}") from e

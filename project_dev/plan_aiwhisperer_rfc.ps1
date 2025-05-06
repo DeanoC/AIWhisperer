@@ -10,7 +10,11 @@ param (
     [switch]$NoSubtasks,
     
     [Parameter(HelpMessage = "Switch to clean the output directory before generating new content.")]
-    [switch]$Clean
+    [switch]$Clean,
+
+    [Parameter(HelpMessage = "Automatically confirm prompts without user interaction. Alias: -y.")]
+    [Alias("y")]
+    [switch]$Yes
 )
 
 # --- Script Initialization ---
@@ -18,6 +22,7 @@ Write-Verbose "Script starting. PowerShell version: $($PSVersionTable.PSVersion)
 Write-Verbose "Raw RFC File Parameter: '$RfcFile'"
 Write-Verbose "NoSubtasks switch set: $NoSubtasks"
 Write-Verbose "Clean switch set: $Clean"
+Write-Verbose "Yes switch set: $Yes"
 
 # Use the automatic variable $PSScriptRoot for the script's directory
 $ScriptDir = $PSScriptRoot
@@ -94,19 +99,22 @@ try {
         $existingFiles = Get-ChildItem -Path $OutputFolder -Recurse
         if ($existingFiles.Count -gt 0) {
             Write-Host "The output directory contains files: $OutputFolder"
-            $confirmation = Read-Host "Do you want to clean the directory? (Y/N)"
             
-            if ($confirmation -eq 'Y' -or $confirmation -eq 'y') {
-                Write-Verbose "Cleaning output directory: $OutputFolder"
-                try {
-                    Remove-Item -Path "$OutputFolder\*" -Recurse -Force -ErrorAction Stop
-                    Write-Host "Output directory cleaned successfully."
-                } catch {
-                    Write-Error "Failed to clean output directory: $_"
-                    exit 1
+            if (-not $Yes) {
+                $confirmation = Read-Host "Do you want to clean the directory? (Y/N)"
+                if ($confirmation -ne 'Y' -and $confirmation -ne 'y') {
+                    Write-Host "Clean operation cancelled by user."
+                    return
                 }
-            } else {
-                Write-Host "Clean operation cancelled by user."
+            }
+
+            Write-Verbose "Cleaning output directory: $OutputFolder"
+            try {
+                Remove-Item -Path "$OutputFolder\*" -Recurse -Force -ErrorAction Stop
+                Write-Host "Output directory cleaned successfully."
+            } catch {
+                Write-Error "Failed to clean output directory: $_"
+                exit 1
             }
         } else {
             Write-Verbose "Output directory exists but is empty. No cleaning needed."

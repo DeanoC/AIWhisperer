@@ -58,7 +58,7 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
   "required": ["natural_language_goal", "plan"],
   "additionalProperties": false
 }} # End escaping JSON schema
-```
+ ```yaml
 
 **Instructions:**
 
@@ -75,13 +75,13 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
    * **Include meaningful `validation_criteria` for all step types, including `planning` and `documentation`, to clearly verify step completion.**
        * For `planning` steps, consider adding an output artifact (e.g., `docs/analysis_summary.md`) and validating its creation and content clarity. Example:
 
-           ```yaml
            output_artifacts:
              - docs/analysis_summary.md
            validation_criteria:
              - docs/analysis_summary.md exists.
              - docs/analysis_summary.md clearly identifies required code changes and test scenarios.
              - docs/analysis_summary.md outlines a high-level implementation plan.
+
            ```
 
        * For `documentation` steps, ensure criteria explicitly cover all documented items separately. Example:
@@ -95,17 +95,17 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
    * **Use explicit and consistent relative paths for artifacts** (e.g., `src/module/file.py`, `tests/unit/test_file.py`, `docs/feature.md`). Ensure consistency in path structure (e.g., always use `tests/unit/` for unit tests).
 
 8. **IMPORTANT YAML FORMATTING GUIDELINES:** For text fields that might contain colons or other special YAML characters:
-   
+
    * For `overall_context`, always use block scalar format with pipe:
-   
+
    ```yaml
    overall_context: |
      This is text with special characters: colons, dashes, etc.
      The pipe character ensures proper parsing.
    ```
-   
-   * Similarly for `agent_spec.instructions`:
-   
+
+  * Similarly for `agent_spec.instructions`:
+
    ```yaml
    instructions: |
      Step 1: Do this first.
@@ -124,12 +124,14 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
    * `refinement`: For steps specifically designed to improve or correct the output of a previous step based on feedback or validation results.
    If none of these fit well, you may use another descriptive type.
 10. **Strict Test-Driven Development (TDD):** This project MANDATES a strict TDD methodology. For **any** step involving the creation or modification of executable code (i.e., `type: 'code_generation'` or `type: 'file_edit'`) **required by `{md_content}`**:
-   * **Test Generation First:** The plan **must** include a dedicated step (`type: 'test_generation'`) that **strictly precedes** the corresponding `code_generation` or `file_edit` step in the plan sequence. This test step must generate tests specifically for the code that will be created or modified in the subsequent step.
-   * **Dependency on Tests:** The `code_generation` or `file_edit` step **must** list the corresponding `test_generation` step ID in its `depends_on` list.
-   * **Validation After:** Following the `code_generation` or `file_edit` step, the plan **must** include a dedicated step (`type: 'validation'`) responsible for executing the specific tests generated in the preceding `test_generation` step. This validation step **must** depend on the `code_generation` or `file_edit` step.
-   * **Test Generation Instructions:** The `test_generation` step's instructions should emphasize creating tests that thoroughly verify the requirements for the *specific code being generated/modified in the next step*. Avoid special casing (e.g., use randomized or varied inputs/identifiers where appropriate, not just fixed examples). Its `validation_criteria` must ensure the test file(s) are created or updated appropriately (e.g., `tests/unit/test_my_feature.py exists`, `tests/unit/test_my_feature.py contains test_new_functionality`).
-   * **Validation Instructions:** The `validation` step's instructions must specify running the relevant tests generated in the preceding test step (e.g., using `pytest tests/unit/test_my_feature.py::test_new_functionality`). Its `validation_criteria` must confirm that the test execution command runs successfully and that the specific tests pass (e.g., `pytest tests/unit/test_my_feature.py::test_new_functionality executes successfully`, `Test test_new_functionality in tests/unit/test_my_feature.py passes`).
-   * **Code/Edit Agent Instructions:** The instructions for the `code_generation` or `file_edit` agent **must** explicitly forbid implementing code that *only* passes the specific generated tests (i.e., no special-case logic tailored solely to the tests). The code must correctly implement the required functionality as described in the requirements.
+
+* **Test Generation First:** The plan **must** include a dedicated step (`type: 'test_generation'`) that **strictly precedes** the corresponding `code_generation` or `file_edit` step in the plan sequence. This test step must generate tests specifically for the code that will be created or modified in the subsequent step.
+* **Dependency on Tests:** The `code_generation` or `file_edit` step **must** list the corresponding `test_generation` step ID in its `depends_on` list.
+* **Validation After:** Following the `code_generation` or `file_edit` step, the plan **must** include a dedicated step (`type: 'validation'`) responsible for executing the specific tests generated in the preceding `test_generation` step. This validation step **must** depend on the `code_generation` or `file_edit` step.
+* **Test Generation Instructions:** The `test_generation` step's instructions should emphasize creating tests that thoroughly verify the requirements for the *specific code being generated/modified in the next step*. Avoid special casing (e.g., use randomized or varied inputs/identifiers where appropriate, not just fixed examples). Its `validation_criteria` must ensure the test file(s) are created or updated appropriately (e.g., `tests/unit/test_my_feature.py exists`, `tests/unit/test_my_feature.py contains test_new_functionality`).
+* **Validation Instructions:** The `validation` step's instructions must specify running the relevant tests generated in the preceding test step (e.g., using `pytest tests/unit/test_my_feature.py::test_new_functionality`). Its `validation_criteria` must confirm that the test execution command runs successfully and that the specific tests pass (e.g., `pytest tests/unit/test_my_feature.py::test_new_functionality executes successfully`, `Test test_new_functionality in tests/unit/test_my_feature.py passes`).
+* **Code/Edit Agent Instructions:** The instructions for the `code_generation` or `file_edit` agent **must** explicitly forbid implementing code that *only* passes the specific generated tests (i.e., no special-case logic tailored solely to the tests). The code must correctly implement the required functionality as described in the requirements.
+
 11. **Code Reuse:** For steps with `type: 'code_generation'` or `type: 'file_edit'` **required by `{md_content}`**, ensure the `agent_spec.instructions` explicitly directs the executor agent to:
 
 * First, examine the existing codebase (especially potentially relevant utility modules like `utils.py`, `config.py`, `exceptions.py`, etc.) for functions, classes, constants, or custom exceptions that can be reused to fulfill the task. **Mention specific potentially relevant modules (including `exceptions.py` if error handling is involved) in the instructions.**
@@ -178,4 +180,4 @@ Produce **only** a YAML document, enclosed in ```yaml fences, adhering strictly 
 
 **User Requirements Provided:**
 
-**(Remember: The following requirements are the ONLY source for the generated plan. Do NOT invent other tasks.)**
+## (Remember: The following requirements are the ONLY source for the generated plan. Do NOT invent other tasks.)

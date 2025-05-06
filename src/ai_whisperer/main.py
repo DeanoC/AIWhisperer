@@ -144,7 +144,7 @@ def main():
 
             # Initialize subtask generator
             console.print("Initializing subtask generator...")
-            subtask_generator = SubtaskGenerator(args.config)
+            subtask_generator = SubtaskGenerator(args.config, args.output)
             logger.info("Subtask generator initialized.")
 
             # Generate subtask
@@ -186,10 +186,7 @@ def main():
             logger.debug("Configuration loaded successfully.")
 
             # Create the Orchestrator with the right output directory
-            orchestrator = Orchestrator(
-                config=config,
-                output_dir=args.output  # Pass command line arg output directory
-            )
+            orchestrator = Orchestrator(config, args.output)
 
             # Generate full project plan (main YAML + subtasks)
             result = orchestrator.generate_full_project_plan(args.requirements, args.config)
@@ -233,10 +230,7 @@ def main():
             logger.debug("Configuration loaded successfully.")
 
             # Create the Orchestrator with the right output directory
-            orchestrator = Orchestrator(
-                config=config,
-                output_dir=args.output  # Pass command line arg output directory
-            )
+            orchestrator = Orchestrator(config, args.output)
 
             console.print(f"Generating initial task plan from: {args.requirements}")
             # Generate only the main task plan YAML

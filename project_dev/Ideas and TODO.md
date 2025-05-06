@@ -24,3 +24,27 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 > Yes you idea of using meta-feedback loop against perviously geneated histroricaly 
 > results is good. I will add that to the the task list :) thank you
 ----
+
+* Improved CLI with a modern verb noun structure + more tools for getting info on Openrouter models, prices etc.
+* Add support for Openrouter advanced features (cache etc.)
+* Refinement of the original requirement files
+* Aider support for processing the subtasks themselves
+* Feedback loops for orchestrator and subtask generator
+* Support system prompts
+* Provide use of prompt engineering guides to aid prompts
+* produce project specific prompts by refining defaults with project details an AI
+* more text processing for less yaml restriction during the AI returns
+* Provide context to the generators, code base, functions, etc.
+* limiting info to subtasks (not telling the the following steps)
+* Patching hashs, task_id into the yaml not requiring the AI to do it
+* Human in the model alerts based on tricky issues
+* Support for non open router providers
+* Training example corpus
+* Scoring of plans
+* Subtask phase specific prompts
+* Hierachical breakdown (fusion of tasks at high level, more than 1 level...)
+* Built in tools (MPS usage, web fetch, terminal etc.)
+* git branch per requirement
+* Change detect based on hashes, to avoid unnessarry AI calls
+* Provide cleaner output whilst running
+* Include generated planning docs into other subtasks context

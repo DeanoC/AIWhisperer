@@ -16,15 +16,15 @@ from src.postprocessing.add_items_postprocessor import add_items_postprocessor
 class TestOrchestratorPostprocessingIntegration:
     """Test the integration of the add_items_postprocessor with the Orchestrator."""
 
-    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI')
-    @patch('src.ai_whisperer.orchestrator.uuid.uuid4')
+    @patch("src.ai_whisperer.openrouter_api.OpenRouterAPI")
+    @patch("src.ai_whisperer.orchestrator.uuid.uuid4")
     def test_orchestrator_adds_task_id_and_hashes(self, mock_uuid4, mock_api):
         """Test that the orchestrator adds task_id and input_hashes via the postprocessor."""
         # Setup
         mock_uuid4.return_value = "test-uuid"
         mock_api_instance = MagicMock()
         mock_api.return_value = mock_api_instance
-        
+
         # Mock the API response with a simple YAML
         mock_api_instance.call_chat_completion.return_value = """
 natural_language_goal: Test goal
@@ -36,77 +36,89 @@ plan:
       instructions: Test instructions
 """
         # Ensure the mock is used instead of making real API calls
-        with patch('src.ai_whisperer.orchestrator.openrouter_api.OpenRouterAPI', return_value=mock_api_instance):
+        with patch(
+            "src.ai_whisperer.orchestrator.openrouter_api.OpenRouterAPI",
+            return_value=mock_api_instance,
+        ):
             # Create a test config
             test_config = {
-            'openrouter': {
-                'api_key': 'test-key',
-                'model': 'test-model',
-                'params': {}
-            },
-            'prompts': {
-                'orchestrator_prompt_content': 'Test prompt',
-                'subtask_generator_prompt_content': 'Test prompt'
+                "openrouter": {
+                    "api_key": "test-key",
+                    "model": "test-model",
+                    "params": {},
+                },
+                "prompts": {
+                    "orchestrator_prompt_content": "Test prompt",
+                    "subtask_generator_prompt_content": "Test prompt",
+                },
             }
-        }
-        
+
             # Create temporary files for testing
             tmp_dir = Path("./tmp_test")
             tmp_dir.mkdir(exist_ok=True)
-            
+
             requirements_path = tmp_dir / "test_requirements.md"
-            with open(requirements_path, 'w') as f:
+            with open(requirements_path, "w") as f:
                 f.write("Test requirements")
-            
+
             config_path = tmp_dir / "test_config.yaml"
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 yaml.dump(test_config, f)
-            
+
             # Create orchestrator and call generate_initial_yaml
             orchestrator = Orchestrator(test_config, output_dir=str(tmp_dir))
-        
+
             # Mock the _calculate_input_hashes method to return a fixed hash
-            with patch.object(orchestrator, '_calculate_input_hashes', return_value={
-                'requirements_md': 'test-hash-1',
-                'config_yaml': 'test-hash-2',
-                'prompt_file': 'test-hash-3'
-            }):
+            with patch.object(
+                orchestrator,
+                "_calculate_input_hashes",
+                return_value={
+                    "requirements_md": "test-hash-1",
+                    "config_yaml": "test-hash-2",
+                    "prompt_file": "test-hash-3",
+                },
+            ):
                 # Mock the _validate_yaml_response method to avoid validation
-                with patch.object(orchestrator, '_validate_yaml_response'):
+                with patch.object(orchestrator, "_validate_yaml_response"):
                     # Mock the save_yaml method to capture the YAML content
-                    with patch.object(orchestrator, 'save_yaml', return_value=tmp_dir / "output.yaml") as mock_save:
-                        orchestrator.generate_initial_yaml(str(requirements_path), str(config_path))
-                        
+                    with patch.object(
+                        orchestrator, "save_yaml", return_value=tmp_dir / "output.yaml"
+                    ) as mock_save:
+                        orchestrator.generate_initial_yaml(
+                            str(requirements_path), str(config_path)
+                        )
+
                         # Get the YAML content that would have been saved
                         saved_yaml = mock_save.call_args[0][0]
-                        
+
                         # Verify that task_id and input_hashes were added
-                        assert 'task_id' in saved_yaml
-                        assert saved_yaml['task_id'] == "test-uuid"
-                        assert 'input_hashes' in saved_yaml
-                        assert saved_yaml['input_hashes'] == {
-                            'requirements_md': 'test-hash-1',
-                            'config_yaml': 'test-hash-2',
-                            'prompt_file': 'test-hash-3'
+                        assert "task_id" in saved_yaml
+                        assert saved_yaml["task_id"] == "test-uuid"
+                        assert "input_hashes" in saved_yaml
+                        assert saved_yaml["input_hashes"] == {
+                            "requirements_md": "test-hash-1",
+                            "config_yaml": "test-hash-2",
+                            "prompt_file": "test-hash-3",
                         }
-            
+
             # Clean up
             import shutil
+
             shutil.rmtree(tmp_dir)
 
 
 class TestSubtaskGeneratorPostprocessingIntegration:
     """Test the integration of the add_items_postprocessor with the SubtaskGenerator."""
 
-    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI')
-    @patch('src.ai_whisperer.subtask_generator.uuid.uuid4')
+    @patch("src.ai_whisperer.openrouter_api.OpenRouterAPI")
+    @patch("src.ai_whisperer.subtask_generator.uuid.uuid4")
     def test_subtask_generator_adds_subtask_id(self, mock_uuid4, mock_api):
         """Test that the subtask generator adds subtask_id via the postprocessor."""
         # Setup
         mock_uuid4.return_value = "test-subtask-uuid"
         mock_api_instance = MagicMock()
         mock_api.return_value = mock_api_instance
-        
+
         # Mock the API response with a simple YAML
         mock_api_instance.call_chat_completion.return_value = """
 step_id: test_step
@@ -118,92 +130,103 @@ agent_spec:
         # Set model and params attributes on the mock
         mock_api_instance.model = "test-model"
         mock_api_instance.params = {}
-        
+
         # Ensure the mock is used instead of making real API calls
-        with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI', return_value=mock_api_instance):
+        with patch(
+            "src.ai_whisperer.openrouter_api.OpenRouterAPI",
+            return_value=mock_api_instance,
+        ):
             # Create a test config
             test_config = {
-            'openrouter': {
-                'api_key': 'test-key',
-                'model': 'test-model',
-                'params': {}
-            },
-            'prompts': {
-                'orchestrator_prompt_content': 'Test prompt',
-                'subtask_generator_prompt_content': 'Test prompt'
+                "openrouter": {
+                    "api_key": "test-key",
+                    "model": "test-model",
+                    "params": {},
+                },
+                "prompts": {
+                    "orchestrator_prompt_content": "Test prompt",
+                    "subtask_generator_prompt_content": "Test prompt",
+                },
             }
-        }
-        
+
             # Create temporary directory for testing
             tmp_dir = Path("./tmp_test")
             tmp_dir.mkdir(exist_ok=True)
-            
+
             config_path = tmp_dir / "test_config.yaml"
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 yaml.dump(test_config, f)
-            
+
             # Create input step
             input_step = {
-                'step_id': 'test_step',
-                'description': 'Test step',
-                'agent_spec': {
-                    'type': 'test',
-                    'instructions': 'Test instructions'
-                }
+                "step_id": "test_step",
+                "description": "Test step",
+                "agent_spec": {"type": "test", "instructions": "Test instructions"},
             }
-            
+
             # Create subtask generator
-            subtask_generator = SubtaskGenerator(str(config_path), output_dir=str(tmp_dir))
-                
+            subtask_generator = SubtaskGenerator(
+                str(config_path), output_dir=str(tmp_dir)
+            )
+
             # Replace the openrouter_client with our mock
             subtask_generator.openrouter_client = mock_api_instance
-        
+
             # Mock the validate_against_schema method to avoid validation
-            with patch('src.ai_whisperer.subtask_generator.validate_against_schema'):
+            with patch("src.ai_whisperer.subtask_generator.validate_against_schema"):
                 # Patch open to capture the written YAML
-                with patch('builtins.open', create=True) as mock_open:
+                with patch("builtins.open", create=True) as mock_open:
                     # Call generate_subtask
                     subtask_generator.generate_subtask(input_step)
-                    
+
                     # Get the YAML content that would have been written
                     # This is a bit tricky since we're mocking open
                     # We need to find the call where the YAML was written
                     yaml_written = False
                     all_yaml_contents = []
                     full_yaml_content = ""
-                        
+
                     # Collect all write calls to reconstruct the full YAML
                     for call in mock_open.mock_calls:
-                        if call[0] == '().__enter__().write':
+                        if call[0] == "().__enter__().write":
                             content = call[1][0]
                             all_yaml_contents.append(content)
                             full_yaml_content += content
-                        
+
                     # Now try to parse the complete YAML content
                     if full_yaml_content.strip():
                         try:
                             written_yaml = yaml.safe_load(full_yaml_content)
-                                
+
                             # Debug the content if there's an issue
-                            assert isinstance(written_yaml, dict), f"Expected dict, got {type(written_yaml)}: {written_yaml}\nOriginal content: {full_yaml_content}"
-                                
+                            assert isinstance(
+                                written_yaml, dict
+                            ), f"Expected dict, got {type(written_yaml)}: {written_yaml}\nOriginal content: {full_yaml_content}"
+
                             # Check for step_id and subtask_id
-                            assert 'step_id' in written_yaml, f"step_id not found in: {written_yaml.keys()}"
-                            assert written_yaml['step_id'] == "test_step"
-                                
-                            assert 'subtask_id' in written_yaml, f"subtask_id not found in: {written_yaml.keys()}"
-                            assert written_yaml['subtask_id'] == "test-subtask-uuid"
+                            assert (
+                                "step_id" in written_yaml
+                            ), f"step_id not found in: {written_yaml.keys()}"
+                            assert written_yaml["step_id"] == "test_step"
+
+                            assert (
+                                "subtask_id" in written_yaml
+                            ), f"subtask_id not found in: {written_yaml.keys()}"
+                            assert written_yaml["subtask_id"] == "test-subtask-uuid"
                             yaml_written = True
                         except Exception as e:
                             # Log the exception for debugging
                             print(f"Error parsing YAML: {e}")
                             print(f"Full YAML content: {full_yaml_content}")
-                        
+
                     # Make sure we actually found and checked a YAML write
-                    assert yaml_written, f"No valid YAML with subtask_id was found. All contents: {all_yaml_contents}"
-            
+                    assert (
+                        yaml_written
+                    ), f"No valid YAML with subtask_id was found. All contents: {all_yaml_contents}"
+
             # Clean up
             import shutil
+
             shutil.rmtree(tmp_dir)
 
 
@@ -213,7 +236,7 @@ class TestPostprocessorDirectIntegration:
     def test_postprocessor_in_pipeline(self):
         """Test that the postprocessor works correctly in the pipeline."""
         from src.postprocessing.pipeline import PostprocessingPipeline
-        
+
         # Create a test YAML string
         yaml_string = """
 title: Test Document
@@ -224,41 +247,37 @@ plan:
   - step_id: step2
     description: Second step
 """
-        
+
         # Create result_data with items to add
         result_data = {
             "items_to_add": {
                 "top_level": {
                     "task_id": "test-task-id",
-                    "input_hashes": {"file1": "hash1", "file2": "hash2"}
+                    "input_hashes": {"file1": "hash1", "file2": "hash2"},
                 },
-                "step_level": {
-                    "subtask_id": "test-subtask-id"
-                }
+                "step_level": {"subtask_id": "test-subtask-id"},
             },
             "success": True,
             "steps": {},
-            "logs": []
+            "logs": [],
         }
-        
+
         # Create pipeline with the add_items_postprocessor
-        pipeline = PostprocessingPipeline(
-            scripted_steps=[add_items_postprocessor]
-        )
-        
+        pipeline = PostprocessingPipeline(scripted_steps=[add_items_postprocessor])
+
         # Process the YAML string
         modified_yaml_string, result = pipeline.process(yaml_string, result_data)
-        
+
         # Parse the modified YAML
         modified_yaml = yaml.safe_load(modified_yaml_string)
-        
+
         # Verify that the items were added
-        assert 'task_id' in modified_yaml
-        assert modified_yaml['task_id'] == "test-task-id"
-        assert 'input_hashes' in modified_yaml
-        assert modified_yaml['input_hashes'] == {"file1": "hash1", "file2": "hash2"}
-        
+        assert "task_id" in modified_yaml
+        assert modified_yaml["task_id"] == "test-task-id"
+        assert "input_hashes" in modified_yaml
+        assert modified_yaml["input_hashes"] == {"file1": "hash1", "file2": "hash2"}
+
         # Verify that step-level items were added
-        for step in modified_yaml['plan']:
-            assert 'subtask_id' in step
-            assert step['subtask_id'] == "test-subtask-id"
+        for step in modified_yaml["plan"]:
+            assert "subtask_id" in step
+            assert step["subtask_id"] == "test-subtask-id"
