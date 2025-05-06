@@ -127,3 +127,4 @@ test_output.yaml
 output/
 .aider*
 project_dev/in_dev/aiwhisperer_dogfood/
+/.output.txt

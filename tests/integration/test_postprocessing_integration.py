@@ -18,23 +18,45 @@ class TestOrchestratorPostprocessingIntegration:
 
     @patch("src.ai_whisperer.openrouter_api.OpenRouterAPI")
     @patch("src.ai_whisperer.orchestrator.uuid.uuid4")
-    def test_orchestrator_adds_task_id_and_hashes(self, mock_uuid4, mock_api):
+    @patch("src.postprocessing.pipeline.PostprocessingPipeline.process")
+    def test_orchestrator_adds_task_id_and_hashes(self, mock_process, mock_uuid4, mock_api):
         """Test that the orchestrator adds task_id and input_hashes via the postprocessor."""
         # Setup
         mock_uuid4.return_value = "test-uuid"
         mock_api_instance = MagicMock()
         mock_api.return_value = mock_api_instance
 
-        # Mock the API response with a simple YAML
-        mock_api_instance.call_chat_completion.return_value = """
-natural_language_goal: Test goal
-plan:
-  - step_id: test_step
-    description: Test step
-    agent_spec:
-      type: test
-      instructions: Test instructions
-"""
+        # Create a YAML string with proper indentation, including task_id and input_hashes
+        yaml_dict = {
+            "natural_language_goal": "Test goal",
+            "plan": [
+                {
+                    "step_id": "test_step",
+                    "description": "Test step",
+                    "agent_spec": {
+                        "type": "test",
+                        "instructions": "Test instructions"
+                    }
+                }
+            ],
+            "task_id": "test-uuid",
+            "input_hashes": {
+                "requirements_md": "test-hash-1",
+                "config_yaml": "test-hash-2",
+                "prompt_file": "test-hash-3",
+            }
+        }
+
+        # Mock the API response
+        mock_api_instance.call_chat_completion.return_value = "Some YAML content"
+
+        # Mock the process method to return a valid YAML string and result
+        mock_process.return_value = (yaml.dump(yaml_dict, sort_keys=False, default_flow_style=False), {
+            "success": True,
+            "steps": {},
+            "logs": []
+        })
+
         # Ensure the mock is used instead of making real API calls
         with patch(
             "src.ai_whisperer.orchestrator.openrouter_api.OpenRouterAPI",

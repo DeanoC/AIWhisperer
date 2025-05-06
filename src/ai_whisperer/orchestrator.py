@@ -23,7 +23,10 @@ from .exceptions import (
 from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
- 
+from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
+from src.postprocessing.scripted_steps.normalize_indentation import normalize_indentation
+from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
+
 # Determine the package root directory to locate default files relative to the package
 try:
     PACKAGE_ROOT = Path(__file__).parent.resolve()
@@ -395,7 +398,13 @@ class Orchestrator:
                 }
 
                 pipeline = PostprocessingPipeline(
-                    scripted_steps=[clean_backtick_wrapper, add_items_postprocessor],
+                    scripted_steps=[
+                        clean_backtick_wrapper,
+                        normalize_indentation,
+                        validate_syntax,
+                        handle_required_fields,
+                        add_items_postprocessor
+                    ]
                 )
                 # Pass the YAML data through the postprocessing pipeline
                 yaml_string, postprocessing_result = pipeline.process(
@@ -429,7 +438,7 @@ class Orchestrator:
             except Exception as e:
                 logger.error(f"An error occurred during YAML postprocessing: {e}")
                 raise OrchestratorError(f"YAML postprocessing failed: {e}") from e
-            
+
             print(f"YAML data after parsing:\n{yaml_data}")
 
             # 7. Validate YAML Response (Schema & Hashes)

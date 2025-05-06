@@ -13,6 +13,9 @@ from typing import Dict, Any
 from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
+from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
+from src.postprocessing.scripted_steps.normalize_indentation import normalize_indentation
+from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
 
 from .config import load_config
 from .openrouter_api import OpenRouterAPI
@@ -154,7 +157,7 @@ class SubtaskGenerator:
             try:
                 # Extract YAML content from potential markdown code blocks
                 yaml_string = ai_response_yaml
-                
+
                 # Create result_data with items to add
                 result_data = {
                     "items_to_add": {
@@ -168,13 +171,16 @@ class SubtaskGenerator:
                     "steps": {},
                     "logs": []
                 }
-                
+
                 pipeline = PostprocessingPipeline(
                     scripted_steps=[
                         clean_backtick_wrapper,
+                        normalize_indentation,
+                        validate_syntax,
+                        handle_required_fields,
                         add_items_postprocessor
                     ]
-                ) 
+                )
                 # Pass the YAML data through the postprocessing pipeline
                 yaml_string, postprocessing_result = pipeline.process(yaml_string, result_data)
 
