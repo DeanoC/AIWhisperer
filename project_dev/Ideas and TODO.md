@@ -48,3 +48,8 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 * Change detect based on hashes, to avoid unnessarry AI calls
 * Provide cleaner output whilst running
 * Include generated planning docs into other subtasks context
+* after generated subtasks, replace the subtask descriptions in the main file with file reference to the generated ones.
+
+
+---
+We need to tell the subtask generated to create a failing scaffold of files during the test_generation phase.

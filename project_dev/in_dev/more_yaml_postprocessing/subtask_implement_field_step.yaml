@@ -1,0 +1,55 @@
+description: Implement the postprocessing step for handling required and invalid fields.
+depends_on:
+- generate_test_for_field_step
+agent_spec:
+  type: code_generation
+  input_artifacts:
+  - tests/unit/test_postprocessing_fields.py
+  output_artifacts:
+  - src/postprocessing/scripted_steps/handle_required_fields.py
+  instructions: 'Implement the `handle_required_fields.py` scripted step in `src/postprocessing/scripted_steps`.
+
+    This step should define a function or class method that takes two main arguments:
+
+    1. The input YAML content (likely as a Python dictionary after parsing).
+
+    2. A schema or configuration defining the required fields and their default values,
+    as well as the set of allowed fields.
+
+
+    The implementation should perform the following actions:
+
+    1. Iterate through the required fields defined in the schema.
+
+    2. For each required field that is missing from the input YAML content, add the
+    field with its specified default value.
+
+    3. Iterate through the fields present in the input YAML content.
+
+    4. For each field in the input that is *not* defined in the provided schema (i.e.,
+    it''s an invalid field), remove it from the content.
+
+    5. The function/method should return the modified YAML content (as a Python dictionary).
+
+
+    Ensure the code adheres to the strict Test-Driven Development (TDD) approach.
+    Read and understand the tests in `tests/unit/test_postprocessing_fields.py` generated
+    in the previous step. Write code that satisfies these tests, but focus on implementing
+    the general logic for handling required and invalid fields correctly, not just
+    passing the specific test cases.
+
+
+    Consider if any existing data structures or validation logic in `utils.py` or
+    `config.py` can be leveraged to represent the schema or handle data manipulation.
+
+    '
+  validation_criteria:
+  - src/postprocessing/scripted_steps/handle_required_fields.py exists.
+  - src/postprocessing/scripted_steps/handle_required_fields.py contains a Python
+    function or class with a method that accepts YAML content (dict) and a schema/config
+    (dict or list) as input.
+  - The implemented logic correctly adds missing required fields with defaults.
+  - The implemented logic correctly removes fields not defined in the schema.
+  - The implemented code passes the unit tests in `tests/unit/test_postprocessing_fields.py`.
+subtask_id: 0d3fae98-d1c7-469b-bba6-250260a9e715
+step_id: implement_field_step

@@ -1,0 +1,40 @@
+description: Integrate the new scripted steps into the PostprocessingPipeline.
+depends_on:
+- test_indentation_step
+- test_field_step
+- test_syntax_step
+agent_spec:
+  type: file_edit
+  input_artifacts:
+  - src/postprocessing/pipeline.py
+  - src/postprocessing/scripted_steps/normalize_indentation.py
+  - src/postprocessing/scripted_steps/handle_required_fields.py
+  - src/postprocessing/scripted_steps/validate_syntax.py
+  output_artifacts:
+  - src/postprocessing/pipeline.py
+  instructions: 'Edit the `PostprocessingPipeline` class in `src/postprocessing/pipeline.py`.
+
+    Import the `normalize_indentation`, `handle_required_fields`, and `validate_syntax`
+    classes from their respective modules in `src/postprocessing/scripted_steps`.
+
+    Locate the `_processing_sequence` list within the `PostprocessingPipeline` class.
+
+    Add instances of `normalize_indentation`, `handle_required_fields`, and `validate_syntax`
+    to this list.
+
+    Ensure the steps are added in a logical order: indentation normalization first,
+    then handling required fields, and finally syntax validation.
+
+    Follow the existing pattern for adding step instances to the list.
+
+    '
+  validation_criteria:
+  - src/postprocessing/pipeline.py exists.
+  - src/postprocessing/pipeline.py imports the new scripted step modules (`normalize_indentation`,
+    `handle_required_fields`, `validate_syntax`).
+  - The `PostprocessingPipeline` class in src/postprocessing/pipeline.py includes
+    instances of `normalize_indentation`, `handle_required_fields`, and `validate_syntax`
+    in its `_processing_sequence` list.
+  - The new steps are ordered logically within the `_processing_sequence`.
+subtask_id: c78b4e39-1d99-464e-8c4f-67df5f6e93c9
+step_id: integrate_postprocessing_steps

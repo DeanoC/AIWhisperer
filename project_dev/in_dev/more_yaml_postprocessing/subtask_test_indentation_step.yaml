@@ -1,0 +1,26 @@
+description: Run unit tests for the indentation normalization step.
+depends_on:
+- implement_indentation_step
+agent_spec:
+  type: validation
+  input_artifacts:
+  - src/postprocessing/scripted_steps/normalize_indentation.py
+  - tests/unit/test_postprocessing_indentation.py
+  instructions: 'Execute the unit tests for the indentation normalization step using
+    pytest.
+
+
+    1. Ensure you are in the project''s root directory.
+
+    2. Run the command: `pytest tests/unit/test_postprocessing_indentation.py`
+
+    3. Review the output to confirm that pytest executed successfully and all tests
+    passed.
+
+    '
+  validation_criteria:
+  - The command `pytest tests/unit/test_postprocessing_indentation.py` executes without
+    errors.
+  - All tests within `tests/unit/test_postprocessing_indentation.py` pass successfully.
+subtask_id: 2a748934-0bb4-4c1c-817d-dd0d46d4a5d6
+step_id: test_indentation_step

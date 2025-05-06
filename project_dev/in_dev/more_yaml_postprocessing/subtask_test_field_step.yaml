@@ -1,0 +1,24 @@
+description: Run unit tests for the field handling step.
+depends_on:
+- implement_field_step
+agent_spec:
+  type: validation
+  input_artifacts:
+  - src/postprocessing/scripted_steps/handle_required_fields.py
+  - tests/unit/test_postprocessing_fields.py
+  instructions: 'Execute the unit tests for the field handling step using pytest.
+
+    Navigate to the project root directory.
+
+    Run the command: `pytest tests/unit/test_postprocessing_fields.py`
+
+    Ensure the test execution completes without errors and all tests pass.
+
+    '
+  validation_criteria:
+  - The command `pytest tests/unit/test_postprocessing_fields.py` is executed.
+  - The pytest command exits with a zero status code, indicating successful execution.
+  - All individual tests within `tests/unit/test_postprocessing_fields.py` report
+    a passing status.
+subtask_id: a7ed64b4-a719-4e56-978d-95d5c362ad3a
+step_id: test_field_step

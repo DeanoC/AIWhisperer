@@ -1,0 +1,27 @@
+description: Run integration tests for the PostprocessingPipeline.
+depends_on:
+- generate_integration_tests
+agent_spec:
+  type: validation
+  input_artifacts:
+  - src/postprocessing/pipeline.py
+  - tests/integration/test_postprocessing_pipeline.py
+  - src/postprocessing/scripted_steps/
+  instructions: 'Execute the integration tests for the PostprocessingPipeline using
+    pytest.
+
+    Navigate to the root directory of the project.
+
+    Run the command: `pytest tests/integration/test_postprocessing_pipeline.py`
+
+    Ensure that the test execution completes without errors.
+
+    '
+  validation_criteria:
+  - The command `pytest tests/integration/test_postprocessing_pipeline.py` is executed
+    successfully.
+  - The pytest execution exits with a zero status code, indicating no test failures
+    or errors.
+  - All tests defined in `tests/integration/test_postprocessing_pipeline.py` pass.
+subtask_id: bbf12462-7ac1-443f-a037-766a80d752e2
+step_id: test_integration_pipeline

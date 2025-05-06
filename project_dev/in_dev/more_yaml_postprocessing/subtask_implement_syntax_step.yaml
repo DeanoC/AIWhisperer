@@ -1,0 +1,63 @@
+description: Implement the postprocessing step for YAML syntax validation and correction.
+depends_on:
+- generate_test_for_syntax_step
+agent_spec:
+  type: code_generation
+  input_artifacts:
+  - tests/unit/test_postprocessing_syntax.py
+  output_artifacts:
+  - src/postprocessing/scripted_steps/validate_syntax.py
+  instructions: 'Implement the `validate_syntax.py` scripted step within the `src/postprocessing/scripted_steps`
+    directory.
+
+
+    This step should define a Python class or function that accepts a string containing
+    YAML content as input.
+
+
+    Use a standard Python YAML parsing library (like `PyYAML`) to attempt parsing
+    the input string.
+
+
+    If the parsing fails due to a `yaml.YAMLError`, the code should:
+
+    1. Attempt basic, safe corrections for common and simple syntax issues (e.g.,
+    missing colons after keys, simple indentation errors). Avoid complex or potentially
+    destructive corrections.
+
+    2. If corrections are successful, return the corrected YAML string.
+
+    3. If corrections are not possible or the error persists, raise a specific custom
+    exception (e.g., `YamlSyntaxError` from `src/postprocessing/exceptions.py` if
+    available, otherwise define one) that includes details about the syntax error
+    location and nature.
+
+
+    The implementation must be compatible with the unit tests provided in `tests/unit/test_postprocessing_syntax.py`.
+    Ensure the code handles both valid and invalid YAML inputs as specified by the
+    tests, but do not tailor the implementation solely to pass those specific test
+    cases; build robust general validation and correction logic.
+
+
+    Look for and reuse existing YAML handling utilities in the project, particularly
+    in `src/utils.py` or similar common modules, to maintain consistency and avoid
+    code duplication.
+
+    '
+  constraints:
+  - Adhere to the Test-Driven Development (TDD) principle; ensure the implementation
+    passes the provided unit tests.
+  - Use a standard and reliable Python YAML parsing library (e.g., PyYAML).
+  - Corrections should be minimal, safe, and limited to obvious syntax issues.
+  - Raise a specific exception for uncorrectable syntax errors.
+  validation_criteria:
+  - src/postprocessing/scripted_steps/validate_syntax.py exists.
+  - src/postprocessing/scripted_steps/validate_syntax.py contains a Python class or
+    function named `validate_and_correct_yaml` or similar, which takes a string input
+    and returns a string or raises an exception.
+  - The implementation uses a YAML parsing library to validate syntax.
+  - The implementation attempts basic corrections for simple syntax errors.
+  - The implementation raises an appropriate exception for uncorrectable syntax errors.
+  - The code passes the tests defined in tests/unit/test_postprocessing_syntax.py.
+subtask_id: df66fbc2-3a5d-42d5-954d-a5ccbfd67fd9
+step_id: implement_syntax_step
