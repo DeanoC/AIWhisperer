@@ -397,10 +397,19 @@ class Orchestrator:
                     "steps": {},
                     "logs": [],
                 }
+                # Save YAML string to temp file for debugging
+                logger.debug("Saving YAML string to temporary file for debugging")
+                try:
+                    with open("./temp.txt", "w", encoding="utf-8") as f:
+                        f.write(yaml_string)
+                    logger.debug("Successfully saved YAML string to ./temp.txt")
+                except IOError as e:
+                    logger.warning(f"Failed to save debug YAML file: {e}")
 
                 pipeline = PostprocessingPipeline(
                     scripted_steps=[
                         clean_backtick_wrapper,
+                        escape_text_fields,
                         normalize_indentation,
                         validate_syntax,
                         handle_required_fields,

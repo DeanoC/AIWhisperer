@@ -214,7 +214,7 @@ class TestOrchestratorSubtasks:
     @patch('src.ai_whisperer.orchestrator.yaml.safe_load')
     def test_generate_full_project_plan(self, mock_yaml_load, mock_hash,
                                        mock_is_file, mock_api_call, orchestrator):
-        mock_api_call.return_value = "```yaml\nplan:\n- step_id: step1\n```"
+        mock_api_call.return_value = "```yaml\nplan:\n  - step_id: step1\n```"
 
         # Define the raw data expected before postprocessing adds hashes/id
         raw_plan_data = {

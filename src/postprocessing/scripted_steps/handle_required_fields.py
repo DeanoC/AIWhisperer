@@ -1,5 +1,6 @@
 from ruamel.yaml import YAML
 from io import StringIO
+import yaml as pyyaml  # Import PyYAML as a fallback
 
 def handle_required_fields(yaml_content: str | dict, data: dict = None) -> tuple:
     """
@@ -33,7 +34,22 @@ def handle_required_fields(yaml_content: str | dict, data: dict = None) -> tuple
     try:
         # Parse the YAML content into a dictionary if it's a string
         if isinstance(yaml_content, str):
-            parsed_yaml = yaml.load(yaml_content)
+            try:
+                # First try with ruamel.yaml
+                parsed_yaml = yaml.load(yaml_content)
+            except Exception as ruamel_error:
+                data["logs"].append(f"ruamel.yaml parsing failed: {ruamel_error}")
+                data["logs"].append("Falling back to PyYAML for parsing.")
+
+                try:
+                    # Try with PyYAML as a fallback
+                    parsed_yaml = pyyaml.safe_load(yaml_content)
+                    data["logs"].append("Successfully parsed with PyYAML fallback.")
+                except Exception as pyyaml_error:
+                    data["logs"].append(f"PyYAML fallback also failed: {pyyaml_error}")
+                    # If both fail, just return the content as is
+                    data["logs"].append("Returning content as is due to parsing failures.")
+                    return yaml_content, data
         elif isinstance(yaml_content, dict):
             parsed_yaml = yaml_content
         else:

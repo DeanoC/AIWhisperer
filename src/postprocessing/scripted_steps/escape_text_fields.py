@@ -59,8 +59,22 @@ def escape_text_fields(yaml_content: str | dict, data: dict = None) -> Tuple[str
 
         # Check if this is a properly formatted YAML line with key-value pairs
         # Valid YAML key-value format: key: value or key:
-        if re.match(r'^\s*[^:\s]+\s*:(\s.*)?$', line) and not re.search(r'^\s*[^:]+:[^:]+:.*$', line):
-            processed_lines.append(line)
+        # More strict pattern to identify valid YAML key-value pairs
+        if re.match(r'^\s*[a-zA-Z0-9_-]+\s*:(\s.*)?$', line) and not re.search(r'^\s*[^:]+:[^:]+:.*$', line):
+            # Additional check for lines that might look like YAML but contain natural language
+            value_part = re.sub(r'^\s*[a-zA-Z0-9_-]+\s*:\s*', '', line).strip()
+            if not value_part or re.match(r'^["\'].*["\']$', value_part) or not re.search(r'[.!?]', value_part):
+                processed_lines.append(line)
+                continue
+
+            # If the value part contains sentence-like text, quote it
+            indent = len(line) - len(line.lstrip())
+            key_part = re.match(r'^\s*([a-zA-Z0-9_-]+\s*:)\s*', line).group(1)
+            indentation = line[:indent]
+            content = value_part.replace('"', '\\"')
+            quoted_line = f'{indentation}{key_part} "{content}"'
+            processed_lines.append(quoted_line)
+            changes_made += 1
             continue
 
         # Check if line contains a colon but not in a valid YAML key-value format

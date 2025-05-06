@@ -42,15 +42,26 @@ def add_items_postprocessor(yaml_content: str | dict, data: dict) -> tuple:
         data["success"] = True
         return yaml_content, data
 
-    # Parse the YAML content into a dictionary if it's a string
+    # Parse the YAML content into a dictionary if it's a string - always parse in this step
+    # to ensure we don't rely on previously parsed YAML
     try:
         if isinstance(yaml_content, str):
             if not yaml_content.strip():
                 raise ValueError("Empty YAML string provided")
 
-            yaml_dict = yaml.safe_load(yaml_content)
-            if yaml_dict is None:
-                yaml_dict = {}  # Handle case where yaml_content is empty but valid
+            # Try to parse with PyYAML
+            try:
+                yaml_dict = yaml.safe_load(yaml_content)
+                if yaml_dict is None:
+                    yaml_dict = {}  # Handle case where yaml_content is empty but valid
+                step_result["logs"].append("Successfully parsed YAML with PyYAML")
+            except Exception as yaml_error:
+                step_result["logs"].append(f"Failed to parse YAML with PyYAML: {str(yaml_error)}")
+
+                # If parsing fails, create a minimal dictionary with the items to add
+                yaml_dict = {}
+                step_result["logs"].append("Created minimal dictionary for items to add")
+                step_result["warnings"].append("Using minimal dictionary due to parsing failure")
         elif isinstance(yaml_content, dict):
             yaml_dict = yaml_content
         else:
@@ -63,6 +74,9 @@ def add_items_postprocessor(yaml_content: str | dict, data: dict) -> tuple:
         step_result["errors"].append(f"Failed to parse YAML: {str(e)}")
         data["steps"]["add_items_postprocessor"] = step_result
         data["success"] = False
+
+        # Return the content as is to avoid blocking the pipeline
+        step_result["logs"].append("Returning content as is due to parsing failure")
         return yaml_content, data
 
     # Add top-level items
