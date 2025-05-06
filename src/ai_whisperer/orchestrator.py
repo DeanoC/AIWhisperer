@@ -262,6 +262,8 @@ class Orchestrator:
             # 4. Construct Final Prompt
             logger.info("Constructing prompt for OpenRouter API...")
             hashes_json_string = json.dumps(input_hashes, indent=2)
+            # Escape any curly braces in the JSON string to avoid format string issues
+            hashes_json_string = hashes_json_string.replace("{", "{{").replace("}", "}}")
             final_prompt = prompt_template.format(
                 md_content=requirements_content, input_hashes_dict=hashes_json_string
             )

@@ -58,7 +58,7 @@ def mock_schema_content():
 @pytest.fixture
 def mock_prompt_content():
     """Provides basic prompt template content."""
-    return "Prompt template with {markdown_content} and {input_hashes_dict}"
+    return "Prompt template with {md_content} and {input_hashes_dict}"
 
 @pytest.fixture
 def mock_requirements_content():

@@ -1,5 +1,6 @@
 import pytest
 import yaml
+import json  # Added for compatibility with existing code
 from pathlib import Path
 import tempfile
 import os
@@ -9,16 +10,15 @@ from src.ai_whisperer.config import load_config, _load_prompt_content
 from src.ai_whisperer.exceptions import ConfigError
 
 # Helper function to create a temporary config file with the given content
-def create_temp_config(content, is_json=False): # Add is_json parameter
+def create_temp_config(content, is_json=False): # Keep parameter for backward compatibility
     temp_dir = tempfile.gettempdir()
-    config_path = Path(temp_dir) / "test_config.json" # Change default extension to .json
+    config_path = Path(temp_dir) / "test_config.yaml" # Use .yaml extension
 
-    # Use json.dump if is_json is True and content is a dictionary, otherwise write directly
-    if is_json and isinstance(content, dict):
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(content, f, indent=2) # Use json.dump for JSON
-    else:
-        with open(config_path, 'w', encoding='utf-8') as f:
+    # Always write as YAML, regardless of is_json parameter
+    with open(config_path, 'w', encoding='utf-8') as f:
+        if isinstance(content, dict):
+            yaml.dump(content, f, default_flow_style=False)
+        else:
             f.write(content)
 
     return str(config_path)
@@ -65,7 +65,7 @@ task_models:
 output_dir: "./output/"
 """
 
-    config_path = create_temp_config(config_content, is_json=True) # Specify is_json=True
+    config_path = create_temp_config(config_content)
 
     try:
         # Mock the prompt loading to avoid file not found errors
@@ -123,7 +123,7 @@ task_models:
 output_dir: "./output/"
 """
 
-    config_path = create_temp_config(config_content, is_json=True) # Specify is_json=True
+    config_path = create_temp_config(config_content)
 
     try:
         # The config should load successfully even without task-specific models
@@ -177,7 +177,7 @@ task_models:
 output_dir: "./output/"
 """
 
-    config_path = create_temp_config(config_content, is_json=True) # Specify is_json=True
+    config_path = create_temp_config(config_content)
 
     try:
         # The config should load successfully, but we'll validate the task models separately
@@ -240,7 +240,7 @@ task_models:
 output_dir: "./output/"
 """
 
-    config_path = create_temp_config(config_content, is_json=True) # Specify is_json=True
+    config_path = create_temp_config(config_content)
 
     try:
         # The config should load successfully, but we'll check for unexpected keys and types
