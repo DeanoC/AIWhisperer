@@ -2,7 +2,7 @@
 
 AI Whisperer is a Python command-line tool that takes your project requirements written in Markdown and uses an AI model (via OpenRouter) to generate structured task definitions in YAML format.
 
-## Features (Initial Shell)
+## Features
 
 * Parses command-line arguments for requirements file, configuration file, and output file.
 * Loads configuration (API keys, model details, prompts) from a YAML file.
@@ -13,6 +13,17 @@ AI Whisperer is a Python command-line tool that takes your project requirements 
 * Uses `rich` for colored console output and basic logging.
 * Includes custom exceptions for error handling.
 * Developed using TDD with `pytest`.
+* Postprocessing pipeline for enhancing AI-generated content:
+  * Clean backtick wrappers from YAML content
+  * Add required items (task_id, input_hashes, subtask_id) automatically
+  * More postprocessing steps can be added as needed
+
+## Project development
+
+The project_dev folder is used to track new features (rfc), done feature(done) and in progress (in_progress).
+This structure is delibrately structured to assist AI in the development process.
+
+AI Whisperer is a dog food tool, almost (so far all!) features and improvements go through its own system. This both improves and identifies issues and provides the benefits of controlled AI development process.
 
 ## Installation
 
@@ -132,6 +143,30 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
     ```
 
     This will process the step definition from `step.yaml`, refine it into a detailed implementation plan, and save the result to a file in the output directory.
+
+The project_dev folder shows how I currently use aiwhisperper to implement features in it self.
+A starting feature request can be generated with any AI chat with a prompt similar to
+the following with context from something like
+
+```text
+Write a feature request in a similar style to patch_hash_task_id.md to the same rfc folder called more_yaml_postprocessing that will implement postprocessing similar to our existing postprocessing system that is designed to clean up results from our AI calls in code rather than requiring the ai to format the document.
+Currently our prompts have strict rules
+```
+
+Currently a prompt like 
+
+```text
+We are implementing a new feature more_yaml_postprocessing with more_yaml_postprocessing_aiwhisperer_config.yaml being our structure high level plan.
+It has already had refinement for each subtask in the same folder with the anme subtask_%subtask name%.yaml, these should be considered better versions then then the subtask defined in the high level task plan.
+
+You job is to work though the plan, implementing the feature.
+You MUST do it using strict order following a strict test-first driven methology.
+Filenames in the plans may be slightly wrong so check the codebase to see if existing files/folder structure would be better.
+
+Anytime you aren't sure of the best course of action, ask me
+```
+
+can be used to start implementing the feature. Obviously AI will need help, but the goal of AI Whisperer is to reduce this.
 
 ## Development
 

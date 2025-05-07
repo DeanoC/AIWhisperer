@@ -1,0 +1,68 @@
+description: Generate integration tests for the updated PostprocessingPipeline.
+depends_on:
+- integrate_postprocessing_steps
+agent_spec:
+  type: test_generation
+  input_artifacts:
+  - postprocessing_pipeline/pipeline.py
+  - postprocessing_pipeline/steps/__init__.py
+  - postprocessing_pipeline/steps/indentation_normalization.py
+  - postprocessing_pipeline/steps/required_fields.py
+  - postprocessing_pipeline/steps/invalid_fields.py
+  output_artifacts:
+  - tests/integration/test_postprocessing_pipeline.py
+  instructions: 'Generate an integration test file `tests/integration/test_postprocessing_pipeline.py`
+    using pytest.
+
+
+    These tests must verify the functionality of the complete `PostprocessingPipeline`,
+    ensuring that all integrated steps (including indentation normalization, adding
+    required fields, removing invalid fields, and handling basic syntax issues) work
+    together correctly to process various YAML inputs.
+
+
+    For each test case:
+
+    1. Define an input YAML string that represents a specific scenario (e.g., missing
+    indentation, missing required fields, presence of invalid fields, syntax errors).
+
+    2. Define the expected output YAML string after the pipeline has processed the
+    input.
+
+    3. Instantiate the `PostprocessingPipeline`.
+
+    4. Call the pipeline''s processing method with the input YAML.
+
+    5. Assert that the actual output YAML matches the expected output YAML.
+
+
+    Include test cases that specifically cover:
+
+    - YAML with incorrect indentation that needs normalization.
+
+    - YAML missing required fields that should be added by the pipeline.
+
+    - YAML containing invalid fields that should be removed.
+
+    - YAML with basic syntax issues (e.g., extra spaces, incorrect list formatting)
+    that the pipeline should handle or correct.
+
+    - A combination of the above scenarios in a single input YAML.
+
+    - Valid YAML input that should pass through the pipeline unchanged.
+
+    '
+  constraints:
+  - Follow standard Python testing practices using `pytest`.
+  - Ensure tests are independent and can be run in any order.
+  - Use clear and descriptive test function names.
+  - Include comments where necessary to explain complex test cases or expected behavior.
+  validation_criteria:
+  - tests/integration/test_postprocessing_pipeline.py exists.
+  - tests/integration/test_postprocessing_pipeline.py contains multiple integration
+    test functions using `pytest`.
+  - The tests cover scenarios for indentation normalization, adding required fields,
+    removing invalid fields, and handling basic syntax issues.
+  - The tests assert the final output YAML structure and content after pipeline processing.
+subtask_id: 7cfb1349-92ea-4c0d-9e6b-22b48a45046d
+step_id: generate_integration_tests

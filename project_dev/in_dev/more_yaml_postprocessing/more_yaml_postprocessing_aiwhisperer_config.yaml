@@ -1,0 +1,435 @@
+natural_language_goal: Implement new postprocessing steps for YAML cleanup, update
+  prompts to reduce formatting complexity, add comprehensive testing for new steps
+  and the pipeline, and update documentation, while adhering to TDD.
+overall_context: 'The project aims to reduce prompt complexity for AI agents by offloading
+  YAML formatting and cleanup tasks to a postprocessing pipeline.
+
+  This involves adding new scripted steps to the pipeline, simplifying existing prompts,
+  writing unit and integration tests, and updating documentation.
+
+  A strict Test-Driven Development (TDD) approach must be followed for any code generation
+  or file editing steps involving executable code.
+
+  '
+plan:
+- step_id: plan_postprocessing_steps
+  description: Plan the specific new postprocessing steps required for YAML cleanup.
+  depends_on: []
+  agent_spec:
+    type: planning
+    input_artifacts: []
+    output_artifacts:
+    - docs/postprocessing_plan.md
+    instructions: 'Based on the requirements:
+
+      - Identify the specific YAML cleanup tasks needed (indentation normalization,
+      field presence/defaults, removing invalid fields, syntax validation).
+
+      - For each task, define a single, focused scripted step.
+
+      - Outline the purpose and high-level logic for each new scripted step.
+
+      - Document the plan in `docs/postprocessing_plan.md`.
+
+      '
+    validation_criteria:
+    - docs/postprocessing_plan.md exists.
+    - docs/postprocessing_plan.md lists distinct steps for each cleanup task.
+    - docs/postprocessing_plan.md describes the purpose of each step.
+- step_id: generate_test_for_indentation_step
+  description: Generate unit tests for the indentation normalization postprocessing
+    step.
+  depends_on:
+  - plan_postprocessing_steps
+  agent_spec:
+    type: test_generation
+    input_artifacts: []
+    output_artifacts:
+    - tests/unit/test_postprocessing_indentation.py
+    instructions: 'Generate a unit test file `tests/unit/test_postprocessing_indentation.py`
+      for a postprocessing step that normalizes YAML indentation.
+
+      The tests should cover various scenarios including:
+
+      - Correctly indented YAML.
+
+      - YAML with inconsistent indentation (mixed spaces and tabs).
+
+      - YAML with excessive indentation.
+
+      - YAML with insufficient indentation.
+
+      - Edge cases like empty files or files with only comments.
+
+      The tests should assert that the output YAML has consistent, normalized indentation
+      (defaulting to 2 spaces).
+
+      '
+    constraints:
+    - Follow standard Python testing practices using `pytest`.
+    validation_criteria:
+    - tests/unit/test_postprocessing_indentation.py exists.
+    - tests/unit/test_postprocessing_indentation.py contains tests for various indentation
+      scenarios.
+- step_id: implement_indentation_step
+  description: Implement the postprocessing step for normalizing YAML indentation.
+  depends_on:
+  - generate_test_for_indentation_step
+  agent_spec:
+    type: code_generation
+    input_artifacts:
+    - tests/unit/test_postprocessing_indentation.py
+    output_artifacts:
+    - src/postprocessing/scripted_steps/normalize_indentation.py
+    instructions: 'Implement the `normalize_indentation.py` scripted step in `src/postprocessing/scripted_steps`.
+
+      This step should take YAML content as input and return YAML content with normalized
+      indentation.
+
+      Use a standard indentation (e.g., 2 spaces).
+
+      Ensure the code is compatible with the tests generated in `generate_test_for_indentation_step`.
+
+      Do not write code that only passes the specific generated tests; implement the
+      general functionality correctly.
+
+      Look for relevant code in `utils.py` if any utility functions for string or
+      file manipulation might be useful.
+
+      '
+    validation_criteria:
+    - src/postprocessing/scripted_steps/normalize_indentation.py exists.
+    - src/postprocessing/scripted_steps/normalize_indentation.py contains a Python
+      class or function implementing indentation normalization.
+- step_id: test_indentation_step
+  description: Run unit tests for the indentation normalization step.
+  depends_on:
+  - implement_indentation_step
+  agent_spec:
+    type: validation
+    input_artifacts:
+    - src/postprocessing/scripted_steps/normalize_indentation.py
+    - tests/unit/test_postprocessing_indentation.py
+    instructions: 'Execute the unit tests for the indentation normalization step using
+      pytest.
+
+      Run the command: `pytest tests/unit/test_postprocessing_indentation.py`
+
+      '
+    validation_criteria:
+    - pytest tests/unit/test_postprocessing_indentation.py executes successfully.
+    - All tests in tests/unit/test_postprocessing_indentation.py pass.
+- step_id: generate_test_for_field_step
+  description: Generate unit tests for the required fields postprocessing step.
+  depends_on:
+  - plan_postprocessing_steps
+  agent_spec:
+    type: test_generation
+    input_artifacts: []
+    output_artifacts:
+    - tests/unit/test_postprocessing_fields.py
+    instructions: 'Generate a unit test file `tests/unit/test_postprocessing_fields.py`
+      for a postprocessing step that ensures required YAML fields are present with
+      default values if missing.
+
+      The tests should cover scenarios including:
+
+      - YAML with all required fields present.
+
+      - YAML missing some required fields (verify default values are added).
+
+      - YAML with extra, invalid fields (verify they are removed).
+
+      - YAML with incorrect data types for fields (verify correction or removal).
+
+      - Nested structures with missing/invalid fields.
+
+      - Edge cases like empty YAML or fields set to null.
+
+      Assume a predefined schema or list of required fields and their default values
+      for testing purposes.
+
+      '
+    constraints:
+    - Follow standard Python testing practices using `pytest`.
+    validation_criteria:
+    - tests/unit/test_postprocessing_fields.py exists.
+    - tests/unit/test_postprocessing_fields.py contains tests for missing, invalid,
+      and extra fields.
+- step_id: implement_field_step
+  description: Implement the postprocessing step for handling required and invalid
+    fields.
+  depends_on:
+  - generate_test_for_field_step
+  agent_spec:
+    type: code_generation
+    input_artifacts:
+    - tests/unit/test_postprocessing_fields.py
+    output_artifacts:
+    - src/postprocessing/scripted_steps/handle_required_fields.py
+    instructions: 'Implement the `handle_required_fields.py` scripted step in `src/postprocessing/scripted_steps`.
+
+      This step should take YAML content and a schema/list of required fields with
+      defaults as input.
+
+      It should add missing required fields with their default values, and remove
+      any fields not defined in the schema.
+
+      Ensure the code is compatible with the tests generated in `generate_test_for_field_step`.
+
+      Do not write code that only passes the specific generated tests; implement the
+      general functionality correctly.
+
+      Consider reusing code from `utils.py` or `config.py` if any data structures
+      or validation logic exists.
+
+      '
+    validation_criteria:
+    - src/postprocessing/scripted_steps/handle_required_fields.py exists.
+    - src/postprocessing/scripted_steps/handle_required_fields.py contains a Python
+      class or function implementing the field handling logic.
+- step_id: test_field_step
+  description: Run unit tests for the field handling step.
+  depends_on:
+  - implement_field_step
+  agent_spec:
+    type: validation
+    input_artifacts:
+    - src/postprocessing/scripted_steps/handle_required_fields.py
+    - tests/unit/test_postprocessing_fields.py
+    instructions: 'Execute the unit tests for the field handling step using pytest.
+
+      Run the command: `pytest tests/unit/test_postprocessing_fields.py`
+
+      '
+    validation_criteria:
+    - pytest tests/unit/test_postprocessing_fields.py executes successfully.
+    - All tests in tests/unit/test_postprocessing_fields.py pass.
+- step_id: generate_test_for_syntax_step
+  description: Generate unit tests for the YAML syntax validation step.
+  depends_on:
+  - plan_postprocessing_steps
+  agent_spec:
+    type: test_generation
+    input_artifacts: []
+    output_artifacts:
+    - tests/unit/test_postprocessing_syntax.py
+    instructions: 'Generate a unit test file `tests/unit/test_postprocessing_syntax.py`
+      for a postprocessing step that validates and corrects basic YAML syntax issues.
+
+      The tests should cover scenarios including:
+
+      - Valid YAML.
+
+      - YAML with common syntax errors (e.g., missing colons, incorrect indentation,
+      invalid characters).
+
+      - Edge cases like empty files or files with only comments.
+
+      The tests should verify that valid YAML passes and invalid YAML is either corrected
+      (if possible) or flagged as an error.
+
+      '
+    constraints:
+    - Follow standard Python testing practices using `pytest`.
+    validation_criteria:
+    - tests/unit/test_postprocessing_syntax.py exists.
+    - tests/unit/test_postprocessing_syntax.py contains tests for various YAML syntax
+      error scenarios.
+- step_id: implement_syntax_step
+  description: Implement the postprocessing step for YAML syntax validation and correction.
+  depends_on:
+  - generate_test_for_syntax_step
+  agent_spec:
+    type: code_generation
+    input_artifacts:
+    - tests/unit/test_postprocessing_syntax.py
+    output_artifacts:
+    - src/postprocessing/scripted_steps/validate_syntax.py
+    instructions: 'Implement the `validate_syntax.py` scripted step in `src/postprocessing/scripted_steps`.
+
+      This step should take YAML content as input. It should use a YAML parser to
+      validate the syntax.
+
+      If syntax errors are found, attempt basic corrections if feasible (e.g., simple
+      indentation issues, missing colons in obvious cases) or return an error indicating
+      the issue.
+
+      Ensure the code is compatible with the tests generated in `generate_test_for_syntax_step`.
+
+      Do not write code that only passes the specific generated tests; implement the
+      general functionality correctly.
+
+      Reuse existing parsing or validation logic from the project if available (e.g.,
+      in `utils.py`).
+
+      '
+    validation_criteria:
+    - src/postprocessing/scripted_steps/validate_syntax.py exists.
+    - src/postprocessing/scripted_steps/validate_syntax.py contains a Python class
+      or function implementing YAML syntax validation.
+- step_id: test_syntax_step
+  description: Run unit tests for the YAML syntax validation step.
+  depends_on:
+  - implement_syntax_step
+  agent_spec:
+    type: validation
+    input_artifacts:
+    - src/postprocessing/scripted_steps/validate_syntax.py
+    - tests/unit/test_postprocessing_syntax.py
+    instructions: 'Execute the unit tests for the YAML syntax validation step using
+      pytest.
+
+      Run the command: `pytest tests/unit/test_postprocessing_syntax.py`
+
+      '
+    validation_criteria:
+    - pytest tests/unit/test_postprocessing_syntax.py executes successfully.
+    - All tests in tests/unit/test_postprocessing_syntax.py pass.
+- step_id: integrate_postprocessing_steps
+  description: Integrate the new scripted steps into the PostprocessingPipeline.
+  depends_on:
+  - test_indentation_step
+  - test_field_step
+  - test_syntax_step
+  agent_spec:
+    type: file_edit
+    input_artifacts:
+    - src/postprocessing/pipeline.py
+    - src/postprocessing/scripted_steps/normalize_indentation.py
+    - src/postprocessing/scripted_steps/handle_required_fields.py
+    - src/postprocessing/scripted_steps/validate_syntax.py
+    output_artifacts:
+    - src/postprocessing/pipeline.py
+    instructions: 'Edit the `PostprocessingPipeline` class in `src/postprocessing/pipeline.py`.
+
+      Import the new scripted steps (`normalize_indentation`, `handle_required_fields`,
+      `validate_syntax`).
+
+      Add instances of these steps to the pipeline''s processing sequence.
+
+      Ensure the steps are ordered logically to apply formatting and validation in
+      the correct sequence.
+
+      Look for existing patterns for adding steps to the pipeline.
+
+      '
+    validation_criteria:
+    - src/postprocessing/pipeline.py exists.
+    - src/postprocessing/pipeline.py imports the new scripted step modules.
+    - The PostprocessingPipeline class in src/postprocessing/pipeline.py includes
+      the new steps in its processing list.
+- step_id: generate_integration_tests
+  description: Generate integration tests for the updated PostprocessingPipeline.
+  depends_on:
+  - integrate_postprocessing_steps
+  agent_spec:
+    type: test_generation
+    input_artifacts: []
+    output_artifacts:
+    - tests/integration/test_postprocessing_pipeline.py
+    instructions: 'Generate an integration test file `tests/integration/test_postprocessing_pipeline.py`.
+
+      These tests should verify that the full `PostprocessingPipeline`, including
+      the newly integrated steps, correctly processes YAML inputs.
+
+      Cover scenarios with YAML inputs that require:
+
+      - Indentation normalization.
+
+      - Adding missing required fields.
+
+      - Removing invalid fields.
+
+      - Handling basic syntax issues.
+
+      The tests should assert that the final output YAML, after passing through the
+      pipeline, conforms to the expected clean and correctly formatted structure.
+
+      '
+    constraints:
+    - Follow standard Python testing practices using `pytest`.
+    validation_criteria:
+    - tests/integration/test_postprocessing_pipeline.py exists.
+    - tests/integration/test_postprocessing_pipeline.py contains integration tests
+      for the full pipeline.
+- step_id: test_integration_pipeline
+  description: Run integration tests for the PostprocessingPipeline.
+  depends_on:
+  - generate_integration_tests
+  agent_spec:
+    type: validation
+    input_artifacts:
+    - src/postprocessing/pipeline.py
+    - tests/integration/test_postprocessing_pipeline.py
+    - src/postprocessing/scripted_steps/
+    instructions: 'Execute the integration tests for the PostprocessingPipeline using
+      pytest.
+
+      Run the command: `pytest tests/integration/test_postprocessing_pipeline.py`
+
+      '
+    validation_criteria:
+    - pytest tests/integration/test_postprocessing_pipeline.py executes successfully.
+    - All tests in tests/integration/test_postprocessing_pipeline.py pass.
+- step_id: update_prompts
+  description: Update prompts to remove strict YAML formatting rules.
+  depends_on: []
+  agent_spec:
+    type: file_edit
+    input_artifacts:
+    - prompts/orchestrator_default.md
+    - prompts/subtask_generator_default.md
+    output_artifacts:
+    - prompts/orchestrator_default.md
+    - prompts/subtask_generator_default.md
+    instructions: 'Edit the prompt files `prompts/orchestrator_default.md` and `prompts/subtask_generator_default.md`.
+
+      Remove explicit instructions or constraints that enforce strict YAML formatting
+      rules (e.g., specific indentation levels, quoting requirements, ordering of
+      fields).
+
+      Adjust the instructions to focus the AI on generating the correct content and
+      structure according to the schema, relying on the postprocessing pipeline for
+      strict formatting.
+
+      '
+    validation_criteria:
+    - prompts/orchestrator_default.md exists and has reduced formatting instructions.
+    - prompts/subtask_generator_default.md exists and has reduced formatting instructions.
+- step_id: update_documentation
+  description: Update documentation to reflect new postprocessing capabilities and
+    simplified prompts.
+  depends_on:
+  - test_integration_pipeline
+  - update_prompts
+  agent_spec:
+    type: documentation
+    input_artifacts:
+    - docs/
+    - prompts/orchestrator_default.md
+    - prompts/subtask_generator_default.md
+    output_artifacts:
+    - docs/postprocessing.md
+    - docs/prompts.md
+    instructions: 'Update the documentation in the `docs` folder.
+
+      - Document the new postprocessing steps and their purpose.
+
+      - Explain how the postprocessing pipeline ensures YAML quality.
+
+      - Provide examples of how prompts can be simplified by relying on postprocessing.
+
+      - Update relevant sections (e.g., developer guide, prompt guide) to reflect
+      these changes.
+
+      '
+    validation_criteria:
+    - Relevant documentation files in docs/ have been updated or created.
+    - Documentation clearly explains the role of the postprocessing pipeline.
+    - Documentation for prompts reflects the simplified formatting requirements.
+task_id: 2b63d0d1-6929-4aa9-9455-8fa5013cd721
+input_hashes:
+  requirements_md: b786cfeb646ab7e9221d3792b942946b8b69ace9ecadb57518afcf285ae2b7ed
+  config_yaml: 0693ebb1f5c1c73a09dbac55f1ebfa392b331f4c81cbedaf1ee3f45633b9ae77
+  prompt_file: 3fa077ed87aa5a74270078bb22e1c3d5fae623b741b18a8b3bb8fe0239ab4a72

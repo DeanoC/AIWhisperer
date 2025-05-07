@@ -49,8 +49,9 @@ def main():
     )
     parser.add_argument(
         "--output",
-        required=False,
-        help="Path to save the generated task YAML file. Required for task YAML generation."
+        type=str,
+        default="output",
+        help="Directory for output files."
     )
     parser.add_argument(
         "--list-models",
@@ -73,7 +74,9 @@ def main():
     )
     
     # Use parse_known_args to avoid conflicts with pytest arguments during testing
-    args, unknown = parser.parse_known_args()    # --- Handle OpenRouter Models Listing ---
+    args, unknown = parser.parse_known_args()
+
+    # --- Handle OpenRouter Models Listing ---
     if args.list_models:
         try:
             # Check if config path is provided
@@ -105,7 +108,9 @@ def main():
             raise SystemExit(1)
         except Exception as e:
             print(f"An unexpected error occurred while listing models: {e}", file=sys.stderr)
-            raise SystemExit(1)    # --- Handle Subtask Generation ---
+            raise SystemExit(1)
+
+    # --- Handle Subtask Generation ---
     if args.generate_subtask:
         try:
             # Check required arguments
@@ -139,7 +144,7 @@ def main():
 
             # Initialize subtask generator
             console.print("Initializing subtask generator...")
-            subtask_generator = SubtaskGenerator(args.config)
+            subtask_generator = SubtaskGenerator(args.config, args.output)
             logger.info("Subtask generator initialized.")
 
             # Generate subtask
@@ -169,7 +174,8 @@ def main():
 
     # --- Handle Full Project Plan Generation ---
     if args.full_project:
-        try:            # Check for required arguments for full project generation
+        try:
+            # Check for required arguments for full project generation
             if not args.requirements or not args.config:
                 print("Error: --requirements and --config are required for full project generation.", file=sys.stderr)
                 raise SystemExit(1)
@@ -179,21 +185,20 @@ def main():
             config = load_config(args.config)
             logger.debug("Configuration loaded successfully.")
 
-            # Initialize Orchestrator
-            console.print("Initializing orchestrator...")
-            orchestrator = Orchestrator(config)
-            logger.info("Orchestrator initialized.")
+            # Create the Orchestrator with the right output directory
+            orchestrator = Orchestrator(config, args.output)
 
-            # Generate full project plan
-            console.print(f"Generating full project plan from requirements: {args.requirements}")
-            result = orchestrator.generate_full_project_plan(
-                requirements_md_path_str=args.requirements,
-                config_path_str=args.config
-            )
+            # Generate full project plan (main YAML + subtasks)
+            result = orchestrator.generate_full_project_plan(args.requirements, args.config)
+            logger.info(f"Generated task plan: {result['task_plan']}")
+            logger.info(f"Generated {len(result['subtasks'])} subtasks")
 
             # Report success
             console.print(f"[green]Successfully generated project plan:[/green]")
             console.print(f"- Task plan: {result['task_plan']}")
+            if result['task_plan'] != result['overview_plan']:
+                console.print(f"- Overview plan: {result['overview_plan']}")
+
             console.print(f"- Subtasks generated: {len(result['subtasks'])}")
             for i, subtask_path in enumerate(result['subtasks'], 1):
                 console.print(f"  {i}. {subtask_path}")
@@ -210,7 +215,9 @@ def main():
         except Exception as e:
             logger.critical(f"An unexpected error occurred during project generation: {e}", exc_info=True)
             console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
-            raise SystemExit(1)# --- Handle Main Task YAML Generation ---
+            raise SystemExit(1)
+
+    # --- Handle Main Task YAML Generation ---
     # Only proceed to main logic if no special flags were active
     if not (args.list_models or args.generate_subtask or args.full_project):
         # Check for required arguments for core logic
@@ -225,19 +232,16 @@ def main():
             config = load_config(args.config)
             logger.debug("Configuration loaded successfully.")
 
-            # --- Use Orchestrator ---
-            console.print("Initializing orchestrator...")
-            orchestrator = Orchestrator(config)
-            logger.info("Orchestrator initialized.")
+            # Create the Orchestrator with the right output directory
+            orchestrator = Orchestrator(config, args.output)
 
             console.print(f"Generating initial task plan from: {args.requirements}")
-            # Call the orchestrator method with corrected argument names
-            generated_yaml_path = orchestrator.generate_initial_yaml(
-                requirements_md_path_str=args.requirements,
-                config_path_str=args.config
-            )            # Use the returned path in the success message
-            console.print(f"[green]Successfully generated task YAML: {generated_yaml_path}[/green]")
-            # --- End Orchestrator Logic ---
+            # Generate only the main task plan YAML
+            result = orchestrator.generate_initial_json(args.requirements, args.config)
+            logger.info(f"Generated task YAML: {result}")
+
+            # Use the returned path in the success message
+            console.print(f"[green]Successfully generated task JSON: {result}[/green]")
         except ConfigError as e:
             logger.error(f"Configuration error: {e}", exc_info=False)
             logger.debug(f"Configuration error details:", exc_info=True)

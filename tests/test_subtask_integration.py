@@ -109,7 +109,11 @@ def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_lo
             pass
         
         # Check if our specific task was called
-        mock_generator_cls.assert_called_once_with(CONFIG_FILE)
+        # Expect the second argument 'output' based on the actual call
+        mock_generator_cls.assert_called_once_with(CONFIG_FILE, 'output')
+
+        # Check if the subtask was generated
+        
         mock_generator_instance.generate_subtask.assert_called_once_with(STEP_DATA)
         
         # Check if success message was printed

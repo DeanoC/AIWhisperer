@@ -1,0 +1,46 @@
+description: Implement the postprocessing step for normalizing YAML indentation.
+depends_on:
+- generate_test_for_indentation_step
+agent_spec:
+  type: code_generation
+  input_artifacts:
+  - tests/unit/test_postprocessing_indentation.py
+  - src/utils.py
+  output_artifacts:
+  - src/postprocessing/scripted_steps/normalize_indentation.py
+  instructions: 'Implement the `normalize_indentation.py` scripted step in `src/postprocessing/scripted_steps`.
+
+
+    This step should define a function or class that takes a string containing YAML
+    content as input and returns a string with the same YAML content but with normalized
+    indentation.
+
+
+    The standard indentation to be used is 2 spaces.
+
+
+    Ensure the implementation correctly handles various YAML structures (lists, nested
+    maps, scalar values).
+
+
+    The code must be compatible with the unit tests provided in `tests/unit/test_postprocessing_indentation.py`.
+    Run these tests locally to verify correctness as you implement.
+
+
+    Do not write code that is specifically tailored *only* to pass the generated tests;
+    implement the general functionality for normalizing YAML indentation robustly.
+
+
+    Review `src/utils.py` for any potentially useful utility functions for string
+    manipulation or file handling that could be leveraged.
+
+    '
+  validation_criteria:
+  - src/postprocessing/scripted_steps/normalize_indentation.py exists.
+  - src/postprocessing/scripted_steps/normalize_indentation.py contains a Python class
+    or function named `normalize_yaml_indentation` or similar, which accepts a string
+    and returns a string.
+  - The implemented code in `src/postprocessing/scripted_steps/normalize_indentation.py`
+    passes the tests defined in `tests/unit/test_postprocessing_indentation.py`.
+subtask_id: 216879cb-a928-40ba-bad0-58af04fa9ea9
+step_id: implement_indentation_step

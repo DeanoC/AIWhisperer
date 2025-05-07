@@ -1,0 +1,43 @@
+{
+  "description": "Modify OpenRouterAPI.list_models() to fetch and structure comprehensive model details.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "file_edit",
+    "input_artifacts": [
+      "src/ai_whisperer/openrouter_api.py",
+      "docs/internal_process/openrouter_list_enhancement_plan.md",
+      "tests/unit/test_openrouter_api_list_models.py"
+    ],
+    "output_artifacts": [
+      "src/ai_whisperer/openrouter_api.py"
+    ],
+    "instructions": [
+      "Open and edit the file `src/ai_whisperer/openrouter_api.py`.",
+      "Locate the `list_models()` method within the `OpenRouterAPI` class.",
+      "Modify the `list_models()` method to make an HTTP GET request to the appropriate OpenRouter API endpoint that provides detailed information about available models.",
+      "Ensure the API call includes any necessary headers or parameters as required by the OpenRouter API documentation for retrieving detailed model information.",
+      "Process the JSON response received from the API.",
+      "Extract key details for each model from the parsed response, such as `id`, `name`, `features`, `cost` (input/output), `context_window`, `provider`, `description`, and any other relevant fields available in the API response and outlined in `docs/internal_process/openrouter_list_enhancement_plan.md`.",
+      "Structure the extracted data into a Python list where each element is a dictionary representing a single model with the extracted details.",
+      "Update the `list_models()` method to return this list of dictionaries.",
+      "Refer to `docs/internal_process/openrouter_list_enhancement_plan.md` for specific details on the required data structure and fields to extract.",
+      "Consult `tests/unit/test_openrouter_api_list_models.py` to understand the expected output format and data points for testing purposes."
+    ],
+    "constraints": [
+      "Only modify the `list_models` method and potentially add new private helper methods within the `OpenRouterAPI` class if necessary for parsing or structuring.",
+      "Do not alter the signature of the `list_models` method unless absolutely required by the new API response structure, and if so, update dependent code accordingly.",
+      "Ensure the method handles potential API errors gracefully (e.g., using try-except blocks for network issues or invalid responses).",
+      "The method must return a list of dictionaries, with each dictionary containing comprehensive details for a single model as specified in the plan documentation."
+    ],
+    "validation_criteria": [
+      "The file `src/ai_whisperer/openrouter_api.py` is modified.",
+      "The `list_models` method within `OpenRouterAPI` now makes an API call to fetch detailed model information.",
+      "The API response is successfully parsed.",
+      "The parsed data is structured into a list of dictionaries.",
+      "Each dictionary in the list contains comprehensive model details including (but not limited to) id, name, features, cost, context_window, and provider.",
+      "The `list_models` method returns this list of detailed model dictionaries."
+    ]
+  },
+  "step_id": "implement_openrouter_api_list_models_enhancement",
+  "task_id": "3628f8eb-55d4-4e1e-84fe-6f0f97d383dd"
+}

@@ -1,0 +1,38 @@
+{
+  "description": "Run the previously generated tests and manually verify the console output and CSV export.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "src/ai_whisperer/main.py",
+      "src/ai_whisperer/openrouter_api.py",
+      "src/ai_whisperer/utils.py",
+      "tests/unit/test_main_list_models.py",
+      "tests/unit/test_openrouter_api_list_models.py"
+    ],
+    "output_artifacts": [],
+    "instructions": [
+      "Navigate to the root directory of the AIWhisperer project.",
+      "Run the unit tests specifically targeting the list_models functionality in main.py and openrouter_api.py using pytest. Ensure these tests pass.",
+      "Execute the command `python -m ai_whisperer.main --list-models --config config.yaml` and observe the console output. Verify that the output lists models and matches the expected format and content, ensuring no regressions from previous behavior.",
+      "Execute the command `python -m ai_whisperer.main --list-models --config config.yaml --output-csv models.csv`.",
+      "Check the project root directory to confirm that a file named `models.csv` has been created.",
+      "Open the `models.csv` file using a spreadsheet viewer or text editor.",
+      "Verify that the CSV file contains appropriate headers (e.g., model name, provider, features, cost, context window).",
+      "Examine the rows in the CSV file to ensure they contain detailed and correctly formatted information for each listed model.",
+      "Specifically, check that all required model attributes (features, cost, context window, provider) are present and populated for each model entry in the CSV.",
+      "Confirm that the CSV file is well-formatted and can be easily read and parsed by standard spreadsheet software."
+    ],
+    "constraints": [],
+    "validation_criteria": [
+      "All relevant unit tests for `list_models` functionality pass.",
+      "Console output for `ai-whisperer --list-models` without `--output-csv` is correct, lists models, and shows no regressions.",
+      "A file named `models.csv` is successfully created in the project root directory when `--output-csv models.csv` is used.",
+      "The `models.csv` file contains headers and rows with detailed model information.",
+      "Required model attributes (features, cost, context window, provider) are present and correctly formatted in the `models.csv` file.",
+      "The `models.csv` file is valid CSV format and readable by spreadsheet software."
+    ]
+  },
+  "step_id": "validate_list_models_enhancement",
+  "task_id": "3628f8eb-55d4-4e1e-84fe-6f0f97d383dd"
+}

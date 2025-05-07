@@ -93,8 +93,6 @@ def load_config(config_path: str, env_vars: Optional[Dict[str, str]] = None) -> 
     try:
         with open(path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
-            if config is None:
-                config = {}
             if not isinstance(config, dict):
                 raise ConfigError(f"Invalid configuration format in {config_path}. Expected a dictionary, got {type(config).__name__}.")
     except yaml.YAMLError as e:

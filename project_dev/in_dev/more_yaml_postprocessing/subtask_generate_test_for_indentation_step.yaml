@@ -1,0 +1,58 @@
+description: Generate unit tests for the indentation normalization postprocessing
+  step.
+depends_on:
+- plan_postprocessing_steps
+agent_spec:
+  type: test_generation
+  input_artifacts: []
+  output_artifacts:
+  - tests/unit/test_postprocessing_indentation.py
+  instructions: 'Generate a unit test file `tests/unit/test_postprocessing_indentation.py`
+    for a postprocessing step that normalizes YAML indentation.
+
+    Follow a Test-Driven Development (TDD) approach, writing tests that will initially
+    fail, but pass once the indentation normalization logic is implemented.
+
+    The tests should cover various scenarios including:
+
+
+    - Correctly indented YAML (should remain unchanged).
+
+    - YAML with inconsistent indentation (mixed spaces and tabs) - should be normalized
+    to 2 spaces.
+
+    - YAML with excessive indentation (more than 2 spaces per level) - should be normalized
+    to 2 spaces.
+
+    - YAML with insufficient indentation (less than 2 spaces per level) - should be
+    normalized to 2 spaces.
+
+    - Edge cases like empty files.
+
+    - Edge cases like files with only comments.
+
+    - YAML with different levels of nesting and list items.
+
+
+    For each test case, define a string representing the input YAML with various indentation
+    issues and the expected output YAML string with consistent 2-space indentation.
+
+    Use pytest fixtures or parameterized tests to structure the test cases efficiently.
+
+    The tests should assert that the output YAML string produced by the (yet to be
+    implemented) normalization function matches the expected output string.
+
+    '
+  constraints:
+  - Follow standard Python testing practices using `pytest`.
+  - Adhere to the TDD principle: write tests before implementing the code they test.
+  - Ensure tests are isolated and do not depend on external factors.
+  validation_criteria:
+  - tests/unit/test_postprocessing_indentation.py exists.
+  - tests/unit/test_postprocessing_indentation.py contains multiple test functions
+    covering the specified indentation scenarios.
+  - Each test function uses assertions to compare the output of the (placeholder)
+    normalization logic with expected YAML strings.
+  - The tests are structured using pytest (e.g., functions starting with `test_`).
+subtask_id: bef06f94-f4c5-438e-bd3b-e27afebf11bc
+step_id: generate_test_for_indentation_step
