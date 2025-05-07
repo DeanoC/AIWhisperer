@@ -106,7 +106,7 @@ def main():
                 import csv # Import csv module here
 
                 with open(csv_filepath, 'w', newline='', encoding='utf-8') as csvfile:
-                    fieldnames = ['id', 'name', 'description', 'features', 'context_window', 'input_cost', 'output_cost']
+                    fieldnames = ['id', 'name', 'supported_parameters', 'context_length', 'input_cost', 'output_cost','description', ]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
                     writer.writeheader()
@@ -119,11 +119,11 @@ def main():
                         writer.writerow({
                             'id': model.get('id', ''),
                             'name': model.get('name', ''),
-                            'description': model.get('description', ''),
-                            'features': model.get('features', []), # Include features
-                            'context_window': model.get('context_window', ''),
+                            'supported_parameters': model.get('supported_parameters', []), # Include supported parameters
+                            'context_length': model.get('context_length', ''),
                             'input_cost': input_cost,
-                            'output_cost': output_cost
+                            'output_cost': output_cost,
+                            'description': model.get('description', '')
                         })
                 console.print(f"[green]Successfully wrote model list to CSV: {csv_filepath}[/green]")
             else:

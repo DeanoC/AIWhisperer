@@ -34,7 +34,7 @@ class OpenRouterAPI:
             # Re-add model and params attributes
             self.model = self.openrouter_config.get('model')
             self.params = self.openrouter_config.get('params', {})
-            self.site_url = self.openrouter_config.get('site_url', 'https://github.com/yourusername/AIWhisperer')
+            self.site_url = self.openrouter_config.get('site_url', 'https://github.com/DeanoC/AIWhisperer')
             self.app_name = self.openrouter_config.get('app_name', 'AIWhisperer')
         except KeyError as e:
             raise ConfigError(f"Missing expected configuration key within 'openrouter' section: {e}") from e
@@ -81,10 +81,10 @@ class OpenRouterAPI:
                         "id": model_data.get("id"),
                         "name": model_data.get("name"),
                         "pricing": model_data.get("pricing"),
+                        "supported_parameters": model_data.get("supported_parameters"),
+                        "context_length": model_data.get("context_length"),
+
                         "description": model_data.get("description"),
-                        "features": model_data.get("features"),
-                        "context_window": model_data.get("context_window"),
-                        "top_provider": model_data.get("top_provider"),
                         # Add other relevant fields as needed based on API response and planning
                     }
                     detailed_models.append(model_info)
