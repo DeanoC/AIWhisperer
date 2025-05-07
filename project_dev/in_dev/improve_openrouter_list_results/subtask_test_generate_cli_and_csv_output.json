@@ -1,0 +1,42 @@
+{
+  "description": "Generate tests for handling the new --output-csv CLI argument and generating CSV output.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "test_generation",
+    "input_artifacts": [
+      "project_dev/in_dev/improve_openrouter_list_results/planning_summary.md",
+      "src/ai_whisperer/main.py"
+    ],
+    "output_artifacts": [
+      "tests/unit/test_main_list_models.py"
+    ],
+    "instructions": [
+      "Create a new test file `tests/unit/test_main_list_models.py` if it doesn't exist, or add tests to it if it does.",
+      "Write unit or integration tests within `tests/unit/test_main_list_models.py` that specifically target the `list_models` functionality in `src/ai_whisperer/main.py`.",
+      "Ensure the tests cover the following scenarios:",
+      "- Verify that the `list_models` function correctly parses the `--output-csv` command-line argument when it is provided.",
+      "- Test that when `--output-csv` is present, the `list_models` function calls the necessary internal logic (potentially mocking API calls) to fetch detailed model information.",
+      "- Write tests to confirm that the fetched detailed model data is correctly formatted into a CSV string or a structure that can be easily written as CSV.",
+      "- Include tests that simulate writing the generated CSV data to the file path specified by the `--output-csv` argument. Use mocking to avoid actual file system operations during the test run.",
+      "- Add tests to ensure that when the `--output-csv` argument is NOT provided, the `list_models` function falls back to its original behavior of printing a concise list of models to the console (standard output).",
+      "Use mock objects (e.g., from `unittest.mock` or `pytest-mock`) to simulate the behavior of the OpenRouter API and file system operations, providing controlled mock data for model details.",
+      "Ensure the tests are well-structured, readable, and follow standard Python testing practices."
+    ],
+    "constraints": [
+      "Tests must be placed in `tests/unit/test_main_list_models.py`.",
+      "Tests should focus solely on the behavior related to the `--output-csv` argument and CSV output generation/handling.",
+      "Avoid making actual API calls or writing to the file system during test execution by using mocking."
+    ],
+    "validation_criteria": [
+      "The file `tests/unit/test_main_list_models.py` exists.",
+      "The file `tests/unit/test_main_list_models.py` contains test functions that specifically verify the parsing of the `--output-csv` CLI argument.",
+      "The file `tests/unit/test_main_list_models.py` contains test functions that verify the logic for fetching detailed data when `--output-csv` is present.",
+      "The file `tests/unit/test_main_list_models.py` contains test functions that verify the correct formatting of data into a CSV structure or string.",
+      "The file `tests/unit/test_main_list_models.py` contains test functions that verify the simulated writing of CSV data to a file path.",
+      "The file `tests/unit/test_main_list_models.py` contains test functions that verify the console output behavior when `--output-csv` is not provided."
+    ]
+  },
+  "step_id": "test_generate_cli_and_csv_output",
+  "task_id": "bac1d332-c4a9-4b4c-8553-f27f24263d8e",
+  "subtask_id": "e267b2af-b4a1-4349-9e53-6eab6f221902"
+}

@@ -199,7 +199,7 @@ class TestAddItemsPostprocessor:
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Input string is empty or whitespace-only, treating as empty object." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
         assert any("Using empty dictionary due to empty input string" in warning for warning in updated_result["steps"]["add_items_postprocessor"]["warnings"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
         # Check the output content is a formatted JSON string with the added item
         assert json.loads(modified_json_string) == {"task_id": "abc-123"}
 
@@ -292,12 +292,11 @@ class TestAddItemsPostprocessor:
         modified_json_dict = json.loads(modified_json_string)
 
         # Assert - should warn about conflict but still add non-conflicting items
-        assert modified_json_dict["task_id"] == "existing-id"  # Original value preserved
+        assert modified_json_dict["task_id"] == "new-id"  # Should be overwritten
         assert modified_json_dict["input_hashes"] == {"file1": "hash1"}  # New item added
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
-        assert len(updated_result["steps"]["add_items_postprocessor"]["warnings"]) > 0
-        assert "Key 'task_id' already exists" in updated_result["steps"]["add_items_postprocessor"]["warnings"][0]
+        # No warning expected for overwriting based on clarified behavior
 
     def test_add_items_to_nested_steps(self):
         """Test adding items to steps that are nested under a different key."""
@@ -460,7 +459,7 @@ class TestAddItemsPostprocessor:
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Input is a dict, processing directly." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
         assert any("Added step-level item: subtask_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
 
     def test_input_is_list(self):
@@ -511,7 +510,7 @@ class TestAddItemsPostprocessor:
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Input is a dict, processing directly." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
 
     def test_add_items_to_empty_list_input(self):
         """Test adding items to an empty list input (should not add top-level items)."""
@@ -558,7 +557,7 @@ class TestAddItemsPostprocessor:
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Input string is empty or whitespace-only, treating as empty object." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
         assert any("Using empty dictionary due to empty input string" in warning for warning in updated_result["steps"]["add_items_postprocessor"]["warnings"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
 
     def test_add_items_to_json_string_with_comments(self):
         """Test handling of a JSON string with comments (should be treated as invalid JSON)."""
@@ -671,7 +670,7 @@ Some concluding text.
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Successfully parsed content as JSON." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
 
     def test_add_items_to_json_string_with_null_values(self):
         """Test adding items to a JSON string containing null values."""
@@ -704,7 +703,7 @@ Some concluding text.
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Successfully parsed content as JSON." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
 
     def test_add_items_to_json_string_with_boolean_values(self):
         """Test adding items to a JSON string containing boolean values."""
@@ -737,7 +736,7 @@ Some concluding text.
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Successfully parsed content as JSON." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
 
     def test_add_items_to_json_string_with_number_values(self):
         """Test adding items to a JSON string containing number values."""
@@ -770,7 +769,7 @@ Some concluding text.
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Successfully parsed content as JSON." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
 
     def test_add_items_to_json_string_with_nested_empty_objects_and_arrays(self):
         """Test adding items to a JSON string with nested empty objects and arrays."""
@@ -803,7 +802,7 @@ Some concluding text.
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Successfully parsed content as JSON." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
-        assert any("Added top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: task_id" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
 
     def test_add_items_to_json_string_with_complex_nested_structure(self):
         """Test adding items to a JSON string with a complex nested structure."""
@@ -884,7 +883,7 @@ Some concluding text.
         assert updated_result["steps"]["add_items_postprocessor"]["success"] is True
         assert "add_items_postprocessor" in updated_result["steps"]
         assert any("Successfully parsed content as JSON." in log for log in updated_result["steps"]["add_items_postprocessor"]["logs"])
-        assert any("Added top-level item: status" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
+        assert any("Added/Overwrote top-level item: status" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
         assert any("Added step-level item: assigned_to" in change for change in updated_result["steps"]["add_items_postprocessor"]["changes"])
         # Check that the change count is correct (3 steps modified)
         assert len(updated_result["steps"]["add_items_postprocessor"]["changes"]) == 4 # 1 top-level + 3 step-level

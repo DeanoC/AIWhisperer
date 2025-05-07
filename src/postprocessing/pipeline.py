@@ -5,6 +5,7 @@ This module implements the main postprocessing pipeline for JSON data, which
 consists of a scripted phase (with configurable processing steps) and an
 AI improvements phase (initially implemented as a dummy identity transform).
 """
+import json
 import inspect
 import logging
 from typing import Dict, List, Callable, Tuple, Any
@@ -99,6 +100,28 @@ class PostprocessingPipeline:
 
             current_content, current_data = step_output
 
+            # Record the execution of the step in the data dictionary
+            if "steps" not in current_data:
+                current_data["steps"] = {}
+            current_data["steps"][step_name] = {
+                "success": True,
+                # You might want to add more details here later, like changes, errors, warnings
+            }
+
+            # If the step returned a string, attempt to parse it as JSON for the next step
+            if isinstance(current_content, str) and current_content.strip():
+                try:
+                    parsed_next_input = json.loads(current_content)
+                    # If parsing is successful, use the parsed object for the next step
+                    current_content = parsed_next_input
+                    logger.debug(f"Parsed string output of {step_name} as JSON for next step.")
+                except json.JSONDecodeError:
+                    # If parsing fails, keep it as a string. The next step should handle invalid input.
+                    logger.debug(f"Output of {step_name} is a string but not valid JSON, passing as string.")
+                except Exception as e:
+                    logger.warning(f"Unexpected error parsing output of {step_name} as JSON: {e}")
+                    # Keep as string on unexpected errors as well
+
             # logger.debug(f"Output from {step_name} (type: {type(current_content)}): {str(current_content)[:200]}...") # Log first 200 chars
 
             # Save the output of this step to a temporary file for debugging
@@ -113,7 +136,7 @@ class PostprocessingPipeline:
 
             #     temp_filename = f"output/{step_id}_step_output_{step_name}.txt"
             #     with open(temp_filename, "w", encoding="utf-8") as f:
-            #         # Handle both string and dictionary content 
+            #         # Handle both string and dictionary content
             #         if isinstance(current_content, str):
             #             f.write(current_content)
             #         else:
@@ -178,6 +201,15 @@ class PostprocessingPipeline:
     def process(self, json_content: str | dict, data: Dict = None) -> Tuple[str | dict, Dict]:
         """
         Process the input JSON data through the entire pipeline.
+        """
+        logger.debug(f"PostprocessingPipeline.process input - json_content type: {type(json_content).__name__}, data keys: {data.keys() if data is not None else 'None'}")
+        if isinstance(json_content, str):
+             logger.debug(f"PostprocessingPipeline.process input - json_content start: '{json_content[:100]}...'")
+        elif isinstance(json_content, (dict, list)):
+             logger.debug(f"PostprocessingPipeline.process input - json_content keys/items: {list(json_content.keys())[:10] if isinstance(json_content, dict) else len(json_content)}")
+
+
+        """
 
         Args:
             json_content: The input JSON content as a string or dictionary
@@ -193,6 +225,7 @@ class PostprocessingPipeline:
                 "steps": {},
                 "logs": []
             }
+        logger.debug(f"Processing pipeline started with data (type: {type(data)}): {data}")
 
         # Log the start of processing
         if "logs" in data:
@@ -200,6 +233,14 @@ class PostprocessingPipeline:
 
         # Execute the scripted phase
         processed_content, updated_data = self._execute_scripted_phase(json_content, data)
+
+        logger.debug(f"PostprocessingPipeline.process after scripted phase - processed_content type: {type(processed_content).__name__}, updated_data keys: {updated_data.keys()}")
+        if isinstance(processed_content, str):
+             logger.debug(f"PostprocessingPipeline.process after scripted phase - processed_content start: '{processed_content[:100]}...'")
+        elif isinstance(processed_content, (dict, list)):
+             logger.debug(f"PostprocessingPipeline.process after scripted phase - processed_content keys/items: {list(processed_content.keys())[:10] if isinstance(processed_content, dict) else len(processed_content)}")
+        logger.debug(f"PostprocessingPipeline.process after scripted phase - updated_data['steps']: {updated_data.get('steps')}")
+
 
         # Execute the AI improvements phase
         processed_content, updated_data = self._execute_ai_phase(processed_content, updated_data)

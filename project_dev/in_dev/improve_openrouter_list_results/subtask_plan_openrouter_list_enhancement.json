@@ -1,0 +1,45 @@
+{
+  "description": "Analyze existing code and plan the necessary modifications to main.py and openrouter_api.py for the list models enhancement.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "planning",
+    "input_artifacts": [
+      "src/ai_whisperer/main.py",
+      "src/ai_whisperer/openrouter_api.py",
+      "docs/usage.md"
+    ],
+    "output_artifacts": [
+      "project_dev/in_dev/improve_openrouter_list_results/planning_summary.md"
+    ],
+    "instructions": [
+      "Review `src/ai_whisperer/main.py` to understand how the `--list-models` command-line argument is currently parsed and handled.",
+      "Examine the `OpenRouterAPI.list_models()` method in `src/ai_whisperer/openrouter_api.py` to understand its current implementation and the data it retrieves.",
+      "Analyze the OpenRouter API documentation (or infer from the current code/context) how to request more detailed information about models beyond just their IDs.",
+      "Determine the specific API endpoint or parameters needed to get comprehensive model details (e.g., context window, pricing, capabilities).",
+      "Plan the modifications required in `OpenRouterAPI.list_models()` to fetch this detailed information.",
+      "Design the data structure to hold the detailed model information retrieved from the API.",
+      "Determine the best approach to integrate the new `--output-csv` argument into `src/ai_whisperer/main.py` using argparse.",
+      "Plan the logic in `main.py` to handle the `--output-csv` argument: if present, format the detailed model data into a CSV structure; otherwise, display the data in a user-friendly format (like the current table or a more detailed printout).",
+      "Outline the specific columns that should be included in the CSV output based on the available detailed model information.",
+      "Plan the logic for writing the formatted data to a CSV file, including handling headers and proper escaping.",
+      "Consider potential error handling for API calls and file writing.",
+      "Document the planned code changes for both `main.py` and `openrouter_api.py` in `project_dev/in_dev/improve_openrouter_list_results/planning_summary.md`.",
+      "Include in `planning_summary.md` a description of the chosen data structure for detailed model info and the planned CSV formatting logic."
+    ],
+    "constraints": [
+      "Focus planning only on the `--list-models` command and its enhancement.",
+      "Ensure the plan includes handling both the default output and the new `--output-csv` output.",
+      "The plan must leverage the existing `OpenRouterAPI` class."
+    ],
+    "validation_criteria": [
+      "The file `project_dev/in_dev/improve_openrouter_list_results/planning_summary.md` is created.",
+      "`planning_summary.md` contains a clear outline of the necessary code changes in `src/ai_whisperer/main.py` related to argument parsing and output formatting.",
+      "`planning_summary.md` contains a clear outline of the necessary code changes in `src/ai_whisperer/openrouter_api.py` related to fetching detailed model information.",
+      "`planning_summary.md` describes the proposed data structure for storing detailed model information.",
+      "`planning_summary.md` describes the logic for formatting the detailed model data into CSV format, including column selection."
+    ]
+  },
+  "step_id": "plan_openrouter_list_enhancement",
+  "task_id": "bac1d332-c4a9-4b4c-8553-f27f24263d8e",
+  "subtask_id": "fcb9874b-ca9b-4dd1-bce6-02b49be07124"
+}

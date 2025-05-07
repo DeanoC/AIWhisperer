@@ -1,5 +1,5 @@
 {
-  "description": "Update documentation to reflect the new --output-csv option for --list-models.",
+  "description": "Update usage documentation to reflect the new --output-csv option.",
   "depends_on": [],
   "agent_spec": {
     "type": "documentation",
@@ -11,23 +11,28 @@
       "docs/usage.md"
     ],
     "instructions": [
-      "Locate the section in `docs/usage.md` that describes the `--list-models` command.",
-      "Add a new paragraph or bullet point within this section specifically for the `--output-csv` option.",
-      "Clearly state that `--output-csv` is an optional parameter for `--list-models`.",
-      "Explain that its purpose is to export the detailed information about the listed models into a CSV file.",
-      "Describe the type of information included in the CSV output (e.g., model ID, name, provider, context window, pricing, etc. - refer to the implementation in `src/ai_whisperer/main.py` if needed to confirm the exact fields).",
-      "Provide a clear example of how to use the command with the new option, for instance: `aiwhisperer --list-models --output-csv models.csv`.",
-      "Ensure the new documentation is consistent in style and formatting with the rest of the `docs/usage.md` file."
+      "Open the file `docs/usage.md` for editing.",
+      "Locate the section that describes the `--list-models` command.",
+      "Add a new paragraph or update the existing description for `--list-models` to include information about the new optional `--output-csv` parameter.",
+      "Clearly state that the `--output-csv` flag will output the model list in CSV format to standard output.",
+      "Provide a clear example demonstrating how to use the `--list-models` command with the `--output-csv` flag, potentially showing how to redirect the output to a file (e.g., `aiwhisperer --list-models --output-csv > models.csv`).",
+      "Explain the structure and content of the CSV output, specifying the columns included (e.g., model name, provider, context window, etc., based on the implementation in `src/ai_whisperer/main.py`).",
+      "Ensure the documentation is clear, concise, and easy for users to understand."
     ],
-    "constraints": [],
+    "constraints": [
+      "Only modify the `docs/usage.md` file.",
+      "Do not alter other documentation files.",
+      "The documentation must accurately reflect the behavior of the `--output-csv` option as implemented in `src/ai_whisperer/main.py`."
+    ],
     "validation_criteria": [
-      "`docs/usage.md` is successfully modified.",
-      "The documentation for the `--list-models` command now includes a description of the `--output-csv` option.",
-      "The purpose of exporting to CSV is explained.",
-      "An example command using `--list-csv` is present.",
-      "The documentation mentions the kind of data that will be exported to the CSV file."
+      "The file `docs/usage.md` has been modified.",
+      "The documentation for the `--list-models` command in `docs/usage.md` explicitly mentions the `--output-csv` parameter.",
+      "The purpose of the `--output-csv` parameter (outputting CSV format) is clearly explained.",
+      "An example usage of `--list-models --output-csv` is present in `docs/usage.md`.",
+      "Information describing the content or columns of the CSV output is included in `docs/usage.md`."
     ]
   },
   "step_id": "update_documentation",
-  "task_id": "1b82deca-8c11-4330-aa30-01a2ff98799f"
+  "task_id": "bac1d332-c4a9-4b4c-8553-f27f24263d8e",
+  "subtask_id": "d421a69c-1eef-47ac-9b29-a7449a19ee97"
 }

@@ -41,12 +41,13 @@ class OpenRouterAPI:
         except Exception as e:
             raise ConfigError(f"Error initializing OpenRouterAPI from config: {e}") from e
     
-    def list_models(self) -> List[str]:
+    def list_models(self) -> List[Dict[str, Any]]:
         """
-        Retrieves a list of available model IDs from the OpenRouter API.
+        Retrieves a list of available models with detailed metadata from the OpenRouter API.
         
         Returns:
-            A list of model ID strings that can be used with the OpenRouter API.
+            A list of dictionaries, where each dictionary contains detailed information
+            about a model.
             
         Raises:
             OpenRouterConnectionError: If there's a network issue connecting to the API.
@@ -68,25 +69,38 @@ class OpenRouterAPI:
                 # Ensure the expected data structure exists
                 if "data" not in data or not isinstance(data["data"], list):
                     raise OpenRouterAPIError(
-                        "Unexpected response format: 'data' array is missing or not a list.", 
-                        status_code=response.status_code, 
+                        "Unexpected response format: 'data' array is missing or not a list.",
+                        status_code=response.status_code,
                         response=response
                     )
                 
-                # Extract model IDs from the response
-                model_ids = [model["id"] for model in data["data"] if "id" in model]
-                return model_ids
+                # Extract detailed model information from the response
+                detailed_models = []
+                for model_data in data["data"]:
+                    model_info = {
+                        "id": model_data.get("id"),
+                        "name": model_data.get("name"),
+                        "pricing": model_data.get("pricing"),
+                        "description": model_data.get("description"),
+                        "features": model_data.get("features"),
+                        "context_window": model_data.get("context_window"),
+                        "top_provider": model_data.get("top_provider"),
+                        # Add other relevant fields as needed based on API response and planning
+                    }
+                    detailed_models.append(model_info)
+                    
+                return detailed_models
                 
             except ValueError as e:
                 raise OpenRouterAPIError(
-                    f"Failed to decode JSON response: {e}", 
-                    status_code=response.status_code, 
+                    f"Failed to decode JSON response: {e}",
+                    status_code=response.status_code,
                     response=response
                 ) from e
             except (KeyError, TypeError) as e:
                 raise OpenRouterAPIError(
-                    f"Unexpected response structure: {e}", 
-                    status_code=response.status_code, 
+                    f"Unexpected response structure: {e}",
+                    status_code=response.status_code,
                     response=response
                 ) from e
                 
@@ -103,26 +117,26 @@ class OpenRouterAPI:
 
             if status_code == 401:
                 raise OpenRouterAuthError(
-                    f"Authentication failed: {error_message}", 
-                    status_code=status_code, 
+                    f"Authentication failed: {error_message}",
+                    status_code=status_code,
                     response=e.response
                 ) from e
             elif status_code == 429:
                 raise OpenRouterRateLimitError(
-                    f"Rate limit exceeded: {error_message}", 
-                    status_code=status_code, 
+                    f"Rate limit exceeded: {error_message}",
+                    status_code=status_code,
                     response=e.response
                 ) from e
             else:
                 raise OpenRouterAPIError(
-                    f"API request failed: {error_message}", 
-                    status_code=status_code, 
+                    f"API request failed: {error_message}",
+                    status_code=status_code,
                     response=e.response
                 ) from e
                 
         except requests.exceptions.RequestException as e:
             raise OpenRouterConnectionError(
-                f"Network error connecting to OpenRouter API: {e}", 
+                f"Network error connecting to OpenRouter API: {e}",
                 original_exception=e
             ) from e
     

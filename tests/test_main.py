@@ -67,7 +67,7 @@ class TestMain:
         mock_setup_rich.return_value = mock_console # Have setup_rich_output return our mock console
         mock_orchestrator_instance = MagicMock() # Mock Orchestrator instance
         mock_orchestrator_cls.return_value = mock_orchestrator_instance # Have Orchestrator() return our mock instance
-        mock_orchestrator_instance.generate_initial_yaml.return_value = 'generated_output.yaml' # Mock the output path
+        mock_orchestrator_instance.generate_initial_json.return_value = 'generated_output.yaml' # Mock the output path
 
         # Set command-line arguments
         sys.argv = ['main.py', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE, '--output', self.OUT_FILE]
@@ -80,13 +80,13 @@ class TestMain:
         mock_setup_rich.assert_called_once() # Rich console setup should be called exactly once
         mock_load_config.assert_called_once_with(self.CONF_FILE) # load_config should be called once with config file
         mock_orchestrator_cls.assert_called_once_with(self.WRAPPED_CONFIG, self.OUT_FILE) # Orchestrator should be instantiated with config and output_dir
-        mock_orchestrator_instance.generate_initial_yaml.assert_called_once_with( # generate_initial_yaml should be called
+        mock_orchestrator_instance.generate_initial_json.assert_called_once_with( # generate_initial_json should be called
             self.REQ_FILE,
             self.CONF_FILE
         )
         mock_sys_exit.assert_not_called() # Should not exit in the normal flow
         # And finally check that the output was printed to console
-        expected_print_call = call(f"[green]Successfully generated task YAML: generated_output.yaml[/green]")
+        expected_print_call = call(f"[green]Successfully generated task JSON: generated_output.yaml[/green]")
         assert expected_print_call in mock_console.print.call_args_list
 
     @patch('sys.exit')
@@ -202,7 +202,7 @@ class TestMain:
             
             # Verify the orchestrator was called (i.e., didn't take the list_models path)
             mock_orchestrator_cls.assert_called_once()
-            mock_orchestrator_instance.generate_initial_yaml.assert_called_once()
+            mock_orchestrator_instance.generate_initial_json.assert_called_once()
 
 def test_main_list_models_missing_config(monkeypatch, capsys):
     """Test the --list-models flag without the required --config argument."""

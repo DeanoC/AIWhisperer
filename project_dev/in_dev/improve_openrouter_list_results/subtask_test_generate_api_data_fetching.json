@@ -1,0 +1,43 @@
+{
+  "description": "Generate tests for fetching detailed model data from the OpenRouter API.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "test_generation",
+    "input_artifacts": [
+      "project_dev/in_dev/improve_openrouter_list_results/planning_summary.md"
+    ],
+    "output_artifacts": [
+      "tests/unit/test_openrouter_api_detailed.py"
+    ],
+    "instructions": [
+      "Create a new Python file `tests/unit/test_openrouter_api_detailed.py`.",
+      "Import necessary libraries for unit testing (e.g., `pytest`, `unittest.mock`).",
+      "Define a test class, e.g., `TestOpenRouterAPIDetailed`.",
+      "Inside the test class, write unit tests for the method in `src/ai_whisperer/openrouter_api.py` responsible for fetching detailed model information.",
+      "Use `unittest.mock.patch` or similar techniques to mock the HTTP requests made to the OpenRouter API.",
+      "Prepare mock API responses that simulate the structure of the detailed model data returned by OpenRouter, including fields like `id`, `name`, `features`, `pricing`, `context_window`, `provider`, etc.",
+      "Create test cases to verify that the method correctly handles a successful API response with detailed data for one or more models.",
+      "Create test cases to verify that the method correctly parses and extracts specific metadata fields such as pricing (input/output costs), context window size, and listed features.",
+      "Create test cases to ensure the method correctly structures the parsed data into the expected format (e.g., a dictionary where keys are model IDs and values are dictionaries of their details).",
+      "Include test cases that simulate different levels of detail or variations in the data structure returned by the API.",
+      "Ensure tests cover potential edge cases, such as models with missing optional fields.",
+      "Add assertions to verify the structure and content of the data returned by the method after processing the mocked API response."
+    ],
+    "constraints": [
+      "Do not make actual HTTP requests to the OpenRouter API.",
+      "Focus strictly on testing the data fetching and parsing logic within `src/ai_whisperer/openrouter_api.py`."
+    ],
+    "validation_criteria": [
+      "tests/unit/test_openrouter_api_detailed.py exists.",
+      "tests/unit/test_openrouter_api_detailed.py contains a test class.",
+      "The test file contains multiple test methods (functions) prefixed with `test_`.",
+      "Tests use mocking to simulate API responses.",
+      "Tests include assertions to verify the parsing and structuring of detailed model data.",
+      "Tests cover verification of specific metadata fields like pricing, context window, and features.",
+      "Tests cover scenarios with multiple models."
+    ]
+  },
+  "step_id": "test_generate_api_data_fetching",
+  "task_id": "bac1d332-c4a9-4b4c-8553-f27f24263d8e",
+  "subtask_id": "8ae1c235-9da9-410b-bfb8-9909be87f532"
+}

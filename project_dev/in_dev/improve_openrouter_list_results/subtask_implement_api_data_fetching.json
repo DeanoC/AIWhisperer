@@ -1,0 +1,41 @@
+{
+  "description": "Modify the OpenRouterAPI.list_models method to fetch and return detailed model metadata.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "file_edit",
+    "input_artifacts": [
+      "src/ai_whisperer/openrouter_api.py",
+      "tests/unit/test_openrouter_api_detailed.py",
+      "project_dev/in_dev/improve_openrouter_list_results/planning_summary.md"
+    ],
+    "output_artifacts": [
+      "src/ai_whisperer/openrouter_api.py"
+    ],
+    "instructions": [
+      "Locate the `list_models` method within `src/ai_whisperer/openrouter_api.py`.",
+      "Modify the API endpoint or parameters used in the `list_models` method's HTTP request to OpenRouter's API to retrieve comprehensive model details. Consult OpenRouter API documentation if necessary to identify the correct endpoint or parameters for detailed model listing.",
+      "Update the code to handle the API response, which is expected to contain a list of models with detailed metadata (e.g., 'id', 'name', 'description', 'features', 'pricing', 'context_length', 'architecture', 'provider').",
+      "Parse the JSON response from the API to extract all relevant metadata for each model.",
+      "Refactor the `list_models` method to return a data structure (e.g., a list of dictionaries or custom objects) that includes the extracted detailed metadata for each model.",
+      "Review `project_dev/in_dev/improve_openrouter_list_results/planning_summary.md` to understand how the change in return data structure for `list_models` might impact other parts of the AI Whisperer tool, particularly the console output for the `--list-models` command.",
+      "Ensure that the changes are compatible with existing code that calls `list_models`. If existing code expects only model names, determine if it needs to be updated or if the new `list_models` can provide the detailed data while allowing the existing code to extract just the name (as per the planning summary).",
+      "Add or update necessary imports within `src/ai_whisperer/openrouter_api.py`."
+    ],
+    "constraints": [
+      "The modification must not break the existing console output format for the `--list-models` command when the `--output-csv` flag is NOT used. Refer to the planning summary for guidance on handling this.",
+      "The changes should be contained within the `src/ai_whisperer/openrouter_api.py` file for this subtask.",
+      "Do not implement changes to the console output formatting in this subtask; focus solely on fetching and returning the detailed data from the API."
+    ],
+    "validation_criteria": [
+      "The `list_models` method in `src/ai_whisperer/openrouter_api.py` should make an API call that retrieves detailed model information from OpenRouter.",
+      "The `list_models` method should successfully parse the detailed API response.",
+      "The `list_models` method should return a data structure containing detailed metadata for each model listed by OpenRouter.",
+      "The structure of the returned data should include fields such as 'id', 'name', 'description', 'features', 'pricing', 'context_length', 'architecture', and 'provider' if available from the API.",
+      "The modified code should pass existing unit tests related to `OpenRouterAPI` that are not specifically for the detailed output (these will be addressed in a later task).",
+      "The code should adhere to Python syntax and style guidelines."
+    ]
+  },
+  "step_id": "implement_api_data_fetching",
+  "task_id": "bac1d332-c4a9-4b4c-8553-f27f24263d8e",
+  "subtask_id": "2896b122-1240-4602-9b9e-26139f28dab3"
+}

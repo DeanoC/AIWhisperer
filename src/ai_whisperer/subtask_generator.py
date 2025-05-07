@@ -42,6 +42,7 @@ class SubtaskGenerator:
 
         Raises:
             ConfigError: If configuration loading fails.
+            SubtaskGenerationError: If the prompt template cannot be loaded.
         """
         try:
             self.config = load_config(config_path)
@@ -53,18 +54,59 @@ class SubtaskGenerator:
             self.openrouter_client = OpenRouterAPI(
                 config=model_config
             )
-            self.subtask_prompt_template = self.config['prompts']['subtask_generator_prompt_content']
             self.output_dir = output_dir  # Store the output directory
             self.overall_context = overall_context
             self.workspace_context = workspace_context # Store context
+
+            # Load the subtask prompt template from file
+            try:
+                self.subtask_prompt_template = self._load_prompt_template()
+            except SubtaskGenerationError as e:
+                # If file loading fails, try to load from config as a fallback
+                logger.warning(f"Failed to load subtask prompt from file: {e}. Attempting to load from config.")
+                try:
+                    self.subtask_prompt_template = self.config['prompts']['subtask_generator_prompt_content']
+                    logger.info("Subtask prompt template loaded successfully from config.")
+                except KeyError as ke:
+                    raise SubtaskGenerationError(f"Subtask prompt template not found in config or default file: {ke}") from ke
+                except Exception as ex:
+                    raise SubtaskGenerationError(f"Unexpected error loading subtask prompt from config: {ex}") from ex
+
+
         except ConfigError as e:
             # Re-raise ConfigError to be handled by the caller
             raise e
-        except KeyError as e:
-            raise ConfigError(f"Missing expected key in configuration: {e}") from e
         except Exception as e:
             # Catch any other unexpected errors during initialization
             raise SubtaskGenerationError(f"Failed to initialize SubtaskGenerator: {e}") from e
+
+    def _load_prompt_template(self) -> str:
+        """
+        Loads the subtask prompt template content from the default path.
+
+        Returns:
+            The prompt content (str).
+
+        Raises:
+            SubtaskGenerationError: If the prompt file cannot be found or read.
+        """
+        # Assuming a default prompt path for subtask generation
+        # This should be relative to the project root or package root
+        # For now, let's assume it's in the prompts directory at the project root
+        prompt_path = Path("prompts/subtask_generator_default.md")
+
+        logger.info(f"Attempting to load subtask prompt template from: {prompt_path}")
+        try:
+            with open(prompt_path, "r", encoding="utf-8") as f:
+                prompt_content = f.read()
+            logger.info(f"Subtask prompt template loaded successfully from {prompt_path}.")
+            return prompt_content
+        except FileNotFoundError:
+            # Do not raise here, allow fallback to config
+            raise SubtaskGenerationError(f"Subtask prompt file not found: {prompt_path}")
+        except IOError as e:
+            raise SubtaskGenerationError(f"Error reading subtask prompt file {prompt_path}: {e}") from e
+
 
     def _prepare_prompt(self, input_step: Dict[str, Any]) -> str:
         """Prepares the prompt for the AI model using all context placeholders."""
@@ -74,12 +116,15 @@ class SubtaskGenerator:
 
             # Replace all placeholders in the template
             prompt = self.subtask_prompt_template.format(
-                    md_content=subtask_json_str, 
+                    md_content=subtask_json_str,
                     overall_context=self.overall_context,
                     workspace_context=self.workspace_context,
                 )
 
             return prompt
+        except KeyError as e:
+             # Catch missing placeholders in the template string
+             raise SubtaskGenerationError(f"Missing placeholder in subtask prompt template: {e}") from e
         except Exception as e:
             # Catch potential errors during JSON dumping or string replacement
             raise SubtaskGenerationError(f"Failed to prepare prompt: {e}") from e
@@ -133,6 +178,7 @@ class SubtaskGenerator:
                     "description": input_step.get("description", ""),
                     "depends_on": input_step.get("depends_on", []),
                     "task_id": input_step.get("task_id", ""),
+                    "subtask_id": str(uuid.uuid4()),  # Generate a unique subtask ID
                 },
                 "success": True,
             }

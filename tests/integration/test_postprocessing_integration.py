@@ -235,8 +235,43 @@ class TestSubtaskGeneratorPostprocessingIntegration:
                     "required": ["step_id", "subtask_id", "description", "agent_spec"]
                 }
 
-                # Mock the open function to avoid writing to a file
-                with patch("builtins.open", mock_open()):
+                # Mock the open function to avoid writing to a file, but provide schema content when reading the schema file
+                mock_file = mock_open()
+                # Configure the mock to return schema content when the schema file is opened
+                schema_content = """
+{
+  "type": "object",
+  "properties": {
+    "subtask_id": {
+      "type": "string",
+      "description": "Unique identifier for the subtask (e.g., UUID)",
+      "format": "uuid"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "ID of the parent task plan this subtask belongs to.",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "description": "A short, descriptive name for the subtask."
+    },
+    "description": {
+      "type": "string",
+      "description": "A detailed description of the subtask's purpose and instructions."
+    },
+    "instructions": {
+      "type": "string",
+      "description": "Specific instructions for the AI agent executing this subtask."
+    }
+  },
+  "required": ["subtask_id", "task_id", "name", "description", "instructions"],
+  "additionalProperties": false
+}
+"""
+                mock_file.return_value.__enter__.return_value.read.side_effect = lambda: schema_content
+
+                with patch("builtins.open", mock_file):
                     # Create result_data with items to add and the schema
                     result_data = {
                         "items_to_add": {

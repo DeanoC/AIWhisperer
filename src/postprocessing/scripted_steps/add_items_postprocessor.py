@@ -12,6 +12,8 @@ from typing import Dict, Any, Tuple, List, Optional, Union
 logger = logging.getLogger(__name__)
 
 def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tuple[Union[str, dict, list], Dict]:
+    logger.debug(f"add_items_postprocessor input - content type: {type(content).__name__}, data keys: {data.keys()}")
+    logger.debug(f"add_items_postprocessor input - items_to_add: {data.get('items_to_add')}")
     """
     Adds specified items to the JSON content at designated positions.
 
@@ -61,9 +63,11 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
             step_result["logs"].append("Input string is empty or whitespace-only, treating as empty object.")
             step_result["warnings"].append("Using empty dictionary due to empty input string")
         else:
+            logger.debug(f"Attempting to parse content as JSON. Content start: '{content[:100]}...'")
             try:
                 parsed_content = json.loads(content)
                 step_result["logs"].append("Successfully parsed content as JSON.")
+                logger.debug("Successfully parsed content as JSON.")
             except json.JSONDecodeError as e:
                 err_msg = f"Failed to parse content as JSON in add_items_postprocessor: {e}"
                 logger.warning(f"{err_msg} - Content: '{content[:100]}...'")
@@ -71,9 +75,11 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
                 step_result["errors"].append(err_msg)
                 step_result["success"] = False
                 # Return original content if parsing fails
+                logger.debug(f"add_items_postprocessor returning original content due to JSONDecodeError. Data keys: {data.keys()}")
                 return content, data
             except Exception as e:
                 err_msg = f"An unexpected error occurred during JSON parsing: {e}"
+                logger.debug(f"add_items_postprocessor returning original content due to unexpected error. Data keys: {data.keys()}")
                 logger.error(err_msg)
                 step_result["logs"].append(f"ERROR: {err_msg}")
                 step_result["errors"].append(err_msg)
@@ -82,7 +88,10 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
                 return content, data
     elif isinstance(content, (dict, list)):
         parsed_content = content
-        step_result["logs"].append(f"Input is a {type(content).__name__.lower()}, processing directly.")
+        logger.debug(f"add_items_postprocessor input is dict/list. Data keys: {data.keys()}")
+        input_type = type(content).__name__.lower()
+        step_result["logs"].append(f"Input is a {input_type}, processing directly.")
+        logger.debug(f"Input is a {input_type}, processing directly.")
     else:
         err_msg = f"Unsupported content type: {type(content)}. Expected str, dict, or list."
         logger.error(err_msg)
@@ -90,21 +99,22 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
         step_result["errors"].append(err_msg)
         step_result["success"] = False
         raise ValueError(err_msg) # Raise for unsupported types
+    
+    logger.debug(f"add_items_postprocessor - parsed_content type: {type(parsed_content).__name__}")
 
     # Ensure parsed_content is mutable if it was a string that parsed successfully
     # and is a dict or list. Scalars from JSON strings are immutable.
     if original_type_was_str and isinstance(parsed_content, (dict, list)):
+         logger.debug("Input was string, deep copying parsed content to ensure mutability.")
          parsed_content = json.loads(json.dumps(parsed_content)) # Deep copy to ensure mutability
 
     # Add top-level items
     top_level_items = items_to_add.get("top_level", {})
     if isinstance(parsed_content, dict) and top_level_items:
         for key, value in top_level_items.items():
-            if key in parsed_content:
-                step_result["warnings"].append(f"Key '{key}' already exists at top level, not overwriting")
-            else:
-                parsed_content[key] = value
-                step_result["changes"].append(f"Added top-level item: {key}")
+            # Always add/overwrite top-level items from items_to_add
+            parsed_content[key] = value
+            step_result["changes"].append(f"Added/Overwrote top-level item: {key}")
     elif top_level_items:
          step_result["warnings"].append(f"Top-level items specified, but content is not a dictionary (type: {type(parsed_content).__name__})")
 
@@ -119,9 +129,11 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
             step_container_key = data.get("step_container", "plan")
 
         def find_and_add_to_steps(obj, container_key, items_to_add_dict):
+            logger.debug(f"Searching for step container '{container_key}' in object of type {type(obj).__name__}")
             if isinstance(obj, dict):
                 for key, value in obj.items():
                     if key == container_key:
+                        logger.debug(f"Found potential step container key: '{key}'")
                         if isinstance(value, list):
                             # Found the step container list
                             for item in value:
@@ -132,6 +144,7 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
                                         else:
                                             item[item_key] = item_value
                                             step_result["changes"].append(f"Added step-level item: {item_key}")
+                                            logger.debug(f"Added step-level item '{item_key}' to a step.")
                                 else:
                                     warn_msg = f"Skipping non-dictionary item in step container list: {item}"
                                     logger.warning(warn_msg)
@@ -171,6 +184,7 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
         try:
             output_string = json.dumps(parsed_content, indent=4, ensure_ascii=False)
             step_result["logs"].append("Converted processed content back to formatted JSON string.")
+            logger.debug(f"add_items_postprocessor returning formatted JSON string. Data keys: {data.keys()}")
             return output_string, data
         except Exception as e:
             err_msg = f"Error dumping processed content to JSON string: {e}"
@@ -179,9 +193,11 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
             step_result["errors"].append(err_msg)
             step_result["success"] = False
             # If dumping fails, return the processed content as is (dict/list)
+            logger.debug(f"add_items_postprocessor returning processed content (dict/list) due to dump error. Data keys: {data.keys()}")
             return parsed_content, data
     else:
         # Otherwise, return the processed content as is (dict, list, or original invalid string)
+        logger.debug(f"add_items_postprocessor returning processed content as is. Data keys: {data.keys()}")
         return parsed_content, data
 
 if __name__ == '__main__':

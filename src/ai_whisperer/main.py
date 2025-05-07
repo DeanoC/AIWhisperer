@@ -59,6 +59,12 @@ def main():
         help="List available OpenRouter models and exit."
     )
     parser.add_argument(
+        "--output-csv",
+        type=str,
+        required=False,
+        help="Path to output CSV file for --list-models command."
+    )
+    parser.add_argument(
         "--generate-subtask",
         action="store_true",
         help="Generate a detailed subtask YAML from a step definition."
@@ -77,13 +83,9 @@ def main():
     args, unknown = parser.parse_known_args()
 
     # --- Handle OpenRouter Models Listing ---
-    if args.list_models:
+    if getattr(args, 'list_models', False):
         try:
             # Check if config path is provided
-            if not args.config:
-                print("Error: --config argument is required when using --list-models.", file=sys.stderr)
-                raise SystemExit(1)
-
             # Load configuration to get API key
             console.print(f"Loading configuration from: {args.config}")
             config = load_config(args.config)
@@ -92,13 +94,46 @@ def main():
             # Instantiate OpenRouterAPI client
             client = OpenRouterAPI(config['openrouter'])
 
-            # Fetch and print models
+            # Fetch detailed models
             console.print("Fetching available OpenRouter models...")
-            models = client.list_models()
-            console.print("[bold green]Available OpenRouter Models:[/bold green]")
-            for model in models:
-                console.print(f"- {model}")
+            detailed_models = client.list_models()
+
+            if args.output_csv:
+                # Output to CSV
+                csv_filepath = Path(args.output_csv)
+                csv_filepath.parent.mkdir(parents=True, exist_ok=True) # Ensure directory exists
+                
+                import csv # Import csv module here
+
+                with open(csv_filepath, 'w', newline='', encoding='utf-8') as csvfile:
+                    fieldnames = ['id', 'name', 'description', 'features', 'context_window', 'input_cost', 'output_cost']
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+                    writer.writeheader()
+                    for model in detailed_models:
+                        # Extract pricing information
+                        pricing = model.get('pricing', {})
+                        input_cost = pricing.get('prompt', 0) # Default to 0 if not found
+                        output_cost = pricing.get('completion', 0) # Default to 0 if not found
+
+                        writer.writerow({
+                            'id': model.get('id', ''),
+                            'name': model.get('name', ''),
+                            'description': model.get('description', ''),
+                            'features': model.get('features', []), # Include features
+                            'context_window': model.get('context_window', ''),
+                            'input_cost': input_cost,
+                            'output_cost': output_cost
+                        })
+                console.print(f"[green]Successfully wrote model list to CSV: {csv_filepath}[/green]")
+            else:
+                # Output to console (backward compatibility)
+                console.print("[bold green]Available OpenRouter Models:[/bold green]")
+                for model in detailed_models:
+                    console.print(f"- {model.get('id', 'N/A')}") # Print only ID for backward compatibility
+            
             raise SystemExit(0)
+            return # Ensure exit in test environments
 
         except ConfigError as e:
             print(f"Configuration error: {e}", file=sys.stderr)
@@ -111,7 +146,7 @@ def main():
             raise SystemExit(1)
 
     # --- Handle Subtask Generation ---
-    if args.generate_subtask:
+    elif getattr(args, 'generate_subtask', False):
         try:
             # Check required arguments
             if not args.config:
@@ -154,6 +189,7 @@ def main():
             # Success
             console.print(f"[green]Successfully generated subtask YAML: {output_path}[/green]")
             sys.exit(0)
+            return # Ensure exit in test environments
 
         except ConfigError as e:
             logger.error(f"Configuration error: {e}", exc_info=False)
@@ -173,7 +209,7 @@ def main():
             sys.exit(1)
 
     # --- Handle Full Project Plan Generation ---
-    if args.full_project:
+    elif getattr(args, 'full_project', False):
         try:
             # Check for required arguments for full project generation
             if not args.requirements or not args.config:
@@ -203,7 +239,8 @@ def main():
             for i, subtask_path in enumerate(result['subtasks'], 1):
                 console.print(f"  {i}. {subtask_path}")
             
-            sys.exit(0)       
+            sys.exit(0)
+            return # Ensure exit in test environments
         except ConfigError as e:
             logger.error(f"Configuration error: {e}", exc_info=False)
             console.print(f"[bold red]Configuration Error:[/bold red] {e}")
@@ -219,12 +256,10 @@ def main():
 
     # --- Handle Main Task YAML Generation ---
     # Only proceed to main logic if no special flags were active
-    if not (args.list_models or args.generate_subtask or args.full_project):
-        # Check for required arguments for core logic
-        if not args.requirements or not args.config or not args.output:
-            parser.print_help(file=sys.stderr)
-            print("Error: --requirements, --config, and --output are required for the main operation.", file=sys.stderr)
-            sys.exit(1)
+    else:
+        # Explicitly check if any special flags are active and return if so
+        if getattr(args, 'list_models', False) or getattr(args, 'generate_subtask', False) or getattr(args, 'full_project', False):
+            return
 
         try:
             logger.info("Starting AI Whisperer process...")

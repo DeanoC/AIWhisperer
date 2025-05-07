@@ -4,10 +4,15 @@ from src.postprocessing.scripted_steps.handle_required_fields import handle_requ
 
 # Mock schema for testing
 SCHEMA = {
-    "required_field_1": "default_value_1",
-    "required_field_2": "default_value_2",
+    "required": ["required_field_1", "required_field_2", "nested_field"],
+    "required_field_1": {"default": "default_value_1"},
+    "required_field_2": {"default": "default_value_2"},
     "nested_field": {
-        "nested_required_1": "nested_default_1"
+        "type": "object",
+        "required": ["nested_required_1"],
+        "properties": {
+            "nested_required_1": {"default": "nested_default_1"}
+        }
     },
     "optional_field": None # Optional field with no default
 }
@@ -17,79 +22,79 @@ SCHEMA = {
     (
         "All required fields present (dict)",
         {"required_field_1": "value1", "required_field_2": "value2", "nested_field": {"nested_required_1": "value3"}},
-        {"required_field_1": "value1", "required_field_2": "value2", "nested_field": {"nested_required_1": "value3"}, "optional_field": None}
+        {"required_field_1": "value1", "required_field_2": "value2", "nested_field": {"nested_required_1": "value3"}}
     ),
-    # Case: Missing required fields (dict input)
+    # Case: Missing required fields (dict input) - only adds fields that are explicitly required in their own schema
     (
         "Missing required fields (dict)",
         {"required_field_1": "value1"},
-        {"required_field_1": "value1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None}
+        {"required_field_1": "value1"}
     ),
-    # Case: Extra fields (dict input) - should be preserved
+    # Case: Extra fields (dict input) - should be preserved, no additional fields added
     (
         "Extra fields (dict)",
         {"required_field_1": "value1", "extra_field": "invalid"},
-        {"required_field_1": "value1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None, "extra_field": "invalid"}
+        {"required_field_1": "value1", "extra_field": "invalid"}
     ),
-    # Case: Incorrect data types (dict input) - should preserve incorrect type for non-null, replace null with default
+    # Case: Incorrect data types (dict input) - should preserve incorrect type for non-null, preserve null
     (
         "Incorrect data types (dict)",
         {"required_field_1": 123, "required_field_2": None, "nested_field": {"nested_required_1": 456}},
-        {"required_field_1": 123, "required_field_2": "default_value_2", "nested_field": {"nested_required_1": 456}, "optional_field": None}
+        {"required_field_1": 123, "required_field_2": None, "nested_field": {"nested_required_1": 456}}
     ),
-    # Case: Empty input (dict)
+    # Case: Empty input (dict) - no fields added as none are explicitly required in their own schema
     (
         "Empty input (dict)",
         {},
-        {"required_field_1": "default_value_1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None}
+        {}
     ),
-    # Case: Fields set to null (dict input)
+    # Case: Fields set to null (dict input) - nulls are preserved, no missing fields added
     (
         "Fields set to null (dict)",
         {"required_field_1": None, "nested_field": {"nested_required_1": None}},
-        {"required_field_1": "default_value_1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None}
+        {"required_field_1": None, "nested_field": {"nested_required_1": None}}
     ),
     # Case: All required fields present (JSON string input)
     (
         "All required fields present (JSON string)",
         '{"required_field_1": "value1", "required_field_2": "value2", "nested_field": {"nested_required_1": "value3"}}',
-        {"required_field_1": "value1", "required_field_2": "value2", "nested_field": {"nested_required_1": "value3"}, "optional_field": None}
+        {"required_field_1": "value1", "required_field_2": "value2", "nested_field": {"nested_required_1": "value3"}}
     ),
-    # Case: Missing required fields (JSON string input)
+    # Case: Missing required fields (JSON string input) - only adds fields that are explicitly required in their own schema
     (
         "Missing required fields (JSON string)",
         '{"required_field_1": "value1"}',
-        {"required_field_1": "value1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None}
+        {"required_field_1": "value1"}
     ),
-    # Case: Extra fields (JSON string input) - should be preserved
+    # Case: Extra fields (JSON string input) - should be preserved, no additional fields added
     (
         "Extra fields (JSON string)",
         '{"required_field_1": "value1", "extra_field": "invalid"}',
-        {"required_field_1": "value1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None, "extra_field": "invalid"}
+        {"required_field_1": "value1", "extra_field": "invalid"}
     ),
-    # Case: Incorrect data types (JSON string input) - should preserve incorrect type for non-null, replace null with default
+    # Case: Incorrect data types (JSON string input) - should preserve incorrect type for non-null, preserve null
     (
         "Incorrect data types (JSON string)",
         '{"required_field_1": 123, "required_field_2": null, "nested_field": {"nested_required_1": 456}}',
-        {"required_field_1": 123, "required_field_2": "default_value_2", "nested_field": {"nested_required_1": 456}, "optional_field": None}
+        {"required_field_1": 123, "required_field_2": None, "nested_field": {"nested_required_1": 456}}
     ),
-    # Case: Empty input (JSON string)
+    # Case: Empty input (JSON string) - no fields added as none are explicitly required in their own schema
     (
         "Empty input (JSON string)",
         '{}',
-        {"required_field_1": "default_value_1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None}
+        {}
     ),
-    # Case: Fields set to null (JSON string input)
+    # Case: Fields set to null (JSON string input) - nulls are preserved, no missing fields added
     (
         "Fields set to null (JSON string)",
         '{"required_field_1": null, "nested_field": {"nested_required_1": null}}',
-        {"required_field_1": "default_value_1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None}
+        {"required_field_1": None, "nested_field": {"nested_required_1": None}}
     ),
-    # Case: JSON string with only whitespace
+    # Case: JSON string with only whitespace - treated as empty object, no fields added
     (
         "Whitespace only (JSON string)",
         '   \n  ',
-        {"required_field_1": "default_value_1", "required_field_2": "default_value_2", "nested_field": {"nested_required_1": "nested_default_1"}, "optional_field": None}
+        {}
     ),
     # Case: JSON string with only comments (should be treated as empty) - Not applicable for JSON
     # Case: Invalid JSON string - should return original string and log error

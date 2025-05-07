@@ -197,7 +197,7 @@ class TestOrchestratorSubtasks:
         return {
             'openrouter': {'api_key': 'test_key', 'model': 'test_model', 'params': {}},
             'output_dir': '/tmp/output',
-            'prompts': {'orchestrator': 'test prompt', 'subtask': 'test subtask prompt'}
+            'prompts': {'orchestrator': 'test prompt', 'subtask_generator_prompt_content': 'test subtask prompt'}
         }
 
     @pytest.fixture
@@ -215,8 +215,12 @@ class TestOrchestratorSubtasks:
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
     @patch('src.ai_whisperer.orchestrator.json.loads')
-    def test_generate_full_project_plan(self, mock_json_loads, mock_hash,
-                                       mock_is_file, mock_api_call, orchestrator, mock_prompt_content):
+    @patch('builtins.open', new_callable=mock_open) # Patch open for file reading
+    def test_generate_full_project_plan(self, mock_open_file, mock_json_loads, mock_hash,
+                                       mock_is_file, mock_api_call, orchestrator, mock_prompt_content, mock_requirements_content):
+        # Configure the mock_open_file to return mock requirements content when requirements.md is opened
+        mock_open_file.return_value.__enter__.return_value.read.return_value = mock_requirements_content
+
         # Create a mock for the _load_prompt_template method
         mock_load_prompt = MagicMock(return_value=(mock_prompt_content, Path('/tmp/mock_path.md')))
         # Replace the orchestrator's _load_prompt_template method with our mock
@@ -388,14 +392,15 @@ No additional properties are allowed at the top level.
             'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}]
         }
         # Define the data expected AFTER postprocessing and for the file read-back
+        # This should include task_id and input_hashes at the top level
         expected_plan_data = {
-            'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}],
+            'task_id': 'mock_task_id_1',
             'input_hashes': {
                 'requirements_md': 'test_hash',
                 'config_json': 'test_hash',
                 'prompt_file': 'test_hash'
             },
-            'task_id': 'mock_task_id_1'
+            'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}]
         }
         # Convert to JSON string for mock_open
         expected_json_content = json.dumps(expected_plan_data)
@@ -416,15 +421,19 @@ No additional properties are allowed at the top level.
             # Call 6: Add another value just to be safe
             expected_plan_data
         ]
-
-        # Mock jsonschema validation and subtask generator within a new mock_open context
-        with patch('builtins.open', new_callable=mock_open, read_data=expected_json_content) as mock_file_open:
-            with patch('src.ai_whisperer.orchestrator.jsonschema.validate'):
-                with patch('src.ai_whisperer.subtask_generator.SubtaskGenerator') as mock_subtask_gen:
+    
+        # Mock jsonschema validation and subtask generator
+        # Also mock json.load specifically for reading the saved task plan file
+        with patch('src.ai_whisperer.orchestrator.jsonschema.validate'):
+            with patch('src.ai_whisperer.subtask_generator.SubtaskGenerator') as mock_subtask_gen:
+                with patch('src.ai_whisperer.orchestrator.json.load') as mock_json_load_file:
+                    # Configure mock_json_load_file to return the expected data when the task plan file is read
+                    mock_json_load_file.return_value = expected_plan_data
+    
                     mock_generator = MagicMock()
                     mock_generator.generate_subtask.side_effect = [
-                        Path('/tmp/output/subtask_step1.json'),
-                        Path('/tmp/output/subtask_step2.json')
+                        (Path('/tmp/output/subtask_step1.json'), {"agent_spec": {"type": "test_type_1"}}),
+                        (Path('/tmp/output/subtask_step2.json'), {"agent_spec": {"type": "test_type_2"}})
                     ]
                     mock_subtask_gen.return_value = mock_generator
                     # Call the method under test
@@ -449,9 +458,12 @@ No additional properties are allowed at the top level.
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
     @patch('src.ai_whisperer.orchestrator.json.loads')
-    @patch('builtins.open', new_callable=mock_open, read_data="test content")
-    def test_generate_full_project_plan_no_steps(self, mock_file_open, mock_json_loads,
-                                               mock_hash, mock_is_file, mock_api_call, orchestrator, mock_prompt_content):
+    @patch('builtins.open', new_callable=mock_open) # Patch open for file reading
+    def test_generate_full_project_plan_no_steps(self, mock_open_file, mock_json_loads,
+                                               mock_hash, mock_is_file, mock_api_call, orchestrator, mock_prompt_content, mock_requirements_content):
+        # Configure the mock_open_file to return mock requirements content when requirements.md is opened
+        mock_open_file.return_value.__enter__.return_value.read.return_value = mock_requirements_content
+
         initial_result = {}
         # Patch the _load_prompt_template method to return our mock content
         with patch.object(orchestrator, '_load_prompt_template', return_value=(mock_prompt_content, Path('/tmp/mock_path.md'))):
@@ -470,6 +482,16 @@ No additional properties are allowed at the top level.
                 },
                 'task_id': 'mock_task_id_2'
             }
+            # Define the data expected AFTER postprocessing and for the file read-back for the no_steps case
+            expected_empty_plan_data_read = {
+                'task_id': 'mock_task_id_2',
+                'input_hashes': {
+                    'requirements_md': 'test_hash',
+                    'config_json': 'test_hash',
+                    'prompt_file': 'test_hash'
+                },
+                'plan': []
+            }
             # Add extra mock returns to prevent StopIteration
             mock_json_loads.side_effect = [
                 # Call 1: Inside add_items_postprocessor
@@ -477,36 +499,39 @@ No additional properties are allowed at the top level.
                 # Call 2: After postprocessing in generate_initial_json
                 expected_empty_plan_data,
                 # Call 3: Reading file back in generate_full_project_plan
-                expected_empty_plan_data,
+                expected_empty_plan_data_read,
                 # Call 4: Add extra return value for any additional calls
-                expected_empty_plan_data,
+                expected_empty_plan_data_read,
                 # Call 5: Add another value just to be safe
-                expected_empty_plan_data
+                expected_empty_plan_data_read
             ]
-            # Mock jsonschema validation
+            # Mock jsonschema validation and subtask generator
+            # Also mock json.load specifically for reading the saved task plan file
             with patch('src.ai_whisperer.orchestrator.jsonschema.validate'):
-                # Mock subtask generator
                 with patch('src.ai_whisperer.subtask_generator.SubtaskGenerator') as mock_subtask_gen:
-                    mock_generator = MagicMock()
-                    mock_subtask_gen.return_value = mock_generator
+                     with patch('src.ai_whisperer.orchestrator.json.load') as mock_json_load_file:
+                        # Configure mock_json_load_file to return the expected data for the no_steps case
+                        mock_json_load_file.return_value = expected_empty_plan_data_read
     
-                    # Call the method under test
-                    # Add schema to result_data before calling pipeline.process
-                    result_data_with_schema = {**initial_result, "schema": orchestrator.task_schema}
-                    result = orchestrator.generate_full_project_plan('requirements.md', 'config.json')
-    
-                    # Check that the openrouter call had the correct arguments
-                    mock_api_call.assert_called_once()
-                    call_args = mock_api_call.call_args
-                    assert 'prompt_text' in call_args[1]
-                    assert 'model' in call_args[1]
-                    assert 'params' in call_args[1]
-                    assert call_args[1]['model'] == orchestrator.openrouter_client.model
-                    assert call_args[1]['params'] == orchestrator.openrouter_client.params
-    
-            # Assertions
-            assert result is not None
-            assert 'task_plan' in result
-            assert 'subtasks' in result
-            assert len(result['subtasks']) == 0
-            assert mock_generator.generate_subtask.call_count == 0
+                        mock_generator = MagicMock()
+                        mock_subtask_gen.return_value = mock_generator
+        
+                        # Call the method under test
+                        # Add schema to result_data before calling pipeline.process
+                        result_data_with_schema = {**initial_result, "schema": orchestrator.task_schema}
+                        result = orchestrator.generate_full_project_plan('requirements.md', 'config.json')
+        
+                        # Check that the openrouter call had the correct arguments
+                        mock_api_call.assert_called_once()
+                        call_args = mock_api_call.call_args
+                        assert 'prompt_text' in call_args[1]
+                        assert 'model' in call_args[1]
+                        assert 'params' in call_args[1]
+                        assert call_args[1]['model'] == orchestrator.openrouter_client.model
+                        assert call_args[1]['params'] == orchestrator.openrouter_client.params
+                        # Assertions
+                        assert result is not None
+                        assert 'task_plan' in result
+                        assert 'subtasks' in result
+                        assert len(result['subtasks']) == 0 # Expect 0 subtasks for empty plan
+                        assert mock_generator.generate_subtask.call_count == 0 # Ensure generate_subtask was not called

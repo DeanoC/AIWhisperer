@@ -1,0 +1,29 @@
+{
+  "description": "Run tests to validate CLI argument parsing, CSV formatting, and output logic.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "src/ai_whisperer/main.py",
+      "tests/unit/test_main_list_models.py"
+    ],
+    "output_artifacts": [],
+    "instructions": [
+      "Navigate to the root directory of the AIWhisperer project.",
+      "Ensure all dependencies are installed (e.g., by running `pip install -r requirements.txt` and `pip install -r test_requirements.md`).",
+      "Execute the specific test file `tests/unit/test_main_list_models.py` using a test runner like pytest.",
+      "Observe the test results.",
+      "Confirm that all tests within `test_main_list_models.py` related to CLI argument parsing, CSV output generation, file writing, and console output fallback report as 'passed'."
+    ],
+    "constraints": [
+      "Do not modify any source code or test files.",
+      "Only execute the specified test file."
+    ],
+    "validation_criteria": [
+      "The test execution report shows 0 failures and 0 errors for `tests/unit/test_main_list_models.py`."
+    ]
+  },
+  "step_id": "validate_cli_and_csv_output",
+  "task_id": "bac1d332-c4a9-4b4c-8553-f27f24263d8e",
+  "subtask_id": "e3305b4d-9cae-4ab4-a4cf-633b6697a093"
+}

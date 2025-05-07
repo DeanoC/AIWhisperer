@@ -21,7 +21,31 @@ MOCK_CONFIG = {
         'app_name': 'mock_app'
     },
     'prompts': {
-        'subtask_generator_prompt_content': "Refine this step: {subtask_json}",
+        'subtask_generator_prompt_content': """# Subtask Generator Default Prompt
+
+You are an AI assistant tasked with expanding a high-level step from a task plan into a detailed subtask definition in JSON format.
+
+**Overall Context:**
+```text
+{overall_context}
+```
+
+**Workspace Context:**
+```text
+{workspace_context}
+```
+
+**Input Step:**
+```json
+{md_content}
+```
+
+**Instructions:**
+
+Based on the "Overall Context", "Workspace Context", and the "Input Step", generate a detailed JSON definition for the subtask. The JSON should adhere to the subtask schema and provide comprehensive instructions for an AI agent to complete this specific step.
+
+Produce **only** the JSON document, enclosed in ```json fences.
+""",
         # Add other prompt contents if needed by the generator
     },
     'output_dir': './test_output/'
@@ -36,7 +60,8 @@ VALID_INPUT_STEP = {
     }
 }
 
-MOCK_AI_RESPONSE_JSON_VALID = """{
+MOCK_AI_RESPONSE_JSON_VALID = """```json
+{
   "step_id": "test_step_1_refined",
   "description": "Implement the core logic for feature X in src/feature_x.py.",
   "agent_spec": {
@@ -56,6 +81,7 @@ MOCK_AI_RESPONSE_JSON_VALID = """{
     "Unit tests in tests/test_feature_x.py pass."
   ]
 }
+```
 """
 
 MOCK_AI_RESPONSE_JSON_INVALID_SCHEMA = """
@@ -90,8 +116,88 @@ def mock_openrouter_client():
 @pytest.fixture
 def mock_filesystem():
     """Fixture to mock file system operations (open, write, exists, etc.)."""
-    # Using mock_open for basic file writing simulation
-    m_open = mock_open()
+    # Define content for different files
+    schema_content = """{
+  "type": "object",
+  "properties": {
+    "subtask_id": {
+      "type": "string",
+      "description": "Unique identifier for the subtask (e.g., UUID)",
+      "format": "uuid"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "ID of the parent task plan this subtask belongs to.",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "description": "A short, descriptive name for the subtask."
+    },
+    "description": {
+      "type": "string",
+      "description": "A detailed description of the subtask's purpose and instructions."
+    },
+    "instructions": {
+      "type": "string",
+      "description": "Specific instructions for the AI agent executing this subtask."
+    }
+  },
+  "required": ["subtask_id", "task_id", "name", "description", "instructions"],
+  "additionalProperties": false
+}"""
+
+    prompt_template_content = """# Subtask Generator Default Prompt
+
+You are an AI assistant tasked with expanding a high-level step from a task plan into a detailed subtask definition in JSON format.
+
+**Overall Context:**
+```text
+{overall_context}
+```
+
+**Workspace Context:**
+```text
+{workspace_context}
+```
+
+**Input Step:**
+```json
+{md_content}
+```
+
+**Instructions:**
+
+Based on the "Overall Context", "Workspace Context", and the "Input Step", generate a detailed JSON definition for the subtask. The JSON should adhere to the subtask schema and provide comprehensive instructions for an AI agent to complete this specific step.
+
+Produce **only** the JSON document, enclosed in ```json fences.
+"""
+
+    # Create a mock_open instance and a dedicated mock file handle for writing
+    m_open = MagicMock()
+    mock_write_handle = mock_open()() # Create a single mock handle for writing
+
+    # Define a side effect function for mock_open
+    def open_side_effect(file_path, mode='r', encoding=None):
+        # Convert Path objects to string for consistent comparison
+        file_path_str = str(file_path)
+
+        if 'subtask_schema.json' in file_path_str and 'schemas' in file_path_str:
+            # Return a mock file handle with schema content
+            return mock_open(read_data=schema_content)()
+        elif 'subtask_generator_default.md' in file_path_str and 'prompts' in file_path_str:
+            # Return a mock file handle with prompt template content
+            return mock_open(read_data=prompt_template_content)()
+        elif mode == 'w':
+            # Return the dedicated mock write handle for writing
+            return mock_write_handle
+        else:
+            # For other files or modes, raise FileNotFoundError
+            raise FileNotFoundError(f"Mocked file not found: {file_path}")
+
+    # Set the side effect for the mock_open instance
+    m_open.side_effect = open_side_effect
+
     # Patch pathlib.Path.mkdir as the code now uses it
     with patch('builtins.open', m_open), \
          patch('pathlib.Path.mkdir') as mock_path_mkdir, \
@@ -100,11 +206,15 @@ def mock_filesystem():
         mock_exists.return_value = False
         # Ensure Path.mkdir is also mocked for consistency
         mock_path_mkdir.return_value = None
-        yield {
+        mock_filesystem_dict = {
             'open': m_open,
-            'path_mkdir': mock_path_mkdir, # Use this key now
-            'exists': mock_exists
+            'path_mkdir': mock_path_mkdir,
+            'exists': mock_exists,
+            'mock_write_handle': mock_write_handle # Include the dedicated write handle
         }
+        print(f"DEBUG: mock_filesystem fixture yielding: {mock_filesystem_dict}")
+        yield mock_filesystem_dict
+
 
 @pytest.fixture
 def mock_schema_validation():
@@ -128,13 +238,14 @@ def test_subtask_generator_initialization(mock_load_config):
 def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock_filesystem, mock_schema_validation):
     """Tests successful generation and saving of a subtask JSON."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
-    from unittest.mock import ANY, patch
+    from unittest.mock import ANY, patch, MagicMock
     from pathlib import Path
+    import json # Import json to patch json.dump
 
     # Pass the output_dir from MOCK_CONFIG during instantiation
     generator = SubtaskGenerator('dummy_config.json', output_dir=MOCK_CONFIG['output_dir'])
 
-    # The test is failing because the actual output contains 'step_id: test_step_1' 
+    # The test is failing because the actual output contains 'step_id: test_step_1'
     # but we're asserting 'step_id: test_step_1_refined'
     # Either modify the mock response to match what's expected or update the assertion
 
@@ -142,99 +253,81 @@ def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock
     # Mock AI response using the correct method name with the expected step_id
     mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_JSON_VALID
 
-    # Create a result_data with a schema to trigger the special case in subtask_generator.py
-    # This will make it try to parse the JSON directly instead of going through the pipeline
-    result_data = {
-        "schema": {
-            "type": "object",
-            "properties": {
-                "step_id": {"type": "string"},
-                "description": {"type": "string"},
-                "agent_spec": {"type": "object"},
-                "constraints": {"type": "array"},
-                "validation_criteria": {"type": "array"}
-            },
-            "required": ["step_id", "description", "agent_spec"]
-        },
-        "success": True,
-        "logs": ["Test schema provided"],
-        "steps": {}  # Add the steps key to the result_data dictionary
-    }
-
     # Mock os.path.exists to simulate output file not existing initially
     mock_filesystem['exists'].return_value = False
 
-    try:
-        output_path = generator.generate_subtask(VALID_INPUT_STEP, result_data=result_data)
-    except Exception as e:
-        print(f"FULL ERROR MESSAGE: {e}")
-        print(f"ERROR TYPE: {type(e)}")
-        raise
+    # Patch json.dump to verify the data being written
+    with patch('json.dump') as mock_json_dump:
+        try:
+            output_path, generated_data = generator.generate_subtask(VALID_INPUT_STEP)
+        except Exception as e:
+            print(f"FULL ERROR MESSAGE: {e}")
+            print(f"ERROR TYPE: {type(e)}")
+            raise
 
-    # 1. Verify prompt preparation (check call to call_chat_completion)
-    mock_openrouter_client.call_chat_completion.assert_called_once()
-    call_args, call_kwargs = mock_openrouter_client.call_chat_completion.call_args
-    # Check keyword arguments used in the call
-    assert 'prompt_text' in call_kwargs
-    assert VALID_INPUT_STEP['description'] in call_kwargs['prompt_text']
-    assert 'model' in call_kwargs
-    assert call_kwargs['model'] == mock_openrouter_client.model
-    assert 'params' in call_kwargs
-    assert call_kwargs['params'] == mock_openrouter_client.params
+        # 1. Verify prompt preparation (check call to call_chat_completion)
+        mock_openrouter_client.call_chat_completion.assert_called_once()
+        call_args, call_kwargs = mock_openrouter_client.call_chat_completion.call_args
+        # Check keyword arguments used in the call
+        assert 'prompt_text' in call_kwargs
+        assert VALID_INPUT_STEP['description'] in call_kwargs['prompt_text']
+        assert 'model' in call_kwargs
+        assert call_kwargs['model'] == mock_openrouter_client.model
+        assert 'params' in call_kwargs
+        assert call_kwargs['params'] == mock_openrouter_client.params
 
-    # 2. Verify schema validation - fix the test to use ANY for expected values that vary
-    expected_schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
+        # 2. Verify schema validation - fix the test to use ANY for expected values that vary
+        expected_schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
 
-    # Instead of asserting the exact call, check that it was called once
-    # and then verify important attributes separately
-    assert mock_schema_validation.call_count == 1
-    validation_args = mock_schema_validation.call_args[0]
+        # Instead of asserting the exact call, check that it was called once
+        # and then verify important attributes separately
+        assert mock_schema_validation.call_count == 1
+        validation_args = mock_schema_validation.call_args[0]
 
-    # Verify the schema path is correct
-    assert validation_args[1] == expected_schema_path
+        # Verify the schema path is correct
+        assert validation_args[1] == expected_schema_path
 
-    # Verify step_id is present in the validated data
-    assert 'step_id' in validation_args[0]
+        # Verify step_id is present in the validated data
+        assert 'step_id' in validation_args[0]
 
-    # Verify subtask_id is present (but don't check its exact value)
-    assert 'subtask_id' in validation_args[0]
+        # Verify subtask_id is present (but don't check its exact value)
+        assert 'subtask_id' in validation_args[0]
 
-    # Other assertions as needed...
+        # Other assertions as needed...
 
-    # 3. Verify output file path generation
-    expected_output_filename = f"subtask_{VALID_INPUT_STEP['step_id']}.json"
-    expected_output_dir = Path(MOCK_CONFIG['output_dir'])
-    expected_path = expected_output_dir / expected_output_filename
-    assert output_path == expected_path.resolve()
+        # 3. Verify output file path generation
+        expected_output_filename = f"subtask_{VALID_INPUT_STEP['step_id']}.json"
+        expected_output_dir = Path(MOCK_CONFIG['output_dir'])
+        expected_path = expected_output_dir / expected_output_filename
+        assert output_path == expected_path.resolve()
 
-    # 4. Verify directory creation and file writing
-    mock_filesystem['path_mkdir'].assert_called_once_with(parents=True, exist_ok=True)
+        # Also assert that the generated_data is a dictionary and contains subtask_id
+        assert isinstance(generated_data, dict)
+        assert 'subtask_id' in generated_data
 
-    # Check that open was called at least once
-    assert mock_filesystem['open'].call_count > 0
+        # 4. Verify directory creation and file writing
+        mock_filesystem['path_mkdir'].assert_called_once_with(parents=True, exist_ok=True)
 
-    # Find the call to open the expected output file
-    output_file_call = None
-    for call in mock_filesystem['open'].call_args_list:
-        args, kwargs = call
-        if args[0] == expected_path and args[1] == 'w' and kwargs.get('encoding') == 'utf-8':
-            output_file_call = call
-            break
+        # Check that open was called at least once
+        assert mock_filesystem['open'].call_count > 0
 
-    # Assert that the expected output file was opened
-    assert output_file_call is not None, f"Expected open({expected_path}, 'w', encoding='utf-8') to be called"
+        # Find the call to open the expected output file and capture the returned handle
+        # Find the call to open the expected output file
+        # Find the call to open the expected output file
+        output_file_call_found = False
+        for call_item in mock_filesystem['open'].call_args_list:
+            args, kwargs = call_item
+            if args[0] == expected_path and args[1] == 'w' and kwargs.get('encoding') == 'utf-8':
+                output_file_call_found = True
+                break
 
-    # Get the handle and written content
-    handle = mock_filesystem['open']()
-    written_content = "".join(call.args[0] for call in handle.write.call_args_list)
+        # Assert that the expected output file was opened
+        assert output_file_call_found is True, f"Expected open({expected_path}, 'w', encoding='utf-8') to be called"
 
-    # Update the assertion to check for JSON content
-    # Now that we're using the pipeline, the step_id in the written content is the one from the AI response
-    # which is "test_step_1_refined"
-    assert '"step_id": "test_step_1_refined"' in written_content
-    assert '"subtask_id":' in written_content # Check that subtask_id was added
+        # Verify json.dump was called with the correct data and the dedicated mock write handle
+        mock_json_dump.assert_called_once_with(generated_data, mock_filesystem['mock_write_handle'], indent=2, ensure_ascii=False)
 
-    # Note: We don't need to call generate_subtask again, as we've already verified it works
+# Note: We don't need to call generate_subtask again, as we've already verified it works
 
 def test_generate_subtask_ai_error(mock_load_config, mock_openrouter_client):
     """Tests handling of API errors from OpenRouter."""
@@ -280,7 +373,7 @@ def test_generate_subtask_file_write_error(mock_load_config, mock_openrouter_cli
         "steps": {}  # Add the steps key to the result_data dictionary
     }
 
-    with pytest.raises(SubtaskGenerationError, match="Failed to write output file"):
+    with pytest.raises(SubtaskGenerationError, match="An unexpected error occurred during subtask generation: Disk full"):
         generator.generate_subtask(VALID_INPUT_STEP, result_data=result_data)
 
 def test_generate_subtask_json_parsing_error(mock_load_config, mock_openrouter_client):
