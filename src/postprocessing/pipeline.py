@@ -102,26 +102,26 @@ class PostprocessingPipeline:
             # logger.debug(f"Output from {step_name} (type: {type(current_content)}): {str(current_content)[:200]}...") # Log first 200 chars
 
             # Save the output of this step to a temporary file for debugging
-            try:
-                # Get step_id from data if available, otherwise use "unknown"
-                step_id = "unknown"
-                try:
-                    if "items_to_add" in data and "top_level" in data["items_to_add"]:
-                        step_id = data["items_to_add"]["top_level"].get("step_id", "unknown")
-                except Exception as e:
-                    logger.warning(f"Could not retrieve step_id from data: {e}")
+            # try:
+            #     # Get step_id from data if available, otherwise use "unknown"
+            #     step_id = "unknown"
+            #     try:
+            #         if "items_to_add" in data and "top_level" in data["items_to_add"]:
+            #             step_id = data["items_to_add"]["top_level"].get("step_id", "unknown")
+            #     except Exception as e:
+            #         logger.warning(f"Could not retrieve step_id from data: {e}")
 
-                temp_filename = f"output/{step_id}_step_output_{step_name}.txt"
-                with open(temp_filename, "w", encoding="utf-8") as f:
-                    # Handle both string and dictionary content 
-                    if isinstance(current_content, str):
-                        f.write(current_content)
-                    else:
-                        # Use a simple representation for non-string content
-                        f.write(str(current_content))
-                logger.debug(f"Saved output of {step_name} to {temp_filename}")
-            except IOError as e:
-                logger.warning(f"Failed to save output of {step_name} to temporary file: {e}")
+            #     temp_filename = f"output/{step_id}_step_output_{step_name}.txt"
+            #     with open(temp_filename, "w", encoding="utf-8") as f:
+            #         # Handle both string and dictionary content 
+            #         if isinstance(current_content, str):
+            #             f.write(current_content)
+            #         else:
+            #             # Use a simple representation for non-string content
+            #             f.write(str(current_content))
+            #     logger.debug(f"Saved output of {step_name} to {temp_filename}")
+            # except IOError as e:
+            #     logger.warning(f"Failed to save output of {step_name} to temporary file: {e}")
 
         return current_content, current_data
 
