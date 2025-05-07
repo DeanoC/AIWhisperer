@@ -268,7 +268,7 @@ class Orchestrator:
                 md_content=requirements_content, input_hashes_dict=hashes_json_string
             )
             logger.debug(
-                f"Constructed final prompt (first 500 chars):\n{final_prompt[:500]}..."
+                f"Constructed final prompt:\n{final_prompt}..."
             )
             # 5. Call OpenRouter API
             logger.info("Calling OpenRouter API...")

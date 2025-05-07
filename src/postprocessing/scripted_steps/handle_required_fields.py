@@ -101,25 +101,35 @@ def handle_required_fields(content: Union[str, dict, list], data: dict = None) -
             # Start with a copy of the content part if it's a dictionary, otherwise an empty dict
             result = content_part.copy() if isinstance(content_part, dict) else {}
 
-            # Iterate through the schema to add missing required fields or replace nulls with defaults
-            for key, default_value in schema_part.items():
-                if isinstance(default_value, dict):  # Handle nested structures
-                    if key in result and isinstance(result.get(key), dict):
-                        # Recursively process nested dictionaries
-                        result[key] = process_fields(result[key], default_value)
-                    else:
-                        # Add missing nested structure or replace non-dict value with processed default
-                        result[key] = process_fields({}, default_value) # Start with empty dict for recursion
+            # Iterate through the schema to add missing required fields
+            for key, schema_value in schema_part.items():
+                if isinstance(schema_value, dict):
+                    # For objects, check if they have properties and required fields
+                    if "type" in schema_value and schema_value["type"] == "object":
+                        # Handle nested object properties
+                        props = schema_value.get("properties", {})
+                        if key in result and isinstance(result[key], dict):
+                            result[key] = process_fields(result[key], props)
+                        else:
+                            # Only create missing object if it's required
+                            if key in schema_value.get("required", []):
+                                result[key] = process_fields({}, props)
+                    elif "properties" in schema_value:
+                        # Direct object schema
+                        if key in result and isinstance(result[key], dict):
+                            result[key] = process_fields(result[key], schema_value["properties"])
+                        else:
+                            # Only create missing object if it's required
+                            if key in schema_part.get("required", []):
+                                result[key] = process_fields({}, schema_value["properties"])
                 else:
-                    # Add the field if it's missing or if the content value is None
-                    if key not in result or result[key] is None:
-                         result[key] = default_value
-                    # Note: We are not enforcing type based on schema default here,
-                    # only ensuring presence and handling None. Full schema validation
-                    # should be done by a separate step.
-
-            # Optional: Remove fields not in schema? The current YAML version preserves them.
-            # Sticking to preserving extra fields for now.
+                    # For non-objects, only add if missing and required
+                    if key not in result and key in schema_part.get("required", []):
+                        # Use default value if specified, otherwise null
+                        default_value = (schema_value.get("default") 
+                                       if isinstance(schema_value, dict) and "default" in schema_value 
+                                       else None)
+                        result[key] = default_value
 
             return result
 

@@ -234,11 +234,11 @@ def main():
 
             console.print(f"Generating initial task plan from: {args.requirements}")
             # Generate only the main task plan YAML
-            result = orchestrator.generate_initial_yaml(args.requirements, args.config)
+            result = orchestrator.generate_initial_json(args.requirements, args.config)
             logger.info(f"Generated task YAML: {result}")
 
             # Use the returned path in the success message
-            console.print(f"[green]Successfully generated task YAML: {result}[/green]")
+            console.print(f"[green]Successfully generated task JSON: {result}[/green]")
         except ConfigError as e:
             logger.error(f"Configuration error: {e}", exc_info=False)
             logger.debug(f"Configuration error details:", exc_info=True)

@@ -58,7 +58,7 @@ def mock_schema_content():
 @pytest.fixture
 def mock_prompt_content():
     """Provides basic prompt template content."""
-    return "Prompt template with {md_content} and {input_hashes_dict}"
+    return "# Mock Prompt\n\nYou are an AI assistant tasked with converting a user's natural language requirements into a structured JSON task plan.\n\n**User Requirements Provided:**\n\n```text\n{{md_content}}\n```\n\n"
 
 @pytest.fixture
 def mock_requirements_content():
@@ -203,17 +203,186 @@ class TestOrchestratorSubtasks:
     @pytest.fixture
     def orchestrator(self, mock_config, setup_orchestrator_files):
         with patch('src.ai_whisperer.orchestrator.json.load') as mock_json_load:
-            mock_json_load.return_value = {'type': 'object'} # Simplified schema
+            mock_json_load.return_value = {'type': 'object'}  # Simplified schema
             return Orchestrator(mock_config)
+            
+    @pytest.fixture
+    def mock_prompt_content(self):
+        """Provides basic prompt template content for tests in this class."""
+        return "# Mock Prompt\n\nYou are an AI assistant tasked with converting a user's natural language requirements into a structured JSON task plan.\n\n**User Requirements Provided:**\n\n```text\n{{md_content}}\n```\n\n"
 
     @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI.call_chat_completion')
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
     @patch('src.ai_whisperer.orchestrator.json.loads')
     def test_generate_full_project_plan(self, mock_json_loads, mock_hash,
-                                       mock_is_file, mock_api_call, orchestrator):
-        mock_api_call.return_value = "```json\n{\n  \"plan\": [\n    {\n      \"step_id\": \"step1\"\n    },\n    {\n      \"step_id\": \"step2\"\n    }\n  ]\n}\n```"
+                                       mock_is_file, mock_api_call, orchestrator, mock_prompt_content):
+        # Create a mock for the _load_prompt_template method
+        mock_load_prompt = MagicMock(return_value=(mock_prompt_content, Path('/tmp/mock_path.md')))
+        # Replace the orchestrator's _load_prompt_template method with our mock
+        orchestrator._load_prompt_template = mock_load_prompt
+        
+        # The API call should return a simple JSON string wrapped in code fences to simulate AI response
+        mock_api_call.return_value = """```json
+    {
+      "natural_language_goal": "Test goal",
+      "plan": [
+    {"step_id": "step1"}, 
+    {"step_id": "step2"}
+      ]
+    }
 
+**Output:**
+
+# Orchestrator Default Prompt
+
+You are an AI assistant tasked with converting a user's natural language requirements into a structured JSON task plan.
+
+**Input:**
+
+1. **User Requirements:** A markdown document containing the user's goal.
+
+**Output:**
+
+Produce **only** a JSON document, enclosed in ```json fences, adhering strictly to the following schema:
+
+The JSON document must be an object with the following properties:
+- natural_language_goal (string): A concise summary of the user's main objective
+- overall_context (string, optional): Shared background information, constraints, style guides, etc., applicable to all steps
+- plan (array): An array of step objects, each with:
+  - step_id (string): Unique identifier for this step within the task (e.g., 'step-1', 'generate-code')
+  - description (string): Human-readable description of the step's purpose
+  - depends_on (array of strings, default []): List of step_ids that must be completed before this step
+  - agent_spec (object): An object with:
+    - type (string): Categorizes the step type. Prefer types from the prioritized list in instructions (e.g., 'planning', 'code_generation', 'test_generation', 'file_edit', 'validation', 'documentation').
+    - input_artifacts (array of strings, default []): List of required input file paths or data identifiers
+    - output_artifacts (array of strings, default []): List of expected output file paths or data identifiers
+    - instructions (string): Detailed instructions for the AI agent executing this step. MUST be a single string, using proper JSON string escaping with newline characters (\n) for readability.
+    - constraints (array of strings, default []): Specific rules or conditions the output must satisfy
+    - validation_criteria (array of strings, default []): Conditions to check for successful completion
+    - model_preference (object or null, default null): Optional model preferences with properties like provider, model, temperature, and max_tokens
+
+Required properties: natural_language_goal, plan
+No additional properties are allowed at the top level.
+
+**Instructions:**
+
+1. **Analyze the provided `User Requirements` EXCLUSIVELY.**
+   * **Your entire response MUST be based SOLELY on the User Requirements section.**
+   * **DO NOT invent, hallucinate, or generate plans for features or tasks NOT explicitly described in the `User Requirements`.**
+   * **If the `User Requirements` describes Feature X, the generated plan MUST implement Feature X and ONLY Feature X.**
+2. Focus on the core task requirements and structure.
+3. Set the `natural_language_goal` field to a concise summary of the user's main objective **based *only* on the requirements in `User Requirements`**.
+4. If applicable, populate the `overall_context` field with a **single string** containing any shared background information, constraints, or style guides relevant to the entire task **as derived from `User Requirements`**. Do not use complex objects or nested structures here. If not applicable, omit this field or set it to an empty string.
+6. Decompose the requirements **from `User Requirements`** into a logical sequence of steps (plan). Define `step_id`, `description`, `depends_on` (if any), and `agent_spec` for each step. **The entire plan must directly implement the requirements specified in `User Requirements`.** **Use concise, descriptive, `snake_case` names for `step_id` (e.g., `generate_tests`, `implement_feature`). Avoid hyphens.** Ensure `depends_on` is always present, using an empty list `[]` for initial steps.
+7. Populate the `agent_spec` with appropriate `type`, `input_artifacts`, `output_artifacts`, detailed `instructions`, and optionally `constraints` and `validation_criteria`, **all derived from the analysis of `User Requirements`**.
+   * **Include meaningful `validation_criteria` for all step types, including `planning` and `documentation`, to clearly verify step completion.**
+       * For `planning` steps, consider adding an output artifact (e.g., `docs/analysis_summary.md`) and validating its creation and content clarity. Example:
+
+           ```json
+           "output_artifacts": [
+             "docs/analysis_summary.md"
+           ],
+           "validation_criteria": [
+             "docs/analysis_summary.md exists.",
+             "docs/analysis_summary.md clearly identifies required code changes and test scenarios.",
+             "docs/analysis_summary.md outlines a high-level implementation plan."
+           ]
+           ```
+
+       * For `documentation` steps, ensure criteria explicitly cover all documented items separately. Example:
+
+           ```json
+           "validation_criteria": [
+             "README.md clearly documents the new CLI option.",
+             "CLI help message clearly documents the new CLI option."
+           ]
+           ```
+
+   * **Use explicit and consistent relative paths for artifacts** (e.g., `src/module/file.py`, `tests/unit/test_file.py`, `docs/feature.md`). Ensure consistency in path structure (e.g., always use `tests/unit/` for unit tests).
+
+8. **IMPORTANT JSON FORMATTING GUIDELINES:** For text fields that might contain special characters:
+
+   * For `overall_context`, ensure proper JSON string escaping:
+
+   ```json
+   "overall_context": "This is text with special characters: colons, dashes, etc.\nThe newline character ensures proper formatting."
+   ```
+
+  * Similarly for `agent_spec.instructions`:
+
+   ```json
+   "instructions": "Step 1: Do this first.\nStep 2: Then do this next."
+   ```
+
+9. **Prioritize Agent Types:** When assigning the `agent_spec.type`, prioritize using types from the following list where applicable:
+   * `planning`: For steps involving breaking down tasks, analyzing requirements, or designing approaches.
+   * `code_generation`: For steps that write new code files or significant code blocks.
+   * `test_generation`: Specifically for generating unit tests or test cases.
+   * `file_edit`: For steps that modify existing files (code, configuration, documentation). Use this instead of `code_generation` for modifications.
+   * `validation`: For steps that check code quality, run tests, or verify outputs against criteria (e.g., linting, testing execution, schema validation).
+   * `documentation`: For steps focused on writing or updating documentation (READMEs, docstrings, comments).
+   * `file_io`: For basic file operations like creating directories, moving files, etc., if needed as separate steps.
+   * `analysis`: For steps focused on understanding existing code or data before modification or generation.
+   * `refinement`: For steps specifically designed to improve or correct the output of a previous step based on feedback or validation results.
+   If none of these fit well, you may use another descriptive type.
+10. **Strict Test-Driven Development (TDD):** This project MANDATES a strict TDD methodology. For **any** step involving the creation or modification of executable code (i.e., `type: 'code_generation'` or `type: 'file_edit'`) **required by `User Requirements`**:
+
+* **Test Generation First:** The plan **must** include a dedicated step (`type: 'test_generation'`) that **strictly precedes** the corresponding `code_generation` or `file_edit` step in the plan sequence. This test step must generate tests specifically for the code that will be created or modified in the subsequent step.
+* **Dependency on Tests:** The `code_generation` or `file_edit` step **must** list the corresponding `test_generation` step ID in its `depends_on` list.
+* **Validation After:** Following the `code_generation` or `file_edit` step, the plan **must** include a dedicated step (`type: 'validation'`) responsible for executing the specific tests generated in the preceding `test_generation` step. This validation step **must** depend on the `code_generation` or `file_edit` step.
+* **Test Generation Instructions:** The `test_generation` step's instructions should emphasize creating tests that thoroughly verify the requirements for the *specific code being generated/modified in the next step*. Avoid special casing (e.g., use randomized or varied inputs/identifiers where appropriate, not just fixed examples). Its `validation_criteria` must ensure the test file(s) are created or updated appropriately (e.g., `tests/unit/test_my_feature.py exists`, `tests/unit/test_my_feature.py contains test_new_functionality`).
+* **Validation Instructions:** The `validation` step's instructions must specify running the relevant tests generated in the preceding test step (e.g., using `pytest tests/unit/test_my_feature.py::test_new_functionality`). Its `validation_criteria` must confirm that the test execution command runs successfully and that the specific tests pass (e.g., `pytest tests/unit/test_my_feature.py::test_new_functionality executes successfully`, `Test test_new_functionality in tests/unit/test_my_feature.py passes`).
+* **Code/Edit Agent Instructions:** The instructions for the `code_generation` or `file_edit` agent **must** explicitly forbid implementing code that *only* passes the specific generated tests (i.e., no special-case logic tailored solely to the tests). The code must correctly implement the required functionality as described in the requirements.
+
+11. **Code Reuse:** For steps with `type: 'code_generation'` or `type: 'file_edit'` **required by `User Requirements`**, ensure the `agent_spec.instructions` explicitly directs the executor agent to:
+
+* First, examine the existing codebase (especially potentially relevant utility modules like `utils.py`, `config.py`, `exceptions.py`, etc.) for functions, classes, constants, or custom exceptions that can be reused to fulfill the task. **Mention specific potentially relevant modules (including `exceptions.py` if error handling is involved) in the instructions.**
+* Only implement new logic if suitable existing code cannot be found or adapted.
+* If reusing code, ensure it's imported and used correctly according to project conventions.
+
+12. **JSON Syntax for Strings:** Pay close attention to valid JSON syntax. **ABSOLUTELY DO NOT use markdown-style backticks (`) within JSON string values.** This applies especially to array items in fields like `validation_criteria`, `constraints`, `input_artifacts`, and `output_artifacts`.
+
+* **Correct:** Use properly escaped JSON strings (e.g., `"README.md"`) when referring to files or code elements in these arrays.
+* **Incorrect (DO NOT DO THIS):**
+
+       ```json
+       "validation_criteria": [
+         "`README.md` contains documentation", // INVALID JSON
+         "Check `src/main.py` for changes" // INVALID JSON
+       ]
+       ```
+
+* **Correct Example:**
+
+       ```json
+       "validation_criteria": [
+         "README.md contains documentation",
+         "Check src/main.py for changes",
+         "Output file output/result.txt exists"
+       ]
+       ```
+
+* Backticks (`) are ONLY acceptable when they are part of the *content* of a properly escaped JSON string.
+
+13. Format the `description` and `instructions` fields clearly and actionably. **Crucially, the `instructions` field MUST be a single JSON string.** Use proper JSON string escaping with newline characters (`\n`) and internal markdown formatting (e.g., bullet points, numbered lists, and backticks for code elements *within this string*) for clarity, similar to the project's planning documents.
+
+* **Example of correct multi-line instructions string:**
+
+       ```json
+       "instructions": "# Action 1\nUpdate the file `config.py` based on X.\n- Detail A\n- Detail B\n# Action 2\nGenerate the second file using Y."
+       ```
+
+* **Do NOT generate a JSON array like `"instructions": ["Line 1", "Line 2"]`.**
+
+14. **JSON Structure:** Ensure the generated JSON is perfectly valid. Each property must follow proper JSON syntax with commas separating properties and no trailing comma after the last property. Arrays and objects must be properly closed with matching brackets and braces. All property names must be enclosed in double quotes.
+
+**User Requirements Provided:**
+
+```text
+{md_content}
+```
+"""
         # Define the raw data expected before postprocessing adds hashes/id
         raw_plan_data = {
             'plan': [{'step_id': 'step1'}, {'step_id': 'step2'}]
@@ -234,15 +403,17 @@ class TestOrchestratorSubtasks:
         # Mock json loads - ensure we provide enough mock returns
         # The StopIteration error indicates we need more return values
         mock_json_loads.side_effect = [
-            # Call 1: Inside add_items_postprocessor
+            # Call 1: Parse the raw API response JSON string
             raw_plan_data,
-            # Call 2: After postprocessing in generate_initial_json
+            # Call 2: Inside add_items_postprocessor
+            raw_plan_data,
+            # Call 3: After postprocessing in generate_initial_json
             expected_plan_data,
-            # Call 3: Reading file back in generate_full_project_plan
+            # Call 4: Reading file back in generate_full_project_plan
             expected_plan_data,
-            # Call 4: Add extra return value for any additional calls
+            # Call 5: Add extra return value for any additional calls
             expected_plan_data,
-            # Call 5: Add another value just to be safe
+            # Call 6: Add another value just to be safe
             expected_plan_data
         ]
 
@@ -280,59 +451,62 @@ class TestOrchestratorSubtasks:
     @patch('src.ai_whisperer.orchestrator.json.loads')
     @patch('builtins.open', new_callable=mock_open, read_data="test content")
     def test_generate_full_project_plan_no_steps(self, mock_file_open, mock_json_loads,
-                                               mock_hash, mock_is_file, mock_api_call, orchestrator):
+                                               mock_hash, mock_is_file, mock_api_call, orchestrator, mock_prompt_content):
         initial_result = {}
-        mock_api_call.return_value = "```json\n{\n  \"plan\": []\n}\n```"
-        # Mock json loads for empty task plan
-        raw_empty_plan_data = {
-            'plan': []
-        }
-        expected_empty_plan_data = {
-            'plan': [],
-            'input_hashes': {
-                'requirements_md': 'test_hash',
-                'config_json': 'test_hash',
-                'prompt_file': 'test_hash'
-            },
-            'task_id': 'mock_task_id_2'
-        }
-        # Add extra mock returns to prevent StopIteration
-        mock_json_loads.side_effect = [
-            # Call 1: Inside add_items_postprocessor
-            raw_empty_plan_data,
-            # Call 2: After postprocessing in generate_initial_json
-            expected_empty_plan_data,
-            # Call 3: Reading file back in generate_full_project_plan
-            expected_empty_plan_data,
-            # Call 4: Add extra return value for any additional calls
-            expected_empty_plan_data,
-            # Call 5: Add another value just to be safe
-            expected_empty_plan_data
-        ]
-        # Mock jsonschema validation
-        with patch('src.ai_whisperer.orchestrator.jsonschema.validate'):
-            # Mock subtask generator
-            with patch('src.ai_whisperer.subtask_generator.SubtaskGenerator') as mock_subtask_gen:
-                mock_generator = MagicMock()
-                mock_subtask_gen.return_value = mock_generator
-
-                # Call the method under test
-                # Add schema to result_data before calling pipeline.process
-                result_data_with_schema = {**initial_result, "schema": orchestrator.task_schema}
-                result = orchestrator.generate_full_project_plan('requirements.md', 'config.json')
-
-                # Check that the openrouter call had the correct arguments
-                mock_api_call.assert_called_once()
-                call_args = mock_api_call.call_args
-                assert 'prompt_text' in call_args[1]
-                assert 'model' in call_args[1]
-                assert 'params' in call_args[1]
-                assert call_args[1]['model'] == orchestrator.openrouter_client.model
-                assert call_args[1]['params'] == orchestrator.openrouter_client.params
-
-        # Assertions
-        assert result is not None
-        assert 'task_plan' in result
-        assert 'subtasks' in result
-        assert len(result['subtasks']) == 0
-        assert mock_generator.generate_subtask.call_count == 0
+        # Patch the _load_prompt_template method to return our mock content
+        with patch.object(orchestrator, '_load_prompt_template', return_value=(mock_prompt_content, Path('/tmp/mock_path.md'))):
+            mock_api_call.return_value = "```json\n{\n  \"plan\": []\n}\n```"
+            
+            # Mock json loads for empty task plan
+            raw_empty_plan_data = {
+                'plan': []
+            }
+            expected_empty_plan_data = {
+                'plan': [],
+                'input_hashes': {
+                    'requirements_md': 'test_hash',
+                    'config_json': 'test_hash',
+                    'prompt_file': 'test_hash'
+                },
+                'task_id': 'mock_task_id_2'
+            }
+            # Add extra mock returns to prevent StopIteration
+            mock_json_loads.side_effect = [
+                # Call 1: Inside add_items_postprocessor
+                raw_empty_plan_data,
+                # Call 2: After postprocessing in generate_initial_json
+                expected_empty_plan_data,
+                # Call 3: Reading file back in generate_full_project_plan
+                expected_empty_plan_data,
+                # Call 4: Add extra return value for any additional calls
+                expected_empty_plan_data,
+                # Call 5: Add another value just to be safe
+                expected_empty_plan_data
+            ]
+            # Mock jsonschema validation
+            with patch('src.ai_whisperer.orchestrator.jsonschema.validate'):
+                # Mock subtask generator
+                with patch('src.ai_whisperer.subtask_generator.SubtaskGenerator') as mock_subtask_gen:
+                    mock_generator = MagicMock()
+                    mock_subtask_gen.return_value = mock_generator
+    
+                    # Call the method under test
+                    # Add schema to result_data before calling pipeline.process
+                    result_data_with_schema = {**initial_result, "schema": orchestrator.task_schema}
+                    result = orchestrator.generate_full_project_plan('requirements.md', 'config.json')
+    
+                    # Check that the openrouter call had the correct arguments
+                    mock_api_call.assert_called_once()
+                    call_args = mock_api_call.call_args
+                    assert 'prompt_text' in call_args[1]
+                    assert 'model' in call_args[1]
+                    assert 'params' in call_args[1]
+                    assert call_args[1]['model'] == orchestrator.openrouter_client.model
+                    assert call_args[1]['params'] == orchestrator.openrouter_client.params
+    
+            # Assertions
+            assert result is not None
+            assert 'task_plan' in result
+            assert 'subtasks' in result
+            assert len(result['subtasks']) == 0
+            assert mock_generator.generate_subtask.call_count == 0
