@@ -57,12 +57,23 @@ No additional properties are allowed at the top level.
 
 3. **Test-Driven Development and Code Steps (MANDATORY):**
     * For **each distinct component or piece of functionality involving code, logic, or computation** (including for non-traditional languages like BrainFuck), the plan MUST follow a strict Test-Implement-Validate sequence:
-      * A **dedicated `test_generation` step** that creates specific tests or test stubs for that component's required behavior. If multiple components are tested in one go by a single test_generation step, ensure subsequent implementation steps correctly reference this comprehensive test step for the relevant tests.
-     * A `code_generation` or `file_edit` step that implements the logic for that specific component. This step **MUST** list the relevant `test_generation` step in its `depends_on` array.
-      * A **dedicated `validation` step** that depends on the corresponding code step and specifies how to verify its correct behavior (e.g., by running the tests generated earlier for that component).   * If the language/environment cannot support real execution (e.g., BrainFuck web fetching), the plan must still include:
-     * Simulated/testable stubs for the required logic.
-     * Validation steps that check for correct error handling or simulated output.
-   * Documentation-only or planning-only plans are **not sufficient** for requirements that specify code or logic.
+      * A **dedicated `test_generation` step** that:
+        * Lists any relevant planning or analysis output artifacts in its `input_artifacts` array
+        * Creates specific tests or test stubs based on the planning documentation
+        * Produces well-defined test artifacts listed in `output_artifacts`
+        * If multiple components are tested in one go by a single test_generation step, ensure subsequent implementation steps correctly reference this comprehensive test step for the relevant tests.
+      * A `code_generation` or `file_edit` step that:
+        * Lists both the planning artifacts AND the test artifacts in its `input_artifacts` array
+        * Implements the logic according to the planning specs and to pass the tests
+        * This step **MUST** list the relevant `test_generation` step in its `depends_on` array.
+      * A **dedicated `validation` step** that:
+        * Lists both implementation artifacts AND test artifacts in its `input_artifacts`
+        * Depends on the corresponding code step
+        * Specifies how to verify its correct behavior (e.g., by running the tests generated earlier for that component).
+      * If the language/environment cannot support real execution (e.g., BrainFuck web fetching), the plan must still include:
+        * Simulated/testable stubs for the required logic.
+        * Validation steps that check for correct error handling or simulated output.
+      * Documentation-only or planning-only plans are **not sufficient** for requirements that specify code or logic.
 
 4. **Agent Types (in priority order):**
    1. `planning`: Task breakdown, requirement analysis, approach design

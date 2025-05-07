@@ -85,7 +85,7 @@ class SubtaskGenerator:
             raise SubtaskGenerationError(f"Failed to prepare prompt: {e}") from e
 
 
-    def generate_subtask(self, input_step: Dict[str, Any], result_data: Dict = None) -> str:
+    def generate_subtask(self, input_step: Dict[str, Any], result_data: Dict = None) -> tuple[Path, dict]:
         """
         Generates a detailed subtask JSON definition for the given input step.
 
@@ -101,8 +101,6 @@ class SubtaskGenerator:
         """
         if not isinstance(input_step, dict) or 'step_id' not in input_step or 'description' not in input_step:
              raise SubtaskGenerationError("Invalid input_step format. Must be a dict with 'step_id' and 'description'.")
-
-        step_id = input_step['step_id']
 
         try:
             # 1. Prepare Prompt (now uses stored context via self)
@@ -123,42 +121,34 @@ class SubtaskGenerator:
             if not ai_response_text:
                 raise SubtaskGenerationError("Received empty response from AI.")
 
+            if result_data is None:
+                result_data = {
+                    "logs": []
+                }
+
+            # Ensure items_to_add is present up to date in result_data
+            result_data["items_to_add"] = {
+                "top_level": {
+                    "step_id": input_step["step_id"],
+                    "description": input_step.get("description", ""),
+                    "depends_on": input_step.get("depends_on", []),
+                    "task_id": input_step.get("task_id", ""),
+                },
+                "success": True,
+            }
+
             # 3. Parse AI Response JSON and apply postprocessing
             try:
                 # Debug: Print the AI response text
                 # print(f"AI response text: {ai_response_text}")
 
-                # Create result_data with items to add if not provided
-                if result_data is None:
-                    result_data = {
-                        "items_to_add": {
-                            "top_level": {
-                                "subtask_id": str(uuid.uuid4()),  # Generate a unique subtask ID
-                                "step_id": step_id  # Preserve the original step_id
-                            },
-                            "step_level": {}  # No step-level items for subtasks
-                        },
-                        "success": True,
-                        "steps": {},
-                        "logs": []
-                    }
+                # Load the subtask schema
+                subtask_schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
+                with open(subtask_schema_path, "r", encoding="utf-8") as f:
+                    subtask_schema = json.load(f)
 
-                    # Load the subtask schema
-                    subtask_schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
-                    with open(subtask_schema_path, "r", encoding="utf-8") as f:
-                        subtask_schema = json.load(f)
-
-                    # Add the schema to result_data before calling pipeline.process
-                    result_data["schema"] = subtask_schema
-                elif "items_to_add" not in result_data:
-                    # Ensure items_to_add is present in result_data
-                    result_data["items_to_add"] = {
-                        "top_level": {
-                            "subtask_id": str(uuid.uuid4()),  # Generate a unique subtask ID
-                            "step_id": step_id  # Preserve the original step_id
-                        },
-                        "step_level": {}  # No step-level items for subtasks
-                    }
+                # Add the schema to result_data before calling pipeline.process
+                result_data["schema"] = subtask_schema
 
                 # Always use the pipeline
                 pipeline = PostprocessingPipeline(
@@ -172,21 +162,22 @@ class SubtaskGenerator:
                 )
 
                 # Pass the AI response text through the postprocessing pipeline
-                generated_data, postprocessing_result = pipeline.process(ai_response_text, result_data)
+                generated_data, result_data = pipeline.process(ai_response_text, result_data)
 
                 # Log the postprocessing results
                 logger.info("Postprocessing completed successfully.")
-                # logger.debug(f"Postprocessing result logs: {postprocessing_result.get('logs', [])}")
 
                 # The pipeline should return a dictionary if successful
                 if not isinstance(generated_data, dict):
-                     raise ValueError(f"Postprocessing pipeline did not return a dictionary. Got {type(generated_data).__name__}.")
+                    logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
+                    raise ValueError(f"Postprocessing pipeline did not return a dictionary. Got {type(generated_data).__name__}.")
 
             except (json.JSONDecodeError, ValueError) as e:
+                logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
                 raise SubtaskGenerationError(f"Failed to parse AI response as JSON: {e}\nResponse:\n{ai_response_text}") from e
             except ProcessingError as e: # Catch errors from within the pipeline steps
-                 raise SubtaskGenerationError(f"Error during postprocessing pipeline: {e}") from e
-
+                logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
+                raise SubtaskGenerationError(f"Error during postprocessing pipeline: {e}") from e
 
             # 4. Validate Schema (using placeholder function)
             try:
@@ -195,14 +186,16 @@ class SubtaskGenerator:
                 validate_against_schema(generated_data, schema_path)
             except SchemaValidationError as e:
                 # Re-raise schema validation errors specifically
+                logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
                 raise e
             except Exception as e:
                 # Catch other potential validation errors
+                logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
                 raise SubtaskGenerationError(f"Error during schema validation: {e}") from e
 
             # 5. Save Output JSON
             output_dir_path = Path(self.output_dir)
-            output_filename = f"subtask_{step_id}.json" # Change extension to .json
+            output_filename = f"subtask_{input_step["step_id"]}.json"
             output_path = output_dir_path / output_filename # Use Path object
 
             try:
@@ -212,13 +205,15 @@ class SubtaskGenerator:
                     # Save using json.dump
                     json.dump(generated_data, f, indent=2, ensure_ascii=False)
             except IOError as e:
+                logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
                 raise SubtaskGenerationError(f"Failed to write output file {output_path}: {e}") from e
             except TypeError as e: # Catch JSON serialization errors
-                 raise SubtaskGenerationError(f"Error serializing data to JSON for file {output_path}: {e}") from e
+                logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
+                raise SubtaskGenerationError(f"Error serializing data to JSON for file {output_path}: {e}") from e
 
 
             logger.info(f"Generated subtask JSON at: {output_path}")
-            return output_path.resolve() # Return resolved Path object
+            return (output_path.resolve(),generated_data)
 
         except OpenRouterAPIError as e:
             raise SubtaskGenerationError(f"AI interaction failed: {e}") from e
@@ -230,7 +225,8 @@ class SubtaskGenerator:
              raise e
         except SchemaValidationError as e:
              # Re-raise specific schema errors
-             raise e
+            raise e
         except Exception as e:
             # Catch any other unexpected errors during generation
+            logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
             raise SubtaskGenerationError(f"An unexpected error occurred during subtask generation: {e}") from e

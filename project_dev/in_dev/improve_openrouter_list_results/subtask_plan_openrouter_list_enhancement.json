@@ -1,0 +1,38 @@
+{
+  "description": "Analyze requirements and outline the necessary code modifications in main.py and openrouter_api.py, as well as the data structure for model details.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "planning",
+    "input_artifacts": [
+      "project_dev/rfc/improve_openrouter_list_results.md",
+      "src/ai_whisperer/main.py",
+      "src/ai_whisperer/openrouter_api.py"
+    ],
+    "output_artifacts": [
+      "docs/internal_process/openrouter_list_enhancement_plan.md"
+    ],
+    "instructions": [
+      "Carefully read and understand the requirements outlined in `project_dev/rfc/improve_openrouter_list_results.md` for enhancing the `aiwhisperer list --provider openrouter` command.",
+      "Analyze the current implementation of the `list` command handling in `src/ai_whisperer/main.py` to identify where the new `--output-csv` argument should be parsed and processed.",
+      "Examine the `OpenRouterAPI.list_models()` method in `src/ai_whisperer/openrouter_api.py`. Determine how to modify this method to fetch more comprehensive details about each model, beyond just the model ID.",
+      "Design a suitable Python data structure (e.g., a list of dictionaries, a custom class) to store the detailed model information retrieved from the OpenRouter API. Consider the fields likely to be available and useful (e.g., model ID, name, description, pricing, context window, etc.).",
+      "Outline the logic required to format the collected detailed model information into a standard CSV format. Specify how headers should be handled and how individual data fields should be quoted and separated.",
+      "Plan the implementation steps for exporting the formatted data to a file when the `--output-csv` argument is provided.",
+      "Document the entire plan, including the proposed changes to `main.py`, `openrouter_api.py`, the chosen data structure, and the CSV formatting/export logic, in the markdown file `docs/internal_process/openrouter_list_enhancement_plan.md`."
+    ],
+    "constraints": [
+      "The plan must strictly adhere to the requirements specified in `project_dev/rfc/improve_openrouter_list_results.md`.",
+      "The plan must focus only on enhancing the OpenRouter model listing and CSV export; do not propose changes to other providers or commands.",
+      "The output document must be a single markdown file at the specified path."
+    ],
+    "validation_criteria": [
+      "The file `docs/internal_process/openrouter_list_enhancement_plan.md` is created.",
+      "`docs/internal_process/openrouter_list_enhancement_plan.md` contains a section detailing the planned modifications to `src/ai_whisperer/main.py`.",
+      "`docs/internal_process/openrouter_list_enhancement_plan.md` contains a section detailing the planned modifications to `src/ai_whisperer/openrouter_api.py`.",
+      "`docs/internal_process/openrouter_list_enhancement_plan.md` clearly describes the data structure intended for storing detailed model information.",
+      "`docs/internal_process/openrouter_list_enhancement_plan.md` clearly describes the logic for formatting the data into CSV and exporting it."
+    ]
+  },
+  "step_id": "plan_openrouter_list_enhancement",
+  "task_id": "3628f8eb-55d4-4e1e-84fe-6f0f97d383dd"
+}

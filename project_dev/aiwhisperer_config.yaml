@@ -18,7 +18,7 @@ openrouter:
 
   # Optional: Used for identifying your app in OpenRouter logs (sent as headers).
   # Defaults are provided if these are omitted.
-  site_url: "http://localhost:8000" # Example: Your project's URL (sent as HTTP-Referer).
+  site_url: "http://AIWhisperer:8000" # Example: Your project's URL (sent as HTTP-Referer).
   app_name: "AIWhisperer"           # Example: Your application's name (sent as X-Title).
 
 # --- Prompt Templates --- Required Section ---

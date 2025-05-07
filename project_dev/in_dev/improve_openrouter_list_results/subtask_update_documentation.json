@@ -1,0 +1,40 @@
+{
+  "description": "Update the documentation to reflect the new --output-csv option and the availability of detailed model information.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [
+      "docs/usage.md"
+    ],
+    "output_artifacts": [
+      "docs/usage.md"
+    ],
+    "instructions": [
+      "Open the file `docs/usage.md` for editing.",
+      "Locate the section describing the `--list-models` command.",
+      "Add a new subsection or bullet point specifically for the `--output-csv` option.",
+      "Clearly explain that `--output-csv` is an optional parameter for the `--list-models` command.",
+      "Describe the purpose of `--output-csv`: to output the model list in CSV format.",
+      "Specify that the CSV output includes detailed information about each model, such as model name, provider, context window, pricing (input/output), and whether it's recommended or not.",
+      "Provide an example command demonstrating the usage of `--list-models` with the `--output-csv` option, e.g., `python src/ai_whisperer/main.py --list-models --output-csv`.",
+      "Review the existing examples for `--list-models` and update them if necessary to include the new option or show the different output formats.",
+      "Ensure the language is clear, concise, and easy for users to understand.",
+      "Check for any grammatical errors or typos.",
+      "Save the changes to `docs/usage.md`."
+    ],
+    "constraints": [
+      "Only modify the `docs/usage.md` file.",
+      "Ensure the documentation for `--output-csv` is placed logically within the `--list-models` section."
+    ],
+    "validation_criteria": [
+      "The file `docs/usage.md` has been modified.",
+      "Documentation for the `--output-csv` option has been added under the `--list-models` section in `docs/usage.md`.",
+      "The documentation clearly explains the purpose and usage of `--output-csv`.",
+      "The documentation mentions that the CSV output provides detailed model information (e.g., name, provider, context window, pricing, recommendation status).",
+      "At least one example command showing `--list-models` with `--output-csv` is present.",
+      "The documentation is free of grammatical errors and is properly formatted."
+    ]
+  },
+  "step_id": "update_documentation",
+  "task_id": "3628f8eb-55d4-4e1e-84fe-6f0f97d383dd"
+}

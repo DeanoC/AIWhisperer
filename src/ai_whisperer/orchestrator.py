@@ -243,8 +243,6 @@ class Orchestrator:
             )
 
             workspace_context = build_ascii_directory_tree(".")
-            print(f"Workspace context:\n{workspace_context}")
-
 
             # 3. Read Requirements Content
             logger.info(f"Reading requirements file: {requirements_md_path}")
@@ -412,19 +410,19 @@ class Orchestrator:
         Generates a complete project plan including initial task JSON and all subtasks.
 
         This method:
-        1. First generates the initial task plan YAML
-        2. For each step in the task plan, generates a detailed subtask YAML
-        3. Returns paths to all generated files
-
+        1. First generates the initial task plan JSON
+        2. For each step in the task plan, generates a detailed subtask JSON
+        3. Returns paths to all generated files and step info for the last generated step
+    
         Args:
             requirements_md_path_str: Path string to the input requirements markdown file.
             config_path_str: Path string to the configuration file used.
-
+    
         Returns:
-            Dict with task_plan (Path) and subtasks (list of Paths)
-
+            Dict with task_plan (Path), subtasks (list of Paths), and step_info (Dict with step_id, depends_on, file_path)
+    
         Raises:
-            All exceptions from generate_initial_yaml plus:
+            All exceptions from generate_initial_json plus:
             OrchestratorError: For issues during subtask generation
         """
         logger.info("Starting full project plan generation")
@@ -434,7 +432,7 @@ class Orchestrator:
             requirements_md_path_str, config_path_str
         )
         logger.info(f"Initial task plan generated: {task_plan_path}")
-
+        overplan_path = task_plan_path
         # Load the generated task plan JSON to extract steps
         try:
             with open(task_plan_path, "r", encoding="utf-8") as f:
@@ -463,30 +461,67 @@ class Orchestrator:
 
         # Generate subtask for each step
         subtask_paths = []
-        if "plan" in task_data and isinstance(
-            task_data["plan"], list
-        ):  # Changed from 'steps' to 'plan'
+        step_info = []
+        if "plan" in task_data and isinstance(task_data["plan"], list):
             steps_count = len(task_data["plan"])
+            step_info = [{} for _ in range(steps_count)]
             logger.info(f"Generating subtasks for {steps_count} steps")
 
             for i, step in enumerate(task_data["plan"], 1):
                 try:
                     step_id = step.get("step_id", f"step_{i}")
                     logger.info(f"Generating subtask {i}/{steps_count}: {step_id}")
-                    subtask_path = subtask_generator.generate_subtask(step)
+
+                    # some preprocessing of the step data
+                    step_data = {k: v for k, v in step.items() if k != "depends_on"}
+                    step_data["task_id"] = task_data["task_id"]
+
+                    subtask_path, subtask = subtask_generator.generate_subtask(step_data)
                     subtask_paths.append(subtask_path)
                     logger.info(f"Generated subtask: {subtask_path}")
+                    
+                    # Create step info JSON object
+                    step_info[i - 1] = {
+                        "step_id": step_id,
+                        "file_path": os.path.relpath(subtask_path, start=".").replace(os.sep, '/'),
+                        "depends_on": step.get("depends_on"),
+                        "type": subtask.get('agent_spec', {}).get('type'),
+                        "input_artifacts": subtask.get('agent_spec', {}).get('input_artifacts'),
+                        "output_artifacts": subtask.get('agent_spec', {}).get('output_artifacts'),
+                        "completed": False,
+                    }
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to generate subtask for step {step.get('step_id', i)}: {e}"
-                    )
-                    # Continue with other steps instead of failing completely
+                    logger.warning(f"Failed to generate subtask for step {step.get('step_id', i)}: {e}")
+                    raise e
         else:
             logger.warning("No steps found in task plan, no subtasks will be generated")
 
-        result = {"task_plan": task_plan_path, "subtasks": subtask_paths}
 
-        logger.info(
-            f"Full project plan generation completed with {len(subtask_paths)} subtasks"
-        )
+        # Save the updated task plan to a new file with 'overview' prefix
+        if subtask_paths and "plan" in task_data:
+            task_data["plan"] = step_info
+            # Create new filename with 'overplan' prefix
+            task_plan_path_obj = Path(task_plan_path)
+            overplan_filename = f"overview_{task_plan_path_obj.name}"
+            overplan_path = os.path.join(self.output_dir, overplan_filename)
+            
+            # Save the updated plan with removed steps to the new file
+            try:
+                with open(overplan_path, "w", encoding="utf-8") as f:
+                    json.dump(task_data, f, indent=2)
+                logger.info(f"Saved updated plan with removed steps to: {overplan_path}")
+            except Exception as e:
+                logger.error(f"Failed to save updated plan: {e}")
+        else:
+            logger.info("No steps were processed, not creating overplan file")
+        
+        result = {
+            "task_plan": task_plan_path, 
+            "subtasks": subtask_paths,
+            "step_info": step_info if "step_info" in locals() else None,
+            "overview_plan": overplan_path
+        }
+
+
+        logger.info(f"Full project plan generation completed with {len(subtask_paths)} subtasks")
         return result

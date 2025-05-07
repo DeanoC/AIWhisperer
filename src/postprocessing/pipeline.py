@@ -80,7 +80,6 @@ class PostprocessingPipeline:
         if data is None:
             data = {
                 "success": True,
-                "steps": {},
                 "logs": []
             }
 
@@ -123,16 +122,6 @@ class PostprocessingPipeline:
                 logger.debug(f"Saved output of {step_name} to {temp_filename}")
             except IOError as e:
                 logger.warning(f"Failed to save output of {step_name} to temporary file: {e}")
-
-
-            # Initialize step result tracking if not already present
-            if step_name not in current_data["steps"]:
-                current_data["steps"][step_name] = {
-                    "success": True,
-                    "changes": [],
-                    "errors": [],
-                    "warnings": []
-                }
 
         return current_content, current_data
 

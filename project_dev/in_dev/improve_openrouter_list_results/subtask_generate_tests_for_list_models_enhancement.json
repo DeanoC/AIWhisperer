@@ -1,0 +1,53 @@
+{
+  "description": "Create unit and integration tests for the enhanced --list-models command, including tests for handling --output-csv and verifying the structure of fetched data.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "test_generation",
+    "input_artifacts": [
+      "docs/internal_process/openrouter_list_enhancement_plan.md"
+    ],
+    "output_artifacts": [
+      "tests/unit/test_main_list_models.py",
+      "tests/unit/test_openrouter_api_list_models.py",
+      "tests/integration/test_list_models_command.py"
+    ],
+    "instructions": [
+      "Review the enhancement plan (`docs/internal_process/openrouter_list_enhancement_plan.md`) to understand the expected behavior of the enhanced `--list-models` command.",
+      "Create a new file `tests/unit/test_main_list_models.py` if it doesn't exist.",
+      "In `tests/unit/test_main_list_models.py`, write unit tests using `pytest` and `unittest.mock` to test the `main.py` logic specifically related to the `--list-models` command and the `--output-csv` argument.",
+      "Tests should verify that when `--output-csv` is provided, the correct function/logic is called to handle CSV output.",
+      "Tests should verify that when `--output-csv` is not provided, the correct function/logic is called for standard console output.",
+      "Create a new file `tests/unit/test_openrouter_api_list_models.py` if it doesn't exist.",
+      "In `tests/unit/test_openrouter_api_list_models.py`, write unit tests using `pytest` and `unittest.mock` to test the `openrouter_api.py` functions responsible for fetching and parsing model details.",
+      "Mock the OpenRouter API responses to simulate different scenarios, including successful responses with comprehensive model data, empty results, and API errors (e.g., 400, 500 errors).",
+      "Tests should verify that the parsing logic correctly extracts and structures the expected model details from the mocked API responses.",
+      "Tests should verify how the functions handle empty or erroneous API responses.",
+      "Create a new file `tests/integration/test_list_models_command.py` if it doesn't exist.",
+      "In `tests/integration/test_list_models_command.py`, write integration tests using `pytest` and potentially `subprocess` or `click.testing.CliRunner` to simulate running the `aiwhisperer --list-models` command.",
+      "Write an integration test to run `aiwhisperer --list-models` without `--output-csv` and verify the console output format and content (e.g., check for expected model names and details).",
+      "Write an integration test to run `aiwhisperer --list-models --output-csv models.csv` and verify that a file named `models.csv` is created.",
+      "Verify the content and structure of the generated `models.csv` file (e.g., check headers, number of rows, and data format).",
+      "Ensure all tests have clear and descriptive names indicating the specific functionality or scenario being tested.",
+      "Add necessary imports and fixtures to the test files.",
+      "Do not implement the actual code changes for the `--list-models` enhancement in `main.py` or `openrouter_api.py` in this step."
+    ],
+    "constraints": [
+      "Do not implement the actual code changes for the `--list-models` enhancement at this step, only generate tests.",
+      "Focus exclusively on generating tests for the `--list-models` command and its `--output-csv` option as described in the input and enhancement plan.",
+      "Use `pytest` for writing tests."
+    ],
+    "validation_criteria": [
+      "The file `tests/unit/test_main_list_models.py` exists.",
+      "The file `tests/unit/test_main_list_models.py` contains test functions that specifically test the handling of the `--output-csv` argument for the list-models command.",
+      "The file `tests/unit/test_openrouter_api_list_models.py` exists.",
+      "The file `tests/unit/test_openrouter_api_list_models.py` contains test functions that mock API responses and verify the parsing of comprehensive model details.",
+      "The file `tests/unit/test_openrouter_api_list_models.py` includes tests for handling empty results and API errors.",
+      "The file `tests/integration/test_list_models_command.py` exists.",
+      "The file `tests/integration/test_list_models_command.py` contains integration tests that simulate running the `aiwhisperer --list-models` command.",
+      "Integration tests cover scenarios with and without the `--output-csv` flag, verifying both console output and generated CSV file content/structure.",
+      "All added test functions have descriptive names (e.g., `test_list_models_with_csv_flag`, `test_parse_openrouter_models_success`)."
+    ]
+  },
+  "step_id": "generate_tests_for_list_models_enhancement",
+  "task_id": "3628f8eb-55d4-4e1e-84fe-6f0f97d383dd"
+}

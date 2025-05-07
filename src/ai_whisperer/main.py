@@ -196,6 +196,9 @@ def main():
             # Report success
             console.print(f"[green]Successfully generated project plan:[/green]")
             console.print(f"- Task plan: {result['task_plan']}")
+            if result['task_plan'] != result['overview_plan']:
+                console.print(f"- Overview plan: {result['overview_plan']}")
+
             console.print(f"- Subtasks generated: {len(result['subtasks'])}")
             for i, subtask_path in enumerate(result['subtasks'], 1):
                 console.print(f"  {i}. {subtask_path}")
