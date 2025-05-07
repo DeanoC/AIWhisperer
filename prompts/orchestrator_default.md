@@ -5,6 +5,7 @@ You are an AI assistant tasked with converting a user's natural language require
 **Input:**
 
 1. **User Requirements:** A markdown document containing the user's goal.
+2. **Workspace Context** Details of the current workspace
 
 **Output:**
 
@@ -155,3 +156,6 @@ No additional properties are allowed at the top level.
 
 **User Requirements Provided:**
 {md_content}
+
+**Workspace Context**
+{workspace_context}

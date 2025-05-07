@@ -73,11 +73,11 @@ class SubtaskGenerator:
             subtask_json_str = json.dumps(input_step, indent=2)
 
             # Replace all placeholders in the template
-            prompt = self.subtask_prompt_template
-            prompt = prompt.replace("{subtask_json}", subtask_json_str)
-            # Use stored context
-            prompt = prompt.replace("{overall_context}", self.overall_context)
-            prompt = prompt.replace("{workspace_context}", self.workspace_context)
+            prompt = self.subtask_prompt_template.format(
+                    md_content=subtask_json_str, 
+                    overall_context=self.overall_context,
+                    workspace_context=self.workspace_context,
+                )
 
             return prompt
         except Exception as e:
@@ -170,6 +170,7 @@ class SubtaskGenerator:
                         add_items_postprocessor
                     ]
                 )
+
                 # Pass the AI response text through the postprocessing pipeline
                 generated_data, postprocessing_result = pipeline.process(ai_response_text, result_data)
 

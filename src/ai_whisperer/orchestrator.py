@@ -9,7 +9,7 @@ from typing import Dict, Any, Tuple
 
 
 from . import openrouter_api
-from .utils import calculate_sha256
+from .utils import build_ascii_directory_tree, calculate_sha256
 from .model_selector import get_model_for_task
 from .exceptions import (
     OrchestratorError,
@@ -242,6 +242,10 @@ class Orchestrator:
                 requirements_md_path, config_path, prompt_path
             )
 
+            workspace_context = build_ascii_directory_tree(".")
+            print(f"Workspace context:\n{workspace_context}")
+
+
             # 3. Read Requirements Content
             logger.info(f"Reading requirements file: {requirements_md_path}")
             try:
@@ -265,7 +269,9 @@ class Orchestrator:
             # Escape any curly braces in the JSON string to avoid format string issues
             hashes_json_string = hashes_json_string.replace("{", "{{").replace("}", "}}")
             final_prompt = prompt_template.format(
-                md_content=requirements_content, input_hashes_dict=hashes_json_string
+                md_content=requirements_content, 
+                input_hashes_dict=hashes_json_string,
+                workspace_context=workspace_context,
             )
             # logger.debug(
             #     f"Constructed final prompt:\n{final_prompt}..."
@@ -444,13 +450,14 @@ class Orchestrator:
         overall_context = task_data.get(
             "overall_context", ""
         )  # Default to empty string if missing
-        # TODO: Implement workspace context gathering if needed
-        workspace_context = ""  # Placeholder for now
+        
+        workspace_context = build_ascii_directory_tree(".")
+
         subtask_generator = SubtaskGenerator(
             config_path=config_path_str,
             overall_context=overall_context,
             workspace_context=workspace_context,
-            output_dir=self.output_dir,  # Pass the output_dir from Orchestrator
+            output_dir=self.output_dir
         )
         logger.info("Initialized subtask generator with overall context.")
 
