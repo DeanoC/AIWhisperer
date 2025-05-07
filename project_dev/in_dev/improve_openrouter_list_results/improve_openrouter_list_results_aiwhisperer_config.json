@@ -1,0 +1,219 @@
+{
+  "natural_language_goal": "Enhance the --list-models command to provide detailed model information with an optional CSV output.",
+  "overall_context": "Improve the utility of the AIWhisperer tool's model listing feature.",
+  "plan": [
+    {
+      "step_id": "plan_openrouter_model_enhancement",
+      "description": "Analyze the requirements and existing code to plan the implementation of enhanced OpenRouter model listing and CSV output.",
+      "depends_on": [],
+      "agent_spec": {
+        "type": "planning",
+        "input_artifacts": [
+          "docs/usage.md",
+          "src/ai_whisperer/main.py",
+          "src/ai_whisperer/openrouter_api.py",
+          "project_dev/rfc/improve_openrouter_list_results.md"
+        ],
+        "output_artifacts": [
+          "docs/openrouter_model_enhancement_plan.md"
+        ],
+        "instructions": [
+          "Review the user requirements and the existing code for --list-models and OpenRouterAPI.",
+          "Identify the specific API calls needed to retrieve detailed model information.",
+          "Determine how to integrate the --output-csv argument parsing into main.py.",
+          "Design the data structure for storing comprehensive model details.",
+          "Plan the logic for formatting and writing data to a CSV file.",
+          "Outline the necessary changes to main.py and openrouter_api.py.",
+          "Document the plan in docs/openrouter_model_enhancement_plan.md, including API endpoints, data fields, and code modification strategy."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "docs/openrouter_model_enhancement_plan.md exists.",
+          "docs/openrouter_model_enhancement_plan.md clearly outlines API calls and data points to retrieve.",
+          "docs/openrouter_model_enhancement_plan.md describes the plan for handling the --output-csv argument.",
+          "docs/openrouter_model_enhancement_plan.md includes a strategy for CSV formatting."
+        ]
+      }
+    },
+    {
+      "step_id": "generate_tests_for_model_listing",
+      "description": "Create unit and integration tests for the enhanced model listing functionality and CSV output.",
+      "depends_on": [
+        "plan_openrouter_model_enhancement"
+      ],
+      "agent_spec": {
+        "type": "test_generation",
+        "input_artifacts": [
+          "docs/openrouter_model_enhancement_plan.md",
+          "src/ai_whisperer/main.py",
+          "src/ai_whisperer/openrouter_api.py",
+          "tests/unit/test_main.py",
+          "tests/unit/test_openrouter_api.py"
+        ],
+        "output_artifacts": [
+          "tests/unit/test_openrouter_model_listing.py",
+          "tests/integration/test_openrouter_model_listing_cli.py"
+        ],
+        "instructions": [
+          "Based on the plan, create tests for:",
+          "- Parsing of the --output-csv argument in main.py.",
+          "- Mocking OpenRouter API calls to return detailed model data.",
+          "- openrouter_api.py correctly processing and returning detailed model data.",
+          "- main.py handling the detailed data for console output (no --output-csv).",
+          "- main.py handling the detailed data and writing it to a CSV file when --output-csv is specified.",
+          "- Verifying the content and format of the generated CSV file.",
+          "- Existing console output functionality remains unchanged when --output-csv is not present."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "tests/unit/test_openrouter_model_listing.py exists and contains tests covering API data retrieval and processing.",
+          "tests/integration/test_openrouter_model_listing_cli.py exists and contains tests covering CLI argument parsing and CSV output.",
+          "Tests include cases for both console output and CSV output scenarios.",
+          "Tests verify the structure and content of the detailed model information."
+        ]
+      }
+    },
+    {
+      "step_id": "implement_openrouter_api_enhancement",
+      "description": "Modify OpenRouterAPI.list_models to fetch detailed model information.",
+      "depends_on": [
+        "generate_tests_for_model_listing",
+        "plan_openrouter_model_enhancement"
+      ],
+      "agent_spec": {
+        "type": "file_edit",
+        "input_artifacts": [
+          "src/ai_whisperer/openrouter_api.py",
+          "docs/openrouter_model_enhancement_plan.md",
+          "tests/unit/test_openrouter_model_listing.py"
+        ],
+        "output_artifacts": [
+          "src/ai_whisperer/openrouter_api.py"
+        ],
+        "instructions": [
+          "Modify the list_models method in src/ai_whisperer/openrouter_api.py.",
+          "Update the method to call the appropriate OpenRouter API endpoint that provides detailed model information.",
+          "Parse the API response to extract relevant fields: features, cost (input/output), context window, provider, etc.",
+          "Return a structured data object (e.g., a list of dictionaries or custom objects) containing these details.",
+          "Consult the plan doc for specific API details and required data points.",
+          "Ensure existing functionality for other API calls in the class is not broken."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "src/ai_whisperer/openrouter_api.py is modified.",
+          "The list_models method now retrieves and returns detailed model information according to the plan.",
+          "The method's return structure facilitates easy access to model attributes.",
+          "Basic syntax validation passes."
+        ]
+      }
+    },
+    {
+      "step_id": "implement_cli_and_csv_output",
+      "description": "Modify main.py to handle --output-csv argument and implement CSV export logic.",
+      "depends_on": [
+        "implement_openrouter_api_enhancement",
+        "generate_tests_for_model_listing",
+        "plan_openrouter_model_enhancement"
+      ],
+      "agent_spec": {
+        "type": "file_edit",
+        "input_artifacts": [
+          "src/ai_whisperer/main.py",
+          "docs/openrouter_model_enhancement_plan.md",
+          "tests/integration/test_openrouter_model_listing_cli.py"
+        ],
+        "output_artifacts": [
+          "src/ai_whisperer/main.py"
+        ],
+        "instructions": [
+          "Modify the main function in src/ai_whisperer/main.py.",
+          "Add an optional argument parser for '--output-csv' when '--list-models' is used.",
+          "If '--output-csv' is not specified, use the existing logic to print model names to the console.",
+          "If '--output-csv' is specified, call the enhanced OpenRouterAPI.list_models to get detailed data.",
+          "Implement logic to format the detailed model data and write it to the specified CSV file path.",
+          "Use appropriate CSV library for writing data (e.g., `csv` module).",
+          "Include a header row in the CSV file with appropriate column names.",
+          "Ensure proper handling of different data types for CSV output."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "src/ai_whisperer/main.py is modified.",
+          "Argument parsing for --output-csv is implemented.",
+          "Logic exists to differentiate between console output and CSV output based on --output-csv.",
+          "CSV writing functionality is implemented.",
+          "Basic syntax validation passes."
+        ]
+      }
+    },
+    {
+      "step_id": "validate_model_listing_enhancement",
+      "description": "Run tests to validate the enhanced model listing and CSV output.",
+      "depends_on": [
+        "implement_openrouter_api_enhancement",
+        "implement_cli_and_csv_output"
+      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "src/ai_whisperer/main.py",
+          "src/ai_whisperer/openrouter_api.py",
+          "tests/unit/test_openrouter_model_listing.py",
+          "tests/integration/test_openrouter_model_listing_cli.py"
+        ],
+        "output_artifacts": [],
+        "instructions": [
+          "Run the unit tests in tests/unit/test_openrouter_model_listing.py.",
+          "Run the integration tests in tests/integration/test_openrouter_model_listing_cli.py.",
+          "Ensure all tests related to the enhanced model listing and CSV output pass.",
+          "Manually verify console output when --output-csv is omitted.",
+          "Manually run the command with --output-csv to generate a CSV file and inspect its contents and format for correctness."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "All tests in tests/unit/test_openrouter_model_listing.py pass.",
+          "All tests in tests/integration/test_openrouter_model_listing_cli.py pass.",
+          "Running `ai-whisperer --list-models --config config.yaml` prints model names to console.",
+          "Running `ai-whisperer --list-models --config config.yaml --output-csv models.csv` creates 'models.csv'.",
+          "The generated 'models.csv' file contains detailed model information with appropriate headers and data."
+        ]
+      }
+    },
+    {
+      "step_id": "update_documentation",
+      "description": "Update documentation to reflect the new --output-csv option for --list-models.",
+      "depends_on": [
+        "validate_model_listing_enhancement"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "docs/usage.md",
+          "src/ai_whisperer/main.py"
+        ],
+        "output_artifacts": [
+          "docs/usage.md"
+        ],
+        "instructions": [
+          "Edit docs/usage.md.",
+          "Add documentation for the new optional '--output-csv' parameter for the '--list-models' command.",
+          "Explain its purpose (exporting detailed model info to CSV).",
+          "Provide an example usage command demonstrating the new option.",
+          "Mention the type of data that will be included in the CSV output."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "docs/usage.md is updated.",
+          "The new --output-csv option is clearly documented.",
+          "An example usage with --output-csv is provided.",
+          "The documentation explains the content of the CSV file."
+        ]
+      }
+    }
+  ],
+  "task_id": "1b82deca-8c11-4330-aa30-01a2ff98799f",
+  "input_hashes": {
+    "requirements_md": "04a3feb3fd09a1abf2f451bd7ae8f48a27197749711f8879cf6ccad0dab471f3",
+    "config_json": "eaaa4544d932ac66823099dfbeb80082fff062e3c285c74ca459fd0606eab63a",
+    "prompt_file": "33034ab75c02037264e5d24f7c87b6ecf9c38ce56055c7a0190e58865e5e0bdc"
+  }
+}

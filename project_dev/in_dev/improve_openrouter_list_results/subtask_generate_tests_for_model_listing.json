@@ -1,0 +1,44 @@
+{
+  "description": "Create unit and integration tests for the enhanced model listing functionality and CSV output.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "test_generation",
+    "input_artifacts": [
+      "docs/openrouter_model_enhancement_plan.md",
+      "src/ai_whisperer/main.py",
+      "src/ai_whisperer/openrouter_api.py",
+      "tests/unit/test_main.py",
+      "tests/unit/test_openrouter_api.py"
+    ],
+    "output_artifacts": [
+      "tests/unit/test_openrouter_model_listing.py",
+      "tests/integration/test_openrouter_model_listing_cli.py"
+    ],
+    "instructions": [
+      "Create a new unit test file `tests/unit/test_openrouter_model_listing.py`.",
+      "In `test_openrouter_model_listing.py`, write tests that mock the `openrouter_api.get_models` function to return a list of model dictionaries containing detailed information (e.g., `description`, `pricing`, `context_window`).",
+      "Test that `openrouter_api.py` correctly processes this detailed mocked data.",
+      "Create a new integration test file `tests/integration/test_openrouter_model_listing_cli.py`.",
+      "In `test_openrouter_model_listing_cli.py`, use `subprocess` or `pytest`'s `capsys` fixture to test the `aiwhisperer list-models` command-line interface.",
+      "Test the command without the `--output-csv` argument, verifying that the console output contains detailed model information.",
+      "Test the command with the `--output-csv <filename>` argument, verifying that a CSV file is created.",
+      "Read the generated CSV file and verify its content, ensuring it includes all detailed model information and is correctly formatted.",
+      "Ensure tests cover edge cases, such as empty model lists or API errors (if applicable based on the plan).",
+      "Verify that the existing console output format for `list-models` remains unchanged when the `--output-csv` flag is not used.",
+      "Ensure tests are well-structured, readable, and follow standard Python testing practices."
+    ],
+    "constraints": [
+      "Do not modify existing test files (`tests/unit/test_main.py`, `tests/unit/test_openrouter_api.py`) unless absolutely necessary to integrate new test cases, and document any such changes.",
+      "Focus tests specifically on the new detailed model listing and CSV output features."
+    ],
+    "validation_criteria": [
+      "`tests/unit/test_openrouter_model_listing.py` exists and contains unit tests covering the processing of detailed model data by `openrouter_api.py` and `main.py`'s handling of this data for console output.",
+      "`tests/integration/test_openrouter_model_listing_cli.py` exists and contains integration tests covering the `aiwhisperer list-models` CLI command with and without the `--output-csv` argument.",
+      "Integration tests successfully generate and validate the content and format of the CSV output file when `--output-csv` is used.",
+      "Tests verify that the console output includes detailed model information when `--output-csv` is not used.",
+      "All newly created tests pass successfully."
+    ]
+  },
+  "step_id": "generate_tests_for_model_listing",
+  "task_id": "1b82deca-8c11-4330-aa30-01a2ff98799f"
+}

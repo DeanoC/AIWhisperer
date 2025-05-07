@@ -1,0 +1,47 @@
+{
+  "description": "Modify main.py to handle --output-csv argument and implement CSV export logic.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "file_edit",
+    "input_artifacts": [
+      "src/ai_whisperer/main.py",
+      "docs/openrouter_model_enhancement_plan.md",
+      "tests/integration/test_openrouter_model_listing_cli.py"
+    ],
+    "output_artifacts": [
+      "src/ai_whisperer/main.py"
+    ],
+    "instructions": [
+      "Locate the `main` function within `src/ai_whisperer/main.py`.",
+      "Inside the argument parser setup, add an optional argument `--output-csv`.",
+      "This argument should be used in conjunction with the `--list-models` argument.",
+      "The `--output-csv` argument should expect a file path string as its value.",
+      "Modify the logic that handles the `--list-models` flag.",
+      "Check if the `--output-csv` argument is present and has a value.",
+      "If `--output-csv` is NOT specified, retain the current logic to call `OpenRouterAPI.list_models()` (which now returns detailed data) and format the output for console printing as before.",
+      "If `--output-csv` IS specified, call `OpenRouterAPI.list_models()` to get the detailed list of models.",
+      "Open the file path specified by `--output-csv` in write mode.",
+      "Use the standard Python `csv` module to write the data to the file.",
+      "Write a header row to the CSV file. Column names should correspond to the keys in the detailed model data returned by `OpenRouterAPI.list_models()`, such as 'id', 'name', 'owned_by', 'context_length', 'pricing', etc.",
+      "Iterate through the list of model data obtained from `OpenRouterAPI.list_models()`.",
+      "For each model, write a row to the CSV file, ensuring that the data aligns with the header columns.",
+      "Handle potential data types within the model information appropriately for CSV output (e.g., nested structures might need flattening or specific formatting).",
+      "Ensure the file is properly closed after writing."
+    ],
+    "constraints": [],
+    "validation_criteria": [
+      "src/ai_whisperer/main.py is modified.",
+      "An optional `--output-csv` argument is added to the argument parser, dependent on `--list-models`.",
+      "The `--output-csv` argument accepts a file path string.",
+      "The code correctly branches execution based on the presence of the `--output-csv` argument when `--list-models` is used.",
+      "If `--output-csv` is absent, console output logic is maintained.",
+      "If `--output-csv` is present, `OpenRouterAPI.list_models()` is called.",
+      "CSV writing logic is implemented using the `csv` module.",
+      "The CSV output includes a header row.",
+      "Model data is written to the specified CSV file path.",
+      "Basic syntax validation of `src/ai_whisperer/main.py` passes."
+    ]
+  },
+  "step_id": "implement_cli_and_csv_output",
+  "task_id": "1b82deca-8c11-4330-aa30-01a2ff98799f"
+}

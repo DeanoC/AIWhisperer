@@ -1,0 +1,118 @@
+{
+  "natural_language_goal": "Enhance the --list-models command to provide detailed model information with an optional CSV output.",
+  "overall_context": "Improve the utility of the AIWhisperer tool's model listing feature.",
+  "plan": [
+    {
+      "step_id": "plan_openrouter_model_enhancement",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_plan_openrouter_model_enhancement.json",
+      "depends_on": [],
+      "type": "planning",
+      "input_artifacts": [
+        "docs/usage.md",
+        "src/ai_whisperer/main.py",
+        "src/ai_whisperer/openrouter_api.py",
+        "project_dev/rfc/improve_openrouter_list_results.md"
+      ],
+      "output_artifacts": [
+        "docs/openrouter_model_enhancement_plan.md"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "generate_tests_for_model_listing",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_generate_tests_for_model_listing.json",
+      "depends_on": [
+        "plan_openrouter_model_enhancement"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/openrouter_model_enhancement_plan.md",
+        "src/ai_whisperer/main.py",
+        "src/ai_whisperer/openrouter_api.py",
+        "tests/unit/test_main.py",
+        "tests/unit/test_openrouter_api.py"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_openrouter_model_listing.py",
+        "tests/integration/test_openrouter_model_listing_cli.py"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "implement_openrouter_api_enhancement",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_implement_openrouter_api_enhancement.json",
+      "depends_on": [
+        "generate_tests_for_model_listing",
+        "plan_openrouter_model_enhancement"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "src/ai_whisperer/openrouter_api.py",
+        "docs/openrouter_model_enhancement_plan.md",
+        "tests/unit/test_openrouter_model_listing.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/openrouter_api.py"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "implement_cli_and_csv_output",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_implement_cli_and_csv_output.json",
+      "depends_on": [
+        "implement_openrouter_api_enhancement",
+        "generate_tests_for_model_listing",
+        "plan_openrouter_model_enhancement"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "src/ai_whisperer/main.py",
+        "docs/openrouter_model_enhancement_plan.md",
+        "tests/integration/test_openrouter_model_listing_cli.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/main.py"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "validate_model_listing_enhancement",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_validate_model_listing_enhancement.json",
+      "depends_on": [
+        "implement_openrouter_api_enhancement",
+        "implement_cli_and_csv_output"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "src/ai_whisperer/main.py",
+        "src/ai_whisperer/openrouter_api.py",
+        "tests/unit/test_openrouter_model_listing.py",
+        "tests/integration/test_openrouter_model_listing_cli.py"
+      ],
+      "output_artifacts": [],
+      "completed": false
+    },
+    {
+      "step_id": "update_documentation",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_update_documentation.json",
+      "depends_on": [
+        "validate_model_listing_enhancement"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "docs/usage.md",
+        "src/ai_whisperer/main.py"
+      ],
+      "output_artifacts": [
+        "docs/usage.md"
+      ],
+      "completed": false
+    }
+  ],
+  "task_id": "1b82deca-8c11-4330-aa30-01a2ff98799f",
+  "input_hashes": {
+    "requirements_md": "04a3feb3fd09a1abf2f451bd7ae8f48a27197749711f8879cf6ccad0dab471f3",
+    "config_json": "eaaa4544d932ac66823099dfbeb80082fff062e3c285c74ca459fd0606eab63a",
+    "prompt_file": "33034ab75c02037264e5d24f7c87b6ecf9c38ce56055c7a0190e58865e5e0bdc"
+  }
+}
