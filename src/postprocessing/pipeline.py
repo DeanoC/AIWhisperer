@@ -90,31 +90,31 @@ class PostprocessingPipeline:
         for step in self.scripted_steps:
             step_name = step.__name__
             logger.debug(f"Executing step: {step_name}")
-            logger.debug(f"Input to {step_name} (type: {type(current_content)}): {str(current_content)[:200]}...") # Log first 200 chars
+            # logger.debug(f"Input to {step_name} (type: {type(current_content)}): {str(current_content)[:200]}...") # Log first 200 chars
 
             # Execute the step and ensure it returns a tuple
             step_output = step(current_content, current_data)
 
             if not isinstance(step_output, tuple) or len(step_output) != 2:
-                raise ValueError(f"Step '{step_name}' did not return a valid (yaml_content, data) tuple.")
+                raise ValueError(f"Step '{step_name}' did not return a valid (step_output, data) tuple.")
 
             current_content, current_data = step_output
 
-            logger.debug(f"Output from {step_name} (type: {type(current_content)}): {str(current_content)[:200]}...") # Log first 200 chars
+            # logger.debug(f"Output from {step_name} (type: {type(current_content)}): {str(current_content)[:200]}...") # Log first 200 chars
 
-            # Save the output of this step to a temporary file for debugging
-            try:
-                temp_filename = f"step_output_{step_name}.txt"
-                with open(temp_filename, "w", encoding="utf-8") as f:
-                    # Handle both string and dictionary content
-                    if isinstance(current_content, str):
-                        f.write(current_content)
-                    else:
-                        # Use a simple representation for non-string content
-                        f.write(str(current_content))
-                logger.debug(f"Saved output of {step_name} to {temp_filename}")
-            except IOError as e:
-                logger.warning(f"Failed to save output of {step_name} to temporary file: {e}")
+            # # Save the output of this step to a temporary file for debugging
+            # try:
+            #     temp_filename = f"step_output_{step_name}.txt"
+            #     with open(temp_filename, "w", encoding="utf-8") as f:
+            #         # Handle both string and dictionary content
+            #         if isinstance(current_content, str):
+            #             f.write(current_content)
+            #         else:
+            #             # Use a simple representation for non-string content
+            #             f.write(str(current_content))
+            #     logger.debug(f"Saved output of {step_name} to {temp_filename}")
+            # except IOError as e:
+            #     logger.warning(f"Failed to save output of {step_name} to temporary file: {e}")
 
 
             # Initialize step result tracking if not already present
@@ -140,7 +140,7 @@ class PostprocessingPipeline:
             tuple: (processed_json_content, updated_result)
         """
         logger.debug("Executing AI improvements phase (dummy implementation)")
-        logger.debug(f"Input to AI phase (type: {type(json_content)}): {str(json_content)[:200]}...") # Log first 200 chars
+        # logger.debug(f"Input to AI phase (type: {type(json_content)}): {str(json_content)[:200]}...") # Log first 200 chars
 
         # For now, this is just an identity transform
         # In the future, this will be replaced with actual AI processing logic
@@ -148,19 +148,19 @@ class PostprocessingPipeline:
         # Use the identity_transform but track it separately in the results
         processed_content, updated_data = identity_transform(json_content, data)
 
-        logger.debug(f"Output from AI phase (type: {type(processed_content)}): {str(processed_content)[:200]}...") # Log first 200 chars
+        # logger.debug(f"Output from AI phase (type: {type(processed_content)}): {str(processed_content)[:200]}...") # Log first 200 chars
 
-        # Save the output of the AI phase to a temporary file for debugging
-        try:
-            temp_filename = "step_output_ai_phase.txt"
-            with open(temp_filename, "w", encoding="utf-8") as f:
-                if isinstance(processed_content, str):
-                    f.write(processed_content)
-                else:
-                    f.write(str(processed_content))
-            logger.debug(f"Saved output of AI phase to {temp_filename}")
-        except IOError as e:
-            logger.warning(f"Failed to save output of AI phase to temporary file: {e}")
+        # # Save the output of the AI phase to a temporary file for debugging
+        # try:
+        #     temp_filename = "step_output_ai_phase.txt"
+        #     with open(temp_filename, "w", encoding="utf-8") as f:
+        #         if isinstance(processed_content, str):
+        #             f.write(processed_content)
+        #         else:
+        #             f.write(str(processed_content))
+        #     logger.debug(f"Saved output of AI phase to {temp_filename}")
+        # except IOError as e:
+        #     logger.warning(f"Failed to save output of AI phase to temporary file: {e}")
 
 
         # Add an entry for the AI phase in the data

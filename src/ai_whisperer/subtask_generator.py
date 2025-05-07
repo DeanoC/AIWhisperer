@@ -126,7 +126,7 @@ class SubtaskGenerator:
             # 3. Parse AI Response JSON and apply postprocessing
             try:
                 # Debug: Print the AI response text
-                print(f"AI response text: {ai_response_text}")
+                # print(f"AI response text: {ai_response_text}")
 
                 # Create result_data with items to add if not provided
                 if result_data is None:
@@ -175,7 +175,7 @@ class SubtaskGenerator:
 
                 # Log the postprocessing results
                 logger.info("Postprocessing completed successfully.")
-                logger.debug(f"Postprocessing result logs: {postprocessing_result.get('logs', [])}")
+                # logger.debug(f"Postprocessing result logs: {postprocessing_result.get('logs', [])}")
 
                 # The pipeline should return a dictionary if successful
                 if not isinstance(generated_data, dict):

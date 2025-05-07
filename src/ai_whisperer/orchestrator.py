@@ -267,9 +267,9 @@ class Orchestrator:
             final_prompt = prompt_template.format(
                 md_content=requirements_content, input_hashes_dict=hashes_json_string
             )
-            logger.debug(
-                f"Constructed final prompt:\n{final_prompt}..."
-            )
+            # logger.debug(
+            #     f"Constructed final prompt:\n{final_prompt}..."
+            # )
             # 5. Call OpenRouter API
             logger.info("Calling OpenRouter API...")
             try:
@@ -281,7 +281,7 @@ class Orchestrator:
                     prompt_text=final_prompt, model=model, params=params
                 )
                 logger.info("Received response from OpenRouter API.")
-                logger.debug(f"API Response content:\n{api_response_content}")
+                # logger.debug(f"API Response content:\n{api_response_content}")
             except OpenRouterAPIError as e:
                 logger.error(f"OpenRouter API call failed: {e}")
                 raise
@@ -303,13 +303,13 @@ class Orchestrator:
                     "schema": self.task_schema # Add the schema here
                 }
                 # Save JSON string to temp file for debugging
-                logger.debug("Saving JSON string to temporary file for debugging")
-                try:
-                    with open("./temp.txt", "w", encoding="utf-8") as f:
-                        f.write(api_response_content)
-                    logger.debug("Successfully saved JSON string to ./temp.txt")
-                except IOError as e:
-                    logger.warning(f"Failed to save debug JSON file: {e}")
+                # logger.debug("Saving JSON string to temporary file for debugging")
+                # try:
+                #     with open("./temp.txt", "w", encoding="utf-8") as f:
+                #         f.write(api_response_content)
+                #     logger.debug("Successfully saved JSON string to ./temp.txt")
+                # except IOError as e:
+                #     logger.warning(f"Failed to save debug JSON file: {e}")
 
                 pipeline = PostprocessingPipeline(
                     scripted_steps=[
@@ -325,13 +325,13 @@ class Orchestrator:
                     api_response_content, result_data
                 )
 
-                print(f"JSON data after postprocessing:\n{processed_data}")
+                # print(f"JSON data after postprocessing:\n{processed_data}")
 
                 # Log the postprocessing results
-                logger.info("Postprocessing completed successfully.")
-                logger.debug(
-                    f"Postprocessing result logs: {postprocessing_result.get('logs', [])}"
-                )
+                # logger.info("Postprocessing completed successfully.")
+                # logger.debug(
+                #     f"Postprocessing result logs: {postprocessing_result.get('logs', [])}"
+                # )
 
                 # The pipeline should return a dictionary if successful
                 if not isinstance(processed_data, dict):
@@ -358,7 +358,7 @@ class Orchestrator:
                 raise OrchestratorError(f"JSON postprocessing failed: {e}") from e
 
 
-            print(f"JSON data after parsing:\n{json_data}")
+            # print(f"JSON data after parsing:\n{json_data}")
 
             # 7. Save Output JSON
             # Create output filename based on the input requirements file
