@@ -1,10 +1,10 @@
 {
-  "natural_language_goal": "Enhance the --list-models command to display detailed model information and optionally export it to a CSV file.",
-  "overall_context": "Improving the AIWhisperer tool's model selection capabilities.",
+  "natural_language_goal": "Enhance the --list-models command to include detailed OpenRouter model information and an option to export to CSV.",
+  "overall_context": "Improving the AIWhisperer tool's usability and information provided to the user, specifically for the OpenRouter integration.",
   "plan": [
     {
-      "step_id": "plan_openrouter_list_enhancement",
-      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_plan_openrouter_list_enhancement.json",
+      "step_id": "plan_feature_implementation",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_plan_feature_implementation.json",
       "depends_on": [],
       "type": "planning",
       "input_artifacts": [
@@ -13,76 +13,45 @@
         "src/ai_whisperer/openrouter_api.py"
       ],
       "output_artifacts": [
-        "docs/internal_process/openrouter_list_enhancement_plan.md"
+        "project_dev/in_dev/improve_openrouter_list_results/implementation_plan.md"
       ],
       "completed": false
     },
     {
-      "step_id": "generate_tests_for_list_models_enhancement",
-      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_generate_tests_for_list_models_enhancement.json",
+      "step_id": "test_generate_list_models_enhancement",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_test_generate_list_models_enhancement.json",
       "depends_on": [
-        "plan_openrouter_list_enhancement"
+        "plan_feature_implementation"
       ],
       "type": "test_generation",
       "input_artifacts": [
-        "docs/internal_process/openrouter_list_enhancement_plan.md"
+        "project_dev/in_dev/improve_openrouter_list_results/implementation_plan.md",
+        "tests/test_main.py",
+        "tests/test_openrouter_api.py"
       ],
       "output_artifacts": [
-        "tests/unit/test_main_list_models.py",
-        "tests/unit/test_openrouter_api_list_models.py",
-        "tests/integration/test_list_models_command.py"
+        "tests/test_main.py",
+        "tests/test_openrouter_api.py"
       ],
       "completed": false
     },
     {
-      "step_id": "implement_main_list_models_enhancement",
-      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_implement_main_list_models_enhancement.json",
+      "step_id": "implement_list_models_enhancement",
+      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_implement_list_models_enhancement.json",
       "depends_on": [
-        "generate_tests_for_list_models_enhancement"
+        "test_generate_list_models_enhancement"
       ],
       "type": "file_edit",
       "input_artifacts": [
+        "project_dev/in_dev/improve_openrouter_list_results/implementation_plan.md",
         "src/ai_whisperer/main.py",
-        "docs/internal_process/openrouter_list_enhancement_plan.md",
-        "tests/unit/test_main_list_models.py"
-      ],
-      "output_artifacts": [
-        "src/ai_whisperer/main.py"
-      ],
-      "completed": false
-    },
-    {
-      "step_id": "implement_openrouter_api_list_models_enhancement",
-      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_implement_openrouter_api_list_models_enhancement.json",
-      "depends_on": [
-        "implement_main_list_models_enhancement"
-      ],
-      "type": "file_edit",
-      "input_artifacts": [
         "src/ai_whisperer/openrouter_api.py",
-        "docs/internal_process/openrouter_list_enhancement_plan.md",
-        "tests/unit/test_openrouter_api_list_models.py"
+        "tests/test_main.py",
+        "tests/test_openrouter_api.py"
       ],
       "output_artifacts": [
+        "src/ai_whisperer/main.py",
         "src/ai_whisperer/openrouter_api.py"
-      ],
-      "completed": false
-    },
-    {
-      "step_id": "implement_csv_export_logic",
-      "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_implement_csv_export_logic.json",
-      "depends_on": [
-        "implement_openrouter_api_list_models_enhancement"
-      ],
-      "type": "code_generation",
-      "input_artifacts": [
-        "src/ai_whisperer/main.py",
-        "src/ai_whisperer/openrouter_api.py",
-        "docs/internal_process/openrouter_list_enhancement_plan.md",
-        "tests/unit/test_main_list_models.py"
-      ],
-      "output_artifacts": [
-        "src/ai_whisperer/utils.py"
       ],
       "completed": false
     },
@@ -90,15 +59,14 @@
       "step_id": "validate_list_models_enhancement",
       "file_path": "project_dev/in_dev/improve_openrouter_list_results/subtask_validate_list_models_enhancement.json",
       "depends_on": [
-        "implement_csv_export_logic"
+        "implement_list_models_enhancement"
       ],
       "type": "validation",
       "input_artifacts": [
+        "tests/test_main.py",
+        "tests/test_openrouter_api.py",
         "src/ai_whisperer/main.py",
-        "src/ai_whisperer/openrouter_api.py",
-        "src/ai_whisperer/utils.py",
-        "tests/unit/test_main_list_models.py",
-        "tests/unit/test_openrouter_api_list_models.py"
+        "src/ai_whisperer/openrouter_api.py"
       ],
       "output_artifacts": [],
       "completed": false
@@ -111,15 +79,17 @@
       ],
       "type": "documentation",
       "input_artifacts": [
-        "docs/usage.md"
+        "docs/usage.md",
+        "docs/configuration.md"
       ],
       "output_artifacts": [
-        "docs/usage.md"
+        "docs/usage.md",
+        "docs/configuration.md"
       ],
       "completed": false
     }
   ],
-  "task_id": "3628f8eb-55d4-4e1e-84fe-6f0f97d383dd",
+  "task_id": "238e023a-878b-46f5-ada3-105e5703e365",
   "input_hashes": {
     "requirements_md": "04a3feb3fd09a1abf2f451bd7ae8f48a27197749711f8879cf6ccad0dab471f3",
     "config_json": "eaaa4544d932ac66823099dfbeb80082fff062e3c285c74ca459fd0606eab63a",
