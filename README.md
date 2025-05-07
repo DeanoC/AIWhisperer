@@ -119,6 +119,8 @@ Run the tool from the project's root directory:
 
 ```bash
 python -m src.ai_whisperer.main --requirements <path/to/your/requirements.md> --config config.yaml --output <path/to/output/tasks.yaml>
+python -m src.ai_whisperer.main --config .\project_dev\aiwhisperer_config.yaml --list-models --output-csv models.csv
+
 ```
 
 **Example:**
