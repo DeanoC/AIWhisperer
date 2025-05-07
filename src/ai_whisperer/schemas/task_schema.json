@@ -63,7 +63,8 @@
                 "default": []
               },
               "instructions": {
-                "type": "string",
+                "type": "array",
+                "items": { "type": "string" },
                 "description": "Detailed instructions for the AI agent executing this step"
               },
               "constraints": {
