@@ -33,10 +33,8 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 * Support system prompts
 * Provide use of prompt engineering guides to aid prompts
 * produce project specific prompts by refining defaults with project details an AI
-* more text processing for less yaml restriction during the AI returns
 * Provide context to the generators, code base, functions, etc.
 * limiting info to subtasks (not telling the the following steps)
-* Patching hashs, task_id into the yaml not requiring the AI to do it
 * Human in the model alerts based on tricky issues
 * Support for non open router providers
 * Training example corpus
@@ -48,7 +46,6 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 * Change detect based on hashes, to avoid unnessarry AI calls
 * Provide cleaner output whilst running
 * Include generated planning docs into other subtasks context
-* after generated subtasks, replace the subtask descriptions in the main file with file reference to the generated ones.
 * Add the script environemt to context (bash, powershell, etc. as AI agents often assume bash)
 
 ---
