@@ -1,5 +1,8 @@
 pip>=23.0
 
+PyYAML>=5.4
+requests-mock
+
 requests>=2.30,<3.0
 pytest>=7.0,<8.0
 rich>=13.0,<14.0
