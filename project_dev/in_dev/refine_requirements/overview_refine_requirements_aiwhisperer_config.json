@@ -1,0 +1,143 @@
+{
+  "natural_language_goal": "Implement a CLI command to refine requirements using AI.",
+  "overall_context": "This feature adds a new capability to the AIWhisperer tool to improve requirement documents.",
+  "plan": [
+    {
+      "step_id": "plan_refine_requirements_feature",
+      "file_path": "project_dev/in_dev/refine_requirements/subtask_plan_refine_requirements_feature.json",
+      "depends_on": [],
+      "type": "planning",
+      "input_artifacts": [
+        "project_dev/rfc/refine_requirements.md",
+        "docs/configuration.md",
+        "src/ai_whisperer/main.py"
+      ],
+      "output_artifacts": [
+        "project_dev/in_dev/refine_requirements/plan_summary.md"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "generate_cli_tests",
+      "file_path": "project_dev/in_dev/refine_requirements/subtask_generate_cli_tests.json",
+      "depends_on": [
+        "plan_refine_requirements_feature"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "project_dev/in_dev/refine_requirements/plan_summary.md"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_refine_cli.py"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "implement_cli_command",
+      "file_path": "project_dev/in_dev/refine_requirements/subtask_implement_cli_command.json",
+      "depends_on": [
+        "generate_cli_tests"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "project_dev/in_dev/refine_requirements/plan_summary.md",
+        "tests/unit/test_refine_cli.py",
+        "src/ai_whisperer/main.py",
+        "src/ai_whisperer/utils.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/main.py",
+        "src/ai_whisperer/utils.py"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "validate_cli_command",
+      "file_path": "project_dev/in_dev/refine_requirements/subtask_validate_cli_command.json",
+      "depends_on": [
+        "implement_cli_command"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "src/ai_whisperer/main.py",
+        "tests/unit/test_refine_cli.py"
+      ],
+      "output_artifacts": [],
+      "completed": false
+    },
+    {
+      "step_id": "generate_ai_interaction_tests",
+      "file_path": "project_dev/in_dev/refine_requirements/subtask_generate_ai_interaction_tests.json",
+      "depends_on": [
+        "validate_cli_command",
+        "plan_refine_requirements_feature"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "project_dev/in_dev/refine_requirements/plan_summary.md",
+        "src/ai_whisperer/openrouter_api.py"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_refine_ai_interaction.py"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "implement_ai_interaction_and_save",
+      "file_path": "project_dev/in_dev/refine_requirements/subtask_implement_ai_interaction_and_save.json",
+      "depends_on": [
+        "generate_ai_interaction_tests"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "project_dev/in_dev/refine_requirements/plan_summary.md",
+        "tests/unit/test_refine_ai_interaction.py",
+        "src/ai_whisperer/main.py",
+        "src/ai_whisperer/openrouter_api.py",
+        "prompts/orchestrator_default.md"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/main.py"
+      ],
+      "completed": false
+    },
+    {
+      "step_id": "validate_ai_interaction_and_save",
+      "file_path": "project_dev/in_dev/refine_requirements/subtask_validate_ai_interaction_and_save.json",
+      "depends_on": [
+        "implement_ai_interaction_and_save"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "src/ai_whisperer/main.py",
+        "tests/unit/test_refine_ai_interaction.py"
+      ],
+      "output_artifacts": [],
+      "completed": false
+    },
+    {
+      "step_id": "update_documentation",
+      "file_path": "project_dev/in_dev/refine_requirements/subtask_update_documentation.json",
+      "depends_on": [
+        "validate_ai_interaction_and_save"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "src/ai_whisperer/main.py",
+        "docs/usage.md",
+        "README.md"
+      ],
+      "output_artifacts": [
+        "docs/usage.md",
+        "README.md"
+      ],
+      "completed": false
+    }
+  ],
+  "task_id": "45512229-1ac2-4ee7-a859-5c5ff96118d1",
+  "input_hashes": {
+    "requirements_md": "90c7ae88e36fe1a7b81e3e0c0576ff33ad180cf8e48e7283a05d710e4d5b37fd",
+    "config_json": "eaaa4544d932ac66823099dfbeb80082fff062e3c285c74ca459fd0606eab63a",
+    "prompt_file": "33034ab75c02037264e5d24f7c87b6ecf9c38ce56055c7a0190e58865e5e0bdc"
+  }
+}

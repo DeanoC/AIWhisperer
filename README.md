@@ -17,6 +17,7 @@ AI Whisperer is a Python command-line tool that takes your project requirements 
   * Clean backtick wrappers from YAML content
   * Add required items (task_id, input_hashes, subtask_id) automatically
   * More postprocessing steps can be added as needed
+* **New:** Refine requirement documents using AI to improve clarity and completeness.
 
 ## Project development
 
@@ -145,6 +146,14 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
     ```
 
     This will process the step definition from `step.yaml`, refine it into a detailed implementation plan, and save the result to a file in the output directory.
+
+* **`refine`**: Refines an existing requirement document using an AI model.
+
+    ```bash
+    python -m src.ai_whisperer.main refine <path/to/requirements.md> --config config.yaml [--prompt-file <path/to/prompt.txt>] [--iterations <number>]
+    ```
+
+    This command will take the specified requirements file, process it with an AI model (optionally using a custom prompt and multiple iterations), rename the original file with a `.original` suffix, and save the refined content back to the original filename.
 
 The project_dev folder shows how I currently use aiwhisperper to implement features in it self.
 A starting feature request can be generated with any AI chat with a prompt similar to

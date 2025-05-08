@@ -413,14 +413,14 @@ class Orchestrator:
         1. First generates the initial task plan JSON
         2. For each step in the task plan, generates a detailed subtask JSON
         3. Returns paths to all generated files and step info for the last generated step
-    
+
         Args:
             requirements_md_path_str: Path string to the input requirements markdown file.
             config_path_str: Path string to the configuration file used.
-    
+
         Returns:
             Dict with task_plan (Path), subtasks (list of Paths), and step_info (Dict with step_id, depends_on, file_path)
-    
+
         Raises:
             All exceptions from generate_initial_json plus:
             OrchestratorError: For issues during subtask generation
@@ -448,7 +448,7 @@ class Orchestrator:
         overall_context = task_data.get(
             "overall_context", ""
         )  # Default to empty string if missing
-        
+
         workspace_context = build_ascii_directory_tree(".")
 
         subtask_generator = SubtaskGenerator(
@@ -479,7 +479,7 @@ class Orchestrator:
                     subtask_path, subtask = subtask_generator.generate_subtask(step_data)
                     subtask_paths.append(subtask_path)
                     logger.info(f"Generated subtask: {subtask_path}")
-                    
+
                     # Create step info JSON object
                     step_info[i - 1] = {
                         "step_id": step_id,
@@ -504,7 +504,7 @@ class Orchestrator:
             task_plan_path_obj = Path(task_plan_path)
             overplan_filename = f"overview_{task_plan_path_obj.name}"
             overplan_path = os.path.join(self.output_dir, overplan_filename)
-            
+
             # Save the updated plan with removed steps to the new file
             try:
                 with open(overplan_path, "w", encoding="utf-8") as f:
@@ -514,7 +514,7 @@ class Orchestrator:
                 logger.error(f"Failed to save updated plan: {e}")
         else:
             logger.info("No steps were processed, not creating overplan file")
-        
+
         result = {
             "task_plan": task_plan_path, 
             "subtasks": subtask_paths,
@@ -525,3 +525,118 @@ class Orchestrator:
 
         logger.info(f"Full project plan generation completed with {len(subtask_paths)} subtasks")
         return result
+
+    def refine_requirements(self, input_file, prompt_file=None, iterations=1):
+        """
+        Refine a requirements document using an AI model.
+
+        Args:
+            input_file (str): Path to the input requirements document.
+            prompt_file (str, optional): Path to a custom prompt file.
+            iterations (int): Number of refinement iterations.
+
+        Returns:
+            list: List of paths to the refined requirements documents.
+        """
+        # Convert input_file to Path object for easier manipulation
+        input_filepath = Path(input_file)
+
+        # Read the input requirements
+        with open(input_filepath, 'r', encoding='utf-8') as f:
+            requirements_content = f.read()
+
+        # Read custom prompt if provided
+        if prompt_file:
+            with open(prompt_file, 'r', encoding='utf-8') as pf:
+                prompt_to_send = pf.read()
+        else:
+            prompt_to_send = f"Refine the following requirements:\n\n{requirements_content}"
+
+        # Get model and params from config if available, else use defaults
+        openrouter_config = self.config.get('openrouter', {}) if hasattr(self, 'config') else {}
+        model = openrouter_config.get('model', 'mock-model')
+        params = openrouter_config.get('params', {})
+
+        # Use OpenRouterAPI from self if available, else create one
+        if hasattr(self, 'client'):
+            client = self.client
+        else:
+            from .openrouter_api import OpenRouterAPI
+            client = OpenRouterAPI(self.config.get('openrouter', {}))
+
+        saved_files = []
+        original_filepath = input_filepath
+
+        for i in range(1, iterations + 1):
+            # Determine the next iteration filename
+            next_iteration_filepath = self._determine_next_refine_filename(str(input_filepath))
+
+            # Call the AI model
+            ai_response_content = client.call_chat_completion(prompt_to_send, model, params)
+
+            # Rename the original file to the iteration filename
+            os.rename(input_filepath, next_iteration_filepath)
+
+            # Save the AI response to the original filename
+            with open(input_filepath, 'w', encoding='utf-8') as f:
+                f.write(ai_response_content)
+
+            saved_files.append(str(input_filepath))
+
+            # Update requirements_content for next iteration if needed
+            if i < iterations:
+                with open(input_filepath, 'r', encoding='utf-8') as f:
+                    requirements_content = f.read()
+                prompt_to_send = f"Refine the following requirements:\n\n{requirements_content}"
+
+        return saved_files
+
+    def _determine_next_refine_filename(self, input_filepath_str):
+        """
+        Determines the filename for the old version of the file with iteration number.
+
+        Args:
+            input_filepath_str (str): Path to the input file.
+
+        Returns:
+            str: Path to the old version filename with iteration number.
+        """
+        input_filepath = Path(input_filepath_str)
+        parent_dir = input_filepath.parent
+        stem = input_filepath.stem
+        suffix = input_filepath.suffix
+
+        # Find existing refined files for this stem with old_ prefix
+        existing_files = os.listdir(str(parent_dir))
+
+        # Determine the highest iteration number
+        max_iteration = 0
+        for filename in existing_files:
+            # Check if the file starts with "old_" and contains the stem and "_iteration"
+            if filename.startswith(f"old_{stem}") and "_iteration" in filename and filename.endswith(suffix):
+                try:
+                    # Extract the number after '_iteration'
+                    iteration_part = filename.split('_iteration')[1].split('.')[0]
+                    iteration = int(iteration_part)
+                    max_iteration = max(max_iteration, iteration)
+                except (ValueError, IndexError):
+                    # Ignore files that don't have a valid number after '_iteration'
+                    continue
+
+        next_iteration = max_iteration + 1
+        old_filename = f"old_{stem}_iteration{next_iteration}{suffix}"
+        return os.path.join(str(parent_dir), old_filename)
+
+    def _fnmatch(self, filename, pattern):
+        """
+        Simple pattern matching function for filenames.
+
+        Args:
+            filename (str): Filename to check.
+            pattern (str): Pattern to match against.
+
+        Returns:
+            bool: True if the filename matches the pattern, False otherwise.
+        """
+        import fnmatch
+        return fnmatch.fnmatch(filename, pattern)

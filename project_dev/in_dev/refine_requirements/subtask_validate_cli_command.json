@@ -1,0 +1,39 @@
+{
+  "description": "Validate the implementation of the new CLI command and file handling.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "src/ai_whisperer/main.py",
+      "tests/unit/test_refine_cli.py"
+    ],
+    "output_artifacts": [],
+    "instructions": [
+      "Navigate to the project root directory.",
+      "Run the unit tests specifically for the refine CLI command using pytest:",
+      "`pytest tests/unit/test_refine_cli.py`",
+      "Verify that the output indicates all tests within `test_refine_cli.py` have passed.",
+      "Create a dummy input file for manual testing, e.g., `dummy_input.md` with some placeholder text.",
+      "Run the `aiwhisperer refine` command with the dummy file:",
+      "`python -m ai_whisperer refine dummy_input.md`",
+      "Verify that the command executes without errors and creates an output file named `dummy_input_refined_1.md`.",
+      "Run the command again on the newly created file:",
+      "`python -m ai_whisperer refine dummy_input_refined_1.md`",
+      "Verify that the command executes without errors and creates an output file named `dummy_input_refined_2.md`.",
+      "Run the command with different arguments if applicable (e.g., a different output directory or prefix if those features were implemented).",
+      "Ensure that the file renaming logic correctly handles the iteration number for subsequent runs on the same base filename."
+    ],
+    "constraints": [
+      "Validation must be performed in the project's virtual environment.",
+      "Do not modify the source code (`src/ai_whisperer/main.py`) or test file (`tests/unit/test_refine_cli.py`) during this validation step."
+    ],
+    "validation_criteria": [
+      "All tests in `tests/unit/test_refine_cli.py` pass successfully.",
+      "Manual testing confirms the `aiwhisperer refine` CLI command parses arguments correctly.",
+      "Manual testing confirms the CLI command correctly renames output files with an incrementing iteration number (e.g., `filename_refined_1.md`, `filename_refined_2.md`)."
+    ]
+  },
+  "step_id": "validate_cli_command",
+  "task_id": "45512229-1ac2-4ee7-a859-5c5ff96118d1",
+  "subtask_id": "f14bf11b-3360-438b-b46f-c4f266fdeef1"
+}

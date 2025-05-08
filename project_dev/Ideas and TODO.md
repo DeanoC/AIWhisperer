@@ -25,7 +25,7 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 > results is good. I will add that to the the task list :) thank you
 ----
 
-* Improved CLI with a modern verb noun structure + more tools for getting info on Openrouter models, prices etc.
+* Improved CLI with a modern verb noun structure
 * Add support for Openrouter advanced features (cache etc.)
 * Refinement of the original requirement files
 * Aider support for processing the subtasks themselves
@@ -47,6 +47,9 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 * Provide cleaner output whilst running
 * Include generated planning docs into other subtasks context
 * Add the script environemt to context (bash, powershell, etc. as AI agents often assume bash)
+* prompt refinement CLI api
+* Need to reinforce tracking docs + and finish task in roocode instead of moving from plan to do
+* Multi AI discussion on suggestions and refinements
 
 ---
 We need to tell the subtask generated to create a failing scaffold of files during the test_generation phase.

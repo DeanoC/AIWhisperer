@@ -3,6 +3,7 @@ import sys
 import logging
 import yaml
 from pathlib import Path
+import os # Added for os.path.splitext
 
 # Import necessary components from the application
 from .config import load_config
@@ -32,58 +33,96 @@ def main():
     setup_logging()
     console = setup_rich_output()
 
+
     # --- Argument Parsing ---
     parser = argparse.ArgumentParser(
-        description="Generate task YAML from requirements using an AI model via OpenRouter.",
+        description="AI Whisperer CLI application for generating task plans and refining requirements.",
         prog="ai-whisperer"
     )
-    parser.add_argument(
+
+    # Create subparsers for different commands
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # --- Task Generation Command ---
+    generate_parser = subparsers.add_parser("generate", help="Generate task YAML or full project plan")
+    generate_parser.add_argument(
         "--requirements",
         required=False,
         help="Path to the requirements Markdown file. Required for task YAML generation."
     )
-    parser.add_argument(
+    generate_parser.add_argument(
         "--config",
         required=False,
         help="Path to the configuration YAML file. Required for most operations."
     )
-    parser.add_argument(
+    generate_parser.add_argument(
         "--output",
         type=str,
         default="output",
         help="Directory for output files."
     )
-    parser.add_argument(
-        "--list-models",
+    generate_parser.add_argument(
+        "--generate-subtask",
         action="store_true",
-        help="List available OpenRouter models and exit."
+        help="Generate a detailed subtask YAML from a step definition."
     )
-    parser.add_argument(
+    generate_parser.add_argument(
+        "--step",
+        help="Path to the input step YAML file. Required when using --generate-subtask."
+    )
+    generate_parser.add_argument(
+        "--full-project",
+        action="store_true",
+        help="Generate a complete project plan with task YAML and all subtasks."
+    )
+
+    # --- List Models Command ---
+    list_models_parser = subparsers.add_parser("list-models", help="List available OpenRouter models")
+    list_models_parser.add_argument(
+        "--config",
+        required=True, # Config is required to list models
+        help="Path to the configuration YAML file."
+    )
+    list_models_parser.add_argument(
         "--output-csv",
         type=str,
         required=False,
         help="Path to output CSV file for --list-models command."
     )
-    parser.add_argument(
-        "--generate-subtask",
-        action="store_true",
-        help="Generate a detailed subtask YAML from a step definition."
+
+    # --- Refine Command ---
+    refine_parser = subparsers.add_parser("refine", help="Refine a requirements document using an AI model")
+    refine_parser.add_argument(
+        "input_file",
+        help="Path to the input requirements document to refine."
     )
-    parser.add_argument(
-        "--step",
-        help="Path to the input step YAML file. Required when using --generate-subtask."
+    refine_parser.add_argument(
+        "--config",
+        required=True, # Config is required for AI interaction
+        help="Path to the configuration YAML file."
     )
-    parser.add_argument(
-        "--full-project",
-        action="store_true",
-        help="Generate a complete project plan with task YAML and all subtasks."
+    refine_parser.add_argument(
+        "--prompt-file",
+        required=False,
+        help="Path to a custom prompt file. If not provided, a default prompt will be used."
     )
-    
+    refine_parser.add_argument(
+        "--iterations",
+        type=int,
+        default=1,
+        help="Number of refinement iterations to perform."
+    )
+    refine_parser.add_argument(
+        "--output",
+        required=False,
+        help="Path to output directory or file."
+    )
+
     # Use parse_known_args to avoid conflicts with pytest arguments during testing
     args, unknown = parser.parse_known_args()
 
-    # --- Handle OpenRouter Models Listing ---
-    if getattr(args, 'list_models', False):
+    # --- Handle Commands ---
+    if args.command == "list-models":
         try:
             # Check if config path is provided
             # Load configuration to get API key
@@ -254,7 +293,7 @@ def main():
             console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
             raise SystemExit(1)
 
-    # --- Handle Main Task YAML Generation ---
+    # --- Handle Main Task YAML Generation and Refine Command ---
     # Only proceed to main logic if no special flags were active
     else:
         # Explicitly check if any special flags are active and return if so
@@ -267,16 +306,28 @@ def main():
             config = load_config(args.config)
             logger.debug("Configuration loaded successfully.")
 
-            # Create the Orchestrator with the right output directory
-            orchestrator = Orchestrator(config, args.output)
-
-            console.print(f"Generating initial task plan from: {args.requirements}")
-            # Generate only the main task plan YAML
-            result = orchestrator.generate_initial_json(args.requirements, args.config)
-            logger.info(f"Generated task YAML: {result}")
-
-            # Use the returned path in the success message
-            console.print(f"[green]Successfully generated task JSON: {result}[/green]")
+            if args.command == "refine":
+                # Handle the refine command
+                orchestrator = Orchestrator(config, args.output)
+                input_file = args.input_file
+                prompt_file = args.prompt_file
+                iterations = args.iterations
+                # Call your orchestrator's refine method (example, adapt as needed)
+                result = orchestrator.refine_requirements(
+                    input_file=input_file,
+                    prompt_file=prompt_file,
+                    iterations=iterations
+                )
+                console.print(f"[green]Successfully refined requirements: {result}[/green]")
+            else:
+                # Default: generate command
+                orchestrator = Orchestrator(config, args.output)
+                console.print(f"Generating initial task plan from: {args.requirements}")
+                # Generate only the main task plan YAML
+                result = orchestrator.generate_initial_json(args.requirements, args.config)
+                logger.info(f"Generated task YAML: {result}")
+                # Use the returned path in the success message
+                console.print(f"[green]Successfully generated task JSON: {result}[/green]")
         except ConfigError as e:
             logger.error(f"Configuration error: {e}", exc_info=False)
             logger.debug(f"Configuration error details:", exc_info=True)

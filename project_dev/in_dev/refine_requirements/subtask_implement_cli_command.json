@@ -1,0 +1,57 @@
+{
+  "description": "Implement the new CLI command for refining requirements, including file handling and argument parsing.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "file_edit",
+    "input_artifacts": [
+      "project_dev/in_dev/refine_requirements/plan_summary.md",
+      "tests/unit/test_refine_cli.py",
+      "src/ai_whisperer/main.py",
+      "src/ai_whisperer/utils.py"
+    ],
+    "output_artifacts": [
+      "src/ai_whisperer/main.py",
+      "src/ai_whisperer/utils.py"
+    ],
+    "instructions": [
+      "Navigate to the `src/ai_whisperer/main.py` file.",
+      "Add a new command 'refine' to the AIWhisperer CLI using the `argparse` module.",
+      "Define the 'refine' command's arguments:",
+      "- A required positional argument for the input file path.",
+      "- An optional argument `--prompt-file` for a custom prompt file path.",
+      "In the function or method associated with the 'refine' command:",
+      "- Implement the logic to read the content of the input file specified by the user.",
+      "- Implement the file renaming logic:",
+      "- Given an input file path like `path/to/document.md`, determine the base filename (`document`) and extension (`.md`).",
+      "- Check the directory of the input file for existing files matching the pattern `<filename>_iteration*.md`.",
+      "- Determine the highest existing iteration number (N) from these files.",
+      "- Calculate the next iteration number: N + 1 (if no iteration files exist, start with 1).",
+      "- Construct the new filename: `<filename>_iteration<N+1>.md`.",
+      "- Rename the original input file to this new filename.",
+      "- Use existing utility functions in `src/ai_whisperer/utils.py` for file path manipulation or checking if applicable.",
+      "Ensure the CLI provides helpful usage messages for the 'refine' command and its arguments.",
+      "Do NOT implement the AI interaction logic (calling the AI model) in this step.",
+      "Do NOT implement the logic for saving the new, refined file content in this step."
+    ],
+    "constraints": [
+      "The CLI should provide helpful usage messages via `argparse`.",
+      "The file renaming logic must correctly handle file extensions and paths, including cases where no iteration files exist.",
+      "The implementation must not break existing CLI commands.",
+      "The file renaming must happen *before* any potential AI processing would occur (though AI processing is not part of this step)."
+    ],
+    "validation_criteria": [
+      "The `src/ai_whisperer/main.py` file is modified to include the 'refine' command definition.",
+      "The 'refine' command is accessible via the CLI.",
+      "The 'refine' command requires an input file path argument.",
+      "The 'refine' command accepts an optional `--prompt-file` argument.",
+      "The code includes logic to read the content of the specified input file.",
+      "The code includes logic to rename the input file to the next iteration number format (`<filename>_iteration<N>.md`).",
+      "The iteration number determination correctly finds the next available number.",
+      "The file renaming logic correctly handles different file paths and extensions.",
+      "The implementation passes the unit tests defined in `tests/unit/test_refine_cli.py` (ensure tests cover argument parsing and file renaming logic)."
+    ]
+  },
+  "step_id": "implement_cli_command",
+  "task_id": "45512229-1ac2-4ee7-a859-5c5ff96118d1",
+  "subtask_id": "3b0581bc-7e80-499e-b8aa-6f9c3cdda1b7"
+}
