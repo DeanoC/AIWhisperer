@@ -226,7 +226,7 @@ def test_list_models_success(mock_requests):
     mock_requests.get(MODELS_API_URL, json={"data": expected_models}, status_code=200)
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     models = client.list_models()
-    assert models == ["model1", "model2"]
+    assert models == expected_models
     history = mock_requests.request_history
     assert len(history) == 1
     request = history[0]

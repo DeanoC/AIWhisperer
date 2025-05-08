@@ -85,7 +85,7 @@ def test_list_models_detailed_single(mock_get):
     models = api.list_models()
 
     assert len(models) == 1
-    assert models == ["test-model-1"]
+    assert models == MOCK_API_RESPONSE_SINGLE_MODEL["data"]
 
 
 @patch('src.ai_whisperer.openrouter_api.requests.get')
@@ -100,7 +100,7 @@ def test_list_models_detailed_multiple(mock_get):
     models = api.list_models()
 
     assert len(models) == 2
-    assert models == ["test-model-1", "test-model-2"]
+    assert models == MOCK_API_RESPONSE_MULTIPLE_MODELS["data"]
 
 
 @patch('src.ai_whisperer.openrouter_api.requests.get')
@@ -115,7 +115,7 @@ def test_list_models_detailed_missing_fields(mock_get):
     models = api.list_models()
 
     assert len(models) == 1
-    assert models == ["test-model-3"]
+    assert models == MOCK_API_RESPONSE_MISSING_FIELDS["data"]
 
 @patch('src.ai_whisperer.openrouter_api.requests.get')
 def test_list_models_detailed_empty_data(mock_get):
