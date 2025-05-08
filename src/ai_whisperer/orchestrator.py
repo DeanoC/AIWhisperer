@@ -6,6 +6,7 @@ import os
 import uuid
 from pathlib import Path
 from typing import Dict, Any, Tuple
+import copy # Import the copy module
 
 
 from . import openrouter_api
@@ -24,6 +25,8 @@ from src.postprocessing.scripted_steps.escape_text_fields import escape_text_fie
 from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
 from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
 from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
+
+from src.ai_whisperer.config import load_config
 
 
 # Determine the package root directory to locate default files relative to the package
@@ -413,6 +416,8 @@ class Orchestrator:
         try:
             with open(task_plan_path, "r", encoding="utf-8") as f:
                 task_data = json.load(f)
+            # Create a deep copy for the overview plan
+            overview_data = copy.deepcopy(task_data)
         except Exception as e:
             logger.error(f"Failed to read generated task plan JSON: {e}")
             raise OrchestratorError(f"Failed to read generated task plan JSON: {e}") from e
@@ -473,17 +478,29 @@ class Orchestrator:
             logger.warning("No steps found in task plan, no subtasks will be generated")
 
         # Save the updated task plan with step info
-        task_data["plan"] = step_info
-        try:
-            with open(overplan_path, "w", encoding="utf-8") as f:
-                json.dump(task_data, f, indent=2)
-            logger.info(f"Updated task plan saved to {overplan_path}")
-        except Exception as e:
-            logger.error(f"Failed to save updated task plan JSON: {e}")
-            raise OrchestratorError(f"Failed to save updated task plan JSON: {e}") from e
+        # Update the plan in the overview data with step info
+        overview_data["plan"] = step_info
+        overview_path = None # Initialize overview_path
+
+        # Construct the output filename for the overview file
+        original_filename = os.path.basename(task_plan_path)
+        filename_stem, file_extension = os.path.splitext(original_filename)
+        overview_filename = f"overview_{filename_stem}{file_extension}"
+
+        # Save the overview data to the new overview file path
+        overview_path = self.save_json(overview_data, overview_filename)
+
+        # The original task_plan_path already points to the initial JSON,
+        # which was loaded into task_data. We don't need to re-save task_data
+        # unless it was modified elsewhere (which it shouldn't be for the initial plan).
+        # The previous code was overwriting the initial plan with the updated one.
+        # We keep task_plan_path as the path to the initial plan.
+
+        logger.info(f"Overview task plan saved to {overview_path}")
 
         return {
-            "task_plan": overplan_path,
+            "task_plan": task_plan_path, # Path to the initial task plan
+            "overview_plan": overview_path, # Path to the overview plan with step info
             "subtasks": subtask_paths,
             "step_info": step_info,
         }

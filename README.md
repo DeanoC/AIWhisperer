@@ -119,8 +119,8 @@ See [Configuration Examples](docs/config_examples.md) for more detailed examples
 Run the tool from the project's root directory:
 
 ```bash
-python -m src.ai_whisperer.main --requirements <path/to/your/requirements.md> --config config.yaml --output <path/to/output/tasks.yaml>
-python -m src.ai_whisperer.main --config .\project_dev\aiwhisperer_config.yaml --list-models --output-csv models.csv
+python -m src.ai_whisperer.main generate --requirements <path/to/your/requirements.md> --config config.yaml --output <path/to/output/tasks.yaml>
+python -m src.ai_whisperer.main list-models --config .\project_dev\aiwhisperer_config.yaml --output-csv models.csv
 
 ```
 
@@ -164,7 +164,7 @@ Write a feature request in a similar style to patch_hash_task_id.md to the same 
 Currently our prompts have strict rules
 ```
 
-Currently a prompt like 
+Currently a prompt like
 
 ```text
 We are implementing a new feature more_yaml_postprocessing with more_yaml_postprocessing_aiwhisperer_config.yaml being our structure high level plan.

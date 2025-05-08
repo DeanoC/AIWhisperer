@@ -67,6 +67,11 @@ class OpenRouterAPI:
         try:
             response = requests.get(MODELS_API_URL, headers=headers, timeout=30)
             response.raise_for_status()
+
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"OpenRouter API list_models raw response type: {type(response.text)}")
+            logger.debug(f"OpenRouter API list_models raw response content: {response.text[:500]}") # Log first 500 chars
             
             try:
                 data = response.json()
@@ -80,9 +85,17 @@ class OpenRouterAPI:
                 
                 # Extract detailed model information from the response
                 # Extract only the model IDs from the response
-                model_ids = [model_data.get("id") for model_data in data["data"] if model_data.get("id")]
+                # Extract detailed model information from the response
+                # The API call should return all the data for all the models
                 
-                return model_ids
+                # Add logging to inspect elements in data["data"]
+                for i, item in enumerate(data["data"]):
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.debug(f"Element {i} in data['data'] type: {type(item)}")
+                    logger.debug(f"Element {i} in data['data'] content: {item}")
+
+                return data["data"]
                 
             except ValueError as e:
                 raise OpenRouterAPIError(

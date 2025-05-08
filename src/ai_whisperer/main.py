@@ -119,7 +119,14 @@ def main():
     )
 
     # Use parse_known_args to avoid conflicts with pytest arguments during testing
-    args, unknown = parser.parse_known_args()
+    # Check if running under pytest
+    if 'pytest' in sys.modules:
+        args, unknown = parser.parse_known_args()
+        logger.debug("Running under pytest, using parse_known_args.")
+    else:
+        args = parser.parse_args()
+        unknown = [] # No unknown arguments expected when not under pytest
+        logger.debug("Not running under pytest, using parse_args.")
 
     logger.debug(f"Parsed arguments: {args}")
     logger.debug(f"Unknown arguments: {unknown}")
@@ -275,6 +282,7 @@ def main():
 
             # Create the Orchestrator with the right output directory
             orchestrator = Orchestrator(config, args.output)
+
 
             # Generate full project plan (main YAML + subtasks)
             result = orchestrator.generate_full_project_plan(args.requirements, args.config)
