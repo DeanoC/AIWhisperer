@@ -129,11 +129,9 @@ output_dir: "./output/"
         # The config should load successfully even without task-specific models
         config = load_config(config_path, env_vars=mock_env_vars)
 
-        # Verify the task_models section exists but is empty
+        # Verify the task_models section exists and is an empty dictionary
         assert 'task_models' in config, "task_models section is missing"
-        task_models = config['task_models']
-        assert isinstance(task_models, dict), "task_models should be a dictionary"
-        assert len(task_models) == 0, "task_models should be empty"
+        assert config['task_models'] == {}, "task_models should be an empty dictionary"
 
     finally:
         # Clean up the temporary file

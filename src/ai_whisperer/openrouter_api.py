@@ -29,6 +29,10 @@ class OpenRouterAPI:
             ConfigError: If required configuration keys are missing.
         """
         try:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"OpenRouterAPI __init__ received config type: {type(config)}")
+            logger.debug(f"OpenRouterAPI __init__ received config: {config}")
             self.openrouter_config = config  # Use the passed dict directly
             self.api_key = self.openrouter_config['api_key']
             # Re-add model and params attributes
@@ -75,21 +79,10 @@ class OpenRouterAPI:
                     )
                 
                 # Extract detailed model information from the response
-                detailed_models = []
-                for model_data in data["data"]:
-                    model_info = {
-                        "id": model_data.get("id"),
-                        "name": model_data.get("name"),
-                        "pricing": model_data.get("pricing"),
-                        "supported_parameters": model_data.get("supported_parameters"),
-                        "context_length": model_data.get("context_length"),
-
-                        "description": model_data.get("description"),
-                        # Add other relevant fields as needed based on API response and planning
-                    }
-                    detailed_models.append(model_info)
-                    
-                return detailed_models
+                # Extract only the model IDs from the response
+                model_ids = [model_data.get("id") for model_data in data["data"] if model_data.get("id")]
+                
+                return model_ids
                 
             except ValueError as e:
                 raise OpenRouterAPIError(

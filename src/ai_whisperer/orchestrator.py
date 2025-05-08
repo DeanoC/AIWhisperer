@@ -1,7 +1,7 @@
 import json
 import jsonschema
 import logging
-import traceback  # Added import
+import traceback
 import os
 import uuid
 from pathlib import Path
@@ -10,7 +10,6 @@ from typing import Dict, Any, Tuple
 
 from . import openrouter_api
 from .utils import build_ascii_directory_tree, calculate_sha256
-from .model_selector import get_model_for_task
 from .exceptions import (
     OrchestratorError,
     PromptError,
@@ -34,7 +33,7 @@ except NameError:
     # Fallback for environments where __file__ might not be defined (e.g., some test runners)
     PACKAGE_ROOT = Path(".").resolve() / "src" / "ai_whisperer"
 
-DEFAULT_PROMPT_PATH = PACKAGE_ROOT.parent.parent / "prompts" / "orchestrator_default.md"
+# DEFAULT_PROMPT_PATH is no longer used as prompts are loaded via config
 DEFAULT_SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "task_schema.json"
 
 # Configure basic logging to display debug messages
@@ -45,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 class Orchestrator:
     """
-    Orchestrates the process of generating an initial task plan YAML from requirements.
+    Orchestrates the process of generating an initial task plan JSON from requirements.
     Handles prompt loading, hashing, API calls, validation, and output saving.
     """
 
@@ -64,14 +63,16 @@ class Orchestrator:
         """
         self.config = config
         self.output_dir = output_dir
-        self.prompt_override_path = config.get("prompt_override_path")
+        # prompt_override_path is no longer used
 
         # Check if openrouter configuration is present
         if "openrouter" not in config:
             raise ConfigError("'openrouter' configuration section is missing.")
 
-        # Get the model configuration for the "Orchestrator" task
-        model_config = get_model_for_task(config, "Orchestrator")
+        # Get the model configuration for the "Orchestrator" task from the loaded config
+        model_config = self.config.get('task_model_configs', {}).get('orchestrator')
+        if not model_config:
+             raise ConfigError("Model configuration for 'orchestrator' task is missing in the loaded config.")
 
         logger.info(
             f"Orchestrator Model: {model_config.get('model')}, Params: {model_config.get('params')}"
@@ -101,45 +102,18 @@ class Orchestrator:
             logger.error(f"Unexpected error loading schema {schema_path}: {e}")
             raise OrchestratorError(f"Failed to load schema {schema_path}: {e}") from e
 
-    def _load_prompt_template(self) -> Tuple[str, Path]:
-        """
-        Loads the prompt template content from the override path or the default path.
-
-        Returns:
-            A tuple containing the prompt content (str) and the path used (Path).
-
-        Raises:
-            PromptError: If the prompt file cannot be found or read.
-        """
-        prompt_path = (
-            Path(self.prompt_override_path)
-            if self.prompt_override_path
-            else DEFAULT_PROMPT_PATH
-        )
-
-        logger.info(f"Attempting to load prompt template from: {prompt_path}")
-        try:
-            with open(prompt_path, "r", encoding="utf-8") as f:
-                prompt_content = f.read()
-            logger.info(f"Prompt template loaded successfully from {prompt_path}.")
-            return prompt_content, prompt_path.resolve()  # Return resolved path
-        except FileNotFoundError:
-            logger.error(f"Prompt file not found: {prompt_path}")
-            raise PromptError(f"Prompt file not found: {prompt_path}")
-        except IOError as e:
-            logger.error(f"Error reading prompt file {prompt_path}: {e}")
-            raise PromptError(f"Error reading prompt file {prompt_path}: {e}") from e
+    # _load_prompt_template is no longer needed as prompts are loaded via config
 
     def _calculate_input_hashes(
-        self, requirements_md_path: Path, config_path: Path, prompt_path: Path
+        self, requirements_md_path: Path, config_path: Path
     ) -> Dict[str, str]:
         """
-        Calculates SHA-256 hashes for the input requirements, config, and prompt files.
+        Calculates SHA-256 hashes for the input requirements and config files.
+        Prompt file hash is assumed to be calculated during config loading.
 
         Args:
             requirements_md_path: Path to the input requirements markdown file.
             config_path: Path to the configuration file used.
-            prompt_path: Path to the prompt file used.
 
         Returns:
             A dictionary containing the hashes.
@@ -153,7 +127,8 @@ class Orchestrator:
             hashes = {
                 "requirements_md": calculate_sha256(requirements_md_path),
                 "config_json": calculate_sha256(config_path),
-                "prompt_file": calculate_sha256(prompt_path),
+                # Prompt file hash is now calculated during config loading
+                "prompt_file": self.config.get('input_hashes', {}).get('prompt_file', 'hash_not_available'),
             }
             logger.info(f"Calculated hashes: {hashes}")
             return hashes
@@ -193,29 +168,28 @@ class Orchestrator:
         Generates the initial task plan JSON file based on input requirements markdown.
 
         This method orchestrates the end-to-end process:
-        1. Loads the prompt template
-        2. Calculates SHA-256 hashes of input files
-        3. Reads the requirements markdown content
-        4. Constructs a prompt with markdown content and input hashes
-        5. Calls the OpenRouter API
-        6. Parses and validates the YAML response (checks hashes and schema)
-        7. Saves the validated YAML to the output directory
+        1. Gets the prompt template content from the loaded config.
+        2. Calculates SHA-256 hashes of input files (requirements and config).
+        3. Reads the requirements markdown content.
+        4. Constructs a prompt with markdown content and input hashes.
+        5. Calls the OpenRouter API.
+        6. Parses and validates the JSON response (checks hashes and schema).
+        7. Saves the validated JSON to the output directory.
 
         Args:
             requirements_md_path_str: Path string to the input requirements markdown file.
             config_path_str: Path string to the configuration file used.
 
         Returns:
-            The Path object of the generated YAML file.
+            The Path object of the generated JSON file.
 
         Raises:
             FileNotFoundError: If the requirements markdown file is not found.
-            IOError: If there's an error reading the requirements file or writing the output YAML.
-            PromptError: If the prompt template cannot be loaded.
-            ConfigError: If configuration is invalid.
+            IOError: If there's an error reading the requirements file or writing the output JSON.
+            ConfigError: If configuration is invalid or prompt content is missing.
             OpenRouterAPIError: If the API call fails.
             HashMismatchError: If response hashes don't match calculated hashes.
-            YAMLValidationError: If the response YAML fails schema validation.
+            YAMLValidationError: If the response JSON fails schema validation.
             OrchestratorError: For other orchestrator-specific issues.
             ProcessingError: For errors during file processing operations.
         """
@@ -234,12 +208,14 @@ class Orchestrator:
             )
 
         try:
-            # 1. Load Prompt Template
-            prompt_template, prompt_path = self._load_prompt_template()
+            # 1. Get Prompt Template Content from loaded config
+            prompt_template = self.config.get('task_prompts_content', {}).get('orchestrator')
+            if not prompt_template:
+                 raise ConfigError("Prompt content for 'orchestrator' task is missing in the loaded config.")
 
-            # 2. Calculate Input Hashes
+            # 2. Calculate Input Hashes (prompt hash is from config loading)
             input_hashes = self._calculate_input_hashes(
-                requirements_md_path, config_path, prompt_path
+                requirements_md_path, config_path
             )
 
             workspace_context = build_ascii_directory_tree(".")
@@ -267,7 +243,7 @@ class Orchestrator:
             # Escape any curly braces in the JSON string to avoid format string issues
             hashes_json_string = hashes_json_string.replace("{", "{{").replace("}", "}}")
             final_prompt = prompt_template.format(
-                md_content=requirements_content, 
+                md_content=requirements_content,
                 input_hashes_dict=hashes_json_string,
                 workspace_context=workspace_context,
             )
@@ -281,6 +257,7 @@ class Orchestrator:
                 model = self.openrouter_client.model
                 params = self.openrouter_client.params
 
+                # print(f"DEBUG: Orchestrator final_prompt (first 500 chars):\n{final_prompt[:500]}...") # Removed debug log
                 api_response_content = self.openrouter_client.call_chat_completion(
                     prompt_text=final_prompt, model=model, params=params
                 )
@@ -420,7 +397,6 @@ class Orchestrator:
 
         Returns:
             Dict with task_plan (Path), subtasks (list of Paths), and step_info (Dict with step_id, depends_on, file_path)
-
         Raises:
             All exceptions from generate_initial_json plus:
             OrchestratorError: For issues during subtask generation
@@ -496,147 +472,133 @@ class Orchestrator:
         else:
             logger.warning("No steps found in task plan, no subtasks will be generated")
 
+        # Save the updated task plan with step info
+        task_data["plan"] = step_info
+        try:
+            with open(overplan_path, "w", encoding="utf-8") as f:
+                json.dump(task_data, f, indent=2)
+            logger.info(f"Updated task plan saved to {overplan_path}")
+        except Exception as e:
+            logger.error(f"Failed to save updated task plan JSON: {e}")
+            raise OrchestratorError(f"Failed to save updated task plan JSON: {e}") from e
 
-        # Save the updated task plan to a new file with 'overview' prefix
-        if subtask_paths and "plan" in task_data:
-            task_data["plan"] = step_info
-            # Create new filename with 'overplan' prefix
-            task_plan_path_obj = Path(task_plan_path)
-            overplan_filename = f"overview_{task_plan_path_obj.name}"
-            overplan_path = os.path.join(self.output_dir, overplan_filename)
-
-            # Save the updated plan with removed steps to the new file
-            try:
-                with open(overplan_path, "w", encoding="utf-8") as f:
-                    json.dump(task_data, f, indent=2)
-                logger.info(f"Saved updated plan with removed steps to: {overplan_path}")
-            except Exception as e:
-                logger.error(f"Failed to save updated plan: {e}")
-        else:
-            logger.info("No steps were processed, not creating overplan file")
-
-        result = {
-            "task_plan": task_plan_path, 
+        return {
+            "task_plan": overplan_path,
             "subtasks": subtask_paths,
-            "step_info": step_info if "step_info" in locals() else None,
-            "overview_plan": overplan_path
+            "step_info": step_info,
         }
 
-
-        logger.info(f"Full project plan generation completed with {len(subtask_paths)} subtasks")
-        return result
-
-    def refine_requirements(self, input_file, prompt_file=None, iterations=1):
+    def refine_requirements(self, input_filepath_str: str, config_path_str: str) -> Path:
         """
-        Refine a requirements document using an AI model.
+        Refines the requirements markdown file based on AI feedback.
 
         Args:
-            input_file (str): Path to the input requirements document.
-            prompt_file (str, optional): Path to a custom prompt file.
-            iterations (int): Number of refinement iterations.
+            input_filepath_str: Path string to the input requirements markdown file.
+            config_path_str: Path string to the configuration file used.
 
         Returns:
-            list: List of paths to the refined requirements documents.
+            The Path object of the refined requirements markdown file.
+
+        Raises:
+            FileNotFoundError: If the input requirements markdown file is not found.
+            IOError: If there's an error reading the input file or writing the output file.
+            ConfigError: If configuration is invalid.
+            OpenRouterAPIError: If the API call fails.
+            OrchestratorError: For other orchestration-specific issues.
+            ProcessingError: For errors during file processing operations.
         """
-        # Convert input_file to Path object for easier manipulation
-        input_filepath = Path(input_file)
+        input_filepath = Path(input_filepath_str).resolve()
+        config_path = Path(config_path_str).resolve()
 
-        # Read the input requirements
-        with open(input_filepath, 'r', encoding='utf-8') as f:
-            requirements_content = f.read()
+        logger.info(f"Starting requirements refinement for: {input_filepath}")
+        logger.info(f"Using configuration file: {config_path}")
 
-        # Read custom prompt if provided
-        if prompt_file:
-            with open(prompt_file, 'r', encoding='utf-8') as pf:
-                prompt_to_send = pf.read()
-        else:
-            prompt_to_send = f"Refine the following requirements:\n\n{requirements_content}"
+        if not input_filepath.is_file():
+            logger.error(f"Requirements file not found: {input_filepath}")
+            raise FileNotFoundError(f"Requirements file not found: {input_filepath}")
 
-        # Get model and params from config if available, else use defaults
-        openrouter_config = self.config.get('openrouter', {}) if hasattr(self, 'config') else {}
-        model = openrouter_config.get('model', 'mock-model')
-        params = openrouter_config.get('params', {})
+        try:
+            # Load config
+            config = load_config(config_path_str)
 
-        # Use OpenRouterAPI from self if available, else create one
-        if hasattr(self, 'client'):
-            client = self.client
-        else:
-            from .openrouter_api import OpenRouterAPI
-            client = OpenRouterAPI(self.config.get('openrouter', {}))
+            # Get the model configuration and prompt content for the "refine_requirements" task
+            model_config = config.get('task_model_configs', {}).get('refine_requirements')
+            if not model_config:
+                 raise ConfigError("Model configuration for 'refine_requirements' task is missing in the loaded config.")
 
-        saved_files = []
-        original_filepath = input_filepath
+            prompt_template = config.get('task_prompts_content', {}).get('refine_requirements')
+            if not prompt_template:
+                 raise ConfigError("Prompt content for 'refine_requirements' task is missing in the loaded config.")
 
-        for i in range(1, iterations + 1):
-            # Determine the next iteration filename
-            next_iteration_filepath = self._determine_next_refine_filename(str(input_filepath))
-
-            # Call the AI model
-            ai_response_content = client.call_chat_completion(prompt_to_send, model, params)
-
-            # Rename the original file to the iteration filename
-            os.rename(input_filepath, next_iteration_filepath)
-
-            # Save the AI response to the original filename
-            with open(input_filepath, 'w', encoding='utf-8') as f:
-                f.write(ai_response_content)
-
-            saved_files.append(str(input_filepath))
-
-            # Update requirements_content for next iteration if needed
-            if i < iterations:
+            # Read input requirements content
+            logger.info(f"Reading requirements file: {input_filepath}")
+            try:
                 with open(input_filepath, 'r', encoding='utf-8') as f:
                     requirements_content = f.read()
-                prompt_to_send = f"Refine the following requirements:\n\n{requirements_content}"
+                logger.info("Requirements content read successfully.")
+            except IOError as e:
+                logger.error(f"Error reading requirements file {input_filepath}: {e}")
+                raise ProcessingError(f"Error reading requirements file {input_filepath}: {e}") from e
 
-        return saved_files
+            # Construct prompt
+            logger.info("Constructing prompt for requirements refinement...")
+            final_prompt = prompt_template.format(md_content=requirements_content)
+            # logger.debug(f"Constructed final prompt:\n{final_prompt}...")
+
+            # Call OpenRouter API
+            logger.info("Calling OpenRouter API for requirements refinement...")
+            try:
+                # Initialize a new OpenRouterAPI client with the task-specific model config
+                refine_api_client = openrouter_api.OpenRouterAPI(config=model_config)
+                api_response_content = refine_api_client.call_chat_completion(
+                    prompt_text=final_prompt,
+                    model=refine_api_client.model,
+                    params=refine_api_client.params
+                )
+                logger.info("Received response from OpenRouter API for requirements refinement.")
+                # logger.debug(f"API Response content:\n{api_response_content}")
+            except OpenRouterAPIError as e:
+                logger.error(f"OpenRouter API call for requirements refinement failed: {e}")
+                raise
+
+            # Determine output filename (e.g., requirements_v2.md)
+            output_filepath = self._determine_next_refine_filename(input_filepath_str)
+            logger.info(f"Saving refined requirements to: {output_filepath}")
+
+            # Save the refined content
+            try:
+                with open(output_filepath, 'w', encoding='utf-8') as f:
+                    f.write(api_response_content)
+                logger.info(f"Successfully saved refined requirements to {output_filepath}")
+                return output_filepath
+            except IOError as e:
+                logger.error(f"Error writing refined requirements file {output_filepath}: {e}")
+                raise ProcessingError(f"Error writing refined requirements file {output_filepath}: {e}") from e
+
+        except (FileNotFoundError, ConfigError, OpenRouterAPIError, ProcessingError) as e:
+            logger.error(f"Requirements refinement failed: {e}")
+            raise
+        except Exception as e:
+            logger.exception(f"An unexpected error occurred during requirements refinement: {e}")
+            raise OrchestratorError(f"An unexpected error occurred during requirements refinement: {e}") from e
+
 
     def _determine_next_refine_filename(self, input_filepath_str):
-        """
-        Determines the filename for the old version of the file with iteration number.
-
-        Args:
-            input_filepath_str (str): Path to the input file.
-
-        Returns:
-            str: Path to the old version filename with iteration number.
-        """
+        """Determines the next available filename for refined requirements."""
         input_filepath = Path(input_filepath_str)
         parent_dir = input_filepath.parent
         stem = input_filepath.stem
         suffix = input_filepath.suffix
 
-        # Find existing refined files for this stem with old_ prefix
-        existing_files = os.listdir(str(parent_dir))
-
-        # Determine the highest iteration number
-        max_iteration = 0
-        for filename in existing_files:
-            # Check if the file starts with "old_" and contains the stem and "_iteration"
-            if filename.startswith(f"old_{stem}") and "_iteration" in filename and filename.endswith(suffix):
-                try:
-                    # Extract the number after '_iteration'
-                    iteration_part = filename.split('_iteration')[1].split('.')[0]
-                    iteration = int(iteration_part)
-                    max_iteration = max(max_iteration, iteration)
-                except (ValueError, IndexError):
-                    # Ignore files that don't have a valid number after '_iteration'
-                    continue
-
-        next_iteration = max_iteration + 1
-        old_filename = f"old_{stem}_iteration{next_iteration}{suffix}"
-        return os.path.join(str(parent_dir), old_filename)
+        i = 1
+        while True:
+            new_stem = f"{stem}_v{i}"
+            new_filepath = parent_dir / f"{new_stem}{suffix}"
+            if not new_filepath.exists():
+                return new_filepath
+            i += 1
 
     def _fnmatch(self, filename, pattern):
-        """
-        Simple pattern matching function for filenames.
-
-        Args:
-            filename (str): Filename to check.
-            pattern (str): Pattern to match against.
-
-        Returns:
-            bool: True if the filename matches the pattern, False otherwise.
-        """
+        """Simple fnmatch wrapper for potential future expansion."""
         import fnmatch
         return fnmatch.fnmatch(filename, pattern)

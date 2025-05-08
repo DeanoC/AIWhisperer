@@ -12,30 +12,30 @@ Define the command name, required arguments (input file path), and optional argu
 
 The command will be:
 
-```
+```bash
 ai-whisperer --refine --requirements <input_file> --output <output_dir> --iterations <n>
 ```
 
-*   `--refine`:  Specifies the refine command.
-*   `--requirements <input_file>`:  Specifies the path to the requirements Markdown file. This is a required argument.
-*   `--output <output_dir>`: Specifies the directory for output files. This is an optional argument. If not specified, the default output directory will be used.
-*   `--iterations <n>`: Specifies the number of refinement iterations to perform. This is an optional argument. If not specified, a default number of iterations will be used.
+* `--refine`:  Specifies the refine command.
+* `--requirements <input_file>`:  Specifies the path to the requirements Markdown file. This is a required argument.
+* `--output <output_dir>`: Specifies the directory for output files. This is an optional argument. If not specified, the default output directory will be used.
+* `--iterations <n>`: Specifies the number of refinement iterations to perform. This is an optional argument. If not specified, a default number of iterations will be used.
 
 ## 3. Outline the workflow
 
 Describe the steps involved in the `refine` command, including:
 
-*   Reading the input file.
-*   Preparing the content for AI interaction.
-*   Interacting with the AI model.
-*   Saving the refined output.
+* Reading the input file.
+* Preparing the content for AI interaction.
+* Interacting with the AI model.
+* Saving the refined output.
 
 The workflow will be as follows:
 
-1.  The tool will read the content of the specified input file (likely a markdown file).
-2.  The tool will prepare this content for interaction with the AI model. This may involve formatting the content or extracting relevant sections.
-3.  The tool will interact with the AI (referencing potential API calls or internal processing) to refine the content.
-4.  The tool will save the refined output to the specified output directory.
+1. The tool will read the content of the specified input file (likely a markdown file).
+2. The tool will prepare this content for interaction with the AI model. This may involve formatting the content or extracting relevant sections.
+3. The tool will interact with the AI (referencing potential API calls or internal processing) to refine the content.
+4. The tool will save the refined output to the specified output directory.
 
 ## 4. Detail file handling logic
 
@@ -49,9 +49,9 @@ Describe the error handling strategy for file I/O operations, API calls, and oth
 
 The error handling strategy will be as follows:
 
-*   File I/O operations: Catch `FileNotFoundError`, `PermissionError`, and `IOError` exceptions. Log the error and display an informative message to the user.
-*   API calls: Catch `OpenRouterAPIError` exceptions. Log the error and display an informative message to the user.
-*   Other potential failure points: Catch `Exception` exceptions. Log the error and display a generic error message to the user.
+* File I/O operations: Catch `FileNotFoundError`, `PermissionError`, and `IOError` exceptions. Log the error and display an informative message to the user.
+* API calls: Catch `OpenRouterAPIError` exceptions. Log the error and display an informative message to the user.
+* Other potential failure points: Catch `Exception` exceptions. Log the error and display a generic error message to the user.
 
 ## 6. Diagram
 

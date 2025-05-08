@@ -26,13 +26,13 @@ prompts: {} # Explicitly set to an empty dictionary
 
 # --- Task-Specific Model Settings ---
 task_models:
-  "Subtask Generation":
+  "subtask_generator":
     provider: "openrouter"
     model: "google/gemini-2.5-flash-preview"
     params:
       temperature: 0.5
       max_tokens: 8000
-  "Orchestrator":
+  "orchestrator":
     provider: "openrouter"
     model: "google/gemini-2.5-flash-preview"
     params:

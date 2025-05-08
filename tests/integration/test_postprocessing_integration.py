@@ -11,6 +11,7 @@ from pathlib import Path
 
 from src.ai_whisperer.orchestrator import Orchestrator
 from src.ai_whisperer.subtask_generator import SubtaskGenerator
+from src.ai_whisperer.config import load_config # Import load_config
 from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 from src.postprocessing.pipeline import PostprocessingPipeline
@@ -65,17 +66,23 @@ class TestOrchestratorPostprocessingIntegration:
             "src.ai_whisperer.orchestrator.openrouter_api.OpenRouterAPI",
             return_value=mock_api_instance,
         ):
-            # Create a test config
-            test_config = {
+            # Create a raw test config with the new structure
+            raw_test_config = {
                 "openrouter": {
                     "api_key": "test-key",
                     "model": "test-model",
                     "params": {},
                 },
-                "prompts": {
-                    "orchestrator_prompt_content": "Test prompt",
-                    "subtask_generator_prompt_content": "Test prompt",
+                "task_prompts": {
+                    # Path is relative to the config file location (tmp_test)
+                    "orchestrator": "orchestrator_default.md"
                 },
+                "task_models": {
+                    "orchestrator": {
+                        "model": "test-model",
+                        "params": {},
+                    }
+                }
             }
 
             # Create temporary files for testing
@@ -86,12 +93,21 @@ class TestOrchestratorPostprocessingIntegration:
             with open(requirements_path, "w") as f:
                 f.write("Test requirements")
 
+            # Create a dummy prompt file
+            orchestrator_prompt_path = tmp_dir / "orchestrator_default.md"
+            with open(orchestrator_prompt_path, "w") as f:
+                f.write("Dummy orchestrator prompt content")
+
+            # Create a dummy config file
             config_path = tmp_dir / "test_config.json"
             with open(config_path, "w") as f:
-                json.dump(test_config, f)
+                json.dump(raw_test_config, f)
 
-            # Create orchestrator and call generate_initial_json
-            orchestrator = Orchestrator(test_config, output_dir=str(tmp_dir))
+            # Load the processed config using load_config
+            processed_config = load_config(str(config_path))
+
+            # Create orchestrator with the processed config
+            orchestrator = Orchestrator(processed_config, output_dir=str(tmp_dir))
 
             # Mock the _calculate_input_hashes method to return a fixed hash
             with patch.object(
@@ -185,37 +201,48 @@ class TestSubtaskGeneratorPostprocessingIntegration:
             "src.ai_whisperer.openrouter_api.OpenRouterAPI",
             return_value=mock_api_instance,
         ):
-            # Create a test config
-            test_config = {
+            # Create a raw test config with the new structure
+            raw_test_config = {
                 "openrouter": {
                     "api_key": "test-key",
                     "model": "test-model",
                     "params": {},
                 },
-                "prompts": {
-                    "orchestrator_prompt_content": "Test prompt",
-                    "subtask_generator_prompt_content": "Test prompt",
+                "task_prompts": {
+                    # Path is relative to the config file location (tmp_test)
+                    "subtask_generator": "subtask_generator_default.md"
                 },
+                 "task_models": {
+                    "subtask_generator": {
+                        "model": "test-model",
+                        "params": {},
+                    }
+                }
             }
 
             # Create temporary directory for testing
             tmp_dir = Path("./tmp_test")
             tmp_dir.mkdir(exist_ok=True)
 
+            # Create a dummy prompt file
+            subtask_generator_prompt_path = tmp_dir / "subtask_generator_default.md"
+            with open(subtask_generator_prompt_path, "w") as f:
+                f.write("Dummy subtask generator prompt content")
+
+            # Create a dummy config file
             config_path = tmp_dir / "test_config.json"
             with open(config_path, "w") as f:
-                json.dump(test_config, f)
+                json.dump(raw_test_config, f)
 
-            # Create input step
-            input_step = {
-                "step_id": "test_step",
-                "description": "Test step",
-                "agent_spec": {"type": "test", "instructions": "Test instructions"},
-            }
+            # Load the processed config using load_config
+            processed_config = load_config(str(config_path))
 
-            # Create subtask generator
+            # Create subtask generator with the processed config
             subtask_generator = SubtaskGenerator(
-                str(config_path), output_dir=str(tmp_dir)
+                str(config_path), # Pass config_path string as SubtaskGenerator expects it
+                overall_context="",
+                workspace_context="",
+                output_dir=str(tmp_dir),
             )
 
             # Replace the openrouter_client with our mock
@@ -272,6 +299,12 @@ class TestSubtaskGeneratorPostprocessingIntegration:
                 mock_file.return_value.__enter__.return_value.read.side_effect = lambda: schema_content
 
                 with patch("builtins.open", mock_file):
+                    # Create input step
+                    input_step = {
+                        "step_id": "test_step",
+                        "description": "Test step",
+                        "agent_spec": {"type": "test", "instructions": "Test instructions"},
+                    }
                     # Create result_data with items to add and the schema
                     result_data = {
                         "items_to_add": {

@@ -7,9 +7,10 @@ from pathlib import Path
 from src.ai_whisperer.subtask_generator import SubtaskGenerator
 from src.ai_whisperer.orchestrator import Orchestrator
 from src.ai_whisperer.exceptions import ConfigError
+from src.ai_whisperer.config import load_config # Import load_config for mocking
 
-# Sample configuration for testing
-SAMPLE_CONFIG = {
+# Sample configuration for testing (input config structure)
+SAMPLE_CONFIG_INPUT = {
     'openrouter': {
         'api_key': 'default-api-key',
         'model': 'default-model',
@@ -20,16 +21,9 @@ SAMPLE_CONFIG = {
         'site_url': 'http://localhost:8000',
         'app_name': 'AIWhisperer'
     },
-    'prompts': {
-        'orchestrator_prompt_path': 'prompts/orchestrator_default.md',
-        'subtask_generator_prompt_path': 'prompts/subtask_generator_default.md',
-        'orchestrator_prompt_content': 'Test orchestrator prompt content',
-        'subtask_generator_prompt_content': 'Test subtask generator prompt content'
-    },
     'output_dir': './output/',
     'task_models': {
         'Subtask Generation': {
-            'provider': 'openrouter',
             'model': 'anthropic/claude-3-opus',
             'params': {
                 'temperature': 0.5,
@@ -37,13 +31,16 @@ SAMPLE_CONFIG = {
             }
         },
         'Orchestrator': {
-            'provider': 'openrouter',
             'model': 'mistralai/mistral-large',
             'params': {
                 'temperature': 0.8,
                 'max_tokens': 8192
             }
         }
+    },
+    'task_prompts': {
+        'subtask_generator': 'prompts/subtask_generator_default.md',
+        'orchestrator': 'prompts/orchestrator_default.md'
     }
 }
 
@@ -57,122 +54,119 @@ def create_temp_config(content):
 
     return str(config_path)
 
-# Tests for SubtaskGenerator integration with model_selector
+# Tests for SubtaskGenerator integration with config loading
 class TestSubtaskGeneratorModelIntegration:
-    @patch('src.ai_whisperer.subtask_generator.get_model_for_task')
     @patch('src.ai_whisperer.subtask_generator.load_config')
     @patch('src.ai_whisperer.subtask_generator.OpenRouterAPI')
-    def test_subtask_generator_uses_model_selector(self, mock_openrouter, mock_load_config, mock_get_model):
+    def test_subtask_generator_uses_correct_model_config(self, mock_openrouter, mock_load_config):
         # Setup mocks
-        mock_load_config.return_value = SAMPLE_CONFIG
-
-        # Mock the model_selector to return a specific configuration
-        mock_model_config = {
-            'api_key': 'test-api-key',
-            'model': 'anthropic/claude-3-opus',
-            'params': {
-                'temperature': 0.5,
-                'max_tokens': 4096
-            },
-            'site_url': 'http://localhost:8000',
-            'app_name': 'AIWhisperer'
+        # Create a mock config that includes the expected task_model_configs and task_prompts_content, as load_config would return
+        mock_loaded_config = SAMPLE_CONFIG_INPUT.copy()
+        mock_loaded_config['task_model_configs'] = {
+            'subtask_generator': {
+                'api_key': 'default-api-key',
+                'model': 'anthropic/claude-3-opus',
+                'params': {
+                    'temperature': 0.5,
+                    'max_tokens': 4096
+                },
+                'site_url': 'http://localhost:8000',
+                'app_name': 'AIWhisperer'
+            }
         }
-        mock_get_model.return_value = mock_model_config
+        mock_loaded_config['task_prompts_content'] = {
+            'subtask_generator': 'Mock Subtask Generator Prompt Content'
+        }
+        mock_load_config.return_value = mock_loaded_config
 
-        # Create a SubtaskGenerator instance
+        # Expected model configuration for Subtask Generation from the mock loaded config
+        expected_model_config = mock_loaded_config['task_model_configs']['subtask_generator']
+
+        # Create a SubtaskGenerator instance, passing a dummy config_path
         subtask_generator = SubtaskGenerator(
-            config_path="dummy_path.yaml",
+            config_path="dummy_path.yaml", # Pass config_path
             overall_context="Test context",
             workspace_context="Test workspace"
         )
 
-        # Verify that get_model_for_task was called with the correct arguments
-        mock_get_model.assert_called_once_with(SAMPLE_CONFIG, "Subtask Generation")
+        # Verify that load_config was called with the correct path
+        mock_load_config.assert_called_once_with("dummy_path.yaml")
 
-        # Verify that OpenRouterAPI was initialized with the configuration from get_model_for_task
-        mock_openrouter.assert_called_once_with(config=mock_model_config)
+        # Verify that OpenRouterAPI was initialized with the correct model configuration from the loaded config
+        mock_openrouter.assert_called_once_with(config=expected_model_config)
 
-    @patch('src.ai_whisperer.subtask_generator.get_model_for_task')
     @patch('src.ai_whisperer.subtask_generator.load_config')
     @patch('src.ai_whisperer.subtask_generator.OpenRouterAPI')
-    def test_subtask_generator_handles_different_model_config(self, mock_openrouter, mock_load_config, mock_get_model):
-        # Setup mocks
-        mock_load_config.return_value = SAMPLE_CONFIG
-
-        # Mock the model_selector to return a different configuration
-        mock_model_config = {
-            'api_key': 'test-api-key',
-            'model': 'mistralai/mistral-large',
-            'params': {
-                'temperature': 0.8,
-                'max_tokens': 8192
-            },
-            'site_url': 'http://localhost:8000',
-            'app_name': 'AIWhisperer'
+    def test_subtask_generator_handles_missing_task_model_config(self, mock_openrouter, mock_load_config):
+        # Setup mocks with a mock loaded config missing the 'Subtask Generation' task model config
+        mock_loaded_config_missing_task_model = SAMPLE_CONFIG_INPUT.copy()
+        mock_loaded_config_missing_task_model['task_model_configs'] = {} # Simulate missing task model config after loading
+        mock_loaded_config_missing_task_model['task_prompts_content'] = { # Still need prompt content for the check after model config
+             'subtask_generator': 'Mock Subtask Generator Prompt Content'
         }
-        mock_get_model.return_value = mock_model_config
 
-        # Create a SubtaskGenerator instance
-        subtask_generator = SubtaskGenerator(
-            config_path="dummy_path.yaml",
-            overall_context="Test context",
-            workspace_context="Test workspace"
-        )
+        mock_load_config.return_value = mock_loaded_config_missing_task_model
 
-        # Verify that get_model_for_task was called with the correct arguments
-        mock_get_model.assert_called_once_with(SAMPLE_CONFIG, "Subtask Generation")
+        # Based on src/ai_whisperer/subtask_generator.py, it should raise ConfigError if missing
+        # So, the test should assert that ConfigError is raised when initializing with a dummy config_path.
+        with pytest.raises(ConfigError, match="Model configuration for 'subtask_generator' task is missing in the loaded config."):
+            SubtaskGenerator(
+                config_path="dummy_path.yaml", # Pass config_path
+                overall_context="Test context",
+                workspace_context="Test workspace"
+            )
 
-        # Verify that OpenRouterAPI was initialized with the configuration from get_model_for_task
-        mock_openrouter.assert_called_once_with(config=mock_model_config)
+        # Verify that load_config was called with the correct path
+        mock_load_config.assert_called_once_with("dummy_path.yaml")
 
-# Tests for Orchestrator integration with model_selector
+        # OpenRouterAPI should NOT be called if ConfigError is raised
+        mock_openrouter.assert_not_called()
+
+# Tests for Orchestrator integration with config loading
 class TestOrchestratorModelIntegration:
-    @patch('src.ai_whisperer.orchestrator.get_model_for_task')
-    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI')
-    def test_orchestrator_uses_model_selector(self, mock_openrouter, mock_get_model):
-        # Mock the model_selector to return a specific configuration
-        mock_model_config = {
-            'api_key': 'test-api-key',
-            'model': 'mistralai/mistral-large',
-            'params': {
-                'temperature': 0.8,
-                'max_tokens': 8192
-            },
-            'site_url': 'http://localhost:8000',
-            'app_name': 'AIWhisperer'
+    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI') # Correct patch target
+    def test_orchestrator_uses_correct_model_config(self, mock_openrouter):
+        # Create a mock config that includes the expected task_model_configs and task_prompts_content, simulating load_config output
+        mock_loaded_config = SAMPLE_CONFIG_INPUT.copy()
+        mock_loaded_config['task_model_configs'] = {
+            'orchestrator': {
+                'api_key': 'default-api-key',
+                'model': 'mistralai/mistral-large',
+                'params': {
+                    'temperature': 0.8,
+                    'max_tokens': 8192
+                },
+                'site_url': 'http://localhost:8000',
+                'app_name': 'AIWhisperer'
+            }
         }
-        mock_get_model.return_value = mock_model_config
-
-        # Create an Orchestrator instance
-        orchestrator = Orchestrator(config=SAMPLE_CONFIG)
-
-        # Verify that get_model_for_task was called with the correct arguments
-        mock_get_model.assert_called_once_with(SAMPLE_CONFIG, "Orchestrator")
-
-        # Verify that OpenRouterAPI was initialized with the configuration from get_model_for_task
-        mock_openrouter.assert_called_once_with(config=mock_model_config)
-
-    @patch('src.ai_whisperer.orchestrator.get_model_for_task')
-    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI')
-    def test_orchestrator_handles_different_model_config(self, mock_openrouter, mock_get_model):
-        # Mock the model_selector to return a different configuration
-        mock_model_config = {
-            'api_key': 'test-api-key',
-            'model': 'anthropic/claude-3-opus',
-            'params': {
-                'temperature': 0.5,
-                'max_tokens': 4096
-            },
-            'site_url': 'http://localhost:8000',
-            'app_name': 'AIWhisperer'
+        mock_loaded_config['task_prompts_content'] = {
+            'orchestrator': 'Mock Orchestrator Prompt Content'
         }
-        mock_get_model.return_value = mock_model_config
 
-        # Create an Orchestrator instance
-        orchestrator = Orchestrator(config=SAMPLE_CONFIG)
+        # Expected model configuration for Orchestrator from the mock loaded config
+        expected_model_config = mock_loaded_config['task_model_configs']['orchestrator']
 
-        # Verify that get_model_for_task was called with the correct arguments
-        mock_get_model.assert_called_once_with(SAMPLE_CONFIG, "Orchestrator")
+        # Create an Orchestrator instance, passing the mock loaded config
+        orchestrator = Orchestrator(config=mock_loaded_config)
 
-        # Verify that OpenRouterAPI was initialized with the configuration from get_model_for_task
-        mock_openrouter.assert_called_once_with(config=mock_model_config)
+        # Verify that OpenRouterAPI was initialized with the correct model configuration from the loaded config
+        mock_openrouter.assert_called_once_with(config=expected_model_config)
+
+    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI') # Correct patch target
+    def test_orchestrator_handles_missing_task_model_config(self, mock_openrouter):
+        # Create a mock config that includes task_prompts_content but is missing the 'Orchestrator' task model config
+        mock_loaded_config_missing_task_model = SAMPLE_CONFIG_INPUT.copy()
+        mock_loaded_config_missing_task_model['task_model_configs'] = {} # Simulate missing task model config after loading
+        mock_loaded_config_missing_task_model['task_prompts_content'] = { # Still need prompt content for the check after model config
+             'orchestrator': 'Mock Orchestrator Prompt Content'
+        }
+
+
+        # Based on src/ai_whisperer/orchestrator.py, it should raise ConfigError if missing
+        # So, the test should assert that ConfigError is raised when initializing with the mock loaded config.
+        with pytest.raises(ConfigError, match="Model configuration for 'orchestrator' task is missing in the loaded config."):
+            Orchestrator(config=mock_loaded_config_missing_task_model)
+
+        # OpenRouterAPI should NOT be called if ConfigError is raised
+        mock_openrouter.assert_not_called()

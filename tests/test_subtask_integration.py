@@ -26,7 +26,7 @@ OUT_FILE = 'output.yaml'
 def test_main_list_models_missing_config(monkeypatch, capsys):
     """Test the --list-models flag without the required --config argument."""
     # Mock sys.argv using monkeypatch
-    monkeypatch.setattr('sys.argv', ['main.py', '--list-models'])
+    monkeypatch.setattr('sys.argv', ['main.py', 'list-models'])
 
     with pytest.raises(SystemExit) as excinfo:
         with patch('sys.exit') as mock_exit:
@@ -35,37 +35,37 @@ def test_main_list_models_missing_config(monkeypatch, capsys):
 
     # Check for error message printed to stderr
     captured = capsys.readouterr()
-    assert "Error: --config argument is required when using --list-models." in captured.err
+    assert "required: --config" in captured.err
 
 # Test for --generate-subtask flag without config
 def test_main_generate_subtask_missing_config(monkeypatch, capsys):
     """Test the --generate-subtask flag without the required --config argument."""
     # Mock sys.argv using monkeypatch
-    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--step', 'test_step.yaml'])
+    monkeypatch.setattr('sys.argv', ['main.py', 'generate', '--generate-subtask', '--step', 'test_step.yaml'])
 
     with pytest.raises(SystemExit) as excinfo:
         with patch('sys.exit') as mock_exit:
             mock_exit.side_effect = SystemExit(1)
             main()
 
-    # Check for error message printed to stderr
+    # Check for error message printed to stderr, matching argparse output
     captured = capsys.readouterr()
-    assert "Error: --config argument is required when using --generate-subtask." in captured.err
+    assert "--config" in captured.err and "required" in captured.err
 
 # Test for --generate-subtask flag without step
 def test_main_generate_subtask_missing_step(monkeypatch, capsys):
     """Test the --generate-subtask flag without the required --step argument."""
     # Mock sys.argv using monkeypatch
-    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--config', CONFIG_FILE])
+    monkeypatch.setattr('sys.argv', ['main.py', 'generate', '--generate-subtask', '--config', CONFIG_FILE])
 
     with pytest.raises(SystemExit) as excinfo:
         with patch('sys.exit') as mock_exit:
             mock_exit.side_effect = SystemExit(1)
             main()
 
-    # Check for error message printed to stderr
+    # Check for error message printed to stderr, matching argparse output
     captured = capsys.readouterr()
-    assert "Error: --step argument is required when using --generate-subtask." in captured.err
+    assert "--step" in captured.err and "required" in captured.err
 
 # Test successful subtask generation
 @patch('src.ai_whisperer.main.SubtaskGenerator')
@@ -93,7 +93,7 @@ def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_lo
     mock_console = MagicMock()
     
     # Mock command line arguments
-    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--config', CONFIG_FILE, '--step', STEP_FILE])
+    monkeypatch.setattr('sys.argv', ['main.py', 'generate', '--generate-subtask', '--config', CONFIG_FILE, '--step', STEP_FILE])
     
     # Run with additional mocks
     with patch('src.ai_whisperer.main.setup_rich_output', return_value=mock_console), \

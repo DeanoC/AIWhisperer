@@ -46,7 +46,7 @@ The `openrouter` section contains settings for the OpenRouter API, which is used
 | `params` | No | - | Parameters to pass to the OpenRouter API for chat completions |
 | `params.temperature` | No | - | Controls randomness (0.0 to 2.0). Higher values = more creative, lower = more deterministic |
 | `params.max_tokens` | No | - | Maximum number of tokens to generate in the response |
-| `site_url` | No | "http://localhost:8000" | Your project's URL (sent as HTTP-Referer) |
+| `site_url` | No | "<http://localhost:8000>" | Your project's URL (sent as HTTP-Referer) |
 | `app_name` | No | "AIWhisperer" | Your application's name (sent as X-Title) |
 
 **Note:** The OpenRouter API key MUST be provided via the `OPENROUTER_API_KEY` environment variable. You can set this variable directly in your shell or place it in a `.env` file in the project's root directory (e.g., `OPENROUTER_API_KEY="sk-or-v1-abc...xyz"`).
@@ -74,6 +74,7 @@ The `task_models` section allows you to specify different models for different t
 | `task_models.<task_name>.params` | No | - | Model parameters for this task |
 
 Currently supported task names:
+
 - "Subtask Generation": Used when generating individual subtasks
 - "Orchestrator": Used when generating the overall project plan
 

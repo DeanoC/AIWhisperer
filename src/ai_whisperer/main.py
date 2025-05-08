@@ -41,18 +41,18 @@ def main():
     )
 
     # Create subparsers for different commands
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
 
     # --- Task Generation Command ---
     generate_parser = subparsers.add_parser("generate", help="Generate task YAML or full project plan")
     generate_parser.add_argument(
         "--requirements",
-        required=False,
+        required=True,
         help="Path to the requirements Markdown file. Required for task YAML generation."
     )
     generate_parser.add_argument(
         "--config",
-        required=False,
+        required=True,
         help="Path to the configuration YAML file. Required for most operations."
     )
     generate_parser.add_argument(
@@ -121,6 +121,15 @@ def main():
     # Use parse_known_args to avoid conflicts with pytest arguments during testing
     args, unknown = parser.parse_known_args()
 
+    logger.debug(f"Parsed arguments: {args}")
+    logger.debug(f"Unknown arguments: {unknown}")
+    logger.debug(f"Command: {args.command}")
+
+    # If no command is provided (which shouldn't happen with required=True, but as a safeguard)
+    if args.command is None:
+        parser.print_help()
+        sys.exit(2)
+
     # --- Handle Commands ---
     if args.command == "list-models":
         try:
@@ -130,9 +139,9 @@ def main():
             config = load_config(args.config)
             logger.debug("Configuration loaded successfully for listing models.")
 
+            logger.debug(f"OpenRouterAPI config: {config.get('openrouter')}")
             # Instantiate OpenRouterAPI client
             client = OpenRouterAPI(config['openrouter'])
-
             # Fetch detailed models
             console.print("Fetching available OpenRouter models...")
             detailed_models = client.list_models()
@@ -168,8 +177,12 @@ def main():
             else:
                 # Output to console (backward compatibility)
                 console.print("[bold green]Available OpenRouter Models:[/bold green]")
+                logger.debug(f"Type of detailed_models: {type(detailed_models)}, Content: {detailed_models}") # Debug log
                 for model in detailed_models:
-                    console.print(f"- {model.get('id', 'N/A')}") # Print only ID for backward compatibility
+                    if isinstance(model, str):
+                        console.print(f"- {model}") # Print string directly if it's a string
+                    else:
+                        console.print(f"- {model.get('id', 'N/A')}") # Print ID if it's a dictionary
             
             raise SystemExit(0)
             return # Ensure exit in test environments
@@ -310,12 +323,10 @@ def main():
                 # Handle the refine command
                 orchestrator = Orchestrator(config, args.output)
                 input_file = args.input_file
-                prompt_file = args.prompt_file
                 iterations = args.iterations
                 # Call your orchestrator's refine method (example, adapt as needed)
                 result = orchestrator.refine_requirements(
-                    input_file=input_file,
-                    prompt_file=prompt_file,
+                    requirements_md_path_str=input_file,
                     iterations=iterations
                 )
                 console.print(f"[green]Successfully refined requirements: {result}[/green]")

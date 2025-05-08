@@ -21,14 +21,13 @@ from .config import load_config
 from .openrouter_api import OpenRouterAPI
 from .exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
 from .utils import validate_against_schema # Assuming this will be created in utils
-from .model_selector import get_model_for_task
 from src.postprocessing.pipeline import ProcessingError
 
 logger = logging.getLogger(__name__)
 
 class SubtaskGenerator:
     """
-    Handles the generation of detailed subtask YAML definitions from input steps.
+    Handles the generation of detailed subtask JSON definitions from input steps.
     """
     def __init__(self, config_path: str, overall_context: str = "", workspace_context: str = "", output_dir: str = 'output'):
         """
@@ -46,11 +45,19 @@ class SubtaskGenerator:
         """
         try:
             self.config = load_config(config_path)
-            # Get the model configuration for the "Subtask Generation" task
-            model_config = get_model_for_task(self.config, "Subtask Generation")
-            logger.info(f"Subtask Generation Model: {model_config.get('model')}, Params: {model_config.get('params')}")
 
-            # Pass the task-specific model configuration to the OpenRouterAPI client
+            # Get the model configuration and prompt content for the "subtask_generator" task
+            model_config = self.config.get('task_model_configs', {}).get('subtask_generator')
+            if not model_config:
+                 raise ConfigError("Model configuration for 'subtask_generator' task is missing in the loaded config.")
+
+            self.subtask_prompt_template = self.config.get('task_prompts_content', {}).get('subtask_generator')
+            if not self.subtask_prompt_template:
+                 raise ConfigError("Prompt content for 'subtask_generator' task is missing in the loaded config.")
+
+            logger.info(f"subtaskgenerator Model: {model_config.get('model')}, Params: {model_config.get('params')}")
+
+            # Initialize the OpenRouterAPI client with the task-specific model configuration
             self.openrouter_client = OpenRouterAPI(
                 config=model_config
             )
@@ -58,76 +65,12 @@ class SubtaskGenerator:
             self.overall_context = overall_context
             self.workspace_context = workspace_context # Store context
 
-            # Load the subtask prompt template from file
-            try:
-                self.subtask_prompt_template = self._load_prompt_template()
-            except SubtaskGenerationError as e:
-                # If file loading fails, try to load from config as a fallback
-                logger.warning(f"Failed to load subtask prompt from file: {e}. Attempting to load from config.")
-                try:
-                    self.subtask_prompt_template = self.config['prompts']['subtask_generator_prompt_content']
-                    logger.info("Subtask prompt template loaded successfully from config.")
-                except KeyError as ke:
-                    raise SubtaskGenerationError(f"Subtask prompt template not found in config or default file: {ke}") from ke
-                except Exception as ex:
-                    raise SubtaskGenerationError(f"Unexpected error loading subtask prompt from config: {ex}") from ex
-
-
         except ConfigError as e:
             # Re-raise ConfigError to be handled by the caller
             raise e
         except Exception as e:
             # Catch any other unexpected errors during initialization
             raise SubtaskGenerationError(f"Failed to initialize SubtaskGenerator: {e}") from e
-
-    def _load_prompt_template(self) -> str:
-        """
-        Loads the subtask prompt template content from the default path.
-
-        Returns:
-            The prompt content (str).
-
-        Raises:
-            SubtaskGenerationError: If the prompt file cannot be found or read.
-        """
-        # Assuming a default prompt path for subtask generation
-        # This should be relative to the project root or package root
-        # For now, let's assume it's in the prompts directory at the project root
-        prompt_path = Path("prompts/subtask_generator_default.md")
-
-        logger.info(f"Attempting to load subtask prompt template from: {prompt_path}")
-        try:
-            with open(prompt_path, "r", encoding="utf-8") as f:
-                prompt_content = f.read()
-            logger.info(f"Subtask prompt template loaded successfully from {prompt_path}.")
-            return prompt_content
-        except FileNotFoundError:
-            # Do not raise here, allow fallback to config
-            raise SubtaskGenerationError(f"Subtask prompt file not found: {prompt_path}")
-        except IOError as e:
-            raise SubtaskGenerationError(f"Error reading subtask prompt file {prompt_path}: {e}") from e
-
-
-    def _prepare_prompt(self, input_step: Dict[str, Any]) -> str:
-        """Prepares the prompt for the AI model using all context placeholders."""
-        try:
-            # Convert the input step dictionary to a JSON string
-            subtask_json_str = json.dumps(input_step, indent=2)
-
-            # Replace all placeholders in the template
-            prompt = self.subtask_prompt_template.format(
-                    md_content=subtask_json_str,
-                    overall_context=self.overall_context,
-                    workspace_context=self.workspace_context,
-                )
-
-            return prompt
-        except KeyError as e:
-             # Catch missing placeholders in the template string
-             raise SubtaskGenerationError(f"Missing placeholder in subtask prompt template: {e}") from e
-        except Exception as e:
-            # Catch potential errors during JSON dumping or string replacement
-            raise SubtaskGenerationError(f"Failed to prepare prompt: {e}") from e
 
 
     def generate_subtask(self, input_step: Dict[str, Any], result_data: Dict = None) -> tuple[Path, dict]:
@@ -148,15 +91,15 @@ class SubtaskGenerator:
              raise SubtaskGenerationError("Invalid input_step format. Must be a dict with 'step_id' and 'description'.")
 
         try:
-            # 1. Prepare Prompt (now uses stored context via self)
-            prompt_content = self._prepare_prompt(input_step)
-            # messages = [{"role": "user", "content": prompt_content}] # Keep if switching to messages format
+            # 1. Construct Final Prompt using the loaded template and context
+            subtask_json_str = json.dumps(input_step, indent=2)
+            prompt_content = self.subtask_prompt_template.format(
+                md_content=subtask_json_str,
+                overall_context=self.overall_context,
+                workspace_context=self.workspace_context,
+            )
 
-            # 2. Call AI Model
-            # Get model and params from config
-            model = self.config['openrouter'].get('model')
-            params = self.config['openrouter'].get('params', {})
-              # Call the API with full context
+            # 2. Call AI Model using the initialized openrouter_client
             ai_response_text = self.openrouter_client.call_chat_completion(
                 prompt_text=prompt_content,
                 model=self.openrouter_client.model,  # Get model from client
@@ -185,9 +128,6 @@ class SubtaskGenerator:
 
             # 3. Parse AI Response JSON and apply postprocessing
             try:
-                # Debug: Print the AI response text
-                # print(f"AI response text: {ai_response_text}")
-
                 # Load the subtask schema
                 subtask_schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
                 with open(subtask_schema_path, "r", encoding="utf-8") as f:

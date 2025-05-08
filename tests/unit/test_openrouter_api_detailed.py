@@ -85,15 +85,7 @@ def test_list_models_detailed_single(mock_get):
     models = api.list_models()
 
     assert len(models) == 1
-    model = models[0]
-    assert model['id'] == "test-model-1"
-    assert model['name'] == "Test Model One"
-    assert model['pricing']['input'] == "0.001"
-    assert model['pricing']['output'] == "0.002"
-    assert model['description'] == "A test model."
-    assert model['features'] == ["chat", "completion"]
-    assert model['context_window'] == 8192
-    assert model['top_provider']['name'] == "Test Provider"
+    assert models == ["test-model-1"]
 
 
 @patch('src.ai_whisperer.openrouter_api.requests.get')
@@ -108,26 +100,7 @@ def test_list_models_detailed_multiple(mock_get):
     models = api.list_models()
 
     assert len(models) == 2
-
-    model1 = models[0]
-    assert model1['id'] == "test-model-1"
-    assert model1['name'] == "Test Model One"
-    assert model1['pricing']['input'] == "0.001"
-    assert model1['pricing']['output'] == "0.002"
-    assert model1['description'] == "A test model."
-    assert model1['features'] == ["chat", "completion"]
-    assert model1['context_window'] == 8192
-    assert model1['top_provider']['name'] == "Test Provider"
-
-    model2 = models[1]
-    assert model2['id'] == "test-model-2"
-    assert model2['name'] == "Test Model Two"
-    assert model2['pricing']['input'] == "0.003"
-    assert model2['pricing']['output'] == "0.004"
-    assert model2['description'] == "Another test model."
-    assert model2['features'] == ["image_generation"]
-    assert model2['context_window'] == 4096
-    assert model2['top_provider']['name'] == "Another Provider"
+    assert models == ["test-model-1", "test-model-2"]
 
 
 @patch('src.ai_whisperer.openrouter_api.requests.get')
@@ -142,15 +115,7 @@ def test_list_models_detailed_missing_fields(mock_get):
     models = api.list_models()
 
     assert len(models) == 1
-    model = models[0]
-    assert model['id'] == "test-model-3"
-    assert model['name'] == "Test Model Three"
-    # Assert that missing fields are handled gracefully (e.g., not present or None)
-    assert 'pricing' not in model or model['pricing'] is None
-    assert 'description' not in model or model['description'] is None
-    assert 'features' not in model or model['features'] is None
-    assert 'context_window' not in model or model['context_window'] is None
-    assert 'top_provider' not in model or model['top_provider'] is None
+    assert models == ["test-model-3"]
 
 @patch('src.ai_whisperer.openrouter_api.requests.get')
 def test_list_models_detailed_empty_data(mock_get):

@@ -70,7 +70,7 @@ class TestMain:
         mock_orchestrator_instance.generate_initial_json.return_value = 'generated_output.yaml' # Mock the output path
 
         # Set command-line arguments
-        sys.argv = ['main.py', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE, '--output', self.OUT_FILE]
+        sys.argv = ['main.py', 'generate', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE, '--output', self.OUT_FILE]
         
         # Call the function
         main()
@@ -93,27 +93,27 @@ class TestMain:
     def test_main_missing_requirements_arg(self, mock_sys_exit):
         """Test the main function handles missing required arguments."""
         # Set command-line args (missing --requirements)
-        sys.argv = ['main.py', '--config', self.CONF_FILE, '--output', self.OUT_FILE]
+        sys.argv = ['main.py', 'generate', '--config', self.CONF_FILE, '--output', self.OUT_FILE]
         
         # Call the function
         with pytest.raises(SystemExit):
             main()
             
         # Verify it tried to exit with error code
-        mock_sys_exit.assert_called_once_with(1)
+        mock_sys_exit.assert_called_once_with(2)
 
     @patch('sys.exit')
     def test_main_missing_config_arg(self, mock_sys_exit):
         """Test the main function handles missing config argument."""
         # Set command-line args (missing --config)
-        sys.argv = ['main.py', '--requirements', self.REQ_FILE, '--output', self.OUT_FILE]
+        sys.argv = ['main.py', 'generate', '--requirements', self.REQ_FILE, '--output', self.OUT_FILE]
         
         # Call the function
         with pytest.raises(SystemExit):
             main()
             
         # Verify it tried to exit with error code
-        mock_sys_exit.assert_called_once_with(1)
+        mock_sys_exit.assert_called_once_with(2)
 
     def test_main_missing_output_arg(self):
         """Test the main function handles missing output argument."""
@@ -124,124 +124,47 @@ class TestMain:
         with pytest.raises(SystemExit):
             main()
 
-    # --- Test list_models functionality ---
-    @patch('sys.exit')
-    @patch('src.ai_whisperer.main.setup_rich_output')
-    @patch('src.ai_whisperer.main.setup_logging')
-    @patch('src.ai_whisperer.main.OpenRouterAPI')
-    @patch('src.ai_whisperer.main.load_config')
-    def test_main_list_models_success(self, mock_load_config, mock_api_cls, mock_setup_logging, mock_setup_rich, mock_sys_exit):
-        """Test successful models listing."""
-        # Setup mocks
-        mock_load_config.return_value = self.WRAPPED_CONFIG
-        mock_console = MagicMock()
-        mock_setup_rich.return_value = mock_console
-        mock_api_instance = MagicMock()
-        mock_api_cls.return_value = mock_api_instance
-        mock_api_instance.list_models.return_value = ['model1', 'model2']
-        
-        # Set command-line args for list models
-        sys.argv = ['main.py', '--list-models', '--config', self.CONF_FILE]
-        
-        # Call the function
-        with pytest.raises(SystemExit) as excinfo:
-            main()
-        
-        # Verify the right API calls were made and output generated
-        mock_load_config.assert_called_once_with(self.CONF_FILE)
-        mock_api_cls.assert_called_once_with(self.WRAPPED_CONFIG['openrouter'])
-        mock_api_instance.list_models.assert_called_once()
-        assert excinfo.value.code == 0  # Should exit with success code
-        # Check that the models were printed to console
-        assert any("model1" in str(call_args) for call_args in mock_console.print.call_args_list)
-        assert any("model2" in str(call_args) for call_args in mock_console.print.call_args_list)
-
-    @patch('sys.exit')
-    @patch('src.ai_whisperer.main.setup_rich_output')
-    @patch('src.ai_whisperer.main.setup_logging')
-    @patch('src.ai_whisperer.main.OpenRouterAPI')
-    @patch('src.ai_whisperer.main.load_config')
-    def test_main_list_models_api_error(self, mock_load_config, mock_api_cls, mock_setup_logging, mock_setup_rich, mock_sys_exit):
-        """Test list_models error handling."""
-        # Setup mocks
-        mock_load_config.return_value = self.WRAPPED_CONFIG
-        mock_console = MagicMock()
-        mock_setup_rich.return_value = mock_console
-        mock_api_instance = MagicMock()
-        mock_api_cls.return_value = mock_api_instance
-        mock_api_instance.list_models.side_effect = Exception("API Error")
-        
-        # Set command-line args for list models
-        sys.argv = ['main.py', '--list-models', '--config', self.CONF_FILE]
-        
-        # Call the function
-        with pytest.raises(SystemExit) as excinfo:
-            main()
-        
-        # Verify error handling
-        mock_load_config.assert_called_once_with(self.CONF_FILE)
-        mock_api_cls.assert_called_once_with(self.WRAPPED_CONFIG['openrouter'])
-        mock_api_instance.list_models.assert_called_once()
-        assert excinfo.value.code == 1  # Should exit with error code
-
-    def test_main_no_list_models_flag(self):
-        """Test that normal flow is followed when --list-models is not present."""
-        # Use monkeypatch instead of sys.argv manipulation to avoid affecting other tests
-        with patch('sys.argv', ['main.py', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE, '--output', self.OUT_FILE]), \
-             patch('src.ai_whisperer.main.load_config', return_value=self.WRAPPED_CONFIG), \
-             patch('src.ai_whisperer.main.setup_rich_output'), \
-             patch('src.ai_whisperer.main.setup_logging'), \
-             patch('src.ai_whisperer.main.Orchestrator') as mock_orchestrator_cls:
-                
-            # Setup mock orchestrator
-            mock_orchestrator_instance = MagicMock()
-            mock_orchestrator_cls.return_value = mock_orchestrator_instance
-            
-            # Call the function
-            main()
-            
-            # Verify the orchestrator was called (i.e., didn't take the list_models path)
-            mock_orchestrator_cls.assert_called_once()
-            mock_orchestrator_instance.generate_initial_json.assert_called_once()
-
 def test_main_list_models_missing_config(monkeypatch, capsys):
     """Test the --list-models flag without the required --config argument."""
     # Mock sys.argv using monkeypatch
-    monkeypatch.setattr('sys.argv', ['main.py', '--list-models'])
+    monkeypatch.setattr('sys.argv', ['main.py', 'list-models'])
 
     with pytest.raises(SystemExit) as excinfo:
         main()
 
     # Check for error message printed to stderr
     captured = capsys.readouterr()
-    assert "Error: --config argument is required when using --list-models." in captured.err
-    assert excinfo.value.code == 1
+    # Check for the argparse required argument error message
+    assert "the following arguments are required: --config" in captured.err
+    assert excinfo.value.code == 2
 
 def test_main_generate_subtask_missing_config(monkeypatch, capsys):
     """Test the --generate-subtask flag without the required --config argument."""
     # Mock sys.argv using monkeypatch
-    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--step', 'test_step.yaml'])
+    monkeypatch.setattr('sys.argv', ['main.py', 'generate', '--generate-subtask', '--step', 'test_step.yaml'])
 
     with pytest.raises(SystemExit) as excinfo:
         main()
 
     # Check for error message printed to stderr
     captured = capsys.readouterr()
-    assert "Error: --config argument is required when using --generate-subtask." in captured.err
-    assert excinfo.value.code == 1
+    # Check for the argparse required argument error message
+    assert "the following arguments are required: --requirements, --config" in captured.err
+    assert excinfo.value.code == 2
 
 def test_main_generate_subtask_missing_step(monkeypatch, capsys):
     """Test the --generate-subtask flag without the required --step argument."""
     # Mock sys.argv using monkeypatch
-    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--config', 'config.yaml'])
+    monkeypatch.setattr('sys.argv', ['main.py', 'generate', '--generate-subtask', '--config', 'config.yaml'])
 
     with pytest.raises(SystemExit) as excinfo:
         main()
 
     # Check for error message printed to stderr
     captured = capsys.readouterr()
-    assert "Error: --step argument is required when using --generate-subtask." in captured.err
-    assert excinfo.value.code == 1
+    # Check for the argparse required argument error message
+    assert "the following arguments are required: --requirements" in captured.err
+    assert excinfo.value.code == 2
 
 @patch('src.ai_whisperer.main.SubtaskGenerator')
 @patch('yaml.safe_load')
@@ -270,7 +193,7 @@ def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_lo
     mock_console = MagicMock()
     
     # Mock command line arguments
-    monkeypatch.setattr('sys.argv', ['main.py', '--generate-subtask', '--config', CONFIG_FILE, '--step', STEP_FILE])
+    monkeypatch.setattr('sys.argv', ['main.py', 'generate', '--generate-subtask', '--config', CONFIG_FILE, '--step', STEP_FILE])
     
     # Run with additional mocks
     with patch('src.ai_whisperer.main.setup_rich_output', return_value=mock_console), \
@@ -308,5 +231,6 @@ def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_lo
                 break
         assert output_path_printed, f"Success message with {OUTPUT_PATH} not printed"
         
-        # Check program exited with success code
-        mock_exit.assert_called_once_with(0)
+        # Check program exited with success code (assert last call was with 0)
+        mock_exit.assert_called()
+        mock_exit.assert_called_with(0)

@@ -98,7 +98,21 @@ def mock_load_config():
     """Fixture to mock load_config."""
     # Adjust the patch target based on where load_config will be called from
     with patch('src.ai_whisperer.subtask_generator.load_config') as mock:
-        mock.return_value = MOCK_CONFIG
+        # Create a mock loaded config that includes task_model_configs and task_prompts_content
+        mock_loaded_config = MOCK_CONFIG.copy()
+        mock_loaded_config['task_model_configs'] = {
+            'subtask_generator': {
+                'api_key': 'mock_api_key',
+                'model': 'mock_model',
+                'params': {'temperature': 0.5},
+                'site_url': 'mock_url',
+                'app_name': 'mock_app'
+            }
+        }
+        mock_loaded_config['task_prompts_content'] = {
+            'subtask_generator': MOCK_CONFIG['prompts']['subtask_generator_prompt_content']
+        }
+        mock.return_value = mock_loaded_config
         yield mock
 
 @pytest.fixture
@@ -232,7 +246,9 @@ def test_subtask_generator_initialization(mock_load_config):
     """Tests if the SubtaskGenerator initializes correctly."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
     generator = SubtaskGenerator('dummy_config_path.json')
-    assert generator.config == MOCK_CONFIG
+    # Get the mock loaded config that was returned by the fixture
+    mock_loaded_config = mock_load_config.return_value
+    assert generator.config == mock_loaded_config
     mock_load_config.assert_called_once_with('dummy_config_path.json')
 
 def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock_filesystem, mock_schema_validation):

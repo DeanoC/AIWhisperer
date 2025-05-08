@@ -66,7 +66,7 @@ We need to modify the `load_config` function in `src/ai_whisperer/config.py` to:
 
 ### 2. Model Selection Logic
 
-We will create a new module `src/ai_whisperer/model_selector.py` with a function to select the appropriate model configuration based on the task name:
+We will create a new module `src/ai_whisperer/task_selector.py` with a function to select the appropriate model configuration based on the task name:
 
 ```python
 def get_model_for_task(config: Dict[str, Any], task_name: str) -> Dict[str, Any]:
@@ -120,7 +120,7 @@ def __init__(self, config_path: str, overall_context: str = "", workspace_contex
         self.config = load_config(config_path)
         
         # Get the model configuration for the "Subtask Generation" task
-        from .model_selector import get_model_for_task
+        from .task_selector import get_model_for_task
         model_config = get_model_for_task(self.config, "Subtask Generation")
         
         # Pass the task-specific model configuration to the OpenRouterAPI client
@@ -151,7 +151,7 @@ def __init__(self, config: Dict[str, Any]):
     self.prompt_override_path = config.get('prompt_override_path')
     
     # Get the model configuration for the "Orchestrator" task
-    from .model_selector import get_model_for_task
+    from .task_selector import get_model_for_task
     model_config = get_model_for_task(config, "Orchestrator")
     
     # Initialize OpenRouterAPI client with the task-specific model configuration
@@ -170,7 +170,7 @@ def __init__(self, config: Dict[str, Any]):
 2. **Update Configuration Schema**: Modify the configuration loading logic to support task-specific model settings.
 3. **Validate Configuration Schema**: Run the tests to ensure the updated schema works correctly.
 4. **Generate Model Selection Logic Test**: Create tests for the model selection logic.
-5. **Implement Model Selection Logic**: Create the model_selector.py module with the get_model_for_task function.
+5. **Implement Model Selection Logic**: Create the task_selector.py module with the get_model_for_task function.
 6. **Validate Model Selection Logic**: Run the tests to ensure the model selection logic works correctly.
 7. **Integrate Model Selection Tests**: Create integration tests for the Subtask Generator and Orchestrator.
 8. **Integrate Model Selection**: Modify the Subtask Generator and Orchestrator to use the model selection logic.
