@@ -1,0 +1,177 @@
+{
+  "natural_language_goal": "Implement JSON plan ingestion and parsing in the runner.",
+  "overall_context": "This feature allows the runner to read, parse, and validate AI-generated JSON plans to automate task execution.",
+  "plan": [
+    {
+      "step_id": "plan_json_ingestion_parsing",
+      "description": "Analyze requirements and design the implementation approach for JSON plan ingestion and parsing, including schema validation.",
+      "depends_on": [],
+      "agent_spec": {
+        "type": "planning",
+        "input_artifacts": [
+          "project_dev/rfc/runner/plan-ingestion-and-parsing.md",
+          "src/ai_whisperer/schemas/task_schema.json",
+          "src/ai_whisperer/schemas/subtask_schema.json"
+        ],
+        "output_artifacts": [
+          "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md"
+        ],
+        "instructions": [
+          "Review the provided user story and acceptance criteria.",
+          "Analyze the existing JSON schemas for tasks and subtasks.",
+          "Design the overall architecture for the plan ingestion and parsing module.",
+          "Specify how the JSON will be read from a file.",
+          "Detail how the JSON will be parsed into an internal representation.",
+          "Outline the process for validating the parsed JSON against the defined schema.",
+          "Describe how validation errors will be handled and reported.",
+          "Consider where this module will integrate within the existing runner structure."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md exists.",
+          "The design document clearly describes the file reading mechanism.",
+          "The design document clearly describes the parsing process.",
+          "The design document clearly describes the schema validation process.",
+          "The design document outlines error handling for invalid JSON."
+        ]
+      }
+    },
+    {
+      "step_id": "generate_tests_plan_ingestion_parsing",
+      "description": "Generate unit and integration tests for the JSON plan ingestion and parsing functionality.",
+      "depends_on": [
+        "plan_json_ingestion_parsing"
+      ],
+      "agent_spec": {
+        "type": "test_generation",
+        "input_artifacts": [
+          "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md",
+          "src/ai_whisperer/schemas/task_schema.json",
+          "src/ai_whisperer/schemas/subtask_schema.json"
+        ],
+        "output_artifacts": [
+          "tests/unit/test_plan_ingestion.py",
+          "tests/integration/test_runner_plan_ingestion.py"
+        ],
+        "instructions": [
+          "Create unit tests for the JSON parsing logic, covering valid and invalid JSON structures based on the schema.",
+          "Create unit tests for the schema validation logic, ensuring it correctly identifies valid and invalid plans.",
+          "Create integration tests that simulate reading a JSON file, parsing it, and validating it, including cases with valid and invalid files.",
+          "Ensure tests cover edge cases like empty files or files with incorrect encoding."
+        ],
+        "constraints": [
+          "Tests must use pytest framework."
+        ],
+        "validation_criteria": [
+          "tests/unit/test_plan_ingestion.py exists and contains tests for parsing and validation.",
+          "tests/integration/test_runner_plan_ingestion.py exists and contains tests for file reading, parsing, and validation integration.",
+          "Tests cover valid JSON plans.",
+          "Tests cover invalid JSON plans, including schema violations."
+        ]
+      }
+    },
+    {
+      "step_id": "implement_plan_ingestion_parsing",
+      "description": "Implement the code for reading, parsing, and validating JSON plan files in the runner.",
+      "depends_on": [
+        "generate_tests_plan_ingestion_parsing"
+      ],
+      "agent_spec": {
+        "type": "code_generation",
+        "input_artifacts": [
+          "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md",
+          "tests/unit/test_plan_ingestion.py",
+          "tests/integration/test_runner_plan_ingestion.py",
+          "src/ai_whisperer/schemas/task_schema.json",
+          "src/ai_whisperer/schemas/subtask_schema.json",
+          "src/ai_whisperer/json_validator.py"
+        ],
+        "output_artifacts": [
+          "src/ai_whisperer/plan_parser.py"
+        ],
+        "instructions": [
+          "Create a new module, `plan_parser.py`, responsible for plan ingestion and parsing.",
+          "Implement a function to read JSON content from a specified file path.",
+          "Implement a function to parse the JSON content into Python objects.",
+          "Utilize the existing `json_validator.py` module to validate the parsed Python object against the task and subtask schemas.",
+          "Implement error handling for file not found, invalid JSON syntax, and schema validation errors.",
+          "Ensure the implemented code passes the generated tests.",
+          "Consider re-using code or patterns from `src/ai_whisperer/json_validator.py`."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "src/ai_whisperer/plan_parser.py exists.",
+          "The module contains functions for reading, parsing, and validating JSON.",
+          "The module uses the existing `json_validator.py` for schema validation.",
+          "Error handling for invalid input is implemented."
+        ]
+      }
+    },
+    {
+      "step_id": "validate_plan_ingestion_parsing",
+      "description": "Run tests to validate the implemented JSON plan ingestion and parsing functionality.",
+      "depends_on": [
+        "implement_plan_ingestion_parsing"
+      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "src/ai_whisperer/plan_parser.py",
+          "tests/unit/test_plan_ingestion.py",
+          "tests/integration/test_runner_plan_ingestion.py"
+        ],
+        "output_artifacts": [],
+        "instructions": [
+          "Run the unit tests in `tests/unit/test_plan_ingestion.py`.",
+          "Run the integration tests in `tests/integration/test_runner_plan_ingestion.py`."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "All tests in `tests/unit/test_plan_ingestion.py` pass.",
+          "All tests in `tests/integration/test_runner_plan_ingestion.py` pass."
+        ]
+      }
+    },
+    {
+      "step_id": "update_documentation",
+      "description": "Update documentation to reflect the new plan ingestion and parsing feature.",
+      "depends_on": [
+        "validate_plan_ingestion_parsing"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "project_dev/rfc/runner/plan-ingestion-and-parsing.md",
+          "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md",
+          "src/ai_whisperer/plan_parser.py",
+          "docs/index.md",
+          "docs/usage.md",
+          "docs/internal_process.md"
+        ],
+        "output_artifacts": [
+          "docs/usage.md",
+          "docs/internal_process.md"
+        ],
+        "instructions": [
+          "Update `docs/usage.md` to describe how users can provide a JSON plan file to the runner.",
+          "Update `docs/internal_process.md` to include a section on how the runner ingests, parses, and validates plans.",
+          "Clearly explain the expected JSON plan file format and refer to the relevant schemas.",
+          "Document how validation errors are reported to the user."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "docs/usage.md is updated to mention JSON plan input.",
+          "docs/internal_process.md includes details about the plan ingestion and parsing process.",
+          "Documentation clearly explains the JSON format and validation.",
+          "Documentation is clear and easy to understand."
+        ]
+      }
+    }
+  ],
+  "task_id": "1e967a9a-79e9-4568-8957-5a69c0713a86",
+  "input_hashes": {
+    "requirements_md": "4ad2696500ed971b819cb97428c31792fbcc20656ec7aa8907ec16a980c6ce31",
+    "config_json": "bae825f58be819daf9f14ac791db2453c083be17875e8c8452a9e9a57fd7de3e",
+    "prompt_file": "hash_not_available"
+  }
+}

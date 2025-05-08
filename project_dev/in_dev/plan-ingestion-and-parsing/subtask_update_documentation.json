@@ -1,0 +1,45 @@
+{
+  "description": "Update documentation to reflect the new plan ingestion and parsing feature.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [
+      "project_dev/rfc/runner/plan-ingestion-and-parsing.md",
+      "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md",
+      "src/ai_whisperer/plan_parser.py",
+      "docs/index.md",
+      "docs/usage.md",
+      "docs/internal_process.md",
+      "src/ai_whisperer/schemas/task_schema.json",
+      "src/ai_whisperer/schemas/subtask_schema.json"
+    ],
+    "output_artifacts": [
+      "docs/usage.md",
+      "docs/internal_process.md"
+    ],
+    "instructions": [
+      "Review the provided input artifacts, including the RFC, design document, and relevant source code (`plan_parser.py`), to understand the plan ingestion and parsing feature.",
+      "Locate the existing documentation files `docs/usage.md` and `docs/internal_process.md`.",
+      "Update the `docs/usage.md` file to include a new section or modify an existing one to explain how users can provide a JSON plan file to the runner. This should cover command-line arguments or configuration options for specifying the plan file path.",
+      "Update the `docs/internal_process.md` file to add a new section detailing the runner's internal process for ingesting, parsing, and validating AI-generated JSON plans. Describe the flow from reading the file to validating its structure and content.",
+      "In both updated documentation files, clearly explain the expected JSON plan file format. Refer users to the relevant JSON schema files (`src/ai_whisperer/schemas/task_schema.json` and `src/ai_whisperer/schemas/subtask_schema.json`) and explain their purpose.",
+      "Document how validation errors are reported to the user when a provided JSON plan file is invalid. Explain the types of errors users might encounter and how to interpret them.",
+      "Ensure the language is clear, concise, and easy for users and contributors to understand.",
+      "Review the updated documentation for accuracy and completeness based on the implemented feature."
+    ],
+    "constraints": [
+      "Only modify the specified output files (`docs/usage.md`, `docs/internal_process.md`).",
+      "Maintain the overall structure and style of the existing documentation."
+    ],
+    "validation_criteria": [
+      "docs/usage.md is updated to mention JSON plan input and how to provide it.",
+      "docs/internal_process.md includes a dedicated section describing the plan ingestion, parsing, and validation process.",
+      "Documentation clearly explains the expected JSON plan file format and references the task and subtask schema files.",
+      "Documentation explains how plan validation errors are reported to the user.",
+      "The updated documentation is clear, accurate, and easy to understand."
+    ]
+  },
+  "step_id": "update_documentation",
+  "task_id": "1e967a9a-79e9-4568-8957-5a69c0713a86",
+  "subtask_id": "cf4de594-b5f6-4a50-bddd-19aa40a76b8f"
+}

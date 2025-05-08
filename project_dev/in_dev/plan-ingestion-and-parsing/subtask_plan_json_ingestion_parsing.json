@@ -1,0 +1,37 @@
+{
+  "description": "Analyze requirements and design the implementation approach for JSON plan ingestion and parsing, including schema validation.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "planning",
+    "input_artifacts": [
+      "project_dev/rfc/runner/plan-ingestion-and-parsing.md",
+      "src/ai_whisperer/schemas/task_schema.json",
+      "src/ai_whisperer/schemas/subtask_schema.json"
+    ],
+    "output_artifacts": [
+      "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md"
+    ],
+    "instructions": [
+      "Review the provided requirements document `project_dev/rfc/runner/plan-ingestion-and-parsing.md` to understand the goals and scope of the JSON plan ingestion and parsing feature.",
+      "Analyze the existing JSON schemas located at `src/ai_whisperer/schemas/task_schema.json` and `src/ai_whisperer/schemas/subtask_schema.json`. Understand their structure, required fields, and data types.",
+      "Design the overall architecture for the plan ingestion and parsing module within the AIWhisperer runner. Consider how it will fit into the existing codebase structure (e.g., within `src/ai_whisperer/`).",
+      "Specify the mechanism for reading the JSON plan from a file. Detail the steps involved, including file path handling and potential error scenarios (e.g., file not found, permission issues).",
+      "Detail the process for parsing the read JSON content into an internal representation suitable for the runner's use. Consider using a standard Python library like `json`.",
+      "Outline the process for validating the parsed JSON data against the defined schemas (`task_schema.json` and `subtask_schema.json`). Specify which validation library or method will be used (e.g., `jsonschema`).",
+      "Describe how validation errors will be handled and reported to the user or logging system. Define the format and content of error messages.",
+      "Consider where this module will integrate within the existing runner structure. Identify potential interaction points with other modules like the execution engine or state management.",
+      "Document the design decisions, architecture, parsing mechanism, validation process, error handling, and integration points in the output file `project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md`."
+    ],
+    "constraints": [],
+    "validation_criteria": [
+      "The output file `project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md` exists.",
+      "The design document clearly describes the file reading mechanism for JSON plans.",
+      "The design document clearly describes the process for parsing the JSON content into an internal representation.",
+      "The design document clearly describes the schema validation process using the provided JSON schemas.",
+      "The design document outlines the error handling strategy for invalid JSON data or schema violations."
+    ]
+  },
+  "step_id": "plan_json_ingestion_parsing",
+  "task_id": "1e967a9a-79e9-4568-8957-5a69c0713a86",
+  "subtask_id": "c081009a-a6e6-4004-b536-bdaad7f4f8d0"
+}

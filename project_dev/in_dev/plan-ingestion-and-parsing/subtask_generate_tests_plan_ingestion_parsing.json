@@ -1,0 +1,51 @@
+{
+  "description": "Generate unit and integration tests for the JSON plan ingestion and parsing functionality.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "test_generation",
+    "input_artifacts": [
+      "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md",
+      "src/ai_whisperer/schemas/task_schema.json",
+      "src/ai_whisperer/schemas/subtask_schema.json"
+    ],
+    "output_artifacts": [
+      "tests/unit/test_plan_ingestion.py",
+      "tests/integration/test_runner_plan_ingestion.py"
+    ],
+    "instructions": [
+      "Review the design document 'project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md' to understand the planned implementation details for plan ingestion and parsing.",
+      "Analyze the JSON schemas 'src/ai_whisperer/schemas/task_schema.json' and 'src/ai_whisperer/schemas/subtask_schema.json' to identify required fields, data types, and structural constraints.",
+      "Create a new Python file 'tests/unit/test_plan_ingestion.py' using the pytest framework.",
+      "In 'tests/unit/test_plan_ingestion.py', write unit tests specifically for the JSON parsing logic. Include test cases with valid JSON strings that conform to the schemas, and invalid JSON strings (e.g., malformed JSON syntax).",
+      "In 'tests/unit/test_plan_ingestion.py', write unit tests for the schema validation logic. Include test cases with Python dictionaries/objects that represent valid plans according to the schemas, and cases that violate schema rules (e.g., missing required fields, incorrect data types, invalid structure).",
+      "Create a new Python file 'tests/integration/test_runner_plan_ingestion.py' using the pytest framework.",
+      "In 'tests/integration/test_runner_plan_ingestion.py', write integration tests that simulate the entire process of reading a JSON file, parsing its content, and validating it against the schemas.",
+      "For integration tests, create temporary test files with valid and invalid JSON content based on the schemas.",
+      "Include integration test cases that cover reading from files with valid JSON plans.",
+      "Include integration test cases that cover reading from files with invalid JSON plans, specifically focusing on schema violations that the validation logic should catch.",
+      "Include integration test cases for edge cases such as reading from an empty file or a file with incorrect character encoding if applicable to the planned implementation.",
+      "Ensure all tests provide clear assertions to verify the expected behavior, such as successful parsing/validation or the raising of specific exceptions for invalid inputs.",
+      "Organize tests logically within their respective files using pytest classes and functions."
+    ],
+    "constraints": [
+      "Tests must be written in Python.",
+      "Tests must use the pytest framework.",
+      "Test files must be placed in the 'tests/unit' and 'tests/integration' directories as specified in the output artifacts.",
+      "Do not implement the actual plan ingestion or parsing code; focus solely on generating the test cases."
+    ],
+    "validation_criteria": [
+      "The file 'tests/unit/test_plan_ingestion.py' exists.",
+      "The file 'tests/unit/test_plan_ingestion.py' contains pytest test functions or methods.",
+      "The tests in 'tests/unit/test_plan_ingestion.py' cover both JSON parsing and schema validation logic.",
+      "The file 'tests/integration/test_runner_plan_ingestion.py' exists.",
+      "The file 'tests/integration/test_runner_plan_ingestion.py' contains pytest test functions or methods.",
+      "The tests in 'tests/integration/test_runner_plan_ingestion.py' simulate the process of reading a file, parsing, and validating.",
+      "Test cases exist for valid JSON plans in both unit and integration tests.",
+      "Test cases exist for invalid JSON plans (syntax errors, schema violations) in both unit and integration tests.",
+      "Test cases address edge cases like empty or incorrectly encoded files if applicable to the design."
+    ]
+  },
+  "step_id": "generate_tests_plan_ingestion_parsing",
+  "task_id": "1e967a9a-79e9-4568-8957-5a69c0713a86",
+  "subtask_id": "1d190f62-212c-4cad-b8f3-5b7b8f28012b"
+}
