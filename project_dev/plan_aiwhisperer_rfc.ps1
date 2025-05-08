@@ -2,7 +2,7 @@
 
 [CmdletBinding()] # Enables common parameters like -Verbose, -Debug
 param (
-    [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Path or name of the RFC Markdown file (relative to project_dev/rfc/). '.md' extension is optional.")]
+    [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Path or name of the RFC Markdown file (relative to project_dev/rfc/). '.md' extension is optional. Can also be a path starting with 'project_dev'.")]
     [ValidateNotNullOrEmpty()]
     [string]$RfcFile,
 
@@ -47,15 +47,33 @@ try {
     # Construct the expected RFC directory path
     $RfcDir = Join-Path -Path $ScriptDir -ChildPath "rfc"
 
-    # Handle RFC file name and extension
-    $RfcBaseName = [System.IO.Path]::GetFileNameWithoutExtension($RfcFile)
-    $RfcFileName = $RfcBaseName + ".md" # Ensure .md extension
-    $RfcPath = Join-Path -Path $RfcDir -ChildPath $RfcFileName
+    # Normalize RFC file input
+    $inputPath = $RfcFile
+    $isExplicitPath = $false
+
+    if ($RfcFile -like "project_dev*") {
+        $RfcPath = Join-Path -Path $ProjectRoot -ChildPath $RfcFile
+        $isExplicitPath = $true
+    } elseif ($RfcFile -like ".\*" -or $RfcFile -like "./*") {
+        $RfcPath = Resolve-Path -Path $RfcFile | Select-Object -ExpandProperty Path
+        $isExplicitPath = $true
+    } else {
+        $RfcPath = Join-Path -Path $RfcDir -ChildPath ([System.IO.Path]::GetFileNameWithoutExtension($RfcFile) + ".md")
+    }
+
+    # Ensure .md extension
+    if (-not ($RfcPath.ToLower().EndsWith(".md"))) {
+        $RfcPath += ".md"
+    }
+
+    # Always get the base name for output folder
+    $RfcBaseName = [System.IO.Path]::GetFileNameWithoutExtension($RfcPath)
+
     Write-Verbose "Constructed RFC Path: $RfcPath"
 
     # Validate RFC file existence
     if (-not (Test-Path $RfcPath -PathType Leaf)) {
-        Write-Error "RFC file not found at expected location: '$RfcPath'. Please ensure the file exists in the '$RfcDir' directory."
+        Write-Error "RFC file not found at expected location: '$RfcPath'. Please ensure the file exists."
         exit 1
     }
     Write-Verbose "Confirmed RFC file exists: $RfcPath"
@@ -138,6 +156,7 @@ try {
     # Build the arguments for the Python script
     $pythonArgs = @(
         "-m", $MainModulePath,
+        "generate", # <-- Add the required subcommand
         "--config", $ConfigFile,
         "--requirements", $RfcPath,
         "--output", $OutputFolder
