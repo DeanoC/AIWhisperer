@@ -1,0 +1,96 @@
+{
+  "natural_language_goal": "Enhance the Openrouter API wrapper to support system prompts, tools, structured output, cache, and multimodal input (images/PDFs).",
+  "overall_context": "Enhancing the existing Openrouter API wrapper in src/ai_whisperer/openrouter_api.py to leverage advanced features.",
+  "plan": [
+    {
+      "step_id": "plan_openrouter_enhancements",
+      "file_path": "project_dev/in_dev/add_openrouter_backend_features/subtask_plan_openrouter_enhancements.json",
+      "depends_on": [],
+      "type": "planning",
+      "input_artifacts": [
+        "src/ai_whisperer/openrouter_api.py",
+        "tests/unit/test_openrouter_api.py",
+        "tests/unit/test_openrouter_api_detailed.py"
+      ],
+      "output_artifacts": [
+        "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_api_tests",
+      "file_path": "project_dev/in_dev/add_openrouter_backend_features/subtask_generate_api_tests.json",
+      "depends_on": [
+        "plan_openrouter_enhancements"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md",
+        "tests/unit/test_openrouter_api.py",
+        "tests/unit/test_openrouter_api_detailed.py"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_openrouter_advanced_features.py"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "implement_api_enhancements",
+      "file_path": "project_dev/in_dev/add_openrouter_backend_features/subtask_implement_api_enhancements.json",
+      "depends_on": [
+        "generate_api_tests"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md",
+        "tests/unit/test_openrouter_advanced_features.py",
+        "src/ai_whisperer/openrouter_api.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/openrouter_api.py"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "validate_api_enhancements",
+      "file_path": "project_dev/in_dev/add_openrouter_backend_features/subtask_validate_api_enhancements.json",
+      "depends_on": [
+        "implement_api_enhancements"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "src/ai_whisperer/openrouter_api.py",
+        "tests/unit/test_openrouter_api.py",
+        "tests/unit/test_openrouter_api_detailed.py",
+        "tests/unit/test_openrouter_advanced_features.py"
+      ],
+      "output_artifacts": [],
+      "completed": true
+    },
+    {
+      "step_id": "update_documentation",
+      "file_path": "project_dev/in_dev/add_openrouter_backend_features/subtask_update_documentation.json",
+      "depends_on": [
+        "validate_api_enhancements"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md",
+        "src/ai_whisperer/openrouter_api.py",
+        "docs/usage.md",
+        "docs/configuration.md"
+      ],
+      "output_artifacts": [
+        "docs/usage.md",
+        "docs/configuration.md"
+      ],
+      "completed": true
+    }
+  ],
+  "task_id": "aac35cec-4cc8-48a0-9b52-f63259caa6f7",
+  "input_hashes": {
+    "requirements_md": "01ef32ef90c795d598370c05f28eb2715195871ba62a111f504b389a9a398bbc",
+    "config_json": "bae825f58be819daf9f14ac791db2453c083be17875e8c8452a9e9a57fd7de3e",
+    "prompt_file": "hash_not_available"
+  }
+}

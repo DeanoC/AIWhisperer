@@ -1,0 +1,50 @@
+{
+  "description": "Update documentation to reflect the new Openrouter API features.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [
+      "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md",
+      "src/ai_whisperer/openrouter_api.py",
+      "docs/usage.md",
+      "docs/configuration.md"
+    ],
+    "output_artifacts": [
+      "docs/usage.md",
+      "docs/configuration.md"
+    ],
+    "instructions": [
+      "Open `docs/usage.md`.",
+      "Locate the section describing how to use the Openrouter backend.",
+      "Add a new subsection or update the existing one to explain how to utilize the new features: system prompt, tools, structured output, cache, and multimodal input (images/PDFs).",
+      "Provide clear examples or descriptions of how to pass parameters for these features when using the Openrouter backend.",
+      "Open `docs/configuration.md`.",
+      "Review the configuration options for the Openrouter backend.",
+      "If any new configuration settings are required or modified for the new features (e.g., cache settings), update `docs/configuration.md` accordingly.",
+      "Open `src/ai_whisperer/openrouter_api.py`.",
+      "Identify the functions or methods that were modified or added to support the new features (system prompt, tools, structured output, cache, multimodal).",
+      "For each identified function/method, add or update the docstring to accurately describe its purpose, parameters (especially the new ones related to the features), return values, and any potential exceptions.",
+      "Ensure the docstrings follow standard Python documentation conventions (e.g., using reStructuredText or Google style).",
+      "Review the entire `docs/usage.md` and `docs/configuration.md` files to ensure consistency and clarity."
+    ],
+    "constraints": [
+      "Only modify the specified documentation files (`docs/usage.md`, `docs/configuration.md`) and add docstrings to `src/ai_whisperer/openrouter_api.py`.",
+      "Do not alter the core functionality of the Openrouter API wrapper code itself.",
+      "Maintain the existing structure and formatting of the documentation files where possible."
+    ],
+    "validation_criteria": [
+      "docs/usage.md is updated with a clear explanation of how to use system prompts with the Openrouter backend.",
+      "docs/usage.md is updated with a clear explanation of how to use tools with the Openrouter backend.",
+      "docs/usage.md is updated with a clear explanation of how to use structured output with the Openrouter backend.",
+      "docs/usage.md is updated with a clear explanation of how to use cache with the Openrouter backend.",
+      "docs/usage.md is updated with a clear explanation of how to provide multimodal input (images/PDFs) with the Openrouter backend.",
+      "docs/configuration.md is updated if any relevant configuration changes were necessary for the new features.",
+      "All functions/methods in `src/ai_whisperer/openrouter_api.py` that were modified or added for the new features have updated or new docstrings.",
+      "The docstrings accurately describe the parameters and behavior related to the new features."
+    ],
+    "model_preference": "large_model"
+  },
+  "step_id": "update_documentation",
+  "task_id": "aac35cec-4cc8-48a0-9b52-f63259caa6f7",
+  "subtask_id": "3edd3f51-76e7-4470-8473-28ba176370c0"
+}

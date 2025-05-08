@@ -332,11 +332,14 @@ def main():
                 orchestrator = Orchestrator(config, args.output)
                 input_file = args.input_file
                 iterations = args.iterations
-                # Call your orchestrator's refine method (example, adapt as needed)
-                result = orchestrator.refine_requirements(
-                    requirements_md_path_str=input_file,
-                    iterations=iterations
-                )
+                for i in range(iterations):
+                    console.print(f"[yellow]Refinement iteration {i+1} of {iterations}...[/yellow]")
+                    result = orchestrator.refine_requirements(
+                        input_filepath_str=input_file,
+                    )
+                    # Update input_file with the result for the next iteration
+                    input_file = result
+                    
                 console.print(f"[green]Successfully refined requirements: {result}[/green]")
             else:
                 # Default: generate command

@@ -13,7 +13,11 @@ from .exceptions import ConfigError
 DEFAULT_SITE_URL = "http://localhost:8000"
 DEFAULT_APP_NAME = "AIWhisperer"
 DEFAULT_OUTPUT_DIR = "./output/"
-# Default prompt paths are now handled dynamically based on task name
+# Default tasks for which prompt content is loaded if not explicitly specified in the configuration.
+# These tasks represent key functionalities of the application, such as orchestrating workflows,
+# generating subtasks, and refining requirements. Default prompts for these tasks are located
+# in the 'prompts/' directory and are loaded automatically if not overridden in the config.
+DEFAULT_TASKS = ['orchestrator', 'subtask_generator', 'refine_requirements']
 
 def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, config_dir: Path) -> str:
     """Loads prompt content from a given path or its default.
@@ -160,7 +164,7 @@ def load_config(config_path: str, env_vars: Optional[Dict[str, str]] = None) -> 
         )
 
     # Load default prompts for known tasks if not explicitly specified
-    default_tasks = ['orchestrator', 'subtask_generator']
+    default_tasks = DEFAULT_TASKS
     project_root = Path(__file__).parent.parent.parent
     for task_name in default_tasks:
         if task_name not in config['task_prompts_content']:

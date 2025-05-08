@@ -81,7 +81,7 @@ def test_list_models_detailed_single(mock_get):
     mock_response.json.return_value = MOCK_API_RESPONSE_SINGLE_MODEL
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key"})
+    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
     models = api.list_models()
 
     assert len(models) == 1
@@ -96,7 +96,7 @@ def test_list_models_detailed_multiple(mock_get):
     mock_response.json.return_value = MOCK_API_RESPONSE_MULTIPLE_MODELS
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key"})
+    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
     models = api.list_models()
 
     assert len(models) == 2
@@ -111,7 +111,7 @@ def test_list_models_detailed_missing_fields(mock_get):
     mock_response.json.return_value = MOCK_API_RESPONSE_MISSING_FIELDS
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key"})
+    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
     models = api.list_models()
 
     assert len(models) == 1
@@ -125,7 +125,7 @@ def test_list_models_detailed_empty_data(mock_get):
     mock_response.json.return_value = {"data": []}
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key"})
+    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
     models = api.list_models()
 
     assert len(models) == 0
@@ -138,6 +138,6 @@ def test_list_models_detailed_api_error(mock_get):
     mock_response.text = "Internal Server Error"
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key"})
+    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
     with pytest.raises(Exception): # Assuming a generic exception is raised for API errors
         api.list_models()

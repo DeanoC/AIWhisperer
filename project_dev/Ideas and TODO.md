@@ -28,7 +28,7 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 > results is good. I will add that to the the task list :) thank you
 ----
 
-* Improved CLI with a modern verb noun structure
+* Improved CLI with a modern verb noun structure (partially started)
 * Add support for Openrouter advanced features (cache etc.)
 * Refinement of the original requirement files
 * Aider support for processing the subtasks themselves

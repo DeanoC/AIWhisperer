@@ -505,13 +505,12 @@ class Orchestrator:
             "step_info": step_info,
         }
 
-    def refine_requirements(self, input_filepath_str: str, config_path_str: str) -> Path:
+    def refine_requirements(self, input_filepath_str: str) -> Path:
         """
         Refines the requirements markdown file based on AI feedback.
 
         Args:
             input_filepath_str: Path string to the input requirements markdown file.
-            config_path_str: Path string to the configuration file used.
 
         Returns:
             The Path object of the refined requirements markdown file.
@@ -525,25 +524,21 @@ class Orchestrator:
             ProcessingError: For errors during file processing operations.
         """
         input_filepath = Path(input_filepath_str).resolve()
-        config_path = Path(config_path_str).resolve()
 
         logger.info(f"Starting requirements refinement for: {input_filepath}")
-        logger.info(f"Using configuration file: {config_path}")
 
         if not input_filepath.is_file():
             logger.error(f"Requirements file not found: {input_filepath}")
             raise FileNotFoundError(f"Requirements file not found: {input_filepath}")
 
         try:
-            # Load config
-            config = load_config(config_path_str)
 
             # Get the model configuration and prompt content for the "refine_requirements" task
-            model_config = config.get('task_model_configs', {}).get('refine_requirements')
+            model_config = self.config.get('task_model_configs', {}).get('refine_requirements')
             if not model_config:
                  raise ConfigError("Model configuration for 'refine_requirements' task is missing in the loaded config.")
 
-            prompt_template = config.get('task_prompts_content', {}).get('refine_requirements')
+            prompt_template = self.config.get('task_prompts_content', {}).get('refine_requirements')
             if not prompt_template:
                  raise ConfigError("Prompt content for 'refine_requirements' task is missing in the loaded config.")
 
@@ -578,19 +573,36 @@ class Orchestrator:
                 logger.error(f"OpenRouter API call for requirements refinement failed: {e}")
                 raise
 
-            # Determine output filename (e.g., requirements_v2.md)
-            output_filepath = self._determine_next_refine_filename(input_filepath_str)
-            logger.info(f"Saving refined requirements to: {output_filepath}")
+            # Determine backup filename for the original input file
+            backup_filepath = self._determine_next_backup_filename(input_filepath_str)
+            logger.info(f"Determined backup filepath: {backup_filepath}")
 
-            # Save the refined content
+            # Rename the original input file to the backup path
             try:
-                with open(output_filepath, 'w', encoding='utf-8') as f:
+                logger.info(f"Backing up original file {input_filepath} to {backup_filepath}")
+                input_filepath.rename(backup_filepath)
+                logger.info(f"Successfully backed up original file to {backup_filepath}")
+            except OSError as e:
+                logger.error(f"Error renaming original file {input_filepath} to {backup_filepath}: {e}")
+                raise ProcessingError(f"Error backing up original file {input_filepath}: {e}") from e
+
+            # Save the refined content to the original input_filepath
+            logger.info(f"Saving refined requirements to original file: {input_filepath}")
+            try:
+                with open(input_filepath, 'w', encoding='utf-8') as f:
                     f.write(api_response_content)
-                logger.info(f"Successfully saved refined requirements to {output_filepath}")
-                return output_filepath
+                logger.info(f"Successfully saved refined requirements to {input_filepath}")
+                return input_filepath # Return the original path, now containing refined content
             except IOError as e:
-                logger.error(f"Error writing refined requirements file {output_filepath}: {e}")
-                raise ProcessingError(f"Error writing refined requirements file {output_filepath}: {e}") from e
+                logger.error(f"Error writing refined requirements to {input_filepath}: {e}")
+                # Attempt to restore the backup if saving fails
+                try:
+                    logger.warning(f"Attempting to restore original file from backup {backup_filepath} to {input_filepath}")
+                    backup_filepath.rename(input_filepath)
+                    logger.info(f"Successfully restored original file from backup.")
+                except OSError as restore_e:
+                    logger.error(f"Failed to restore original file from backup after write error: {restore_e}")
+                raise ProcessingError(f"Error writing refined requirements to {input_filepath}: {e}") from e
 
         except (FileNotFoundError, ConfigError, OpenRouterAPIError, ProcessingError) as e:
             logger.error(f"Requirements refinement failed: {e}")
@@ -600,19 +612,21 @@ class Orchestrator:
             raise OrchestratorError(f"An unexpected error occurred during requirements refinement: {e}") from e
 
 
-    def _determine_next_refine_filename(self, input_filepath_str):
-        """Determines the next available filename for refined requirements."""
-        input_filepath = Path(input_filepath_str)
-        parent_dir = input_filepath.parent
-        stem = input_filepath.stem
-        suffix = input_filepath.suffix
+    def _determine_next_backup_filename(self, original_filepath_str: str) -> Path:
+        """Determines the next available filename for backing up the original file.
+        Pattern: old_<original_stem>_v<n><original_suffix>
+        """
+        original_filepath = Path(original_filepath_str)
+        parent_dir = original_filepath.parent
+        original_stem = original_filepath.stem
+        original_suffix = original_filepath.suffix
 
-        i = 1
+        i = 0 # Start versioning from 0
         while True:
-            new_stem = f"{stem}_v{i}"
-            new_filepath = parent_dir / f"{new_stem}{suffix}"
-            if not new_filepath.exists():
-                return new_filepath
+            backup_stem = f"old_{original_stem}_v{i}"
+            backup_filepath = parent_dir / f"{backup_stem}{original_suffix}"
+            if not backup_filepath.exists():
+                return backup_filepath
             i += 1
 
     def _fnmatch(self, filename, pattern):

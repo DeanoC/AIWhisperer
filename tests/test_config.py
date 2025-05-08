@@ -189,7 +189,7 @@ def test_load_config_success_empty_task_prompts(create_test_files, monkeypatch):
     assert config['openrouter']['api_key'] == mock_api_key
     assert 'task_prompts' in config
     # Updated assertion to expect default tasks with None when input task_prompts is empty
-    assert config['task_prompts'] == {'orchestrator': None, 'subtask_generator': None}
+    assert config['task_prompts'] == {'orchestrator': None, 'subtask_generator': None, 'refine_requirements': None}
     assert 'task_prompts_content' in config # Ensure new content key is present
     # Updated assertion to check for actual default content
     assert config['task_prompts_content']['orchestrator'] == ACTUAL_DEFAULT_ORCH_CONTENT
@@ -276,7 +276,7 @@ def test_load_config_optional_keys_openrouter(create_test_files, monkeypatch):
     assert config['openrouter']['site_url'] == DEFAULT_SITE_URL
     assert config['openrouter']['app_name'] == DEFAULT_APP_NAME
     # Updated assertion to expect default tasks with None when input task_prompts is missing
-    assert 'task_prompts' in config and config['task_prompts'] == {'orchestrator': None, 'subtask_generator': None}
+    assert 'task_prompts' in config and config['task_prompts'] == {'orchestrator': None, 'subtask_generator': None, 'refine_requirements': None}
     assert 'task_prompts_content' in config # Ensure new content key is present
     # Updated assertion to check for actual default content
     assert config['task_prompts_content']['orchestrator'] == ACTUAL_DEFAULT_ORCH_CONTENT
@@ -318,7 +318,7 @@ def test_load_config_optional_key_output_dir(create_test_files, monkeypatch):
     assert config['output_dir'] == DEFAULT_OUTPUT_DIR
     assert config['openrouter']['api_key'] == mock_api_key
     # Updated assertion to expect default tasks with None when input task_prompts is missing
-    assert 'task_prompts' in config and config['task_prompts'] == {'orchestrator': None, 'subtask_generator': None}
+    assert 'task_prompts' in config and config['task_prompts'] == {'orchestrator': None, 'subtask_generator': None, 'refine_requirements': None}
     assert 'task_prompts_content' in config # Ensure new content key is present
     # Updated assertion to check for actual default content
     assert config['task_prompts_content']['orchestrator'] == ACTUAL_DEFAULT_ORCH_CONTENT
@@ -336,7 +336,7 @@ def test_load_config_ignores_old_prompt_override(create_test_files, monkeypatch)
     # Assert that the old override path is ignored and task_prompts is empty as specified
     assert 'prompt_override_path' not in config
     # Updated assertion to expect default tasks with None when input task_prompts is empty
-    assert config['task_prompts'] == {'orchestrator': None, 'subtask_generator': None}
+    assert config['task_prompts'] == {'orchestrator': None, 'subtask_generator': None, 'refine_requirements': None}
     assert 'task_prompts_content' in config # Ensure new content key is present
     # Updated assertion to check for actual default content
     assert config['task_prompts_content']['orchestrator'] == ACTUAL_DEFAULT_ORCH_CONTENT

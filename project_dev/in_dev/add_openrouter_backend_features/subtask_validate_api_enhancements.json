@@ -1,0 +1,34 @@
+{
+  "description": "Run the new and existing unit tests to validate the Openrouter API wrapper enhancements.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "src/ai_whisperer/openrouter_api.py",
+      "tests/unit/test_openrouter_api.py",
+      "tests/unit/test_openrouter_api_detailed.py",
+      "tests/unit/test_openrouter_advanced_features.py"
+    ],
+    "output_artifacts": [],
+    "instructions": [
+      "Navigate to the root directory of the AIWhisperer project.",
+      "Ensure the Python environment is correctly set up with dependencies installed (e.g., `pip install -r requirements.txt`).",
+      "Execute the unit tests specifically designed for the advanced features: `pytest tests/unit/test_openrouter_advanced_features.py`.",
+      "Execute the existing unit tests for the Openrouter API wrapper to check for regressions: `pytest tests/unit/test_openrouter_api.py tests/unit/test_openrouter_api_detailed.py`.",
+      "Collect and report the output from the test runs, including the number of tests run and the pass/fail status for each test file."
+    ],
+    "constraints": [
+      "Do not modify any source code or test files.",
+      "Only use standard Python testing tools (pytest)."
+    ],
+    "validation_criteria": [
+      "All tests in tests/unit/test_openrouter_advanced_features.py pass.",
+      "All tests in tests/unit/test_openrouter_api.py pass.",
+      "All tests in tests/unit/test_openrouter_api_detailed.py pass.",
+      "The test execution report is generated and includes the status of all specified test files."
+    ]
+  },
+  "step_id": "validate_api_enhancements",
+  "task_id": "aac35cec-4cc8-48a0-9b52-f63259caa6f7",
+  "subtask_id": "9426da29-c47b-44ef-ba7f-adc70448493e"
+}

@@ -1,0 +1,43 @@
+{
+  "description": "Analyze and plan the necessary code changes to the Openrouter API wrapper to support the new features.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "planning",
+    "input_artifacts": [
+      "src/ai_whisperer/openrouter_api.py",
+      "tests/unit/test_openrouter_api.py",
+      "tests/unit/test_openrouter_api_detailed.py"
+    ],
+    "output_artifacts": [
+      "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md"
+    ],
+    "instructions": [
+      "Carefully read and understand the existing Python code in `src/ai_whisperer/openrouter_api.py`. Pay close attention to the class structure, methods for interacting with the Openrouter API, and how parameters are currently handled.",
+      "Review the unit tests in `tests/unit/test_openrouter_api.py` and `tests/unit/test_openrouter_api_detailed.py` to understand how the current functionality is verified and what aspects of the API interaction are being tested.",
+      "Thoroughly research the official Openrouter API documentation to understand how to implement system prompts, tool usage (function calling), structured output (e.g., via response_format), cache management, and multimodal input (sending images/PDFs in messages). Identify the specific API endpoints, request body parameters, and response structures related to these features.",
+      "Based on the research, determine the most effective way to integrate the new features into the existing `OpenrouterAPI` class or related functions within `src/ai_whisperer/openrouter_api.py`. Consider adding new methods, modifying existing ones, or introducing new parameters.",
+      "Outline the required modifications in detail. For each feature (system prompts, tools, structured output, cache management, multimodal input), specify:",
+      "- Which existing functions/methods need modification or if new ones are required.",
+      "- What new parameters need to be added to function signatures (e.g., `system_prompt`, `tools`, `response_format`, `cache_id`, `image_url`, `pdf_url`).",
+      "- How these new parameters will be included in the API request payload sent to Openrouter.",
+      "- How the response from Openrouter, potentially containing structured output or tool calls, will be handled.",
+      "- Any necessary changes to data structures used within the class.",
+      "Identify potential challenges and edge cases for each feature integration. For example, how to handle different types of multimodal input, how to manage tool definitions and responses, or how to ensure structured output is correctly parsed.",
+      "Document the entire plan in a clear and organized manner in the file `project_dev/in_dev/add_openrouter_backend_features/planning_summary.md`. The document should be easy to follow and provide a solid foundation for the subsequent implementation steps."
+    ],
+    "constraints": [],
+    "validation_criteria": [
+      "The file `project_dev/in_dev/add_openrouter_backend_features/planning_summary.md` must be created.",
+      "The `planning_summary.md` file must contain a dedicated section or clear explanation of how system prompts will be integrated, including specific code modification ideas.",
+      "The `planning_summary.md` file must contain a dedicated section or clear explanation of how tool usage (function calling) will be integrated, including specific code modification ideas.",
+      "The `planning_summary.md` file must contain a dedicated section or clear explanation of how structured output will be integrated, including specific code modification ideas (e.g., using `response_format`).",
+      "The `planning_summary.md` file must contain a dedicated section or clear explanation of how cache management will be integrated, including specific code modification ideas.",
+      "The `planning_summary.md` file must contain a dedicated section or clear explanation of how multimodal input (images/PDFs) will be integrated, including specific code modification ideas.",
+      "The `planning_summary.md` file must explicitly identify the specific files (`src/ai_whisperer/openrouter_api.py`) and likely functions/methods within them that will require modification for each feature.",
+      "The `planning_summary.md` file should discuss potential challenges or considerations for implementing each feature."
+    ]
+  },
+  "step_id": "plan_openrouter_enhancements",
+  "task_id": "aac35cec-4cc8-48a0-9b52-f63259caa6f7",
+  "subtask_id": "32f5b816-eec7-496d-978d-1d153cf52e38"
+}

@@ -1,0 +1,183 @@
+{
+  "natural_language_goal": "Enhance the Openrouter API wrapper to support system prompts, tools, structured output, cache, and multimodal input (images/PDFs).",
+  "overall_context": "Enhancing the existing Openrouter API wrapper in src/ai_whisperer/openrouter_api.py to leverage advanced features.",
+  "plan": [
+    {
+      "step_id": "plan_openrouter_enhancements",
+      "description": "Analyze and plan the necessary code changes to the Openrouter API wrapper to support the new features.",
+      "depends_on": [],
+      "agent_spec": {
+        "type": "planning",
+        "input_artifacts": [
+          "src/ai_whisperer/openrouter_api.py",
+          "tests/unit/test_openrouter_api.py",
+          "tests/unit/test_openrouter_api_detailed.py"
+        ],
+        "output_artifacts": [
+          "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md"
+        ],
+        "instructions": [
+          "Analyze the existing Openrouter API wrapper code.",
+          "Research the Openrouter API documentation for system prompts, tools, structured output, cache management, and multimodal input (images/PDFs).",
+          "Determine how to integrate these features into the existing class/functions.",
+          "Outline the required modifications to function signatures, data structures, and API calls.",
+          "Identify potential challenges and edge cases.",
+          "Document the plan in project_dev/in_dev/add_openrouter_backend_features/planning_summary.md."
+        ],
+        "validation_criteria": [
+          "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md exists.",
+          "planning_summary.md clearly outlines changes for system prompts.",
+          "planning_summary.md clearly outlines changes for tools.",
+          "planning_summary.md clearly outlines changes for structured output.",
+          "planning_summary.md clearly outlines changes for cache management.",
+          "planning_summary.md clearly outlines changes for multimodal input (images/PDFs).",
+          "planning_summary.md identifies specific files and functions to modify."
+        ]
+      }
+    },
+    {
+      "step_id": "generate_api_tests",
+      "description": "Generate new unit tests for the Openrouter API wrapper covering the new features.",
+      "depends_on": [
+        "plan_openrouter_enhancements"
+      ],
+      "agent_spec": {
+        "type": "test_generation",
+        "input_artifacts": [
+          "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md",
+          "tests/unit/test_openrouter_api.py",
+          "tests/unit/test_openrouter_api_detailed.py"
+        ],
+        "output_artifacts": [
+          "tests/unit/test_openrouter_advanced_features.py"
+        ],
+        "instructions": [
+          "Create a new test file tests/unit/test_openrouter_advanced_features.py.",
+          "Based on the planning summary, write tests that verify:",
+          "- Correct handling of system prompts.",
+          "- Correct handling of tool definitions and calls.",
+          "- Correct handling of structured output requests.",
+          "- Correct handling of cache control parameters.",
+          "- Correct handling of image and PDF content in messages.",
+          "Focus on testing the interface and data structures passed to the Openrouter API.",
+          "Use mocks for external API calls."
+        ],
+        "validation_criteria": [
+          "tests/unit/test_openrouter_advanced_features.py exists.",
+          "test_openrouter_advanced_features.py contains tests for system prompts.",
+          "test_openrouter_advanced_features.py contains tests for tools.",
+          "test_openrouter_advanced_features.py contains tests for structured output.",
+          "test_openrouter_advanced_features.py contains tests for cache.",
+          "test_openrouter_advanced_features.py contains tests for multimodal input (images/PDFs).",
+          "Tests use mocking for external API dependencies."
+        ]
+      }
+    },
+    {
+      "step_id": "implement_api_enhancements",
+      "description": "Implement the planned enhancements in the Openrouter API wrapper.",
+      "depends_on": [
+        "generate_api_tests"
+      ],
+      "agent_spec": {
+        "type": "file_edit",
+        "input_artifacts": [
+          "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md",
+          "tests/unit/test_openrouter_advanced_features.py",
+          "src/ai_whisperer/openrouter_api.py"
+        ],
+        "output_artifacts": [
+          "src/ai_whisperer/openrouter_api.py"
+        ],
+        "instructions": [
+          "Modify src/ai_whisperer/openrouter_api.py based on the planning summary.",
+          "Add parameters and logic to support system prompts in the API call.",
+          "Add parameters and logic to support tool definitions and handling in the API call.",
+          "Add parameters and logic to support structured output requests.",
+          "Add parameters and logic to support cache control.",
+          "Add parameters and logic to support image and PDF content in messages.",
+          "Ensure the implemented code passes the tests generated in test_openrouter_advanced_features.py.",
+          "Examine existing code in src/ai_whisperer/utils.py and src/ai_whisperer/exceptions.py for reuse."
+        ],
+        "constraints": [
+          "Do not change the core functionality of existing methods unless required to add new parameters.",
+          "Prioritize code clarity and maintainability."
+        ],
+        "validation_criteria": [
+          "src/ai_whisperer/openrouter_api.py is modified.",
+          "Code includes logic for system prompts.",
+          "Code includes logic for tools.",
+          "Code includes logic for structured output.",
+          "Code includes logic for cache.",
+          "Code includes logic for multimodal input (images/PDFs)."
+        ]
+      }
+    },
+    {
+      "step_id": "validate_api_enhancements",
+      "description": "Run the new and existing unit tests to validate the Openrouter API wrapper enhancements.",
+      "depends_on": [
+        "implement_api_enhancements"
+      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "src/ai_whisperer/openrouter_api.py",
+          "tests/unit/test_openrouter_api.py",
+          "tests/unit/test_openrouter_api_detailed.py",
+          "tests/unit/test_openrouter_advanced_features.py"
+        ],
+        "output_artifacts": [],
+        "instructions": [
+          "Run the unit tests in tests/unit/test_openrouter_advanced_features.py.",
+          "Run the existing unit tests in tests/unit/test_openrouter_api.py and tests/unit/test_openrouter_api_detailed.py to ensure no regressions.",
+          "Report the test results."
+        ],
+        "validation_criteria": [
+          "All tests in tests/unit/test_openrouter_advanced_features.py pass.",
+          "All tests in tests/unit/test_openrouter_api.py pass.",
+          "All tests in tests/unit/test_openrouter_api_detailed.py pass."
+        ]
+      }
+    },
+    {
+      "step_id": "update_documentation",
+      "description": "Update documentation to reflect the new Openrouter API features.",
+      "depends_on": [
+        "validate_api_enhancements"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "project_dev/in_dev/add_openrouter_backend_features/planning_summary.md",
+          "src/ai_whisperer/openrouter_api.py",
+          "docs/usage.md",
+          "docs/configuration.md"
+        ],
+        "output_artifacts": [
+          "docs/usage.md",
+          "docs/configuration.md"
+        ],
+        "instructions": [
+          "Update docs/usage.md to explain how to use the new system prompt, tools, structured output, cache, and multimodal features via the Openrouter backend.",
+          "Update docs/configuration.md if any configuration changes are needed for these features.",
+          "Add docstrings to the modified functions/methods in src/ai_whisperer/openrouter_api.py explaining the new parameters and behavior."
+        ],
+        "validation_criteria": [
+          "docs/usage.md is updated with information on system prompts.",
+          "docs/usage.md is updated with information on tools.",
+          "docs/usage.md is updated with information on structured output.",
+          "docs/usage.md is updated with information on cache.",
+          "docs/usage.md is updated with information on multimodal input (images/PDFs).",
+          "Modified code in src/ai_whisperer/openrouter_api.py has updated docstrings."
+        ]
+      }
+    }
+  ],
+  "task_id": "aac35cec-4cc8-48a0-9b52-f63259caa6f7",
+  "input_hashes": {
+    "requirements_md": "01ef32ef90c795d598370c05f28eb2715195871ba62a111f504b389a9a398bbc",
+    "config_json": "bae825f58be819daf9f14ac791db2453c083be17875e8c8452a9e9a57fd7de3e",
+    "prompt_file": "hash_not_available"
+  }
+}
