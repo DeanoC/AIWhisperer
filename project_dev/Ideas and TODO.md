@@ -29,15 +29,12 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 ----
 
 * Improved CLI with a modern verb noun structure (partially started)
-* Add support for Openrouter advanced features (cache etc.)
-* Refinement of the original requirement files
 * Aider support for processing the subtasks themselves
 * Feedback loops for orchestrator and subtask generator
 * Support system prompts
 * Provide use of prompt engineering guides to aid prompts
 * produce project specific prompts by refining defaults with project details an AI
 * Provide context to the generators, code base, functions, etc.
-* limiting info to subtasks (not telling the the following steps)
 * Human in the model alerts based on tricky issues
 * Support for non open router providers
 * Training example corpus
@@ -50,7 +47,6 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 * Provide cleaner output whilst running
 * Include generated planning docs into other subtasks context
 * Add the script environemt to context (bash, powershell, etc. as AI agents often assume bash)
-* prompt refinement CLI api
 * Need to reinforce tracking docs + and finish task in roocode instead of moving from plan to do
 * Multi AI discussion on suggestions and refinements
 
