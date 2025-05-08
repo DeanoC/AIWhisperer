@@ -15,7 +15,7 @@
       "output_artifacts": [
         "project_dev/in_dev/plan-ingestion-and-parsing/plan_ingestion_parsing_design.md"
       ],
-      "completed": false
+      "completed": true
     },
     {
       "step_id": "generate_tests_plan_ingestion_parsing",
@@ -33,7 +33,7 @@
         "tests/unit/test_plan_ingestion.py",
         "tests/integration/test_runner_plan_ingestion.py"
       ],
-      "completed": false
+      "completed": true
     },
     {
       "step_id": "implement_plan_ingestion_parsing",
@@ -53,7 +53,7 @@
       "output_artifacts": [
         "src/ai_whisperer/plan_parser.py"
       ],
-      "completed": false
+      "completed": true
     },
     {
       "step_id": "validate_plan_ingestion_parsing",
@@ -68,7 +68,7 @@
         "tests/integration/test_runner_plan_ingestion.py"
       ],
       "output_artifacts": [],
-      "completed": false
+      "completed": true
     },
     {
       "step_id": "update_documentation",
@@ -91,7 +91,7 @@
         "docs/usage.md",
         "docs/internal_process.md"
       ],
-      "completed": false
+      "completed": true
     }
   ],
   "task_id": "1e967a9a-79e9-4568-8957-5a69c0713a86",

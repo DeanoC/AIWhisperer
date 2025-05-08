@@ -75,6 +75,67 @@ When you run the `refine` command:
    ai_whisperer refine my_project_requirements.md --config config.yaml --iterations 3
    ```
 
+## Running JSON Plans
+
+The AI Whisperer runner can execute pre-defined plans specified in a JSON format. This allows for complex, multi-step tasks to be defined and run systematically.
+
+### Providing a JSON Plan
+
+To run a JSON plan, you will use a command that specifies the path to your main JSON plan file. (The exact CLI command for initiating a plan run is TBD and will be updated here once finalized. For now, assume a command like `ai_whisperer run-plan <plan_file_path> --config <config_file_path>`).
+
+```bash
+# Example (conceptual command)
+# ai_whisperer run-plan project_plans/my_complex_task_plan.json --config config.yaml
+```
+
+### JSON Plan Structure
+
+A JSON plan consists of a main plan file that outlines the overall task and a series of steps. Some steps might directly contain all their execution details, while others might reference separate subtask JSON files for more detailed instructions.
+
+**Main Plan File:**
+
+The main plan file (e.g., `my_complex_task_plan.json`) defines the overall goal, context, and a sequence of steps. Key fields include:
+
+* `task_id`: A unique identifier for the entire task.
+* `natural_language_goal`: A high-level description of what the plan aims to achieve.
+* `overall_context`: Shared information or constraints applicable to all steps.
+* `input_hashes`: Hashes of input files used to generate the plan, ensuring traceability.
+* `plan`: An array of step objects.
+
+Each **step object** within the `plan` array includes:
+
+* `step_id`: A unique identifier for the step.
+* `description`: A human-readable description of the step.
+* `depends_on`: An array of `step_id`s that must complete before this step can start.
+* `agent_spec`: An object detailing the agent's configuration for this step, including:
+  * `type`: The category of the step (e.g., 'code_generation', 'analysis').
+  * `input_artifacts`: Required input files or data.
+  * `output_artifacts`: Expected output files or data.
+  * `instructions`: Detailed instructions for the AI agent.
+  * `constraints`: Rules the output must follow.
+  * `validation_criteria`: How to check for successful completion.
+* `file_path` (Optional): If a step's details are extensive, they can be in a separate subtask JSON file, and this field will contain the relative path to that file.
+
+For the detailed structure, refer to the [task schema](src/ai_whisperer/schemas/task_schema.json).
+
+**Subtask Files (Optional):**
+
+If a step in the main plan references a `file_path`, that file is a subtask JSON. It contains specific details for that particular step. Key fields in a subtask file include:
+
+* `subtask_id`: Unique ID for the subtask.
+* `task_id`: ID of the parent task plan.
+* `name`: A short name for the subtask.
+* `description`: Detailed description of the subtask.
+* `instructions`: Specific instructions for the agent for this subtask.
+
+For the detailed structure, refer to the [subtask schema](src/ai_whisperer/schemas/subtask_schema.json).
+
+The runner, via the `PlanParser` ([`src/ai_whisperer/plan_parser.py`](src/ai_whisperer/plan_parser.py:1)), will read the main plan file, validate its structure and the structure of any referenced subtask files, and then proceed with execution.
+
+### Configuration
+
+Relevant configuration for running JSON plans (e.g., API keys for AI models used by the steps, default model preferences if not specified in the plan itself) will be managed through the main `config.yaml` file provided with the `--config` argument. Ensure this configuration is correctly set up before running a plan.
+
 ## Advanced OpenRouter API Usage (via AI Whisperer Library)
 
 The AI Whisperer library's `OpenRouterAPI` class ([`src/ai_whisperer/openrouter_api.py`](src/ai_whisperer/openrouter_api.py:1)) has been enhanced to support several advanced features of the OpenRouter API. While these are primarily intended for programmatic use within the AI Whisperer system or by developers using the library, understanding them can be beneficial.
@@ -124,6 +185,7 @@ print(response_content)
 The API supports defining tools (functions) that the AI can request to call. This allows the AI to interact with external systems or perform specific actions. The `call_chat_completion` method can initiate a tool call sequence. The calling code is responsible for handling the tool execution and sending the results back to the model in a subsequent call.
 
 **How to use:**
+
 1. Define your tools as a list of dictionaries, following the OpenRouter specification.
 2. Pass this list as the `tools` argument to `call_chat_completion()`.
 3. If the model decides to use a tool, the response from `call_chat_completion()` will be a dictionary containing `tool_calls` (instead of just content string).
@@ -251,8 +313,9 @@ except json.JSONDecodeError:
 The API can process multimodal inputs, such as images and PDF files, along with text prompts.
 
 **How to use:**
-- For images: Provide a list of image URLs or base64 encoded image data strings via the `images` argument.
-- For PDFs: Provide a list of base64 encoded PDF data strings (as data URIs) via the `pdfs` argument.
+
+* For images: Provide a list of image URLs or base64 encoded image data strings via the `images` argument.
+* For PDFs: Provide a list of base64 encoded PDF data strings (as data URIs) via the `pdfs` argument.
 
 **Example (Image URL):**
 
@@ -309,7 +372,9 @@ print(response_content)
 #     print(response_message_obj)
 
 ```
+
 **Note on PDF Processing:** OpenRouter can process PDFs even for models that don't natively support them by parsing the text. The response might include `file_annotations` which can be sent back in subsequent requests for the same PDF to avoid re-parsing.
 
 ### 5. Caching
+
 The `OpenRouterAPI` client has a built-in caching mechanism. If enabled in the configuration (see [`docs/configuration.md`](docs/configuration.md:1)), responses for identical requests (model, messages, params, tools, response_format) will be cached in memory for the lifetime of the `OpenRouterAPI` object. This can save costs and reduce latency for repeated calls.
