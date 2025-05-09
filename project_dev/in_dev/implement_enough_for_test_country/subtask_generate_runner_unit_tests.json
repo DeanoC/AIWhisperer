@@ -1,0 +1,45 @@
+{
+  "description": "Generate unit tests for the core runner logic responsible for step execution and agent interaction.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "test_generation",
+    "input_artifacts": [
+      "./project_dev/in_dev/implement_enough_for_test_country/implementation_plan.md",
+      "./src/ai_whisperer/execution_engine.py",
+      "./src/ai_whisperer/ai_service_interaction.py"
+    ],
+    "output_artifacts": [
+      "./tests/unit/test_execution_engine_enhancements.py"
+    ],
+    "instructions": [
+      "Analyze the provided `implementation_plan.md` to understand the planned enhancements to the execution engine for processing different agent types and their parameters.",
+      "Review the existing `src/ai_whisperer/execution_engine.py` and `src/ai_whisperer/ai_service_interaction.py` to identify areas requiring new unit tests based on the plan.",
+      "Create a new Python file `./tests/unit/test_execution_engine_enhancements.py`.",
+      "Write unit tests within `./tests/unit/test_execution_engine_enhancements.py` that specifically cover the logic for:",
+      "- Executing steps based on the `agent_spec.type` defined in the plan.",
+      "- Handling various agent parameters (like `instructions`, `input_artifacts`, `output_artifacts`, `constraints`, `validation_criteria`).",
+      "- Verifying correct interaction points and data flow between `execution_engine.py` and `ai_service_interaction.py`.",
+      "- Testing scenarios for processing step inputs and managing step outputs.",
+      "Utilize mocking (e.g., `unittest.mock`) to isolate the execution engine logic from actual AI service calls and file system operations where appropriate.",
+      "Ensure the tests cover edge cases and potential error conditions related to step execution and agent interaction.",
+      "Structure the tests clearly using standard Python unit testing practices."
+    ],
+    "constraints": [
+      "Do not modify any existing files except for creating the specified output file.",
+      "All tests must be placed within the `./tests/unit/test_execution_engine_enhancements.py` file.",
+      "Tests must be unit tests, focusing on isolated components, using mocking for external dependencies."
+    ],
+    "validation_criteria": [
+      "The file `./tests/unit/test_execution_engine_enhancements.py` must be created.",
+      "The file `./tests/unit/test_execution_engine_enhancements.py` must contain test functions (e.g., methods starting with `test_`).",
+      "The tests in `./tests/unit/test_execution_engine_enhancements.py` must cover the logic for executing steps based on `agent_spec.type`.",
+      "The tests must include checks for handling agent parameters (`instructions`, `input_artifacts`, `output_artifacts`, etc.).",
+      "Tests must verify the interaction between `execution_engine.py` and `ai_service_interaction.py`.",
+      "The tests must demonstrate the use of mocking for external dependencies.",
+      "The tests should cover different scenarios of step input and output handling."
+    ]
+  },
+  "step_id": "generate_runner_unit_tests",
+  "task_id": "0fa8c553-09fb-45fc-8384-6780cd3c8a02",
+  "subtask_id": "b28bce76-c72c-4d1f-b848-a5311befe61e"
+}

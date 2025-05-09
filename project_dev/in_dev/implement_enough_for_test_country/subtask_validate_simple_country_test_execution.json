@@ -1,0 +1,38 @@
+{
+  "description": "Run the simple_country_test using the enhanced runner and a real AI connection.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "./tests/simple_run_test_country/run_test_plan.ps1",
+      "./tests/simple_run_test_country/aiwhisperer_config.yaml",
+      "./tests/simple_run_test_country/simple_run_test_country_aiwhisperer_config.json",
+      "./src/ai_whisperer/execution_engine.py"
+    ],
+    "output_artifacts": [],
+    "instructions": [
+      "Navigate to the `./tests/simple_run_test_country/` directory.",
+      "Ensure your environment is configured to use a real AI service (e.g., OpenRouter) by verifying the settings in `aiwhisperer_config.yaml`. You may need to set environment variables for API keys.",
+      "Execute the test plan using the PowerShell script: `./run_test_plan.ps1`.",
+      "Observe the console output of the runner.",
+      "Confirm that the runner loads and processes the steps defined in `simple_run_test_country_aiwhisperer_config.json`.",
+      "Look for indications that the AI service is being invoked for the 'ask_country', 'ask_capital', and 'ask_landmark_in_capital' steps.",
+      "Verify that the 'validate_country', 'validate_capital', and 'validate_landmark_in_capital' steps execute and report successful validation.",
+      "The script should complete without throwing errors, indicating successful execution of the plan and validation steps.",
+      "If the environment is set up for automated testing, you could also run the specific integration test designed for this scenario, if one was created in a previous step. However, the primary instruction is to use the `run_test_plan.ps1` script for this manual/scripted validation."
+    ],
+    "constraints": [
+      "Requires a configured AI service connection (e.g., OpenRouter) with necessary API keys accessible to the environment running the script.",
+      "Requires PowerShell to execute `run_test_plan.ps1`."
+    ],
+    "validation_criteria": [
+      "The `./tests/simple_run_test_country/run_test_plan.ps1` script completes successfully with exit code 0.",
+      "The output logs show evidence of processing each step ('ask_country', 'validate_country', 'ask_capital', 'validate_capital', 'ask_landmark_in_capital', 'validate_landmark_in_capital').",
+      "The validation steps ('validate_country', 'validate_capital', 'validate_landmark_in_capital') within the plan report successful outcomes in the logs.",
+      "No unhandled exceptions or critical errors are reported during the execution."
+    ]
+  },
+  "step_id": "validate_simple_country_test_execution",
+  "task_id": "0fa8c553-09fb-45fc-8384-6780cd3c8a02",
+  "subtask_id": "a56a9725-2a6e-4b74-8f6a-3c40b7437b39"
+}

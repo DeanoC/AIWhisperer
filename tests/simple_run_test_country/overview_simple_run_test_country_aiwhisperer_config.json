@@ -4,109 +4,123 @@
   "plan": [
     {
       "step_id": "select_landmark",
-      "file_path": "project_dev/in_dev/simple_run_test_country/subtask_select_landmark.json",
+      "file_path": "./tests/simple_run_test_country/subtask_select_landmark.json",
       "depends_on": [],
-      "type": "planning",
-      "input_artifacts": [],
-      "output_artifacts": [
-        "landmark_selection.md"
-      ],
+      "agent_spec": {
+        "type": "planning",
+        "input_artifacts": [],
+        "output_artifacts": [
+          "landmark_selection.md"
+        ]
+      },
       "completed": false
     },
     {
       "step_id": "ask_country",
-      "file_path": "project_dev/in_dev/simple_run_test_country/subtask_ask_country.json",
+      "file_path": "./tests/simple_run_test_country/subtask_ask_country.json",
       "depends_on": [
         "select_landmark"
       ],
-      "type": "ai_interaction",
-      "input_artifacts": [
-        "landmark_selection.md"
-      ],
-      "output_artifacts": [
-        "ai_response_country.txt"
-      ],
+      "agent_spec": {
+        "type": "ai_interaction",
+        "input_artifacts": [
+          "landmark_selection.md"
+        ],
+        "output_artifacts": [
+          "ai_response_country.txt"
+        ]
+      },
       "completed": false
     },
     {
       "step_id": "validate_country",
-      "file_path": "project_dev/in_dev/simple_run_test_country/subtask_validate_country.json",
+      "file_path": "./tests/simple_run_test_country/subtask_validate_country.json",
       "depends_on": [
         "ask_country"
       ],
-      "type": "validation",
-      "input_artifacts": [
-        "landmark_selection.md",
-        "ai_response_country.txt"
-      ],
-      "output_artifacts": [
-        "country_validation_result.md"
-      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "landmark_selection.md",
+          "ai_response_country.txt"
+        ],
+        "output_artifacts": [
+          "country_validation_result.md"
+        ]
+      },
       "completed": false
     },
     {
       "step_id": "ask_capital",
-      "file_path": "project_dev/in_dev/simple_run_test_country/subtask_ask_capital.json",
+      "file_path": "./tests/simple_run_test_country/subtask_ask_capital.json",
       "depends_on": [
         "validate_country"
       ],
-      "type": "ai_interaction",
-      "input_artifacts": [
-        "country_validation_result.md",
-        "landmark_selection.md"
-      ],
-      "output_artifacts": [
-        "ai_response_capital.txt"
-      ],
+      "agent_spec": {
+        "type": "ai_interaction",
+        "input_artifacts": [
+          "country_validation_result.md",
+          "landmark_selection.md"
+        ],
+        "output_artifacts": [
+          "ai_response_capital.txt"
+        ]
+      },
       "completed": false
     },
     {
       "step_id": "validate_capital",
-      "file_path": "project_dev/in_dev/simple_run_test_country/subtask_validate_capital.json",
+      "file_path": "./tests/simple_run_test_country/subtask_validate_capital.json",
       "depends_on": [
         "ask_capital"
       ],
-      "type": "validation",
-      "input_artifacts": [
-        "ai_response_capital.txt",
-        "country_validation_result.md"
-      ],
-      "output_artifacts": [
-        "capital_validation_result.md"
-      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "ai_response_capital.txt",
+          "country_validation_result.md"
+        ],
+        "output_artifacts": [
+          "capital_validation_result.md"
+        ]
+      },
       "completed": false
     },
     {
       "step_id": "ask_landmark_in_capital",
-      "file_path": "project_dev/in_dev/simple_run_test_country/subtask_ask_landmark_in_capital.json",
+      "file_path": "./tests/simple_run_test_country/subtask_ask_landmark_in_country.json",
       "depends_on": [
         "validate_capital"
       ],
-      "type": "ai_interaction",
-      "input_artifacts": [
-        "landmark_selection.md",
-        "capital_validation_result.md"
-      ],
-      "output_artifacts": [
-        "ai_response_landmark_in_capital.txt"
-      ],
+      "agent_spec": {
+        "type": "ai_interaction",
+        "input_artifacts": [
+          "landmark_selection.md",
+          "capital_validation_result.md"
+        ],
+        "output_artifacts": [
+          "ai_response_landmark_in_capital.txt"
+        ]
+      },
       "completed": false
     },
     {
       "step_id": "validate_landmark_in_capital",
-      "file_path": "project_dev/in_dev/simple_run_test_country/subtask_validate_landmark_in_capital.json",
+      "file_path": "./tests/simple_run_test_country/subtask_validate_landmark_in_country.json",
       "depends_on": [
         "ask_landmark_in_capital"
       ],
-      "type": "validation",
-      "input_artifacts": [
-        "landmark_selection.md",
-        "ai_response_landmark_in_capital.txt",
-        "capital_validation_result.md"
-      ],
-      "output_artifacts": [
-        "landmark_in_capital_validation_result.md"
-      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "landmark_selection.md",
+          "ai_response_landmark_in_capital.txt",
+          "capital_validation_result.md"
+        ],
+        "output_artifacts": [
+          "landmark_in_capital_validation_result.md"
+        ]
+      },
       "completed": false
     }
   ],

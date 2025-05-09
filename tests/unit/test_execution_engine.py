@@ -19,7 +19,9 @@ class TestExecutionEngine(unittest.TestCase):
         
         # Create a mock monitor for the ExecutionEngine
         self.mock_monitor = MagicMock(spec=TerminalMonitor)
-        self.engine = ExecutionEngine(self.mock_state_manager, monitor=self.mock_monitor)
+        # Add a mock config dictionary
+        self.mock_config = {"openrouter": {"model": "test-model", "params": {}}}
+        self.engine = ExecutionEngine(self.mock_state_manager, monitor=self.mock_monitor, config=self.mock_config)
 
 
     def _get_sample_plan(self, num_tasks=2, add_failing_task=False, add_dependent_task=False):

@@ -1,0 +1,27 @@
+{
+  "description": "Run the unit tests for the execution engine enhancements to ensure functional correctness.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "./tests/unit/test_execution_engine.py",
+      "./src/ai_whisperer/execution_engine.py"
+    ],
+    "output_artifacts": [],
+    "instructions": [
+      "Navigate to the project root directory.",
+      "Execute the unit tests for the execution engine by running the command: `pytest tests/unit/test_execution_engine.py`.",
+      "Verify the output to confirm that all tests within `tests/unit/test_execution_engine.py` pass successfully."
+    ],
+    "constraints": [
+      "Do not modify any code files.",
+      "Only use the `pytest` command to run the tests."
+    ],
+    "validation_criteria": [
+      "All tests in tests/unit/test_execution_engine.py pass successfully."
+    ]
+  },
+  "step_id": "validate_runner_unit_tests",
+  "task_id": "0fa8c553-09fb-45fc-8384-6780cd3c8a02",
+  "subtask_id": "bdb6ba91-5e1c-4d20-95bc-3acbeb9b2dd3"
+}

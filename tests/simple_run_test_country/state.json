@@ -2,31 +2,40 @@
     "tasks": {
         "select_landmark": {
             "status": "completed",
-            "result": "Result of select_landmark"
+            "result": "Planning task select_landmark completed"
         },
         "ask_country": {
             "status": "completed",
-            "result": "Result of ask_country"
+            "result": {
+                "prompt": "What country is Eiffel Tower in?",
+                "response": "The Eiffel Tower is in **France**."
+            }
         },
         "validate_country": {
             "status": "completed",
-            "result": "Result of validate_country"
+            "result": "Validation passed: The country is correctly identified as France."
         },
         "ask_capital": {
             "status": "completed",
-            "result": "Result of ask_capital"
+            "result": {
+                "prompt": "What is the capital of that country?",
+                "response": "The capital of France is **Paris**."
+            }
         },
         "validate_capital": {
             "status": "completed",
-            "result": "Result of validate_capital"
+            "result": "Validation passed: The capital is correctly identified as Paris."
         },
         "ask_landmark_in_capital": {
             "status": "completed",
-            "result": "Result of ask_landmark_in_capital"
+            "result": {
+                "prompt": "Is Eiffel Tower in Paris?",
+                "response": "Yes, the Eiffel Tower is located in **Paris, France**."
+            }
         },
         "validate_landmark_in_capital": {
             "status": "completed",
-            "result": "Result of validate_landmark_in_capital"
+            "result": "Validation passed: The landmark is correctly identified as being in the capital."
         }
     },
     "global_state": {

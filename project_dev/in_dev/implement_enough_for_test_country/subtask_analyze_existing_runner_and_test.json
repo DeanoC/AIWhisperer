@@ -1,0 +1,38 @@
+{
+  "description": "Analyze the current state of the runner code and the simple_country_test to identify missing components needed for full execution.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "analysis",
+    "input_artifacts": [
+      "./src/ai_whisperer/execution_engine.py",
+      "./tests/simple_run_test_country/run_test_plan.ps1",
+      "./tests/simple_run_test_country/simple_run_test_country_aiwhisperer_config.json",
+      "./project_dev/rfc/simple_run_test_country.md"
+    ],
+    "output_artifacts": [
+      "./project_dev/in_dev/implement_enough_for_test_country/analysis_summary.md"
+    ],
+    "instructions": [
+      "Review the provided runner script (run_test_plan.ps1) to understand how it currently invokes the AIWhisperer execution engine.",
+      "Examine the test plan configuration (simple_run_test_country_aiwhisperer_config.json) to understand the structure and content of the steps, specifically the 'agent_spec' for different types like 'test_generation', 'validation', etc.",
+      "Read the original requirements document (simple_run_test_country.md) to grasp the intended behavior and goals of this specific test.",
+      "Analyze the existing execution_engine.py code to understand its current capabilities. Note that it primarily logs step success but does not yet implement the logic to process the 'agent_spec' details.",
+      "Compare the requirements of the test plan steps (e.g., 'subtask_ask_country', 'subtask_validate_country') as defined in the config file with the current functionality of the execution_engine.py.",
+      "Identify the specific functionalities missing in execution_engine.py to correctly process the 'agent_spec' for all agent types used in the simple_country_test, including 'test_generation', 'validation', 'planning', 'file_io', and 'analysis'. This includes handling 'instructions', 'constraints', 'validation_criteria', 'input_artifacts', and 'output_artifacts'.",
+      "Specifically identify what logic is required within the execution engine to interact with an external AI service based on the 'agent_spec' details provided in the plan steps.",
+      "Document the identified gaps in detail within the file ./project_dev/in_dev/implement_enough_for_test_country/analysis_summary.md.",
+      "Propose a high-level plan or approach within analysis_summary.md for implementing the identified missing functionalities in the execution engine to enable the simple_country_test to pass."
+    ],
+    "constraints": [],
+    "validation_criteria": [
+      "The file ./project_dev/in_dev/implement_enough_for_test_country/analysis_summary.md must be created.",
+      "The analysis_summary.md file must clearly list the specific runner functionalities that are missing to execute the simple_country_test plan steps.",
+      "The analysis_summary.md file must outline a high-level approach or plan for implementing these missing functionalities.",
+      "The analysis must cover the handling of 'instructions', 'constraints', 'validation_criteria', 'input_artifacts', and 'output_artifacts' for the relevant agent types in the test plan.",
+      "The analysis must specifically address the requirement for the runner to interact with an AI service based on the plan steps."
+    ]
+  },
+  "step_id": "analyze_existing_runner_and_test",
+  "task_id": "0fa8c553-09fb-45fc-8384-6780cd3c8a02",
+  "subtask_id": "43032d64-14a7-44e1-88d3-ba17d131c0ff"
+}

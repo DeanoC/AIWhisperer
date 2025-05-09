@@ -685,7 +685,7 @@ class Orchestrator:
 
         # 3. Instantiate ExecutionEngine and run the plan
         logger.info("Initializing Execution Engine.")
-        execution_engine = ExecutionEngine(state_manager, monitor) # Pass state_manager and monitor
+        execution_engine = ExecutionEngine(state_manager, monitor, self.config) # Pass state_manager, monitor, and config
 
         # Start the monitor display (this should ideally run in a separate thread/process)
         # For this example, we'll just update it manually or rely on the ExecutionEngine

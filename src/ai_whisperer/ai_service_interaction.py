@@ -213,34 +213,33 @@ class OpenRouterAPI:
 
         current_messages: List[Dict[str, Any]]
 
-        if messages_history:
-            current_messages = list(messages_history) # Make a copy
+        current_messages = list(messages_history) if messages_history else []
+
+        if system_prompt and not messages_history: # Add system prompt only for the first turn
+            current_messages.append({"role": "system", "content": system_prompt})
+
+        user_content_parts: List[Dict[str, Any]] = [{"type": "text", "text": prompt_text}]
+
+        if images:
+            for image_data in images:
+                # Basic check if it's a base64 string or URL
+                # A more robust check might be needed for production
+                if not image_data.startswith("data:image"): # Assuming URLs don't start with data:image
+                     # It's a URL
+                    user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
+                else: # It's base64
+                    user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
+
+        if pdfs:
+            for pdf_data in pdfs: # Assuming pdf_data is already a base64 data URI
+                user_content_parts.append({"type": "file", "file": {"url": pdf_data}})
+
+        # Append the current user message (prompt_text + artifacts)
+        # If only text is present, OpenRouter expects content as a string, not a list.
+        if len(user_content_parts) == 1 and user_content_parts[0]["type"] == "text":
+            current_messages.append({"role": "user", "content": user_content_parts[0]["text"]})
         else:
-            current_messages = []
-            if system_prompt:
-                current_messages.append({"role": "system", "content": system_prompt})
-
-            user_content_parts: List[Dict[str, Any]] = [{"type": "text", "text": prompt_text}]
-
-            if images:
-                for image_data in images:
-                    # Basic check if it's a base64 string or URL
-                    # A more robust check might be needed for production
-                    if not image_data.startswith("data:image"): # Assuming URLs don't start with data:image
-                         # It's a URL
-                        user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
-                    else: # It's base64
-                        user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
-
-            if pdfs:
-                for pdf_data in pdfs: # Assuming pdf_data is already a base64 data URI
-                    user_content_parts.append({"type": "file", "file": {"url": pdf_data}})
-
-            # If only text is present, OpenRouter expects content as a string, not a list.
-            if len(user_content_parts) == 1 and user_content_parts[0]["type"] == "text":
-                current_messages.append({"role": "user", "content": user_content_parts[0]["text"]})
-            else:
-                current_messages.append({"role": "user", "content": user_content_parts})
+            current_messages.append({"role": "user", "content": user_content_parts})
 
         payload = {
             "model": model,
