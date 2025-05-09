@@ -12,7 +12,7 @@ from .state_management import StateManager # Import StateManager
 from .execution_engine import ExecutionEngine # Import ExecutionEngine
 from .logging import setup_logging, get_logger, LogMessage, LogLevel, ComponentType, log_event # Import logging components
 from .monitoring import TerminalMonitor # Import TerminalMonitor
-from . import openrouter_api
+from . import ai_service_interaction
 from .utils import build_ascii_directory_tree, calculate_sha256
 from .exceptions import (
     OrchestratorError,
@@ -93,7 +93,7 @@ class Orchestrator:
         )
 
         # Initialize the OpenRouterAPI client with the task-specific model configuration
-        from .openrouter_api import OpenRouterAPI
+        from .ai_service_interaction import OpenRouterAPI
 
         self.openrouter_client = OpenRouterAPI(config=model_config)
 

@@ -11,7 +11,7 @@ from src.ai_whisperer.exceptions import (
     ConfigError
 )
 # Import the actual class and constants
-from src.ai_whisperer.openrouter_api import OpenRouterAPI, MODELS_API_URL, API_URL
+from src.ai_whisperer.ai_service_interaction import OpenRouterAPI, MODELS_API_URL, API_URL
 
 # Define test config data
 TEST_CONFIG_OPENROUTER_SECTION = {

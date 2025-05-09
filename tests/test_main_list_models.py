@@ -8,7 +8,7 @@ original_argv = sys.argv.copy()
 
 # Import the actual function
 from src.ai_whisperer.main import main
-from src.ai_whisperer.openrouter_api import OpenRouterAPI # Import OpenRouterAPI
+from src.ai_whisperer.ai_service_interaction import OpenRouterAPI # Import OpenRouterAPI
 
 # Define dummy data for mocking
 DUMMY_CONFIG = {

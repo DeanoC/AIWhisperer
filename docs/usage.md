@@ -136,6 +136,84 @@ The runner, via the `PlanParser` ([`src/ai_whisperer/plan_parser.py`](src/ai_whi
 
 Relevant configuration for running JSON plans (e.g., API keys for AI models used by the steps, default model preferences if not specified in the plan itself) will be managed through the main `config.yaml` file provided with the `--config` argument. Ensure this configuration is correctly set up before running a plan.
 
+## Programmatic AI Service Interaction
+
+Beyond the command-line interface, you can interact with AI services programmatically using the `OpenRouterAPI` class provided by the AIWhisperer library. This is useful for integrating AI capabilities directly into your Python code or for building custom workflows.
+
+For detailed information on the `OpenRouterAPI` class, its methods, parameters, and error handling, please refer to the [AI Service Interaction Module Documentation](ai_service_interaction.md).
+
+To get started, you typically instantiate the `OpenRouterAPI` client after loading your application configuration:
+
+```python
+from ai_whisperer.config import load_config
+from ai_whisperer.ai_service_interaction import OpenRouterAPI
+import os
+
+# Ensure OPENROUTER_API_KEY is set in your environment or .env file
+# load_dotenv() # If using a .env file
+
+try:
+    # Load configuration (replace with the actual path to your config)
+    config = load_config("path/to/your/config.yaml")
+
+    # Instantiate the OpenRouterAPI client
+    # Pass the 'openrouter' section of the config
+    openrouter_client = OpenRouterAPI(config=config.get('openrouter', {}))
+
+    # Now you can use the client methods
+
+except Exception as e:
+    print(f"Error loading configuration or initializing API client: {e}")
+```
+
+### Non-Streaming Example (`call_chat_completion`)
+
+Here's a simple example demonstrating a non-streaming chat completion request:
+
+```python
+# Assuming openrouter_client is already instantiated
+try:
+    response_content = openrouter_client.call_chat_completion(
+        prompt_text="What is the capital of Spain?",
+        model="google/gemini-pro", # Use a specific model or openrouter_client.model
+        params={"temperature": 0.5} # Use specific params or openrouter_client.params
+    )
+    print(f"AI Response: {response_content}")
+except Exception as e:
+    print(f"API call failed: {e}")
+```
+
+### Streaming Example (`stream_chat_completion`)
+
+For receiving responses as a stream of data, use the `stream_chat_completion` method:
+
+```python
+# Assuming openrouter_client is already instantiated
+try:
+    print("Streaming response:")
+    full_response_content = ""
+    for chunk in openrouter_client.stream_chat_completion(
+        prompt_text="Explain the concept of streaming in large language models in a few sentences.",
+        model="mistralai/mistral-7b-instruct",
+        params={"temperature": 0.8}
+    ):
+        # Process each chunk as it arrives
+        if chunk and chunk.get("choices"):
+            delta = chunk["choices"][0].get("delta")
+            if delta and delta.get("content"):
+                content_chunk = delta["content"]
+                print(content_chunk, end="", flush=True) # Print chunk without newline
+                full_response_content += content_chunk
+
+    print("\n\nStreaming finished.")
+    # The full_response_content variable now holds the complete response
+    # print(f"Full accumulated response: {full_response_content}")
+
+except Exception as e:
+    print(f"\n\nStreaming failed: {e}")
+```
+
+For more advanced usage, including tool calling, structured output, and multimodal inputs, please refer to the [AI Service Interaction Module Documentation](ai_service_interaction.md).
 ## Advanced OpenRouter API Usage (via AI Whisperer Library)
 
 The AI Whisperer library's `OpenRouterAPI` class ([`src/ai_whisperer/openrouter_api.py`](src/ai_whisperer/openrouter_api.py:1)) has been enhanced to support several advanced features of the OpenRouter API. While these are primarily intended for programmatic use within the AI Whisperer system or by developers using the library, understanding them can be beneficial.

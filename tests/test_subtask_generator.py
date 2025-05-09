@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock, mock_open, call
 # Assuming the core logic will be in src.ai_whisperer.subtask_generator
 # Import necessary exceptions and potentially the class/functions once they exist
 from src.ai_whisperer.exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError
-from src.ai_whisperer.openrouter_api import OpenRouterAPIError
+from src.ai_whisperer.exceptions import OpenRouterAPIError
 
 # --- Test Data ---
 MOCK_CONFIG = {

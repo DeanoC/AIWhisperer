@@ -194,7 +194,7 @@ class TestOrchestratorSubtasks:
 
     # mock_prompt_content fixture is no longer needed as prompt content is in mock_config
 
-    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI.call_chat_completion')
+    @patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
     @patch('src.ai_whisperer.orchestrator.json.loads')
@@ -439,7 +439,7 @@ No additional properties are allowed at the top level.
                     assert result['subtasks'][0] == Path('/tmp/output/subtask_step1.json')
                     assert mock_generator.generate_subtask.call_count == 2
 
-    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI.call_chat_completion')
+    @patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
     @patch('src.ai_whisperer.orchestrator.Path.is_file', return_value=True)
     @patch('src.ai_whisperer.orchestrator.calculate_sha256', return_value='test_hash')
     @patch('src.ai_whisperer.orchestrator.json.loads')

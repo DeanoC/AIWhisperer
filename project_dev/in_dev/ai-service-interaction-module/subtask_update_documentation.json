@@ -1,0 +1,44 @@
+{
+  "description": "Update documentation to reflect the new AI Service Interaction Module.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [
+      "project_dev/in_dev/ai-service-interaction-module/ai_service_interaction_design.md",
+      "src/ai_whisperer/ai_service_interaction.py",
+      "docs/index.md",
+      "docs/usage.md"
+    ],
+    "output_artifacts": [
+      "docs/ai_service_interaction.md",
+      "docs/usage.md"
+    ],
+    "instructions": [
+      "Create a new documentation file `docs/ai_service_interaction.md`.",
+      "Based on the design document (`project_dev/in_dev/ai-service-interaction-module/ai_service_interaction_design.md`) and the source code (`src/ai_whisperer/ai_service_interaction.py`), detail the purpose and functionality of the AI Service Interaction Module.",
+      "Explain how the module integrates with the existing configuration system (using `config.yaml`) for model selection, API keys, and other relevant settings.",
+      "Describe the process of using the module to send prompts to AI services via OpenRouter.",
+      "Provide clear instructions and code examples for handling both standard (single response) and streaming (chunked response) interactions.",
+      "Update the `docs/usage.md` file.",
+      "Add a new section or integrate relevant content into `docs/usage.md` that demonstrates how users can leverage the AI Service Interaction Module within their AIWhisperer workflows.",
+      "Include practical examples showing how to configure and use the module for typical AI interaction tasks.",
+      "Ensure consistency in formatting and style with existing documentation files in the `docs/` directory."
+    ],
+    "constraints": [
+      "Documentation must be clear, concise, and technically accurate.",
+      "Examples in `docs/usage.md` must be functional and easy to understand.",
+      "Avoid making assumptions about the user's prior knowledge of AI services, focusing on how to use the module within AIWhisperer.",
+      "Do not modify any files outside of the `docs/` directory."
+    ],
+    "validation_criteria": [
+      "A new file `docs/ai_service_interaction.md` exists.",
+      "`docs/ai_service_interaction.md` provides a comprehensive overview of the module, including purpose, configuration integration, and usage (standard and streaming).",
+      "`docs/usage.md` has been modified and includes examples demonstrating the use of the AI Service Interaction Module.",
+      "The documentation accurately reflects the implemented features and integration points of the AI Service Interaction Module as found in the source code.",
+      "Documentation follows the general structure and style of other files in the `docs/` directory."
+    ]
+  },
+  "step_id": "update_documentation",
+  "task_id": "525d04d4-42c9-4a08-ac2b-9461936ab13b",
+  "subtask_id": "b0e856b1-9c6c-4534-89cc-de3ac2b0113b"
+}

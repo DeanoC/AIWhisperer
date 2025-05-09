@@ -17,7 +17,7 @@ from .exceptions import (
     SchemaValidationError
 )
 from .utils import setup_logging, setup_rich_output
-from .openrouter_api import OpenRouterAPI
+from .ai_service_interaction import OpenRouterAPI
 from rich.console import Console
 
 # Get a logger for this module

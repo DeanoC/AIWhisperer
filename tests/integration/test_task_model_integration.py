@@ -124,7 +124,7 @@ class TestSubtaskGeneratorModelIntegration:
 
 # Tests for Orchestrator integration with config loading
 class TestOrchestratorModelIntegration:
-    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI') # Correct patch target
+    @patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI') # Correct patch target
     def test_orchestrator_uses_correct_model_config(self, mock_openrouter):
         # Create a mock config that includes the expected task_model_configs and task_prompts_content, simulating load_config output
         mock_loaded_config = SAMPLE_CONFIG_INPUT.copy()
@@ -153,7 +153,7 @@ class TestOrchestratorModelIntegration:
         # Verify that OpenRouterAPI was initialized with the correct model configuration from the loaded config
         mock_openrouter.assert_called_once_with(config=expected_model_config)
 
-    @patch('src.ai_whisperer.openrouter_api.OpenRouterAPI') # Correct patch target
+    @patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI') # Correct patch target
     def test_orchestrator_handles_missing_task_model_config(self, mock_openrouter):
         # Create a mock config that includes task_prompts_content but is missing the 'Orchestrator' task model config
         mock_loaded_config_missing_task_model = SAMPLE_CONFIG_INPUT.copy()

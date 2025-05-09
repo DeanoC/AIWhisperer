@@ -18,7 +18,7 @@ from src.postprocessing.scripted_steps.handle_required_fields import handle_requ
 from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 
 from .config import load_config
-from .openrouter_api import OpenRouterAPI
+from .ai_service_interaction import OpenRouterAPI
 from .exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
 from .utils import validate_against_schema # Assuming this will be created in utils
 from src.postprocessing.pipeline import ProcessingError

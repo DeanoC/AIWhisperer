@@ -1,5 +1,9 @@
 import requests
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Generator
+import json
+from unittest.mock import MagicMock
+import logging
+
 from .exceptions import (
     OpenRouterAPIError,
     OpenRouterAuthError,
@@ -8,15 +12,18 @@ from .exceptions import (
     ConfigError
 )
 
+logger = logging.getLogger(__name__)
+
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODELS_API_URL = "https://openrouter.ai/api/v1/models"
 
 class OpenRouterAPI:
     """
     Client for interacting with the OpenRouter API.
-    Handles authentication and provides methods to access various API endpoints.
+    Handles authentication and provides methods to access various API endpoints,
+    including streaming chat completions.
     """
-    
+
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize the OpenRouter API client with configuration.
@@ -28,8 +35,6 @@ class OpenRouterAPI:
         Raises:
             ConfigError: If required configuration keys are missing.
         """
-        import logging
-        logger = logging.getLogger(__name__)
         logger.debug(f"OpenRouterAPI __init__ received config type: {type(config)}")
         logger.debug(f"OpenRouterAPI __init__ received config: {config}")
 
@@ -37,7 +42,7 @@ class OpenRouterAPI:
             raise ConfigError(f"Invalid 'openrouter' configuration: Expected a dictionary, got {type(config)}")
 
         self.openrouter_config = config
-        
+
         required_keys = ['api_key', 'model']
         missing_keys = [key for key in required_keys if key not in self.openrouter_config or not self.openrouter_config[key]]
         if missing_keys:
@@ -48,7 +53,7 @@ class OpenRouterAPI:
         self.params = self.openrouter_config.get('params', {}) # Default params
         self.site_url = self.openrouter_config.get('site_url', 'https://github.com/DeanoC/AIWhisperer')
         self.app_name = self.openrouter_config.get('app_name', 'AIWhisperer')
-        
+
         self.enable_cache = self.openrouter_config.get('cache', False)
         if self.enable_cache:
             self._cache_store = {}
@@ -62,7 +67,6 @@ class OpenRouterAPI:
 
     def _generate_cache_key(self, model: str, messages: List[Dict[str, Any]], params: Dict[str, Any], tools: List[Dict[str, Any]] = None, response_format: Dict[str, Any] = None) -> str:
         """Generates a cache key for a given request."""
-        import json
         key_parts = {
             "model": model,
             "messages": messages,
@@ -76,11 +80,11 @@ class OpenRouterAPI:
     def list_models(self) -> List[Dict[str, Any]]:
         """
         Retrieves a list of available models with detailed metadata from the OpenRouter API.
-        
+
         Returns:
             A list of dictionaries, where each dictionary contains detailed information
             about a model.
-            
+
         Raises:
             OpenRouterConnectionError: If there's a network issue connecting to the API.
             OpenRouterAuthError: If authentication fails (HTTP 401).
@@ -91,16 +95,14 @@ class OpenRouterAPI:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        
+
         try:
             response = requests.get(MODELS_API_URL, headers=headers, timeout=30)
             response.raise_for_status()
 
-            import logging
-            logger = logging.getLogger(__name__)
             logger.debug(f"OpenRouter API list_models raw response type: {type(response.text)}")
             logger.debug(f"OpenRouter API list_models raw response content: {response.text[:500]}") # Log first 500 chars
-            
+
             try:
                 data = response.json()
                 # Ensure the expected data structure exists
@@ -110,21 +112,14 @@ class OpenRouterAPI:
                         status_code=response.status_code,
                         response=response
                     )
-                
-                # Extract detailed model information from the response
-                # Extract only the model IDs from the response
-                # Extract detailed model information from the response
-                # The API call should return all the data for all the models
-                
+
                 # Add logging to inspect elements in data["data"]
                 for i, item in enumerate(data["data"]):
-                    import logging
-                    logger = logging.getLogger(__name__)
                     logger.debug(f"Element {i} in data['data'] type: {type(item)}")
                     logger.debug(f"Element {i} in data['data'] content: {item}")
 
                 return data["data"]
-                
+
             except ValueError as e:
                 raise OpenRouterAPIError(
                     f"Failed to decode JSON response: {e}",
@@ -137,7 +132,7 @@ class OpenRouterAPI:
                     status_code=response.status_code,
                     response=response
                 ) from e
-                
+
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code
             error_message = f"HTTP error {status_code}"
@@ -167,13 +162,13 @@ class OpenRouterAPI:
                     status_code=status_code,
                     response=e.response
                 ) from e
-                
+
         except requests.exceptions.RequestException as e:
             raise OpenRouterConnectionError(
                 f"Network error connecting to OpenRouter API: {e}",
                 original_exception=e
             ) from e
-    
+
     def call_chat_completion(
         self,
         prompt_text: str,
@@ -184,13 +179,10 @@ class OpenRouterAPI:
         response_format: Dict[str, Any] = None,
         images: List[str] = None,
         pdfs: List[str] = None,
-        # For tool usage, the calling code will manage history.
-        # This function can be called iteratively.
-        # If `messages_history` is provided, it's used instead of constructing from prompt_text.
         messages_history: List[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Calls the OpenRouter Chat Completions API with advanced features.
+        Calls the OpenRouter Chat Completions API with advanced features (non-streaming).
         Handles a single turn or continues a conversation if messages_history is provided.
 
         Args:
@@ -203,7 +195,7 @@ class OpenRouterAPI:
             images: Optional list of image URLs or base64 encoded image data (used with prompt_text).
             pdfs: Optional list of base64 encoded PDF data (used with prompt_text).
             messages_history: Optional list of previous messages to continue a conversation.
-                              If provided, prompt_text, system_prompt, images, pdfs are ignored for message construction.
+                               If provided, prompt_text, system_prompt, images, pdfs are ignored for message construction.
 
         Returns:
             The 'message' object from the API response's first choice,
@@ -239,7 +231,7 @@ class OpenRouterAPI:
                         user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
                     else: # It's base64
                         user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
-            
+
             if pdfs:
                 for pdf_data in pdfs: # Assuming pdf_data is already a base64 data URI
                     user_content_parts.append({"type": "file", "file": {"url": pdf_data}})
@@ -249,7 +241,7 @@ class OpenRouterAPI:
                 current_messages.append({"role": "user", "content": user_content_parts[0]["text"]})
             else:
                 current_messages.append({"role": "user", "content": user_content_parts})
-        
+
         payload = {
             "model": model,
             "messages": current_messages,
@@ -258,7 +250,7 @@ class OpenRouterAPI:
 
         if tools:
             payload["tools"] = tools
-        
+
         if response_format:
             payload["response_format"] = response_format
 
@@ -269,8 +261,6 @@ class OpenRouterAPI:
             # otherwise use the constructed current_messages.
             cache_key = self._generate_cache_key(model, current_messages, params, tools, response_format)
             if cache_key in self._cache_store:
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.info(f"Returning cached response for model {model}.")
                 cached_message_obj = self._cache_store[cache_key]
                 # Apply the same logic as for a fresh response to return content or full object
@@ -283,9 +273,7 @@ class OpenRouterAPI:
             timeout = self.openrouter_config.get('timeout_seconds', 60)
             if not isinstance(timeout, (int, float)) or timeout <= 0:
                 timeout = 60 # Default fallback
-            
-            import logging # Ensure logger is available
-            logger = logging.getLogger(__name__)
+
             logger.debug(f"OpenRouter API call_chat_completion payload: {payload}")
 
             response = requests.post(API_URL, headers=headers, json=payload, timeout=timeout)
@@ -391,4 +379,182 @@ class OpenRouterAPI:
             raise OpenRouterConnectionError(
                 f"Network error connecting to OpenRouter API: {e}",
                 original_exception=e
+            ) from e
+
+    def stream_chat_completion(
+        self,
+        prompt_text: str,
+        model: str,
+        params: Dict[str, Any],
+        system_prompt: str = None,
+        tools: List[Dict[str, Any]] = None,
+        response_format: Dict[str, Any] = None,
+        images: List[str] = None, # If supported by model and OpenRouter streaming
+        pdfs: List[str] = None,   # If supported by model and OpenRouter streaming
+        messages_history: List[Dict[str, Any]] = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Initiates a streaming chat completion request to the OpenRouter API.
+        It sends the prompt and parameters, then yields parsed data chunks as they are received from the API.
+
+        Args:
+            prompt_text: The user's primary text prompt.
+            model: The model identifier.
+            params: API parameters (e.g., temperature).
+            system_prompt: Optional system message.
+            tools: Optional list of tool definitions.
+            response_format: Optional specification for structured output.
+            images: Optional list of image data (ensure OpenRouter streaming supports this).
+            pdfs: Optional list of PDF data (ensure OpenRouter streaming supports this).
+            messages_history: Optional list of previous messages to continue a conversation.
+
+        Yields:
+            Dictionaries representing parsed Server-Sent Event (SSE) data chunks.
+
+        Raises:
+            OpenRouterAuthError: For authentication failures.
+            OpenRouterRateLimitError: If rate limits are exceeded.
+            OpenRouterConnectionError: For network issues.
+            OpenRouterAPIError: For other API errors, including those occurring mid-stream.
+            ConfigError: For configuration-related issues.
+        """
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": self.site_url,
+            "X-Title": self.app_name,
+        }
+
+        current_messages: List[Dict[str, Any]]
+
+        if messages_history:
+            current_messages = list(messages_history) # Make a copy
+        else:
+            current_messages = []
+            if system_prompt:
+                current_messages.append({"role": "system", "content": system_prompt})
+
+            user_content_parts: List[Dict[str, Any]] = [{"type": "text", "text": prompt_text}]
+
+            if images:
+                for image_data in images:
+                    if not image_data.startswith("data:image"):
+                         user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
+                    else:
+                        user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
+
+            if pdfs:
+                for pdf_data in pdfs:
+                    user_content_parts.append({"type": "file", "file": {"url": pdf_data}})
+
+            if len(user_content_parts) == 1 and user_content_parts[0]["type"] == "text":
+                current_messages.append({"role": "user", "content": user_content_parts[0]["text"]})
+            else:
+                current_messages.append({"role": "user", "content": user_content_parts})
+
+        payload = {
+            "model": model,
+            "messages": current_messages,
+            **params,
+            "stream": True # Enable streaming
+        }
+
+        if tools:
+            payload["tools"] = tools
+
+        if response_format:
+            payload["response_format"] = response_format
+
+        try:
+            timeout = self.openrouter_config.get('timeout_seconds', 60)
+            if not isinstance(timeout, (int, float)) or timeout <= 0:
+                timeout = 60 # Default fallback
+
+            logger.debug(f"OpenRouter API stream_chat_completion payload: {payload}")
+
+            # Use stream=True for streaming responses
+            response = requests.post(API_URL, headers=headers, json=payload, stream=True, timeout=timeout)
+
+            # Explicitly check for HTTP errors before attempting to process the stream
+            if response.status_code >= 400:
+                status_code = response.status_code
+                error_text = response.text
+                error_details = error_text
+                try:
+                    if 'application/json' in response.headers.get('Content-Type', ''):
+                        error_data = response.json()
+                        error_details = error_data.get("error", {}).get("message", error_text)
+                except ValueError:
+                    pass
+
+                error_message = f"OpenRouter API Error: {status_code} - {error_details}"
+                if len(error_message) > 500:
+                     error_message = error_message[:497] + "..."
+
+                logger.error(f"HTTPError in stream_chat_completion: {error_message}", exc_info=True)
+
+                if status_code == 401:
+                    raise OpenRouterAuthError(
+                        f"Authentication failed: {error_message}",
+                        status_code=status_code,
+                        response=response
+                    )
+                elif status_code == 429:
+                    raise OpenRouterRateLimitError(
+                        f"Rate limit exceeded: {error_message}",
+                        status_code=status_code,
+                        response=response
+                    )
+                else:
+                    raise OpenRouterAPIError(
+                        f"API request failed: {error_message}",
+                        status_code=status_code,
+                        response=response
+                    )
+
+            # Process the streaming response
+            for line in response.iter_lines():
+                if line: # Filter out keep-alive newlines
+                    if line.startswith(b'data: '): # Check for byte string prefix
+                        decoded_line = line.decode('utf-8')
+                        json_str = decoded_line[len('data:'):].strip()
+                        if json_str == '[DONE]':
+                            break # End of stream
+                        try:
+                            json_chunk = json.loads(json_str)
+                            yield json_chunk
+                        except json.JSONDecodeError as e:
+                            logger.error(f"JSONDecodeError in stream_chat_completion: {e}. Invalid chunk: {json_str}")
+                            raise OpenRouterAPIError(
+                                f"Failed to decode JSON chunk from stream: {e}. Chunk: {json_str[:100]}...",
+                                status_code=response.status_code, # Use the initial response status code
+                                response=response
+                            ) from e
+                    # Ignore other lines like 'event: message' or comments
+                    else:
+                        logger.debug(f"Ignoring non-data line in stream: {line.decode('utf-8')[:100]}")
+
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Timeout error in stream_chat_completion: {e}", exc_info=True)
+            raise OpenRouterConnectionError(
+                f"Request to OpenRouter API timed out after {timeout} seconds: {e}",
+                original_exception=e
+            ) from e
+        except requests.exceptions.RequestException as e:
+            logger.error(f"RequestException during stream processing: {e}", exc_info=True)
+            # This catches network errors that occur *during* the stream iteration
+            raise OpenRouterConnectionError(
+                f"Network error during OpenRouter API streaming: {e}",
+                original_exception=e
+            ) from e
+        except (OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError, OpenRouterAPIError) as e:
+            # Re-raise these specific custom exceptions directly if they were raised intentionally within the try block
+            raise
+        except Exception as e:
+            # Catch any other unexpected errors during processing
+            logger.error(f"Unexpected error during stream processing: {e}", exc_info=True)
+            raise OpenRouterAPIError(
+                f"Unexpected error during OpenRouter API streaming: {e}",
+                status_code=getattr(e, 'response', MagicMock()).status_code if hasattr(e, 'response') else None,
+                response=getattr(e, 'response', None)
             ) from e

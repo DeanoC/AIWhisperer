@@ -6,8 +6,10 @@ import pytest
 import json
 import uuid
 import os
+import yaml
 from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
+import time
 
 from src.ai_whisperer.orchestrator import Orchestrator
 from src.ai_whisperer.subtask_generator import SubtaskGenerator
@@ -17,13 +19,41 @@ from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backt
 from src.postprocessing.pipeline import PostprocessingPipeline
 
 
+@pytest.fixture
+def tmp_path_with_cleanup(request, tmp_path):
+    """
+    Pytest fixture to create a temporary directory and ensure its cleanup
+    with retries to handle PermissionError on Windows.
+    """
+    def cleanup():
+        import shutil # Import shutil within the cleanup function
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            try:
+                shutil.rmtree(tmp_path)
+                break # Success
+            except PermissionError as e:
+                if attempt < max_attempts - 1:
+                    print(f"Cleanup attempt {attempt + 1} failed: {e}. Retrying in 0.1 seconds.")
+                    time.sleep(0.1)
+                else:
+                    print(f"Cleanup failed after {max_attempts} attempts: {e}")
+                    # Optionally re-raise the exception if cleanup is critical
+                    # raise
+            except FileNotFoundError:
+                break # Already removed
+
+    request.addfinalizer(cleanup)
+    return tmp_path
+
+
 class TestOrchestratorPostprocessingIntegration:
     """Test the integration of the add_items_postprocessor with the Orchestrator."""
 
-    @patch("src.ai_whisperer.openrouter_api.OpenRouterAPI")
+    @patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI")
     @patch("src.ai_whisperer.orchestrator.uuid.uuid4")
     @patch("src.postprocessing.pipeline.PostprocessingPipeline.process")
-    def test_orchestrator_adds_task_id_and_hashes(self, mock_process, mock_uuid4, mock_api):
+    def test_orchestrator_adds_task_id_and_hashes(self, mock_process, mock_uuid4, mock_api, tmp_path_with_cleanup):
         """Test that the orchestrator adds task_id and input_hashes via the postprocessor."""
         # Setup
         mock_uuid4.return_value = "test-uuid"
@@ -62,46 +92,41 @@ class TestOrchestratorPostprocessingIntegration:
         })
 
         # Ensure the mock is used instead of making real API calls
-        with patch(
-            "src.ai_whisperer.orchestrator.openrouter_api.OpenRouterAPI",
-            return_value=mock_api_instance,
-        ):
-            # Create a raw test config with the new structure
-            raw_test_config = {
-                "openrouter": {
-                    "api_key": "test-key",
+        # Create a raw test config with the new structure
+        raw_test_config = {
+            "openrouter": {
+                "api_key": "test-key",
+                "model": "test-model",
+                "params": {},
+            },
+            "task_prompts": {
+                # Path is relative to the config file location (tmp_test)
+                "orchestrator": "orchestrator_default.md"
+            },
+            "task_models": {
+                "orchestrator": {
                     "model": "test-model",
                     "params": {},
-                },
-                "task_prompts": {
-                    # Path is relative to the config file location (tmp_test)
-                    "orchestrator": "orchestrator_default.md"
-                },
-                "task_models": {
-                    "orchestrator": {
-                        "model": "test-model",
-                        "params": {},
-                    }
                 }
             }
+        }
 
-            # Create temporary files for testing
-            tmp_dir = Path("./tmp_test")
-            tmp_dir.mkdir(exist_ok=True)
+        # Create temporary files for testing
+        tmp_dir = tmp_path_with_cleanup
 
-            requirements_path = tmp_dir / "test_requirements.md"
-            with open(requirements_path, "w") as f:
-                f.write("Test requirements")
+        requirements_path = tmp_dir / "test_requirements.md"
+        with open(requirements_path, "w") as f:
+            f.write("Test requirements")
 
-            # Create a dummy prompt file
-            orchestrator_prompt_path = tmp_dir / "orchestrator_default.md"
-            with open(orchestrator_prompt_path, "w") as f:
-                f.write("Dummy orchestrator prompt content")
+        # Create a dummy prompt file
+        orchestrator_prompt_path = tmp_dir / "orchestrator_default.md"
+        with open(orchestrator_prompt_path, "w") as f:
+            f.write("Dummy orchestrator prompt content")
 
-            # Create a dummy config file
-            config_path = tmp_dir / "test_config.json"
-            with open(config_path, "w") as f:
-                json.dump(raw_test_config, f)
+        # Create a dummy config file
+        config_path = tmp_dir / "test_config.json"
+        with open(config_path, "w") as f:
+            yaml.dump(raw_test_config, f)
 
             # Load the processed config using load_config
             processed_config = load_config(str(config_path))
@@ -144,19 +169,16 @@ class TestOrchestratorPostprocessingIntegration:
                         "prompt_file": "test-hash-3",
                     }
 
-            # Clean up
-            import shutil
-
-            shutil.rmtree(tmp_dir)
+            # Clean up is handled by the pytest fixture
 
 
 class TestSubtaskGeneratorPostprocessingIntegration:
     """Test the integration of the add_items_postprocessor with the SubtaskGenerator."""
 
-    @patch("src.ai_whisperer.openrouter_api.OpenRouterAPI")
+    @patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI")
     @patch("src.ai_whisperer.subtask_generator.uuid.uuid4")
     @patch("src.postprocessing.pipeline.PostprocessingPipeline.process")
-    def test_subtask_generator_adds_subtask_id(self, mock_process, mock_uuid4, mock_api):
+    def test_subtask_generator_adds_subtask_id(self, mock_process, mock_uuid4, mock_api, tmp_path_with_cleanup):
         """Test that the subtask generator adds subtask_id via the postprocessor."""
         # Setup
         mock_uuid4.return_value = "test-subtask-uuid"
@@ -198,7 +220,7 @@ class TestSubtaskGeneratorPostprocessingIntegration:
 
         # Ensure the mock is used instead of making real API calls
         with patch(
-            "src.ai_whisperer.openrouter_api.OpenRouterAPI",
+            "src.ai_whisperer.ai_service_interaction.OpenRouterAPI",
             return_value=mock_api_instance,
         ):
             # Create a raw test config with the new structure
@@ -221,8 +243,7 @@ class TestSubtaskGeneratorPostprocessingIntegration:
             }
 
             # Create temporary directory for testing
-            tmp_dir = Path("./tmp_test")
-            tmp_dir.mkdir(exist_ok=True)
+            tmp_dir = tmp_path_with_cleanup
 
             # Create a dummy prompt file
             subtask_generator_prompt_path = tmp_dir / "subtask_generator_default.md"
@@ -333,7 +354,4 @@ class TestSubtaskGeneratorPostprocessingIntegration:
                     assert json_dict["agent_spec"]["type"] == "test"
                     assert json_dict["agent_spec"]["instructions"] == "Test instructions"
 
-            # Clean up
-            import shutil
-
-            shutil.rmtree(tmp_dir)
+            # Clean up is handled by the pytest fixture

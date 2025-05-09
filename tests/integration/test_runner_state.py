@@ -112,7 +112,7 @@ class TestRunnerStateIntegration:
             state_file_path = os.path.join(temp_dir, "test_state.json")
             
             # Create an Orchestrator with mocked config and output directory
-            with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI'):
+            with patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI'):
                 orchestrator = Orchestrator(mock_config, output_dir=temp_dir)
                 
                 # Run the plan
@@ -150,7 +150,7 @@ class TestRunnerStateIntegration:
             state_file_path = os.path.join(temp_dir, "test_state_failure.json")
             
             # Create an Orchestrator with mocked config and output directory
-            with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI'):
+            with patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI'):
                 orchestrator = Orchestrator(mock_config, output_dir=temp_dir)
                 
                 # Run the plan
@@ -187,7 +187,7 @@ class TestRunnerStateIntegration:
             state_file_path = os.path.join(temp_dir, "test_state_dependency.json")
             
             # Create an Orchestrator with mocked config and output directory
-            with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI'):
+            with patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI'):
                 orchestrator = Orchestrator(mock_config, output_dir=temp_dir)
                 
                 # Run the plan
@@ -223,7 +223,7 @@ class TestRunnerStateIntegration:
             mock_execute.return_value = "Result of step_1"
             
             # Create an Orchestrator with mocked config and output directory
-            with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI'):
+            with patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI'):
                 orchestrator = Orchestrator(mock_config, output_dir=temp_dir)
                 
                 # Run the first plan
@@ -246,7 +246,7 @@ class TestRunnerStateIntegration:
             mock_execute.side_effect = lambda task_def: f"Result of {task_def['step_id']}"
             
             # Create a new Orchestrator instance
-            with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI'):
+            with patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI'):
                 orchestrator = Orchestrator(mock_config, output_dir=temp_dir)
                 
                 # Run the second plan
@@ -270,7 +270,7 @@ class TestRunnerStateIntegration:
         state_file_path = os.path.join(temp_dir, "test_state_error.json")
         
         # Create an Orchestrator with mocked config and output directory
-        with patch('src.ai_whisperer.openrouter_api.OpenRouterAPI'):
+        with patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI'):
             orchestrator = Orchestrator(mock_config, output_dir=temp_dir)
             
             # Mock os.replace to raise an IOError during state saving

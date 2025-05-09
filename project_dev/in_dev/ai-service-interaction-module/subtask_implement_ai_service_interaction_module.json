@@ -1,0 +1,43 @@
+{
+  "description": "Implement the core logic for the AI Service Interaction Module.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "code_generation",
+    "input_artifacts": [
+      "project_dev/in_dev/ai-service-interaction-module/ai_service_interaction_design.md",
+      "tests/unit/test_ai_service_interaction.py",
+      "tests/integration/test_ai_service_interaction_integration.py",
+      "src/ai_whisperer/openrouter_api.py",
+      "src/ai_whisperer/config.py"
+    ],
+    "output_artifacts": [
+      "src/ai_whisperer/ai_service_interaction.py"
+    ],
+    "instructions": [
+      "Create a new Python file at `src/ai_whisperer/ai_service_interaction.py`.",
+      "Implement the core logic within `src/ai_whisperer/ai_service_interaction.py` based on the specifications in `project_dev/in_dev/ai-service-interaction-module/ai_service_interaction_design.md`.",
+      "Include a function or class method for sending prompts to an AI service.",
+      "Implement logic to handle standard, non-streaming responses from the AI service.",
+      "Implement logic to handle streaming responses from the AI service, processing chunks as they arrive.",
+      "Retrieve API keys and any necessary configuration details from `src/ai_whisperer/config.py` for authentication with the AI service.",
+      "Consider leveraging or adapting existing API interaction patterns found in `src/ai_whisperer/openrouter_api.py`.",
+      "Ensure the implemented code adheres to the requirements outlined in the design document.",
+      "Develop the code with the goal of passing the unit tests (`tests/unit/test_ai_service_interaction.py`) and integration tests (`tests/integration/test_ai_service_interaction_integration.py`) that will be used to validate this module."
+    ],
+    "constraints": [
+      "The implementation must reside solely within the `src/ai_whisperer/ai_service_interaction.py` file.",
+      "Do not modify any other existing files unless explicitly required for integration (and this should be minimal in this step).",
+      "Authentication must rely on the configuration loaded via `src/ai_whisperer/config.py`."
+    ],
+    "validation_criteria": [
+      "The file `src/ai_whisperer/ai_service_interaction.py` is created.",
+      "The module `src/ai_whisperer/ai_service_interaction.py` contains callable entities (functions or methods) for sending prompts.",
+      "The module includes distinct logic paths or functions for handling both standard (non-streaming) and streaming AI service responses.",
+      "The implementation includes code to retrieve and utilize API keys or other credentials from the configuration for authentication.",
+      "The structure and functionality align with the core requirements described in `project_dev/in_dev/ai-service-interaction-module/ai_service_interaction_design.md`."
+    ]
+  },
+  "step_id": "implement_ai_service_interaction_module",
+  "task_id": "525d04d4-42c9-4a08-ac2b-9461936ab13b",
+  "subtask_id": "88b6c2ca-674f-4fbb-a809-b0b5e2ab4b62"
+}
