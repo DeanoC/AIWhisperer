@@ -1,0 +1,35 @@
+{
+  "description": "Check if the AI's country answer is correct.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "landmark_selection.md",
+      "ai_response_country.txt"
+    ],
+    "output_artifacts": [
+      "country_validation_result.md"
+    ],
+    "instructions": [
+      "Read the contents of 'landmark_selection.md' to identify the chosen landmark.",
+      "Read the contents of 'ai_response_country.txt' to get the AI's predicted country for the landmark.",
+      "Based on the landmark identified in 'landmark_selection.md', determine the correct country. Be aware that some landmarks might be associated with multiple countries or have common alternative names (e.g., UK, Great Britain for United Kingdom). Consult general knowledge or reliable sources if necessary.",
+      "Compare the AI's response from 'ai_response_country.txt' with the correct country you determined. Allow for variations in country names as specified in the overall requirements for this test.",
+      "Create a new file named 'country_validation_result.md'.",
+      "Write the validation result into 'country_validation_result.md'. Clearly state whether the validation passed or failed.",
+      "If the validation failed, provide a brief explanation of why it failed (e.g., 'Incorrect country provided', 'Could not determine correct country for landmark')."
+    ],
+    "constraints": [
+      "Must handle variations in country names as described in the requirements.",
+      "The validation must be based solely on the landmark specified in 'landmark_selection.md' and the AI's response in 'ai_response_country.txt'."
+    ],
+    "validation_criteria": [
+      "A file named 'country_validation_result.md' must be created.",
+      "The file 'country_validation_result.md' must contain text that explicitly states 'Pass' or 'Fail' regarding the country validation."
+    ],
+    "model_preference": null
+  },
+  "step_id": "validate_country",
+  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb",
+  "subtask_id": "e6708b49-c471-40bc-9a60-a80838056bdd"
+}

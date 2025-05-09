@@ -1,0 +1,35 @@
+{
+  "description": "Ask the AI what country the selected landmark is in.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "ai_interaction",
+    "input_artifacts": [
+      "landmark_selection.md"
+    ],
+    "output_artifacts": [
+      "ai_response_country.txt"
+    ],
+    "instructions": [
+      "Read the content of the file 'landmark_selection.md' to identify the selected landmark.",
+      "Construct a clear and concise prompt for the AI model, asking specifically for the country where the identified landmark is located.",
+      "The prompt should follow the format: 'What country is [Selected Landmark] in?'",
+      "Send this prompt to the AI model.",
+      "Receive the AI's response.",
+      "Save the complete AI response, including any introductory or concluding text, into a new file named 'ai_response_country.txt'.",
+      "Ensure the file 'ai_response_country.txt' is created in the current working directory."
+    ],
+    "constraints": [
+      "The AI interaction should be focused solely on identifying the country of the landmark.",
+      "Do not include any additional questions or requests in the AI prompt.",
+      "The output file 'ai_response_country.txt' should contain the raw response from the AI."
+    ],
+    "validation_criteria": [
+      "The file 'ai_response_country.txt' must exist.",
+      "The file 'ai_response_country.txt' must not be empty."
+    ],
+    "model_preference": null
+  },
+  "step_id": "ask_country",
+  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb",
+  "subtask_id": "7a25815c-82f4-4a3b-8313-b4b9a6c87a36"
+}

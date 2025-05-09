@@ -62,7 +62,7 @@ class ExecutionEngine:
         # For now, we return a placeholder result.
         result = f"Result of {task_id}"
         logger.info(f"Task {task_id} executed successfully (simulated).")
-        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.EXECUTION_ENGINE, "task_executed_simulated", f"Task {task_id} executed successfully (simulated).", step_id=task_id))
+        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.EXECUTION_ENGINE, "task_executed_simulated", f"Task {task_id} executed (simulated).", step_id=task_id))
         return result
 
     def execute_plan(self, plan_data):

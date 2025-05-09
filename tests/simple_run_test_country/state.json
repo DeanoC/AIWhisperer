@@ -1,0 +1,36 @@
+{
+    "tasks": {
+        "select_landmark": {
+            "status": "completed",
+            "result": "Result of select_landmark"
+        },
+        "ask_country": {
+            "status": "completed",
+            "result": "Result of ask_country"
+        },
+        "validate_country": {
+            "status": "completed",
+            "result": "Result of validate_country"
+        },
+        "ask_capital": {
+            "status": "completed",
+            "result": "Result of ask_capital"
+        },
+        "validate_capital": {
+            "status": "completed",
+            "result": "Result of validate_capital"
+        },
+        "ask_landmark_in_capital": {
+            "status": "completed",
+            "result": "Result of ask_landmark_in_capital"
+        },
+        "validate_landmark_in_capital": {
+            "status": "completed",
+            "result": "Result of validate_landmark_in_capital"
+        }
+    },
+    "global_state": {
+        "plan_status": "completed"
+    },
+    "plan_id": "712d9858-02ca-415a-b300-ffc77ee40feb"
+}

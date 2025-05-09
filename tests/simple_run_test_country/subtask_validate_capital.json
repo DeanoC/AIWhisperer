@@ -1,0 +1,36 @@
+{
+  "description": "Check if the AI's capital city answer is correct.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "ai_response_capital.txt",
+      "country_validation_result.md"
+    ],
+    "output_artifacts": [
+      "capital_validation_result.md"
+    ],
+    "instructions": [
+      "Read the AI's response from 'ai_response_capital.txt'.",
+      "Read the validation result for the country from 'country_validation_result.md'.",
+      "If the country validation failed or was skipped, note this in 'capital_validation_result.md' and skip further validation.",
+      "If the country validation passed, extract the identified country name from 'country_validation_result.md'.",
+      "Using a reliable source (e.g., an internal knowledge base or a web search if available), determine the correct capital city for the identified country.",
+      "Compare the AI's response from 'ai_response_capital.txt' to the correct capital city (case-insensitive comparison is acceptable).",
+      "Record the validation result in 'capital_validation_result.md'. Include whether the validation passed or failed and the reason (e.g., 'AI response matched correct capital', 'AI response did not match correct capital: [AI response] vs [Correct capital]')."
+    ],
+    "constraints": [
+      "Should only proceed with capital validation if the previous step (country validation) was not skipped or explicitly failed.",
+      "Must output 'capital_validation_result.md' regardless of whether the validation was performed or skipped."
+    ],
+    "validation_criteria": [
+      "capital_validation_result.md exists.",
+      "If the country validation step was skipped or failed, capital_validation_result.md clearly states that the capital validation was skipped due to the previous step's outcome.",
+      "If the country validation step passed, capital_validation_result.md clearly indicates if the capital validation passed or failed and provides a reason."
+    ],
+    "model_preference": null
+  },
+  "step_id": "validate_capital",
+  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb",
+  "subtask_id": "77b2821f-6236-49c1-b8db-a72342140667"
+}

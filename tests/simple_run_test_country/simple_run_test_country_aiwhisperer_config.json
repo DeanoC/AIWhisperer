@@ -1,0 +1,219 @@
+{
+  "natural_language_goal": "Perform a simple test of AI interaction and validation using landmark knowledge",
+  "overall_context": "This plan serves as a basic integration test for AIWhisperer's core functionality, including planning, AI interaction, validation, and state passing.",
+  "plan": [
+    {
+      "step_id": "select_landmark",
+      "description": "Select a landmark from a predefined list for the test.",
+      "depends_on": [],
+      "agent_spec": {
+        "type": "planning",
+        "input_artifacts": [],
+        "output_artifacts": [
+          "landmark_selection.md"
+        ],
+        "instructions": [
+          "Choose one landmark from the following list: Eiffel Tower, Great Wall of China, Statue of Liberty, Taj Mahal, Colosseum, Machu Picchu, Pyramid of Giza, Sydney Opera House, Christ the Redeemer, Kremlin, Acropolis, Petra, Chichen Itza, Hagia Sophia, Tower of London, Brandenburg Gate, Sagrada Familia, Forbidden City, Golden Gate Bridge, Mount Fuji.",
+          "Record the selected landmark in 'landmark_selection.md'."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "landmark_selection.md exists.",
+          "landmark_selection.md contains exactly one selected landmark from the provided list."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "ask_country",
+      "description": "Ask the AI what country the selected landmark is in.",
+      "depends_on": [
+        "select_landmark"
+      ],
+      "agent_spec": {
+        "type": "ai_interaction",
+        "input_artifacts": [
+          "landmark_selection.md"
+        ],
+        "output_artifacts": [
+          "ai_response_country.txt"
+        ],
+        "instructions": [
+          "Read the selected landmark from 'landmark_selection.md'.",
+          "Ask the AI: 'What country is [Selected Landmark] in?'",
+          "Save the AI's response to 'ai_response_country.txt'."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "ai_response_country.txt exists.",
+          "ai_response_country.txt is not empty."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "validate_country",
+      "description": "Check if the AI's country answer is correct.",
+      "depends_on": [
+        "ask_country"
+      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "landmark_selection.md",
+          "ai_response_country.txt"
+        ],
+        "output_artifacts": [
+          "country_validation_result.md"
+        ],
+        "instructions": [
+          "Read the selected landmark from 'landmark_selection.md' and the AI's response from 'ai_response_country.txt'.",
+          "Determine the correct country for the landmark, considering common alternative names (e.g., UK, Great Britain for United Kingdom).",
+          "Compare the AI's response to the correct country, allowing for variations mentioned in the requirements.",
+          "Record the validation result (Pass/Fail and reason) in 'country_validation_result.md'."
+        ],
+        "constraints": [
+          "Must handle variations in country names as described in the requirements."
+        ],
+        "validation_criteria": [
+          "country_validation_result.md exists.",
+          "country_validation_result.md clearly indicates if the country validation passed or failed."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "ask_capital",
+      "description": "Ask the AI for the capital of the previously identified country.",
+      "depends_on": [
+        "validate_country"
+      ],
+      "agent_spec": {
+        "type": "ai_interaction",
+        "input_artifacts": [
+          "country_validation_result.md",
+          "landmark_selection.md"
+        ],
+        "output_artifacts": [
+          "ai_response_capital.txt"
+        ],
+        "instructions": [
+          "Verify that the country validation in 'country_validation_result.md' passed.",
+          "If validation passed, ask the AI: 'What is the Capital of that country?'. Ensure context from previous turns is maintained.",
+          "If validation failed, mark this step as skipped or explicitly note the failure in the output.",
+          "Save the AI's response to 'ai_response_capital.txt'."
+        ],
+        "constraints": [
+          "Should only proceed if the country validation was successful.",
+          "Requires maintaining conversational context with the AI."
+        ],
+        "validation_criteria": [
+          "ai_response_capital.txt exists (or a skip/failure note is present).",
+          "If not skipped, ai_response_capital.txt is not empty."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "validate_capital",
+      "description": "Check if the AI's capital city answer is correct.",
+      "depends_on": [
+        "ask_capital"
+      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "ai_response_capital.txt",
+          "country_validation_result.md"
+        ],
+        "output_artifacts": [
+          "capital_validation_result.md"
+        ],
+        "instructions": [
+          "Read the AI's response from 'ai_response_capital.txt'.",
+          "Determine the correct capital city for the country identified in the previous steps.",
+          "Compare the AI's response to the correct capital city.",
+          "Record the validation result (Pass/Fail and reason) in 'capital_validation_result.md'."
+        ],
+        "constraints": [
+          "Should only proceed if the previous step was not skipped or explicitly failed."
+        ],
+        "validation_criteria": [
+          "capital_validation_result.md exists (or a skip/failure note is present).",
+          "If not skipped, capital_validation_result.md clearly indicates if the capital validation passed or failed."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "ask_landmark_in_capital",
+      "description": "Ask the AI if the selected landmark is located in the capital city.",
+      "depends_on": [
+        "validate_capital"
+      ],
+      "agent_spec": {
+        "type": "ai_interaction",
+        "input_artifacts": [
+          "landmark_selection.md",
+          "capital_validation_result.md"
+        ],
+        "output_artifacts": [
+          "ai_response_landmark_in_capital.txt"
+        ],
+        "instructions": [
+          "Verify that the capital validation in 'capital_validation_result.md' passed.",
+          "If validation passed, ask the AI: 'Is [Selected Landmark] located in the Capital city?'. Maintain conversational context.",
+          "If validation failed, mark this step as skipped or explicitly note the failure.",
+          "Save the AI's response to 'ai_response_landmark_in_capital.txt'."
+        ],
+        "constraints": [
+          "Should only proceed if the capital validation was successful.",
+          "Requires maintaining conversational context with the AI."
+        ],
+        "validation_criteria": [
+          "ai_response_landmark_in_capital.txt exists (or a skip/failure note is present).",
+          "If not skipped, ai_response_landmark_in_capital.txt is not empty."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "validate_landmark_in_capital",
+      "description": "Check if the AI's answer about the landmark being in the capital is correct.",
+      "depends_on": [
+        "ask_landmark_in_capital"
+      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "landmark_selection.md",
+          "ai_response_landmark_in_capital.txt",
+          "capital_validation_result.md"
+        ],
+        "output_artifacts": [
+          "landmark_in_capital_validation_result.md"
+        ],
+        "instructions": [
+          "Read the selected landmark from 'landmark_selection.md' and the AI's response from 'ai_response_landmark_in_capital.txt'.",
+          "Determine the correct location of the landmark relative to the capital city.",
+          "Compare the AI's response (Yes/No or similar) to the correct answer.",
+          "Record the validation result (Pass/Fail and reason) in 'landmark_in_capital_validation_result.md'."
+        ],
+        "constraints": [
+          "Should only proceed if the previous step was not skipped or explicitly failed."
+        ],
+        "validation_criteria": [
+          "landmark_in_capital_validation_result.md exists (or a skip/failure note is present).",
+          "If not skipped, landmark_in_capital_validation_result.md clearly indicates if the validation passed or failed."
+        ],
+        "model_preference": null
+      }
+    }
+  ],
+  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb",
+  "input_hashes": {
+    "requirements_md": "7fd599b0bbe01a4a794f936104f4fabcbca2e1e63a094609fd71f2a8730e04c1",
+    "config_json": "bae825f58be819daf9f14ac791db2453c083be17875e8c8452a9e9a57fd7de3e",
+    "prompt_file": "hash_not_available"
+  }
+}

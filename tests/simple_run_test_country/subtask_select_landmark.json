@@ -1,0 +1,31 @@
+{
+  "description": "Select a landmark from a predefined list for the test.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "planning",
+    "input_artifacts": [],
+    "output_artifacts": [
+      "landmark_selection.md"
+    ],
+    "instructions": [
+      "Review the overall context: 'This plan serves as a basic integration test for AIWhisperer's core functionality, including planning, AI interaction, validation, and state passing.'",
+      "Choose one landmark from the following list: Eiffel Tower, Great Wall of China, Statue of Liberty, Taj Mahal, Colosseum, Machu Picchu, Pyramid of Giza, Sydney Opera House, Christ the Redeemer, Kremlin, Acropolis, Petra, Chichen Itza, Hagia Sophia, Tower of London, Brandenburg Gate, Sagrada Familia, Forbidden City, Golden Gate Bridge, Mount Fuji.",
+      "The selection should be arbitrary but must be exactly one item from the provided list.",
+      "Create a new file named 'landmark_selection.md' in the current workspace.",
+      "Write the name of the single selected landmark into 'landmark_selection.md'. Ensure the file contains only the name of the landmark and no other text or formatting."
+    ],
+    "constraints": [
+      "The output file 'landmark_selection.md' must be created.",
+      "The output file 'landmark_selection.md' must contain only the name of the selected landmark.",
+      "The selected landmark must be one of the items from the provided list."
+    ],
+    "validation_criteria": [
+      "landmark_selection.md exists.",
+      "landmark_selection.md contains exactly one selected landmark from the provided list."
+    ],
+    "model_preference": null
+  },
+  "step_id": "select_landmark",
+  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb",
+  "subtask_id": "03425da5-7026-4e1e-9486-e8d8d57bbb33"
+}
