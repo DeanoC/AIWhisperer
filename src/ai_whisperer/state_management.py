@@ -43,7 +43,10 @@ def update_task_status(state, task_id, status):
     """Updates the status of a task in the state.
 
     Initializes 'tasks' or the specific task_id if not present.
+    Raises ValueError if task_id is None.
     """
+    if task_id is None:
+        raise ValueError("task_id cannot be None")
     if "tasks" not in state:
         state["tasks"] = {}
     if task_id not in state["tasks"]:

@@ -1,0 +1,38 @@
+{
+  "description": "Design the logging and monitoring components and their integration with the runner.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "planning",
+    "input_artifacts": [
+      "project_dev/rfc/runner/logging-and-monitoring.md",
+      "project_dev/rfc/runner/execution-engine.md",
+      "project_dev/rfc/runner/state-management.md",
+      "project_dev/rfc/runner/terminal-interaction-module.md"
+    ],
+    "output_artifacts": [
+      "project_dev/in_dev/logging-and-monitoring/logging_monitoring_design.md"
+    ],
+    "instructions": [
+      "Review the provided RFCs (`project_dev/rfc/runner/logging-and-monitoring.md`, `project_dev/rfc/runner/execution-engine.md`, `project_dev/rfc/runner/state-management.md`, `project_dev/rfc/runner/terminal-interaction-module.md`) to understand the context and requirements for logging and monitoring within the AIWhisperer runner.",
+      "Design the logging system, defining the structure and content of log messages for various runner actions, including but not limited to: plan step execution (start, success, failure), AI service calls (request, response, error), file operations (read, write, create, delete), and terminal command execution (command, output, exit code). Consider different logging levels (e.g., DEBUG, INFO, WARNING, ERROR).",
+      "Outline the mechanism for tracking and exposing the execution status of the overall plan and individual steps. This should include states like 'pending', 'running', 'paused', 'cancelled', 'completed', 'failed'.",
+      "Propose a design for a terminal-based monitoring view that can display the current execution status and recent log messages in a user-friendly format.",
+      "Detail how user interactions like pausing, cancelling, and adding context during execution will be reflected in the logging and state management systems. Consider how these actions might trigger specific log messages or state transitions.",
+      "Document the design in the specified output artifact file: `project_dev/in_dev/logging-and-monitoring/logging_monitoring_design.md`."
+    ],
+    "constraints": [
+      "The initial design for monitoring should be focused on a terminal-based interface.",
+      "The design must be flexible enough to allow for future integration with a graphical user interface (GUI) for enhanced monitoring capabilities."
+    ],
+    "validation_criteria": [
+      "The file `project_dev/in_dev/logging-and-monitoring/logging_monitoring_design.md` is created.",
+      "`logging_monitoring_design.md` contains a detailed definition of the log message structure for different action types.",
+      "`logging_monitoring_design.md` describes the approach for tracking and exposing execution status.",
+      "`logging_monitoring_design.md` outlines the proposed mechanism for a terminal-based monitoring view.",
+      "`logging_monitoring_design.md` explicitly addresses how pause, cancel, and add context functionalities interact with the logging and state management design."
+    ]
+  },
+  "step_id": "plan_logging_monitoring",
+  "task_id": "208966bf-05c2-47fc-a8b3-06604dde16ad",
+  "subtask_id": "753f3796-d77c-4a04-b2ca-a82db5c4da8c"
+}

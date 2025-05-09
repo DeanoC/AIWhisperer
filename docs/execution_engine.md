@@ -4,6 +4,12 @@
 
 The Execution Engine is a core component responsible for orchestrating and executing tasks defined within a plan. Its primary role is to process a sequence of tasks, manage their execution state, handle dependencies between tasks, and manage errors that occur during execution. It interacts closely with the State Manager to maintain the state of the overall plan and individual tasks.
 
+## Integration with Logging and Monitoring
+
+The Execution Engine's operations are thoroughly logged and can be observed via the AIWhisperer's monitoring interface. This includes the initiation of tasks, state transitions (e.g., from "pending" to "running", "completed", or "failed"), dependency evaluations, and any errors encountered during execution. This detailed logging is crucial for understanding the engine's behavior and for debugging purposes.
+
+For comprehensive information on the logging and monitoring capabilities, refer to the [Logging and Monitoring Documentation](./logging_monitoring.md).
+
 ## Key Components
 
 Based on the design and implementation, the key components and concepts are:

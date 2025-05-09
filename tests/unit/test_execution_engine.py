@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, call, patch
 import uuid
 
 from src.ai_whisperer.execution_engine import ExecutionEngine, TaskExecutionError
+from src.ai_whisperer.monitoring import TerminalMonitor # Import TerminalMonitor
 
 
 class TestExecutionEngine(unittest.TestCase):
@@ -16,7 +17,9 @@ class TestExecutionEngine(unittest.TestCase):
         self.mock_execute_single_task = patcher.start()
         self.addCleanup(patcher.stop)
         
-        self.engine = ExecutionEngine(self.mock_state_manager)
+        # Create a mock monitor for the ExecutionEngine
+        self.mock_monitor = MagicMock(spec=TerminalMonitor)
+        self.engine = ExecutionEngine(self.mock_state_manager, monitor=self.mock_monitor)
 
 
     def _get_sample_plan(self, num_tasks=2, add_failing_task=False, add_dependent_task=False):
@@ -56,7 +59,9 @@ class TestExecutionEngine(unittest.TestCase):
         self.mock_execute_single_task.assert_not_called()
 
     def test_execute_plan_none(self):
-        self.engine.execute_plan(None)
+        with self.assertRaises(ValueError) as cm:
+            self.engine.execute_plan(None)
+        self.assertEqual(str(cm.exception), "Plan data cannot be None.")
         self.mock_state_manager.set_task_state.assert_not_called()
         self.mock_execute_single_task.assert_not_called()
 
@@ -120,7 +125,9 @@ class TestExecutionEngine(unittest.TestCase):
     def test_execute_plan_with_task_failure(self):
         # This test uses the original _execute_single_task from the placeholder
         # to simulate an actual TaskExecutionError
-        engine_with_real_failure_logic = ExecutionEngine(self.mock_state_manager)
+        # Create a mock monitor for this specific instance
+        mock_monitor_for_failure_test = MagicMock(spec=TerminalMonitor)
+        engine_with_real_failure_logic = ExecutionEngine(self.mock_state_manager, monitor=mock_monitor_for_failure_test)
 
         sample_plan = self._get_sample_plan(num_tasks=1, add_failing_task=True)
         # plan: task_1, task_that_fails

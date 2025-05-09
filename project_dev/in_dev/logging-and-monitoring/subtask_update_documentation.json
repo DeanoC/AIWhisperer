@@ -1,0 +1,39 @@
+{
+  "description": "Update documentation to reflect logging and monitoring features.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [
+      "docs/index.md",
+      "docs/execution_engine.md",
+      "docs/internal_process.md",
+      "project_dev/in_dev/logging-and-monitoring/logging_monitoring_design.md"
+    ],
+    "output_artifacts": [
+      "docs/logging_monitoring.md",
+      "docs/index.md",
+      "docs/execution_engine.md",
+      "docs/internal_process.md"
+    ],
+    "instructions": [
+      "Create a new documentation page at `docs/logging_monitoring.md` dedicated to logging and monitoring features.",
+      "In `docs/logging_monitoring.md`, describe how logging works within the AIWhisperer runner, including details on log levels, where logs are stored (e.g., console, file paths if applicable), and the general format of log messages.",
+      "In `docs/logging_monitoring.md`, explain the terminal monitoring view. Detail how to activate it, describe the information displayed (e.g., task progress, current subtask, status), and explain how to use interactive features like pausing, canceling, and adding context to tasks or subtasks.",
+      "Update `docs/index.md` to include a link to the new `docs/logging_monitoring.md` page, possibly under a 'Features' or 'Advanced Usage' section.",
+      "Update `docs/execution_engine.md` to briefly mention the integration of logging and monitoring within the execution process and link to the new `docs/logging_monitoring.md` page for detailed information.",
+      "Update `docs/internal_process.md` to briefly mention how logging and monitoring aid in debugging and understanding the internal workings of the runner, linking to the new `docs/logging_monitoring.md` page."
+    ],
+    "constraints": [],
+    "validation_criteria": [
+      "A new file `docs/logging_monitoring.md` has been created.",
+      "`docs/logging_monitoring.md` contains comprehensive information about logging (how it works, storage, format) and terminal monitoring (usage, features).",
+      "`docs/index.md` has been updated to include a link to `docs/logging_monitoring.md`.",
+      "`docs/execution_engine.md` has been updated to reference logging/monitoring and link to `docs/logging_monitoring.md`.",
+      "`docs/internal_process.md` has been updated to reference logging/monitoring and link to `docs/logging_monitoring.md`.",
+      "The documentation accurately reflects the implemented logging and monitoring features based on the overall context."
+    ]
+  },
+  "step_id": "update_documentation",
+  "task_id": "208966bf-05c2-47fc-a8b3-06604dde16ad",
+  "subtask_id": "489aa958-f7d8-41ee-9cf8-49f2657f9f61"
+}

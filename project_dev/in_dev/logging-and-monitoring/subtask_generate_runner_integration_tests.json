@@ -1,0 +1,39 @@
+{
+  "description": "Generate integration tests for logging and monitoring with the runner.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "test_generation",
+    "input_artifacts": [
+      "project_dev/in_dev/logging-and-monitoring/logging_monitoring_design.md",
+      "src/ai_whisperer/execution_engine.py",
+      "src/ai_whisperer/state_management.py"
+    ],
+    "output_artifacts": [
+      "tests/integration/test_runner_logging_monitoring.py"
+    ],
+    "instructions": [
+      "Create integration tests in `tests/integration/test_runner_logging_monitoring.py` to verify logging and monitoring are correctly integrated with the runner and execution engine.",
+      "Tests should simulate running a simple plan defined within the test file or a small test plan file.",
+      "Verify that log messages are generated for key events during plan execution, including step start, step completion, and AI interactions (if applicable in the simulated plan).",
+      "Verify that the execution status within the state management (`src/ai_whisperer/state_management.py`) is updated correctly throughout the simulated plan execution (e.g., 'running', 'completed', 'failed').",
+      "If a terminal monitoring view is simulated or accessible, verify it reflects the correct status of the execution.",
+      "Include tests that simulate basic user interactions like pausing, canceling, or adding context during execution and verify that logging and state management correctly reflect these actions."
+    ],
+    "constraints": [
+      "Tests must be placed in the `tests/integration` directory.",
+      "Tests should use appropriate testing frameworks (e.g., pytest).",
+      "Avoid modifying existing production code in `src/ai_whisperer/execution_engine.py` or `src/ai_whisperer/state_management.py`."
+    ],
+    "validation_criteria": [
+      "The file `tests/integration/test_runner_logging_monitoring.py` exists.",
+      "The file `tests/integration/test_runner_logging_monitoring.py` contains one or more test functions.",
+      "The tests simulate the execution of a plan using the runner/execution engine.",
+      "The tests include assertions to verify logging output.",
+      "The tests include assertions to verify state updates.",
+      "The tests include assertions related to simulated user interactions (pause, cancel, add context) if implemented."
+    ]
+  },
+  "step_id": "generate_runner_integration_tests",
+  "task_id": "208966bf-05c2-47fc-a8b3-06604dde16ad",
+  "subtask_id": "37ef4aae-193a-41ba-95cb-1a08a32570f1"
+}

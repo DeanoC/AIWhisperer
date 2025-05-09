@@ -8,6 +8,7 @@ from src.ai_whisperer.orchestrator import Orchestrator
 from src.ai_whisperer.state_management import StateManager
 from src.ai_whisperer.execution_engine import ExecutionEngine, TaskExecutionError
 from src.ai_whisperer.exceptions import OrchestratorError
+from src.ai_whisperer.monitoring import TerminalMonitor # Import TerminalMonitor
 
 
 @pytest.fixture
@@ -316,8 +317,10 @@ class TestRunnerStateIntegration:
         
         # Create a real StateManager and ExecutionEngine
         state_manager = StateManager(state_file_path)
-        execution_engine = ExecutionEngine(state_manager)
-        
+        # Create a mock monitor for the ExecutionEngine
+        mock_monitor = MagicMock(spec=TerminalMonitor)
+        execution_engine = ExecutionEngine(state_manager, monitor=mock_monitor)
+
         # Initialize the state with plan data
         state_manager.initialize_state(sample_plan_data)
 

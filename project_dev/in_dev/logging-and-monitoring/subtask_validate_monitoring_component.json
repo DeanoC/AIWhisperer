@@ -1,0 +1,25 @@
+{
+  "description": "Run unit tests for the monitoring component.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "validation",
+    "input_artifacts": [
+      "src/ai_whisperer/monitoring.py",
+      "tests/unit/test_monitoring.py"
+    ],
+    "output_artifacts": [],
+    "instructions": [
+      "Execute the unit tests specifically for the monitoring component located at `tests/unit/test_monitoring.py`.",
+      "Use a standard Python test runner (like pytest) to run the tests.",
+      "Capture the output of the test execution, including any failures or errors.",
+      "Report the test results, indicating whether all tests passed or if any failed."
+    ],
+    "constraints": [],
+    "validation_criteria": [
+      "All tests in tests/unit/test_monitoring.py pass."
+    ]
+  },
+  "step_id": "validate_monitoring_component",
+  "task_id": "208966bf-05c2-47fc-a8b3-06604dde16ad",
+  "subtask_id": "b3fab874-9c8b-4413-8ef8-bf9599443861"
+}

@@ -135,6 +135,22 @@ This integration of state management allows the AI Whisperer runner to maintain 
 
 ## Error Handling
 
+## Role of Logging and Monitoring in Internal Processes
+
+Logging and monitoring are integral to understanding and debugging the internal processes of the AIWhisperer system. As the Orchestrator, Subtask Generator, Execution Engine, and other components perform their functions, detailed logs are generated. These logs capture:
+
+*   Interactions with AI services.
+*   File system operations.
+*   Execution of terminal commands.
+*   State changes within the system.
+*   User interactions with the runner.
+
+This comprehensive audit trail, coupled with the real-time terminal monitoring view, provides developers with the necessary insights to trace execution flows, diagnose issues, and verify that internal processes are operating as expected.
+
+For a complete guide to these features, please consult the [Logging and Monitoring Documentation](./logging_monitoring.md).
+
+## Error Handling
+
 The system includes comprehensive error handling for various scenarios:
 
 - Configuration errors

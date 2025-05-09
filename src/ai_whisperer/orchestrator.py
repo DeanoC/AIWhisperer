@@ -10,6 +10,8 @@ import copy # Import the copy module
 
 from .state_management import StateManager # Import StateManager
 from .execution_engine import ExecutionEngine # Import ExecutionEngine
+from .logging import setup_logging, get_logger, LogMessage, LogLevel, ComponentType, log_event # Import logging components
+from .monitoring import TerminalMonitor # Import TerminalMonitor
 from . import openrouter_api
 from .utils import build_ascii_directory_tree, calculate_sha256
 from .exceptions import (
@@ -69,13 +71,21 @@ class Orchestrator:
         self.output_dir = output_dir
         # prompt_override_path is no longer used
 
+        # Setup logging based on config (if available) or basic
+        logging_config_path = self.config.get('logging', {}).get('config_path')
+        setup_logging(logging_config_path)
+        logger.info("Logging configured.")
+
+
         # Check if openrouter configuration is present
         if "openrouter" not in config:
+            logger.error("'openrouter' configuration section is missing.")
             raise ConfigError("'openrouter' configuration section is missing.")
 
         # Get the model configuration for the "Orchestrator" task from the loaded config
         model_config = self.config.get('task_model_configs', {}).get('orchestrator')
         if not model_config:
+             logger.error("Model configuration for 'orchestrator' task is missing in the loaded config.")
              raise ConfigError("Model configuration for 'orchestrator' task is missing in the loaded config.")
 
         logger.info(
@@ -624,58 +634,127 @@ class Orchestrator:
     def run_plan(self, plan_data: Dict[str, Any], state_file_path: str):
         """
         Runs the generated plan using the Execution Engine and manages state.
+        Integrates monitoring for real-time feedback.
 
         Args:
             plan_data: The plan data dictionary containing a list of task definitions.
             state_file_path: The path to the state file.
         """
-        logger.info("Starting plan execution")
+        plan_id = plan_data.get("task_id", "unknown_plan")
+        logger.info(f"Starting plan execution for plan: {plan_id}")
+        log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_started", f"Starting execution of plan: {plan_id}"))
+
 
         # Ensure the directory for the state file exists
         state_dir = os.path.dirname(state_file_path)
         if state_dir: # Only create if state_file_path includes a directory
             os.makedirs(state_dir, exist_ok=True)
 
-        # 1. Instantiate StateManager and ExecutionEngine
+        # 1. Instantiate StateManager and TerminalMonitor
         state_manager = StateManager(state_file_path)
-        execution_engine = ExecutionEngine(state_manager)
+        monitor = TerminalMonitor(state_manager) # Initialize TerminalMonitor
 
         # 2. Load the state
         try:
             state_manager.load_state()
-            logger.info(f"Loaded state from {state_file_path}")
+            logger.info(f"Loaded state from {state_file_path}.")
+            log_event(LogMessage(LogLevel.INFO, ComponentType.STATE_MANAGEMENT, "state_loaded", f"State loaded successfully from {state_file_path}."))
         except FileNotFoundError:
             logger.info(f"State file not found at {state_file_path}. Starting with empty state.")
+            log_event(LogMessage(LogLevel.WARNING, ComponentType.STATE_MANAGEMENT, "state_not_found", f"State file not found at {state_file_path}. Starting with empty state."))
             try:
                 state_manager.initialize_state(plan_data) # Initialize state if file not found
+                log_event(LogMessage(LogLevel.INFO, ComponentType.STATE_MANAGEMENT, "state_initialized", "State initialized."))
             except IOError as e:
-                logger.error(f"Failed to save state during initialization to {state_file_path}: {e}")
-                raise OrchestratorError(f"Failed to save state during initialization: {e}") from e
+                error_message = f"Failed to save state during initialization to {state_file_path}: {e}"
+                logger.error(error_message)
+                log_event(LogMessage(LogLevel.CRITICAL, ComponentType.STATE_MANAGEMENT, "state_init_save_failed", error_message, details={"error": str(e)}))
+                raise OrchestratorError(error_message) from e
             except Exception as e:
                 # Catch any other unexpected exceptions during initialization
-                logger.error(f"An unexpected error occurred during state initialization: {e}")
-                raise OrchestratorError(f"An unexpected error occurred during state initialization: {e}") from e
+                error_message = f"An unexpected error occurred during state initialization: {e}"
+                logger.exception(error_message)
+                log_event(LogMessage(LogLevel.CRITICAL, ComponentType.STATE_MANAGEMENT, "state_init_failed_unexpected", error_message, details={"error": str(e), "traceback": traceback.format_exc()}))
+                raise OrchestratorError(error_message) from e
         except Exception as e:
-            logger.error(f"Error loading state from {state_file_path}: {e}")
+            error_message = f"Error loading state from {state_file_path}: {e}"
+            logger.error(error_message)
+            log_event(LogMessage(LogLevel.CRITICAL, ComponentType.STATE_MANAGEMENT, "state_load_failed_unexpected", error_message, details={"error": str(e), "traceback": traceback.format_exc()}))
             # Depending on requirements, you might want to raise an exception or continue with empty state
-            raise OrchestratorError(f"Failed to load state: {e}") from e
+            raise OrchestratorError(error_message) from e
 
-        # 3. Iterate through the plan's tasks and execute them
+        # 3. Instantiate ExecutionEngine and run the plan
+        logger.info("Initializing Execution Engine.")
+        execution_engine = ExecutionEngine(state_manager, monitor) # Pass state_manager and monitor
+
+        # Start the monitor display (this should ideally run in a separate thread/process)
+        # For this example, we'll just update it manually or rely on the ExecutionEngine
+        # to call monitor methods.
+        # monitor.run() # This would block the main thread
+
         if "plan" in plan_data and isinstance(plan_data["plan"], list):
             tasks = plan_data["plan"]
             logger.info(f"Executing {len(tasks)} tasks")
-            execution_engine.execute_plan(plan_data) # Pass the entire plan_data to execution engine
+            state_manager.update_global_state("plan_status", "running")
+            state_manager.save_state()
+            monitor.set_plan_name(plan_id)
+            monitor.set_runner_status_info(f"Executing plan: {plan_id}")
+            # The ExecutionEngine will handle task-level logging and monitoring updates
+
+            try:
+                execution_engine.execute_plan(plan_data) # Pass the entire plan_data to execution engine
+
+                # Determine final plan status
+                all_tasks = state_manager.state.get("tasks", {})
+                if all(task.get("status") == "completed" for task in all_tasks.values()):
+                    final_status = "completed"
+                    log_level = LogLevel.INFO
+                    log_message_text = f"Plan execution finished successfully for plan: {plan_id}"
+                elif any(task.get("status") == "failed" for task in all_tasks.values()):
+                    final_status = "failed"
+                    log_level = LogLevel.ERROR
+                    log_message_text = f"Plan execution finished with failures for plan: {plan_id}"
+                else:
+                    final_status = "completed_with_skipped" # Or another appropriate status
+                    log_level = LogLevel.WARNING
+                    log_message_text = f"Plan execution finished with skipped tasks for plan: {plan_id}"
+
+                state_manager.update_global_state("plan_status", final_status)
+                monitor.set_runner_status_info(log_message_text)
+                log_event(LogMessage(log_level, ComponentType.RUNNER, "plan_execution_finished", log_message_text))
+
+
+            except Exception as e:
+                # Catch any unexpected errors during plan execution
+                error_message_text = f"An unexpected error occurred during plan execution for plan {plan_id}: {str(e)}"
+                logger.exception(error_message_text)
+                state_manager.update_global_state("plan_status", "failed")
+                monitor.set_runner_status_info(f"Plan execution failed: {plan_id}")
+                log_event(LogMessage(LogLevel.CRITICAL, ComponentType.RUNNER, "plan_execution_failed_unexpected", error_message_text, details={"error": str(e), "traceback": traceback.format_exc()}))
+                raise OrchestratorError(error_message_text) from e
+
+
         else:
             logger.warning("No tasks found in the plan to execute.")
+            log_event(LogMessage(LogLevel.WARNING, ComponentType.RUNNER, "no_tasks_to_execute", "No tasks found in the plan to execute."))
+            state_manager.update_global_state("plan_status", "completed_no_tasks")
+            monitor.set_runner_status_info(f"Plan execution finished: No tasks to execute for plan: {plan_id}")
+            log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_finished", f"Plan execution finished: No tasks to execute for plan: {plan_id}"))
+
+
+        logger.info("Plan execution finished.")
 
         # 4. Save the final state
         try:
             state_manager.save_state()
             logger.info(f"Saved final state to {state_file_path}")
+            log_event(LogMessage(LogLevel.INFO, ComponentType.STATE_MANAGEMENT, "state_saved", f"Saved final state to {state_file_path}."))
         except Exception as e:
-            logger.error(f"Failed to save state to {state_file_path}: {e}")
+            error_message = f"Failed to save state to {state_file_path}: {e}"
+            logger.error(error_message)
+            log_event(LogMessage(LogLevel.ERROR, ComponentType.STATE_MANAGEMENT, "state_save_failed", error_message, details={"error": str(e)}))
             # Handle save error - maybe log and continue, or raise
-            raise OrchestratorError(f"Failed to save state: {e}") from e
+            pass # Continue execution even if state saving fails
 
     def _determine_next_backup_filename(self, original_filepath_str: str) -> Path:
         """Determines the next available filename for backing up the original file.
