@@ -155,6 +155,12 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
 
     This command will take the specified requirements file, process it with an AI model (optionally using a custom prompt and multiple iterations), rename the original file with a `.original` suffix, and save the refined content back to the original filename.
 
+* **`run`**: Executes a project plan from an overview JSON file and manages the state file. See the [Usage Documentation](docs/usage.md) for detailed information.
+
+    ```bash
+    python -m src.ai_whisperer.main run --plan-file <path/to/plan.json> --state-file <path/to/state.json> --config <path/to/config.yaml>
+    ```
+
 The project_dev folder shows how I currently use aiwhisperper to implement features in it self.
 A starting feature request can be generated with any AI chat with a prompt similar to
 the following with context from something like

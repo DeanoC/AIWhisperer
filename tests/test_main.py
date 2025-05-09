@@ -122,7 +122,7 @@ class TestMain:
     def test_main_missing_output_arg(self):
         """Test the main function handles missing output argument."""
         # Set command-line args (missing --output)
-        sys.argv = ['main.py', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE]
+        sys.argv = ['main.py', 'generate', '--requirements', self.REQ_FILE, '--config', self.CONF_FILE]
         
         # Call the function
         with pytest.raises(SystemExit):
@@ -152,8 +152,8 @@ def test_main_generate_subtask_missing_config(monkeypatch, capsys):
 
     # Check for error message printed to stderr
     captured = capsys.readouterr()
-    # Check for the argparse required argument error message
-    assert "the following arguments are required: --requirements, --config" in captured.err
+    # argparse only reports the missing argument for this invocation
+    assert "the following arguments are required: --config" in captured.err
     assert excinfo.value.code == 2
 
 def test_main_generate_subtask_missing_step(monkeypatch, capsys):
@@ -166,8 +166,8 @@ def test_main_generate_subtask_missing_step(monkeypatch, capsys):
 
     # Check for error message printed to stderr
     captured = capsys.readouterr()
-    # Check for the argparse required argument error message
-    assert "the following arguments are required: --requirements" in captured.err
+    # argparse only reports the missing argument for this invocation
+    assert "the following arguments are required: --step" in captured.err
     assert excinfo.value.code == 2
 
 @patch('src.ai_whisperer.main.SubtaskGenerator')
@@ -235,6 +235,4 @@ def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_lo
                 break
         assert output_path_printed, f"Success message with {OUTPUT_PATH} not printed"
         
-        # Check program exited with success code (assert last call was with 0)
-        mock_exit.assert_called()
-        mock_exit.assert_called_with(0)
+        # No sys.exit should be called on success; main() should return normally

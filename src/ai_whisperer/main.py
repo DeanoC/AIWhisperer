@@ -2,6 +2,7 @@ import argparse
 import sys
 import logging
 import yaml
+import json
 from pathlib import Path
 import os # Added for os.path.splitext
 
@@ -23,11 +24,12 @@ from rich.console import Console
 # Get a logger for this module
 logger = logging.getLogger(__name__)
 
-def main():
+def main(args=None):
     """Main entry point for the AI Whisperer CLI application.
 
     Parses command-line arguments, loads configuration, initializes components,
     and performs the requested operation (generate task YAML, list models, generate subtask, or full project plan).
+    Accepts an optional 'args' parameter for testability (list of CLI args, or None to use sys.argv).
     """
     # Setup logging and rich console output first
     setup_logging()
@@ -43,12 +45,19 @@ def main():
     # Create subparsers for different commands
     subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
 
+    parser.add_argument(
+        "--project-dir",
+        type=str,
+        default=None,
+        help="Path to the project directory (overrides auto-detection)."
+    )
+
     # --- Task Generation Command ---
     generate_parser = subparsers.add_parser("generate", help="Generate task YAML or full project plan")
     generate_parser.add_argument(
         "--requirements",
-        required=True,
-        help="Path to the requirements Markdown file. Required for task YAML generation."
+        required=False,  # Changed from True to False
+        help="Path to the requirements Markdown file. Required for task YAML generation and full project generation."
     )
     generate_parser.add_argument(
         "--config",
@@ -75,7 +84,6 @@ def main():
         action="store_true",
         help="Generate a complete project plan with task YAML and all subtasks."
     )
-
     # --- List Models Command ---
     list_models_parser = subparsers.add_parser("list-models", help="List available OpenRouter models")
     list_models_parser.add_argument(
@@ -118,19 +126,48 @@ def main():
         help="Path to output directory or file."
     )
 
-    # Use parse_known_args to avoid conflicts with pytest arguments during testing
-    args = parser.parse_args()
-    unknown = [] # No unknown arguments expected when not under pytest
-    logger.debug("Using parse_args.")
+    # --- Run Command ---
+    run_parser = subparsers.add_parser("run", help="Execute a project plan from an overview JSON file.")
+    run_parser.add_argument(
+        "--plan-file",
+        required=True,
+        help="Path to the input overview JSON file containing the task plan."
+    )
+    run_parser.add_argument(
+        "--state-file",
+        required=True,
+        help="Path to the state file. Used for loading previous state and saving current state."
+    )
+    run_parser.add_argument(
+        "--config",
+        required=True,
+        help="Path to the configuration YAML file. Required for orchestrator and AI interactions."
+    )
 
+
+    # Use parse_args (let argparse handle errors and exit codes)
+    if args is not None:
+        args = parser.parse_args(args)
+    else:
+        args = parser.parse_args()
+    logger.debug("Using parse_args.")
     logger.debug(f"Parsed arguments: {args}")
-    logger.debug(f"Unknown arguments: {unknown}")
     logger.debug(f"Command: {args.command}")
 
-    # If no command is provided (which shouldn't happen with required=True, but as a safeguard)
-    if args.command is None:
-        parser.print_help()
-        sys.exit(2)
+
+    # Guard: For test/patching edge cases, ensure required arguments for 'run' are present before command handling
+    if args.command == "run":
+        # Only check if any required argument is None (should not happen in normal argparse usage)
+        if not getattr(args, "plan_file", None) or not getattr(args, "state_file", None) or not getattr(args, "config", None):
+            print("the following arguments are required: --plan-file, --state-file, --config", file=sys.stderr)
+            raise SystemExit(2)
+
+    # Determine project directory
+    if args.project_dir:
+        project_dir = Path(args.project_dir).resolve()
+    else:
+        # Fallback to previous logic or default
+        project_dir = Path(__file__).parent.parent.parent.resolve()
 
     # --- Handle Commands ---
     if args.command == "list-models":
@@ -151,7 +188,7 @@ def main():
             if args.output_csv:
                 # Output to CSV
                 csv_filepath = Path(args.output_csv)
-                csv_filepath.parent.mkdir(parents=True, exist_ok=True) # Ensure directory exists
+                csv_filepath.parent.mkdir(parents=True, exist_ok=True)
                 
                 import csv # Import csv module here
 
@@ -199,56 +236,100 @@ def main():
             print(f"An unexpected error occurred while listing models: {e}", file=sys.stderr)
             raise SystemExit(1)
 
-    # --- Handle Subtask Generation ---
-    elif getattr(args, 'generate_subtask', False):
+    # --- Handle Generate Command ---
+    elif args.command == "generate":
         try:
-            # Check required arguments
-            if not args.config:
-                print("Error: --config argument is required when using --generate-subtask.", file=sys.stderr)
-                raise SystemExit(1)
-            if not args.step:
-                print("Error: --step argument is required when using --generate-subtask.", file=sys.stderr)
-                raise SystemExit(1)
-
             # Load configuration
             console.print(f"Loading configuration from: {args.config}")
             config = load_config(args.config)
-            logger.debug("Configuration loaded successfully for subtask generation.")
+            logger.debug("Configuration loaded successfully.")
 
-            # Load the input step file
-            step_path = Path(args.step)
-            console.print(f"Loading step definition from: {step_path}")
+            # Handle Subtask Generation
+            if args.generate_subtask:
+                # Check required arguments
+                if not args.step:
+                    # Let argparse handle required argument errors
+                    parser.error("the following arguments are required: --step")
+
+                # Load the input step file
+                step_path = Path(args.step)
+                console.print(f"Loading step definition from: {step_path}")
+                
+                try:
+                    with open(step_path, 'r', encoding='utf-8') as f:
+                        step_data = yaml.safe_load(f)
+                        if not isinstance(step_data, dict):
+                            raise ValueError("Step definition must be a YAML dictionary/object")
+                except FileNotFoundError:
+                    console.print(f"[bold red]Error:[/bold red] Step file not found: {step_path}")
+                    raise SystemExit(1)
+                except (yaml.YAMLError, ValueError) as e:
+                    console.print(f"[bold red]Error:[/bold red] Invalid step YAML: {e}")
+                    raise SystemExit(1)
+
+                # Initialize subtask generator
+                console.print("Initializing subtask generator...")
+                subtask_generator = SubtaskGenerator(args.config, args.output)
+                logger.info("Subtask generator initialized.")
+
+                # Generate subtask
+                console.print(f"Generating detailed subtask from step: {step_data.get('step_id', 'unknown')}")
+                output_path = subtask_generator.generate_subtask(step_data)
+
+                # Success
+                console.print(f"[green]Successfully generated subtask YAML: {output_path}[/green]")
+                return # Success, let main() return normally
             
-            try:
-                with open(step_path, 'r', encoding='utf-8') as f:
-                    step_data = yaml.safe_load(f)
-                    if not isinstance(step_data, dict):
-                        raise ValueError("Step definition must be a YAML dictionary/object")
-            except FileNotFoundError:
-                console.print(f"[bold red]Error:[/bold red] Step file not found: {step_path}")
-                raise SystemExit(1)
-            except (yaml.YAMLError, ValueError) as e:
-                console.print(f"[bold red]Error:[/bold red] Invalid step YAML: {e}")
-                raise SystemExit(1)
+            # Handle Full Project Plan Generation
+            elif args.full_project:
+                # Check for required arguments for full project generation
+                if not args.requirements:
+                    parser.error("the following arguments are required: --requirements")
 
-            # Initialize subtask generator
-            console.print("Initializing subtask generator...")
-            subtask_generator = SubtaskGenerator(args.config, args.output)
-            logger.info("Subtask generator initialized.")
+                logger.info("Starting AI Whisperer full project generation...")
+                # config is already loaded above
+                logger.debug("Configuration loaded successfully.")
 
-            # Generate subtask
-            console.print(f"Generating detailed subtask from step: {step_data.get('step_id', 'unknown')}")
-            output_path = subtask_generator.generate_subtask(step_data)
+                # Create the Orchestrator with the right output directory
+                orchestrator = Orchestrator(config, args.output)
 
-            # Success
-            console.print(f"[green]Successfully generated subtask YAML: {output_path}[/green]")
-            sys.exit(0)
-            return # Ensure exit in test environments
+                # Generate full project plan (main YAML + subtasks)
+                result = orchestrator.generate_full_project_plan(args.requirements, args.config)
+                logger.info(f"Generated task plan: {result['task_plan']}")
+                logger.info(f"Generated {len(result['subtasks'])} subtasks")
 
+                # Report success
+                console.print(f"[green]Successfully generated project plan:[/green]")
+                console.print(f"- Task plan: {result['task_plan']}")
+                if result['task_plan'] != result['overview_plan']:
+                    console.print(f"- Overview plan: {result['overview_plan']}")
+
+                console.print(f"- Subtasks generated: {len(result['subtasks'])}")
+                for i, subtask_path in enumerate(result['subtasks'], 1):
+                    console.print(f"  {i}. {subtask_path}")
+                
+                return # Success, let main() return normally
+            
+            # Default: generate initial task YAML
+            else:
+                # Check for required arguments
+                if not args.requirements:
+                    parser.error("the following arguments are required: --requirements")
+                
+                orchestrator = Orchestrator(config, args.output)
+                console.print(f"Generating initial task plan from: {args.requirements}")
+                # Generate only the main task plan YAML
+                result = orchestrator.generate_initial_json(args.requirements, args.config)
+                logger.info(f"Generated task YAML: {result}")
+                # Use the returned path in the success message
+                console.print(f"[green]Successfully generated task JSON: {result}[/green]")
+                return # Success, let main() return normally
+                
         except ConfigError as e:
             logger.error(f"Configuration error: {e}", exc_info=False)
+            logger.debug(f"Configuration error details:", exc_info=True)
             console.print(f"[bold red]Configuration Error:[/bold red] {e}")
-            sys.exit(1)
+            raise SystemExit(1)
         except SubtaskGenerationError as e:
             logger.error(f"Subtask generation error: {e}", exc_info=False)
             console.print(f"[bold red]Subtask Generation Error:[/bold red] {e}")
@@ -257,94 +338,102 @@ def main():
             logger.error(f"Schema validation error: {e}", exc_info=False)
             console.print(f"[bold red]Schema Validation Error:[/bold red] {e}")
             sys.exit(1)
+        except AIWhispererError as e:
+            logger.error(f"Application error: {e}", exc_info=False)
+            logger.debug(f"Application error details:", exc_info=True)
+            console.print(f"[bold red]Error:[/bold red] {e}")
+            sys.exit(1)
         except Exception as e:
-            logger.critical(f"An unexpected error occurred during subtask generation: {e}", exc_info=True)
+            # Catch any other unexpected errors
+            logger.critical(f"An unexpected error occurred: {e}", exc_info=True)
             console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
             sys.exit(1)
 
-    # --- Handle Full Project Plan Generation ---
-    elif getattr(args, 'full_project', False):
-        try:
-            # Check for required arguments for full project generation
-            if not args.requirements or not args.config:
-                print("Error: --requirements and --config are required for full project generation.", file=sys.stderr)
-                raise SystemExit(1)
+    # --- Handle Run Command ---
 
-            logger.info("Starting AI Whisperer full project generation...")
+    elif args.command == "run":
+        # Guard: Let argparse handle required arguments, but double-check for None (for test/patching edge cases)
+        if not getattr(args, "plan_file", None) or not getattr(args, "state_file", None) or not getattr(args, "config", None):
+            parser.error("the following arguments are required: --plan-file, --state-file, --config")
+        try:
+            logger.info("Starting AI Whisperer run process...")
             console.print(f"Loading configuration from: {args.config}")
             config = load_config(args.config)
             logger.debug("Configuration loaded successfully.")
 
-            # Create the Orchestrator with the right output directory
-            orchestrator = Orchestrator(config, args.output)
+            # Load the plan overview JSON
+            plan_file_path = Path(args.plan_file)
+            console.print(f"Loading plan from: {plan_file_path}")
+            try:
+                with open(plan_file_path, 'r', encoding='utf-8') as f:
+                    plan_data = json.load(f)
 
+                if not isinstance(plan_data, dict):
+                    console.print(f"[bold red]Error:[/bold red] Plan file content must be a JSON object.")
+                    sys.exit(1)
+                    return # Ensure exit after sys.exit(1)
 
-            # Generate full project plan (main YAML + subtasks)
-            result = orchestrator.generate_full_project_plan(args.requirements, args.config)
-            logger.info(f"Generated task plan: {result['task_plan']}")
-            logger.info(f"Generated {len(result['subtasks'])} subtasks")
+                # Create the Orchestrator
+                orchestrator = Orchestrator(config, output_dir=".")
 
-            # Report success
-            console.print(f"[green]Successfully generated project plan:[/green]")
-            console.print(f"- Task plan: {result['task_plan']}")
-            if result['task_plan'] != result['overview_plan']:
-                console.print(f"- Overview plan: {result['overview_plan']}")
+                # Run the plan
+                orchestrator.run_plan(plan_data=plan_data, state_file_path=args.state_file)
 
-            console.print(f"- Subtasks generated: {len(result['subtasks'])}")
-            for i, subtask_path in enumerate(result['subtasks'], 1):
-                console.print(f"  {i}. {subtask_path}")
-            
-            sys.exit(0)
-            return # Ensure exit in test environments
-        except ConfigError as e:
-            logger.error(f"Configuration error: {e}", exc_info=False)
-            console.print(f"[bold red]Configuration Error:[/bold red] {e}")
-            raise SystemExit(1)
-        except AIWhispererError as e:
-            logger.error(f"Application error: {e}", exc_info=False)
-            console.print(f"[bold red]Error:[/bold red] {e}")
-            raise SystemExit(1)
+                console.print("[green]Plan execution completed successfully.[/green]")
+                return 0 # Success, return 0 for testability
+
+            except FileNotFoundError:
+                logger.error(f"Plan file not found: {plan_file_path}", exc_info=False)
+                console.print(f"[bold red]Error:[/bold red] Plan file not found: {plan_file_path}")
+                sys.exit(1)
+                return
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in plan file {plan_file_path}: {e}", exc_info=False)
+                console.print(f"[bold red]Error:[/bold red] Invalid JSON in plan file {plan_file_path}: {e}")
+                sys.exit(1)
+                return
+            except ConfigError as e:
+                logger.error(f"Configuration error: {e}", exc_info=False)
+                console.print(f"[bold red]Configuration Error:[/bold red] {e}")
+                sys.exit(1)
+                return
+            except AIWhispererError as e:
+                logger.error(f"Application error: {e}", exc_info=False)
+                console.print(f"[bold red]Error:[/bold red] {e}")
+                sys.exit(1)
+                return
+            # Remove the broad Exception catch here, as specific errors are handled above.
+            # Any other exceptions during file loading/parsing will propagate to the outer handler.
+
         except Exception as e:
-            logger.critical(f"An unexpected error occurred during project generation: {e}", exc_info=True)
+            logger.critical(f"An unexpected error occurred during 'run' command: {e}", exc_info=True)
             console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
-            raise SystemExit(1)
-
-    # --- Handle Main Task YAML Generation and Refine Command ---
-    # Only proceed to main logic if no special flags were active
-    else:
-        # Explicitly check if any special flags are active and return if so
-        if getattr(args, 'list_models', False) or getattr(args, 'generate_subtask', False) or getattr(args, 'full_project', False):
+            sys.exit(1)
             return
 
+
+    # --- Handle Refine Command ---
+    elif args.command == "refine":
         try:
             logger.info("Starting AI Whisperer process...")
             console.print(f"Loading configuration from: {args.config}")
             config = load_config(args.config)
             logger.debug("Configuration loaded successfully.")
 
-            if args.command == "refine":
-                # Handle the refine command
-                orchestrator = Orchestrator(config, args.output)
-                input_file = args.input_file
-                iterations = args.iterations
-                for i in range(iterations):
-                    console.print(f"[yellow]Refinement iteration {i+1} of {iterations}...[/yellow]")
-                    result = orchestrator.refine_requirements(
-                        input_filepath_str=input_file,
-                    )
-                    # Update input_file with the result for the next iteration
-                    input_file = result
-                    
-                console.print(f"[green]Successfully refined requirements: {result}[/green]")
-            else:
-                # Default: generate command
-                orchestrator = Orchestrator(config, args.output)
-                console.print(f"Generating initial task plan from: {args.requirements}")
-                # Generate only the main task plan YAML
-                result = orchestrator.generate_initial_json(args.requirements, args.config)
-                logger.info(f"Generated task YAML: {result}")
-                # Use the returned path in the success message
-                console.print(f"[green]Successfully generated task JSON: {result}[/green]")
+            # Handle the refine command
+            orchestrator = Orchestrator(config, args.output)
+            input_file = args.input_file
+            iterations = args.iterations
+            for i in range(iterations):
+                console.print(f"[yellow]Refinement iteration {i+1} of {iterations}...[/yellow]")
+                result = orchestrator.refine_requirements(
+                    input_filepath_str=input_file,
+                )
+                # Update input_file with the result for the next iteration
+                input_file = result
+                
+            console.print(f"[green]Successfully refined requirements: {result}[/green]")
+            return # Success, let main() return normally
         except ConfigError as e:
             logger.error(f"Configuration error: {e}", exc_info=False)
             logger.debug(f"Configuration error details:", exc_info=True)
@@ -354,12 +443,19 @@ def main():
             logger.error(f"Application error: {e}", exc_info=False)
             logger.debug(f"Application error details:", exc_info=True)
             console.print(f"[bold red]Error:[/bold red] {e}")
-            raise SystemExit(1)
+            sys.exit(1)
         except Exception as e:
             # Catch any other unexpected errors
             logger.critical(f"An unexpected error occurred: {e}", exc_info=True)
             console.print(f"[bold red]Unexpected Error:[/bold red] An unexpected error occurred. Please check logs for details.")
-            raise SystemExit(1)
+            sys.exit(1)
+    
+    # --- Handle Unknown Command ---
+    else:
+        # This else should ideally not be reached if required=True is set for subparsers,
+        # but as a fallback or for unexpected scenarios, we can print usage or an error.
+        parser.print_help()
+        sys.exit(1) # Exit with error code
 
 if __name__ == "__main__":
     main()

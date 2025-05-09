@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from pathlib import Path
 
 from .exceptions import ConfigError
@@ -47,13 +47,14 @@ def get_model_for_task(config: Dict[str, Any], task_name: str) -> Dict[str, Any]
     # If no task-specific configuration is found, return the default openrouter config
     return config.get('openrouter', {})
 
-def get_prompt_for_task(config: Dict[str, Any], task_name: str) -> tuple[str, Path]:
+def get_prompt_for_task(config: Dict[str, Any], task_name: str, project_dir: Optional[Path] = None) -> tuple[str, Path]:
     """
     Get the prompt for a specific task.
 
     Args:
         config: The loaded application configuration.
         task_name: The name of the task.
+        project_dir: Optional project directory to resolve prompt paths.
 
     Returns:
         The prompt string for the task, or the default prompt if no task-specific prompt is found.
@@ -77,7 +78,7 @@ def get_prompt_for_task(config: Dict[str, Any], task_name: str) -> tuple[str, Pa
             logger.debug(f"Prompt file not found at configured path: {prompt_path}")
 
     # Try to load default prompt from file
-    default_prompt_path = Path(__file__).parent / 'prompts' / f'{task_name}_default.md'
+    default_prompt_path = (project_dir or Path(__file__).parent) / 'prompts' / f'{task_name}_default.md'
     logger.debug(f"Checking for default prompt file at: {default_prompt_path}")
     if default_prompt_path.exists():
         logger.debug(f"Default prompt file found at {default_prompt_path}. Reading content.")

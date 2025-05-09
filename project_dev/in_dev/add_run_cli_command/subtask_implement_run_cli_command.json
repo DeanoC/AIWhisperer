@@ -1,0 +1,54 @@
+{
+  "description": "Implement the 'run' CLI command in src/ai_whisperer/main.py based on the plan and tests.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "file_edit",
+    "input_artifacts": [
+      "src/ai_whisperer/main.py",
+      "src/ai_whisperer/orchestrator.py",
+      "src/ai_whisperer/state_management.py",
+      "project_dev/in_dev/add_run_cli_command/run_cli_command_plan.md",
+      "tests/unit/test_main_run_command.py"
+    ],
+    "output_artifacts": [
+      "src/ai_whisperer/main.py"
+    ],
+    "instructions": [
+      "Open the file `src/ai_whisperer/main.py`.",
+      "Identify the existing CLI structure (likely using `click`).",
+      "Add a new command named `run` to the main CLI group.",
+      "Define two arguments for the `run` command:",
+      "- `overview_file`: A required argument representing the path to the plan overview JSON file.",
+      "- `state_file`: A required argument representing the path to the file where the state should be loaded from and saved to.",
+      "Inside the `run` command function:",
+      "- Import necessary modules: `json`, `os`, `src.ai_whisperer.orchestrator`, `src.ai_whisperer.state_management`, and potentially `click` for error handling.",
+      "- Implement logic to load the plan overview JSON from `overview_file`. Handle potential `FileNotFoundError` or `json.JSONDecodeError`.",
+      "- Implement logic to load the current state from `state_file` using `state_management.load_state`. Handle `FileNotFoundError` by initializing a new state if the file doesn't exist.",
+      "- Call the orchestrator function (e.g., `orchestrator.run_plan`) with the loaded plan and state.",
+      "- Implement logic to save the updated state to `state_file` using `state_management.save_state`. Handle potential `IOError`.",
+      "- Include basic error handling for the orchestrator call, printing informative messages to the user.",
+      "- Ensure the function signature and argument handling align with the expected usage and the tests in `tests/unit/test_main_run_command.py`.",
+      "Review the implemented code to ensure it adheres to existing code style and integrates correctly with the orchestrator and state management modules via their public interfaces.",
+      "Verify the changes by ensuring the unit tests in `tests/unit/test_main_run_command.py` pass after the implementation."
+    ],
+    "constraints": [
+      "Do not modify the existing orchestrator or state management logic.",
+      "Use the existing CLI framework (`click`) if already present.",
+      "Implement robust error handling for file operations and orchestrator interaction.",
+      "Adhere to the existing code style and project structure.",
+      "Ensure the implementation directly addresses the requirements outlined in `project_dev/in_dev/add_run_cli_command/run_cli_command_plan.md`."
+    ],
+    "validation_criteria": [
+      "The file `src/ai_whisperer/main.py` contains a new `run` command.",
+      "The `run` command accepts `overview_file` and `state_file` as arguments.",
+      "The `run` command function correctly loads the plan and state.",
+      "The `run` command function correctly calls the orchestrator.",
+      "The `run` command function correctly saves the final state.",
+      "Basic error handling for file operations and orchestrator calls is present.",
+      "The implementation passes all tests in `tests/unit/test_main_run_command.py`."
+    ]
+  },
+  "step_id": "implement_run_cli_command",
+  "task_id": "721123e6-9b41-4a56-9ed5-130d03f17602",
+  "subtask_id": "016624f3-cca2-48ea-a10e-f222ef3b89c1"
+}

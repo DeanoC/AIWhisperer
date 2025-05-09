@@ -1,0 +1,46 @@
+{
+  "description": "Generate the requirement markdown for adding an AI chat feature to the Python hello world project, on a branch.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [
+      "test/simple_project/python_hello_world_requirements.md"
+    ],
+    "output_artifacts": [
+      "test/simple_project/python_ai_chat_requirements.md"
+    ],
+    "instructions": [
+      "Create a new markdown file named `test/simple_project/python_ai_chat_requirements.md`.",
+      "The content of this file should clearly and concisely describe the requirements for adding an AI chat feature to the existing Python hello world project, as detailed in `test/simple_project/python_hello_world_requirements.md`.",
+      "Explicitly state within the document that the implementation of this new feature must be done on a dedicated Git branch.",
+      "Detail the core functionality of the feature: it should be a simple command-line AI chat program.",
+      "Specify that the program must capture user input.",
+      "Outline the requirement to maintain a history of the conversation (both user input and AI responses).",
+      "Describe the process of sending the current user input, along with the conversation history, to an AI model.",
+      "Mandate that the AI model must be accessed via the OpenRouter service.",
+      "Emphasize that the entire implementation process for this feature must strictly adhere to a Test-first Development (TDD) methodology.",
+      "Include requirements for displaying the AI's response to the user.",
+      "Add a section covering considerations for handling API keys securely.",
+      "Include requirements for handling potential errors during the chat interaction, such as API call failures or invalid input."
+    ],
+    "constraints": [
+      "The output must be ONLY the markdown document content for `test/simple_project/python_ai_chat_requirements.md`.",
+      "Do NOT generate any Python code for the AI chat feature itself.",
+      "The requirements document must explicitly reference the base Python project requirements document (`test/simple_project/python_hello_world_requirements.md`).",
+      "The requirements MUST specify OpenRouter as the required AI service for accessing the AI model."
+    ],
+    "validation_criteria": [
+      "A file named `test/simple_project/python_ai_chat_requirements.md` must be created.",
+      "The content of `test/simple_project/python_ai_chat_requirements.md` must describe the implementation of an AI chat feature.",
+      "The file content must explicitly state that the feature implementation should follow a strict TDD approach.",
+      "The file content must clearly indicate that the feature should be implemented on a new branch.",
+      "The file content must reference the base Python project requirements document (`test/simple_project/python_hello_world_requirements.md`).",
+      "The file content must specify that the AI service used is OpenRouter.",
+      "The file content must include requirements covering user input capture, conversation history management, API calls to OpenRouter, and displaying AI responses."
+    ],
+    "model_preference": null
+  },
+  "step_id": "generate_python_ai_chat_feature_requirements",
+  "task_id": "d311cfeb-a92b-4c89-aa5f-592916bb469b",
+  "subtask_id": "cbce0b1d-c400-419f-82b8-22254c082a61"
+}

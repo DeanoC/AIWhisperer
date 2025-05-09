@@ -64,6 +64,8 @@ The `prompts` section contains paths to prompt templates used by the application
 
 Paths can be absolute or relative to the configuration file's location.
 
+> **Note:** If you use the `--project-dir` CLI argument, all relative paths (including prompt templates) will be resolved relative to the specified project directory.
+
 ### Task-Specific Model Settings
 
 The `task_models` section allows you to specify different models for different tasks in the application.

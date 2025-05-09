@@ -1,0 +1,371 @@
+{
+  "natural_language_goal": "Create requirement markdown files in test/simple_project for simple code projects following TDD, including initial hello world projects and subsequent feature requests.",
+  "overall_context": "Generating test cases for the AI Whisperer runner capability by creating requirement markdown documents that describe small, TDD-based projects and feature enhancements.",
+  "plan": [
+    {
+      "step_id": "create_test_directory",
+      "description": "Ensure the test/simple_project directory exists.",
+      "depends_on": [],
+      "agent_spec": {
+        "type": "file_io",
+        "input_artifacts": [],
+        "output_artifacts": [
+          "test/simple_project"
+        ],
+        "instructions": [
+          "Create the directory 'test/simple_project' if it does not already exist."
+        ],
+        "constraints": [],
+        "validation_criteria": [
+          "Directory 'test/simple_project' exists."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_python_hello_world_requirements",
+      "description": "Generate the requirement markdown for a simple Python 3 hello world project with TDD.",
+      "depends_on": [
+        "create_test_directory"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [],
+        "output_artifacts": [
+          "test/simple_project/python_hello_world_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/python_hello_world_requirements.md.",
+          "The markdown should describe a simple Python 3 'Hello, World!' project.",
+          "It must specify that the project should be created from scratch with a git repo and standard github files (README, etc.).",
+          "Crucially, it must state the project should follow a strict Test-first Development (TDD) methodology.",
+          "The markdown should clearly define the expected output ('Hello, World!')."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the project."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/python_hello_world_requirements.md' exists.",
+          "File content specifies a Python 3 hello world project.",
+          "File content mandates TDD.",
+          "File content mentions git repo and github files.",
+          "File content specifies the output 'Hello, World!'."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_javascript_hello_world_requirements",
+      "description": "Generate the requirement markdown for a simple web JavaScript hello world project with TDD.",
+      "depends_on": [
+        "create_test_directory"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [],
+        "output_artifacts": [
+          "test/simple_project/javascript_hello_world_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/javascript_hello_world_requirements.md.",
+          "The markdown should describe a simple web JavaScript 'Hello, World!' project.",
+          "It should be a basic HTML page that uses JavaScript to display 'Hello, World!' in the browser console or on the page.",
+          "It must specify that the project should be created from scratch with a git repo and standard github files (README, etc.).",
+          "Crucially, it must state the project should follow a strict Test-first Development (TDD) methodology (e.g., using a testing framework like Jest for the JS logic if any, or defining validation steps for the HTML/JS interaction).",
+          "The markdown should clearly define the expected output ('Hello, World!' visible)."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the project."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/javascript_hello_world_requirements.md' exists.",
+          "File content specifies a web JavaScript hello world project.",
+          "File content mandates TDD.",
+          "File content mentions git repo and github files.",
+          "File content specifies the output 'Hello, World!'."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_c_hello_world_requirements",
+      "description": "Generate the requirement markdown for a simple C hello world project with TDD.",
+      "depends_on": [
+        "create_test_directory"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [],
+        "output_artifacts": [
+          "test/simple_project/c_hello_world_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/c_hello_world_requirements.md.",
+          "The markdown should describe a simple C 'Hello, World!' project.",
+          "It must specify that the project should be created from scratch with a git repo and standard github files (README, etc.).",
+          "Crucially, it must state the project should follow a strict Test-first Development (TDD) methodology (e.g., using a testing framework like CUnit or defining clear validation steps for console output).",
+          "The markdown should clearly define the expected output ('Hello, World!' printed to console)."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the project."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/c_hello_world_requirements.md' exists.",
+          "File content specifies a C hello world project.",
+          "File content mandates TDD.",
+          "File content mentions git repo and github files.",
+          "File content specifies the output 'Hello, World!'."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_python_echo_feature_requirements",
+      "description": "Generate the requirement markdown for adding an echo feature to the Python hello world project, on a branch.",
+      "depends_on": [
+        "generate_python_hello_world_requirements"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "test/simple_project/python_hello_world_requirements.md"
+        ],
+        "output_artifacts": [
+          "test/simple_project/python_echo_feature_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/python_echo_feature_requirements.md.",
+          "The markdown should describe a feature request for the Python hello world project described in python_hello_world_requirements.md.",
+          "It should specify that this feature should be implemented on a new branch.",
+          "The feature is to add functionality to take user input and echo it back to the screen.",
+          "It must specify that this feature implementation should follow a strict Test-first Development (TDD) methodology.",
+          "Define clear expected behavior for user input and echoed output."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the feature.",
+          "Reference the base Python project requirement document."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/python_echo_feature_requirements.md' exists.",
+          "File content describes adding user input and echo.",
+          "File content mandates TDD for the feature.",
+          "File content specifies implementing on a branch.",
+          "File content references the base Python project."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_python_text_adventure_feature_requirements",
+      "description": "Generate the requirement markdown for adding a text adventure feature to the Python hello world project, on a branch.",
+      "depends_on": [
+        "generate_python_hello_world_requirements"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "test/simple_project/python_hello_world_requirements.md"
+        ],
+        "output_artifacts": [
+          "test/simple_project/python_text_adventure_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/python_text_adventure_requirements.md.",
+          "The markdown should describe a feature request for the Python hello world project described in python_hello_world_requirements.md.",
+          "It should specify that this feature should be implemented on a new branch.",
+          "The feature is to implement a simple text adventure game, similar to early games like Adventure or Zork.",
+          "It must specify that this feature implementation should follow a strict Test-first Development (TDD) methodology.",
+          "Define core concepts like rooms, items, basic commands (go, look, take, use)."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the feature.",
+          "Reference the base Python project requirement document."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/python_text_adventure_requirements.md' exists.",
+          "File content describes implementing a text adventure.",
+          "File content mandates TDD for the feature.",
+          "File content specifies implementing on a branch.",
+          "File content references the base Python project.",
+          "File content defines basic adventure game mechanics."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_python_ai_chat_feature_requirements",
+      "description": "Generate the requirement markdown for adding an AI chat feature to the Python hello world project, on a branch.",
+      "depends_on": [
+        "generate_python_hello_world_requirements"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "test/simple_project/python_hello_world_requirements.md"
+        ],
+        "output_artifacts": [
+          "test/simple_project/python_ai_chat_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/python_ai_chat_requirements.md.",
+          "The markdown should describe a feature request for the Python hello world project described in python_hello_world_requirements.md.",
+          "It should specify that this feature should be implemented on a new branch.",
+          "The feature is to create a simple AI chat program that sends user input, along with previous conversation history, to an AI model accessed via OpenRouter.",
+          "It must specify that this feature implementation should follow a strict Test-first Development (TDD) methodology.",
+          "Define requirements for capturing user input, maintaining conversation history, making API calls to OpenRouter, and displaying AI responses.",
+          "Mention handling API keys and potential errors."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the feature.",
+          "Reference the base Python project requirement document.",
+          "Specify OpenRouter as the AI service."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/python_ai_chat_requirements.md' exists.",
+          "File content describes implementing an AI chat feature.",
+          "File content mandates TDD for the feature.",
+          "File content specifies implementing on a branch.",
+          "File content references the base Python project.",
+          "File content specifies using OpenRouter.",
+          "File content covers input, history, API calls, and responses."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_js_retro_website_feature_requirements",
+      "description": "Generate the requirement markdown for adding a retro website feature to the JavaScript hello world project, on a branch.",
+      "depends_on": [
+        "generate_javascript_hello_world_requirements"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "test/simple_project/javascript_hello_world_requirements.md"
+        ],
+        "output_artifacts": [
+          "test/simple_project/javascript_retro_website_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/javascript_retro_website_requirements.md.",
+          "The markdown should describe a feature request for the JavaScript hello world project described in javascript_hello_world_requirements.md.",
+          "It should specify that this feature should be implemented on a new branch.",
+          "The feature is to transform the simple page into a static website styled like websites from the retro 1990s era.",
+          "It should include elements like basic buttons, simple icons, and styling typical of that period (e.g., table layouts, blinking text, visitor counters).",
+          "It must specify that this feature implementation should follow a strict Test-first Development (TDD) methodology (e.g., testing button functionality, checking for specific HTML structure or CSS classes).",
+          "Define the required visual elements and styling guidelines."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the feature.",
+          "Reference the base JavaScript project requirement document.",
+          "Specify the 1990s retro style."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/javascript_retro_website_requirements.md' exists.",
+          "File content describes adding retro website styling.",
+          "File content mandates TDD for the feature.",
+          "File content specifies implementing on a branch.",
+          "File content references the base JavaScript project.",
+          "File content details retro styling elements."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_js_3d_globe_feature_requirements",
+      "description": "Generate the requirement markdown for adding a 3D spinning globe feature to the JavaScript hello world project, on a branch.",
+      "depends_on": [
+        "generate_javascript_hello_world_requirements"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "test/simple_project/javascript_hello_world_requirements.md"
+        ],
+        "output_artifacts": [
+          "test/simple_project/javascript_3d_globe_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/javascript_3d_globe_requirements.md.",
+          "The markdown should describe a feature request for the JavaScript hello world project described in javascript_hello_world_requirements.md.",
+          "It should specify that this feature should be implemented on a new branch.",
+          "The feature is to create a modern web app that displays a 3D spinning globe.",
+          "It should utilize a suitable JavaScript library (e.g., Three.js, Cesium, or similar) to render the globe.",
+          "It must specify that this feature implementation should follow a strict Test-first Development (TDD) methodology (e.g., testing library loading, checking for canvas element creation, verifying animation loop setup).",
+          "Define requirements for displaying a rotating 3D globe."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the feature.",
+          "Reference the base JavaScript project requirement document.",
+          "Specify displaying a 3D spinning globe."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/javascript_3d_globe_requirements.md' exists.",
+          "File content describes implementing a 3D spinning globe.",
+          "File content mandates TDD for the feature.",
+          "File content specifies implementing on a branch.",
+          "File content references the base JavaScript project.",
+          "File content mentions using a JS library for 3D rendering."
+        ],
+        "model_preference": null
+      }
+    },
+    {
+      "step_id": "generate_c_zx81_emulator_feature_requirements",
+      "description": "Generate the requirement markdown for adding a Sinclair ZX81 emulator feature to the C hello world project, on a branch.",
+      "depends_on": [
+        "generate_c_hello_world_requirements"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "test/simple_project/c_hello_world_requirements.md"
+        ],
+        "output_artifacts": [
+          "test/simple_project/c_zx81_emulator_requirements.md"
+        ],
+        "instructions": [
+          "Create a markdown file at test/simple_project/c_zx81_emulator_requirements.md.",
+          "The markdown should describe a feature request for the C hello world project described in c_hello_world_requirements.md.",
+          "It should specify that this feature should be implemented on a new branch.",
+          "The feature is to implement a simple emulator for the Sinclair ZX81 computer that can run BASIC programs.",
+          "This is a significant undertaking; the markdown should outline the core components needed (CPU emulation, memory, basic I/O) and specify a phased approach.",
+          "It must specify that this feature implementation should follow a strict Test-first Development (TDD) methodology (e.g., writing tests for individual CPU instructions, memory read/write, simulated keyboard input, simulated screen output).",
+          "Define the scope, focusing on minimal functionality to run simple BASIC.",
+          "Mention the need for detailed planning due to complexity."
+        ],
+        "constraints": [
+          "Output must be ONLY the markdown document.",
+          "Do NOT generate the code for the feature.",
+          "Reference the base C project requirement document.",
+          "Specify building a ZX81 emulator."
+        ],
+        "validation_criteria": [
+          "File 'test/simple_project/c_zx81_emulator_requirements.md' exists.",
+          "File content describes implementing a ZX81 emulator.",
+          "File content mandates TDD for the feature.",
+          "File content specifies implementing on a branch.",
+          "File content references the base C project.",
+          "File content outlines emulator components (CPU, memory, I/O).",
+          "File content mentions running BASIC programs.",
+          "File content indicates the complexity and need for phased approach/detailed planning."
+        ],
+        "model_preference": null
+      }
+    }
+  ],
+  "task_id": "d311cfeb-a92b-4c89-aa5f-592916bb469b",
+  "input_hashes": {
+    "requirements_md": "3c0e8080b95db04e1290a27c3d735f552b9c879ee903a1a76a7a96c225884980",
+    "config_json": "bae825f58be819daf9f14ac791db2453c083be17875e8c8452a9e9a57fd7de3e",
+    "prompt_file": "hash_not_available"
+  }
+}

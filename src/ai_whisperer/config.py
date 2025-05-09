@@ -19,7 +19,7 @@ DEFAULT_OUTPUT_DIR = "./output/"
 # in the 'prompts/' directory and are loaded automatically if not overridden in the config.
 DEFAULT_TASKS = ['orchestrator', 'subtask_generator', 'refine_requirements']
 
-def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, config_dir: Path) -> str:
+def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, config_dir: Path, project_dir: Optional[Path] = None) -> str:
     """Loads prompt content from a given path or its default.
 
     User-specified paths (prompt_path_str) are resolved relative to the config directory.
@@ -39,8 +39,11 @@ def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, 
             raise ConfigError(error_msg)
     else:
         # No specific path given, use the default - relative to the PROJECT ROOT, not config dir
-        # Determine the project root directory (2 levels up from the source file)
-        project_root = Path(__file__).parent.parent.parent
+        # Use provided project_dir if given, else fallback to old logic
+        if project_dir is None:
+            project_root = Path(__file__).parent.parent.parent
+        else:
+            project_root = project_dir
         default_path = project_root / default_path_str
         if default_path.is_file():
             resolved_path = default_path

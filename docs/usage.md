@@ -79,14 +79,39 @@ When you run the `refine` command:
 
 The AI Whisperer runner can execute pre-defined plans specified in a JSON format. This allows for complex, multi-step tasks to be defined and run systematically.
 
-### Providing a JSON Plan
+### The `run` Command
 
-To run a JSON plan, you will use a command that specifies the path to your main JSON plan file. (The exact CLI command for initiating a plan run is TBD and will be updated here once finalized. For now, assume a command like `ai_whisperer run-plan <plan_file_path> --config <config_file_path>`).
+The `run` command is used to execute a project plan from an overview JSON file and manage the state of the execution.
+
+**Command Syntax:**
 
 ```bash
-# Example (conceptual command)
-# ai_whisperer run-plan project_plans/my_complex_task_plan.json --config config.yaml
+ai_whisperer run --plan-file <path_to_plan.json> --state-file <path_to_state.json> --config <path_to_config.yaml>
 ```
+
+**Arguments:**
+
+*   `--plan-file <path_to_plan.json>` (Required): Path to the input overview JSON file containing the task plan. This file defines the sequence of steps and their details.
+*   `--state-file <path_to_state.json>` (Required): Path to the state file. This file is used to load the previous state of a plan execution (if any) and save the current state after each step. This allows for resuming interrupted runs.
+*   `--config <path_to_config.yaml>` (Required): Path to the configuration YAML file. This file contains necessary settings for the orchestrator and any AI interactions required by the plan steps.
+
+**Examples:**
+
+1.  **Running a plan and saving state:**
+
+    ```bash
+    ai_whisperer run --plan-file project_plans/my_feature_plan.json --state-file run_state.json --config config.yaml
+    ```
+
+    This will start executing the plan defined in `my_feature_plan.json`, loading and saving the execution state to `run_state.json` using the configuration in `config.yaml`.
+
+2.  **Resuming a plan execution:**
+
+    ```bash
+    ai_whisperer run --plan-file project_plans/my_feature_plan.json --state-file run_state.json --config config.yaml
+    ```
+
+    If `run_state.json` exists from a previous run, the `run` command will automatically resume execution from where it left off.
 
 ### JSON Plan Structure
 

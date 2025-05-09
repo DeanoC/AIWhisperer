@@ -1,0 +1,152 @@
+{
+  "natural_language_goal": "Create requirement markdown files in test/simple_project for simple code projects following TDD, including initial hello world projects and subsequent feature requests.",
+  "overall_context": "Generating test cases for the AI Whisperer runner capability by creating requirement markdown documents that describe small, TDD-based projects and feature enhancements.",
+  "plan": [
+    {
+      "step_id": "create_test_directory",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_create_test_directory.json",
+      "depends_on": [],
+      "type": "file_io",
+      "input_artifacts": [],
+      "output_artifacts": [
+        "test/simple_project"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_python_hello_world_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_python_hello_world_requirements.json",
+      "depends_on": [
+        "create_test_directory"
+      ],
+      "type": "documentation",
+      "input_artifacts": [],
+      "output_artifacts": [
+        "test/simple_project/python_hello_world_requirements.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_javascript_hello_world_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_javascript_hello_world_requirements.json",
+      "depends_on": [
+        "create_test_directory"
+      ],
+      "type": "documentation",
+      "input_artifacts": [],
+      "output_artifacts": [
+        "test/simple_project/javascript_hello_world_requirements.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_c_hello_world_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_c_hello_world_requirements.json",
+      "depends_on": [
+        "create_test_directory"
+      ],
+      "type": "documentation",
+      "input_artifacts": [],
+      "output_artifacts": [
+        "test/simple_project/c_hello_world_requirements.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_python_echo_feature_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_python_echo_feature_requirements.json",
+      "depends_on": [
+        "generate_python_hello_world_requirements"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "test/simple_project/python_hello_world_requirements.md"
+      ],
+      "output_artifacts": [
+        "test/simple_project/python_echo_feature_requirements.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_python_text_adventure_feature_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_python_text_adventure_feature_requirements.json",
+      "depends_on": [
+        "generate_python_hello_world_requirements"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "test/simple_project/python_hello_world_requirements.md"
+      ],
+      "output_artifacts": [
+        "test/simple_project/python_text_adventure_requirements.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_python_ai_chat_feature_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_python_ai_chat_feature_requirements.json",
+      "depends_on": [
+        "generate_python_hello_world_requirements"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "test/simple_project/python_hello_world_requirements.md"
+      ],
+      "output_artifacts": [
+        "test/simple_project/python_ai_chat_requirements.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_js_retro_website_feature_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_js_retro_website_feature_requirements.json",
+      "depends_on": [
+        "generate_javascript_hello_world_requirements"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "test/simple_project/javascript_hello_world_requirements.md"
+      ],
+      "output_artifacts": [
+        "test/simple_project/javascript_retro_website_requirements.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_js_3d_globe_feature_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_js_3d_globe_feature_requirements.json",
+      "depends_on": [
+        "generate_javascript_hello_world_requirements"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "test/simple_project/javascript_hello_world_requirements.md"
+      ],
+      "output_artifacts": [
+        "test/simple_project/javascript_3d_globe_requirements.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_c_zx81_emulator_feature_requirements",
+      "file_path": "project_dev/in_dev/simple_project_tests/subtask_generate_c_zx81_emulator_feature_requirements.json",
+      "depends_on": [
+        "generate_c_hello_world_requirements"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "test/simple_project/c_hello_world_requirements.md"
+      ],
+      "output_artifacts": [
+        "test/simple_project/c_zx81_emulator_requirements.md"
+      ],
+      "completed": true
+    }
+  ],
+  "task_id": "d311cfeb-a92b-4c89-aa5f-592916bb469b",
+  "input_hashes": {
+    "requirements_md": "3c0e8080b95db04e1290a27c3d735f552b9c879ee903a1a76a7a96c225884980",
+    "config_json": "bae825f58be819daf9f14ac791db2453c083be17875e8c8452a9e9a57fd7de3e",
+    "prompt_file": "hash_not_available"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "description": "Generate the requirement markdown for a simple Python 3 hello world project with TDD.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [],
+    "output_artifacts": [
+      "test/simple_project/python_hello_world_requirements.md"
+    ],
+    "instructions": [
+      "Create a new markdown file located at 'test/simple_project/python_hello_world_requirements.md'.",
+      "The content of this markdown file should serve as a clear and concise requirement document for building a very simple 'Hello, World!' project using Python 3.",
+      "Explicitly state within the document that the project must be initiated from a clean slate, including setting up a new Git repository.",
+      "Include a requirement for standard GitHub repository files such as a README.md, .gitignore, and LICENSE.",
+      "Emphasize the critical requirement that the development process for this project must strictly adhere to Test-first Development (TDD) principles.",
+      "Clearly define the expected final output of the project: the exact string 'Hello, World!' printed to the console."
+    ],
+    "constraints": [
+      "The output must be solely the markdown document.",
+      "Do NOT generate any Python code or test files for the 'Hello, World!' project.",
+      "Ensure the markdown file is placed in the specified path: 'test/simple_project/python_hello_world_requirements.md'."
+    ],
+    "validation_criteria": [
+      "A file named 'python_hello_world_requirements.md' must exist in the 'test/simple_project/' directory.",
+      "The content of 'python_hello_world_requirements.md' must clearly state that the project is a Python 3 'Hello, World!' application.",
+      "The markdown file must explicitly require the use of Test-first Development (TDD).",
+      "The markdown file must mention the need for a new Git repository and standard GitHub files (README, .gitignore, LICENSE).",
+      "The markdown file must specify that the expected output is the exact string 'Hello, World!'."
+    ],
+    "model_preference": null
+  },
+  "step_id": "generate_python_hello_world_requirements",
+  "task_id": "d311cfeb-a92b-4c89-aa5f-592916bb469b",
+  "subtask_id": "814501d8-67dd-4633-bdd9-5d638cfb9dd8"
+}

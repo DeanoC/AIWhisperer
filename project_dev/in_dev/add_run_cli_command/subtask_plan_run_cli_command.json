@@ -1,0 +1,41 @@
+{
+  "description": "Plan the implementation of the 'run' CLI command, including argument parsing, state file handling, and orchestrator interaction.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "planning",
+    "input_artifacts": [
+      "src/ai_whisperer/main.py",
+      "src/ai_whisperer/orchestrator.py",
+      "src/ai_whisperer/state_management.py"
+    ],
+    "output_artifacts": [
+      "project_dev/in_dev/add_run_cli_command/run_cli_command_plan.md"
+    ],
+    "instructions": [
+      "Analyze the existing CLI structure in `src/ai_whisperer/main.py` to understand how new commands are added and arguments are parsed.",
+      "Design the command-line arguments for the new 'run' command. Specifically, define arguments for the path to the input overview JSON file (containing the task plan) and the path for the output state file (where the execution state will be saved). Consider using standard argument parsing libraries like `argparse`.",
+      "Determine the mechanism by which the 'run' command will load and parse the overview JSON plan file provided as an argument. This should involve reading the file content and deserializing the JSON structure into a usable data format.",
+      "Outline the process for initializing or loading the execution state. If an output state file path is provided and the file exists, the command should attempt to load the state from this file using functions from `src/ai_whisperer/state_management.py`. If no state file exists or is specified for loading, a new initial state should be created.",
+      "Specify how the 'run' command will interact with the orchestrator. The plan should detail which function(s) within `src/ai_whisperer/orchestrator.py` will be called to initiate and manage the execution of the loaded plan based on the current state.",
+      "Detail the process for saving the execution state. After the orchestrator runs (either to completion or interruption), the current state should be saved to the specified output state file path using functions from `src/ai_whisperer/state_management.py`. This should include handling cases where the file needs to be created or overwritten.",
+      "Consider potential error handling scenarios. This includes, but is not limited to: handling invalid input overview JSON file paths, invalid output state file paths, errors during JSON parsing, errors during state loading or saving, and exceptions raised by the orchestrator during execution. The plan should outline how these errors will be caught and reported to the user.",
+      "Document the complete plan, including argument definitions, loading/parsing logic, state handling, orchestrator interaction, and error handling considerations, in the file `project_dev/in_dev/add_run_cli_command/run_cli_command_plan.md`."
+    ],
+    "constraints": [
+      "The new command must integrate seamlessly with the existing CLI structure defined in `src/ai_whisperer/main.py`.",
+      "The state handling must utilize the functions provided in `src/ai_whisperer/state_management.py`."
+    ],
+    "validation_criteria": [
+      "The output file `project_dev/in_dev/add_run_cli_command/run_cli_command_plan.md` exists.",
+      "The plan clearly defines the required CLI arguments for the 'run' command (input overview file, output state file) and how they will be parsed.",
+      "The plan details the logic for loading the task plan from the specified input JSON file.",
+      "The plan outlines the process for initializing or loading the execution state from the output state file path using `src/ai_whisperer/state_management.py`.",
+      "The plan specifies how the 'run' command will interact with the orchestrator (`src/ai_whisperer/orchestrator.py`) to execute the loaded plan.",
+      "The plan details how the execution state will be saved to the specified output state file using `src/ai_whisperer/state_management.py`.",
+      "The plan includes considerations for handling common error scenarios, such as invalid file paths, JSON parsing errors, and state management issues."
+    ]
+  },
+  "step_id": "plan_run_cli_command",
+  "task_id": "721123e6-9b41-4a56-9ed5-130d03f17602",
+  "subtask_id": "c4d28a56-30b4-4af1-83ef-598e84243058"
+}

@@ -1,0 +1,93 @@
+{
+  "natural_language_goal": "Add a 'run' CLI command to AIWhisperer to execute a plan from an overview JSON file and manage the state file.",
+  "overall_context": "Integrating plan execution into the CLI interface, ensuring state persistence and proper orchestrator interaction.",
+  "plan": [
+    {
+      "step_id": "plan_run_cli_command",
+      "file_path": "project_dev/in_dev/add_run_cli_command/subtask_plan_run_cli_command.json",
+      "depends_on": [],
+      "type": "planning",
+      "input_artifacts": [
+        "src/ai_whisperer/main.py",
+        "src/ai_whisperer/orchestrator.py",
+        "src/ai_whisperer/state_management.py"
+      ],
+      "output_artifacts": [
+        "project_dev/in_dev/add_run_cli_command/run_cli_command_plan.md"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "generate_run_cli_tests",
+      "file_path": "project_dev/in_dev/add_run_cli_command/subtask_generate_run_cli_tests.json",
+      "depends_on": [
+        "plan_run_cli_command"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "project_dev/in_dev/add_run_cli_command/run_cli_command_plan.md"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_main_run_command.py"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "implement_run_cli_command",
+      "file_path": "project_dev/in_dev/add_run_cli_command/subtask_implement_run_cli_command.json",
+      "depends_on": [
+        "generate_run_cli_tests"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "src/ai_whisperer/main.py",
+        "src/ai_whisperer/orchestrator.py",
+        "src/ai_whisperer/state_management.py",
+        "project_dev/in_dev/add_run_cli_command/run_cli_command_plan.md",
+        "tests/unit/test_main_run_command.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/main.py"
+      ],
+      "completed": true
+    },
+    {
+      "step_id": "validate_run_cli_command",
+      "file_path": "project_dev/in_dev/add_run_cli_command/subtask_validate_run_cli_command.json",
+      "depends_on": [
+        "implement_run_cli_command"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "src/ai_whisperer/main.py",
+        "tests/unit/test_main_run_command.py"
+      ],
+      "output_artifacts": [],
+      "completed": true
+    },
+    {
+      "step_id": "update_run_cli_documentation",
+      "file_path": "project_dev/in_dev/add_run_cli_command/subtask_update_run_cli_documentation.json",
+      "depends_on": [
+        "validate_run_cli_command"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "README.md",
+        "docs/usage.md",
+        "src/ai_whisperer/main.py"
+      ],
+      "output_artifacts": [
+        "README.md",
+        "docs/usage.md"
+      ],
+      "completed": true
+    }
+  ],
+  "task_id": "721123e6-9b41-4a56-9ed5-130d03f17602",
+  "input_hashes": {
+    "requirements_md": "b73542c577821418d421588f66c25f1469e41c2d74c470d7cbb3595da5e957dd",
+    "config_json": "bae825f58be819daf9f14ac791db2453c083be17875e8c8452a9e9a57fd7de3e",
+    "prompt_file": "hash_not_available"
+  }
+}

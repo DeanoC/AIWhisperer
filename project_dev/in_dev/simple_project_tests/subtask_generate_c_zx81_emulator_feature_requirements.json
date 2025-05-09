@@ -1,0 +1,43 @@
+{
+  "description": "Generate the requirement markdown for adding a Sinclair ZX81 emulator feature to the C hello world project, on a branch.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [
+      "test/simple_project/c_hello_world_requirements.md"
+    ],
+    "output_artifacts": [
+      "test/simple_project/c_zx81_emulator_requirements.md"
+    ],
+    "instructions": [
+      "Create a markdown file at test/simple_project/c_zx81_emulator_requirements.md.",
+      "The markdown should describe a feature request for the C hello world project described in c_hello_world_requirements.md.",
+      "It should specify that this feature should be implemented on a new branch.",
+      "The feature is to implement a simple emulator for the Sinclair ZX81 computer that can run BASIC programs.",
+      "This is a significant undertaking; the markdown should outline the core components needed (CPU emulation, memory, basic I/O) and specify a phased approach.",
+      "It must specify that this feature implementation should follow a strict Test-first Development (TDD) methodology (e.g., writing tests for individual CPU instructions, memory read/write, simulated keyboard input, simulated screen output).",
+      "Define the scope, focusing on minimal functionality to run simple BASIC.",
+      "Mention the need for detailed planning due to complexity."
+    ],
+    "constraints": [
+      "Output must be ONLY the markdown document.",
+      "Do NOT generate the code for the feature.",
+      "Reference the base C project requirement document.",
+      "Specify building a ZX81 emulator."
+    ],
+    "validation_criteria": [
+      "File 'test/simple_project/c_zx81_emulator_requirements.md' exists.",
+      "File content describes implementing a ZX81 emulator.",
+      "File content mandates TDD for the feature.",
+      "File content specifies implementing on a branch.",
+      "File content references the base C project.",
+      "File content outlines emulator components (CPU, memory, I/O).",
+      "File content mentions running BASIC programs.",
+      "File content indicates the complexity and need for phased approach/detailed planning."
+    ],
+    "model_preference": null
+  },
+  "step_id": "generate_c_zx81_emulator_feature_requirements",
+  "task_id": "d311cfeb-a92b-4c89-aa5f-592916bb469b",
+  "subtask_id": "419fec6a-9992-414a-96a6-df64a7b30c24"
+}

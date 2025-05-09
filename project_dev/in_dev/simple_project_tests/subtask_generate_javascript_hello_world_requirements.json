@@ -1,0 +1,38 @@
+{
+  "description": "Generate the requirement markdown for a simple web JavaScript hello world project with TDD.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [],
+    "output_artifacts": [
+      "test/simple_project/javascript_hello_world_requirements.md"
+    ],
+    "instructions": [
+      "Create a markdown file at the path `test/simple_project/javascript_hello_world_requirements.md` within the workspace.",
+      "The markdown file should serve as the requirements document for a simple web JavaScript 'Hello, World!' project.",
+      "Clearly describe the project: a basic HTML page that includes JavaScript. The JavaScript should display the text 'Hello, World!'. This display can be either in the browser's developer console or directly within the HTML page content.",
+      "Specify that the project should be built from scratch.",
+      "Include the requirement to initialize a git repository for the project.",
+      "List standard GitHub repository files that should be included, such as a README.md, .gitignore, and potentially a LICENSE file.",
+      "Emphasize and clearly state that the project development must strictly follow a Test-first Development (TDD) methodology.",
+      "Suggest using a JavaScript testing framework like Jest if there is significant JavaScript logic that can be unit tested.",
+      "Alternatively, if the logic is minimal, define specific validation steps or acceptance criteria that can be used to verify the HTML/JavaScript interaction and the 'Hello, World!' output.",
+      "Explicitly define the expected outcome: the text 'Hello, World!' must be visibly displayed (either in the console or on the page) when the HTML file is opened in a web browser."
+    ],
+    "constraints": [
+      "The output must be ONLY the content of the markdown document.",
+      "Do NOT generate any code (HTML, CSS, JavaScript, or test files) for the project itself."
+    ],
+    "validation_criteria": [
+      "A file named 'test/simple_project/javascript_hello_world_requirements.md' exists in the workspace.",
+      "The content of 'test/simple_project/javascript_hello_world_requirements.md' clearly describes a web JavaScript 'Hello, World!' project.",
+      "The markdown content explicitly states that the project must follow Test-first Development (TDD).",
+      "The markdown content mentions the creation of a git repository and inclusion of standard GitHub files (like README).",
+      "The markdown content specifically defines 'Hello, World!' as the required output."
+    ],
+    "model_preference": null
+  },
+  "step_id": "generate_javascript_hello_world_requirements",
+  "task_id": "d311cfeb-a92b-4c89-aa5f-592916bb469b",
+  "subtask_id": "17d50f4b-d3f7-4a77-a4c9-8652436a589e"
+}
