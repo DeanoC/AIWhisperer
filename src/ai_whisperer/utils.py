@@ -67,6 +67,7 @@ def validate_against_schema(data: Dict[str, Any], schema_path: str):
         FileNotFoundError: If the schema file does not exist.
     """
     # Placeholder implementation - Replace with actual validation logic
+    # TODO: Implement real schema validation
     print(f"--- Placeholder: Validating data against schema: {schema_path} ---")
     # Example using jsonschema (install with pip install jsonschema)
     # try:
@@ -80,11 +81,6 @@ def validate_against_schema(data: Dict[str, Any], schema_path: str):
     # except Exception as e:
     #     raise SchemaValidationError(f"Failed to load or process schema {schema_path}: {e}") from e
 
-    # Simulate validation for now
-    if not isinstance(data, dict) or 'agent_spec' not in data:
-         # Simulate a validation failure based on test data
-         if data.get('step_id') == 'test_step_1_invalid':
-              raise SchemaValidationError("Simulated failure: Missing agent_spec")
     print("--- Placeholder: Validation successful ---")
     pass # Assume valid for now
 
@@ -253,95 +249,3 @@ def build_ascii_directory_tree(start_path="."):
     _build_tree_recursive(abs_start_path, "", initial_ignore_rules, output_lines)
     
     return "\n".join(output_lines)
-
-# --- Example Usage ---
-if __name__ == "__main__":
-    # Create a dummy directory structure for testing
-    def setup_test_dir(base="test_proj"):
-        if os.path.exists(base):
-            import shutil
-            shutil.rmtree(base)
-        os.makedirs(os.path.join(base, "src", "subdir"), exist_ok=True)
-        os.makedirs(os.path.join(base, "build"), exist_ok=True)
-        os.makedirs(os.path.join(base, "docs"), exist_ok=True)
-        os.makedirs(os.path.join(base, ".git"), exist_ok=True) # To test .git ignore
-
-        with open(os.path.join(base, ".gitignore"), "w") as f:
-            f.write("build/\n") # Ignore build directory at root
-            f.write("*.log\n")  # Ignore all .log files
-            f.write("tempfile.txt\n") # Ignore specific file
-            f.write("!src/important.log\n") # BUT, do not ignore this specific log file
-
-        with open(os.path.join(base, "src", ".gitignore"), "w") as f:
-            f.write("subdir/\n") # Ignore subdir within src
-            f.write("*.tmp\n")   # Ignore .tmp files within src and its children
-            f.write("!keep.tmp\n") # But keep this one
-
-        # Create some files
-        open(os.path.join(base, "main.py"), "w").close()
-        open(os.path.join(base, "README.md"), "w").close()
-        open(os.path.join(base, "app.log"), "w").close() # Should be ignored by root .gitignore
-        open(os.path.join(base, "tempfile.txt"), "w").close() # Should be ignored
-        open(os.path.join(base, "build", "output.o"), "w").close() # build/ dir should be ignored
-        open(os.path.join(base, "src", "code.py"), "w").close()
-        open(os.path.join(base, "src", "important.log"), "w").close() # Should be included (negated)
-        open(os.path.join(base, "src", "data.tmp"), "w").close() # Should be ignored by src/.gitignore
-        open(os.path.join(base, "src", "keep.tmp"), "w").close() # Should be included (negated in src)
-        open(os.path.join(base, "src", "subdir", "file.txt"), "w").close() # subdir/ should be ignored
-        open(os.path.join(base, "docs", "index.html"), "w").close()
-        return base
-
-    test_project_path = setup_test_dir()
-    print(f"--- Building tree for: {test_project_path} ---")
-    tree_output = build_ascii_directory_tree(test_project_path)
-    print(tree_output)
-    print("--- Done ---")
-
-    # Example with a non-existent path
-    print("\n--- Building tree for non-existent path ---")
-    print(build_ascii_directory_tree("no_such_directory_exists_here"))
-    print("--- Done ---")
-
-    # Clean up the dummy directory
-    # import shutil
-    # shutil.rmtree(test_project_path)
-
-
-# Explanation:
-# build_ascii_directory_tree(start_path) (Main Function):
-# Resolves start_path to an absolute path.
-# Initializes output_lines with the name of the starting directory.
-# Calls the recursive helper _build_tree_recursive.
-# Joins the collected output_lines into a single string.
-# _build_tree_recursive(current_dir_path, prefix_str, inherited_ignore_rules, output_lines_list):
-# Ignore Rule "Pushing":
-# It takes inherited_ignore_rules from its parent.
-# It creates current_level_active_rules by copying inherited rules.
-# It then calls _parse_gitignore for a .gitignore file in current_dir_path. The parsed rules (along with their base_dir, which is current_dir_path) are appended to current_level_active_rules. This way, rules from deeper .gitignore files (or later in the same file) can override earlier ones when _is_item_ignored processes them.
-# Directory Traversal:
-# Uses os.scandir() for efficiency as it provides file type information without extra os.stat calls.
-# Sorts entries (directories first, then alphabetically by name) for consistent output.
-# Filtering:
-# Iterates through sorted entries and calls _is_item_ignored for each.
-# Only non-ignored entries are kept in valid_entries_to_display. This list is used to correctly determine the ├── vs └── prefixes.
-# Output Generation:
-# Calculates the correct connector (├── or └──) and new_prefix_segment (│ or ) based on whether the current item is the last in the valid_entries_to_display.
-# Appends the formatted line to output_lines_list.
-# Recursion: If an entry is a directory, it calls itself with the updated path, prefix, and the current_level_active_rules.
-# Ignore Rule "Popping": This happens implicitly. When _build_tree_recursive returns from processing a subdirectory, the current_level_active_rules specific to that subdirectory go out of scope. The calling function continues with its own set of rules, effectively "popping" the subdirectory's rules.
-# _parse_gitignore(gitignore_path):
-# Reads a given .gitignore file line by line.
-# Skips empty lines and lines starting with # (comments).
-# Returns a list of tuples: (pattern_string, base_directory_of_this_gitignore_file). The base_directory is crucial for resolving patterns anchored with / or containing /.
-# _is_item_ignored(full_item_path, is_item_dir, item_name, active_ignore_rules):
-# This is the core of the exclusion logic.
-# Hardcoded Ignores: It first checks for .git (always ignore) and .gitignore (don't list the file itself, though it's processed).
-# Rule Iteration: It iterates through all active_ignore_rules. The key is that the last rule in this list that matches an item determines its fate (ignored or not). This mimics .gitignore's precedence.
-# Pattern Handling:
-# !pattern: Handles negation (re-includes a previously ignored item).
-# pattern/: Marks the pattern as applying only to directories.
-# /pattern: Anchors the pattern to the pattern_base_dir (the directory where the .gitignore file containing this pattern resides).
-# path/pattern: Matches a path relative to pattern_base_dir.
-# pattern (no slashes): Matches the item_name (basename) directly.
-# Uses fnmatch.fnmatch() for glob matching. Note that fnmatch in Python treats * as matching /, which differs slightly from FNM_PATHNAME in C's fnmatch, but is generally good enough for most .gitignore patterns. More complex gitignore features like ** (recursive directory wildcard) are also handled by fnmatch.
-# This implementation provides a robust way to generate an ASCII directory tree while respecting the hierarchical and overriding nature of .gitignore files.

@@ -174,36 +174,3 @@ class TerminalMonitor:
             # This run method would likely be called in a separate thread or async task
             # to allow the main runner logic to proceed.
             # For a simple example, we can keep it running until interrupted.
-            try:
-                while True:
-                    # In a real application, user input would be handled here asynchronously
-                    # or via a separate input thread/task.
-                    # For this basic monitor, we'll just keep the display alive.
-                    time.sleep(0.1)
-            except KeyboardInterrupt:
-                pass # Allow exiting with Ctrl+C
-
-    # Placeholder for user input handling (would need to be integrated with the runner loop)
-    def handle_user_input(self, command: str):
-        """Processes user input commands."""
-        command = command.strip().lower()
-        if command == "pause":
-            print("Pause requested (not implemented)") # Placeholder
-            # Signal runner to pause
-        elif command == "resume":
-            print("Resume requested (not implemented)") # Placeholder
-            # Signal runner to resume
-        elif command == "cancel":
-            print("Cancel requested (not implemented)") # Placeholder
-            # Signal runner to cancel
-        elif command.startswith("context "):
-            context_text = command[8:].strip()
-            print(f"Context added: {context_text} (not implemented)") # Placeholder
-            # Pass context to runner
-        elif command.startswith("details "):
-            step_id = command[8:].strip()
-            self.set_active_step(step_id)
-        elif command == "help":
-            print("Available commands: pause, resume, cancel, context <text>, details <step_id>, help")
-        else:
-            print(f"Unknown command: {command}")

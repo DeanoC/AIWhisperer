@@ -30,7 +30,7 @@ def mock_env_vars():
 
 # Test case 1: Valid configuration with models defined for both 'Subtask Generation' and 'Orchestrator'
 @patch('src.ai_whisperer.config._load_prompt_content', return_value="mocked prompt content")
-def test_valid_task_models_config(mock_load_prompt, mock_env_vars):
+def test_valid_task_models_config(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
 # --- OpenRouter API Settings ---
 openrouter:
@@ -70,7 +70,9 @@ output_dir: "./output/"
     try:
         # Mock the prompt loading to avoid file not found errors
         # This is a simplified approach - in a real test, you might want to mock the file system
-        config = load_config(config_path, env_vars=mock_env_vars)
+        # Use monkeypatch to set environment variables for this test
+        monkeypatch.setenv("OPENROUTER_API_KEY", mock_env_vars["OPENROUTER_API_KEY"])
+        config = load_config(config_path)
 
         # Verify the task_models section exists and has the expected structure
         assert 'task_models' in config, "task_models section is missing"
@@ -99,7 +101,7 @@ output_dir: "./output/"
 
 # Test case 2: Configuration with missing task-specific model definitions
 @patch('src.ai_whisperer.config._load_prompt_content', return_value="mocked prompt content")
-def test_missing_task_models_config(mock_load_prompt, mock_env_vars):
+def test_missing_task_models_config(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
 # --- OpenRouter API Settings ---
 openrouter:
@@ -127,7 +129,9 @@ output_dir: "./output/"
 
     try:
         # The config should load successfully even without task-specific models
-        config = load_config(config_path, env_vars=mock_env_vars)
+        # Use monkeypatch to set environment variables for this test
+        monkeypatch.setenv("OPENROUTER_API_KEY", mock_env_vars["OPENROUTER_API_KEY"])
+        config = load_config(config_path)
 
         # Verify the task_models section exists and is an empty dictionary
         assert 'task_models' in config, "task_models section is missing"
@@ -140,7 +144,7 @@ output_dir: "./output/"
 
 # Test case 3: Configuration with invalid model definitions
 @patch('src.ai_whisperer.config._load_prompt_content', return_value="mocked prompt content")
-def test_invalid_task_model_definition(mock_load_prompt, mock_env_vars):
+def test_invalid_task_model_definition(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
 # --- OpenRouter API Settings ---
 openrouter:
@@ -179,7 +183,9 @@ output_dir: "./output/"
 
     try:
         # The config should load successfully, but we'll validate the task models separately
-        config = load_config(config_path, env_vars=mock_env_vars)
+        # Use monkeypatch to set environment variables for this test
+        monkeypatch.setenv("OPENROUTER_API_KEY", mock_env_vars["OPENROUTER_API_KEY"])
+        config = load_config(config_path)
 
         # Verify the task_models section exists
         assert 'task_models' in config, "task_models section is missing"
@@ -202,7 +208,7 @@ output_dir: "./output/"
 
 # Test case 4: Configuration with unexpected keys or incorrect data types
 @patch('src.ai_whisperer.config._load_prompt_content', return_value="mocked prompt content")
-def test_unexpected_keys_in_task_models(mock_load_prompt, mock_env_vars):
+def test_unexpected_keys_in_task_models(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
 # --- OpenRouter API Settings ---
 openrouter:
@@ -242,7 +248,9 @@ output_dir: "./output/"
 
     try:
         # The config should load successfully, but we'll check for unexpected keys and types
-        config = load_config(config_path, env_vars=mock_env_vars)
+        # Use monkeypatch to set environment variables for this test
+        monkeypatch.setenv("OPENROUTER_API_KEY", mock_env_vars["OPENROUTER_API_KEY"])
+        config = load_config(config_path)
 
         # Verify the task_models section exists
         assert 'task_models' in config, "task_models section is missing"

@@ -153,18 +153,3 @@ def log_event(log_message: LogMessage, logger_name: str = "aiwhisperer"):
 
     # Use logger.log() to pass the level dynamically
     logger.log(level_int, log_message.event_summary, extra=extra_data) # Use the new field name
-
-# Example usage (can be removed or commented out in final library code)
-if __name__ == "__main__":
-    # Setup logging (basic console logging if no config file)
-    setup_logging() # Or setup_logging("path/to/logging_config.yaml")
-
-    # Get a logger
-    app_logger = get_logger("aiwhisperer.runner")
-
-    # Log some events
-    log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "startup", "Application started."))
-    log_event(LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "step_started", "Executing step.", step_id="step_001", details={"step_type": "code_gen"}))
-    log_event(LogMessage(LogLevel.WARNING, ComponentType.FILE_OPERATIONS, "file_not_found", "Config file not found.", details={"path": "config.yaml"}))
-    log_event(LogMessage(LogLevel.ERROR, ComponentType.AI_SERVICE, "api_error", "API call failed.", step_id="step_002", details={"status": 500, "error": "Internal Error"}))
-    log_event(LogMessage(LogLevel.CRITICAL, ComponentType.RUNNER, "shutdown", "Application encountered a critical error and is shutting down."))

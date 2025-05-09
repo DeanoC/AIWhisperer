@@ -89,31 +89,35 @@ class TestMain:
         expected_print_call = call(f"[green]Successfully generated task JSON: generated_output.yaml[/green]")
         assert expected_print_call in mock_console.print.call_args_list
 
-    @patch('sys.exit')
-    def test_main_missing_requirements_arg(self, mock_sys_exit):
+    def test_main_missing_requirements_arg(self, capsys):
         """Test the main function handles missing required arguments."""
         # Set command-line args (missing --requirements)
         sys.argv = ['main.py', 'generate', '--config', self.CONF_FILE, '--output', self.OUT_FILE]
         
         # Call the function
-        with pytest.raises(SystemExit):
+        with pytest.raises(SystemExit) as excinfo:
             main()
             
-        # Verify it tried to exit with error code
-        mock_sys_exit.assert_called_once_with(2)
+        # Verify it tried to exit with error code 2 (argparse error)
+        assert excinfo.value.code == 2
+        # Optionally check stderr for the error message
+        captured = capsys.readouterr()
+        assert "the following arguments are required: --requirements" in captured.err
 
-    @patch('sys.exit')
-    def test_main_missing_config_arg(self, mock_sys_exit):
+    def test_main_missing_config_arg(self, capsys):
         """Test the main function handles missing config argument."""
         # Set command-line args (missing --config)
         sys.argv = ['main.py', 'generate', '--requirements', self.REQ_FILE, '--output', self.OUT_FILE]
         
         # Call the function
-        with pytest.raises(SystemExit):
+        with pytest.raises(SystemExit) as excinfo:
             main()
             
-        # Verify it tried to exit with error code
-        mock_sys_exit.assert_called_once_with(2)
+        # Verify it tried to exit with error code 2 (argparse error)
+        assert excinfo.value.code == 2
+        # Optionally check stderr for the error message
+        captured = capsys.readouterr()
+        assert "the following arguments are required: --config" in captured.err
 
     def test_main_missing_output_arg(self):
         """Test the main function handles missing output argument."""

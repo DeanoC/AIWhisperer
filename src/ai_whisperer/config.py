@@ -61,7 +61,7 @@ def _load_prompt_content(prompt_path_str: Optional[str], default_path_str: str, 
         raise ConfigError(f"Error reading prompt file {resolved_path}: {e}") from e
 
 
-def load_config(config_path: str, env_vars: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+def load_config(config_path: str) -> Dict[str, Any]:
     """
     Loads configuration from a YAML file, validates required keys, handles API key precedence,
     and loads prompt file contents.
@@ -79,13 +79,11 @@ def load_config(config_path: str, env_vars: Optional[Dict[str, str]] = None) -> 
                      is missing required keys/sections, contains empty required values,
                      if the API key is missing, or if prompt files cannot be loaded.
     """
-    # Load .env file first (only if env_vars not provided)
-    if env_vars is None:
-        load_dotenv()
-        env_vars = os.environ
+    # Load .env file first
+    load_dotenv()
 
     # --- Get API Key from Environment --- Required Early ---
-    api_key_from_env = env_vars.get('OPENROUTER_API_KEY')
+    api_key_from_env = os.getenv('OPENROUTER_API_KEY')
     if not api_key_from_env:
         raise ConfigError("Required environment variable OPENROUTER_API_KEY is not set.")
 

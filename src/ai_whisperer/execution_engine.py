@@ -57,45 +57,12 @@ class ExecutionEngine:
         """
         task_id = task_definition.get('step_id', 'unknown_task')
 
-        # Simulate AI service interaction
-        logger.info(f"Simulating AI service call for task {task_id}")
-        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.AI_SERVICE, "api_call_simulated", f"Simulating AI service call for task {task_id}", step_id=task_id))
-        # In a real scenario, this would be an actual API call
-        time.sleep(0.1) # Simulate API latency
-        logger.info(f"Simulated AI service call completed for task {task_id}")
-        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.AI_SERVICE, "api_call_simulated_complete", f"Simulated AI service call completed for task {task_id}", step_id=task_id))
-
-
-        # Simulate file operation
-        logger.info(f"Simulating file operation for task {task_id}")
-        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.FILE_OPERATIONS, "file_op_simulated", f"Simulating file operation for task {task_id}", step_id=task_id))
-        # In a real scenario, this would be a file read/write
-        time.sleep(0.05) # Simulate file operation latency
-        logger.info(f"Simulated file operation completed for task {task_id}")
-        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.FILE_OPERATIONS, "file_op_simulated_complete", f"Simulated file operation completed for task {task_id}", step_id=task_id))
-
-
-        # Simulate terminal command execution
-        logger.info(f"Simulating terminal command for task {task_id}")
-        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.TERMINAL_INTERACTION, "terminal_cmd_simulated", f"Simulating terminal command for task {task_id}", step_id=task_id))
-        # In a real scenario, this would be a terminal command execution
-        time.sleep(0.2) # Simulate terminal command latency
-        logger.info(f"Simulated terminal command completed for task {task_id}")
-        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.TERMINAL_INTERACTION, "terminal_cmd_simulated_complete", f"Simulated terminal command completed for task {task_id}", step_id=task_id))
-
-
-        # Simulate task execution based on instructions or type for more dynamic tests
-        # For now, using a simple failure condition as in the test placeholder
-        if task_id == "task_that_fails":
-            logger.error(f"Task {task_id} failed intentionally.")
-            self.monitor.add_log_message(LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "task_failed_intentional", f"Task {task_id} failed intentionally.", step_id=task_id))
-            raise TaskExecutionError(f"Task {task_id} failed intentionally.")
-
-        # Simulate successful execution and result
-        # A real task executor would produce a more meaningful result.
+        # In a real implementation, this would involve dispatching to a task executor
+        # based on task_definition['agent_spec']['type'] and handling interactions.
+        # For now, we return a placeholder result.
         result = f"Result of {task_id}"
-        logger.info(f"Task {task_id} executed successfully.")
-        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.EXECUTION_ENGINE, "task_executed_success", f"Task {task_id} executed successfully.", step_id=task_id))
+        logger.info(f"Task {task_id} executed successfully (simulated).")
+        self.monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.EXECUTION_ENGINE, "task_executed_simulated", f"Task {task_id} executed successfully (simulated).", step_id=task_id))
         return result
 
     def execute_plan(self, plan_data):

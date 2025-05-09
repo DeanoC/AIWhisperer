@@ -119,14 +119,9 @@ def main():
     )
 
     # Use parse_known_args to avoid conflicts with pytest arguments during testing
-    # Check if running under pytest
-    if 'pytest' in sys.modules:
-        args, unknown = parser.parse_known_args()
-        logger.debug("Running under pytest, using parse_known_args.")
-    else:
-        args = parser.parse_args()
-        unknown = [] # No unknown arguments expected when not under pytest
-        logger.debug("Not running under pytest, using parse_args.")
+    args = parser.parse_args()
+    unknown = [] # No unknown arguments expected when not under pytest
+    logger.debug("Using parse_args.")
 
     logger.debug(f"Parsed arguments: {args}")
     logger.debug(f"Unknown arguments: {unknown}")

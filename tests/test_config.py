@@ -215,7 +215,7 @@ def test_load_config_task_prompts_not_dict(create_test_files):
     with pytest.raises(ConfigError, match=r"Invalid 'task_prompts' section.*Expected a dictionary"):
         load_config(str(config_path))
 
-def test_load_config_missing_required_env_var_api_key(create_test_files):
+def test_load_config_missing_required_env_var_api_key(create_test_files, monkeypatch):
     """Tests ConfigError when OPENROUTER_API_KEY environment variable is not set."""
     _create_file, _ = create_test_files
     config_data = {'openrouter': {'model': 'test_model'}, 'prompts': {}}
@@ -223,11 +223,10 @@ def test_load_config_missing_required_env_var_api_key(create_test_files):
 
     expected_error = r"Required environment variable OPENROUTER_API_KEY is not set"
 
-    # Pass an empty env_vars dict to simulate missing environment variables
-    empty_env_vars = {}
-
-    with pytest.raises(ConfigError, match=expected_error):
-        load_config(str(config_path), env_vars=empty_env_vars)
+    # Use patch.dict to temporarily remove the environment variable
+    with patch.dict(os.environ, {'OPENROUTER_API_KEY': ''}, clear=True):
+        with pytest.raises(ConfigError, match=expected_error):
+            load_config(str(config_path))
 
 def test_load_config_empty_file(create_test_files):
     """Tests loading an empty configuration file."""

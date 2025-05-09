@@ -123,35 +123,23 @@ class TestExecutionEngine(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_execute_plan_with_task_failure(self):
-        # This test uses the original _execute_single_task from the placeholder
-        # to simulate an actual TaskExecutionError
-        # Create a mock monitor for this specific instance
-        mock_monitor_for_failure_test = MagicMock(spec=TerminalMonitor)
-        engine_with_real_failure_logic = ExecutionEngine(self.mock_state_manager, monitor=mock_monitor_for_failure_test)
-
+        # This test mocks _execute_single_task to simulate a TaskExecutionError
         sample_plan = self._get_sample_plan(num_tasks=1, add_failing_task=True)
         # plan: task_1, task_that_fails
-        
+
         task1_def = sample_plan["plan"][0]
         failing_task_def = sample_plan["plan"][1]
 
         # Mock the behavior of _execute_single_task for this instance
-        def side_effect_for_failure_test(self_arg, task_def_arg):
-            if task_def_arg['step_id'] == "task_that_fails":
-                raise TaskExecutionError("Intentional failure for task_that_fails")
-            # Simulate successful execution for task_1 if it's not the failing task
-            if task_def_arg['step_id'] == "task_1":
-                 return f"Result of {task_def_arg['step_id']}"
-            # This part should ideally not be reached if the failing task is handled above
-            # but as a fallback or for other tasks, return a default result
-            return f"Result of {task_def_arg['step_id']}"
+        # The first call (task_1) succeeds, the second call (task_that_fails) raises an exception
+        self.mock_execute_single_task.side_effect = [
+            "Result of task_1",
+            TaskExecutionError("Intentional failure for task_that_fails")
+        ]
 
-        self.mock_execute_single_task.side_effect = side_effect_for_failure_test
-        
-        engine_with_real_failure_logic.execute_plan(sample_plan)
+        self.engine.execute_plan(sample_plan)
 
-        # Check state manager calls for the failing task
-        # Check state manager calls for the failing task
+        # Check state manager calls for both tasks
         expected_state_calls_for_failure = [
             call.set_task_state("task_1", "pending"),
             call.set_task_state("task_1", "in-progress"),
@@ -210,16 +198,16 @@ class TestExecutionEngine(unittest.TestCase):
         # task2_def = sample_plan["plan"][1] # Will be skipped
 
         self.mock_execute_single_task.return_value = "Result of task_1" # Only task_1 will execute
-        
+
         # Simulate task_1 not completing (e.g., it's 'failed' or 'in-progress')
-        self.mock_state_manager.get_task_status.return_value = "failed" 
+        self.mock_state_manager.get_task_status.return_value = "failed"
 
         self.engine.execute_plan(sample_plan)
 
         self.mock_state_manager.get_task_status.assert_called_once_with("task_1")
         # Only task_1 should be attempted
         self.mock_execute_single_task.assert_called_once_with(self.engine, task1_def)
-        
+
         expected_state_calls = [
             call.set_task_state("task_1", "pending"),
             call.set_task_state("task_1", "in-progress"),
