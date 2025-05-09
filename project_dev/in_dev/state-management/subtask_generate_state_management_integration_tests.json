@@ -1,0 +1,48 @@
+{
+  "description": "Generate integration tests to verify state persistence across runner executions.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "test_generation",
+    "input_artifacts": [
+      "src/ai_whisperer/orchestrator.py",
+      "src/ai_whisperer/state_management.py"
+    ],
+    "output_artifacts": [
+      "tests/integration/test_runner_state.py"
+    ],
+    "instructions": [
+      "Create a new Python file for integration tests at tests/integration/test_runner_state.py.",
+      "Import necessary modules, including `pytest` and relevant classes/functions from `src/ai_whisperer/orchestrator.py` and `src/ai_whisperer/state_management.py`.",
+      "Design test functions that simulate the lifecycle of a runner execution:",
+      "- Define test cases that involve starting a runner execution with a simple plan.",
+      "- Implement logic within the test to simulate an interruption (e.g., by raising an exception or manually stopping the process after a few steps).",
+      "- Verify that the state is successfully saved to the configured state file.",
+      "- In a separate part of the test or a new test function, simulate resuming the execution from the saved state.",
+      "- Verify that the runner correctly loads the state and continues the plan from the point of interruption.",
+      "- Include assertions to check that intermediate results, task status, and other relevant state variables are correctly loaded.",
+      "Cover different scenarios, such as:",
+      "- Interruption after the first step.",
+      "- Interruption in the middle of a multi-step task.",
+      "- Resuming a plan that has already partially completed.",
+      "Ensure the tests use temporary directories or mock objects for state files to avoid polluting the actual workspace.",
+      "Write clear and descriptive test function names and comments.",
+      "Adhere to standard Python testing practices and the project's existing test structure in the `tests/integration/` directory."
+    ],
+    "constraints": [
+      "Tests must be written in Python using the pytest framework.",
+      "Do not modify existing files other than creating tests/integration/test_runner_state.py.",
+      "Focus solely on testing the state persistence and resumption logic.",
+      "Ensure tests are self-contained and clean up any temporary files created."
+    ],
+    "validation_criteria": [
+      "The output file tests/integration/test_runner_state.py exists.",
+      "The test file contains multiple test functions (`test_...`) that simulate runner execution interruption and resumption.",
+      "The tests include assertions that verify the correct saving and loading of the runner's state.",
+      "The tests cover different interruption scenarios.",
+      "The tests are syntactically correct Python and can be executed by pytest."
+    ]
+  },
+  "step_id": "generate_state_management_integration_tests",
+  "task_id": "2ee64d42-4ddf-44eb-ac71-e9d5d00816de",
+  "subtask_id": "cb9c3a1e-7d13-4d56-a44c-672334220991"
+}

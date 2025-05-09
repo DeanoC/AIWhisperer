@@ -1,0 +1,247 @@
+{
+  "natural_language_goal": "Implement state management for the runner to store and retrieve intermediate results and execution state.",
+  "overall_context": "The State Management feature is part of the overall runner development, enabling persistence and resume capabilities.",
+  "plan": [
+    {
+      "step_id": "plan_state_management_design",
+      "description": "Design the state management system, including storage mechanism (e.g., file, database), data structures for state, and APIs for saving/loading.",
+      "depends_on": [],
+      "agent_spec": {
+        "type": "planning",
+        "input_artifacts": [
+          "project_dev/rfc/runner/state-management.md",
+          "project_dev/rfc/runner/execution-engine.md",
+          "project_dev/rfc/runner/plan-ingestion-and-parsing.md"
+        ],
+        "output_artifacts": [
+          "project_dev/in_dev/state-management/state_management_design.md"
+        ],
+        "instructions": [
+          "Review the State Management RFC and related runner design documents.",
+          "Propose a design for state management.",
+          "Define the structure of the state data.",
+          "Specify the mechanism for storing and retrieving state (e.g., JSON file).",
+          "Outline the API for interacting with the state management system (save, load, update).",
+          "Consider implications for concurrent access if applicable (though not explicitly required yet).",
+          "Document the design in project_dev/in_dev/state-management/state_management_design.md."
+        ],
+        "constraints": [
+          "The design must support storing intermediate results between tasks.",
+          "The design must support saving and loading the overall execution state."
+        ],
+        "validation_criteria": [
+          "The output file project_dev/in_dev/state-management/state_management_design.md exists.",
+          "The design document clearly describes the state storage mechanism.",
+          "The design document clearly defines the state data structure.",
+          "The design document outlines a clear API for saving and loading state."
+        ]
+      }
+    },
+    {
+      "step_id": "generate_state_management_tests",
+      "description": "Generate unit tests for the state management module based on the design.",
+      "depends_on": [
+        "plan_state_management_design"
+      ],
+      "agent_spec": {
+        "type": "test_generation",
+        "input_artifacts": [
+          "project_dev/in_dev/state-management/state_management_design.md"
+        ],
+        "output_artifacts": [
+          "tests/unit/test_state_management.py"
+        ],
+        "instructions": [
+          "Read the state management design document.",
+          "Create test cases in tests/unit/test_state_management.py that verify:",
+          "- State can be initialized.",
+          "- Data can be stored and retrieved correctly.",
+          "- State can be saved to a file.",
+          "- State can be loaded from a file.",
+          "- Handling of non-existent state files.",
+          "- Updating state values."
+        ],
+        "validation_criteria": [
+          "The output file tests/unit/test_state_management.py exists.",
+          "The test file contains test cases for saving and loading state.",
+          "The test file contains test cases for storing and retrieving data."
+        ]
+      }
+    },
+    {
+      "step_id": "implement_state_management",
+      "description": "Implement the state management module based on the design and tests.",
+      "depends_on": [
+        "generate_state_management_tests"
+      ],
+      "agent_spec": {
+        "type": "code_generation",
+        "input_artifacts": [
+          "project_dev/in_dev/state-management/state_management_design.md",
+          "tests/unit/test_state_management.py"
+        ],
+        "output_artifacts": [
+          "src/ai_whisperer/state_management.py"
+        ],
+        "instructions": [
+          "Create a new Python file src/ai_whisperer/state_management.py.",
+          "Implement the state management logic according to the design document.",
+          "Include functions for initializing, saving, loading, storing, and retrieving state.",
+          "Ensure the implementation passes the tests defined in tests/unit/test_state_management.py.",
+          "Consider using JSON for file-based storage as per the likely design."
+        ],
+        "constraints": [
+          "The implementation must adhere to the design in state_management_design.md.",
+          "The implementation must pass the unit tests."
+        ],
+        "validation_criteria": [
+          "The output file src/ai_whisperer/state_management.py exists.",
+          "The file contains classes/functions for state management.",
+          "The implemented functions match the API outlined in the design.",
+          "The unit tests in tests/unit/test_state_management.py pass when run against the implementation."
+        ]
+      }
+    },
+    {
+      "step_id": "validate_state_management_unit",
+      "description": "Run unit tests for the state management module.",
+      "depends_on": [
+        "implement_state_management"
+      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "src/ai_whisperer/state_management.py",
+          "tests/unit/test_state_management.py"
+        ],
+        "output_artifacts": [],
+        "instructions": [
+          "Run the unit tests located in tests/unit/test_state_management.py.",
+          "Report the test results."
+        ],
+        "validation_criteria": [
+          "All tests in tests/unit/test_state_management.py pass."
+        ]
+      }
+    },
+    {
+      "step_id": "integrate_state_management_with_runner",
+      "description": "Integrate the state management module into the runner's execution flow.",
+      "depends_on": [
+        "validate_state_management_unit"
+      ],
+      "agent_spec": {
+        "type": "file_edit",
+        "input_artifacts": [
+          "src/ai_whisperer/orchestrator.py",
+          "src/ai_whisperer/state_management.py",
+          "project_dev/in_dev/state-management/state_management_design.md",
+          "project_dev/rfc/runner/execution-engine.md"
+        ],
+        "output_artifacts": [
+          "src/ai_whisperer/orchestrator.py"
+        ],
+        "instructions": [
+          "Modify src/ai_whisperer/orchestrator.py to integrate state management.",
+          "Add logic to initialize or load state at the beginning of plan execution.",
+          "Add logic to save state periodically and at the end of plan execution.",
+          "Modify the execution flow to store and retrieve intermediate results using the state management module.",
+          "Consider where state saving logic should be placed (e.g., after each task completion).",
+          "Refer to the state management design and execution engine RFC for guidance."
+        ],
+        "validation_criteria": [
+          "src/ai_whisperer/orchestrator.py is modified to include state management initialization, loading, and saving.",
+          "The orchestrator code includes calls to the state management module's functions."
+        ]
+      }
+    },
+    {
+      "step_id": "generate_state_management_integration_tests",
+      "description": "Generate integration tests to verify state persistence across runner executions.",
+      "depends_on": [
+        "integrate_state_management_with_runner"
+      ],
+      "agent_spec": {
+        "type": "test_generation",
+        "input_artifacts": [
+          "src/ai_whisperer/orchestrator.py",
+          "src/ai_whisperer/state_management.py"
+        ],
+        "output_artifacts": [
+          "tests/integration/test_runner_state.py"
+        ],
+        "instructions": [
+          "Create integration test cases in tests/integration/test_runner_state.py.",
+          "Design tests that simulate running a plan, interrupting it, and resuming.",
+          "Verify that intermediate results and overall state are correctly saved and loaded.",
+          "Include tests for different scenarios of interruption and resume."
+        ],
+        "validation_criteria": [
+          "The output file tests/integration/test_runner_state.py exists.",
+          "The test file contains tests that simulate runner execution interruption and resumption.",
+          "The tests verify that state is correctly persisted and loaded."
+        ]
+      }
+    },
+    {
+      "step_id": "validate_state_management_integration",
+      "description": "Run integration tests for state management within the runner.",
+      "depends_on": [
+        "generate_state_management_integration_tests"
+      ],
+      "agent_spec": {
+        "type": "validation",
+        "input_artifacts": [
+          "src/ai_whisperer/orchestrator.py",
+          "src/ai_whisperer/state_management.py",
+          "tests/integration/test_runner_state.py"
+        ],
+        "output_artifacts": [],
+        "instructions": [
+          "Run the integration tests located in tests/integration/test_runner_state.py.",
+          "This may require setting up a test environment that allows simulating process interruption.",
+          "Report the test results."
+        ],
+        "validation_criteria": [
+          "All tests in tests/integration/test_runner_state.py pass."
+        ]
+      }
+    },
+    {
+      "step_id": "update_documentation",
+      "description": "Update documentation to describe the state management feature.",
+      "depends_on": [
+        "validate_state_management_integration"
+      ],
+      "agent_spec": {
+        "type": "documentation",
+        "input_artifacts": [
+          "docs/index.md",
+          "docs/internal_process.md",
+          "project_dev/rfc/runner/state-management.md",
+          "project_dev/in_dev/state-management/state_management_design.md"
+        ],
+        "output_artifacts": [
+          "docs/index.md",
+          "docs/internal_process.md"
+        ],
+        "instructions": [
+          "Update user-facing documentation (e.g., docs/index.md) to mention the runner's ability to maintain state and resume execution.",
+          "Update internal documentation (e.g., docs/internal_process.md) to describe how state management works and where state is stored.",
+          "Reference the state management RFC and design document where appropriate."
+        ],
+        "validation_criteria": [
+          "Documentation files (docs/index.md, docs/internal_process.md) are updated.",
+          "Documentation clearly explains the state management capability for users.",
+          "Internal documentation briefly describes the implementation details."
+        ]
+      }
+    }
+  ],
+  "task_id": "2ee64d42-4ddf-44eb-ac71-e9d5d00816de",
+  "input_hashes": {
+    "requirements_md": "ee21f9f014c60ad2ee72aa0d140a69e2fa003184ef8582f3133f9c3fb4f3ed11",
+    "config_json": "bae825f58be819daf9f14ac791db2453c083be17875e8c8452a9e9a57fd7de3e",
+    "prompt_file": "hash_not_available"
+  }
+}

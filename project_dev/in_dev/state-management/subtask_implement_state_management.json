@@ -1,0 +1,44 @@
+{
+  "description": "Implement the state management module based on the design and tests.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "code_generation",
+    "input_artifacts": [
+      "project_dev/in_dev/state-management/state_management_design.md",
+      "tests/unit/test_state_management.py"
+    ],
+    "output_artifacts": [
+      "src/ai_whisperer/state_management.py"
+    ],
+    "instructions": [
+      "Create a new Python file at `src/ai_whisperer/state_management.py`.",
+      "Read and understand the state management design document located at `project_dev/in_dev/state-management/state_management_design.md`.",
+      "Implement the state management logic within `src/ai_whisperer/state_management.py`.",
+      "Include functions or classes as outlined in the design for the following core state management operations:",
+      "- Initializing the state.",
+      "- Saving the current state to persistent storage.",
+      "- Loading the state from persistent storage.",
+      "- Storing specific data or values within the state.",
+      "- Retrieving data or values from the state.",
+      "Refer to the unit tests in `tests/unit/test_state_management.py` to understand the expected behavior and API of the state management module.",
+      "Ensure that the implemented functions and classes meet the requirements specified in the tests.",
+      "As per the design, use JSON format for storing the state data when saving to a file.",
+      "Implement any necessary error handling for file operations (e.g., file not found, permission errors).",
+      "Add necessary imports and basic documentation (docstrings) to the implemented code."
+    ],
+    "constraints": [
+      "The implementation must strictly follow the design specifications detailed in `project_dev/in_dev/state-management/state_management_design.md`.",
+      "The implemented code must pass all unit tests defined in `tests/unit/test_state_management.py` without modification to the test file.",
+      "The output file must be located exactly at `src/ai_whisperer/state_management.py`."
+    ],
+    "validation_criteria": [
+      "The file `src/ai_whisperer/state_management.py` must be created and present in the output.",
+      "The file `src/ai_whisperer/state_management.py` must contain Python code defining classes and/or functions related to state management.",
+      "The implemented functions/classes must expose an API that is compatible with the usage demonstrated in `tests/unit/test_state_management.py`.",
+      "Running the unit tests in `tests/unit/test_state_management.py` must execute successfully and all tests must pass (exit code 0)."
+    ]
+  },
+  "step_id": "implement_state_management",
+  "task_id": "2ee64d42-4ddf-44eb-ac71-e9d5d00816de",
+  "subtask_id": "5616507d-e4b7-4698-818c-4900725a75c4"
+}

@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Dict, Any, Tuple
 import copy # Import the copy module
 
-
+from .state_management import StateManager # Import StateManager
+from .execution_engine import ExecutionEngine # Import ExecutionEngine
 from . import openrouter_api
 from .utils import build_ascii_directory_tree, calculate_sha256
 from .exceptions import (
@@ -388,6 +389,7 @@ class Orchestrator:
     ) -> Dict[str, Any]:
         """
         Generates a complete project plan including initial task JSON and all subtasks.
+        After generating the plan and subtasks, it runs the plan using the Execution Engine.
 
         This method:
         1. First generates the initial task plan JSON
@@ -497,6 +499,14 @@ class Orchestrator:
         # We keep task_plan_path as the path to the initial plan.
 
         logger.info(f"Overview task plan saved to {overview_path}")
+
+        # Construct the state file path using the task ID and output directory
+        task_id = task_data.get("task_id", "default_task") # Get task_id, default if missing
+        state_file_name = f"state_{task_id}.json"
+        state_file_path = os.path.join(self.output_dir, state_file_name)
+
+        # Run the generated plan using the Execution Engine and State Management
+        self.run_plan(task_data, state_file_path)
 
         return {
             "task_plan": task_plan_path, # Path to the initial task plan
@@ -611,6 +621,61 @@ class Orchestrator:
             logger.exception(f"An unexpected error occurred during requirements refinement: {e}")
             raise OrchestratorError(f"An unexpected error occurred during requirements refinement: {e}") from e
 
+    def run_plan(self, plan_data: Dict[str, Any], state_file_path: str):
+        """
+        Runs the generated plan using the Execution Engine and manages state.
+
+        Args:
+            plan_data: The plan data dictionary containing a list of task definitions.
+            state_file_path: The path to the state file.
+        """
+        logger.info("Starting plan execution")
+
+        # Ensure the directory for the state file exists
+        state_dir = os.path.dirname(state_file_path)
+        if state_dir: # Only create if state_file_path includes a directory
+            os.makedirs(state_dir, exist_ok=True)
+
+        # 1. Instantiate StateManager and ExecutionEngine
+        state_manager = StateManager(state_file_path)
+        execution_engine = ExecutionEngine(state_manager)
+
+        # 2. Load the state
+        try:
+            state_manager.load_state()
+            logger.info(f"Loaded state from {state_file_path}")
+        except FileNotFoundError:
+            logger.info(f"State file not found at {state_file_path}. Starting with empty state.")
+            try:
+                state_manager.initialize_state(plan_data) # Initialize state if file not found
+            except IOError as e:
+                logger.error(f"Failed to save state during initialization to {state_file_path}: {e}")
+                raise OrchestratorError(f"Failed to save state during initialization: {e}") from e
+            except Exception as e:
+                # Catch any other unexpected exceptions during initialization
+                logger.error(f"An unexpected error occurred during state initialization: {e}")
+                raise OrchestratorError(f"An unexpected error occurred during state initialization: {e}") from e
+        except Exception as e:
+            logger.error(f"Error loading state from {state_file_path}: {e}")
+            # Depending on requirements, you might want to raise an exception or continue with empty state
+            raise OrchestratorError(f"Failed to load state: {e}") from e
+
+        # 3. Iterate through the plan's tasks and execute them
+        if "plan" in plan_data and isinstance(plan_data["plan"], list):
+            tasks = plan_data["plan"]
+            logger.info(f"Executing {len(tasks)} tasks")
+            execution_engine.execute_plan(plan_data) # Pass the entire plan_data to execution engine
+        else:
+            logger.warning("No tasks found in the plan to execute.")
+
+        # 4. Save the final state
+        try:
+            state_manager.save_state()
+            logger.info(f"Saved final state to {state_file_path}")
+        except Exception as e:
+            logger.error(f"Failed to save state to {state_file_path}: {e}")
+            # Handle save error - maybe log and continue, or raise
+            raise OrchestratorError(f"Failed to save state: {e}") from e
 
     def _determine_next_backup_filename(self, original_filepath_str: str) -> Path:
         """Determines the next available filename for backing up the original file.

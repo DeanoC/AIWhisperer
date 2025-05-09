@@ -1,0 +1,40 @@
+{
+  "description": "Design the high-level architecture and components for the execution engine, focusing on task execution order and state management.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "planning",
+    "input_artifacts": [
+      "project_dev/rfc/runner/execution-engine.md",
+      "project_dev/rfc/runner/plan-ingestion-and-parsing.md",
+      "project_dev/rfc/runner/state-management.md"
+    ],
+    "output_artifacts": [
+      "project_dev/in_dev/execution-engine/execution_engine_design.md"
+    ],
+    "instructions": [
+      "Read and understand the existing RFC documents related to the execution engine, plan ingestion, and state management.",
+      "Outline the core components required for the execution engine, such as a task queue, a task runner, and a state manager.",
+      "Define precisely how tasks will be received from the output of the plan ingestion and parsing step.",
+      "Specify the different states a task can be in (e.g., PENDING, IN_PROGRESS, COMPLETED, FAILED) and how transitions between these states will be managed.",
+      "Describe the mechanism for ensuring tasks are executed strictly in the sequential order defined by the plan.",
+      "Detail how the output artifacts of a completed task will be made available as input artifacts for subsequent tasks in the sequence.",
+      "Document the high-level design, including component interactions and data flow, in the file `project_dev/in_dev/execution-engine/execution_engine_design.md`."
+    ],
+    "constraints": [
+      "Focus the design exclusively on sequential task execution.",
+      "Do not include any design elements for conditional logic or concurrent execution in this phase.",
+      "The design must be documented in Markdown format."
+    ],
+    "validation_criteria": [
+      "The file `project_dev/in_dev/execution-engine/execution_engine_design.md` must exist.",
+      "The design document must clearly outline the core components of the execution engine.",
+      "The design document must clearly define how tasks are received and processed from the parsed plan.",
+      "The design document must include a clear and defined approach for managing task states and transitions.",
+      "The design document must explicitly describe the mechanism for ensuring sequential task execution.",
+      "The design document must address how input and output artifacts are handled between sequential tasks."
+    ]
+  },
+  "step_id": "plan_execution_engine",
+  "task_id": "6dda1297-bb9c-433a-bcbc-093dafd62925",
+  "subtask_id": "36688bf6-7950-432b-aff3-a4d1b6e01a69"
+}

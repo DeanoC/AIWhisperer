@@ -1,0 +1,42 @@
+{
+  "description": "Update documentation to describe the state management feature.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "documentation",
+    "input_artifacts": [
+      "docs/index.md",
+      "docs/internal_process.md",
+      "project_dev/rfc/runner/state-management.md",
+      "project_dev/in_dev/state-management/state_management_design.md"
+    ],
+    "output_artifacts": [
+      "docs/index.md",
+      "docs/internal_process.md"
+    ],
+    "instructions": [
+      "Locate the relevant sections in `docs/index.md` that describe the runner's capabilities.",
+      "Add a new section or update an existing one in `docs/index.md` to clearly explain that the runner now supports state management, allowing tasks to persist their state and resume execution.",
+      "Ensure the language in `docs/index.md` is user-friendly and highlights the benefit of this feature.",
+      "Locate the relevant sections in `docs/internal_process.md` that describe the runner's architecture and components.",
+      "Add a new section or update an existing one in `docs/internal_process.md` to describe the state management implementation.",
+      "Explain how state is captured, stored, and loaded.",
+      "Briefly mention the location where state files are stored (if applicable and not sensitive).",
+      "Reference the State Management RFC (`project_dev/rfc/runner/state-management.md`) and the State Management Design document (`project_dev/in_dev/state-management/state_management_design.md`) within `docs/internal_process.md` for more detailed information.",
+      "Review both updated documents (`docs/index.md` and `docs/internal_process.md`) for clarity, accuracy, and consistency with the implemented feature."
+    ],
+    "constraints": [
+      "Only modify the specified documentation files (`docs/index.md`, `docs/internal_process.md`).",
+      "Do not introduce technical jargon in the user-facing documentation (`docs/index.md`) unless clearly explained."
+    ],
+    "validation_criteria": [
+      "Documentation files (`docs/index.md`, `docs/internal_process.md`) are updated.",
+      "The user-facing documentation (`docs/index.md`) includes a clear explanation of the state management capability and its benefits.",
+      "The internal documentation (`docs/internal_process.md`) includes a brief description of the state management implementation details.",
+      "The internal documentation (`docs/internal_process.md`) includes references to the State Management RFC and Design documents.",
+      "The documentation is grammatically correct and easy to understand."
+    ]
+  },
+  "step_id": "update_documentation",
+  "task_id": "2ee64d42-4ddf-44eb-ac71-e9d5d00816de",
+  "subtask_id": "458026ae-a4a5-4799-a4e5-4253c6f33cb0"
+}

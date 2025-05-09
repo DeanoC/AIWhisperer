@@ -123,6 +123,16 @@ When creating or modifying AI prompts for the system:
 
 4. **Clear Instructions**: Provide clear instructions for the AI to focus on the core task requirements and structure.
 
+## State Management
+
+The State Management feature is integrated into the runner's internal process to provide persistence and resume capabilities. The `StateManager` class is responsible for handling the saving, loading, and updating of the execution state.
+
+- **Initialization**: When a plan execution starts, the `StateManager` is initialized with a path to the state file. If a state file exists at this path, the state is loaded, allowing the runner to potentially resume a previous execution. If no state file is found, a new, empty state is initialized.
+- **Saving State**: The execution state is periodically saved to the state file during the plan execution. This ensures that the progress is preserved and can be resumed if the process is interrupted. The saving process is designed to be atomic to prevent data corruption.
+- **Updating State**: As the runner progresses through the plan, the state is updated to reflect the current status of tasks, store intermediate results, and manage global context such as generated file paths. This includes marking tasks as pending, in-progress, completed, or failed, and storing any output or relevant information from each step.
+
+This integration of state management allows the AI Whisperer runner to maintain context across the execution of a plan, enabling more robust and fault-tolerant task automation.
+
 ## Error Handling
 
 The system includes comprehensive error handling for various scenarios:
@@ -132,5 +142,6 @@ The system includes comprehensive error handling for various scenarios:
 - YAML parsing and validation errors
 - File I/O errors
 - Postprocessing errors
+- State management errors (e.g., file not found, invalid state file)
 
 Each error type has a specific exception class that provides detailed information about the error.

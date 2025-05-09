@@ -1,0 +1,45 @@
+{
+  "description": "Implement the core Execution Engine code based on the design and generated tests.",
+  "depends_on": [],
+  "agent_spec": {
+    "type": "code_generation",
+    "input_artifacts": [
+      "project_dev/in_dev/execution-engine/execution_engine_design.md",
+      "tests/unit/test_execution_engine.py",
+      "tests/integration/test_execution_flow.py",
+      "src/ai_whisperer/plan_parser.py"
+    ],
+    "output_artifacts": [
+      "src/ai_whisperer/execution_engine.py"
+    ],
+    "instructions": [
+      "Create a new Python file at `src/ai_whisperer/execution_engine.py`.",
+      "Define a class or set of functions within `src/ai_whisperer/execution_engine.py` that will serve as the core Execution Engine.",
+      "Implement the necessary structure to accept a parsed plan object, likely originating from `src/ai_whisperer/plan_parser.py`.",
+      "Develop the logic to iterate through the steps of the provided plan in the defined sequential order.",
+      "Implement functionality to track and manage the state of each task step within the plan. The states should include at least 'pending', 'in-progress', 'completed', and 'failed'.",
+      "Include a basic mechanism to represent the 'execution' of a task step. Initially, this can be a placeholder function, a simple print statement indicating which step is being 'executed', or a mock call that simulates execution without involving actual agent interaction.",
+      "Ensure the implementation adheres to the design principles outlined in `project_dev/in_dev/execution-engine/execution_engine_design.md`.",
+      "Write the code with the goal of passing the unit tests defined in `tests/unit/test_execution_engine.py` and the integration tests in `tests/integration/test_execution_flow.py`. You may need to implement mock objects or simple return values to satisfy test requirements at this stage.",
+      "Review existing code in the `src/ai_whisperer/` directory, particularly `src/ai_whisperer/plan_parser.py`, to understand the structure of the parsed plan and identify any existing utilities or classes that could be leveraged or integrated with the Execution Engine."
+    ],
+    "constraints": [
+      "The implementation must strictly focus on the sequential processing of plan steps and the management of task states.",
+      "Do not implement any logic for interacting with external agents or calling actual agent execution functions.",
+      "Avoid implementing any form of conditional logic for skipping steps or branching execution.",
+      "Do not implement any concurrency or parallel execution features."
+    ],
+    "validation_criteria": [
+      "The file `src/ai_whisperer/execution_engine.py` has been created.",
+      "The code within `src/ai_whisperer/execution_engine.py` contains a class or functions capable of receiving a plan structure.",
+      "The implementation includes logic for iterating through plan steps sequentially.",
+      "The code demonstrates the ability to manage and update task states (pending, in-progress, completed, failed) for each step.",
+      "A basic placeholder or print statement exists to indicate the 'execution' of a task step, without involving actual agent calls.",
+      "The code structure generally aligns with the high-level design described in `project_dev/in_dev/execution-engine/execution_engine_design.md`.",
+      "The implemented code should pass the provided unit and integration tests, potentially requiring the use of mocks or simple return values for dependencies not yet implemented."
+    ]
+  },
+  "step_id": "implement_execution_engine",
+  "task_id": "6dda1297-bb9c-433a-bcbc-093dafd62925",
+  "subtask_id": "01187200-e735-4e96-953a-ba9d350e06af"
+}
