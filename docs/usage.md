@@ -141,7 +141,7 @@ Each **step object** within the `plan` array includes:
   * `validation_criteria`: How to check for successful completion.
 * `file_path` (Optional): If a step's details are extensive, they can be in a separate subtask JSON file, and this field will contain the relative path to that file.
 
-For the detailed structure, refer to the [task schema](src/ai_whisperer/schemas/task_schema.json).
+For the detailed structure, refer to the [task schema](src/ai_whisperer/schemas/initial_plan_schema.json).
 
 **Subtask Files (Optional):**
 
@@ -153,7 +153,7 @@ If a step in the main plan references a `file_path`, that file is a subtask JSON
 * `description`: Detailed description of the subtask.
 * `instructions`: Specific instructions for the agent for this subtask.
 
-For the detailed structure, refer to the [subtask schema](src/ai_whisperer/schemas/subtask_schema.json).
+For the detailed structure, refer to the [subtask schema](src/ai_whisperer/schemas/subinitial_plan_schema.json).
 
 The runner, via the `PlanParser` ([`src/ai_whisperer/plan_parser.py`](src/ai_whisperer/plan_parser.py:1)), will read the main plan file, validate its structure and the structure of any referenced subtask files, and then proceed with execution.
 

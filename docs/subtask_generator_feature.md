@@ -94,7 +94,7 @@ The prompt template (`prompts/subtask_generator_default.md`) guides the AI in ge
 
 ## Schema Validation
 
-Generated subtasks are validated against a JSON schema (`src/ai_whisperer/schemas/task_schema.json`) to ensure consistency and correctness.
+Generated subtasks are validated against a JSON schema (`src/ai_whisperer/schemas/initial_plan_schema.json`) to ensure consistency and correctness.
 
 ## Error Handling
 

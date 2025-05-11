@@ -1,5 +1,5 @@
 """
-Integration tests for the postprocessing steps with orchestrator and subtask generator.
+Integration tests for the postprocessing steps with initial plan and subtask generator.
 """
 
 import pytest

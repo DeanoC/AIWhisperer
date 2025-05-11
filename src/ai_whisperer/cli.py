@@ -117,7 +117,7 @@ def main(args=None) -> list[BaseCommand]:
     run_parser.add_argument(
         "--config",
         required=True,
-        help="Path to the configuration YAML file. Required for orchestrator and AI interactions.",
+        help="Path to the configuration YAML file.",
     )
 
      # Use parse_args (let argparse handle errors and exit codes)

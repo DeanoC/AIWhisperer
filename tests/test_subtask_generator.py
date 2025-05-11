@@ -241,7 +241,7 @@ Produce **only** the JSON document, enclosed in ```json fences.
         # Convert Path objects to string for consistent comparison
         file_path_str = str(file_path)
 
-        if "subtask_schema.json" in file_path_str and "schemas" in file_path_str:
+        if "subinitial_plan_schema.json" in file_path_str and "schemas" in file_path_str:
             # Return a mock file handle with schema content
             return mock_open(read_data=schema_content)()
         elif "subtask_generator_default.md" in file_path_str and "prompts" in file_path_str:
@@ -341,7 +341,7 @@ def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock
         assert call_kwargs["params"] == mock_openrouter_client.params
 
         # 2. Verify schema validation - fix the test to use ANY for expected values that vary
-        expected_schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
+        expected_schema_path = Path("src/ai_whisperer/schemas/subinitial_plan_schema.json")
 
         # Instead of asserting the exact call, check that it was called once
         # and then verify important attributes separately
@@ -441,7 +441,7 @@ def test_generate_subtask_file_write_error(
     mock_filesystem["open"].side_effect = IOError("Disk full")
 
     # Create a result_data with a schema to trigger the special case in subtask_generator.py
-    # The schema here should match the actual subtask_schema.json for consistency
+    # The schema here should match the actual subinitial_plan_schema.json for consistency
     result_data = {
         "schema": {
             "type": "object",

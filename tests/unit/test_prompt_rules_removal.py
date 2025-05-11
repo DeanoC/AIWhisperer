@@ -1,6 +1,6 @@
 """
 Tests to verify that specific rules related to fixed items have been removed
-from the default orchestrator and subtask generator prompts.
+from the default initial plan and subtask generator prompts.
 """
 
 import pytest
@@ -10,7 +10,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 # Paths to the prompt files
-ORCHESTRATOR_PROMPT_PATH = PROJECT_ROOT / "prompts" / "orchestrator_default.md"
+INITIAL_PLAN_PROMPT_PATH = PROJECT_ROOT / "prompts" / "initial_plan_default.md"
 SUBTASK_GENERATOR_PROMPT_PATH = PROJECT_ROOT / "prompts" / "subtask_generator_default.md"
 
 
@@ -24,12 +24,12 @@ def read_prompt_file(file_path):
         return ""
 
 
-class TestOrchestratorPromptRules:
-    """Tests for the orchestrator prompt rules."""
+class TestInitialPlanPromptRules:
+    """Tests for the initial plan prompt rules."""
 
     def test_input_hashes_rule_removed(self):
         """Test that the rule requiring input_hashes has been removed."""
-        prompt_content = read_prompt_file(ORCHESTRATOR_PROMPT_PATH)
+        prompt_content = read_prompt_file(INITIAL_PLAN_PROMPT_PATH)
 
         # Check for absence of the specific rule text
         assert (
@@ -42,7 +42,7 @@ class TestOrchestratorPromptRules:
 
     def test_task_id_rule_removed(self):
         """Test that the rule requiring task_id generation has been removed."""
-        prompt_content = read_prompt_file(ORCHESTRATOR_PROMPT_PATH)
+        prompt_content = read_prompt_file(INITIAL_PLAN_PROMPT_PATH)
 
         # Check for absence of the specific rule text
         assert "task_id: A unique identifier for this task (generate a UUID)" not in prompt_content
@@ -60,9 +60,9 @@ class TestSubtaskGeneratorPromptRules:
         assert "subtask_id: The unique identifier for this step (MUST match the input subtask_id)" not in prompt_content
 
 
-def test_orchestrator_prompt_exists():
-    """Test that the orchestrator prompt file exists."""
-    assert ORCHESTRATOR_PROMPT_PATH.exists(), f"Orchestrator prompt file not found at {ORCHESTRATOR_PROMPT_PATH}"
+def test_initial_plan_prompt_exists():
+    """Test that the initial plan prompt file exists."""
+    assert INITIAL_PLAN_PROMPT_PATH.exists(), f"Initial plan prompt file not found at {INITIAL_PLAN_PROMPT_PATH}"
 
 
 def test_subtask_generator_prompt_exists():

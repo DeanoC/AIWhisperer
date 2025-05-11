@@ -105,7 +105,7 @@ class ParserPlan:
             raise
 
         try:
-            validate_against_schema(raw_plan_data, "task_schema.json")
+            validate_against_schema(raw_plan_data, "initial_plan_schema.json")
         except ValidationError as e:
             raise PlanValidationError(f"Task validation failed: {e}") from e
         except Exception as e:
@@ -167,7 +167,7 @@ class ParserPlan:
             subtask_id_for_error = step_json.get("subtask_id", f"index {i}")
 
             try:
-                validate_against_schema(step, "subtask_schema.json")
+                validate_against_schema(step, "subinitial_plan_schema.json")
             except ValidationError as e:
                 raise SubtaskValidationError(
                     f"Subtask validation failed for {step_path} (referenced in step '{subtask_id_for_error}'): {e}"
@@ -204,7 +204,7 @@ class ParserPlan:
         self._ensure_loaded()
         return self._plan_data.get("plan", [])
 
-    # Removed get_task_dependencies as 'depends_on' is no longer in subtask_schema.json
+    # Removed get_task_dependencies as 'depends_on' is no longer in subinitial_plan_schema.json
 
     def get_subtask_content(self, subtask_id: str) -> Optional[Dict[str, Any]]:
         """

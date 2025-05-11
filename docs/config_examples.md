@@ -19,7 +19,7 @@ openrouter:
 
 # --- Prompt Templates ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
 # --- Other Application Settings ---
@@ -45,7 +45,7 @@ openrouter:
 
 # --- Prompt Templates ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
 # --- Task-Specific Model Settings ---

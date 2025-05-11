@@ -98,7 +98,7 @@ The process involves the following key stages:
         - The subtask JSON file is read using `_read_json_file`.
             - If the subtask file is not found, a `SubtaskFileNotFoundError` is raised.
             - If the subtask file contains malformed JSON, a `SubtaskInvalidJSONError` is raised.
-        - The content of the subtask JSON is then validated against the `subtask_schema.json` using the `validate_subtask` function from [`src/ai_whisperer/json_validator.py`](src/ai_whisperer/json_validator.py:1).
+        - The content of the subtask JSON is then validated against the `subinitial_plan_schema.json` using the `validate_subtask` function from [`src/ai_whisperer/json_validator.py`](src/ai_whisperer/json_validator.py:1).
             - If schema validation fails, a `SubtaskValidationError` is raised.
         - If successfully loaded and validated, the content of the subtask is embedded directly into the main plan's step data under the key `loaded_subtask_content`.
 

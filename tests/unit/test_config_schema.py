@@ -31,7 +31,7 @@ def mock_env_vars():
     return {"OPENROUTER_API_KEY": "test-api-key"}
 
 
-# Test case 1: Valid configuration with models defined for both 'Subtask Generation' and 'Orchestrator'
+# Test case 1: Valid configuration with models defined for both 'Subtask Generation' and 'Initial Plan'
 @patch("src.ai_whisperer.config._load_prompt_content", return_value="mocked prompt content")
 def test_valid_task_models_config(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
@@ -46,7 +46,7 @@ openrouter:
 
 # --- Prompt Templates ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
 # --- Task-Specific Model Settings ---
@@ -57,7 +57,7 @@ task_models:
     params:
       temperature: 0.5
       max_tokens: 4096
-  "Orchestrator":
+  "Initial Plan":
     provider: "openrouter"
     model: "mistralai/mistral-large"
     params:
@@ -89,13 +89,13 @@ output_dir: "./output/"
         assert subtask_gen["params"]["temperature"] == 0.5, "Temperature is incorrect"
         assert subtask_gen["params"]["max_tokens"] == 4096, "Max tokens is incorrect"
 
-        # Verify Orchestrator configuration
-        assert "Orchestrator" in task_models, "Orchestrator task is missing"
-        orchestrator = task_models["Orchestrator"]
-        assert orchestrator["provider"] == "openrouter", "Provider should be 'openrouter'"
-        assert orchestrator["model"] == "mistralai/mistral-large", "Model is incorrect"
-        assert orchestrator["params"]["temperature"] == 0.8, "Temperature is incorrect"
-        assert orchestrator["params"]["max_tokens"] == 8192, "Max tokens is incorrect"
+        # Verify Initial Plan configuration
+        assert "initial_plan" in task_models, "Initial Plan task is missing"
+        initial_plan = task_models["initial_plan"]
+        assert initial_plan["provider"] == "openrouter", "Provider should be 'openrouter'"
+        assert initial_plan["model"] == "mistralai/mistral-large", "Model is incorrect"
+        assert initial_plan["params"]["temperature"] == 0.8, "Temperature is incorrect"
+        assert initial_plan["params"]["max_tokens"] == 8192, "Max tokens is incorrect"
 
     finally:
         # Clean up the temporary file
@@ -118,12 +118,26 @@ openrouter:
 
 # --- Prompt Templates ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
 # --- Task-Specific Model Settings ---
 task_models:
-  # Missing 'Subtask Generation' and 'Orchestrator' tasks
+  # Missing 'Subtask Generation' and 'Initial Plan' tasks
+  "subtask_generation": {
+    "model": "anthropic/claude-3-opus",
+    "params": {
+      "temperature": 0.5,
+      "max_tokens": 4096
+    }
+  },
+  "initial_plan": {
+    "model": "mistralai/mistral-large",
+    "params": {
+      "temperature": 0.8,
+      "max_tokens": 8192
+    }
+  }
 
 # --- Other Application Settings ---
 output_dir: "./output/"
@@ -162,18 +176,18 @@ openrouter:
 
 # --- Prompt Templates ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
 # --- Task-Specific Model Settings ---
 task_models:
-  "Subtask Generation":
+  "subtask_generation":
     # Missing 'provider' field
     model: "anthropic/claude-3-opus"
     params:
       temperature: 0.5
       max_tokens: 4096
-  "Orchestrator":
+  "initial_plan":
     provider: "openrouter"
     # Missing 'model' field
     params:
@@ -201,10 +215,10 @@ output_dir: "./output/"
         subtask_gen = task_models["Subtask Generation"]
         assert "provider" not in subtask_gen, "Provider should be missing"
 
-        # Verify Orchestrator configuration is invalid (missing model)
-        assert "Orchestrator" in task_models, "Orchestrator task is missing"
-        orchestrator = task_models["Orchestrator"]
-        assert "model" not in orchestrator, "Model should be missing"
+        # Verify Initial Plan configuration is invalid (missing model)
+        assert "initial_plan" in task_models, "Initial Plan task is missing"
+        initial_plan = task_models["initial_plan"]
+        assert "model" not in initial_plan, "Model should be missing"
 
     finally:
         # Clean up the temporary file
@@ -227,19 +241,19 @@ openrouter:
 
 # --- Prompt Templates ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
 # --- Task-Specific Model Settings ---
 task_models:
-  "Subtask Generation":
+  "subtask_generation":
     provider: "openrouter"
     model: "anthropic/claude-3-opus"
     params:
       temperature: 0.5
       max_tokens: 4096
     unexpected_key: "unexpected_value"  # Unexpected key
-  "Orchestrator":
+  "initial_plan":
     provider: 123  # Incorrect data type (should be string)
     model: ["mistralai/mistral-large"]  # Incorrect data type (should be string)
     params:
@@ -268,13 +282,13 @@ output_dir: "./output/"
         assert "unexpected_key" in subtask_gen, "Unexpected key is missing"
         assert subtask_gen["unexpected_key"] == "unexpected_value", "Unexpected value is incorrect"
 
-        # Verify Orchestrator configuration has incorrect data types
-        assert "Orchestrator" in task_models, "Orchestrator task is missing"
-        orchestrator = task_models["Orchestrator"]
-        assert orchestrator["provider"] == 123, "Provider should be an integer (incorrect type)"
-        assert isinstance(orchestrator["model"], list), "Model should be a list (incorrect type)"
-        assert orchestrator["params"]["temperature"] == "0.8", "Temperature should be a string (incorrect type)"
-        assert orchestrator["params"]["max_tokens"] == "8192", "Max tokens should be a string (incorrect type)"
+        # Verify Initial Plan configuration has incorrect data types
+        assert "initial_plan" in task_models, "Initial Plan task is missing"
+        initial_plan = task_models["initial_plan"]
+        assert initial_plan["provider"] == 123, "Provider should be an integer (incorrect type)"
+        assert isinstance(initial_plan["model"], list), "Model should be a list (incorrect type)"
+        assert initial_plan["params"]["temperature"] == "0.8", "Temperature should be a string (incorrect type)"
+        assert initial_plan["params"]["max_tokens"] == "8192", "Max tokens should be a string (incorrect type)"
 
     finally:
         # Clean up the temporary file

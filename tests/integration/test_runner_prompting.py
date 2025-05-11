@@ -13,13 +13,13 @@ from src.ai_whisperer.exceptions import TaskExecutionError
 MOCK_CONFIG = {
     "runner_agent_type_prompts_content": {
         "ai_interaction": "This is the ai_interaction agent prompt content.",
-        "orchestrator": "This is the orchestrator agent prompt content.",
+        "initial_plan": "This is the initial_plan agent prompt content.",
         "subtask_generator": "This is the subtask_generator agent prompt content.",
     },
     "global_runner_default_prompt_content": None,  # Will be populated from file
     "task_models": {
         "default": "gpt-3.5-turbo",
-        "orchestrator": {"model": "gpt-3.5-turbo"},
+        "initial_plan": {"model": "gpt-3.5-turbo"},
         "subtask_generator": {"model": "gpt-3.5-turbo"},
         "refine_requirements": {"model": "gpt-3.5-turbo"},
         "ai_interaction": {"model": "gpt-3.5-turbo"},  # Add model for ai_interaction task
@@ -66,7 +66,7 @@ prompts:
 
 task_models:
   default: "gpt-3.5-turbo"
-  orchestrator: # Add model for orchestrator task
+  initial_plan: # Add model for initial_plan task
     model: "gpt-3.5-turbo"
   subtask_generator: # Add model for subtask_generator task
     model: "gpt-3.5-turbo"

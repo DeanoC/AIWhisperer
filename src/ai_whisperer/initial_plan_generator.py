@@ -45,7 +45,7 @@ class InitialPlanGenerator:
             raise ConfigError("'openrouter' configuration section is missing.")
 
         # Get the model configuration for this task from the loaded config
-        model_config = self.config.get("task_model_configs", {}).get("orchestrator") # Still using 'orchestrator' key for now
+        model_config = self.config.get("task_model_configs", {}).get("initial_plan")
         if not model_config:
             logger.error("Model configuration for initial plan generation task is missing in the loaded config.")
             raise ConfigError("Model configuration for initial plan generation task is missing in the loaded config.")
@@ -66,7 +66,7 @@ class InitialPlanGenerator:
                 # Fallback for environments where __file__ might not be defined (e.g., some test runners)
                 PACKAGE_ROOT = Path(".").resolve() / "src" / "ai_whisperer"
 
-            DEFAULT_SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "task_schema.json"
+            DEFAULT_SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "initial_plan_schema.json"
 
             schema_to_load = schema_path if schema_path is not None else DEFAULT_SCHEMA_PATH
             logger.info(f"Loading validation schema from: {schema_to_load}")
@@ -135,7 +135,7 @@ class InitialPlanGenerator:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(json_content, f, indent=2)
 
-        logger.info(f"Successfully saved initial orchestrator JSON to {output_path}")
+        logger.info(f"Successfully saved initial plan JSON to {output_path}")
         return output_path
 
 
@@ -183,7 +183,7 @@ class InitialPlanGenerator:
 
         try:
             # 1. Get Prompt Template Content from loaded config
-            prompt_template = self.config.get("task_prompts_content", {}).get("orchestrator") # Still using 'orchestrator' key for now
+            prompt_template = self.config.get("task_prompts_content", {}).get("initial_plan")
             if not prompt_template:
                 raise ConfigError("Prompt content for initial plan generation task is missing in the loaded config.")
 
@@ -220,7 +220,7 @@ class InitialPlanGenerator:
                 model = self.openrouter_client.model
                 params = self.openrouter_client.params
 
-                # print(f"DEBUG: Orchestrator final_prompt (first 500 chars):\n{final_prompt[:500]}...") # Removed debug log
+                # print(f"DEBUG: initial_plan final_prompt (first 500 chars):\n{final_prompt[:500]}...") # Removed debug log
                 api_response_content = self.openrouter_client.call_chat_completion(
                     prompt_text=final_prompt, model=model, params=params
                 )

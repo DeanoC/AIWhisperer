@@ -3,7 +3,7 @@ import json
 import pytest
 
 def test_schema_validation():
-    schema_path = "src/ai_whisperer/schemas/task_schema.json"
+    schema_path = "src/ai_whisperer/schemas/initial_plan_schema.json"
     with open(schema_path, "r") as f:
         schema = json.load(f)
     

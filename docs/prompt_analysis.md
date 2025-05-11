@@ -2,7 +2,7 @@
 
 This document identifies the specific rules, instructions, or examples within the default prompts that explicitly mention or require the inclusion of fixed items like hashes, task_id, and subtask_id.
 
-## Orchestrator Default Prompt (`prompts/orchestrator_default.md`)
+## Orchestrator Default Prompt (`prompts/initial_plan_default.md`)
 
 The orchestrator prompt currently requires the AI to include input hashes and task_id in its output. The following sections should be removed or modified:
 

@@ -48,10 +48,10 @@ def sample_overview_plan_data():
 
 @pytest.fixture
 def mock_config():
-    """Create a mock configuration for the Orchestrator."""
+    """Create a mock configuration for the Initial Plan."""
     return {
         "openrouter": {"api_key": "test_key", "model": "test_model"},
-        "task_model_configs": {"orchestrator": {"model": "test_model", "params": {}}},
+        "task_model_configs": {"initial_plan": {"model": "test_model", "params": {}}},
     }
 
 
@@ -104,8 +104,8 @@ class TestRunnerStateIntegration:
             assert loaded_state["tasks"][subtask_id]["status"] == "pending"
             assert loaded_state["tasks"][subtask_id]["result"] is None
 
-    def test_orchestrator_run_plan_creates_state_with_overview(self, temp_dir, sample_overview_plan_data, mock_config):
-        """Test that running a plan through the Orchestrator creates and updates state using an overview plan."""
+    def test_initial_plan_run_plan_creates_state_with_overview(self, temp_dir, sample_overview_plan_data, mock_config):
+        """Test that running a plan creates and updates state."""
         # Create a temporary directory for the overview plan and subtasks
         overview_dir = os.path.join(temp_dir, "overview_plan")
         os.makedirs(overview_dir)

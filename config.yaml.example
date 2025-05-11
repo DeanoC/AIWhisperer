@@ -25,10 +25,10 @@ openrouter:
   app_name: "AIWhisperer"           # Example: Your application's name (sent as X-Title).
 
 # --- Prompt Templates --- Required Section ---
-prompts:
-  # Optional: Path to the prompt template used for generating the overall task plan (orchestrator).
-  # Defaults to 'prompts/orchestrator_default.md' if omitted.
-  # orchestrator_prompt_path: "prompts/orchestrator_default.md"
+prompts:0
+  # Optional: Path to the prompt template used for generating the overall initial plan.
+  # Defaults to 'prompts/initial_plan_default.md' if omitted.
+  # initial_plan_prompt_path: "prompts/initial_plan_default.md"
 
   # Optional: Path to the prompt template used for refining individual subtasks.
   # Defaults to 'prompts/subtask_generator_default.md' if omitted.
@@ -37,8 +37,6 @@ prompts:
 # --- Other Application Settings (Optional) ---
 
 # output_dir: "./generated_tasks/" # Optional: Directory where generated YAML task files will be saved. Defaults to "./output/".
-
-# prompt_override_path: "./custom_prompts/my_orchestrator_prompt.md" # DEPRECATED: Use 'orchestrator_prompt_path' inside the 'prompts' section instead.
 
 # logging:
 #   level: "INFO" # Example: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)

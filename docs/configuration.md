@@ -18,7 +18,7 @@ openrouter:
 
 # --- Prompt Templates --- Required Section ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"       # Optional: Path to orchestrator prompt
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"       # Optional: Path to orchestrator prompt
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"  # Optional: Path to subtask generator prompt
 
 # --- Task-Specific Model Settings --- Optional Section ---
@@ -59,7 +59,7 @@ The `prompts` section contains paths to prompt templates used by the application
 
 | Setting | Required | Default | Description |
 |---------|----------|---------|-------------|
-| `orchestrator_prompt_path` | No | "prompts/orchestrator_default.md" | Path to the prompt template used for generating the overall task plan |
+| `initial_plan_prompt_path` | No | "prompts/initial_plan_default.md" | Path to the prompt template used for generating the overall task plan |
 | `subtask_generator_prompt_path` | No | "prompts/subtask_generator_default.md" | Path to the prompt template used for refining individual subtasks |
 
 Paths can be absolute or relative to the configuration file's location.
@@ -127,7 +127,7 @@ openrouter:
     max_tokens: 2048
 
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
   # --- Agent-Type Default Prompts (for Runner/ExecutionEngine Agents) ---
@@ -162,7 +162,7 @@ openrouter:
   timeout_seconds: 120 # Set a custom timeout
 
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
   # --- Agent-Type Default Prompts (for Runner/ExecutionEngine Agents) ---

@@ -14,10 +14,10 @@ DEFAULT_SITE_URL = "http://localhost:8000"
 DEFAULT_APP_NAME = "AIWhisperer"
 DEFAULT_OUTPUT_DIR = "./output/"
 # Default tasks for which prompt content is loaded if not explicitly specified in the configuration.
-# These tasks represent key functionalities of the application, such as orchestrating workflows,
+# These tasks represent key functionalities of the application, such as initial_plan workflows,
 # generating subtasks, and refining requirements. Default prompts for these tasks are located
 # in the 'prompts/' directory and are loaded automatically if not overridden in the config.
-DEFAULT_TASKS = ["orchestrator", "subtask_generator", "refine_requirements"]
+DEFAULT_TASKS = ["initial_plan", "subtask_generator", "refine_requirements"]
 
 
 def _load_prompt_content(

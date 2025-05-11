@@ -79,7 +79,7 @@ class SubtaskGenerator:
         Generates a detailed subtask JSON definition for the given input step.
 
         Args:
-            input_step: A dictionary representing the high-level step from the orchestrator.
+            input_step: A dictionary representing the high-level step from the initial plan.
 
         Returns:
             The absolute path to the generated YAML file.
@@ -127,7 +127,7 @@ class SubtaskGenerator:
             # 3. Parse AI Response JSON and apply postprocessing
             try:
                 # Load the subtask schema
-                subtask_schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
+                subtask_schema_path = Path("src/ai_whisperer/schemas/subinitial_plan_schema.json")
                 with open(subtask_schema_path, "r", encoding="utf-8") as f:
                     subtask_schema = json.load(f)
 
@@ -170,7 +170,7 @@ class SubtaskGenerator:
             # 4. Validate Schema (using placeholder function)
             try:
                 # Define the schema path relative to the project root
-                schema_path = Path("src/ai_whisperer/schemas/subtask_schema.json")
+                schema_path = Path("src/ai_whisperer/schemas/subinitial_plan_schema.json")
                 validate_against_schema(generated_data, schema_path)
             except SchemaValidationError as e:
                 # Re-raise schema validation errors specifically

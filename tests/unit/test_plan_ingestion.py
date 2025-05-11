@@ -128,8 +128,8 @@ def create_overview_plan_with_subtasks(tmp_path: Path, request):
 
     # Copy schema files to the temporary directory
     source_schema_dir = os.path.join(os.path.dirname(__file__), "../../src/ai_whisperer/schemas")
-    shutil.copy(os.path.join(source_schema_dir, "subtask_schema.json"), schema_temp_dir)
-    shutil.copy(os.path.join(source_schema_dir, "task_schema.json"), schema_temp_dir)
+    shutil.copy(os.path.join(source_schema_dir, "subinitial_plan_schema.json"), schema_temp_dir)
+    shutil.copy(os.path.join(source_schema_dir, "initial_plan_schema.json"), schema_temp_dir)
 
     # Set the schema directory for the validator
     set_schema_directory(str(schema_temp_dir))

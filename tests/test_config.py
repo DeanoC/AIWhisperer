@@ -29,13 +29,13 @@ def _read_actual_default_prompt_content(prompt_relative_path):
 
 # Define expected default prompt content by reading the actual files
 # These are used to verify that load_config correctly loads the default content
-ACTUAL_DEFAULT_ORCH_CONTENT = _read_actual_default_prompt_content("prompts/orchestrator_default.md")
+ACTUAL_DEFAULT_ORCH_CONTENT = _read_actual_default_prompt_content("prompts/initial_plan_default.md")
 ACTUAL_DEFAULT_SUBTASK_CONTENT = _read_actual_default_prompt_content("prompts/subtask_generator_default.md")
 
 # --- Test Data ---
 VALID_OPENROUTER_CONFIG_NO_KEY = {"model": "test_model", "params": {"temperature": 0.7}}
 
-VALID_PROMPTS_CONFIG_PATHS = {"orchestrator": "custom_orchestrator.md", "subtask_generator": "custom_subtask.md"}
+VALID_PROMPTS_CONFIG_PATHS = {"initial_plan": "custom_initial_plan.md", "subtask_generator": "custom_subtask.md"}
 
 VALID_CONFIG_DATA_NEW = {
     "openrouter": VALID_OPENROUTER_CONFIG_NO_KEY,
@@ -95,7 +95,7 @@ def create_test_files(tmp_path):
 
     # Create default prompt files relative to tmp_path, simulating project structure
     # These are needed so load_config can find them when testing default loading
-    default_orch_rel_path = Path("prompts/orchestrator_default.md")
+    default_orch_rel_path = Path("prompts/initial_plan_default.md")
     default_subtask_rel_path = Path("prompts/subtask_generator_default.md")
     default_orch_content = ACTUAL_DEFAULT_ORCH_CONTENT  # Use actual content for fixture
     default_subtask_content = ACTUAL_DEFAULT_SUBTASK_CONTENT  # Use actual content for fixture
@@ -137,9 +137,9 @@ def mock_load_dotenv(mock_dotenv, monkeypatch):
 def test_load_config_success_new_prompts(create_test_files, monkeypatch):
     """Tests loading valid config with new prompt path structure."""
     (_create_file, _) = create_test_files
-    custom_orch_content = "Custom Orchestrator Content"
+    custom_orch_content = "Custom Initial Plan Content"
     custom_subtask_content = "Custom Subtask Content"
-    custom_orch_path_str = VALID_PROMPTS_CONFIG_PATHS["orchestrator"]
+    custom_orch_path_str = VALID_PROMPTS_CONFIG_PATHS["initial_plan"]
     custom_subtask_path_str = VALID_PROMPTS_CONFIG_PATHS["subtask_generator"]
     _create_file(custom_orch_path_str, custom_orch_content)
     _create_file(custom_subtask_path_str, custom_subtask_content)
@@ -157,12 +157,12 @@ def test_load_config_success_new_prompts(create_test_files, monkeypatch):
     assert config["output_dir"] == VALID_CONFIG_DATA_NEW["output_dir"]
 
     assert "task_prompts" in config
-    assert config["task_prompts"]["orchestrator"] == VALID_PROMPTS_CONFIG_PATHS["orchestrator"]
+    assert config["task_prompts"]["initial_plan"] == VALID_PROMPTS_CONFIG_PATHS["initial_plan"]
     assert config["task_prompts"]["subtask_generator"] == VALID_PROMPTS_CONFIG_PATHS["subtask_generator"]
 
     assert "prompt_override_path" not in config  # Ensure old key is not present
     assert "task_prompts_content" in config  # Ensure new content key is present
-    assert config["task_prompts_content"]["orchestrator"] == custom_orch_content
+    assert config["task_prompts_content"]["initial_plan"] == custom_orch_content
     assert config["task_prompts_content"]["subtask_generator"] == custom_subtask_content
 
 
@@ -178,10 +178,10 @@ def test_load_config_success_empty_task_prompts(create_test_files, monkeypatch):
     assert config["openrouter"]["api_key"] == mock_api_key
     assert "task_prompts" in config
     # Updated assertion to expect default tasks with None when input task_prompts is empty
-    assert config["task_prompts"] == {"orchestrator": None, "subtask_generator": None, "refine_requirements": None}
+    assert config["task_prompts"] == {"initial_plan": None, "subtask_generator": None, "refine_requirements": None}
     assert "task_prompts_content" in config  # Ensure new content key is present
     # Updated assertion to check for actual default content
-    assert config["task_prompts_content"]["orchestrator"] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config["task_prompts_content"]["initial_plan"] == ACTUAL_DEFAULT_ORCH_CONTENT
     assert config["task_prompts_content"]["subtask_generator"] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
 
@@ -272,13 +272,13 @@ def test_load_config_optional_keys_openrouter(create_test_files, monkeypatch):
     assert config["openrouter"]["app_name"] == DEFAULT_APP_NAME
     # Updated assertion to expect default tasks with None when input task_prompts is missing
     assert "task_prompts" in config and config["task_prompts"] == {
-        "orchestrator": None,
+        "initial_plan": None,
         "subtask_generator": None,
         "refine_requirements": None,
     }
     assert "task_prompts_content" in config  # Ensure new content key is present
     # Updated assertion to check for actual default content
-    assert config["task_prompts_content"]["orchestrator"] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config["task_prompts_content"]["initial_plan"] == ACTUAL_DEFAULT_ORCH_CONTENT
     assert config["task_prompts_content"]["subtask_generator"] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
 
@@ -299,7 +299,7 @@ def test_load_config_optional_key_output_dir(create_test_files, monkeypatch):
     )  # Ensure task_prompts is present and a dict
     assert "task_prompts_content" in config  # Ensure new content key is present
     # Updated assertion to check for actual default content
-    assert config["task_prompts_content"]["orchestrator"] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config["task_prompts_content"]["initial_plan"] == ACTUAL_DEFAULT_ORCH_CONTENT
     assert config["task_prompts_content"]["subtask_generator"] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
     config_data_without = {"openrouter": VALID_OPENROUTER_CONFIG_NO_KEY, "task_prompts": {}}
@@ -312,7 +312,7 @@ def test_load_config_optional_key_output_dir(create_test_files, monkeypatch):
     )  # Ensure task_prompts is present and a dict
     assert "task_prompts_content" in config  # Ensure new content key is present
     # Updated assertion to check for actual default content
-    assert config["task_prompts_content"]["orchestrator"] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config["task_prompts_content"]["initial_plan"] == ACTUAL_DEFAULT_ORCH_CONTENT
     assert config["task_prompts_content"]["subtask_generator"] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
     # Test with task_prompts section missing entirely
@@ -323,13 +323,13 @@ def test_load_config_optional_key_output_dir(create_test_files, monkeypatch):
     assert config["openrouter"]["api_key"] == mock_api_key
     # Updated assertion to expect default tasks with None when input task_prompts is missing
     assert "task_prompts" in config and config["task_prompts"] == {
-        "orchestrator": None,
+        "initial_plan": None,
         "subtask_generator": None,
         "refine_requirements": None,
     }
     assert "task_prompts_content" in config  # Ensure new content key is present
     # Updated assertion to check for actual default content
-    assert config["task_prompts_content"]["orchestrator"] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config["task_prompts_content"]["initial_plan"] == ACTUAL_DEFAULT_ORCH_CONTENT
     assert config["task_prompts_content"]["subtask_generator"] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
 
@@ -345,10 +345,10 @@ def test_load_config_ignores_old_prompt_override(create_test_files, monkeypatch)
     # Assert that the old override path is ignored and task_prompts is empty as specified
     assert "prompt_override_path" not in config
     # Updated assertion to expect default tasks with None when input task_prompts is empty
-    assert config["task_prompts"] == {"orchestrator": None, "subtask_generator": None, "refine_requirements": None}
+    assert config["task_prompts"] == {"initial_plan": None, "subtask_generator": None, "refine_requirements": None}
     assert "task_prompts_content" in config  # Ensure new content key is present
     # Updated assertion to check for actual default content
-    assert config["task_prompts_content"]["orchestrator"] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config["task_prompts_content"]["initial_plan"] == ACTUAL_DEFAULT_ORCH_CONTENT
     assert config["task_prompts_content"]["subtask_generator"] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
 
@@ -358,7 +358,7 @@ def test_load_config_error_custom_prompt_not_found(create_test_files, monkeypatc
     missing_prompt_path_str = "non_existent_prompt.md"
     config_data = {
         "openrouter": {"model": "m"},  # Need model to pass initial validation
-        "task_prompts": {"orchestrator": missing_prompt_path_str},
+        "task_prompts": {"initial_plan": missing_prompt_path_str},
     }
     config_path = _create_file("config_missing_custom_prompt.yaml", config_data)
 
@@ -375,7 +375,7 @@ def test_load_config_success_default_prompts(create_test_files, monkeypatch):
     (_create_file, default_contents) = create_test_files
     config_data = {
         "openrouter": VALID_OPENROUTER_CONFIG_NO_KEY,
-        "task_prompts": {"orchestrator": None, "subtask_generator": None},  # Use default  # Use default
+        "task_prompts": {"initial_plan": None, "subtask_generator": None},  # Use default  # Use default
         "output_dir": "/custom/output",
     }
     config_path = _create_file("config_default_prompts.yaml", config_data)
@@ -387,23 +387,23 @@ def test_load_config_success_default_prompts(create_test_files, monkeypatch):
     assert config["openrouter"]["api_key"] == mock_api_key
     assert config["output_dir"] == "/custom/output"
     assert "task_prompts" in config
-    assert config["task_prompts"]["orchestrator"] is None
+    assert config["task_prompts"]["initial_plan"] is None
     assert config["task_prompts"]["subtask_generator"] is None
     assert "task_prompts_content" in config
-    assert config["task_prompts_content"]["orchestrator"] == ACTUAL_DEFAULT_ORCH_CONTENT
+    assert config["task_prompts_content"]["initial_plan"] == ACTUAL_DEFAULT_ORCH_CONTENT
     assert config["task_prompts_content"]["subtask_generator"] == ACTUAL_DEFAULT_SUBTASK_CONTENT
 
 
 def test_load_config_invalid_prompt_path_type(create_test_files, monkeypatch):
     """Tests ConfigError when a prompt path value is not a string or None."""
     (_create_file, _) = create_test_files
-    config_data = {"openrouter": {"model": "m"}, "task_prompts": {"orchestrator": 123}}  # Invalid type
+    config_data = {"openrouter": {"model": "m"}, "task_prompts": {"initial_plan": 123}}  # Invalid type
     config_path = _create_file("config_invalid_prompt_type.yaml", config_data)
 
     mock_api_key = "env_key_for_invalid_prompt_type_test"
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
 
-    expected_error_msg = r"Invalid prompt path for task 'orchestrator'.*Expected a string."
+    expected_error_msg = r"Invalid prompt path for task 'initial_plan'.*Expected a string."
     with pytest.raises(ConfigError, match=expected_error_msg):
         load_config(str(config_path))
 
@@ -417,10 +417,10 @@ def test_load_config_missing_task_model_config(create_test_files, monkeypatch):
     config_data = {
         "openrouter": VALID_OPENROUTER_CONFIG_NO_KEY,
         "task_prompts": {
-            "orchestrator": None,
+            "initial_plan": None,
             "missing_model_task": "prompts/dummy_missing_model_prompt.md",  # Specify prompt path
         },
-        "task_models": {"orchestrator": {"model": "orch_model"}},
+        "task_models": {"initial_plan": {"model": "orch_model"}},
     }
     config_path = _create_file("config_missing_task_model.yaml", config_data)
 
@@ -442,15 +442,15 @@ def test_load_config_invalid_task_model_settings_type(create_test_files, monkeyp
     _create_file("prompts/missing_model_task_default.md", "Dummy content")  # Create dummy prompt file
     config_data = {
         "openrouter": VALID_OPENROUTER_CONFIG_NO_KEY,
-        "task_prompts": {"orchestrator": None},
-        "task_models": {"orchestrator": "not_a_dict"},  # Invalid type
+        "task_prompts": {"initial_plan": None},
+        "task_models": {"initial_plan": "not_a_dict"},  # Invalid type
     }
     config_path = _create_file("config_invalid_task_model_type.yaml", config_data)
 
     mock_api_key = "env_key_for_invalid_task_model_type_test"
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
 
-    expected_error_msg = r"Invalid model settings for task 'orchestrator'.*Expected a dictionary."
+    expected_error_msg = r"Invalid model settings for task 'initial_plan'.*Expected a dictionary."
     with pytest.raises(ConfigError, match=expected_error_msg):
         load_config(str(config_path))
 
@@ -465,6 +465,6 @@ def test_load_config_missing_openrouter_model(create_test_files, monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
 
     # Updated expected error message to match the task model config validation error
-    expected_error_msg = r"Missing or empty required keys in model config for task 'orchestrator' after merging: model"
+    expected_error_msg = r"Missing or empty required keys in model config for task 'initial_plan' after merging: model"
     with pytest.raises(ConfigError, match=expected_error_msg):
         load_config(str(config_path))

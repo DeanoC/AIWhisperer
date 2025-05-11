@@ -71,7 +71,7 @@ def validate_against_schema(data: dict, schema_name: str):
 
     Args:
         data (dict): The data to validate.
-        schema_name (str): The name of the schema file (e.g., 'subtask_schema.json').
+        schema_name (str): The name of the schema file (e.g., 'subinitial_plan_schema.json').
 
     Returns:
         tuple: (is_valid, error_message_or_none)

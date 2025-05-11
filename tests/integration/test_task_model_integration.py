@@ -20,12 +20,12 @@ SAMPLE_CONFIG_INPUT = {
     },
     "output_dir": "./output/",
     "task_models": {
-        "Subtask Generation": {"model": "anthropic/claude-3-opus", "params": {"temperature": 0.5, "max_tokens": 4096}},
-        "Orchestrator": {"model": "mistralai/mistral-large", "params": {"temperature": 0.8, "max_tokens": 8192}},
+        "subtask_generation": {"model": "anthropic/claude-3-opus", "params": {"temperature": 0.5, "max_tokens": 4096}},
+        "initial_plan": {"model": "mistralai/mistral-large", "params": {"temperature": 0.8, "max_tokens": 8192}},
     },
     "task_prompts": {
         "subtask_generator": "prompts/subtask_generator_default.md",
-        "orchestrator": "prompts/orchestrator_default.md",
+        "initial_plan": "prompts/initial_plan_default.md",
     },
 }
 
@@ -111,14 +111,14 @@ class TestSubtaskGeneratorModelIntegration:
         mock_openrouter.assert_not_called()
 
 
-# Tests for Orchestrator integration with config loading
-class TestOrchestratorModelIntegration:
+# Tests for Initial Plan integration with config loading
+class TestInitialPlanModelIntegration:
     @patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI")  # Correct patch target
-    def test_orchestrator_uses_correct_model_config(self, mock_openrouter):
+    def test_initial_plan_uses_correct_model_config(self, mock_openrouter):
         # Create a mock config that includes the expected task_model_configs and task_prompts_content, simulating load_config output
         mock_loaded_config = SAMPLE_CONFIG_INPUT.copy()
         mock_loaded_config["task_model_configs"] = {
-            "orchestrator": {
+            "initial_plan": {
                 "api_key": "default-api-key",
                 "model": "mistralai/mistral-large",
                 "params": {"temperature": 0.8, "max_tokens": 8192},
@@ -126,36 +126,36 @@ class TestOrchestratorModelIntegration:
                 "app_name": "AIWhisperer",
             }
         }
-        mock_loaded_config["task_prompts_content"] = {"orchestrator": "Mock Orchestrator Prompt Content"}
+        mock_loaded_config["task_prompts_content"] = {"initial_plan": "Mock Initial Plan Prompt Content"}
 
-        # Expected model configuration for Orchestrator from the mock loaded config
-        expected_model_config = mock_loaded_config["task_model_configs"]["orchestrator"]
+        # Expected model configuration for Initial Plan from the mock loaded config
+        expected_model_config = mock_loaded_config["task_model_configs"]["initial_plan"]
 
-        # Create an Orchestrator instance, passing the mock loaded config
-        orchestrator = Orchestrator(config=mock_loaded_config)
+        # Create an Initial Plan instance, passing the mock loaded config
+        initial_plan = InitialPlan(config=mock_loaded_config)
 
         # Verify that OpenRouterAPI was initialized with the correct model configuration from the loaded config
         mock_openrouter.assert_called_once_with(config=expected_model_config)
 
     @patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI")  # Correct patch target
-    def test_orchestrator_handles_missing_task_model_config(self, mock_openrouter):
-        # Create a mock config that includes task_prompts_content but is missing the 'Orchestrator' task model config
+    def test_initial_plan_handles_missing_task_model_config(self, mock_openrouter):
+        # Create a mock config that includes task_prompts_content but is missing the 'Initial Plan' task model config
         mock_loaded_config_missing_task_model = SAMPLE_CONFIG_INPUT.copy()
         mock_loaded_config_missing_task_model["task_model_configs"] = (
             {}
         )  # Simulate missing task model config after loading
         mock_loaded_config_missing_task_model["task_prompts_content"] = (
             {  # Still need prompt content for the check after model config
-                "orchestrator": "Mock Orchestrator Prompt Content"
+                "initial_plan": "Mock Initial Plan Prompt Content"
             }
         )
 
-        # Based on src/ai_whisperer/orchestrator.py, it should raise ConfigError if missing
+        # Based on src/ai_whisperer/initial_plan.py, it should raise ConfigError if missing
         # So, the test should assert that ConfigError is raised when initializing with the mock loaded config.
         with pytest.raises(
-            ConfigError, match="Model configuration for 'orchestrator' task is missing in the loaded config."
+            ConfigError, match="Model configuration for 'initial_plan' task is missing in the loaded config."
         ):
-            Orchestrator(config=mock_loaded_config_missing_task_model)
+            InitialPlan(config=mock_loaded_config_missing_task_model)
 
         # OpenRouterAPI should NOT be called if ConfigError is raised
         mock_openrouter.assert_not_called()
