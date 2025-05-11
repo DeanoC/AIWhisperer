@@ -67,6 +67,11 @@ class OpenRouterAPI:
         else:
             self._cache_store = None
 
+        # Initialize attributes for storing cost and token data
+        self._last_cost: float | None = None
+        self._last_input_tokens: int | None = None
+        self._last_output_tokens: int | None = None
+
     @property
     def cache(self):
         """Exposes the internal cache store for inspection."""
@@ -90,6 +95,19 @@ class OpenRouterAPI:
         }
         # Sort dicts for consistent key generation
         return json.dumps(key_parts, sort_keys=True)
+    def _extract_cost_tokens(self, response_data: Dict[str, Any]) -> tuple[float | None, int | None, int | None]:
+        """
+        Extracts cost, input tokens, and output tokens from the API response data.
+        Assumes the presence of a 'meta' field with 'cost', 'input_tokens', and 'output_tokens'.
+        Returns None for any missing fields.
+        """
+        meta = response_data.get("meta")
+        if meta:
+            cost = meta.get("cost")
+            input_tokens = meta.get("input_tokens")
+            output_tokens = meta.get("output_tokens")
+            return cost, input_tokens, output_tokens
+        return None, None, None
 
     def list_models(self) -> List[Dict[str, Any]]:
         """
@@ -254,7 +272,7 @@ class OpenRouterAPI:
         payload = {
             "model": model,
             "messages": current_messages,
-            "params": merged_params,  # Include merged parameters under a "params" key
+            **merged_params,  # Merge parameters directly into the payload
         }
 
         if tools:
@@ -325,6 +343,11 @@ class OpenRouterAPI:
             try:
                 data = response.json()
                 logger.debug(f"OpenRouter API call_chat_completion response data: {data}")
+
+                # Extract and store cost and token data
+                self._last_cost, self._last_input_tokens, self._last_output_tokens = self._extract_cost_tokens(data)
+                logger.debug(f"Extracted cost: {self._last_cost}, input_tokens: {self._last_input_tokens}, output_tokens: {self._last_output_tokens}")
+
                 choices = data.get("choices")
                 if not choices or not isinstance(choices, list) or len(choices) == 0:
                     raise OpenRouterAPIError(

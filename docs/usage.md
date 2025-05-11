@@ -481,3 +481,8 @@ print(response_content)
 ### 5. Caching
 
 The `OpenRouterAPI` client has a built-in caching mechanism. If enabled in the configuration (see [`docs/configuration.md`](docs/configuration.md:1)), responses for identical requests (model, messages, params, tools, response_format) will be cached in memory for the lifetime of the `OpenRouterAPI` object. This can save costs and reduce latency for repeated calls.
+### 6. Cost and Token Tracking
+
+When using the `OpenRouterAPI` client programmatically, AIWhisperer now tracks the estimated cost and token usage (prompt and completion) for each interaction with OpenRouter models. This information is stored within the `OpenRouterAPI` object after each call.
+
+This is useful for developers who want to monitor their API consumption. For detailed information on what is tracked, how it's handled, and how to access this data programmatically, please refer to the "Cost and Token Tracking" section in the [AI Service Interaction Module Documentation](ai_service_interaction.md).

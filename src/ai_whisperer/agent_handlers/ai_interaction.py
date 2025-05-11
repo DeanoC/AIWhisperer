@@ -3,6 +3,7 @@
 import json
 import traceback
 from pathlib import Path
+from datetime import datetime, timezone
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
 from src.ai_whisperer.exceptions import TaskExecutionError, OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError
 
@@ -168,17 +169,28 @@ def handle_ai_interaction(engine, task_definition, task_id):
                 )
                 raise TaskExecutionError(error_message)
 
-            self.state_manager.store_conversation_turn(
-                task_id, {"role": "user", "content": prompt}
-            )
+            user_turn = {
+                "role": "user",
+                "content": prompt,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            self.state_manager.store_conversation_turn(task_id, user_turn)
+
+            assistant_turn = {
+                "role": "assistant",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+
             if isinstance(result, str):
-                self.state_manager.store_conversation_turn(
-                    task_id, {"role": "assistant", "content": result}
-                )
+                assistant_turn["content"] = result
             elif isinstance(result, dict) and result.get("tool_calls"):
-                self.state_manager.store_conversation_turn(
-                    task_id, {"role": "assistant", "tool_calls": result["tool_calls"]}
-                )
+                assistant_turn["tool_calls"] = result["tool_calls"]
+
+            # Add usage_info if available in the AI response
+            if "usage" in ai_response:
+                 assistant_turn["usage_info"] = ai_response["usage"]
+
+            self.state_manager.store_conversation_turn(task_id, assistant_turn)
 
             output_artifacts_spec = task_definition.get("output_artifacts", [])
             if output_artifacts_spec:

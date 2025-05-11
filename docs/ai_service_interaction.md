@@ -308,3 +308,43 @@ Common exceptions raised by the module include:
 * [`OpenRouterAPIError`](src/ai_whisperer/exceptions.py:8): A general exception for other API-related errors returned by OpenRouter (e.g., invalid parameters, model not found, internal server errors). This can also be raised for errors occurring mid-stream during streaming calls.
 
 It is recommended to wrap your API calls in `try...except` blocks to catch these exceptions and handle them appropriately based on your application's needs.
+## Cost and Token Tracking
+
+The `OpenRouterAPI` client now automatically tracks estimated cost and token usage for interactions with OpenRouter models. This provides insights into API consumption.
+
+### What is Tracked?
+
+For each call made through `call_chat_completion()` or `stream_chat_completion()` to an OpenRouter model, the following information is tracked:
+
+*   **Prompt Tokens:** The number of tokens in the input prompt.
+*   **Completion Tokens:** The number of tokens in the generated response.
+*   **Total Tokens:** The sum of prompt and completion tokens.
+*   **Estimated Cost:** The estimated cost of the API call, calculated based on the model's pricing and the token counts.
+
+This information is typically extracted from the response headers or body provided by the OpenRouter API.
+
+### How is it Handled?
+
+After each successful API call, the cost and token information for that specific call is stored as attributes within the `OpenRouterAPI` instance. Developers using the library programmatically can access these values directly from the client object after a call completes.
+
+For example:
+
+```python
+# Assuming openrouter_client is an instantiated OpenRouterAPI object
+# and a call has just been made:
+# response = openrouter_client.call_chat_completion(...)
+
+# Access the tracked information for the last call:
+last_cost = openrouter_client.last_call_cost 
+last_prompt_tokens = openrouter_client.last_call_prompt_tokens
+last_completion_tokens = openrouter_client.last_call_completion_tokens
+last_total_tokens = openrouter_client.last_call_total_tokens
+
+if last_cost is not None:
+    print(f"Last call cost: ${last_cost:.6f}")
+    print(f"Prompt tokens: {last_prompt_tokens}, Completion tokens: {last_completion_tokens}, Total: {last_total_tokens}")
+else:
+    print("Cost and token information for the last call is not available (e.g., call failed or model doesn't provide it).")
+```
+
+This information is primarily for internal tracking and can be leveraged for future features such as detailed usage analysis, reporting, or budget management within applications built on AIWhisperer. Currently, this data is not aggregated across calls or exposed through a dedicated CLI command for end-users but is available programmatically.

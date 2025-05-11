@@ -14,6 +14,6 @@ For an in-depth understanding, please see the [Logging and Monitoring Documentat
 
 ## AI Service Interaction Module
 
-The AI Service Interaction Module handles communication with external AI services, including sending prompts and processing streaming responses from providers like OpenRouter.
+The AI Service Interaction Module handles communication with external AI services, including sending prompts and processing streaming responses from providers like OpenRouter. It also includes capabilities for tracking the cost and token usage associated with these API calls.
 
 For detailed information, please see the [AI Service Interaction Module Documentation](ai_service_interaction.md).

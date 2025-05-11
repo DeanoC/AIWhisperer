@@ -573,3 +573,111 @@ class TestOpenRouterAPIUnit:
         mock_post.assert_called_once()
         assert isinstance(api.cache, dict)  # Cache should exist
         assert len(api.cache) == 0  # Cache should be empty
+
+    def test_extract_cost_tokens_present(self, api_client):
+        """Test extraction of cost and tokens when all fields are present."""
+        mock_response_data = {
+            "id": "chatcmpl-cost1",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "model": "test_model",
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response with cost"}}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
+            "meta": {
+                "cost": 0.001,
+                "input_tokens": 10,
+                "output_tokens": 10
+            }
+        }
+        # Assuming the extraction logic is in a method like _extract_cost_tokens
+        # This test will likely fail until that method is implemented.
+        # Replace with the actual method call when known.
+        # For now, we'll simulate calling a method that would process this response.
+        # The assertion will check for the expected (failing) outcome based on current code.
+        # If the current code doesn't extract this, it might return None or raise an error.
+        # We expect it to NOT return the correct values yet.
+        # Let's assume the current code doesn't process 'meta' and just returns None for cost/tokens.
+        # This assertion will need to be updated once the extraction logic is added.
+        # For now, we assert that the expected values are NOT returned.
+        # This is a placeholder assertion that will fail when the extraction is implemented.
+        # Replace with actual assertion against the extraction method's output.
+        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
+        assert extracted_data == (0.001, 10, 10) # This assertion is expected to FAIL initially
+
+    def test_extract_cost_tokens_meta_missing(self, api_client):
+        """Test extraction when the 'meta' section is missing."""
+        mock_response_data = {
+            "id": "chatcmpl-cost2",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "model": "test_model",
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response without meta"}}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
+            # 'meta' section is missing
+        }
+        # Assuming the extraction logic is in _extract_cost_tokens
+        # This test is expected to FAIL initially, likely by returning None or raising an error.
+        # Replace with actual assertion against the extraction method's output.
+        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
+        assert extracted_data == (None, None, None) # This assertion is expected to FAIL initially
+
+    def test_extract_cost_tokens_fields_missing(self, api_client):
+        """Test extraction when cost/token fields are missing within 'meta'."""
+        mock_response_data = {
+            "id": "chatcmpl-cost3",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "model": "test_model",
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response with empty meta"}}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
+            "meta": {
+                # cost, input_tokens, output_tokens are missing
+            }
+        }
+        # Assuming the extraction logic is in _extract_cost_tokens
+        # This test is expected to FAIL initially.
+        # Replace with actual assertion against the extraction method's output.
+        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
+        assert extracted_data == (None, None, None) # This assertion is expected to FAIL initially
+
+    def test_extract_cost_tokens_partial_fields_missing(self, api_client):
+        """Test extraction when some cost/token fields are missing within 'meta'."""
+        mock_response_data = {
+            "id": "chatcmpl-cost4",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "model": "test_model",
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response with partial meta"}}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
+            "meta": {
+                "cost": 0.002,
+                "input_tokens": 20,
+                # output_tokens is missing
+            }
+        }
+        # Assuming the extraction logic is in _extract_cost_tokens
+        # This test is expected to FAIL initially.
+        # Replace with actual assertion against the extraction method's output.
+        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
+        assert extracted_data == (0.002, 20, None) # This assertion is expected to FAIL initially
+
+    def test_extract_cost_tokens_none_values(self, api_client):
+        """Test extraction when cost/token fields are present but have None values."""
+        mock_response_data = {
+            "id": "chatcmpl-cost5",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "model": "test_model",
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response with None values"}}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
+            "meta": {
+                "cost": None,
+                "input_tokens": None,
+                "output_tokens": None
+            }
+        }
+        # Assuming the extraction logic is in _extract_cost_tokens
+        # This test is expected to FAIL initially.
+        # Replace with actual assertion against the extraction method's output.
+        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
+        assert extracted_data == (None, None, None) # This assertion is expected to FAIL initially

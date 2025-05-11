@@ -3,6 +3,10 @@ from unittest.mock import patch, MagicMock
 import json
 from io import BytesIO
 import requests
+from src.ai_whisperer.state_management import StateManager # Import StateManager
+from src.ai_whisperer.agent_handlers.ai_interaction import handle_ai_interaction # Import the handler
+from src.ai_whisperer.execution_engine import ExecutionEngine # Import ExecutionEngine (or mock it)
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType # Import logging components
 
 from src.ai_whisperer.ai_service_interaction import OpenRouterAPI, API_URL
 from src.ai_whisperer.exceptions import (
@@ -224,3 +228,119 @@ class TestOpenRouterAPIIntegration:
             assert api.model == MOCK_CONFIG["model"]
         except Exception as e:
             pytest.fail(f"Initialization with mock config failed: {e}")
+
+    @patch("requests.post")
+    @patch("src.ai_whisperer.state_management.StateManager") # Mock StateManagement
+    @patch("src.ai_whisperer.execution_engine.ExecutionEngine") # Mock ExecutionEngine
+    def test_integration_cost_token_capture(self, mock_execution_engine_class, mock_state_management_class, mock_post):
+        """Test end-to-end capture and storage of cost/token data."""
+        # Mock the StateManagement instance
+        mock_state_management = MagicMock()
+        mock_state_management_class.return_value = mock_state_management
+
+        # Mock the ExecutionEngine instance and its attributes
+        mock_engine = mock_execution_engine_class.return_value
+        mock_engine.state_manager = mock_state_management
+        mock_engine.config = MOCK_CONFIG.copy() # Use a copy of the existing mock config
+        mock_engine.config['logger'] = MagicMock() # Add a mock logger to the config
+        mock_engine.config['global_runner_default_prompt_content'] = "This is a mock default prompt." # Add a mock default prompt
+        mock_engine.monitor = MagicMock() # Mock the monitor
+        mock_engine.openrouter_api = MagicMock() # Mock the OpenRouterAPI instance
+
+        # Mock AI service response with usage data
+        mock_response_data = {
+            "id": "chatcmpl-cost-token-test",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "model": "test_model",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": "This is a mock AI response.",
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 50, "completion_tokens": 75, "total_tokens": 125},
+        }
+        # Configure the mock openrouter_api to return the mock response
+        mock_engine.openrouter_api.call_chat_completion.return_value = mock_response_data
+
+        # Create a mock task definition
+        mock_task_definition = {
+            "type": "ai_interaction",
+            "instructions": "Perform a test interaction.",
+            "input_artifacts": [],
+            "output_artifacts": ["output.txt"],
+        }
+        task_id = "mock-task-cost-token-123"
+
+        # Simulate AI interaction by calling the handler
+        handle_ai_interaction(mock_engine, mock_task_definition, task_id)
+
+        # Access and verify state management
+        # Assert that store_conversation_turn was called for the assistant message with usage_info
+        # We need to check the calls to store_conversation_turn. There should be two calls: one for user, one for assistant.
+        # We are interested in the assistant turn.
+
+        # Find the assistant turn call
+        assistant_turn_call = None
+        for call_args, call_kwargs in mock_state_management.store_conversation_turn.call_args_list:
+            called_task_id, turn_data = call_args
+            if called_task_id == task_id and turn_data.get("role") == "assistant":
+                assistant_turn_call = turn_data
+                break
+
+        assert assistant_turn_call is not None, "store_conversation_turn was not called for the assistant turn"
+
+        assert assistant_turn_call["role"] == "assistant"
+        assert assistant_turn_call["content"] == "This is a mock AI response."
+        assert "usage_info" in assistant_turn_call
+        assert assistant_turn_call["usage_info"]["prompt_tokens"] == 50
+        assert assistant_turn_call["usage_info"]["completion_tokens"] == 75
+        assert assistant_turn_call["usage_info"]["total_tokens"] == 125
+
+        # Assert that monitor.add_log_message was called for relevant events
+        # Check for calls related to receiving content and writing output artifact
+        monitor_calls = mock_engine.monitor.add_log_message.call_args_list
+
+        # Check for 'ai_task_content' log message
+        found_content_log = False
+        for call_args, call_kwargs in monitor_calls:
+            if call_args and isinstance(call_args[0], LogMessage):
+                log_message = call_args[0]
+                if (
+                    log_message.level == LogLevel.INFO and
+                    log_message.component == ComponentType.EXECUTION_ENGINE and
+                    log_message.action == "ai_task_content" and
+                    log_message.event_summary == f"Task {task_id}: Received content." and
+                    log_message.subtask_id == task_id
+                ):
+                    found_content_log = True
+                    break
+        assert found_content_log, "Monitor was not called with the expected 'ai_task_content' log message."
+
+        # Check for 'output_artifact_written' log message
+        found_output_log = False
+        for call_args, call_kwargs in monitor_calls:
+            if call_args and isinstance(call_args[0], LogMessage):
+                log_message = call_args[0]
+                if (
+                    log_message.level == LogLevel.INFO and
+                    log_message.component == ComponentType.EXECUTION_ENGINE and
+                    log_message.action == "output_artifact_written" and
+                    log_message.event_summary == f"Task {task_id}: Wrote result to output artifact: output.txt" and
+                    log_message.subtask_id == task_id and
+                    log_message.details == {"artifact_path": "output.txt"}
+                ):
+                    found_output_log = True
+                    break
+        assert found_output_log, "Monitor was not called with the expected 'output_artifact_written' log message."
+
+
+        # Assert that the mock logger was called (e.g., info or debug level)
+        # The handler logs info messages for receiving content and writing output
+        mock_engine.config['logger'].info.assert_any_call(f"Task {task_id}: Received content.")
+        mock_engine.config['logger'].info.assert_any_call(f"Task {task_id}: Wrote result to output artifact: output.txt")

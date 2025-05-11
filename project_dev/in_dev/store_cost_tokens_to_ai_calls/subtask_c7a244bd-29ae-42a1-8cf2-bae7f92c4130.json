@@ -1,0 +1,35 @@
+{
+  "description": "Update AI service interaction code to extract cost and token information from OpenRouter responses.",
+  "instructions": [
+    "Open the file `src/ai_whisperer/ai_service_interaction.py`.",
+    "Locate the method responsible for handling responses from the OpenRouter API.",
+    "Identify the structure of the OpenRouter response data, paying attention to where cost and token information is located.",
+    "Add code to safely access and extract the 'cost', 'input_tokens', and 'output_tokens' fields from the response.",
+    "Implement error handling or checks to gracefully handle cases where these fields might be missing in responses (although primarily focused on OpenRouter for this task, prepare for future flexibility).",
+    "Store the extracted cost and token information effectively, ensuring it is associated with the specific AI call.",
+    "Ensure the modifications integrate seamlessly with the existing logic for handling different AI service responses.",
+    "Run the test suite using `pytest` to confirm that the new tests related to cost/token extraction in `tests/unit/test_ai_service_interaction.py` now pass, along with all other existing tests."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/ai_service_interaction.py",
+    "tests/unit/test_ai_service_interaction.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/ai_service_interaction.py"
+  ],
+  "constraints": [
+    "The changes must maintain compatibility with all existing AI service interaction functions and expected response structures from other services.",
+    "Avoid introducing new dependencies unless absolutely necessary and approved."
+  ],
+  "validation_criteria": [
+    "All unit tests in `tests/unit/test_ai_service_interaction.py` pass successfully, including the newly added tests for cost and token extraction.",
+    "When running the code with a simulated or actual OpenRouter response, the `cost`, `input_tokens`, and `output_tokens` are correctly extracted and available.",
+    "No existing functionality is broken by the changes."
+  ],
+  "type": "file_edit",
+  "depends_on": [
+    "tests/unit/test_ai_service_interaction.py:new_cost_token_extraction_tests"
+  ],
+  "task_id": "c94f8d36-7e7f-411d-b15b-9e4a42b4590b",
+  "subtask_id": "d4bdf6b9-f742-4a9c-a81b-f9cecd9d2183"
+}
