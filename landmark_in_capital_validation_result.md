@@ -1,1 +1,0 @@
-Validation passed: The landmark is correctly identified as being in the capital.

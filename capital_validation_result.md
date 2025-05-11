@@ -1,1 +1,0 @@
-Validation passed: The capital is correctly identified as Paris.

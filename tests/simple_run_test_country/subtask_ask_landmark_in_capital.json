@@ -1,36 +1,30 @@
 {
   "description": "Ask the AI if the selected landmark is located in the capital city.",
-  "depends_on": [],
-  "agent_spec": {
-    "type": "ai_interaction",
-    "input_artifacts": [
-      "landmark_selection.md",
-      "capital_validation_result.md"
-    ],
-    "output_artifacts": [
-      "ai_response_landmark_in_capital.txt"
-    ],
-    "instructions": [
-      "Read the content of 'capital_validation_result.md' to determine if the capital validation step passed.",
-      "If 'capital_validation_result.md' indicates that the validation passed, read the selected landmark from 'landmark_selection.md'.",
-      "If validation passed, construct the prompt: 'Is [Selected Landmark from landmark_selection.md] located in the Capital city?'.",
-      "Send this prompt to the AI, ensuring conversational context from previous steps is maintained.",
-      "If validation failed according to 'capital_validation_result.md', do not interact with the AI. Instead, write a note to 'ai_response_landmark_in_capital.txt' indicating that the step was skipped due to failed capital validation.",
-      "If the AI interaction occurs (validation passed), save the AI's complete response to the file 'ai_response_landmark_in_capital.txt'."
-    ],
-    "constraints": [
-      "This step must only proceed with the AI interaction if the content of 'capital_validation_result.md' confirms successful capital validation.",
-      "Maintain conversational context with the AI throughout the interaction.",
-      "The output file 'ai_response_landmark_in_capital.txt' must be created regardless of whether the AI interaction occurred (either containing the AI response or a skip/failure note)."
-    ],
-    "validation_criteria": [
-      "The file 'ai_response_landmark_in_capital.txt' must exist.",
-      "If 'capital_validation_result.md' indicated validation passed, 'ai_response_landmark_in_capital.txt' must contain a non-empty response from the AI.",
-      "If 'capital_validation_result.md' indicated validation failed, 'ai_response_landmark_in_capital.txt' must contain a note indicating the step was skipped."
-    ],
-    "model_preference": null
-  },
-  "step_id": "ask_landmark_in_capital",
-  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb",
-  "subtask_id": "8765c599-75d0-4826-a713-8f5945530484"
+  "instructions": [
+    "Read the content of 'capital_validation_result.md' to determine if the capital validation step passed.",
+    "If 'capital_validation_result.md' indicates that the validation passed, read the selected landmark from 'landmark_selection.md'.",
+    "If validation passed, construct the prompt: 'Is [Selected Landmark from landmark_selection.md] located in the Capital city?'.",
+    "Send this prompt to the AI, ensuring conversational context from previous steps is maintained.",
+    "If validation failed according to 'capital_validation_result.md', do not interact with the AI. Instead, write a note to 'ai_response_landmark_in_capital.txt' indicating that the step was skipped due to failed capital validation.",
+    "If the AI interaction occurs (validation passed), save the AI's complete response to the file 'ai_response_landmark_in_capital.txt'."
+  ],
+  "input_artifacts": [
+    "landmark_selection.md",
+    "capital_validation_result.md"
+  ],
+  "output_artifacts": [
+    "ai_response_landmark_in_capital.txt"
+  ],
+  "constraints": [
+    "This step must only proceed with the AI interaction if the content of 'capital_validation_result.md' confirms successful capital validation.",
+    "Maintain conversational context with the AI throughout the interaction.",
+    "The output file 'ai_response_landmark_in_capital.txt' must be created regardless of whether the AI interaction occurred (either containing the AI response or a skip/failure note)."
+  ],
+  "validation_criteria": [
+    "The file 'ai_response_landmark_in_capital.txt' must exist.",
+    "If 'capital_validation_result.md' indicated validation passed, 'ai_response_landmark_in_capital.txt' must contain a non-empty response from the AI.",
+    "If 'capital_validation_result.md' indicated validation failed, 'ai_response_landmark_in_capital.txt' must contain a note indicating the step was skipped."
+  ],
+  "subtask_id": "8765c599-75d0-4826-a713-8f5945530484",
+  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb"
 }

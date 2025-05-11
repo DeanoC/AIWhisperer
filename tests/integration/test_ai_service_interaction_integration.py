@@ -10,26 +10,26 @@ from src.ai_whisperer.exceptions import (
     OpenRouterAuthError,
     OpenRouterRateLimitError,
     OpenRouterConnectionError,
-    ConfigError
+    ConfigError,
 )
 
 # Mock configuration for testing
 MOCK_CONFIG = {
-    'api_key': 'test_api_key',
-    'model': 'test_model',
-    'params': {'temperature': 0.7},
-    'site_url': 'test_site_url',
-    'app_name': 'test_app_name',
-    'cache': False,
-    'timeout_seconds': 10
+    "api_key": "test_api_key",
+    "model": "test_model",
+    "params": {"temperature": 0.7},
+    "site_url": "test_site_url",
+    "app_name": "test_app_name",
+    "cache": False,
+    "timeout_seconds": 10,
 }
 
 # Mock response data for streaming
 MOCK_STREAMING_CHUNKS = [
-    b'data: {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{"role":"assistant","content":"Integration"}}]}\n',
-    b'data: {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{"content":" test"}}]}\n',
-    b'data: {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{}}]}\n', # Empty delta
-    b'data: [DONE]\n',
+    b'data: {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{"role":"assistant","content":"{\\n  \\"description\\": \\"Mock streaming subtask description\\",\\n  \\"instructions\\": \\"Mock streaming subtask instructions\\",\\n  \\"input_artifacts\\": [],\\n  \\"output_artifacts\\": [],\\n  \\"constraints\\": [],\\n  \\"validation_criteria\\": [],\\n  \\"subtask_id\\": \\"mock-streaming-subtask-789\\",\\n  \\"task_id\\": \\""}}]}\n',
+    b'data: {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{"content":"mock-streaming-task-012\\"\\n}"}}]}\n',
+    b'data: {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{}}]}\n',  # Empty delta
+    b"data: [DONE]\n",
 ]
 
 # Mock response data for non-streaming
@@ -43,27 +43,25 @@ MOCK_NON_STREAMING_RESPONSE = {
             "index": 0,
             "message": {
                 "role": "assistant",
-                "content": "This is an integration test non-streaming response."
+                "content": '{\n  "description": "Mock subtask description",\n  "instructions": "Mock subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-subtask-123",\n  "task_id": "mock-task-456"\n}',
             },
-            "finish_reason": "stop"
+            "finish_reason": "stop",
         }
     ],
-    "usage": {
-        "prompt_tokens": 10,
-        "completion_tokens": 10,
-        "total_tokens": 20
-    }
+    "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
 }
+
 
 class MockResponse:
     """A mock class for requests.Response."""
+
     def __init__(self, status_code, json_data=None, text=None, headers=None, iter_lines_data=None):
         self.status_code = status_code
         self._json_data = json_data
         self._text = text
         self.headers = headers if headers is not None else {}
         self._iter_lines_data = iter_lines_data
-        self.request = MagicMock() # Add a mock request object
+        self.request = MagicMock()  # Add a mock request object
 
     def json(self):
         if self._json_data is not None:
@@ -83,7 +81,7 @@ class MockResponse:
             for line in self._iter_lines_data:
                 yield line
         else:
-            yield from [] # Yield nothing if no data
+            yield from []  # Yield nothing if no data
 
 
 class TestOpenRouterAPIIntegration:
@@ -93,7 +91,7 @@ class TestOpenRouterAPIIntegration:
         """Fixture to create an OpenRouterAPI instance with mock config."""
         return OpenRouterAPI(MOCK_CONFIG)
 
-    @patch('requests.post')
+    @patch("requests.post")
     def test_integration_non_streaming_success(self, mock_post, api_client):
         """Test end-to-end mocked non-streaming call."""
         mock_response = MockResponse(200, json_data=MOCK_NON_STREAMING_RESPONSE)
@@ -112,17 +110,16 @@ class TestOpenRouterAPIIntegration:
                 "HTTP-Referer": "test_site_url",
                 "X-Title": "test_app_name",
             },
-            json={
-                "model": model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.5
-            },
-            timeout=10
+            json={"model": model, "messages": [{"role": "user", "content": prompt}], "params": {"temperature": 0.5}},
+            timeout=10,
         )
-        assert response == "This is an integration test non-streaming response."
+        assert (
+            response
+            == '{\n  "description": "Mock subtask description",\n  "instructions": "Mock subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-subtask-123",\n  "task_id": "mock-task-456"\n}'
+        )
 
     # The following tests mock the API call and are useful once stream_chat_completion is added
-    @patch('requests.post')
+    @patch("requests.post")
     def test_integration_streaming_success_mocked(self, mock_post, api_client):
         """Test end-to-end mocked streaming call (will pass once implemented)."""
         mock_response = MockResponse(200, iter_lines_data=MOCK_STREAMING_CHUNKS)
@@ -135,9 +132,20 @@ class TestOpenRouterAPIIntegration:
         stream_generator = api_client.stream_chat_completion(prompt, model, params)
         chunks = list(stream_generator)
         expected_chunks = [
-            {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{"role":"assistant","content":"Integration"}}]},
-            {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{"content":" test"}}]},
-            {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{}}]},
+            {
+                "id": "chatcmpl-abc",
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {
+                            "role": "assistant",
+                            "content": '{\n  "description": "Mock streaming subtask description",\n  "instructions": "Mock streaming subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-streaming-subtask-789",\n  "task_id": "',
+                        },
+                    }
+                ],
+            },
+            {"id": "chatcmpl-abc", "choices": [{"index": 0, "delta": {"content": 'mock-streaming-task-012"\n}'}}]},
+            {"id": "chatcmpl-abc", "choices": [{"index": 0, "delta": {}}]},
         ]
         assert chunks == expected_chunks
 
@@ -161,14 +169,13 @@ class TestOpenRouterAPIIntegration:
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.9,
-                "stream": True # Crucial for streaming
+                "stream": True,  # Crucial for streaming
             },
-            stream=True, # Crucial for streaming
-            timeout=10
+            stream=True,  # Crucial for streaming
+            timeout=10,
         )
 
-
-    @patch('requests.post')
+    @patch("requests.post")
     def test_integration_auth_error(self, mock_post, api_client):
         """Test integration with mocked authentication error (401)."""
         mock_response = MockResponse(401, text="Invalid API Key")
@@ -178,10 +185,9 @@ class TestOpenRouterAPIIntegration:
             api_client.call_chat_completion("prompt", "model", {})
 
         with pytest.raises(OpenRouterAuthError, match="Authentication failed"):
-             list(api_client.stream_chat_completion("prompt", "model", {}))
+            list(api_client.stream_chat_completion("prompt", "model", {}))
 
-
-    @patch('requests.post')
+    @patch("requests.post")
     def test_integration_network_error(self, mock_post, api_client):
         """Test integration with mocked network connection error."""
         mock_post.side_effect = requests.exceptions.RequestException("Simulated network unreachable")
@@ -189,10 +195,13 @@ class TestOpenRouterAPIIntegration:
         with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API"):
             api_client.call_chat_completion("prompt", "model", {})
 
-        with pytest.raises(OpenRouterConnectionError, match="Network error during OpenRouter API streaming: Simulated network unreachable"):
+        with pytest.raises(
+            OpenRouterConnectionError,
+            match="Network error during OpenRouter API streaming: Simulated network unreachable",
+        ):
             list(api_client.stream_chat_completion("prompt", "model", {}))
 
-    @patch('requests.post')
+    @patch("requests.post")
     def test_integration_service_side_error(self, mock_post, api_client):
         """Test integration with mocked service-side error (500)."""
         mock_response = MockResponse(500, text="Simulated Internal Server Error")
@@ -211,7 +220,7 @@ class TestOpenRouterAPIIntegration:
         try:
             api = OpenRouterAPI(MOCK_CONFIG)
             assert isinstance(api, OpenRouterAPI)
-            assert api.api_key == MOCK_CONFIG['api_key']
-            assert api.model == MOCK_CONFIG['model']
+            assert api.api_key == MOCK_CONFIG["api_key"]
+            assert api.model == MOCK_CONFIG["model"]
         except Exception as e:
             pytest.fail(f"Initialization with mock config failed: {e}")

@@ -8,8 +8,13 @@ from unittest.mock import patch, mock_open
 # let's say `ai_whisperer.state_management`
 # In a real scenario, these would be imported:
 from src.ai_whisperer.state_management import (
-    save_state, load_state, update_task_status, store_task_result,
-    get_task_result, update_global_state, get_global_state
+    save_state,
+    load_state,
+    update_task_status,
+    store_task_result,
+    get_task_result,
+    update_global_state,
+    get_global_state,
 )
 
 
@@ -21,12 +26,9 @@ class TestStateManagement(unittest.TestCase):
         self.initial_state = {
             "tasks": {
                 "task1": {"status": "pending", "result": {}},
-                "task2": {"status": "in-progress", "result": {"data": "some_data"}}
+                "task2": {"status": "in-progress", "result": {"data": "some_data"}},
             },
-            "global_state": {
-                "file_paths": ["/path/to/file1.txt"],
-                "other_context": {"key": "value"}
-            }
+            "global_state": {"file_paths": ["/path/to/file1.txt"], "other_context": {"key": "value"}},
         }
 
     def tearDown(self):
@@ -46,7 +48,7 @@ class TestStateManagement(unittest.TestCase):
     def test_load_state_corrupted_file(self, mock_json_load):
         mock_json_load.side_effect = json.JSONDecodeError("mock error", "doc", 0)
         # Create an empty file to simulate a corrupted one for loading
-        with open(self.state_file_path, 'w') as f:
+        with open(self.state_file_path, "w") as f:
             f.write("corrupted data")
         with self.assertRaises(IOError):
             load_state(self.state_file_path)
@@ -61,13 +63,12 @@ class TestStateManagement(unittest.TestCase):
             save_state(self.initial_state, self.state_file_path)
 
         # Check that open was called for the temp file
-        mock_file_open.assert_any_call(temp_file_path, 'w')
+        mock_file_open.assert_any_call(temp_file_path, "w")
         # Ensure the original file does not exist if replace failed and temp was removed
         # This part is tricky to test perfectly without more complex mocking of os.path.exists
         # and os.remove within the save_state function's error handling.
         # For now, we assert that os.replace was called, and an IOError was raised.
         mock_os_replace.assert_called_once_with(temp_file_path, self.state_file_path)
-
 
     def test_update_task_status(self):
         state = {}
@@ -129,5 +130,6 @@ class TestStateManagement(unittest.TestCase):
     # or very sophisticated mocking of file system operations and threading/multiprocessing.
     # The atomicity test for save_state (writing to .tmp then renaming) is a good step.
 
-if __name__ == '__main__':
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+
+if __name__ == "__main__":
+    unittest.main(argv=["first-arg-is-ignored"], exit=False)

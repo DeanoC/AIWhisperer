@@ -15,20 +15,14 @@ Produce **only** a JSON document, representing a refined version of the **exact 
 **Refined Subtask Schema:**
 
 ```json
-{{
+{
   "description": "<MUST BE THE SAME description AS IN `Input Subtask`>",
-  "depends_on": "<MUST BE THE SAME depends_on AS IN `Input Subtask`>",
-  "agent_spec": {{
-    "type": "<MUST BE THE SAME type AS IN `Input Subtask`>",
-    "input_artifacts": [],
-    "output_artifacts": [],
-    "instructions": ["Detailed, actionable steps for THIS subtask (`Input Subtask`.step_id) ONLY.",
-    "Expand based on `Input Subtask`.agent_spec.instructions and context"],
-    "constraints": [],
-    "validation_criteria": [],
-    "model_preference": "<MUST BE THE SAME model_preference AS IN `Input Subtask` if present>"
-  }}
-}}
+  "instructions": ["<Detailed, actionable steps for THIS subtask (`Input Subtask`.subtask_id) ONLY. Expand based on `Input Subtask`.instructions and context>"],
+  "input_artifacts": ["<List of input artifacts for the subtask>", "..."],
+  "output_artifacts": ["<List of output artifacts for the subtask>", "..."],
+  "constraints": ["<List of constraints that must be adhered to while executing the subtask>", "..."],
+  "validation_criteria": ["<List of criteria for validating the output of the subtask>", "..."]
+}
 ```
 
 **Input Subtask:**

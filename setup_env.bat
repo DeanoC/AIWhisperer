@@ -14,6 +14,9 @@ if not exist .venv (
 echo Activating virtual environment...
 call .venv\Scripts\activate
 
+echo Setting PYTHONPATH...
+set PYTHONPATH=%PYTHONPATH%;%~dp0src
+
 echo Installing requirements...
 %PYTHON_PATH% -m pip install -r requirements.txt
 

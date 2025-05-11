@@ -5,14 +5,18 @@ This module implements the main postprocessing pipeline for JSON data, which
 consists of a scripted phase (with configurable processing steps) and an
 AI improvements phase (initially implemented as a dummy identity transform).
 """
+
 import json
 import inspect
 import logging
 from typing import Dict, List, Callable, Tuple, Any
 
+
 class ProcessingError(Exception):
     """Exception raised for errors during the processing pipeline."""
+
     pass
+
 
 # Import the identity transform for use in the dummy AI phase
 from src.postprocessing.scripted_steps.identity_transform import identity_transform
@@ -79,10 +83,7 @@ class PostprocessingPipeline:
 
         # Initialize the data object if not provided
         if data is None:
-            data = {
-                "success": True,
-                "logs": []
-            }
+            data = {"success": True, "logs": []}
 
         current_content = json_content
         current_data = data
@@ -98,7 +99,7 @@ class PostprocessingPipeline:
             if not isinstance(step_output, tuple) or len(step_output) != 2:
                 raise ValueError(f"Step '{step_name}' did not return a valid (step_output, data) tuple.")
 
-            current_content, current_data = step_output
+            (current_content, current_data) = step_output
 
             # Record the execution of the step in the data dictionary
             if "steps" not in current_data:
@@ -126,15 +127,15 @@ class PostprocessingPipeline:
 
             # Save the output of this step to a temporary file for debugging
             # try:
-            #     # Get step_id from data if available, otherwise use "unknown"
-            #     step_id = "unknown"
+            #     # Get subtask_id from data if available, otherwise use "unknown"
+            #     subtask_id = "unknown"
             #     try:
             #         if "items_to_add" in data and "top_level" in data["items_to_add"]:
-            #             step_id = data["items_to_add"]["top_level"].get("step_id", "unknown")
+            #             subtask_id = data["items_to_add"]["top_level"].get("subtask_id", "unknown")
             #     except Exception as e:
-            #         logger.warning(f"Could not retrieve step_id from data: {e}")
+            #         logger.warning(f"Could not retrieve subtask_id from data: {e}")
 
-            #     temp_filename = f"output/{step_id}_step_output_{step_name}.txt"
+            #     temp_filename = f"output/{subtask_id}_step_output_{step_name}.txt"
             #     with open(temp_filename, "w", encoding="utf-8") as f:
             #         # Handle both string and dictionary content
             #         if isinstance(current_content, str):
@@ -146,7 +147,7 @@ class PostprocessingPipeline:
             # except IOError as e:
             #     logger.warning(f"Failed to save output of {step_name} to temporary file: {e}")
 
-        return current_content, current_data
+        return (current_content, current_data)
 
     def _execute_ai_phase(self, json_content: str | dict, data: Dict) -> Tuple[str | dict, Dict]:
         """
@@ -166,7 +167,7 @@ class PostprocessingPipeline:
         # In the future, this will be replaced with actual AI processing logic
 
         # Use the identity_transform but track it separately in the results
-        processed_content, updated_data = identity_transform(json_content, data)
+        (processed_content, updated_data) = identity_transform(json_content, data)
 
         # logger.debug(f"Output from AI phase (type: {type(processed_content)}): {str(processed_content)[:200]}...") # Log first 200 chars
 
@@ -182,32 +183,34 @@ class PostprocessingPipeline:
         # except IOError as e:
         #     logger.warning(f"Failed to save output of AI phase to temporary file: {e}")
 
-
         # Add an entry for the AI phase in the data
         if "ai_improvement_phase" not in updated_data["steps"]:
             updated_data["steps"]["ai_improvement_phase"] = {
                 "success": True,
                 "changes": [],
                 "errors": [],
-                "warnings": []
+                "warnings": [],
             }
 
         # Add a log entry to indicate this is a dummy phase
         if "logs" in updated_data:
             updated_data["logs"].append("AI improvements phase executed (dummy implementation)")
 
-        return processed_content, updated_data
+        return (processed_content, updated_data)
 
     def process(self, json_content: str | dict, data: Dict = None) -> Tuple[str | dict, Dict]:
         """
         Process the input JSON data through the entire pipeline.
         """
-        logger.debug(f"PostprocessingPipeline.process input - json_content type: {type(json_content).__name__}, data keys: {data.keys() if data is not None else 'None'}")
+        logger.debug(
+            f"PostprocessingPipeline.process input - json_content type: {type(json_content).__name__}, data keys: {data.keys() if data is not None else 'None'}"
+        )
         if isinstance(json_content, str):
-             logger.debug(f"PostprocessingPipeline.process input - json_content start: '{json_content[:100]}...'")
+            logger.debug(f"PostprocessingPipeline.process input - json_content start: '{json_content[:100]}...'")
         elif isinstance(json_content, (dict, list)):
-             logger.debug(f"PostprocessingPipeline.process input - json_content keys/items: {list(json_content.keys())[:10] if isinstance(json_content, dict) else len(json_content)}")
-
+            logger.debug(
+                f"PostprocessingPipeline.process input - json_content keys/items: {list(json_content.keys())[:10] if isinstance(json_content, dict) else len(json_content)}"
+            )
 
         """
 
@@ -220,11 +223,7 @@ class PostprocessingPipeline:
         """
         # Initialize the data object if not provided
         if data is None:
-            data = {
-                "success": True,
-                "steps": {},
-                "logs": []
-            }
+            data = {"success": True, "steps": {}, "logs": []}
         logger.debug(f"Processing pipeline started with data (type: {type(data)}): {data}")
 
         # Log the start of processing
@@ -232,21 +231,28 @@ class PostprocessingPipeline:
             data["logs"].append("Starting JSON postprocessing pipeline")
 
         # Execute the scripted phase
-        processed_content, updated_data = self._execute_scripted_phase(json_content, data)
+        (processed_content, updated_data) = self._execute_scripted_phase(json_content, data)
 
-        logger.debug(f"PostprocessingPipeline.process after scripted phase - processed_content type: {type(processed_content).__name__}, updated_data keys: {updated_data.keys()}")
+        logger.debug(
+            f"PostprocessingPipeline.process after scripted phase - processed_content type: {type(processed_content).__name__}, updated_data keys: {updated_data.keys()}"
+        )
         if isinstance(processed_content, str):
-             logger.debug(f"PostprocessingPipeline.process after scripted phase - processed_content start: '{processed_content[:100]}...'")
+            logger.debug(
+                f"PostprocessingPipeline.process after scripted phase - processed_content start: '{processed_content[:100]}...'"
+            )
         elif isinstance(processed_content, (dict, list)):
-             logger.debug(f"PostprocessingPipeline.process after scripted phase - processed_content keys/items: {list(processed_content.keys())[:10] if isinstance(processed_content, dict) else len(processed_content)}")
-        logger.debug(f"PostprocessingPipeline.process after scripted phase - updated_data['steps']: {updated_data.get('steps')}")
-
+            logger.debug(
+                f"PostprocessingPipeline.process after scripted phase - processed_content keys/items: {list(processed_content.keys())[:10] if isinstance(processed_content, dict) else len(processed_content)}"
+            )
+        logger.debug(
+            f"PostprocessingPipeline.process after scripted phase - updated_data['steps']: {updated_data.get('steps')}"
+        )
 
         # Execute the AI improvements phase
-        processed_content, updated_data = self._execute_ai_phase(processed_content, updated_data)
+        (processed_content, updated_data) = self._execute_ai_phase(processed_content, updated_data)
 
         # Log the completion of processing
         if "logs" in updated_data:
             updated_data["logs"].append("JSON postprocessing pipeline complete")
 
-        return processed_content, updated_data
+        return (processed_content, updated_data)

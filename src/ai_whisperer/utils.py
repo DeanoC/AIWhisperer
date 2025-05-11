@@ -6,24 +6,24 @@ from typing import Dict, Any
 import os
 import fnmatch
 
-# from jsonschema import validate, ValidationError # Potential library
+from jsonschema import validate, ValidationError  # Potential library
 
 from pathlib import Path  # Import Path
 from rich.console import Console
 
 from .exceptions import SchemaValidationError
+from .json_validator import validate_against_schema
+
 
 def setup_logging(level=logging.INFO):
     """Sets up basic logging configuration to output to stderr."""
-    logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        stream=sys.stderr
-    )
+    logging.basicConfig(level=level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", stream=sys.stderr)
+
 
 def setup_rich_output() -> Console:
     """Creates and returns a Rich Console object for styled terminal output."""
     return Console(stderr=True)
+
 
 def calculate_sha256(file_path: str | Path) -> str:
     """
@@ -54,37 +54,6 @@ def calculate_sha256(file_path: str | Path) -> str:
         # Raise a more general IOError for other read issues
         raise IOError(f"Error reading file {file_path}: {e}") from e
 
-def validate_against_schema(data: Dict[str, Any], schema_path: str):
-    """
-    Validates the given data against a JSON schema file.
-
-    Args:
-        data: The dictionary data to validate.
-        schema_path: The path to the JSON schema file.
-
-    Raises:
-        SchemaValidationError: If validation fails or schema file cannot be read.
-        FileNotFoundError: If the schema file does not exist.
-    """
-    # Placeholder implementation - Replace with actual validation logic
-    # TODO: Implement real schema validation
-    print(f"--- Placeholder: Validating data against schema: {schema_path} ---")
-    # Example using jsonschema (install with pip install jsonschema)
-    # try:
-    #     with open(schema_path, 'r') as f:
-    #         schema = json.load(f)
-    #     validate(instance=data, schema=schema)
-    # except FileNotFoundError:
-    #      raise # Re-raise FileNotFoundError
-    # except ValidationError as e:
-    #     raise SchemaValidationError(f"Schema validation failed: {e.message}") from e
-    # except Exception as e:
-    #     raise SchemaValidationError(f"Failed to load or process schema {schema_path}: {e}") from e
-
-    print("--- Placeholder: Validation successful ---")
-    pass # Assume valid for now
-
-
 def _parse_gitignore(gitignore_path):
     """
     Parses a .gitignore file.
@@ -92,22 +61,23 @@ def _parse_gitignore(gitignore_path):
     These patterns are relative to the directory containing the .gitignore file.
     """
     patterns = []
-    if not os.path.isfile(gitignore_path): # Ensure it's a file, not a dir named .gitignore
+    if not os.path.isfile(gitignore_path):  # Ensure it's a file, not a dir named .gitignore
         return patterns
-    
+
     # The base directory for patterns in this .gitignore file
     pattern_base_dir = os.path.dirname(gitignore_path)
     try:
-        with open(gitignore_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(gitignore_path, "r", encoding="utf-8", errors="ignore") as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#'): # Ignore empty lines and comments
+                if line and not line.startswith("#"):  # Ignore empty lines and comments
                     patterns.append((line, pattern_base_dir))
     except IOError:
         # Fail silently if .gitignore is unreadable (e.g., permissions)
         # print(f"Warning: Could not read {gitignore_path}") # Optional warning
         pass
     return patterns
+
 
 def _is_item_ignored(full_item_path, is_item_dir, item_name, active_ignore_rules):
     """
@@ -129,15 +99,15 @@ def _is_item_ignored(full_item_path, is_item_dir, item_name, active_ignore_rules
     for pattern_str_original, pattern_base_dir in active_ignore_rules:
         pattern_str = pattern_str_original
         is_negation = False
-        if pattern_str.startswith('!'):
+        if pattern_str.startswith("!"):
             is_negation = True
             pattern_str = pattern_str[1:]
 
         # Patterns ending with '/' are for directories only
-        is_dir_only_pattern = pattern_str.endswith('/')
+        is_dir_only_pattern = pattern_str.endswith("/")
         if is_dir_only_pattern:
             pattern_str = pattern_str[:-1]
-        
+
         # If a pattern is for directories only, and the current item is not a directory,
         # this rule doesn't apply to this item (it might apply to its parent if it were a dir).
         if is_dir_only_pattern and not is_item_dir:
@@ -146,34 +116,35 @@ def _is_item_ignored(full_item_path, is_item_dir, item_name, active_ignore_rules
         # Determine the path string to test against the pattern
         # Gitignore patterns use forward slashes.
         path_to_test_against_pattern = ""
-        
+
         # Case 1: Pattern starts with '/' (e.g., "/foo.txt", "/build/")
         # It's anchored to the root of the directory containing the .gitignore file (pattern_base_dir).
-        if pattern_str_original.startswith('/') or (is_negation and pattern_str_original.startswith('!/')):
+        if pattern_str_original.startswith("/") or (is_negation and pattern_str_original.startswith("!/")):
             # The pattern (after '!' and '/') needs to match path relative to pattern_base_dir
             # We need to strip the leading '/' from pattern_str for fnmatch
-            current_glob_pattern = pattern_str[1:] if pattern_str.startswith('/') else pattern_str
-            path_to_test_against_pattern = os.path.relpath(full_item_path, pattern_base_dir).replace(os.sep, '/')
-        
+            current_glob_pattern = pattern_str[1:] if pattern_str.startswith("/") else pattern_str
+            path_to_test_against_pattern = os.path.relpath(full_item_path, pattern_base_dir).replace(os.sep, "/")
+
         # Case 2: Pattern contains '/' but doesn't start with it (e.g., "foo/bar.txt", "docs/")
         # It's a path relative to pattern_base_dir.
-        elif '/' in pattern_str:
+        elif "/" in pattern_str:
             current_glob_pattern = pattern_str
-            path_to_test_against_pattern = os.path.relpath(full_item_path, pattern_base_dir).replace(os.sep, '/')
+            path_to_test_against_pattern = os.path.relpath(full_item_path, pattern_base_dir).replace(os.sep, "/")
 
         # Case 3: Pattern does not contain '/' (e.g., "*.log", "foo")
         # It matches the basename of the item anywhere.
         else:
             current_glob_pattern = pattern_str
-            path_to_test_against_pattern = item_name # Match against the simple name
+            path_to_test_against_pattern = item_name  # Match against the simple name
 
         if fnmatch.fnmatch(path_to_test_against_pattern, current_glob_pattern):
             if is_negation:
                 ignored_status = False  # Rule explicitly un-ignores the item
             else:
-                ignored_status = True   # Rule ignores the item
-                
+                ignored_status = True  # Rule ignores the item
+
     return ignored_status
+
 
 def _build_tree_recursive(current_dir_path, prefix_str, inherited_ignore_rules, output_lines_list):
     """
@@ -184,8 +155,8 @@ def _build_tree_recursive(current_dir_path, prefix_str, inherited_ignore_rules, 
     - output_lines_list: The list to which output lines are appended.
     """
     # 1. "Push" .gitignore rules: Combine inherited rules with rules from the current directory
-    current_level_active_rules = list(inherited_ignore_rules) # Start with a copy of parent rules
-    
+    current_level_active_rules = list(inherited_ignore_rules)  # Start with a copy of parent rules
+
     gitignore_file_in_current_dir = os.path.join(current_dir_path, ".gitignore")
     # _parse_gitignore returns (pattern, base_dir_of_that_pattern)
     current_level_active_rules.extend(_parse_gitignore(gitignore_file_in_current_dir))
@@ -195,13 +166,12 @@ def _build_tree_recursive(current_dir_path, prefix_str, inherited_ignore_rules, 
         # os.scandir is more efficient as it provides type information
         raw_entries = list(os.scandir(current_dir_path))
         # Sort: directories first, then files, then alphabetically by name (case-insensitive)
-        sorted_entries = sorted(
-            raw_entries, 
-            key=lambda e: (not e.is_dir(), e.name.lower())
-        )
+        sorted_entries = sorted(raw_entries, key=lambda e: (not e.is_dir(), e.name.lower()))
     except OSError as e:
         # Could happen due to permissions issues
-        output_lines_list.append(f"{prefix_str}└── [Error reading: {os.path.basename(current_dir_path)} - {e.strerror}]")
+        output_lines_list.append(
+            f"{prefix_str}└── [Error reading: {os.path.basename(current_dir_path)} - {e.strerror}]"
+        )
         return
 
     # Filter out ignored entries *before* determining connector prefixes
@@ -211,18 +181,21 @@ def _build_tree_recursive(current_dir_path, prefix_str, inherited_ignore_rules, 
             valid_entries_to_display.append(entry)
 
     for i, entry in enumerate(valid_entries_to_display):
-        is_last_entry = (i == len(valid_entries_to_display) - 1)
+        is_last_entry = i == len(valid_entries_to_display) - 1
         connector = "└── " if is_last_entry else "├── "
-        
+
         output_lines_list.append(f"{prefix_str}{connector}{entry.name}")
 
         if entry.is_dir():
             # For the next level, update the prefix
             new_prefix_segment = "    " if is_last_entry else "│   "
-            _build_tree_recursive(entry.path, prefix_str + new_prefix_segment, current_level_active_rules, output_lines_list)
-    
+            _build_tree_recursive(
+                entry.path, prefix_str + new_prefix_segment, current_level_active_rules, output_lines_list
+            )
+
     # "Pop" happens automatically when this function returns, as current_level_active_rules
     # was local to this call. The caller will use its own set of rules.
+
 
 def build_ascii_directory_tree(start_path="."):
     """
@@ -242,10 +215,10 @@ def build_ascii_directory_tree(start_path="."):
         return f"Error: Path '{start_path}' is not a valid directory."
 
     output_lines = [os.path.basename(abs_start_path)]  # Start with the root directory's name
-    
+
     # Initial ignore rules are empty; they will be loaded as we traverse
-    initial_ignore_rules = [] 
-    
+    initial_ignore_rules = []
+
     _build_tree_recursive(abs_start_path, "", initial_ignore_rules, output_lines)
-    
+
     return "\n".join(output_lines)

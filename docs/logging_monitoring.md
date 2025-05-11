@@ -30,7 +30,7 @@ Log messages in AIWhisperer follow a structured format defined by the `LogMessag
 - `component`: The part of the system that generated the log (e.g., `execution_engine`, `ai_service`).
 - `action`: A verb describing the specific event (e.g., `step_execution_started`, `api_request_sent`).
 - `message`: A human-readable summary of the event.
-- `step_id`: The ID of the plan step related to the log, if applicable.
+- `subtask_id`: The ID of the plan step related to the log, if applicable.
 - `event_id`: A unique ID for the specific log event, useful for tracing.
 - `state_before`: The state of the relevant entity before the action.
 - `state_after`: The state of the relevant entity after the action.
@@ -56,7 +56,7 @@ Users can interact with the running plan through the terminal monitor by typing 
 - `resume`: To continue the execution of a plan that has been paused.
 - `cancel`: To terminate the current plan execution immediately.
 - `context <your additional context text>`: To provide supplementary information or instructions to the AI for the current or next step. This context can influence subsequent AI interactions.
-- `details <step_id>`: (If implemented) To switch the focus of the "Current Step Logs Panel" to display logs for a specific step, even if it's already completed or failed.
+- `details <subtask_id>`: (If implemented) To switch the focus of the "Current Step Logs Panel" to display logs for a specific step, even if it's already completed or failed.
 - `help`: To display a list of available commands and their descriptions.
 
 ## Log Configuration

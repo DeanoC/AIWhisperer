@@ -9,13 +9,14 @@ from unittest.mock import patch
 from src.ai_whisperer.config import load_config, _load_prompt_content
 from src.ai_whisperer.exceptions import ConfigError
 
+
 # Helper function to create a temporary config file with the given content
-def create_temp_config(content, is_json=False): # Keep parameter for backward compatibility
+def create_temp_config(content, is_json=False):  # Keep parameter for backward compatibility
     temp_dir = tempfile.gettempdir()
-    config_path = Path(temp_dir) / "test_config.yaml" # Use .yaml extension
+    config_path = Path(temp_dir) / "test_config.yaml"  # Use .yaml extension
 
     # Always write as YAML, regardless of is_json parameter
-    with open(config_path, 'w', encoding='utf-8') as f:
+    with open(config_path, "w", encoding="utf-8") as f:
         if isinstance(content, dict):
             yaml.dump(content, f, default_flow_style=False)
         else:
@@ -23,13 +24,15 @@ def create_temp_config(content, is_json=False): # Keep parameter for backward co
 
     return str(config_path)
 
+
 # Mock environment variables for testing
 @pytest.fixture
 def mock_env_vars():
     return {"OPENROUTER_API_KEY": "test-api-key"}
 
+
 # Test case 1: Valid configuration with models defined for both 'Subtask Generation' and 'Orchestrator'
-@patch('src.ai_whisperer.config._load_prompt_content', return_value="mocked prompt content")
+@patch("src.ai_whisperer.config._load_prompt_content", return_value="mocked prompt content")
 def test_valid_task_models_config(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
 # --- OpenRouter API Settings ---
@@ -75,32 +78,33 @@ output_dir: "./output/"
         config = load_config(config_path)
 
         # Verify the task_models section exists and has the expected structure
-        assert 'task_models' in config, "task_models section is missing"
-        task_models = config['task_models']
+        assert "task_models" in config, "task_models section is missing"
+        task_models = config["task_models"]
 
         # Verify Subtask Generation configuration
-        assert 'Subtask Generation' in task_models, "Subtask Generation task is missing"
-        subtask_gen = task_models['Subtask Generation']
-        assert subtask_gen['provider'] == 'openrouter', "Provider should be 'openrouter'"
-        assert subtask_gen['model'] == 'anthropic/claude-3-opus', "Model is incorrect"
-        assert subtask_gen['params']['temperature'] == 0.5, "Temperature is incorrect"
-        assert subtask_gen['params']['max_tokens'] == 4096, "Max tokens is incorrect"
+        assert "Subtask Generation" in task_models, "Subtask Generation task is missing"
+        subtask_gen = task_models["Subtask Generation"]
+        assert subtask_gen["provider"] == "openrouter", "Provider should be 'openrouter'"
+        assert subtask_gen["model"] == "anthropic/claude-3-opus", "Model is incorrect"
+        assert subtask_gen["params"]["temperature"] == 0.5, "Temperature is incorrect"
+        assert subtask_gen["params"]["max_tokens"] == 4096, "Max tokens is incorrect"
 
         # Verify Orchestrator configuration
-        assert 'Orchestrator' in task_models, "Orchestrator task is missing"
-        orchestrator = task_models['Orchestrator']
-        assert orchestrator['provider'] == 'openrouter', "Provider should be 'openrouter'"
-        assert orchestrator['model'] == 'mistralai/mistral-large', "Model is incorrect"
-        assert orchestrator['params']['temperature'] == 0.8, "Temperature is incorrect"
-        assert orchestrator['params']['max_tokens'] == 8192, "Max tokens is incorrect"
+        assert "Orchestrator" in task_models, "Orchestrator task is missing"
+        orchestrator = task_models["Orchestrator"]
+        assert orchestrator["provider"] == "openrouter", "Provider should be 'openrouter'"
+        assert orchestrator["model"] == "mistralai/mistral-large", "Model is incorrect"
+        assert orchestrator["params"]["temperature"] == 0.8, "Temperature is incorrect"
+        assert orchestrator["params"]["max_tokens"] == 8192, "Max tokens is incorrect"
 
     finally:
         # Clean up the temporary file
         if os.path.exists(config_path):
             os.remove(config_path)
 
+
 # Test case 2: Configuration with missing task-specific model definitions
-@patch('src.ai_whisperer.config._load_prompt_content', return_value="mocked prompt content")
+@patch("src.ai_whisperer.config._load_prompt_content", return_value="mocked prompt content")
 def test_missing_task_models_config(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
 # --- OpenRouter API Settings ---
@@ -134,16 +138,17 @@ output_dir: "./output/"
         config = load_config(config_path)
 
         # Verify the task_models section exists and is an empty dictionary
-        assert 'task_models' in config, "task_models section is missing"
-        assert config['task_models'] == {}, "task_models should be an empty dictionary"
+        assert "task_models" in config, "task_models section is missing"
+        assert config["task_models"] == {}, "task_models should be an empty dictionary"
 
     finally:
         # Clean up the temporary file
         if os.path.exists(config_path):
             os.remove(config_path)
 
+
 # Test case 3: Configuration with invalid model definitions
-@patch('src.ai_whisperer.config._load_prompt_content', return_value="mocked prompt content")
+@patch("src.ai_whisperer.config._load_prompt_content", return_value="mocked prompt content")
 def test_invalid_task_model_definition(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
 # --- OpenRouter API Settings ---
@@ -188,26 +193,27 @@ output_dir: "./output/"
         config = load_config(config_path)
 
         # Verify the task_models section exists
-        assert 'task_models' in config, "task_models section is missing"
-        task_models = config['task_models']
+        assert "task_models" in config, "task_models section is missing"
+        task_models = config["task_models"]
 
         # Verify Subtask Generation configuration is invalid (missing provider)
-        assert 'Subtask Generation' in task_models, "Subtask Generation task is missing"
-        subtask_gen = task_models['Subtask Generation']
-        assert 'provider' not in subtask_gen, "Provider should be missing"
+        assert "Subtask Generation" in task_models, "Subtask Generation task is missing"
+        subtask_gen = task_models["Subtask Generation"]
+        assert "provider" not in subtask_gen, "Provider should be missing"
 
         # Verify Orchestrator configuration is invalid (missing model)
-        assert 'Orchestrator' in task_models, "Orchestrator task is missing"
-        orchestrator = task_models['Orchestrator']
-        assert 'model' not in orchestrator, "Model should be missing"
+        assert "Orchestrator" in task_models, "Orchestrator task is missing"
+        orchestrator = task_models["Orchestrator"]
+        assert "model" not in orchestrator, "Model should be missing"
 
     finally:
         # Clean up the temporary file
         if os.path.exists(config_path):
             os.remove(config_path)
 
+
 # Test case 4: Configuration with unexpected keys or incorrect data types
-@patch('src.ai_whisperer.config._load_prompt_content', return_value="mocked prompt content")
+@patch("src.ai_whisperer.config._load_prompt_content", return_value="mocked prompt content")
 def test_unexpected_keys_in_task_models(mock_load_prompt, mock_env_vars, monkeypatch):
     config_content = """
 # --- OpenRouter API Settings ---
@@ -253,22 +259,22 @@ output_dir: "./output/"
         config = load_config(config_path)
 
         # Verify the task_models section exists
-        assert 'task_models' in config, "task_models section is missing"
-        task_models = config['task_models']
+        assert "task_models" in config, "task_models section is missing"
+        task_models = config["task_models"]
 
         # Verify Subtask Generation configuration has unexpected key
-        assert 'Subtask Generation' in task_models, "Subtask Generation task is missing"
-        subtask_gen = task_models['Subtask Generation']
-        assert 'unexpected_key' in subtask_gen, "Unexpected key is missing"
-        assert subtask_gen['unexpected_key'] == "unexpected_value", "Unexpected value is incorrect"
+        assert "Subtask Generation" in task_models, "Subtask Generation task is missing"
+        subtask_gen = task_models["Subtask Generation"]
+        assert "unexpected_key" in subtask_gen, "Unexpected key is missing"
+        assert subtask_gen["unexpected_key"] == "unexpected_value", "Unexpected value is incorrect"
 
         # Verify Orchestrator configuration has incorrect data types
-        assert 'Orchestrator' in task_models, "Orchestrator task is missing"
-        orchestrator = task_models['Orchestrator']
-        assert orchestrator['provider'] == 123, "Provider should be an integer (incorrect type)"
-        assert isinstance(orchestrator['model'], list), "Model should be a list (incorrect type)"
-        assert orchestrator['params']['temperature'] == "0.8", "Temperature should be a string (incorrect type)"
-        assert orchestrator['params']['max_tokens'] == "8192", "Max tokens should be a string (incorrect type)"
+        assert "Orchestrator" in task_models, "Orchestrator task is missing"
+        orchestrator = task_models["Orchestrator"]
+        assert orchestrator["provider"] == 123, "Provider should be an integer (incorrect type)"
+        assert isinstance(orchestrator["model"], list), "Model should be a list (incorrect type)"
+        assert orchestrator["params"]["temperature"] == "0.8", "Temperature should be a string (incorrect type)"
+        assert orchestrator["params"]["max_tokens"] == "8192", "Max tokens should be a string (incorrect type)"
 
     finally:
         # Clean up the temporary file

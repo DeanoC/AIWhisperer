@@ -1,4 +1,6 @@
 import re
+
+
 def clean_backtick_wrapper(content: str | dict, data: dict) -> tuple:
     """
     Removes code block wrappers (e.g., ```json, ```yaml) from the input data.
@@ -40,7 +42,7 @@ def clean_backtick_wrapper(content: str | dict, data: dict) -> tuple:
     if isinstance(content, dict):
         if "logs" in data:
             data["logs"].append("Input is a dictionary, no backtick wrappers to remove.")
-        return content, data
+        return (content, data)
 
     # Log the original content for debugging
     if "logs" in data:
@@ -52,7 +54,7 @@ def clean_backtick_wrapper(content: str | dict, data: dict) -> tuple:
         # Log the cleaning step for empty content
         if "logs" in data:
             data["logs"].append(f"Removed all backticks. Cleaned content starts with: ")
-        return content, data
+        return (content, data)
 
     cleaned_content = re.sub(r"^```[a-zA-Z]*\n?(.*)\n?```$", r"\1", content, flags=re.DOTALL)
 
@@ -60,4 +62,4 @@ def clean_backtick_wrapper(content: str | dict, data: dict) -> tuple:
     if "logs" in data:
         data["logs"].append(f"Removed all backticks. Cleaned content starts with: {cleaned_content[:20]}")
 
-    return cleaned_content, data
+    return (cleaned_content, data)

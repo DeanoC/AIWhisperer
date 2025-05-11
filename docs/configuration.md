@@ -66,6 +66,25 @@ Paths can be absolute or relative to the configuration file's location.
 
 > **Note:** If you use the `--project-dir` CLI argument, all relative paths (including prompt templates) will be resolved relative to the specified project directory.
 
+### Runner/ExecutionEngine Agent Prompts
+
+This section defines default prompts for specific agent types that are used by the ExecutionEngine (Runner). These prompts serve as the base instructions for agents when executing tasks, and their selection follows a specific fallback mechanism.
+
+| Setting                                   | Required | Default | Description                                                                                                                               |
+| :---------------------------------------- | :------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| `prompts.agent_type_defaults`             | No       | -       | A dictionary defining default prompt paths for specific agent types used by the ExecutionEngine/Runner.                                   |
+| `prompts.agent_type_defaults.<agent_type>`| No       | -       | Path to the default prompt file for the specified `<agent_type>`. Paths are relative to the config file.                                  |
+| `prompts.global_runner_default_prompt_path`| No       | -       | Path to a global default prompt file for the Runner, used as a fallback if no agent-specific default or task instructions are available. |
+
+**Prompt Selection Logic for Runner Agents:**
+
+When the ExecutionEngine (Runner) executes a task with a specific `agent_spec.type`, it determines the prompt to use based on the following hierarchy:
+
+1.  The Runner first attempts to find a prompt in `prompts.agent_type_defaults` that matches the `agent_spec.type` of the current task.
+2.  If a matching agent-specific default prompt is **not found**, the Runner will then use the content of `task_definition['instructions']` from the task plan, provided these instructions are present and not empty.
+3.  If a matching agent-specific default prompt is **not found** AND `task_definition['instructions']` are also missing or empty, the Runner will then use the prompt specified by `prompts.global_runner_default_prompt_path` (if this path is configured).
+4.  If none of the above (agent-specific default, task instructions, or global runner default) are available, the agent might operate without a base system prompt, which could lead to unpredictable behavior or errors.
+
 ### Task-Specific Model Settings
 
 The `task_models` section allows you to specify different models for different tasks in the application.
@@ -111,6 +130,21 @@ prompts:
   orchestrator_prompt_path: "prompts/orchestrator_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
+  # --- Agent-Type Default Prompts (for Runner/ExecutionEngine Agents) ---
+  # This section defines default prompts for specific agent types that are
+  # referenced in the 'agent_spec.type' field of tasks executed by the
+  # ExecutionEngine (Runner).
+  agent_type_defaults:
+    ai_interaction: "prompts/defaults/runner/ai_interaction_default.md"
+    planning: "prompts/defaults/runner/planning_default.md"
+    # custom_agent_type: "prompts/defaults/runner/custom_agent_default.md"
+
+  # --- Optional: Global Default Prompt (for Runner/ExecutionEngine Agents) ---
+  # This prompt is used by the ExecutionEngine as a last resort if no
+  # agent-type specific prompt (from agent_type_defaults) is found for the
+  # current agent_spec.type AND the task_definition['instructions'] are also missing or empty.
+  global_runner_default_prompt_path: "prompts/global_runner_fallback_default.md"
+
 output_dir: "./output/"
 ```
 
@@ -130,6 +164,21 @@ openrouter:
 prompts:
   orchestrator_prompt_path: "prompts/orchestrator_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
+
+  # --- Agent-Type Default Prompts (for Runner/ExecutionEngine Agents) ---
+  # This section defines default prompts for specific agent types that are
+  # referenced in the 'agent_spec.type' field of tasks executed by the
+  # ExecutionEngine (Runner).
+  agent_type_defaults:
+    ai_interaction: "prompts/defaults/runner/ai_interaction_default.md"
+    planning: "prompts/defaults/runner/planning_default.md"
+    # custom_agent_type: "prompts/defaults/runner/custom_agent_default.md"
+
+  # --- Optional: Global Default Prompt (for Runner/ExecutionEngine Agents) ---
+  # This prompt is used by the ExecutionEngine as a last resort if no
+  # agent-type specific prompt (from agent_type_defaults) is found for the
+  # current agent_spec.type AND the task_definition['instructions'] are also missing or empty.
+  global_runner_default_prompt_path: "prompts/global_runner_fallback_default.md"
 
 task_models:
   "Subtask Generation":

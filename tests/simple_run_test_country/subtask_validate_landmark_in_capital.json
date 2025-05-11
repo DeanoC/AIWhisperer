@@ -1,37 +1,31 @@
 {
   "description": "Check if the AI's answer about the landmark being in the capital is correct.",
-  "depends_on": [],
-  "agent_spec": {
-    "type": "validation",
-    "input_artifacts": [
-      "landmark_selection.md",
-      "ai_response_landmark_in_capital.txt",
-      "capital_validation_result.md"
-    ],
-    "output_artifacts": [
-      "landmark_in_capital_validation_result.md"
-    ],
-    "instructions": [
-      "Locate and read the file 'landmark_selection.md' to identify the specific landmark chosen in a previous step.",
-      "Locate and read the file 'ai_response_landmark_in_capital.txt' to understand the AI's response regarding whether the selected landmark is located in the capital city.",
-      "Based on your internal knowledge or by performing a quick search if necessary, determine the actual location of the landmark identified in 'landmark_selection.md' and verify if it is indeed within the capital city of the country previously determined.",
-      "Compare the factual location of the landmark relative to the capital with the AI's response found in 'ai_response_landmark_in_capital.txt'. The AI's response is expected to be a simple 'Yes' or 'No' or similar clear indication.",
-      "Create a new file named 'landmark_in_capital_validation_result.md'.",
-      "In 'landmark_in_capital_validation_result.md', clearly state if the validation 'Passed' or 'Failed'.",
-      "If the validation 'Failed', provide a brief reason explaining why (e.g., 'AI stated Yes, but landmark X is not in capital Y').",
-      "If the validation 'Passed', state that the AI's response correctly identified whether the landmark is in the capital."
-    ],
-    "constraints": [
-      "This step should only be executed if the previous steps (selecting a landmark and getting the AI's response) were completed successfully and not skipped."
-    ],
-    "validation_criteria": [
-      "A file named 'landmark_in_capital_validation_result.md' must exist in the output directory.",
-      "The content of 'landmark_in_capital_validation_result.md' must clearly state either 'Pass' or 'Fail'.",
-      "If the result is 'Fail', the file must include a brief explanation for the failure."
-    ],
-    "model_preference": null
-  },
-  "step_id": "validate_landmark_in_capital",
-  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb",
-  "subtask_id": "fa300251-715f-41f6-9760-d58338a1940f"
+  "instructions": [
+    "Locate and read the file 'landmark_selection.md' to identify the specific landmark chosen in a previous step.",
+    "Locate and read the file 'ai_response_landmark_in_capital.txt' to understand the AI's response regarding whether the selected landmark is located in the capital city.",
+    "Based on your internal knowledge or by performing a quick search if necessary, determine the actual location of the landmark identified in 'landmark_selection.md' and verify if it is indeed within the capital city of the country previously determined.",
+    "Compare the factual location of the landmark relative to the capital with the AI's response found in 'ai_response_landmark_in_capital.txt'. The AI's response is expected to be a simple 'Yes' or 'No' or similar clear indication.",
+    "Create a new file named 'landmark_in_capital_validation_result.md'.",
+    "In 'landmark_in_capital_validation_result.md', clearly state if the validation 'Passed' or 'Failed'.",
+    "If the validation 'Failed', provide a brief reason explaining why (e.g., 'AI stated Yes, but landmark X is not in capital Y').",
+    "If the validation 'Passed', state that the AI's response correctly identified whether the landmark is in the capital."
+  ],
+  "input_artifacts": [
+    "landmark_selection.md",
+    "ai_response_landmark_in_capital.txt",
+    "capital_validation_result.md"
+  ],
+  "output_artifacts": [
+    "landmark_in_capital_validation_result.md"
+  ],
+  "constraints": [
+    "This step should only be executed if the previous steps (selecting a landmark and getting the AI's response) were completed successfully and not skipped."
+  ],
+  "validation_criteria": [
+    "A file named 'landmark_in_capital_validation_result.md' must exist in the output directory.",
+    "The content of 'landmark_in_capital_validation_result.md' must clearly state either 'Pass' or 'Fail'.",
+    "If the result is 'Fail', the file must include a brief explanation for the failure."
+  ],
+  "subtask_id": "fa300251-715f-41f6-9760-d58338a1940f",
+  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb"
 }

@@ -8,6 +8,7 @@ It parses the JSON content and re-serializes it with consistent formatting.
 import json
 from typing import Tuple
 
+
 def format_json(content: str | dict, data: dict) -> tuple:
     """
     Formats the JSON content for consistency.
@@ -53,7 +54,7 @@ def format_json(content: str | dict, data: dict) -> tuple:
             data["logs"].append("Input is a dictionary, no formatting applied. Assumed to be valid.")
         else:
             # This case should ideally not be reached if type hints are respected.
-            processed_content = content # Return original content
+            processed_content = content  # Return original content
             error_message = f"Unsupported content type: {type(content)}. Expected str or dict."
             data["logs"].append(f"ERROR: {error_message}")
             if "errors" not in data:
@@ -74,40 +75,43 @@ def format_json(content: str | dict, data: dict) -> tuple:
         if "errors" not in data:
             data["errors"] = []
         data["errors"].append(error_message)
-        processed_content = content # Return original content
+        processed_content = content  # Return original content
 
-    return processed_content, data
+    return (processed_content, data)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example Usage - This part is for local testing and won't be run by unittest
     test_data_str_valid = '{"name": "Test", "items": [1, 2, 3], "details": {"type": "example"}}'
-    test_data_dict = {"name": "TestDict", "items": [4,5,6]}
-    test_data_str_invalid = '{"name": "Test", "items": [1, 2, 3], "details": {"type": "example"}' # Missing closing brace
+    test_data_dict = {"name": "TestDict", "items": [4, 5, 6]}
+    test_data_str_invalid = (
+        '{"name": "Test", "items": [1, 2, 3], "details": {"type": "example"}'  # Missing closing brace
+    )
     test_data_str_ugly = '{\n"name":"TestUgly",\n  "items" : [ 1,2,3 ]\n}'
 
     print("--- Test Case 1: Valid JSON String ---")
-    output_content, output_data = format_json(test_data_str_valid, {"logs": []})
+    (output_content, output_data) = format_json(test_data_str_valid, {"logs": []})
     print("Formatted Content:\n", output_content)
     print("Logs:\n", json.dumps(output_data["logs"], indent=2))
     assert isinstance(output_content, str)
     assert json.loads(output_content)["name"] == "Test"
 
     print("\n--- Test Case 2: Dictionary Input ---")
-    output_content_dict, output_data_dict = format_json(test_data_dict, {"logs": []})
+    (output_content_dict, output_data_dict) = format_json(test_data_dict, {"logs": []})
     print("Formatted Content (dict input):\n", output_content_dict)
     print("Logs (dict input):\n", json.dumps(output_data_dict["logs"], indent=2))
     assert isinstance(output_content_dict, dict)
     assert output_content_dict["name"] == "TestDict"
 
     print("\n--- Test Case 3: Invalid JSON String ---")
-    output_content_invalid, output_data_invalid = format_json(test_data_str_invalid, {"logs": []})
+    (output_content_invalid, output_data_invalid) = format_json(test_data_str_invalid, {"logs": []})
     print("Formatted Content (invalid input):\n", output_content_invalid)
     print("Logs (invalid input):\n", json.dumps(output_data_invalid["logs"], indent=2))
     assert "errors" in output_data_invalid
     assert output_content_invalid == test_data_str_invalid
 
     print("\n--- Test Case 4: Ugly JSON String ---")
-    output_content_ugly, output_data_ugly = format_json(test_data_str_ugly, {"logs": []})
+    (output_content_ugly, output_data_ugly) = format_json(test_data_str_ugly, {"logs": []})
     print("Formatted Content (ugly input):\n", output_content_ugly)
     print("Logs (ugly input):\n", json.dumps(output_data_ugly["logs"], indent=2))
     assert isinstance(output_content_ugly, str)

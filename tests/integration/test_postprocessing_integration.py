@@ -13,7 +13,7 @@ import time
 
 from src.ai_whisperer.orchestrator import Orchestrator
 from src.ai_whisperer.subtask_generator import SubtaskGenerator
-from src.ai_whisperer.config import load_config # Import load_config
+from src.ai_whisperer.config import load_config  # Import load_config
 from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 from src.postprocessing.pipeline import PostprocessingPipeline
@@ -25,13 +25,15 @@ def tmp_path_with_cleanup(request, tmp_path):
     Pytest fixture to create a temporary directory and ensure its cleanup
     with retries to handle PermissionError on Windows.
     """
+
     def cleanup():
-        import shutil # Import shutil within the cleanup function
+        import shutil  # Import shutil within the cleanup function
+
         max_attempts = 5
         for attempt in range(max_attempts):
             try:
                 shutil.rmtree(tmp_path)
-                break # Success
+                break  # Success
             except PermissionError as e:
                 if attempt < max_attempts - 1:
                     print(f"Cleanup attempt {attempt + 1} failed: {e}. Retrying in 0.1 seconds.")
@@ -41,7 +43,7 @@ def tmp_path_with_cleanup(request, tmp_path):
                     # Optionally re-raise the exception if cleanup is critical
                     # raise
             except FileNotFoundError:
-                break # Already removed
+                break  # Already removed
 
     request.addfinalizer(cleanup)
     return tmp_path
@@ -65,12 +67,9 @@ class TestOrchestratorPostprocessingIntegration:
             "natural_language_goal": "Test goal",
             "plan": [
                 {
-                    "step_id": "test_step",
+                    "subtask_id": "test_step",
                     "description": "Test step",
-                    "agent_spec": {
-                        "type": "test",
-                        "instructions": "Test instructions"
-                    }
+                    "agent_spec": {"type": "test", "instructions": "Test instructions"},
                 }
             ],
             "task_id": "test-uuid",
@@ -78,37 +77,24 @@ class TestOrchestratorPostprocessingIntegration:
                 "requirements_md": "test-hash-1",
                 "config_json": "test-hash-2",
                 "prompt_file": "test-hash-3",
-            }
+            },
         }
 
         # Mock the API response
         mock_api_instance.call_chat_completion.return_value = "Some JSON content"
 
         # Mock the process method to return a valid JSON dictionary and result
-        mock_process.return_value = (json_dict, {
-            "success": True,
-            "steps": {},
-            "logs": []
-        })
+        mock_process.return_value = (json_dict, {"success": True, "steps": {}, "logs": []})
 
         # Ensure the mock is used instead of making real API calls
         # Create a raw test config with the new structure
         raw_test_config = {
-            "openrouter": {
-                "api_key": "test-key",
-                "model": "test-model",
-                "params": {},
-            },
+            "openrouter": {"api_key": "test-key", "model": "test-model", "params": {}},
             "task_prompts": {
                 # Path is relative to the config file location (tmp_test)
                 "orchestrator": "orchestrator_default.md"
             },
-            "task_models": {
-                "orchestrator": {
-                    "model": "test-model",
-                    "params": {},
-                }
-            }
+            "task_models": {"orchestrator": {"model": "test-model", "params": {}}},
         }
 
         # Create temporary files for testing
@@ -146,12 +132,8 @@ class TestOrchestratorPostprocessingIntegration:
             ):
                 # Mock the _validate_json_response method to avoid validation
                 # Mock the save_json method to capture the JSON content
-                with patch.object(
-                    orchestrator, "save_json", return_value=tmp_dir / "output.json"
-                ) as mock_save:
-                    orchestrator.generate_initial_json(
-                        str(requirements_path), str(config_path)
-                    )
+                with patch.object(orchestrator, "save_json", return_value=tmp_dir / "output.json") as mock_save:
+                    orchestrator.generate_initial_json(str(requirements_path), str(config_path))
 
                     # Get the JSON content that would have been saved
                     saved_json = mock_save.call_args[0][0]
@@ -187,24 +169,19 @@ class TestSubtaskGeneratorPostprocessingIntegration:
 
         # Create a JSON dictionary with the expected fields
         json_dict = {
-            "step_id": "test_step",
+            "task_id": "mock-test-task-id",
+            "subtask_id": "mock-test-subtask-id",
             "description": "Test step",
-            "agent_spec": {
-                "type": "test",
-                "instructions": "Test instructions"
-            },
-            "subtask_id": "test-subtask-uuid"
+            "type": "no-op",
+            "instructions": ["Test instructions"],
         }
 
         # Mock the API response with a simple JSON
         mock_api_instance.call_chat_completion.return_value = """
 {
-  "step_id": "test_step",
-  "description": "Test step",
-  "agent_spec": {
-    "type": "test",
-    "instructions": "Test instructions"
-  }
+    "description": "Test step",
+    "type": "no-op",
+    "instructions": ["Test instructions"]
 }
 """
         # Set model and params attributes on the mock
@@ -212,34 +189,18 @@ class TestSubtaskGeneratorPostprocessingIntegration:
         mock_api_instance.params = {}
 
         # Mock the process method to return a valid JSON dictionary and result
-        mock_process.return_value = (json_dict, {
-            "success": True,
-            "steps": {},
-            "logs": []
-        })
+        mock_process.return_value = (json_dict, {"success": True, "steps": {}, "logs": []})
 
         # Ensure the mock is used instead of making real API calls
-        with patch(
-            "src.ai_whisperer.ai_service_interaction.OpenRouterAPI",
-            return_value=mock_api_instance,
-        ):
+        with patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI", return_value=mock_api_instance):
             # Create a raw test config with the new structure
             raw_test_config = {
-                "openrouter": {
-                    "api_key": "test-key",
-                    "model": "test-model",
-                    "params": {},
-                },
+                "openrouter": {"api_key": "test-key", "model": "test-model", "params": {}},
                 "task_prompts": {
                     # Path is relative to the config file location (tmp_test)
                     "subtask_generator": "subtask_generator_default.md"
                 },
-                 "task_models": {
-                    "subtask_generator": {
-                        "model": "test-model",
-                        "params": {},
-                    }
-                }
+                "task_models": {"subtask_generator": {"model": "test-model", "params": {}}},
             }
 
             # Create temporary directory for testing
@@ -260,7 +221,7 @@ class TestSubtaskGeneratorPostprocessingIntegration:
 
             # Create subtask generator with the processed config
             subtask_generator = SubtaskGenerator(
-                str(config_path), # Pass config_path string as SubtaskGenerator expects it
+                str(config_path),  # Pass config_path string as SubtaskGenerator expects it
                 overall_context="",
                 workspace_context="",
                 output_dir=str(tmp_dir),
@@ -275,12 +236,12 @@ class TestSubtaskGeneratorPostprocessingIntegration:
                 subtask_schema = {
                     "type": "object",
                     "properties": {
-                        "step_id": {"type": "string"},
+                        "task_id": {"type": "string"},
                         "subtask_id": {"type": "string"},
                         "description": {"type": "string"},
-                        "agent_spec": {"type": "object"}
+                        "agent_spec": {"type": "object"},
                     },
-                    "required": ["step_id", "subtask_id", "description", "agent_spec"]
+                    "required": ["task_id", "subtask_id", "description", "agent_spec"],
                 }
 
                 # Mock the open function to avoid writing to a file, but provide schema content when reading the schema file
@@ -322,23 +283,25 @@ class TestSubtaskGeneratorPostprocessingIntegration:
                 with patch("builtins.open", mock_file):
                     # Create input step
                     input_step = {
-                        "step_id": "test_step",
+                        "task_id": "test-id",
+                        "subtask_id": "test-subtask-id",
                         "description": "Test step",
-                        "agent_spec": {"type": "test", "instructions": "Test instructions"},
+                        "type": "no-op", 
+                        "instructions": ["Test instructions"],
                     }
                     # Create result_data with items to add and the schema
                     result_data = {
                         "items_to_add": {
                             "top_level": {
-                                "subtask_id": str(mock_uuid4.return_value),  # Use mocked UUID
-                                "step_id": input_step["step_id"],  # Preserve the original step_id
+                                "task_id": input_step["task_id"],  # Preserve the original task_id
+                                "subtask_id": input_step["subtask_id"],  # Preserve the original subtask_id
                             },
                             "step_level": {},  # No step-level items for subtasks
                         },
                         "success": True,
                         "steps": {},
                         "logs": [],
-                        "schema": subtask_schema, # Add the schema here
+                        "schema": subtask_schema,  # Add the schema here
                     }
 
                     # Call generate_subtask with the updated result_data
@@ -346,12 +309,13 @@ class TestSubtaskGeneratorPostprocessingIntegration:
 
                     # Verify that the process method was called with the expected arguments
                     mock_process.assert_called_once()
+                    print(json_dict)
 
                     # Verify that the returned JSON dictionary has the expected fields
-                    assert json_dict["step_id"] == "test_step"
-                    assert json_dict["subtask_id"] == "test-subtask-uuid"
+                    assert json_dict["task_id"] == "mock-test-task-id"
+                    assert json_dict["subtask_id"] == "mock-test-subtask-id"
                     assert json_dict["description"] == "Test step"
-                    assert json_dict["agent_spec"]["type"] == "test"
-                    assert json_dict["agent_spec"]["instructions"] == "Test instructions"
+                    assert json_dict["type"] == "no-op"
+                    assert json_dict["instructions"][0] == "Test instructions"
 
             # Clean up is handled by the pytest fixture

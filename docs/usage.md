@@ -129,9 +129,9 @@ The main plan file (e.g., `my_complex_task_plan.json`) defines the overall goal,
 
 Each **step object** within the `plan` array includes:
 
-* `step_id`: A unique identifier for the step.
+* `subtask_id`: A unique identifier for the step.
 * `description`: A human-readable description of the step.
-* `depends_on`: An array of `step_id`s that must complete before this step can start.
+* `depends_on`: An array of `subtask_id`s that must complete before this step can start.
 * `agent_spec`: An object detailing the agent's configuration for this step, including:
   * `type`: The category of the step (e.g., 'code_generation', 'analysis').
   * `input_artifacts`: Required input files or data.

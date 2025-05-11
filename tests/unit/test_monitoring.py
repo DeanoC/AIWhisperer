@@ -9,14 +9,15 @@ from rich.table import Table
 from datetime import datetime
 from enum import Enum
 from typing import Optional
-import os # Import os for StateManager
+import os  # Import os for StateManager
 
 # Import real classes from the source code
 from src.ai_whisperer.logging import LogMessage, LogLevel, ComponentType
 from src.ai_whisperer.state_management import StateManager
-from src.ai_whisperer.monitoring import TerminalMonitor # Import the real TerminalMonitor
+from src.ai_whisperer.monitoring import TerminalMonitor  # Import the real TerminalMonitor
 
 # --- Unit Tests ---
+
 
 class TestMonitoring:
 
@@ -29,9 +30,9 @@ class TestMonitoring:
         plan_data = {
             "task_id": "test_plan",
             "plan": [
-                {"step_id": "step_1", "description": "Step One"},
-                {"step_id": "step_2", "description": "Step Two"},
-            ]
+                {"subtask_id": "step_1", "description": "Step One"},
+                {"subtask_id": "step_2", "description": "Step Two"},
+            ],
         }
         manager.initialize_state(plan_data)
         return manager
@@ -39,8 +40,9 @@ class TestMonitoring:
     @pytest.fixture
     def terminal_monitor(self, state_manager):
         # Patch Rich Live and Console to prevent actual terminal output during tests
-        with patch('src.ai_whisperer.monitoring.Live') as mock_live, \
-             patch('src.ai_whisperer.monitoring.Console') as mock_console:
+        with patch("src.ai_whisperer.monitoring.Live") as mock_live, patch(
+            "src.ai_whisperer.monitoring.Console"
+        ) as mock_console:
             # Instantiate the real TerminalMonitor with the state_manager
             monitor = TerminalMonitor(state_manager)
             # Assign the mock Live object to the monitor's internal _live attribute
@@ -55,23 +57,23 @@ class TestMonitoring:
         assert state_manager.get_global_state("plan_status") is None
 
     def test_update_plan_status_running(self, state_manager):
-        state_manager.update_global_state("plan_status", "in-progress") # Real status is "in-progress"
+        state_manager.update_global_state("plan_status", "in-progress")  # Real status is "in-progress"
         assert state_manager.get_global_state("plan_status") == "in-progress"
 
     def test_update_plan_status_completed(self, state_manager):
-        state_manager.update_global_state("plan_status", "completed") # Real status is "completed"
+        state_manager.update_global_state("plan_status", "completed")  # Real status is "completed"
         assert state_manager.get_global_state("plan_status") == "completed"
 
     def test_update_plan_status_failed(self, state_manager):
-        state_manager.update_global_state("plan_status", "failed") # Real status is "failed"
+        state_manager.update_global_state("plan_status", "failed")  # Real status is "failed"
         assert state_manager.get_global_state("plan_status") == "failed"
 
     def test_update_plan_status_cancelled(self, state_manager):
-        state_manager.update_global_state("plan_status", "cancelled") # Real status is "cancelled"
+        state_manager.update_global_state("plan_status", "cancelled")  # Real status is "cancelled"
         assert state_manager.get_global_state("plan_status") == "cancelled"
 
     def test_update_plan_status_paused(self, state_manager):
-        state_manager.update_global_state("plan_status", "paused") # Real status is "paused"
+        state_manager.update_global_state("plan_status", "paused")  # Real status is "paused"
         assert state_manager.get_global_state("plan_status") == "paused"
 
     # The real StateManager does not have a validation for plan status values in update_global_state
@@ -80,17 +82,16 @@ class TestMonitoring:
     #     with pytest.raises(ValueError):
     #         state_manager.update_global_state("plan_status", "InvalidStatus")
 
-
     def test_initial_step_status_is_none(self, state_manager):
         # The real StateManager returns None if task_id is not found
         assert state_manager.get_task_status("step_abc") is None
 
     def test_update_step_status(self, state_manager):
         # Need to initialize the task in state_manager first
-        state_manager.set_task_state("step_1", "pending") # Real status is "pending"
-        state_manager.set_task_state("step_1", "in-progress") # Real status is "in-progress"
+        state_manager.set_task_state("step_1", "pending")  # Real status is "pending"
+        state_manager.set_task_state("step_1", "in-progress")  # Real status is "in-progress"
         assert state_manager.get_task_status("step_1") == "in-progress"
-        state_manager.set_task_state("step_1", "completed") # Real status is "completed"
+        state_manager.set_task_state("step_1", "completed")  # Real status is "completed"
         assert state_manager.get_task_status("step_1") == "completed"
 
     def test_update_multiple_step_statuses(self, state_manager):
@@ -105,12 +106,14 @@ class TestMonitoring:
     #     with pytest.raises(ValueError):
     #         state_manager.set_task_state("step_xyz", "BadStatus")
 
-
     def test_get_all_step_statuses(self, state_manager):
         state_manager.set_task_state("step_1", "in-progress")
         state_manager.set_task_state("step_2", "completed")
         # The real StateManager stores tasks under the "tasks" key, including result: None by default
-        assert state_manager.state.get("tasks") == {"step_1": {"status": "in-progress", "result": None}, "step_2": {"status": "completed", "result": None}}
+        assert state_manager.state.get("tasks") == {
+            "step_1": {"status": "in-progress", "result": None},
+            "step_2": {"status": "completed", "result": None},
+        }
 
     # Test Simulating Plan Execution Flow (using the real StateManager)
     def test_plan_execution_status_transitions(self, state_manager):
@@ -150,7 +153,7 @@ class TestMonitoring:
         assert state_manager.get_global_state("plan_status") == "cancelled"
 
     def test_step_status_transitions_during_plan_execution(self, state_manager):
-        state_manager.initialize_state({"task_id": "test_plan", "plan": [{"step_id": "step_1"}, {"step_id": "step_2"}]})
+        state_manager.initialize_state({"task_id": "test_plan", "plan": [{"subtask_id": "step_1"}, {"subtask_id": "step_2"}]})
         state_manager.update_global_state("plan_status", "in-progress")
 
         assert state_manager.get_task_status("step_1") == "pending"
@@ -166,7 +169,7 @@ class TestMonitoring:
         assert state_manager.get_task_status("step_2") == "in-progress"
 
         state_manager.set_task_state("step_2", "failed")
-        state_manager.update_global_state("plan_status", "failed") # Plan fails if a step fails
+        state_manager.update_global_state("plan_status", "failed")  # Plan fails if a step fails
         assert state_manager.get_task_status("step_1") == "completed"
         assert state_manager.get_task_status("step_2") == "failed"
         assert state_manager.get_global_state("plan_status") == "failed"
@@ -174,8 +177,8 @@ class TestMonitoring:
     # Test Terminal Monitoring View Rendering (using the real TerminalMonitor and StateManager)
     def test_terminal_monitor_updates_layout(self, terminal_monitor, state_manager):
         plan_steps_data = [
-            {"step_id": "step_1", "description": "Step One"},
-            {"step_id": "step_2", "description": "Step Two"},
+            {"subtask_id": "step_1", "description": "Step One"},
+            {"subtask_id": "step_2", "description": "Step Two"},
         ]
         state_manager.initialize_state({"task_id": "Test Plan", "plan": plan_steps_data})
         state_manager.update_global_state("plan_status", "in-progress")
@@ -187,8 +190,18 @@ class TestMonitoring:
         terminal_monitor.set_runner_status_info("Processing...")
 
         # Simulate adding logs (using real LogMessage)
-        terminal_monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "start", event_summary="Runner started.", step_id="step_2")) # Use event_summary
-        terminal_monitor.add_log_message(LogMessage(LogLevel.INFO, ComponentType.EXECUTION_ENGINE, "step_execution_started", event_summary="Starting step_2", step_id="step_2")) # Use event_summary
+        terminal_monitor.add_log_message(
+            LogMessage(LogLevel.INFO, ComponentType.RUNNER, "start", event_summary="Runner started.", subtask_id="step_2")
+        )  # Use event_summary
+        terminal_monitor.add_log_message(
+            LogMessage(
+                LogLevel.INFO,
+                ComponentType.EXECUTION_ENGINE,
+                "step_execution_started",
+                event_summary="Starting step_2",
+                subtask_id="step_2",
+            )
+        )  # Use event_summary
 
         terminal_monitor.update_display()
 
@@ -206,12 +219,12 @@ class TestMonitoring:
 
     def test_plan_overview_panel_content_rendering(self, terminal_monitor, state_manager):
         plan_steps_data = [
-            {"step_id": "step_1", "description": "Step One"},
-            {"step_id": "step_2", "description": "Step Two"},
-            {"step_id": "step_3", "description": "Step Three"},
-            {"step_id": "step_4", "description": "Step Four"},
-            {"step_id": "step_5", "description": "Step Five"},
-            {"step_id": "step_6", "description": "Step Six"},
+            {"subtask_id": "step_1", "description": "Step One"},
+            {"subtask_id": "step_2", "description": "Step Two"},
+            {"subtask_id": "step_3", "description": "Step Three"},
+            {"subtask_id": "step_4", "description": "Step Four"},
+            {"subtask_id": "step_5", "description": "Step Five"},
+            {"subtask_id": "step_6", "description": "Step Six"},
         ]
         # Set the plan data on the state_manager instance from the fixture
         state_manager.state["plan"] = plan_steps_data
@@ -234,9 +247,23 @@ class TestMonitoring:
     def test_current_step_logs_panel_content_rendering(self, terminal_monitor):
         terminal_monitor.set_active_step("step_abc")
         active_step_logs_data = [
-            LogMessage(LogLevel.INFO, ComponentType.RUNNER, "start", event_summary="Runner started.", step_id="step_abc"), # Use event_summary
-            LogMessage(LogLevel.DEBUG, ComponentType.AI_SERVICE, "api_request_sent", event_summary="Sent request.", step_id="step_abc"), # Use event_summary
-            LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "step_execution_failed", event_summary="Step failed.", step_id="step_abc"), # Use event_summary
+            LogMessage(
+                LogLevel.INFO, ComponentType.RUNNER, "start", event_summary="Runner started.", subtask_id="step_abc"
+            ),  # Use event_summary
+            LogMessage(
+                LogLevel.DEBUG,
+                ComponentType.AI_SERVICE,
+                "api_request_sent",
+                event_summary="Sent request.",
+                subtask_id="step_abc",
+            ),  # Use event_summary
+            LogMessage(
+                LogLevel.ERROR,
+                ComponentType.EXECUTION_ENGINE,
+                "step_execution_failed",
+                event_summary="Step failed.",
+                subtask_id="step_abc",
+            ),  # Use event_summary
         ]
         for log in active_step_logs_data:
             terminal_monitor.add_log_message(log)
@@ -252,10 +279,12 @@ class TestMonitoring:
 
     def test_current_step_logs_panel_content_rendering_no_step(self, terminal_monitor):
         general_logs = [
-             LogMessage(LogLevel.INFO, ComponentType.RUNNER, "start", event_summary="Runner started."), # Use event_summary
+            LogMessage(
+                LogLevel.INFO, ComponentType.RUNNER, "start", event_summary="Runner started."
+            )  # Use event_summary
         ]
         for log in general_logs:
-             terminal_monitor.add_log_message(log)
+            terminal_monitor.add_log_message(log)
 
         panel = terminal_monitor._get_current_step_logs_panel_content()
         assert isinstance(panel, Panel)
@@ -264,34 +293,33 @@ class TestMonitoring:
         assert "Runner started." in text_content
         assert "General Logs" in str(panel.title)
 
-
     # Test User Interaction Points (Mocking input) - Skipping detailed tests for now
     # as the real TerminalMonitor's input handling is integrated with the Live loop
     # and requires more complex mocking or integration testing.
     # The handle_user_input method is a placeholder in the real class.
 
     # Test Edge Cases (using the real StateManager and LogMessage)
-    def test_update_step_status_with_none_step_id_raises_error(self, state_manager):
-        # The real StateManager.set_task_state does not explicitly check for None step_id
+    def test_update_step_status_with_none_subtask_id_raises_error(self, state_manager):
+        # The real StateManager.set_task_state does not explicitly check for None subtask_id
         # but accessing state["tasks"][None] would likely raise a TypeError.
         # Let's check for TypeError instead of ValueError, or update StateManager
-        # to raise a more specific error if step_id is None.
+        # to raise a more specific error if subtask_id is None.
         # Based on the previous fix, StateManager.update_task_status now raises ValueError.
         with pytest.raises(ValueError):
-             state_manager.set_task_state(None, "in-progress") # Use a valid status string
+            state_manager.set_task_state(None, "in-progress")  # Use a valid status string
 
     def test_log_message_with_minimal_fields(self):
         log = LogMessage(
             level=LogLevel.INFO,
             component=ComponentType.RUNNER,
             action="initialized",
-            event_summary="Runner initialized." # Use event_summary
+            event_summary="Runner initialized.",  # Use event_summary
         )
         assert log.level == LogLevel.INFO
         assert log.component == ComponentType.RUNNER
         assert log.action == "initialized"
-        assert log.event_summary == "Runner initialized." # Use event_summary
-        assert log.step_id is None
+        assert log.event_summary == "Runner initialized."  # Use event_summary
+        assert log.subtask_id is None
         assert log.details == {}
 
     def test_log_message_with_all_fields(self):
@@ -300,19 +328,19 @@ class TestMonitoring:
             level=LogLevel.DEBUG,
             component=ComponentType.AI_SERVICE,
             action="api_request_sent",
-            event_summary="Sent request.", # Use event_summary
-            step_id="step_abc",
+            event_summary="Sent request.",  # Use event_summary
+            subtask_id="step_abc",
             event_id="event_xyz",
             state_before="Idle",
             state_after="Waiting",
             duration_ms=500.5,
-            details=details
+            details=details,
         )
         assert log.level == LogLevel.DEBUG
         assert log.component == ComponentType.AI_SERVICE
         assert log.action == "api_request_sent"
-        assert log.event_summary == "Sent request." # Use event_summary
-        assert log.step_id == "step_abc"
+        assert log.event_summary == "Sent request."  # Use event_summary
+        assert log.subtask_id == "step_abc"
         assert log.event_id == "event_xyz"
         assert log.state_before == "Idle"
         assert log.state_after == "Waiting"

@@ -1,7 +1,7 @@
 import pytest
 import sys
 import json
-import argparse # Import argparse
+import argparse  # Import argparse
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
@@ -12,41 +12,59 @@ from pathlib import Path
 
 # Mock the necessary components
 
+
 # Fixture for tests that need sys.exit patched (normal success/failure cases)
 @pytest.fixture
 def mock_dependencies():
-    with patch('src.ai_whisperer.main.Orchestrator') as MockOrchestrator, \
-         patch('src.ai_whisperer.main.load_config') as mock_load_config, \
-         patch('builtins.open', new_callable=MagicMock) as mock_open, \
-         patch('json.load') as mock_json_load, \
-         patch('sys.exit') as mock_sys_exit, \
-         patch('src.ai_whisperer.main.setup_rich_output') as mock_setup_rich_output:
+    with patch("src.ai_whisperer.main.Orchestrator") as MockOrchestrator, patch(
+        "src.ai_whisperer.main.load_config"
+    ) as mock_load_config, patch("src.ai_whisperer.main.ParserPlan") as MockParserPlan, patch(
+        "sys.exit"
+    ) as mock_sys_exit, patch(
+        "src.ai_whisperer.main.setup_rich_output"
+    ) as mock_setup_rich_output:
         # Configure mocks
         mock_orchestrator_instance = MockOrchestrator.return_value
         mock_orchestrator_instance.run_plan.return_value = None
         mock_config = MagicMock()
         mock_load_config.return_value = mock_config
-        mock_file_handle = MagicMock()
-        mock_open.return_value.__enter__.return_value = mock_file_handle
-        mock_json_load.return_value = {"task_id": "test-task", "plan": []}
-        yield MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_sys_exit, mock_setup_rich_output
+
+        # Configure the mocked ParserPlan instance
+        mock_parser_plan_instance = MockParserPlan.return_value
+        # Assume main calls load_overview_plan based on traceback
+        mock_parser_plan_instance.load_overview_plan.return_value = None  # load methods don't return value
+        mock_parser_plan_instance.get_parsed_plan.return_value = {
+            "task_id": "test-task",
+            "plan": [],
+        }  # Configure return for get_parsed_plan
+
+        yield MockOrchestrator, mock_load_config, MockParserPlan, mock_sys_exit, mock_setup_rich_output
+
 
 # Fixture for tests that must let sys.exit raise SystemExit (argparse error cases)
 @pytest.fixture
 def mock_dependencies_no_exit_patch():
-    with patch('src.ai_whisperer.main.Orchestrator') as MockOrchestrator, \
-         patch('src.ai_whisperer.main.load_config') as mock_load_config, \
-         patch('builtins.open', new_callable=MagicMock) as mock_open, \
-         patch('json.load') as mock_json_load, \
-         patch('src.ai_whisperer.main.setup_rich_output') as mock_setup_rich_output:
+    with patch("src.ai_whisperer.main.Orchestrator") as MockOrchestrator, patch(
+        "src.ai_whisperer.main.load_config"
+    ) as mock_load_config, patch("src.ai_whisperer.main.ParserPlan") as MockParserPlan, patch(
+        "src.ai_whisperer.main.setup_rich_output"
+    ) as mock_setup_rich_output:
         mock_orchestrator_instance = MockOrchestrator.return_value
         mock_orchestrator_instance.run_plan.return_value = None
         mock_config = MagicMock()
         mock_load_config.return_value = mock_config
-        mock_file_handle = MagicMock()
-        mock_open.return_value.__enter__.return_value = mock_file_handle
-        mock_json_load.return_value = {"task_id": "test-task", "plan": []}
-        yield MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_setup_rich_output
+
+        # Configure the mocked ParserPlan instance
+        mock_parser_plan_instance = MockParserPlan.return_value
+        # Assume main calls load_overview_plan based on traceback
+        mock_parser_plan_instance.load_overview_plan.return_value = None  # load methods don't return value
+        mock_parser_plan_instance.get_parsed_plan.return_value = {
+            "task_id": "test-task",
+            "plan": [],
+        }  # Configure return for get_parsed_plan
+
+        yield MockOrchestrator, mock_load_config, MockParserPlan, mock_setup_rich_output
+
 
 # Import the main entry point function after patching dependencies
 # This assumes the CLI logic is in a function like `cli_entry_point` in main.py
@@ -72,6 +90,7 @@ def mock_dependencies_no_exit_patch():
 # Let's import it inside the test functions or use a fixture that imports it.
 # A fixture seems cleaner.
 
+
 @pytest.fixture
 def run_main_command(mock_dependencies):
     # This fixture will set sys.argv and call the main entry point function.
@@ -90,28 +109,34 @@ def run_main_command(mock_dependencies):
 
     def _run_main(args):
         from src.ai_whisperer import main
+
         return main.main(args)
 
     return _run_main
 
+
 # --- Test Cases ---
+
 
 def test_run_command_parses_required_args(run_main_command, mock_dependencies):
     """Test that the run command correctly parses required arguments."""
-    MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_sys_exit, mock_setup_rich_output = mock_dependencies
+    (MockOrchestrator, mock_load_config, MockParserPlan, mock_sys_exit, mock_setup_rich_output) = mock_dependencies
 
     plan_file = "path/to/plan.json"
     state_file = "path/to/state.json"
     config_file = "path/to/config.yaml"
 
-    exit_code = run_main_command(['run', '--plan-file', plan_file, '--state-file', state_file, '--config', config_file])
+    exit_code = run_main_command(["run", "--plan-file", plan_file, "--state-file", state_file, "--config", config_file])
 
     # Verify load_config was called with the correct config file
     mock_load_config.assert_called_once_with(config_file)
 
-    # Verify the plan file was opened and loaded
-    mock_open.assert_called_once_with(Path(plan_file), 'r', encoding='utf-8')
-    mock_json_load.assert_called_once_with(mock_open.return_value.__enter__.return_value)
+    # Verify ParserPlan was instantiated and load_overview_plan was called
+    MockParserPlan.assert_called_once_with()  # Assuming no args needed for instantiation
+    mock_parser_plan_instance = MockParserPlan.return_value
+    # Assuming main calls load_overview_plan based on traceback
+    mock_parser_plan_instance.load_overview_plan.assert_called_once_with(str(Path(plan_file)))
+    # The plan data is now obtained via get_parsed_plan, which is mocked in the fixture
 
     # Verify Orchestrator was instantiated with correct config (output_dir might need adjustment based on plan)
     # The plan mentions output_dir="." as a possibility. Let's assume this for now.
@@ -120,65 +145,90 @@ def test_run_command_parses_required_args(run_main_command, mock_dependencies):
     # Verify run_plan was called with the correct plan data and state file
     mock_orchestrator_instance = MockOrchestrator.return_value
     mock_orchestrator_instance.run_plan.assert_called_once_with(
-        plan_data=mock_json_load.return_value,
-        state_file_path=state_file
+        plan_parser=mock_parser_plan_instance, state_file_path=state_file
     )
 
     # Verify sys.exit(0) was called on success
     assert exit_code == 0
 
+
 def test_run_command_missing_plan_file(run_main_command, mock_dependencies_no_exit_patch):
     """Test that the run command exits with an error if --plan-file is missing."""
-    MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_setup_rich_output = mock_dependencies_no_exit_patch
+    (MockOrchestrator, mock_load_config, MockParserPlan, mock_setup_rich_output) = mock_dependencies_no_exit_patch
 
     # Run command without --plan-file
     # Run command without --plan-file
     # Use fixture that does NOT patch sys.exit so SystemExit is raised
     def _run():
-        return run_main_command(['run', '--state-file', 'state.json', '--config', 'config.yaml'])
+        return run_main_command(["run", "--state-file", "state.json", "--config", "config.yaml"])
+
     with pytest.raises(SystemExit) as excinfo:
         _run()
     assert excinfo.value.code == 2
     # Note: argparse prints error to stderr, which pytest captures.
     # We are not asserting console output here as argparse handles it.
 
+
 def test_run_command_missing_state_file(run_main_command, mock_dependencies_no_exit_patch):
     """Test that the run command exits with an error if --state-file is missing."""
-    MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_setup_rich_output = mock_dependencies_no_exit_patch
+    (MockOrchestrator, mock_load_config, MockParserPlan, mock_setup_rich_output) = mock_dependencies_no_exit_patch
 
     # Run command without --state-file
     # Run command without --state-file
     def _run():
-        return run_main_command(['run', '--plan-file', 'plan.json', '--config', 'config.yaml'])
+        return run_main_command(["run", "--plan-file", "plan.json", "--config", "config.yaml"])
+
     with pytest.raises(SystemExit) as excinfo:
         _run()
     assert excinfo.value.code == 2
+
 
 def test_run_command_missing_config_file(run_main_command, mock_dependencies_no_exit_patch):
     """Test that the run command exits with an error if --config is missing."""
-    MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_setup_rich_output = mock_dependencies_no_exit_patch
+    (MockOrchestrator, mock_load_config, MockParserPlan, mock_setup_rich_output) = mock_dependencies_no_exit_patch
 
     # Run command without --config
     # Run command without --config
     def _run():
-        return run_main_command(['run', '--plan-file', 'plan.json', '--state-file', 'state.json'])
+        return run_main_command(["run", "--plan-file", "plan.json", "--state-file", "state.json"])
+
     with pytest.raises(SystemExit) as excinfo:
         _run()
     assert excinfo.value.code == 2
 
 
+from src.ai_whisperer.plan_parser import (
+    PlanFileNotFoundError,
+    PlanInvalidJSONError,
+    PlanValidationError,
+    SubtaskFileNotFoundError,
+    SubtaskInvalidJSONError,
+    SubtaskValidationError,
+    PlanNotLoadedError,
+)
+
+
 def test_run_command_plan_file_not_found(run_main_command, mock_dependencies):
-    """Test that the run command handles FileNotFoundError for the plan file."""
-    MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_sys_exit, mock_setup_rich_output = mock_dependencies
+    """Test that the run command handles PlanFileNotFoundError for the plan file."""
+    (MockOrchestrator, mock_load_config, MockParserPlan, mock_sys_exit, mock_setup_rich_output) = mock_dependencies
 
-    # Configure mock_open to raise FileNotFoundError
-    mock_open.side_effect = FileNotFoundError("No such file or directory")
+    # Get the mocked ParserPlan instance
+    mock_parser_plan_instance = MockParserPlan.return_value
 
+    # Configure mock_parser_plan_instance.load_overview_plan to raise PlanFileNotFoundError
     plan_file = "nonexistent/plan.json"
+    mock_parser_plan_instance.load_overview_plan.side_effect = PlanFileNotFoundError(
+        f"Overview plan file not found: {plan_file}"
+    )
+
     state_file = "path/to/state.json"
     config_file = "path/to/config.yaml"
 
-    run_main_command(['run', '--plan-file', plan_file, '--state-file', state_file, '--config', config_file])
+    run_main_command(["run", "--plan-file", plan_file, "--state-file", state_file, "--config", config_file])
+
+    # Verify ParserPlan was instantiated and load_overview_plan was called
+    MockParserPlan.assert_called_once_with()
+    mock_parser_plan_instance.load_overview_plan.assert_called_once_with(str(Path(plan_file)))
 
     # Verify sys.exit(1) was called
     mock_sys_exit.assert_called_once_with(1)
@@ -186,45 +236,66 @@ def test_run_command_plan_file_not_found(run_main_command, mock_dependencies):
     mock_setup_rich_output.return_value.print.assert_called()
     # You could add more specific checks on the console output if needed
 
+
 def test_run_command_invalid_plan_json(run_main_command, mock_dependencies):
-    """Test that the run command handles JSONDecodeError for the plan file."""
-    MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_sys_exit, mock_setup_rich_output = mock_dependencies
+    """Test that the run command handles PlanInvalidJSONError for the plan file."""
+    (MockOrchestrator, mock_load_config, MockParserPlan, mock_sys_exit, mock_setup_rich_output) = mock_dependencies
 
-    # Configure mock_json_load to raise JSONDecodeError
-    mock_json_load.side_effect = json.JSONDecodeError("Invalid JSON", "doc", 0)
+    # Get the mocked ParserPlan instance
+    mock_parser_plan_instance = MockParserPlan.return_value
 
+    # Configure mock_parser_plan_instance.load_overview_plan to raise PlanInvalidJSONError
     plan_file = "path/to/invalid.json"
+    mock_parser_plan_instance.load_overview_plan.side_effect = PlanInvalidJSONError(
+        f"Malformed JSON in file {plan_file}: Invalid JSON"
+    )
+
     state_file = "path/to/state.json"
     config_file = "path/to/config.yaml"
 
-    run_main_command(['run', '--plan-file', plan_file, '--state-file', state_file, '--config', config_file])
+    run_main_command(["run", "--plan-file", plan_file, "--state-file", state_file, "--config", config_file])
+
+    # Verify ParserPlan was instantiated and load_overview_plan was called
+    MockParserPlan.assert_called_once_with()
+    mock_parser_plan_instance.load_overview_plan.assert_called_once_with(str(Path(plan_file)))
 
     # Verify sys.exit(1) was called
     mock_sys_exit.assert_called_once_with(1)
     # Verify an error message indicating invalid JSON was printed
     mock_setup_rich_output.return_value.print.assert_called()
 
+
 def test_run_command_plan_not_dict(run_main_command, mock_dependencies):
-    """Test that the run command handles plan file content that is not a JSON object."""
-    MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_sys_exit, mock_setup_rich_output = mock_dependencies
+    """Test that the run command handles PlanValidationError for plan file content that is not a JSON object."""
+    (MockOrchestrator, mock_load_config, MockParserPlan, mock_sys_exit, mock_setup_rich_output) = mock_dependencies
 
-    # Configure mock_json_load to return a list instead of a dict
-    mock_json_load.return_value = []
+    # Get the mocked ParserPlan instance
+    mock_parser_plan_instance = MockParserPlan.return_value
 
+    # Configure mock_parser_plan_instance.load_overview_plan to raise PlanValidationError
     plan_file = "path/to/list_plan.json"
+    mock_parser_plan_instance.load_overview_plan.side_effect = PlanValidationError(
+        f"'plan' field in '{plan_file}' must be a list."
+    )
+
     state_file = "path/to/state.json"
     config_file = "path/to/config.yaml"
 
-    run_main_command(['run', '--plan-file', plan_file, '--state-file', state_file, '--config', config_file])
+    run_main_command(["run", "--plan-file", plan_file, "--state-file", state_file, "--config", config_file])
+
+    # Verify ParserPlan was instantiated and load_overview_plan was called
+    MockParserPlan.assert_called_once_with()
+    mock_parser_plan_instance.load_overview_plan.assert_called_once_with(str(Path(plan_file)))
 
     # Verify sys.exit(1) was called
     mock_sys_exit.assert_called_once_with(1)
     # Verify an error message indicating the plan must be a JSON object was printed
     mock_setup_rich_output.return_value.print.assert_called()
 
+
 def test_run_command_orchestrator_error(run_main_command, mock_dependencies):
     """Test that the run command handles errors raised by the Orchestrator."""
-    MockOrchestrator, mock_load_config, mock_open, mock_json_load, mock_sys_exit, mock_setup_rich_output = mock_dependencies
+    (MockOrchestrator, mock_load_config, MockParserPlan, mock_sys_exit, mock_setup_rich_output) = mock_dependencies
 
     # Assuming there's an OrchestratorError defined in ai_whisperer.exceptions
     # If not, we might need to define a custom exception for testing or use a generic Exception.
@@ -239,12 +310,13 @@ def test_run_command_orchestrator_error(run_main_command, mock_dependencies):
     state_file = "path/to/state.json"
     config_file = "path/to/config.yaml"
 
-    run_main_command(['run', '--plan-file', plan_file, '--state-file', state_file, '--config', config_file])
+    run_main_command(["run", "--plan-file", plan_file, "--state-file", state_file, "--config", config_file])
 
     # Verify sys.exit(1) was called
     mock_sys_exit.assert_called_once_with(1)
     # Verify an error message indicating orchestration error was printed
     mock_setup_rich_output.return_value.print.assert_called()
+
 
 # Note: Testing state management mocking directly in main.py is not needed based on the plan,
 # as state management is handled within the Orchestrator. The tests for Orchestrator

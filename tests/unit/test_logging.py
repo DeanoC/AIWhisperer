@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 # If the actual implementation path is different, this import will need adjustment.
 try:
     from src.ai_whisperer.logging import LogLevel, ComponentType, LogMessage
+
     # Assuming a logging function or class exists, e.g., setup_logging and a logger instance
     from src.ai_whisperer.logging import setup_logging, get_logger
 except ImportError:
@@ -34,12 +35,12 @@ except ImportError:
 
     @dataclass
     class LogMessage:
-        timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat(timespec='milliseconds') + "Z")
+        timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat(timespec="milliseconds") + "Z")
         level: LogLevel
         component: ComponentType
         action: str
         message: str
-        step_id: Optional[str] = None
+        subtask_id: Optional[str] = None
         event_id: Optional[str] = None
         state_before: Optional[str] = None
         state_after: Optional[str] = None
@@ -60,9 +61,9 @@ except ImportError:
 @pytest.fixture(scope="function")
 def mock_logger():
     # Use a unique logger name for each test function to avoid interference
-    logger_name = f"test_logger_{datetime.now().timestamp()}".replace('.', '_')
+    logger_name = f"test_logger_{datetime.now().timestamp()}".replace(".", "_")
     logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.DEBUG) # Capture all levels
+    logger.setLevel(logging.DEBUG)  # Capture all levels
 
     # Mock handlers
     mock_handler = MagicMock()
@@ -71,7 +72,7 @@ def mock_logger():
     # Clear existing handlers to avoid actual logging output during tests
     logger.handlers = []
     logger.addHandler(mock_handler)
-    logger.propagate = False # Prevent logs from going to root logger
+    logger.propagate = False  # Prevent logs from going to root logger
 
     yield logger, mock_handler
 
@@ -85,15 +86,15 @@ def test_log_message_structure():
         level=LogLevel.INFO,
         component=ComponentType.RUNNER,
         action="startup",
-        event_summary="Runner started." # Use event_summary
+        event_summary="Runner started.",  # Use event_summary
     )
 
     assert isinstance(msg.timestamp, str)
     assert msg.level == LogLevel.INFO
     assert msg.component == ComponentType.RUNNER
     assert msg.action == "startup"
-    assert msg.event_summary == "Runner started." # Use event_summary
-    assert msg.step_id is None
+    assert msg.event_summary == "Runner started."  # Use event_summary
+    assert msg.subtask_id is None
     assert msg.event_id is None
     assert msg.state_before is None
     assert msg.state_after is None
@@ -104,23 +105,33 @@ def test_log_message_structure():
         level=LogLevel.ERROR,
         component=ComponentType.EXECUTION_ENGINE,
         action="step_execution_failed",
-        event_summary="Step failed.", # Use event_summary
-        step_id="step_123",
-        details={"error": "details here"}
+        event_summary="Step failed.",  # Use event_summary
+        subtask_id="step_123",
+        details={"error": "details here"},
     )
-    assert msg_with_details.step_id == "step_123"
+    assert msg_with_details.subtask_id == "step_123"
     assert msg_with_details.details == {"error": "details here"}
 
 
 def test_logging_different_levels(mock_logger):
     """Test that messages with different log levels are processed."""
-    logger, mock_handler = mock_logger
+    (logger, mock_handler) = mock_logger
 
-    log_info = LogMessage(LogLevel.INFO, ComponentType.RUNNER, "test_action", event_summary="Info message") # Use event_summary
-    log_warning = LogMessage(LogLevel.WARNING, ComponentType.RUNNER, "test_action", event_summary="Warning message") # Use event_summary
-    log_error = LogMessage(LogLevel.ERROR, ComponentType.RUNNER, "test_action", event_summary="Error message") # Use event_summary
-    log_debug = LogMessage(LogLevel.DEBUG, ComponentType.RUNNER, "test_action", event_summary="Debug message") # Use event_summary
-    log_critical = LogMessage(LogLevel.CRITICAL, ComponentType.RUNNER, "test_action", event_summary="Critical message") # Use event_summary
+    log_info = LogMessage(
+        LogLevel.INFO, ComponentType.RUNNER, "test_action", event_summary="Info message"
+    )  # Use event_summary
+    log_warning = LogMessage(
+        LogLevel.WARNING, ComponentType.RUNNER, "test_action", event_summary="Warning message"
+    )  # Use event_summary
+    log_error = LogMessage(
+        LogLevel.ERROR, ComponentType.RUNNER, "test_action", event_summary="Error message"
+    )  # Use event_summary
+    log_debug = LogMessage(
+        LogLevel.DEBUG, ComponentType.RUNNER, "test_action", event_summary="Debug message"
+    )  # Use event_summary
+    log_critical = LogMessage(
+        LogLevel.CRITICAL, ComponentType.RUNNER, "test_action", event_summary="Critical message"
+    )  # Use event_summary
 
     # Assuming a function that takes LogMessage and logs it, e.g., log_event(log_message)
     # For now, we'll simulate by creating a log record and calling the handler directly
@@ -132,31 +143,31 @@ def test_logging_different_levels(mock_logger):
         extra_data = {
             "component": log_msg.component.value,
             "action": log_msg.action,
-            "step_id": log_msg.step_id,
+            "subtask_id": log_msg.subtask_id,
             "event_id": log_msg.event_id,
             "state_before": log_msg.state_before,
             "state_after": log_msg.state_after,
             "duration_ms": log_msg.duration_ms,
-            "details": log_msg.details
+            "details": log_msg.details,
         }
         # Filter out None values to match expected behavior of some loggers/formatters
         extra_data = {k: v for k, v in extra_data.items() if v is not None}
 
         if log_msg.level == LogLevel.DEBUG:
-            logger.debug(log_msg.event_summary, extra=extra_data) # Use event_summary
+            logger.debug(log_msg.event_summary, extra=extra_data)  # Use event_summary
         elif log_msg.level == LogLevel.INFO:
-            logger.info(log_msg.event_summary, extra=extra_data) # Use event_summary
+            logger.info(log_msg.event_summary, extra=extra_data)  # Use event_summary
         elif log_msg.level == LogLevel.WARNING:
-            logger.warning(log_msg.event_summary, extra=extra_data) # Use event_summary
+            logger.warning(log_msg.event_summary, extra=extra_data)  # Use event_summary
         elif log_msg.level == LogLevel.ERROR:
-            logger.error(log_msg.event_summary, extra=extra_data) # Use event_summary
+            logger.error(log_msg.event_summary, extra=extra_data)  # Use event_summary
         elif log_msg.level == LogLevel.CRITICAL:
-            logger.critical(log_msg.event_summary, extra=extra_data) # Use event_summary
+            logger.critical(log_msg.event_summary, extra=extra_data)  # Use event_summary
 
     simulate_log_event(logger, log_info)
     simulate_log_event(logger, log_warning)
     simulate_log_event(logger, log_error)
-    simulate_log_event(logger, log_debug) # Should be captured as logger level is DEBUG
+    simulate_log_event(logger, log_debug)  # Should be captured as logger level is DEBUG
     simulate_log_event(logger, log_critical)
 
     # Check that the handler received calls for each level
@@ -164,7 +175,7 @@ def test_logging_different_levels(mock_logger):
     # We expect calls like handler.handle(record) where record has levelname, msg, and extra
     calls = mock_handler.handle.call_args_list
 
-    assert len(calls) == 5 # Expecting 5 log calls
+    assert len(calls) == 5  # Expecting 5 log calls
 
     # Verify levels in the calls
     logged_levels = [call[0][0].levelname for call in calls]
@@ -177,19 +188,19 @@ def test_logging_different_levels(mock_logger):
 
 def test_logging_with_metadata(mock_logger):
     """Test that log messages include correct metadata from LogMessage."""
-    logger, mock_handler = mock_logger
+    (logger, mock_handler) = mock_logger
 
     log_msg = LogMessage(
         level=LogLevel.INFO,
         component=ComponentType.EXECUTION_ENGINE,
         action="step_execution_started",
-        event_summary="Starting step.", # Use event_summary
-        step_id="step_abc",
+        event_summary="Starting step.",  # Use event_summary
+        subtask_id="step_abc",
         event_id="event_xyz",
         state_before="Pending",
         state_after="Running",
         duration_ms=10.5,
-        details={"step_type": "planning", "input_count": 2}
+        details={"step_type": "planning", "input_count": 2},
     )
 
     # Simulate logging this message
@@ -197,15 +208,15 @@ def test_logging_with_metadata(mock_logger):
         extra_data = {
             "component": log_msg.component.value,
             "action": log_msg.action,
-            "step_id": log_msg.step_id,
+            "subtask_id": log_msg.subtask_id,
             "event_id": log_msg.event_id,
             "state_before": log_msg.state_before,
             "state_after": log_msg.state_after,
             "duration_ms": log_msg.duration_ms,
-            "details": log_msg.details
+            "details": log_msg.details,
         }
         extra_data = {k: v for k, v in extra_data.items() if v is not None}
-        logger.info(log_msg.event_summary, extra=extra_data) # Use event_summary
+        logger.info(log_msg.event_summary, extra=extra_data)  # Use event_summary
 
     simulate_log_event(logger, log_msg)
 
@@ -215,13 +226,13 @@ def test_logging_with_metadata(mock_logger):
 
     # Verify standard LogRecord attributes
     assert record.levelname == "INFO"
-    assert record.getMessage() == "Starting step." # getMessage includes the original message
+    assert record.getMessage() == "Starting step."  # getMessage includes the original message
 
     # Verify custom attributes passed via 'extra'
     # These should be available directly on the record object
     assert record.component == ComponentType.EXECUTION_ENGINE.value
     assert record.action == "step_execution_started"
-    assert record.step_id == "step_abc"
+    assert record.subtask_id == "step_abc"
     assert record.event_id == "event_xyz"
     assert record.state_before == "Pending"
     assert record.state_after == "Running"

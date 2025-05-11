@@ -5,13 +5,21 @@ import traceback
 import os
 import uuid
 from pathlib import Path
-from typing import Dict, Any, Tuple
-import copy # Import the copy module
+from typing import Dict, Any, Tuple, Optional  # Import Optional
+import copy  # Import the copy module
 
-from .state_management import StateManager # Import StateManager
-from .execution_engine import ExecutionEngine # Import ExecutionEngine
-from .logging import setup_logging, get_logger, LogMessage, LogLevel, ComponentType, log_event # Import logging components
-from .monitoring import TerminalMonitor # Import TerminalMonitor
+from .state_management import StateManager  # Import StateManager
+from .execution_engine import ExecutionEngine  # Import ExecutionEngine
+from .plan_parser import ParserPlan, PlanNotLoadedError  # Import ParserPlan
+from .logging import (
+    setup_logging,
+    get_logger,
+    LogMessage,
+    LogLevel,
+    ComponentType,
+    log_event,
+)  # Import logging components
+from .monitoring import TerminalMonitor  # Import TerminalMonitor
 from . import ai_service_interaction
 from .utils import build_ascii_directory_tree, calculate_sha256
 from .exceptions import (
@@ -39,7 +47,7 @@ except NameError:
     # Fallback for environments where __file__ might not be defined (e.g., some test runners)
     PACKAGE_ROOT = Path(".").resolve() / "src" / "ai_whisperer"
 
-# DEFAULT_PROMPT_PATH is no longer used as prompts are loaded via config
+# DEFAULT_SCHEMA_PATH is no longer used as prompts are loaded via config
 DEFAULT_SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "task_schema.json"
 
 # Configure basic logging to display debug messages
@@ -54,9 +62,14 @@ class Orchestrator:
     Handles prompt loading, hashing, API calls, validation, and output saving.
     """
 
-    def __init__(self, config: Dict[str, Any], output_dir="output"):
+    def __init__(self, config: Dict[str, Any], output_dir="output", schema_path: Optional[Path] = None):
         """
         Initializes the Orchestrator with application configuration.
+
+        Args:
+            config: The loaded application configuration dictionary.
+            output_dir: Directory where output files will be saved.
+            schema_path: Optional path to the task schema file. If None, uses DEFAULT_SCHEMA_PATH.
 
         Args:
             config: The loaded application configuration dictionary.
@@ -72,10 +85,9 @@ class Orchestrator:
         # prompt_override_path is no longer used
 
         # Setup logging based on config (if available) or basic
-        logging_config_path = self.config.get('logging', {}).get('config_path')
+        logging_config_path = self.config.get("logging", {}).get("config_path")
         setup_logging(logging_config_path)
         logger.info("Logging configured.")
-
 
         # Check if openrouter configuration is present
         if "openrouter" not in config:
@@ -83,14 +95,12 @@ class Orchestrator:
             raise ConfigError("'openrouter' configuration section is missing.")
 
         # Get the model configuration for the "Orchestrator" task from the loaded config
-        model_config = self.config.get('task_model_configs', {}).get('orchestrator')
+        model_config = self.config.get("task_model_configs", {}).get("orchestrator")
         if not model_config:
-             logger.error("Model configuration for 'orchestrator' task is missing in the loaded config.")
-             raise ConfigError("Model configuration for 'orchestrator' task is missing in the loaded config.")
+            logger.error("Model configuration for 'orchestrator' task is missing in the loaded config.")
+            raise ConfigError("Model configuration for 'orchestrator' task is missing in the loaded config.")
 
-        logger.info(
-            f"Orchestrator Model: {model_config.get('model')}, Params: {model_config.get('params')}"
-        )
+        logger.info(f"Orchestrator Model: {model_config.get('model')}, Params: {model_config.get('params')}")
 
         # Initialize the OpenRouterAPI client with the task-specific model configuration
         from .ai_service_interaction import OpenRouterAPI
@@ -101,9 +111,9 @@ class Orchestrator:
 
         # Load the validation schema
         try:
-            schema_path = DEFAULT_SCHEMA_PATH
-            logger.info(f"Loading validation schema from: {schema_path}")
-            with open(schema_path, "r", encoding="utf-8") as f:
+            schema_to_load = schema_path if schema_path is not None else DEFAULT_SCHEMA_PATH
+            logger.info(f"Loading validation schema from: {schema_to_load}")
+            with open(schema_to_load, "r", encoding="utf-8") as f:
                 self.task_schema = json.load(f)
             logger.info("Validation schema loaded successfully.")
         except FileNotFoundError:
@@ -118,9 +128,7 @@ class Orchestrator:
 
     # _load_prompt_template is no longer needed as prompts are loaded via config
 
-    def _calculate_input_hashes(
-        self, requirements_md_path: Path, config_path: Path
-    ) -> Dict[str, str]:
+    def _calculate_input_hashes(self, requirements_md_path: Path, config_path: Path) -> Dict[str, str]:
         """
         Calculates SHA-256 hashes for the input requirements and config files.
         Prompt file hash is assumed to be calculated during config loading.
@@ -142,14 +150,13 @@ class Orchestrator:
                 "requirements_md": calculate_sha256(requirements_md_path),
                 "config_json": calculate_sha256(config_path),
                 # Prompt file hash is now calculated during config loading
-                "prompt_file": self.config.get('input_hashes', {}).get('prompt_file', 'hash_not_available'),
+                "prompt_file": self.config.get("input_hashes", {}).get("prompt_file", "hash_not_available"),
             }
             logger.info(f"Calculated hashes: {hashes}")
             return hashes
         except (FileNotFoundError, IOError) as e:
             logger.error(f"Error calculating input hashes: {e}")
             raise  # Re-raise the original error
-
 
     def save_json(self, json_content, output_filename):
         """
@@ -175,9 +182,7 @@ class Orchestrator:
         logger.info(f"Successfully saved initial orchestrator JSON to {output_path}")
         return output_path
 
-    def generate_initial_json(
-        self, requirements_md_path_str: str, config_path_str: str
-    ) -> Path:
+    def generate_initial_json(self, requirements_md_path_str: str, config_path_str: str) -> Path:
         """
         Generates the initial task plan JSON file based on input requirements markdown.
 
@@ -217,20 +222,16 @@ class Orchestrator:
         # Ensure requirements file exists before proceeding
         if not requirements_md_path.is_file():
             logger.error(f"Requirements file not found: {requirements_md_path}")
-            raise FileNotFoundError(
-                f"Requirements file not found: {requirements_md_path}"
-            )
+            raise FileNotFoundError(f"Requirements file not found: {requirements_md_path}")
 
         try:
             # 1. Get Prompt Template Content from loaded config
-            prompt_template = self.config.get('task_prompts_content', {}).get('orchestrator')
+            prompt_template = self.config.get("task_prompts_content", {}).get("orchestrator")
             if not prompt_template:
-                 raise ConfigError("Prompt content for 'orchestrator' task is missing in the loaded config.")
+                raise ConfigError("Prompt content for 'orchestrator' task is missing in the loaded config.")
 
             # 2. Calculate Input Hashes (prompt hash is from config loading)
-            input_hashes = self._calculate_input_hashes(
-                requirements_md_path, config_path
-            )
+            input_hashes = self._calculate_input_hashes(requirements_md_path, config_path)
 
             workspace_context = build_ascii_directory_tree(".")
 
@@ -244,12 +245,8 @@ class Orchestrator:
                 logger.error(f"Requirements file not found: {requirements_md_path}")
                 raise
             except IOError as e:
-                logger.error(
-                    f"Error reading requirements file {requirements_md_path}: {e}"
-                )
-                raise ProcessingError(
-                    f"Error reading requirements file {requirements_md_path}: {e}"
-                ) from e
+                logger.error(f"Error reading requirements file {requirements_md_path}: {e}")
+                raise ProcessingError(f"Error reading requirements file {requirements_md_path}: {e}") from e
 
             # 4. Construct Final Prompt
             logger.info("Constructing prompt for OpenRouter API...")
@@ -295,7 +292,7 @@ class Orchestrator:
                     "success": True,
                     "steps": {},
                     "logs": [],
-                    "schema": self.task_schema # Add the schema here
+                    "schema": self.task_schema,  # Add the schema here
                 }
                 # Save JSON string to temp file for debugging
                 # logger.debug("Saving JSON string to temporary file for debugging")
@@ -312,13 +309,11 @@ class Orchestrator:
                         escape_text_fields,
                         validate_syntax,
                         handle_required_fields,
-                        add_items_postprocessor
+                        add_items_postprocessor,
                     ]
                 )
                 # Pass the JSON data through the postprocessing pipeline
-                processed_data, postprocessing_result = pipeline.process(
-                    api_response_content, result_data
-                )
+                (processed_data, postprocessing_result) = pipeline.process(api_response_content, result_data)
 
                 # print(f"JSON data after postprocessing:\n{processed_data}")
 
@@ -337,30 +332,25 @@ class Orchestrator:
                         f"API response postprocessing did not yield a valid dictionary. Content: {api_response_content[:200]}..."
                     )
 
-                json_data = processed_data # Use the processed data
+                json_data = processed_data  # Use the processed data
 
             except (json.JSONDecodeError, ValueError) as e:
                 logger.error(f"Failed to parse or process JSON response: {e}")
-                logger.error(
-                    f"Response content that failed parsing:\n{api_response_content}"
-                )
+                logger.error(f"Response content that failed parsing:\n{api_response_content}")
                 raise OrchestratorError(f"Invalid JSON received from API or postprocessing failed: {e}") from e
-            except ProcessingError as e: # Catch errors from within the pipeline steps
-                 logger.error(f"An error occurred during JSON postprocessing: {e}")
-                 raise OrchestratorError(f"JSON postprocessing failed: {e}") from e
+            except ProcessingError as e:  # Catch errors from within the pipeline steps
+                logger.error(f"An error occurred during JSON postprocessing: {e}")
+                raise OrchestratorError(f"JSON postprocessing failed: {e}") from e
             except Exception as e:
                 logger.error(f"An unexpected error occurred during JSON postprocessing: {e}")
                 raise OrchestratorError(f"JSON postprocessing failed: {e}") from e
-
 
             # print(f"JSON data after parsing:\n{json_data}")
 
             # 7. Save Output JSON
             # Create output filename based on the input requirements file
             config_stem = config_path.stem  # Get the stem of the config file path
-            output_filename = (
-                f"{requirements_md_path.stem}_{config_stem}.json"  # Combine stems, change extension
-            )
+            output_filename = f"{requirements_md_path.stem}_{config_stem}.json"  # Combine stems, change extension
 
             logger.info(f"Saving validated JSON to: {self.output_dir}")
             try:
@@ -368,12 +358,10 @@ class Orchestrator:
                 return output_path
             except IOError as e:
                 logger.error(f"Error writing output JSON file {output_filename}: {e}")
-                raise ProcessingError(
-                    f"Error writing output JSON file {output_filename}: {e}"
-                ) from e
-            except TypeError as e: # Catch JSON serialization errors
-                 logger.error(f"Error serializing data to JSON for file {output_filename}: {e}")
-                 raise ProcessingError(f"Error serializing data to JSON for file {output_filename}: {e}") from e
+                raise ProcessingError(f"Error writing output JSON file {output_filename}: {e}") from e
+            except TypeError as e:  # Catch JSON serialization errors
+                logger.error(f"Error serializing data to JSON for file {output_filename}: {e}")
+                raise ProcessingError(f"Error serializing data to JSON for file {output_filename}: {e}") from e
 
         except (
             FileNotFoundError,
@@ -390,13 +378,9 @@ class Orchestrator:
         except Exception as e:
             # Catch any unexpected errors
             logger.exception(f"An unexpected error occurred during orchestration: {e}")
-            raise OrchestratorError(
-                f"An unexpected error occurred during orchestration: {e}"
-            ) from e
+            raise OrchestratorError(f"An unexpected error occurred during orchestration: {e}") from e
 
-    def generate_full_project_plan(
-        self, requirements_md_path_str: str, config_path_str: str
-    ) -> Dict[str, Any]:
+    def generate_full_project_plan(self, requirements_md_path_str: str, config_path_str: str) -> Dict[str, Any]:
         """
         Generates a complete project plan including initial task JSON and all subtasks.
         After generating the plan and subtasks, it runs the plan using the Execution Engine.
@@ -411,7 +395,7 @@ class Orchestrator:
             config_path_str: Path string to the configuration file used.
 
         Returns:
-            Dict with task_plan (Path), subtasks (list of Paths), and step_info (Dict with step_id, depends_on, file_path)
+            Dict with task_plan (Path), subtasks (list of Paths), and step_info (Dict with subtask_id, depends_on, file_path)
         Raises:
             All exceptions from generate_initial_json plus:
             OrchestratorError: For issues during subtask generation
@@ -419,9 +403,7 @@ class Orchestrator:
         logger.info("Starting full project plan generation")
 
         # First generate the initial task plan
-        task_plan_path = self.generate_initial_json(
-            requirements_md_path_str, config_path_str
-        )
+        task_plan_path = self.generate_initial_json(requirements_md_path_str, config_path_str)
         logger.info(f"Initial task plan generated: {task_plan_path}")
         overplan_path = task_plan_path
         # Load the generated task plan JSON to extract steps
@@ -438,9 +420,7 @@ class Orchestrator:
         from .subtask_generator import SubtaskGenerator
 
         # Extract overall_context from the loaded task data
-        overall_context = task_data.get(
-            "overall_context", ""
-        )  # Default to empty string if missing
+        overall_context = task_data.get("overall_context", "")  # Default to empty string if missing
 
         workspace_context = build_ascii_directory_tree(".")
 
@@ -448,7 +428,7 @@ class Orchestrator:
             config_path=config_path_str,
             overall_context=overall_context,
             workspace_context=workspace_context,
-            output_dir=self.output_dir
+            output_dir=self.output_dir,
         )
         logger.info("Initialized subtask generator with overall context.")
 
@@ -462,29 +442,29 @@ class Orchestrator:
 
             for i, step in enumerate(task_data["plan"], 1):
                 try:
-                    step_id = step.get("step_id", f"step_{i}")
-                    logger.info(f"Generating subtask {i}/{steps_count}: {step_id}")
+                    subtask_id = step.get("subtask_id", f"step_{i}")
+                    logger.info(f"Generating subtask {i}/{steps_count}: {subtask_id}")
 
                     # some preprocessing of the step data
                     step_data = {k: v for k, v in step.items() if k != "depends_on"}
                     step_data["task_id"] = task_data["task_id"]
 
-                    subtask_path, subtask = subtask_generator.generate_subtask(step_data)
+                    (subtask_path, subtask) = subtask_generator.generate_subtask(step_data)
                     subtask_paths.append(subtask_path)
                     logger.info(f"Generated subtask: {subtask_path}")
 
                     # Create step info JSON object
                     step_info[i - 1] = {
-                        "step_id": step_id,
-                        "file_path": os.path.relpath(subtask_path, start=".").replace(os.sep, '/'),
+                        "subtask_id": subtask_id,
+                        "file_path": os.path.relpath(subtask_path, start=".").replace(os.sep, "/"),
                         "depends_on": step.get("depends_on"),
-                        "type": subtask.get('agent_spec', {}).get('type'),
-                        "input_artifacts": subtask.get('agent_spec', {}).get('input_artifacts'),
-                        "output_artifacts": subtask.get('agent_spec', {}).get('output_artifacts'),
+                        "type": subtask.get("type"),
+                        "input_artifacts": subtask.get("input_artifacts"),
+                        "output_artifacts": subtask.get("output_artifacts"),
                         "completed": False,
                     }
                 except Exception as e:
-                    logger.warning(f"Failed to generate subtask for step {step.get('step_id', i)}: {e}")
+                    logger.warning(f"Failed to generate subtask for step {step.get('subtask_id', i)}: {e}")
                     raise e
         else:
             logger.warning("No steps found in task plan, no subtasks will be generated")
@@ -492,11 +472,11 @@ class Orchestrator:
         # Save the updated task plan with step info
         # Update the plan in the overview data with step info
         overview_data["plan"] = step_info
-        overview_path = None # Initialize overview_path
+        overview_path = None  # Initialize overview_path
 
         # Construct the output filename for the overview file
         original_filename = os.path.basename(task_plan_path)
-        filename_stem, file_extension = os.path.splitext(original_filename)
+        (filename_stem, file_extension) = os.path.splitext(original_filename)
         overview_filename = f"overview_{filename_stem}{file_extension}"
 
         # Save the overview data to the new overview file path
@@ -511,16 +491,19 @@ class Orchestrator:
         logger.info(f"Overview task plan saved to {overview_path}")
 
         # Construct the state file path using the task ID and output directory
-        task_id = task_data.get("task_id", "default_task") # Get task_id, default if missing
+        task_id = task_data.get("task_id", "default_task")  # Get task_id, default if missing
         state_file_name = f"state_{task_id}.json"
         state_file_path = os.path.join(self.output_dir, state_file_name)
 
-        # Run the generated plan using the Execution Engine and State Management
-        self.run_plan(task_data, state_file_path)
+        # The plan is generated and saved, but not executed by this method.
+        # Execution is handled by the run_plan method.
+
+        # Remove the call to self.run_plan:
+        # self.run_plan(overview_parser, state_file_path)
 
         return {
-            "task_plan": task_plan_path, # Path to the initial task plan
-            "overview_plan": overview_path, # Path to the overview plan with step info
+            "task_plan": task_plan_path,  # Path to the initial task plan
+            "overview_plan": overview_path,  # Path to the overview plan with step info
             "subtasks": subtask_paths,
             "step_info": step_info,
         }
@@ -554,18 +537,18 @@ class Orchestrator:
         try:
 
             # Get the model configuration and prompt content for the "refine_requirements" task
-            model_config = self.config.get('task_model_configs', {}).get('refine_requirements')
+            model_config = self.config.get("task_model_configs", {}).get("refine_requirements")
             if not model_config:
-                 raise ConfigError("Model configuration for 'refine_requirements' task is missing in the loaded config.")
+                raise ConfigError("Model configuration for 'refine_requirements' task is missing in the loaded config.")
 
-            prompt_template = self.config.get('task_prompts_content', {}).get('refine_requirements')
+            prompt_template = self.config.get("task_prompts_content", {}).get("refine_requirements")
             if not prompt_template:
-                 raise ConfigError("Prompt content for 'refine_requirements' task is missing in the loaded config.")
+                raise ConfigError("Prompt content for 'refine_requirements' task is missing in the loaded config.")
 
             # Read input requirements content
             logger.info(f"Reading requirements file: {input_filepath}")
             try:
-                with open(input_filepath, 'r', encoding='utf-8') as f:
+                with open(input_filepath, "r", encoding="utf-8") as f:
                     requirements_content = f.read()
                 logger.info("Requirements content read successfully.")
             except IOError as e:
@@ -581,11 +564,9 @@ class Orchestrator:
             logger.info("Calling OpenRouter API for requirements refinement...")
             try:
                 # Initialize a new OpenRouterAPI client with the task-specific model config
-                refine_api_client = openrouter_api.OpenRouterAPI(config=model_config)
+                refine_api_client = ai_service_interaction.OpenRouterAPI(config=model_config)
                 api_response_content = refine_api_client.call_chat_completion(
-                    prompt_text=final_prompt,
-                    model=refine_api_client.model,
-                    params=refine_api_client.params
+                    prompt_text=final_prompt, model=refine_api_client.model, params=refine_api_client.params
                 )
                 logger.info("Received response from OpenRouter API for requirements refinement.")
                 # logger.debug(f"API Response content:\n{api_response_content}")
@@ -609,15 +590,17 @@ class Orchestrator:
             # Save the refined content to the original input_filepath
             logger.info(f"Saving refined requirements to original file: {input_filepath}")
             try:
-                with open(input_filepath, 'w', encoding='utf-8') as f:
+                with open(input_filepath, "w", encoding="utf-8") as f:
                     f.write(api_response_content)
                 logger.info(f"Successfully saved refined requirements to {input_filepath}")
-                return input_filepath # Return the original path, now containing refined content
+                return input_filepath  # Return the original path, now containing refined content
             except IOError as e:
                 logger.error(f"Error writing refined requirements to {input_filepath}: {e}")
                 # Attempt to restore the backup if saving fails
                 try:
-                    logger.warning(f"Attempting to restore original file from backup {backup_filepath} to {input_filepath}")
+                    logger.warning(
+                        f"Attempting to restore original file from backup {backup_filepath} to {input_filepath}"
+                    )
                     backup_filepath.rename(input_filepath)
                     logger.info(f"Successfully restored original file from backup.")
                 except OSError as restore_e:
@@ -631,130 +614,210 @@ class Orchestrator:
             logger.exception(f"An unexpected error occurred during requirements refinement: {e}")
             raise OrchestratorError(f"An unexpected error occurred during requirements refinement: {e}") from e
 
-    def run_plan(self, plan_data: Dict[str, Any], state_file_path: str):
+    def run_plan(self, plan_parser: ParserPlan, state_file_path: str) -> bool:
         """
-        Runs the generated plan using the Execution Engine and manages state.
-        Integrates monitoring for real-time feedback.
+        Executes a project plan from a parsed plan object.
 
         Args:
-            plan_data: The plan data dictionary containing a list of task definitions.
-            state_file_path: The path to the state file.
+            plan_parser: A ParserPlan instance with the loaded plan.
+            state_file_path: Path to the state file for loading/saving state.
+
+        Returns:
+            bool: True if the plan execution completed successfully (no failed tasks), False otherwise.
+
+        Raises:
+            PlanNotLoadedError: If the plan_parser does not have a loaded plan.
+            IOError: If there are issues loading or saving the state file.
+            OrchestratorError: For other orchestration-specific issues.
         """
-        plan_id = plan_data.get("task_id", "unknown_plan")
-        logger.info(f"Starting plan execution for plan: {plan_id}")
-        log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_started", f"Starting execution of plan: {plan_id}"))
+        logger.info("Starting plan execution...")
+        log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_start", "Starting plan execution."))
 
+        try:
+            plan_data = plan_parser.get_parsed_plan()
+            if plan_data is None:
+                raise PlanNotLoadedError("Plan data is not loaded in the provided ParserPlan.")
+        except PlanNotLoadedError as e:
+            logger.error(f"Plan not loaded: {e}")
+            log_event(LogMessage(LogLevel.ERROR, ComponentType.RUNNER, "plan_not_loaded", f"Plan not loaded: {e}"))
+            raise  # Re-raise the original exception
 
-        # Ensure the directory for the state file exists
-        state_dir = os.path.dirname(state_file_path)
-        if state_dir: # Only create if state_file_path includes a directory
-            os.makedirs(state_dir, exist_ok=True)
-
-        # 1. Instantiate StateManager and TerminalMonitor
+        # Initialize or load state
         state_manager = StateManager(state_file_path)
-        monitor = TerminalMonitor(state_manager) # Initialize TerminalMonitor
-
-        # 2. Load the state
         try:
             state_manager.load_state()
-            logger.info(f"Loaded state from {state_file_path}.")
-            log_event(LogMessage(LogLevel.INFO, ComponentType.STATE_MANAGEMENT, "state_loaded", f"State loaded successfully from {state_file_path}."))
+            logger.info(f"Loaded state from {state_file_path}")
+            log_event(
+                LogMessage(LogLevel.INFO, ComponentType.RUNNER, "state_loaded", f"Loaded state from {state_file_path}")
+            )
         except FileNotFoundError:
             logger.info(f"State file not found at {state_file_path}. Starting with empty state.")
-            log_event(LogMessage(LogLevel.WARNING, ComponentType.STATE_MANAGEMENT, "state_not_found", f"State file not found at {state_file_path}. Starting with empty state."))
+            log_event(
+                LogMessage(
+                    LogLevel.INFO,
+                    ComponentType.RUNNER,
+                    "state_file_not_found",
+                    f"State file not found at {state_file_path}. Starting with empty state.",
+                )
+            )
             try:
-                state_manager.initialize_state(plan_data) # Initialize state if file not found
-                log_event(LogMessage(LogLevel.INFO, ComponentType.STATE_MANAGEMENT, "state_initialized", "State initialized."))
+                state_manager.initialize_state(plan_data)  # Initialize with plan data
             except IOError as e:
-                error_message = f"Failed to save state during initialization to {state_file_path}: {e}"
-                logger.error(error_message)
-                log_event(LogMessage(LogLevel.CRITICAL, ComponentType.STATE_MANAGEMENT, "state_init_save_failed", error_message, details={"error": str(e)}))
-                raise OrchestratorError(error_message) from e
-            except Exception as e:
-                # Catch any other unexpected exceptions during initialization
-                error_message = f"An unexpected error occurred during state initialization: {e}"
-                logger.exception(error_message)
-                log_event(LogMessage(LogLevel.CRITICAL, ComponentType.STATE_MANAGEMENT, "state_init_failed_unexpected", error_message, details={"error": str(e), "traceback": traceback.format_exc()}))
-                raise OrchestratorError(error_message) from e
+                logger.error(f"Error initializing state and saving to {state_file_path}: {e}")
+                log_event(
+                    LogMessage(
+                        LogLevel.ERROR,
+                        ComponentType.RUNNER,
+                        "state_initialize_save_error",
+                        f"Error initializing state and saving to {state_file_path}: {e}",
+                    )
+                )
+                raise OrchestratorError(f"Failed to initialize state and save to {state_file_path}: {e}") from e
+        except IOError as e:
+            logger.error(f"Error loading state from {state_file_path}: {e}")
+            log_event(
+                LogMessage(
+                    LogLevel.ERROR,
+                    ComponentType.RUNNER,
+                    "state_load_error",
+                    f"Error loading state from {state_file_path}: {e}",
+                )
+            )
+            raise OrchestratorError(f"Failed to load state from {state_file_path}: {e}") from e
         except Exception as e:
-            error_message = f"Error loading state from {state_file_path}: {e}"
-            logger.error(error_message)
-            log_event(LogMessage(LogLevel.CRITICAL, ComponentType.STATE_MANAGEMENT, "state_load_failed_unexpected", error_message, details={"error": str(e), "traceback": traceback.format_exc()}))
-            # Depending on requirements, you might want to raise an exception or continue with empty state
-            raise OrchestratorError(error_message) from e
+            logger.exception(f"An unexpected error occurred while loading state from {state_file_path}: {e}")
+            log_event(
+                LogMessage(
+                    LogLevel.CRITICAL,
+                    ComponentType.RUNNER,
+                    "state_load_unexpected_error",
+                    f"An unexpected error occurred while loading state from {state_file_path}: {e}",
+                    details={"error": str(e), "traceback": traceback.format_exc()},
+                )
+            )
+            raise OrchestratorError(
+                f"An unexpected error occurred while loading state from {state_file_path}: {e}"
+            ) from e
 
-        # 3. Instantiate ExecutionEngine and run the plan
-        logger.info("Initializing Execution Engine.")
-        execution_engine = ExecutionEngine(state_manager, monitor, self.config) # Pass state_manager, monitor, and config
+        # Initialize Execution Engine
+        monitor = TerminalMonitor(state_manager)  # Initialize TerminalMonitor
+        execution_engine = ExecutionEngine(state_manager, monitor, self.config)
+        logger.info("Execution Engine initialized.")
+        log_event(
+            LogMessage(
+                LogLevel.INFO, ComponentType.RUNNER, "execution_engine_initialized", "Execution Engine initialized."
+            )
+        )
 
-        # Start the monitor display (this should ideally run in a separate thread/process)
-        # For this example, we'll just update it manually or rely on the ExecutionEngine
-        # to call monitor methods.
-        # monitor.run() # This would block the main thread
+        # Execute the plan
+        plan_successful = True  # Flag to track overall plan success
+        try:
+            execution_engine.execute_plan(plan_parser)
+            logger.info("Execution Engine finished plan execution.")
+            log_event(
+                LogMessage(
+                    LogLevel.INFO,
+                    ComponentType.RUNNER,
+                    "execution_engine_finished",
+                    "Execution Engine finished plan execution.",
+                )
+            )
+        except Exception as e:
+            logger.exception(f"An unexpected error occurred during plan execution: {e}")
+            log_event(
+                LogMessage(
+                    LogLevel.CRITICAL,
+                    ComponentType.RUNNER,
+                    "plan_execution_unexpected_error",
+                    f"An unexpected error occurred during plan execution: {e}",
+                    details={"error": str(e), "traceback": traceback.format_exc()},
+                )
+            )
+            plan_successful = False  # Set flag to False on unexpected error
+            # Do not re-raise here, allow state to be saved and status checked
 
-        if "plan" in plan_data and isinstance(plan_data["plan"], list):
-            tasks = plan_data["plan"]
-            logger.info(f"Executing {len(tasks)} tasks")
-            state_manager.update_global_state("plan_status", "running")
-            state_manager.save_state()
-            monitor.set_plan_name(plan_id)
-            monitor.set_runner_status_info(f"Executing plan: {plan_id}")
-            # The ExecutionEngine will handle task-level logging and monitoring updates
-
-            try:
-                execution_engine.execute_plan(plan_data) # Pass the entire plan_data to execution engine
-
-                # Determine final plan status
-                all_tasks = state_manager.state.get("tasks", {})
-                if all(task.get("status") == "completed" for task in all_tasks.values()):
-                    final_status = "completed"
-                    log_level = LogLevel.INFO
-                    log_message_text = f"Plan execution finished successfully for plan: {plan_id}"
-                elif any(task.get("status") == "failed" for task in all_tasks.values()):
-                    final_status = "failed"
-                    log_level = LogLevel.ERROR
-                    log_message_text = f"Plan execution finished with failures for plan: {plan_id}"
-                else:
-                    final_status = "completed_with_skipped" # Or another appropriate status
-                    log_level = LogLevel.WARNING
-                    log_message_text = f"Plan execution finished with skipped tasks for plan: {plan_id}"
-
-                state_manager.update_global_state("plan_status", final_status)
-                monitor.set_runner_status_info(log_message_text)
-                log_event(LogMessage(log_level, ComponentType.RUNNER, "plan_execution_finished", log_message_text))
-
-
-            except Exception as e:
-                # Catch any unexpected errors during plan execution
-                error_message_text = f"An unexpected error occurred during plan execution for plan {plan_id}: {str(e)}"
-                logger.exception(error_message_text)
-                state_manager.update_global_state("plan_status", "failed")
-                monitor.set_runner_status_info(f"Plan execution failed: {plan_id}")
-                log_event(LogMessage(LogLevel.CRITICAL, ComponentType.RUNNER, "plan_execution_failed_unexpected", error_message_text, details={"error": str(e), "traceback": traceback.format_exc()}))
-                raise OrchestratorError(error_message_text) from e
-
-
-        else:
-            logger.warning("No tasks found in the plan to execute.")
-            log_event(LogMessage(LogLevel.WARNING, ComponentType.RUNNER, "no_tasks_to_execute", "No tasks found in the plan to execute."))
-            state_manager.update_global_state("plan_status", "completed_no_tasks")
-            monitor.set_runner_status_info(f"Plan execution finished: No tasks to execute for plan: {plan_id}")
-            log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_finished", f"Plan execution finished: No tasks to execute for plan: {plan_id}"))
-
-
-        logger.info("Plan execution finished.")
-
-        # 4. Save the final state
+        # Save final state
         try:
             state_manager.save_state()
             logger.info(f"Saved final state to {state_file_path}")
-            log_event(LogMessage(LogLevel.INFO, ComponentType.STATE_MANAGEMENT, "state_saved", f"Saved final state to {state_file_path}."))
+            log_event(
+                LogMessage(
+                    LogLevel.INFO, ComponentType.RUNNER, "state_saved", f"Saved final state to {state_file_path}."
+                )
+            )
+        except IOError as e:
+            logger.error(f"Error saving final state to {state_file_path}: {e}")
+            log_event(
+                LogMessage(
+                    LogLevel.ERROR,
+                    ComponentType.RUNNER,
+                    "state_save_error",
+                    f"Error saving final state to {state_file_path}: {e}",
+                )
+            )
+            plan_successful = False  # Consider save errors as plan failure
+            raise OrchestratorError(f"Failed to save final state to {state_file_path}: {e}") from e
         except Exception as e:
-            error_message = f"Failed to save state to {state_file_path}: {e}"
-            logger.error(error_message)
-            log_event(LogMessage(LogLevel.ERROR, ComponentType.STATE_MANAGEMENT, "state_save_failed", error_message, details={"error": str(e)}))
-            # Handle save error - maybe log and continue, or raise
-            pass # Continue execution even if state saving fails
+            logger.exception(f"An unexpected error occurred while saving final state to {state_file_path}: {e}")
+            log_event(
+                LogMessage(
+                    LogLevel.CRITICAL,
+                    ComponentType.RUNNER,
+                    "state_save_unexpected_error",
+                    f"An unexpected error occurred while saving final state to {state_file_path}: {e}",
+                    details={"error": str(e), "traceback": traceback.format_exc()},
+                )
+            )
+            plan_successful = False  # Consider unexpected save errors as plan failure
+            # Do not re-raise here
+
+        # Check if any tasks failed in the state manager
+        failed_tasks = [
+            task_id
+            for task_id, task_state in state_manager.state.get("tasks", {}).items()
+            if task_state.get("status") == "failed"
+        ]
+
+        if failed_tasks:
+            logger.error(
+                f"Plan execution finished with failures for plan: {state_manager.state.get('plan_id', 'unknown')}"
+            )
+            log_event(
+                LogMessage(
+                    LogLevel.ERROR,
+                    ComponentType.RUNNER,
+                    "plan_execution_failed",
+                    f"Plan execution finished with failures. Failed tasks: {', '.join(failed_tasks)}",
+                )
+            )
+            plan_successful = False  # Set flag to False if any task failed
+
+        if plan_successful:
+            logger.info(
+                f"Plan execution finished successfully for plan: {state_manager.state.get('plan_id', 'unknown')}"
+            )
+            log_event(
+                LogMessage(
+                    LogLevel.INFO,
+                    ComponentType.RUNNER,
+                    "plan_execution_success",
+                    "Plan execution finished successfully.",
+                )
+            )
+            return True  # Indicate overall success
+        else:
+            logger.error(
+                f"Plan execution finished with overall failure for plan: {state_manager.state.get('plan_id', 'unknown')}"
+            )
+            log_event(
+                LogMessage(
+                    LogLevel.ERROR,
+                    ComponentType.RUNNER,
+                    "plan_execution_overall_failure",
+                    "Plan execution finished with overall failure.",
+                )
+            )
+            return False  # Indicate overall failure
 
     def _determine_next_backup_filename(self, original_filepath_str: str) -> Path:
         """Determines the next available filename for backing up the original file.
@@ -765,7 +828,7 @@ class Orchestrator:
         original_stem = original_filepath.stem
         original_suffix = original_filepath.suffix
 
-        i = 0 # Start versioning from 0
+        i = 0  # Start versioning from 0
         while True:
             backup_stem = f"old_{original_stem}_v{i}"
             backup_filepath = parent_dir / f"{backup_stem}{original_suffix}"
@@ -776,4 +839,5 @@ class Orchestrator:
     def _fnmatch(self, filename, pattern):
         """Simple fnmatch wrapper for potential future expansion."""
         import fnmatch
+
         return fnmatch.fnmatch(filename, pattern)

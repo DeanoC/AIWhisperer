@@ -31,20 +31,20 @@ The prompt instructs the AI to generate and include a task_id:
 
 ## Subtask Generator Default Prompt (`prompts/subtask_generator_default.md`)
 
-The subtask generator prompt currently requires the AI to include step_id in its output. The following sections should be removed or modified:
+The subtask generator prompt currently requires the AI to include subtask_id in its output. The following sections should be removed or modified:
 
 ### Step ID Requirement
 
-The prompt instructs the AI to include the step_id from the input:
+The prompt instructs the AI to include the subtask_id from the input:
 
 ```
-You MUST preserve the step_id from the input YAML in your output.
+You MUST preserve the subtask_id from the input YAML in your output.
 ```
 
 And later in the prompt:
 
 ```
-- step_id: The unique identifier for this step (MUST match the input step_id)
+- subtask_id: The unique identifier for this step (MUST match the input subtask_id)
 ```
 
 ## Recommended Changes
@@ -58,7 +58,7 @@ And later in the prompt:
 
 ### For Subtask Generator Default Prompt
 
-1. Remove the instruction to preserve the step_id
+1. Remove the instruction to preserve the subtask_id
 2. Remove validation checks related to this field
 
 These modifications will allow the AI to focus on generating the substantive content without worrying about these fixed items, which will be added by the new postprocessing step.

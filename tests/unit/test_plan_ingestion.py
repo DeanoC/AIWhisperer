@@ -1,325 +1,512 @@
 import pytest
 import json
-from unittest.mock import mock_open, patch
+import os
+import shutil
+import pytest
+from pathlib import Path
+from typing import Dict
 
-# Assume the plan ingestion logic will be in a module like this:
-# from ai_whisperer.plan_ingestion import PlanIngestion, PlanValidationError
+from src.ai_whisperer.json_validator import set_schema_directory, get_schema_directory
 
-# For now, let's define placeholder classes and functions to write tests against.
-# These would be replaced by actual implementations later.
+# Import the new ParserPlan and exceptions
+from src.ai_whisperer.plan_parser import (
+    ParserPlan,
+    PlanParsingError,
+    PlanFileNotFoundError,
+    PlanInvalidJSONError,
+    PlanValidationError,
+    SubtaskFileNotFoundError,
+    SubtaskInvalidJSONError,
+    SubtaskValidationError,
+    PlanNotLoadedError,
+)
 
-class PlanValidationError(Exception):
-    pass
+# --- Test Data ---
 
-class PlanIngestion:
-    def __init__(self, plan_json_content: str):
-        try:
-            self.plan_data = json.loads(plan_json_content)
-        except json.JSONDecodeError as e:
-            raise PlanValidationError(f"Malformed JSON: {e}")
-        self._validate_plan_structure()
-        self._validate_subtask_references() # Placeholder for subtask validation
-
-    def _validate_plan_structure(self):
-        required_top_level_fields = ["task_id", "natural_language_goal", "input_hashes", "plan"]
-        for field in required_top_level_fields:
-            if field not in self.plan_data:
-                raise PlanValidationError(f"Missing required top-level field: {field}")
-
-        if not isinstance(self.plan_data["plan"], list):
-            raise PlanValidationError("'plan' field must be a list.")
-
-        required_step_fields = ["step_id", "description", "agent_spec"] # depends_on is optional
-        required_agent_spec_fields = ["type", "instructions"]
-
-        for i, step in enumerate(self.plan_data["plan"]):
-            for field in required_step_fields:
-                if field not in step:
-                    raise PlanValidationError(f"Step {i} missing required field: {field}")
-            
-            agent_spec = step.get("agent_spec", {})
-            for field in required_agent_spec_fields:
-                if field not in agent_spec:
-                    raise PlanValidationError(f"Step {i} agent_spec missing required field: {field}")
-            
-            # Validate input_hashes structure
-            input_hashes = self.plan_data.get("input_hashes", {})
-            required_input_hashes_fields = ["requirements_md", "config_yaml", "prompt_file"]
-            for field in required_input_hashes_fields:
-                if field not in input_hashes:
-                    raise PlanValidationError(f"Missing required field in input_hashes: {field}")
-
-
-    def _validate_subtask_references(self):
-        # This method would typically load and validate subtask JSON files.
-        # For unit tests, we'll mock this behavior.
-        # According to design doc:
-        # - The runner will read the subtask files referenced in the `file_path` of each step.
-        # - The subtask files will be validated against their actual structure.
-        # - The validation will check for the presence of required fields like `description`, 
-        #   `depends_on`, `agent_spec`, `step_id`, `task_id`, and `subtask_id`.
-        # - The `agent_spec` will be checked to ensure it has `type`, `input_artifacts`, 
-        #   `output_artifacts`, `instructions`, `constraints`, and `validation_criteria`.
-        #
-        # The subtask_schema.json has:
-        # "required": ["subtask_id", "task_id", "name", "description", "instructions"]
-        pass # Actual implementation would involve file I/O and further validation.
-
-    def get_parsed_plan(self):
-        return self.plan_data
-
-    def get_task_dependencies(self):
-        dependencies = {}
-        for step in self.plan_data.get("plan", []):
-            dependencies[step["step_id"]] = step.get("depends_on", [])
-        return dependencies
-
-# --- Test Cases ---
-
-VALID_PLAN_CONTENT = {
+VALID_SINGLE_FILE_PLAN_CONTENT = {
     "task_id": "task-123",
-    "natural_language_goal": "Test the plan ingestion.",
+    "natural_language_goal": "Test the single file plan ingestion.",
     "overall_context": "This is a test.",
-    "input_hashes": {
-        "requirements_md": "hash1",
-        "config_yaml": "hash2",
-        "prompt_file": "hash3"
-    },
+    "input_hashes": {"requirements_md": "hash1", "config_yaml": "hash2", "prompt_file": "hash3"},
     "plan": [
         {
-            "step_id": "step-001",
-            "description": "First step",
-            "depends_on": [],
-            "agent_spec": {
-                "type": "code_generation",
-                "input_artifacts": ["input.txt"],
-                "output_artifacts": ["output.txt"],
-                "instructions": ["Generate code."],
-                "constraints": ["Must be Python."],
-                "validation_criteria": ["Runs without errors."]
-            }
+            "subtask_id": "subtask-001",  # Added subtask_id
+            "description": "First step: Generate code.",  # Combined description and instructions
+            "instructions": ["Generate code according to requirements."],  # Instructions as array
+            "input_artifacts": ["input.txt"],
+            "output_artifacts": ["output.txt"],
+            "constraints": ["Must be Python."],
+            "validation_criteria": ["Runs without errors."],
+            "type": "code_generation",  # Added required field
+            "depends_on": [],  # Added required field
+            "model_preference": None,  # Added required field
         },
         {
-            "step_id": "step-002",
-            "description": "Second step",
-            "depends_on": ["step-001"],
-            "agent_spec": {
-                "type": "validation",
-                "instructions": ["Validate output."]
-            }
-        }
-    ]
+            "subtask_id": "subtask-002",  # Added subtask_id
+            "description": "Second step: Validate output.",  # Combined description and instructions
+            "instructions": ["Validate the generated output."],  # Instructions as array
+            "input_artifacts": ["output.txt"],  # Added input_artifacts
+            "output_artifacts": [],  # Added output_artifacts
+            "constraints": [],  # Added constraints
+            "validation_criteria": ["Output matches expected format."],  # Updated validation_criteria
+            "type": "validation",  # Added required field
+            "depends_on": ["subtask-001"],  # Added required field
+            "model_preference": None,  # Added required field
+        },
+    ],
 }
 
-VALID_SUBTASK_CONTENT = {
+VALID_OVERVIEW_PLAN_CONTENT = {
+    "task_id": "task-overview-456",
+    "natural_language_goal": "Test the overview plan ingestion.",
+    "input_hashes": {"requirements_md": "hash_req", "config_yaml": "hash_config", "prompt_file": "hash_prompt"},
+    "plan": [
+        {
+            "subtask_id": "step-o1",
+            "file_path": "subtasks/subtask1.json",
+            "depends_on": [],  # depends_on is still in overview plan step
+            "type": "overview_step_type",  # Added required field
+        },
+        {
+            "subtask_id": "step-o2",
+            "file_path": "subtasks/subtask2.json",
+            "depends_on": ["step-o1"],  # depends_on is still in overview plan step
+            "type": "overview_step_type",  # Added required field
+        },
+    ],
+}
+
+VALID_SUBTASK_CONTENT_1 = {
     "subtask_id": "subtask-abc",
-    "task_id": "task-123",
-    "name": "Sample Subtask",
-    "description": "A subtask for testing.",
-    "instructions": "Do something specific for this subtask."
+    "task_id": "task-overview-456",
+    "description": "A subtask for testing overview.",  # Updated description
+    "instructions": ["Do something specific for subtask 1."],  # Instructions as array
+    "input_artifacts": [],  # Added required field
+    "output_artifacts": [],  # Added required field
+    "constraints": [],  # Added required field
+    "validation_criteria": [],  # Added required field
+    "type": "test_subtask",  # Added required field
+    "depends_on": [],  # Added required field
+    "model_preference": None,  # Added required field
 }
 
+VALID_SUBTASK_CONTENT_2 = {
+    "subtask_id": "subtask-def",
+    "task_id": "task-overview-456",
+    "description": "Another subtask for testing overview.",  # Updated description
+    "instructions": ["Do something specific for subtask 2."],  # Instructions as array
+    "input_artifacts": [],  # Added required field
+    "output_artifacts": [],  # Added required field
+    "constraints": [],  # Added required field
+    "validation_criteria": [],  # Added required field
+    "type": "test_subtask",  # Added required field
+    "depends_on": ["subtask-abc"],  # Added required field
+    "model_preference": None,  # Added required field
+}
 
-def test_successful_plan_ingestion():
-    plan_str = json.dumps(VALID_PLAN_CONTENT)
-    ingestion = PlanIngestion(plan_str)
-    assert ingestion.get_parsed_plan() == VALID_PLAN_CONTENT
+# --- Fixtures ---
 
-def test_malformed_json():
-    malformed_plan_str = '{"task_id": "task-123", "plan": [}' # Missing closing brace and quotes
-    with pytest.raises(PlanValidationError, match="Malformed JSON"):
-        PlanIngestion(malformed_plan_str)
 
-def test_missing_required_top_level_field():
-    invalid_plan = VALID_PLAN_CONTENT.copy()
-    del invalid_plan["task_id"]
-    plan_str = json.dumps(invalid_plan)
-    with pytest.raises(PlanValidationError, match="Missing required top-level field: task_id"):
-        PlanIngestion(plan_str)
+@pytest.fixture
+def create_plan_file(tmp_path: Path):
+    """Fixture to create a temporary plan file."""
 
-def test_missing_required_input_hashes_field():
-    invalid_plan = json.loads(json.dumps(VALID_PLAN_CONTENT)) # Deep copy
-    del invalid_plan["input_hashes"]["requirements_md"]
-    plan_str = json.dumps(invalid_plan)
-    with pytest.raises(PlanValidationError, match="Missing required field in input_hashes: requirements_md"):
-        PlanIngestion(plan_str)
+    def _creator(filename: str, content: dict):
+        file_path = tmp_path / filename
+        file_path.write_text(json.dumps(content))
+        return str(file_path)
 
-def test_plan_not_a_list():
-    invalid_plan = VALID_PLAN_CONTENT.copy()
-    invalid_plan["plan"] = {"not_a": "list"}
-    plan_str = json.dumps(invalid_plan)
-    with pytest.raises(PlanValidationError, match="'plan' field must be a list."):
-        PlanIngestion(plan_str)
+    return _creator
 
-def test_missing_required_step_field():
-    invalid_plan = json.loads(json.dumps(VALID_PLAN_CONTENT)) # Deep copy
-    del invalid_plan["plan"][0]["step_id"]
-    plan_str = json.dumps(invalid_plan)
-    with pytest.raises(PlanValidationError, match="Step 0 missing required field: step_id"):
-        PlanIngestion(plan_str)
 
-def test_missing_required_agent_spec_field():
-    invalid_plan = json.loads(json.dumps(VALID_PLAN_CONTENT)) # Deep copy
-    del invalid_plan["plan"][0]["agent_spec"]["type"]
-    plan_str = json.dumps(invalid_plan)
-    with pytest.raises(PlanValidationError, match="Step 0 agent_spec missing required field: type"):
-        PlanIngestion(plan_str)
+@pytest.fixture
+def create_overview_plan_with_subtasks(tmp_path: Path, request):
+    """Fixture to create a temporary overview plan and its subtasks, and set schema directory."""
+    original_schema_dir = get_schema_directory()
+    schema_temp_dir = tmp_path / "schemas"
+    schema_temp_dir.mkdir()
 
-def test_get_task_dependencies():
-    plan_str = json.dumps(VALID_PLAN_CONTENT)
-    ingestion = PlanIngestion(plan_str)
-    expected_dependencies = {
-        "step-001": [],
-        "step-002": ["step-001"]
-    }
-    assert ingestion.get_task_dependencies() == expected_dependencies
+    # Copy schema files to the temporary directory
+    source_schema_dir = os.path.join(os.path.dirname(__file__), "../../src/ai_whisperer/schemas")
+    shutil.copy(os.path.join(source_schema_dir, "subtask_schema.json"), schema_temp_dir)
+    shutil.copy(os.path.join(source_schema_dir, "task_schema.json"), schema_temp_dir)
 
-def test_plan_with_no_dependencies():
-    plan_content = {
-        "task_id": "task-nodep",
-        "natural_language_goal": "Test no deps.",
-        "input_hashes": {
-            "requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"
-        },
+    # Set the schema directory for the validator
+    set_schema_directory(str(schema_temp_dir))
+
+    def _creator(overview_filename: str, overview_content: dict, subtask_dir: str, subtasks: Dict[str, dict]):
+        overview_file_path = tmp_path / overview_filename
+        subtask_dir_path = tmp_path / subtask_dir
+        subtask_dir_path.mkdir()
+
+        # Update overview content with correct relative paths
+        updated_overview_content = overview_content.copy()
+        updated_plan_steps = []
+        for step in overview_content.get("plan", []):
+            updated_step = step.copy()
+            if "file_path" in updated_step:
+                # Ensure file_path is relative to the overview file's directory
+                updated_step["file_path"] = os.path.join(subtask_dir, os.path.basename(updated_step["file_path"]))
+            updated_plan_steps.append(updated_step)
+        updated_overview_content["plan"] = updated_plan_steps
+
+        overview_file_path.write_text(json.dumps(updated_overview_content))
+
+        for subtask_filename, subtask_content in subtasks.items():
+            subtask_file_path = subtask_dir_path / subtask_filename
+            subtask_file_path.write_text(json.dumps(subtask_content))
+
+        return str(overview_file_path)
+
+    # Add a finalizer to reset the schema directory after the test
+    request.addfinalizer(lambda: set_schema_directory(original_schema_dir))
+
+    return _creator
+
+
+# --- Test Cases for ParserPlan ---
+
+
+def test_parser_plan_not_loaded_init():
+    """Test that accessing data before loading raises PlanNotLoadedError."""
+    parser = ParserPlan()
+    with pytest.raises(PlanNotLoadedError, match="Plan data has not been loaded. Call a load method first."):
+        parser.get_parsed_plan()
+    with pytest.raises(PlanNotLoadedError, match="Plan data has not been loaded. Call a load method first."):
+        parser.get_all_steps()
+    # get_task_dependencies is removed
+    with pytest.raises(PlanNotLoadedError, match="Plan data has not been loaded. Call a load method first."):
+        parser.get_subtask_content("some_subtask_id")
+
+
+# --- Tests for load_single_file_plan ---
+
+
+def test_load_single_file_plan_success(create_plan_file):
+    """Test successful loading of a valid single-file plan."""
+    plan_path = create_plan_file("single_plan.json", VALID_SINGLE_FILE_PLAN_CONTENT)
+    parser = ParserPlan()
+    parser.load_single_file_plan(plan_path)
+    assert parser.get_parsed_plan() == VALID_SINGLE_FILE_PLAN_CONTENT
+    assert parser.get_all_steps() == VALID_SINGLE_FILE_PLAN_CONTENT["plan"]
+    # get_task_dependencies is removed, no assertion needed
+    assert parser.get_subtask_content("subtask-001") is None  # Single file plan doesn't have embedded subtasks
+
+
+def test_load_single_file_plan_file_not_found():
+    """Test loading a non-existent single-file plan."""
+    parser = ParserPlan()
+    with pytest.raises(PlanFileNotFoundError, match="Plan file not found: .*non_existent_plan.json"):
+        parser.load_single_file_plan("non_existent_plan.json")
+
+
+def test_load_single_file_plan_malformed_json(tmp_path):
+    """Test loading a single-file plan with malformed JSON."""
+    malformed_content = '{"task_id": "task-malformed", "plan": ['
+    malformed_plan_path = tmp_path / "malformed_plan.json"
+    malformed_plan_path.write_text(malformed_content)
+    parser = ParserPlan()
+    with pytest.raises(PlanInvalidJSONError, match="Malformed JSON"):
+        parser.load_single_file_plan(str(malformed_plan_path))
+
+
+def test_load_single_file_plan_missing_top_level_field(create_plan_file):
+    """Test single-file plan with missing required top-level field."""
+    invalid_content = VALID_SINGLE_FILE_PLAN_CONTENT.copy()
+    del invalid_content["task_id"]
+    plan_path = create_plan_file("invalid_plan.json", invalid_content)
+    parser = ParserPlan()
+    with pytest.raises(PlanValidationError, match="'task_id' is a required property"):
+        parser.load_single_file_plan(plan_path)
+
+
+def test_load_single_file_plan_missing_required_input_hashes_field(create_plan_file):
+    """Test single-file plan with missing required input_hashes field."""
+    invalid_content = json.loads(json.dumps(VALID_SINGLE_FILE_PLAN_CONTENT))
+    del invalid_content["input_hashes"]["requirements_md"]
+    plan_path = create_plan_file("invalid_plan.json", invalid_content)
+    parser = ParserPlan()
+    with pytest.raises(PlanValidationError, match="'requirements_md' is a required property"):
+        parser.load_single_file_plan(plan_path)
+
+
+def test_load_single_file_plan_plan_not_a_list(create_plan_file):
+    """Test single-file plan where 'plan' is not a list."""
+    invalid_content = VALID_SINGLE_FILE_PLAN_CONTENT.copy()
+    invalid_content["plan"] = {"not_a": "list"}
+    plan_path = create_plan_file("invalid_plan.json", invalid_content)
+    parser = ParserPlan()
+    with pytest.raises(PlanValidationError, match=".* is not of type 'array'"):
+        parser.load_single_file_plan(plan_path)
+
+
+# Test for missing required subtask fields in single-file plan
+def test_load_single_file_plan_missing_required_subtask_field(create_plan_file):
+    """Test single-file plan with a step missing a required subtask field."""
+    invalid_content = json.loads(json.dumps(VALID_SINGLE_FILE_PLAN_CONTENT))
+    # Remove a required field from the first subtask
+    del invalid_content["plan"][0]["description"]
+    plan_path = create_plan_file("invalid_single_subtask.json", invalid_content)
+    parser = ParserPlan()
+
+    # Expecting PlanValidationError because load_single_file_plan now validates steps
+    with pytest.raises(PlanValidationError, match="'description' is a required property"):
+        parser.load_single_file_plan(plan_path)
+
+
+# Test for extra properties in single-file plan steps due to additionalProperties: false
+def test_load_single_file_plan_extra_property_in_subtask(create_plan_file):
+    """Test single-file plan with an extra property in a step."""
+    invalid_content = json.loads(json.dumps(VALID_SINGLE_FILE_PLAN_CONTENT))
+    # Add an extra property to the first subtask
+    invalid_content["plan"][0]["extra_property"] = "should be removed"
+    plan_path = create_plan_file("invalid_single_extra.json", invalid_content)
+    parser = ParserPlan()
+    # Expecting SubtaskValidationError because load_single_file_plan now validates steps
+    with pytest.raises(PlanValidationError, match="Additional properties are not allowed"):
+        parser.load_single_file_plan(plan_path)
+
+
+# --- Tests for load_overview_plan ---
+
+
+def test_load_overview_plan_success(create_overview_plan_with_subtasks):
+    """Test successful loading of a valid overview plan with subtasks."""
+    overview_path = create_overview_plan_with_subtasks(
+        "overview_plan.json",
+        VALID_OVERVIEW_PLAN_CONTENT,
+        "subtasks",
+        {"subtask1.json": VALID_SUBTASK_CONTENT_1, "subtask2.json": VALID_SUBTASK_CONTENT_2},
+    )
+    parser = ParserPlan()
+    parser.load_overview_plan(overview_path)
+    parsed_plan = parser.get_parsed_plan()
+
+    assert parsed_plan["task_id"] == VALID_OVERVIEW_PLAN_CONTENT["task_id"]
+    assert len(parsed_plan["plan"]) == 2
+    assert "loaded_subtasks" in parsed_plan
+    assert len(parsed_plan["loaded_subtasks"]) == 2
+    assert parsed_plan["loaded_subtasks"]["step-o1"] == VALID_SUBTASK_CONTENT_1
+    assert parsed_plan["loaded_subtasks"]["step-o2"] == VALID_SUBTASK_CONTENT_2
+
+    assert parser.get_all_steps() == parsed_plan["plan"]
+    # get_task_dependencies is removed, no assertion needed
+    assert parser.get_subtask_content("step-o1") == VALID_SUBTASK_CONTENT_1
+    assert parser.get_subtask_content("step-o2") == VALID_SUBTASK_CONTENT_2
+    assert parser.get_subtask_content("non-existent-step") is None
+
+
+def test_load_overview_plan_file_not_found():
+    """Test loading a non-existent overview plan."""
+    parser = ParserPlan()
+    with pytest.raises(PlanFileNotFoundError, match="Overview plan file not found: .*non_existent_overview.json"):
+        parser.load_overview_plan("non_existent_overview.json")
+
+
+def test_load_overview_plan_malformed_json(tmp_path):
+    """Test loading an overview plan with malformed JSON."""
+    malformed_content = '{"task_id": "task-malformed-overview", "plan": ['
+    malformed_plan_path = tmp_path / "malformed_overview.json"
+    malformed_plan_path.write_text(malformed_content)
+    parser = ParserPlan()
+    with pytest.raises(PlanInvalidJSONError, match="Malformed JSON"):
+        parser.load_overview_plan(str(malformed_plan_path))
+
+
+def test_load_overview_plan_missing_top_level_field(create_plan_file):
+    """Test overview plan with missing required top-level field."""
+    invalid_content = VALID_OVERVIEW_PLAN_CONTENT.copy()
+    del invalid_content["task_id"]
+    plan_path = create_plan_file("invalid_overview.json", invalid_content)
+    parser = ParserPlan()
+    with pytest.raises(PlanValidationError, match="'task_id' is a required property"):
+        parser.load_overview_plan(plan_path)
+
+
+def test_load_overview_plan_plan_not_a_list(create_plan_file):
+    """Test overview plan where 'plan' is not a list."""
+    invalid_content = VALID_OVERVIEW_PLAN_CONTENT.copy()
+    invalid_content["plan"] = {"not_a": "list"}
+    plan_path = create_plan_file("invalid_overview.json", invalid_content)
+    parser = ParserPlan()
+    with pytest.raises(PlanValidationError, match=".* is not of type 'array'"):
+        parser.load_overview_plan(plan_path)
+
+
+def test_load_overview_plan_missing_required_step_field(create_plan_file):
+    """Test overview plan with missing required step field."""
+    invalid_content = json.loads(json.dumps(VALID_OVERVIEW_PLAN_CONTENT))
+    del invalid_content["plan"][0]["subtask_id"]
+    plan_path = create_plan_file("invalid_overview.json", invalid_content)
+    parser = ParserPlan()
+    with pytest.raises(PlanValidationError, match="'subtask_id' is a required property"):
+        parser.load_overview_plan(plan_path)
+def test_load_overview_plan_subtask_file_not_found(create_overview_plan_with_subtasks, tmp_path):
+    """Test overview plan referencing a non-existent subtask file."""
+    overview_content = {
+        "task_id": "task-sub-missing",
+        "natural_language_goal": "Test missing subtask.",
+        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"},
         "plan": [
             {
-                "step_id": "step-a",
-                "description": "Step A",
-                "agent_spec": {"type": "generic", "instructions": ["Do A"]}
+                "subtask_id": "step-m1",
+                "description": "Step with missing subtask",
+                "file_path": "subtasks/missing_subtask.json",  # This file won't be created
+                "depends_on": [],
+                "agent_spec": {"type": "subtask_runner"},
             }
-        ]
+        ],
     }
-    plan_str = json.dumps(plan_content)
-    ingestion = PlanIngestion(plan_str)
-    assert ingestion.get_task_dependencies() == {"step-a": []}
-
-@patch('builtins.open', new_callable=mock_open)
-@patch('json.load')
-def test_subtask_validation_success(mock_json_load, mock_file_open):
-    """
-    This test simulates the scenario where subtask files are referenced and validated.
-    The actual validation logic for subtasks would be more complex.
-    """
-    plan_with_subtask_ref = {
-        "task_id": "task-sub",
-        "natural_language_goal": "Test subtask ref.",
-        "input_hashes": {
-            "requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"
-        },
-        "plan": [
-            {
-                "step_id": "step-s1",
-                "description": "Step with subtask",
-                "file_path": "path/to/subtask1.json", # Design doc mentions file_path for subtasks
-                "agent_spec": {"type": "subtask_runner", "instructions": ["Run subtask"]}
-            }
-        ]
-    }
-    
-    # Mock PlanIngestion to include subtask validation logic
-    class PlanIngestionWithSubtaskValidation(PlanIngestion):
-        def _validate_subtask_references(self):
-            for step in self.plan_data.get("plan", []):
-                if "file_path" in step:
-                    # Simulate reading and validating the subtask file
-                    # In a real scenario, you'd open(step["file_path"])
-                    # and json.load() it, then validate against subtask_schema.json
-                    mock_file_open.return_value # Ensure open was called
-                    mock_json_load.return_value = VALID_SUBTASK_CONTENT # Simulate loaded content
-                    
-                    subtask_content = mock_json_load() # Simulate loading
-                    required_subtask_fields = ["subtask_id", "task_id", "name", "description", "instructions"]
-                    for field in required_subtask_fields:
-                        if field not in subtask_content:
-                            raise PlanValidationError(f"Subtask {step['file_path']} missing field: {field}")
-    
-    plan_str = json.dumps(plan_with_subtask_ref)
-    ingestion = PlanIngestionWithSubtaskValidation(plan_str) # No error expected
-    assert ingestion.get_parsed_plan()["plan"][0]["file_path"] == "path/to/subtask1.json"
+    overview_path = create_overview_plan_with_subtasks(
+        "overview_missing_subtask.json", overview_content, "subtasks", {}  # No subtasks created
+    )
+    parser = ParserPlan()
+    with pytest.raises(SubtaskFileNotFoundError, match="Step file not found:\s*.*missing_subtask.json\s*\(at index \d+\)"):
+        parser.load_overview_plan(overview_path)
 
 
-@patch('builtins.open', new_callable=mock_open)
-@patch('json.load')
-def test_subtask_validation_missing_field(mock_json_load, mock_file_open):
-    plan_with_subtask_ref = {
-        "task_id": "task-sub-fail",
-        "natural_language_goal": "Test subtask ref fail.",
-        "input_hashes": {
-            "requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"
-        },
-        "plan": [
-            {
-                "step_id": "step-s2",
-                "description": "Step with invalid subtask",
-                "file_path": "path/to/invalid_subtask.json",
-                "agent_spec": {"type": "subtask_runner", "instructions": ["Run invalid subtask"]}
-            }
-        ]
-    }
-    
-    invalid_subtask_content = VALID_SUBTASK_CONTENT.copy()
-    del invalid_subtask_content["name"] # Missing 'name'
+def test_load_overview_plan_subtask_malformed_json(create_overview_plan_with_subtasks):
+    """Test overview plan referencing a subtask with malformed JSON."""
+    # Provide syntactically valid but semantically incorrect JSON to trigger validation error
+    invalid_subtask_content = {}  # Empty object is valid JSON but fails schema validation
+    overview_path = create_overview_plan_with_subtasks(
+        "overview_invalid_subtask_content.json",
+        VALID_OVERVIEW_PLAN_CONTENT,
+        "subtasks",
+        {
+            "subtask1.json": VALID_SUBTASK_CONTENT_1,
+            "subtask2.json": invalid_subtask_content,
+        },  # subtask2 has invalid content
+    )
+    parser = ParserPlan()
+    # Expecting SubtaskValidationError due to schema violation
+    with pytest.raises(SubtaskValidationError, match="Subtask validation failed for\s*.*subtask\d+\.json\s*\(referenced in step '.*'\):\s*.*"):
+        parser.load_overview_plan(overview_path)
 
-    class PlanIngestionWithSubtaskValidation(PlanIngestion):
-        def _validate_subtask_references(self):
-            for step in self.plan_data.get("plan", []):
-                if "file_path" in step:
-                    mock_file_open.return_value
-                    mock_json_load.return_value = invalid_subtask_content
-                    
-                    subtask_content = mock_json_load()
-                    required_subtask_fields = ["subtask_id", "task_id", "name", "description", "instructions"]
-                    for field in required_subtask_fields:
-                        if field not in subtask_content:
-                            raise PlanValidationError(f"Subtask {step['file_path']} missing field: {field}")
 
-    plan_str = json.dumps(plan_with_subtask_ref)
-    with pytest.raises(PlanValidationError, match="Subtask path/to/invalid_subtask.json missing field: name"):
-        PlanIngestionWithSubtaskValidation(plan_str)
+def test_load_overview_plan_subtask_validation_error(create_overview_plan_with_subtasks):
+    """Test overview plan referencing a subtask that fails schema validation."""
+    invalid_subtask_content = VALID_SUBTASK_CONTENT_1.copy()
+    del invalid_subtask_content["description"]  # Missing required field 'description'
+    overview_path = create_overview_plan_with_subtasks(
+        "overview_invalid_subtask.json",
+        VALID_OVERVIEW_PLAN_CONTENT,
+        "subtasks",
+        {"subtask1.json": invalid_subtask_content, "subtask2.json": VALID_SUBTASK_CONTENT_2},  # subtask1 is invalid
+    )
+    parser = ParserPlan()
+    with pytest.raises(SubtaskValidationError, match="Subtask validation failed for .*subtask1.json"):
+        parser.load_overview_plan(overview_path)
 
-def test_empty_plan_array():
-    plan_content = {
-        "task_id": "task-empty-plan",
-        "natural_language_goal": "Test empty plan array.",
-        "input_hashes": {
-            "requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"
-        },
-        "plan": [] # Empty plan
-    }
-    plan_str = json.dumps(plan_content)
-    ingestion = PlanIngestion(plan_str) # Should not raise error for empty plan array itself
-    assert ingestion.get_parsed_plan()["plan"] == []
-    assert ingestion.get_task_dependencies() == {}
 
-def test_plan_with_optional_fields_missing():
+# --- Tests for data access after loading ---
+
+
+def test_data_access_after_single_file_load(create_plan_file):
+    """Test accessing data after successful single-file load."""
+    plan_path = create_plan_file("single_plan.json", VALID_SINGLE_FILE_PLAN_CONTENT)
+    parser = ParserPlan()
+    parser.load_single_file_plan(plan_path)
+    # These should not raise PlanNotLoadedError
+    parser.get_parsed_plan()
+    parser.get_all_steps()
+    # get_task_dependencies is removed, no assertion needed
+
+
+def test_data_access_after_overview_load(create_overview_plan_with_subtasks):
+    """Test accessing data after successful overview load."""
+    overview_path = create_overview_plan_with_subtasks(
+        "overview_plan.json",
+        VALID_OVERVIEW_PLAN_CONTENT,
+        "subtasks",
+        {"subtask1.json": VALID_SUBTASK_CONTENT_1, "subtask2.json": VALID_SUBTASK_CONTENT_2},
+    )
+    parser = ParserPlan()
+    parser.load_overview_plan(overview_path)
+    # These should not raise PlanNotLoadedError
+    parser.get_parsed_plan()
+    parser.get_all_steps()
+    # get_task_dependencies is removed, no assertion needed
+    parser.get_subtask_content("step-o1")
+    parser.get_subtask_content("step-o2")
+    parser.get_subtask_content("non-existent-step")
+
+
+# --- Additional Tests ---
+
+# Removed test_plan_with_no_dependencies_single_file as get_task_dependencies is removed
+# Removed test_empty_plan_array_single_file as get_task_dependencies is removed
+
+
+def test_plan_with_optional_fields_missing_single_file(create_plan_file):
+    """Test single-file plan with optional fields missing."""
     plan_content = {
         "task_id": "task-optional",
         "natural_language_goal": "Test optional fields.",
-        "input_hashes": {
-            "requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"
-        },
+        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"},
         "plan": [
             {
-                "step_id": "step-opt1",
-                "description": "Step with minimal agent_spec",
-                # depends_on is missing (optional)
-                "agent_spec": {
-                    "type": "minimal_type",
-                    "instructions": ["Minimal instructions"]
-                    # input_artifacts, output_artifacts, constraints, validation_criteria are missing (optional)
-                }
+                "subtask_id": "subtask-opt1",  # Added required field
+                "description": "Step with minimal fields.",  # Added required field
+                "instructions": ["Minimal instructions."],  # Added required field
+                "input_artifacts": [],  # Added required field
+                "output_artifacts": [],  # Added required field
+                "constraints": [],  # Added required field
+                "validation_criteria": [],  # Added required field
+                "type": "minimal_step",  # Added required field
+                "depends_on": [],  # Added required field
+                "model_preference": None,  # Added required field
             }
-        ]
+        ],
     }
-    plan_str = json.dumps(plan_content)
-    ingestion = PlanIngestion(plan_str) # Should not raise error
-    parsed_plan = ingestion.get_parsed_plan()
-    assert "depends_on" not in parsed_plan["plan"][0]
-    agent_spec = parsed_plan["plan"][0]["agent_spec"]
-    assert "input_artifacts" not in agent_spec
-    assert "output_artifacts" not in agent_spec
-    assert "constraints" not in agent_spec
-    assert "validation_criteria" not in agent_spec
+    plan_path = create_plan_file("optional_fields_plan.json", plan_content)
+    parser = ParserPlan()
+    parser.load_single_file_plan(plan_path)
+    # Assert that the plan was loaded without validation errors
+    assert parser.get_parsed_plan() == plan_content
+    assert parser.get_all_steps() == plan_content["plan"]
 
-# Placeholder for where the actual PlanIngestion and PlanValidationError would be imported from
-# from ai_whisperer.plan_ingestion import PlanIngestion, PlanValidationError
+
+# Test for overview plan with optional fields missing in subtasks
+def test_overview_plan_with_optional_subtask_fields_missing(create_overview_plan_with_subtasks):
+    """Test overview plan referencing subtasks with optional fields missing."""
+    subtask_content_minimal = {
+        "subtask_id": "subtask-minimal",
+        "task_id": "task-overview-optional",
+        "description": "Minimal subtask.",
+        "instructions": ["Do minimal work."],
+        "input_artifacts": [],
+        "output_artifacts": [],
+        "constraints": [],
+        "validation_criteria": [],
+        "type": "minimal_subtask_type",  # Added required field
+        "depends_on": [],  # Added required field
+        "model_preference": None,  # Added required field
+    }
+    overview_content = {
+        "task_id": "task-overview-optional",
+        "natural_language_goal": "Test optional subtask fields.",
+        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"},
+        "plan": [
+            {
+                "subtask_id": "step-min1",
+                "description": "Step with minimal subtask",
+                "file_path": "subtasks/minimal_subtask.json",
+                "depends_on": [],
+                "agent_spec": {"type": "subtask_runner"},
+            }
+        ],
+    }
+    overview_path = create_overview_plan_with_subtasks(
+        "overview_optional_subtask.json",
+        overview_content,
+        "subtasks",
+        {"minimal_subtask.json": subtask_content_minimal},
+    )
+    parser = ParserPlan()
+    parser.load_overview_plan(overview_path)
+    # Assert that the overview plan and subtask were loaded without validation errors
+    parsed_plan = parser.get_parsed_plan()
+    assert parsed_plan["task_id"] == overview_content["task_id"]
+    assert len(parsed_plan["plan"]) == 1
+    assert parsed_plan["loaded_subtasks"]["step-min1"] == subtask_content_minimal

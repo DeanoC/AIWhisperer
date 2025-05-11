@@ -18,18 +18,16 @@ Produce **only** a JSON document, enclosed in ```json fences, adhering strictly 
   "overall_context": string?,      // Optional shared context
   "plan": [                        // Array of step objects
     {{
-      "step_id": string,           // e.g., "setup_environment"
+      "subtask_id": string,           // e.g., "setup_environment"
       "description": string,       // Human-readable purpose
       "depends_on": string[],      // Default: []
-      "agent_spec": {{
-        "type": string,            // See agent types below
-        "input_artifacts": string[],
-        "output_artifacts": string[],
-        "instructions": string[],  
-        "constraints": string[],
-        "validation_criteria": string[],
-        "model_preference": object?
-      }}
+      "type": string,            // See agent types below
+      "input_artifacts": string[],
+      "output_artifacts": string[],
+      "instructions": string[],  
+      "constraints": string[],
+      "validation_criteria": string[],
+      "model_preference": object?
     }}
   ]
 }}
@@ -49,7 +47,7 @@ No additional properties are allowed at the top level.
    * Set the `natural_language_goal` field to a concise summary of the user's main objective.
    * If applicable, populate the `overall_context` field with shared background information as a single string.
    * Decompose the requirements into a logical sequence of steps (plan).
-   * Use concise, descriptive, `snake_case` names for `step_id` (e.g., `generate_tests`, `implement_feature`).
+   * Use concise, descriptive, `snake_case` names for `subtask_id` (e.g., `generate_tests`, `implement_feature`).
    * Ensure `depends_on` is always present, using an empty list `[]` for initial steps.
     * When decomposing requirements involving code, prioritize creating sequences of `test_generation` -> `code_implementation` (`code_generation` or `file_edit`) -> `validation` steps for each distinct logical component or feature increment.
       * For example, if a feature requires (1) new CLI arguments, (2) changes to an API call, and (3) new output formatting, the plan should ideally reflect three such TDD trilogies, appropriately sequenced.
@@ -146,20 +144,18 @@ No additional properties are allowed at the top level.
   "overall_context": "Building a utility that supports future extensions",
   "plan": [
     {{
-      "step_id": "setup_tests",
+      "subtask_id": "setup_tests",
       "description": "Create tests for the dog food fetcher",
       "depends_on": [],
-      "agent_spec": {{
-        "type": "test_generation",
-        "input_artifacts": [],
-        "output_artifacts": ["tests/test_dogfood.py"],
-        "instructions": [
-          "Create tests for the dog food fetcher that verify:",
-          "- It handles 'dog' parameter correctly",
-          "- It properly errors on other animal types",
-          "- It correctly fetches from the specified URL"],
-        "validation_criteria": []
-      }}
+      "type": "test_generation",
+      "input_artifacts": [],
+      "output_artifacts": ["tests/test_dogfood.py"],
+      "instructions": [
+        "Create tests for the dog food fetcher that verify:",
+        "- It handles 'dog' parameter correctly",
+        "- It properly errors on other animal types",
+        "- It correctly fetches from the specified URL"],
+      "validation_criteria": []
     }}
   ]
 }}

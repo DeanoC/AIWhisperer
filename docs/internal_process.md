@@ -87,7 +87,7 @@ The process involves the following key stages:
     - Custom validation logic is then applied to the parsed JSON data:
         - It checks for required top-level fields such as `task_id`, `natural_language_goal`, `input_hashes`, and `plan`.
         - It verifies that the `plan` field is a list and `input_hashes` is an object with its own required fields.
-        - Each step within the `plan` array is validated to ensure it's a dictionary and contains required fields like `step_id`, `description`, and `agent_spec`.
+        - Each step within the `plan` array is validated to ensure it's a dictionary and contains required fields like `subtask_id`, `description`, and `agent_spec`.
         - The `agent_spec` within each step is also validated for its required fields (e.g., `type`, `instructions`).
     - If any of these custom validations fail, a `PlanValidationError` is raised with a descriptive message.
 

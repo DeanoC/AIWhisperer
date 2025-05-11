@@ -1,39 +1,33 @@
 {
   "description": "Ask the AI for the capital of the previously identified country.",
-  "depends_on": [],
-  "agent_spec": {
-    "type": "ai_interaction",
-    "input_artifacts": [
-      "country_validation_result.md",
-      "landmark_selection.md"
-    ],
-    "output_artifacts": [
-      "ai_response_capital.txt"
-    ],
-    "instructions": [
-      "Read the content of 'country_validation_result.md' to determine if the country validation in the previous step was successful. This file should contain a clear indication of the validation outcome.",
-      "If the validation result in 'country_validation_result.md' indicates success (e.g., 'Validation Passed: Yes' or similar), proceed to interact with the AI.",
-      "When interacting with the AI, formulate a query asking for the capital of the country that was identified and validated in the previous steps. The AI should be able to infer the country from the ongoing conversational context.",
-      "The specific prompt to the AI should be: 'What is the Capital of that country?'.",
-      "Ensure that the AI interaction maintains the conversational context established in prior AI interaction steps.",
-      "If the validation result in 'country_validation_result.md' indicates failure, do not interact with the AI. Instead, create the 'ai_response_capital.txt' file and write a note indicating that the step was skipped due to validation failure (e.g., 'Step skipped: Country validation failed').",
-      "If the AI interaction occurs, save the AI's response (the capital city) directly into the file named 'ai_response_capital.txt'.",
-      "If the AI response is empty or does not contain a clear answer, note this in 'ai_response_capital.txt' (e.g., 'AI provided an empty or unclear response')."
-    ],
-    "constraints": [
-      "This step is strictly conditional on the successful outcome of the country validation step, as indicated in 'country_validation_result.md'.",
-      "The AI interaction must leverage and maintain the conversational state from the previous AI interaction step ('landmark_selection').",
-      "The output file 'ai_response_capital.txt' must be created in all cases, either containing the AI's response or a note about skipping/failure."
-    ],
-    "validation_criteria": [
-      "The file 'ai_response_capital.txt' must exist in the workspace.",
-      "If 'country_validation_result.md' indicated successful validation, 'ai_response_capital.txt' must contain a non-empty response from the AI.",
-      "If 'country_validation_result.md' indicated failed validation, 'ai_response_capital.txt' must contain a note indicating the step was skipped due to validation failure.",
-      "The content of 'ai_response_capital.txt' should be consistent with the validation outcome and the AI interaction (or lack thereof)."
-    ],
-    "model_preference": null
-  },
-  "step_id": "ask_capital",
-  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb",
-  "subtask_id": "d6ef9ad9-858e-4be5-ae10-8fa4e2902ef3"
+  "instructions": [
+    "Read the content of 'country_validation_result.md' to determine if the country validation in the previous step was successful. This file should contain a clear indication of the validation outcome.",
+    "If the validation result in 'country_validation_result.md' indicates success (e.g., 'Validation Passed: Yes' or similar), proceed to interact with the AI.",
+    "When interacting with the AI, formulate a query asking for the capital of the country that was identified and validated in the previous steps. The AI should be able to infer the country from the ongoing conversational context.",
+    "The specific prompt to the AI should be: 'What is the Capital of that country?'.",
+    "Ensure that the AI interaction maintains the conversational context established in prior AI interaction steps.",
+    "If the validation result in 'country_validation_result.md' indicates failure, do not interact with the AI. Instead, create the 'ai_response_capital.txt' file and write a note indicating that the step was skipped due to validation failure (e.g., 'Step skipped: Country validation failed').",
+    "If the AI interaction occurs, save the AI's response (the capital city) directly into the file named 'ai_response_capital.txt'.",
+    "If the AI response is empty or does not contain a clear answer, note this in 'ai_response_capital.txt' (e.g., 'AI provided an empty or unclear response')."
+  ],
+  "input_artifacts": [
+    "country_validation_result.md",
+    "landmark_selection.md"
+  ],
+  "output_artifacts": [
+    "ai_response_capital.txt"
+  ],
+  "constraints": [
+    "This step is strictly conditional on the successful outcome of the country validation step, as indicated in 'country_validation_result.md'.",
+    "The AI interaction must leverage and maintain the conversational state from the previous AI interaction step ('landmark_selection').",
+    "The output file 'ai_response_capital.txt' must be created in all cases, either containing the AI's response or a note about skipping/failure."
+  ],
+  "validation_criteria": [
+    "The file 'ai_response_capital.txt' must exist in the workspace.",
+    "If 'country_validation_result.md' indicated successful validation, 'ai_response_capital.txt' must contain a non-empty response from the AI.",
+    "If 'country_validation_result.md' indicated failed validation, 'ai_response_capital.txt' must contain a note indicating the step was skipped due to validation failure.",
+    "The content of 'ai_response_capital.txt' should be consistent with the validation outcome and the AI interaction (or lack thereof)."
+  ],
+  "subtask_id": "d6ef9ad9-858e-4be5-ae10-8fa4e2902ef3",
+  "task_id": "712d9858-02ca-415a-b300-ffc77ee40feb"
 }
