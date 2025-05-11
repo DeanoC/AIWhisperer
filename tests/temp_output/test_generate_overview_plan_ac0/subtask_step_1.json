@@ -1,0 +1,23 @@
+{
+  "description": "Create a Python file.",
+  "instructions": [
+    "Create a new file named `hello_world.py` in the project root directory.",
+    "Write the necessary Python code within `hello_world.py` to print the string 'Hello, World!' to the console."
+  ],
+  "input_artifacts": [],
+  "output_artifacts": [
+    "hello_world.py"
+  ],
+  "constraints": [
+    "The file must be named `hello_world.py`.",
+    "The output must be exactly 'Hello, World!' followed by a newline (as is standard for print())."
+  ],
+  "validation_criteria": [
+    "Verify that the file `hello_world.py` exists in the project root directory.",
+    "Execute the `hello_world.py` script.",
+    "Confirm that the script's standard output is exactly 'Hello, World!\\n'."
+  ],
+  "type": null,
+  "task_id": "test_task_123",
+  "subtask_id": "0e285ac2-dd7f-401c-9826-68e568dca5c2"
+}

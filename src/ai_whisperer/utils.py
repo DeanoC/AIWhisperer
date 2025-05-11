@@ -68,6 +68,7 @@ def save_json_to_file(data: Dict[str, Any], output_path: str | Path):
     path.parent.mkdir(parents=True, exist_ok=True)  # Ensure output directory exists
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
+    return path
 def _parse_gitignore(gitignore_path):
     """
     Parses a .gitignore file.

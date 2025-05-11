@@ -153,7 +153,7 @@ If a step in the main plan references a `file_path`, that file is a subtask JSON
 * `description`: Detailed description of the subtask.
 * `instructions`: Specific instructions for the agent for this subtask.
 
-For the detailed structure, refer to the [subtask schema](src/ai_whisperer/schemas/subinitial_plan_schema.json).
+For the detailed structure, refer to the [subtask schema](src/ai_whisperer/schemas/subtask_plan_schema.json).
 
 The runner, via the `PlanParser` ([`src/ai_whisperer/plan_parser.py`](src/ai_whisperer/plan_parser.py:1)), will read the main plan file, validate its structure and the structure of any referenced subtask files, and then proceed with execution.
 

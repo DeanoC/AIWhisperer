@@ -204,8 +204,6 @@ class ParserPlan:
         self._ensure_loaded()
         return self._plan_data.get("plan", [])
 
-    # Removed get_task_dependencies as 'depends_on' is no longer in subinitial_plan_schema.json
-
     def get_subtask_content(self, subtask_id: str) -> Optional[Dict[str, Any]]:
         """
         Returns the loaded subtask content for a given subtask_id.

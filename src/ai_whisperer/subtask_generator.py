@@ -20,7 +20,7 @@ from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_
 
 from .config import load_config
 from .ai_service_interaction import OpenRouterAPI
-from .exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
+from .exceptions import ConfigError, OrchestratorError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
 from src.postprocessing.pipeline import ProcessingError
 
 logger = logging.getLogger(__name__)
@@ -66,6 +66,31 @@ class SubtaskGenerator:
             self.output_dir = output_dir  # Store the output directory
             self.overall_context = overall_context
             self.workspace_context = workspace_context  # Store context
+        # Load the validation schema
+            try:
+                # Determine the package root directory to locate default files relative to the package
+                try:
+                    PACKAGE_ROOT = Path(__file__).parent.resolve()
+                except NameError:
+                    # Fallback for environments where __file__ might not be defined (e.g., some test runners)
+                    PACKAGE_ROOT = Path(".").resolve() / "src" / "ai_whisperer"
+
+                DEFAULT_SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "subtask_schema.json"
+
+                schema_to_load = DEFAULT_SCHEMA_PATH
+                logger.info(f"Loading validation schema from: {schema_to_load}")
+                with open(schema_to_load, "r", encoding="utf-8") as f:
+                    self.task_schema = json.load(f)
+                logger.info("Validation schema loaded successfully.")
+            except FileNotFoundError:
+                logger.error(f"Schema file not found at {schema_to_load}")
+                raise  # Re-raise to indicate critical failure
+            except json.JSONDecodeError as e:
+                logger.error(f"Error decoding JSON schema file {schema_to_load}: {e}")
+                raise ConfigError(f"Invalid JSON in schema file {schema_to_load}: {e}") from e
+            except Exception as e:
+                logger.error(f"Unexpected error loading schema {schema_to_load}: {e}")
+                raise OrchestratorError(f"Failed to load schema {schema_to_load}: {e}") from e
 
         except ConfigError as e:
             # Re-raise ConfigError to be handled by the caller
@@ -94,11 +119,9 @@ class SubtaskGenerator:
         try:
             # 1. Construct Final Prompt using the loaded template and context
             subtask_json_str = json.dumps(input_step, indent=2)
-            prompt_content = self.subtask_prompt_template.format(
-                md_content=subtask_json_str,
-                overall_context=self.overall_context,
-                workspace_context=self.workspace_context,
-            )
+            prompt_content = self.subtask_prompt_template.replace("{md_content}", subtask_json_str)
+            prompt_content = prompt_content.replace("{overall_context}", self.overall_context)
+            prompt_content = prompt_content.replace("{workspace_context}", self.workspace_context) 
 
             # 2. Call AI Model using the initialized openrouter_client
             ai_response_text = self.openrouter_client.call_chat_completion(
@@ -117,23 +140,17 @@ class SubtaskGenerator:
             result_data["items_to_add"] = {
                 "top_level": {
                     "description": input_step.get("description", ""),
-                    # Removed "depends_on": input_step.get("depends_on", []), as it's not in the new schema
                     "task_id": input_step.get("task_id", ""), # Add task_id from input_step
                     "subtask_id": str(uuid.uuid4()),  # Generate a unique subtask ID
                 },
                 "success": True,
+                "steps": {},
+                "logs": [],
             }
+            result_data["schema"] = self.task_schema  # Add schema to result_data
 
             # 3. Parse AI Response JSON and apply postprocessing
             try:
-                # Load the subtask schema
-                subtask_schema_path = Path("src/ai_whisperer/schemas/subinitial_plan_schema.json")
-                with open(subtask_schema_path, "r", encoding="utf-8") as f:
-                    subtask_schema = json.load(f)
-
-                # Add the schema to result_data before calling pipeline.process
-                result_data["schema"] = subtask_schema
-
                 # Always use the pipeline
                 pipeline = PostprocessingPipeline(
                     scripted_steps=[
@@ -170,7 +187,7 @@ class SubtaskGenerator:
             # 4. Validate Schema (using placeholder function)
             try:
                 # Define the schema path relative to the project root
-                schema_path = Path("src/ai_whisperer/schemas/subinitial_plan_schema.json")
+                schema_path = Path("src/ai_whisperer/schemas/subtask_plan_schema.json")
                 validate_against_schema(generated_data, schema_path)
             except SchemaValidationError as e:
                 # Re-raise schema validation errors specifically
