@@ -66,19 +66,9 @@
             "type": "array",
             "items": { "type": "string" },
             "description": "Conditions to check for successful completion"
-          },
-          "model_preference": {
-            "type": ["object", "null"],
-            "properties": {
-              "provider": { "type": "string" },
-              "model": { "type": "string" },
-              "temperature": { "type": "number" },
-              "max_tokens": { "type": "integer" }
-            },
-            "additionalProperties": true
           }
         },
-        "required": ["subtask_id", "description", "type", "instructions", "depends_on", "input_artifacts", "output_artifacts", "constraints", "validation_criteria", "model_preference"],
+        "required": ["subtask_id", "description", "type", "instructions", "depends_on", "input_artifacts", "output_artifacts", "constraints", "validation_criteria"],
         "additionalProperties": false
       }
     }

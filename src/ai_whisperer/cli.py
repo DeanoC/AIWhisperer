@@ -24,10 +24,6 @@ def main(args=None) -> list[BaseCommand]:
     Accepts an optional 'args' parameter for testability (list of CLI args, or None to use sys.argv).
     Returns the instantiated command object.
     """
-    # Add debug print to confirm main function execution
-    print("DEBUG: Entered main function")
-    # Add debug print to confirm execution reaches setup_logging
-    print("DEBUG: About to call setup_logging")
     # Setup logging and rich console output first (keep this here for initial setup)
     setup_logging()
     console = setup_rich_output()
@@ -38,12 +34,16 @@ def main(args=None) -> list[BaseCommand]:
         prog="ai-whisperer",
     )
 
-    # Create subparsers for different commands
-    subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
-
+    # Add global arguments to the main parser
     parser.add_argument(
         "--project-dir", type=str, default=None, help="Path to the project directory (overrides auto-detection)."
     )
+    parser.add_argument(
+        "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
+    )
+
+    # Create subparsers for different commands
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
 
     # --- Generate Command with Subcommands ---
     generate_parser = subparsers.add_parser("generate", help="Generate plans and projects")
@@ -52,11 +52,8 @@ def main(args=None) -> list[BaseCommand]:
     # Initial Plan Subcommand
     initial_plan_parser = generate_subparsers.add_parser("initial-plan", help="Generate the initial task plan YAML")
     initial_plan_parser.add_argument(
-        "requirements_path", 
+        "requirements_path",
         help="Path to the requirements Markdown file. Required for initial plan generation."
-    )
-    initial_plan_parser.add_argument(
-        "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
     )
     initial_plan_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
 
@@ -66,9 +63,6 @@ def main(args=None) -> list[BaseCommand]:
         "initial_plan_path",
         help="Path to the initial task plan JSON file.",
     )
-    overview_plan_parser.add_argument(
-        "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
-    )
     overview_plan_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
 
     # Full Plan Subcommand
@@ -77,16 +71,10 @@ def main(args=None) -> list[BaseCommand]:
         "requirements_path",
         help="Path to the requirements Markdown file.",
     )
-    full_plan_parser.add_argument(
-        "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
-    )
     full_plan_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
 
     # --- List Models Command ---
     list_models_parser = subparsers.add_parser("list-models", help="List available OpenRouter models")
-    list_models_parser.add_argument(
-        "--config", required=True, help="Path to the configuration YAML file."
-    )
     list_models_parser.add_argument(
         "--output-csv", type=str, required=False, help="Path to output CSV file for --list-models command."
     )
@@ -94,9 +82,6 @@ def main(args=None) -> list[BaseCommand]:
     # --- Refine Command ---
     refine_parser = subparsers.add_parser("refine", help="Refine a requirements document using an AI model")
     refine_parser.add_argument("input_file", help="Path to the input requirements document to refine.")
-    refine_parser.add_argument(
-        "--config", required=True, help="Path to the configuration YAML file."
-    )
     refine_parser.add_argument(
         "--prompt-file",
         required=False,
@@ -115,11 +100,6 @@ def main(args=None) -> list[BaseCommand]:
         required=True,
         help="Path to the state file. Used for loading previous state and saving current state.",
     )
-    run_parser.add_argument(
-        "--config",
-        required=True,
-        help="Path to the configuration YAML file.",
-    )
 
      # Use parse_args (let argparse handle errors and exit codes)
     try:
@@ -127,6 +107,7 @@ def main(args=None) -> list[BaseCommand]:
             parsed_args = parser.parse_args(args)
         else:
             parsed_args = parser.parse_args()
+
         logger.debug("Using parse_args.")
         logger.debug(f"Parsed arguments: {parsed_args}")
         logger.debug(f"Command: {parsed_args.command}")

@@ -147,10 +147,10 @@ try {
     # Build the arguments for the Python script
     $pythonArgs = @(
         "-m", $MainModulePath,
+        "--config", $ConfigFile,
         "generate",
         "initial-plan",
         $RfcPath,
-        "--config", $ConfigFile,
         "--output", $OutputFolder
     )
     Write-Verbose "Executing Python script from Project Root: $ProjectRoot"
