@@ -93,15 +93,15 @@ def call_chat_completion(
 
 **Key Parameters:**
 
-*   `prompt_text` (str): The user's primary text prompt.
-*   `model` (str): The model identifier to use for this specific call.
-*   `params` (Dict\[str, Any]): API parameters for this call (e.g., `temperature`, `max_tokens`). These override default parameters from the configuration.
-*   `system_prompt` (str, optional): An optional system message to guide the AI's behavior.
-*   `tools` (List\[Dict\[str, Any]], optional): A list of tool definitions for function calling.
-*   `response_format` (Dict\[str, Any], optional): Specifies the desired format for the AI's response (e.g., JSON schema).
-*   `images` (List\[str], optional): A list of image URLs or base64 encoded image data for multimodal input.
-*   `pdfs` (List\[str], optional): A list of base64 encoded PDF data (as data URIs) for multimodal input.
-*   `messages_history` (List\[Dict\[str, Any]], optional): A list of previous messages to continue a conversation. If provided, `prompt_text`, `system_prompt`, `images`, and `pdfs` are ignored for message construction.
+* `prompt_text` (str): The user's primary text prompt.
+* `model` (str): The model identifier to use for this specific call.
+* `params` (Dict\[str, Any]): API parameters for this call (e.g., `temperature`, `max_tokens`). These override default parameters from the configuration.
+* `system_prompt` (str, optional): An optional system message to guide the AI's behavior.
+* `tools` (List\[Dict\[str, Any]], optional): A list of tool definitions for function calling.
+* `response_format` (Dict\[str, Any], optional): Specifies the desired format for the AI's response (e.g., JSON schema).
+* `images` (List\[str], optional): A list of image URLs or base64 encoded image data for multimodal input.
+* `pdfs` (List\[str], optional): A list of base64 encoded PDF data (as data URIs) for multimodal input.
+* `messages_history` (List\[Dict\[str, Any]], optional): A list of previous messages to continue a conversation. If provided, `prompt_text`, `system_prompt`, `images`, and `pdfs` are ignored for message construction.
 
 **Returns:**
 
@@ -301,10 +301,10 @@ The AI Service Interaction Module is designed to raise specific exceptions to in
 
 Common exceptions raised by the module include:
 
-*   [`ConfigError`](src/ai_whisperer/exceptions.py:10): Raised when there are issues with the configuration provided to the `OpenRouterAPI` client (e.g., missing required keys).
-*   [`OpenRouterConnectionError`](src/ai_whisperer/exceptions.py:11): Raised for network-related issues when connecting to the OpenRouter API (e.g., timeouts, connection refused).
-*   [`OpenRouterAuthError`](src/ai_whisperer/exceptions.py:9): Raised specifically for authentication failures (HTTP 401 errors) when the API key is invalid.
-*   [`OpenRouterRateLimitError`](src/ai_whisperer/exceptions.py:10): Raised when your requests exceed the rate limits imposed by the OpenRouter API (HTTP 429 errors).
-*   [`OpenRouterAPIError`](src/ai_whisperer/exceptions.py:8): A general exception for other API-related errors returned by OpenRouter (e.g., invalid parameters, model not found, internal server errors). This can also be raised for errors occurring mid-stream during streaming calls.
+* [`ConfigError`](src/ai_whisperer/exceptions.py:10): Raised when there are issues with the configuration provided to the `OpenRouterAPI` client (e.g., missing required keys).
+* [`OpenRouterConnectionError`](src/ai_whisperer/exceptions.py:11): Raised for network-related issues when connecting to the OpenRouter API (e.g., timeouts, connection refused).
+* [`OpenRouterAuthError`](src/ai_whisperer/exceptions.py:9): Raised specifically for authentication failures (HTTP 401 errors) when the API key is invalid.
+* [`OpenRouterRateLimitError`](src/ai_whisperer/exceptions.py:10): Raised when your requests exceed the rate limits imposed by the OpenRouter API (HTTP 429 errors).
+* [`OpenRouterAPIError`](src/ai_whisperer/exceptions.py:8): A general exception for other API-related errors returned by OpenRouter (e.g., invalid parameters, model not found, internal server errors). This can also be raised for errors occurring mid-stream during streaming calls.
 
 It is recommended to wrap your API calls in `try...except` blocks to catch these exceptions and handle them appropriately based on your application's needs.

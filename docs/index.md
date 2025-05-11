@@ -11,6 +11,7 @@ The AI Whisperer runner includes a robust State Management feature. This feature
 AIWhisperer incorporates a comprehensive logging system and a real-time terminal monitoring interface. These features are designed to provide clear visibility into the execution of plans, aid in debugging, and allow for user interaction with running tasks. Key aspects include detailed action logging, status tracking of plan steps, and interactive commands like pause, resume, and cancel.
 
 For an in-depth understanding, please see the [Logging and Monitoring Documentation](logging_monitoring.md).
+
 ## AI Service Interaction Module
 
 The AI Service Interaction Module handles communication with external AI services, including sending prompts and processing streaming responses from providers like OpenRouter.

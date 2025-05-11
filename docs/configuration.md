@@ -80,10 +80,10 @@ This section defines default prompts for specific agent types that are used by t
 
 When the ExecutionEngine (Runner) executes a task with a specific `agent_spec.type`, it determines the prompt to use based on the following hierarchy:
 
-1.  The Runner first attempts to find a prompt in `prompts.agent_type_defaults` that matches the `agent_spec.type` of the current task.
-2.  If a matching agent-specific default prompt is **not found**, the Runner will then use the content of `task_definition['instructions']` from the task plan, provided these instructions are present and not empty.
-3.  If a matching agent-specific default prompt is **not found** AND `task_definition['instructions']` are also missing or empty, the Runner will then use the prompt specified by `prompts.global_runner_default_prompt_path` (if this path is configured).
-4.  If none of the above (agent-specific default, task instructions, or global runner default) are available, the agent might operate without a base system prompt, which could lead to unpredictable behavior or errors.
+1. The Runner first attempts to find a prompt in `prompts.agent_type_defaults` that matches the `agent_spec.type` of the current task.
+2. If a matching agent-specific default prompt is **not found**, the Runner will then use the content of `task_definition['instructions']` from the task plan, provided these instructions are present and not empty.
+3. If a matching agent-specific default prompt is **not found** AND `task_definition['instructions']` are also missing or empty, the Runner will then use the prompt specified by `prompts.global_runner_default_prompt_path` (if this path is configured).
+4. If none of the above (agent-specific default, task instructions, or global runner default) are available, the agent might operate without a base system prompt, which could lead to unpredictable behavior or errors.
 
 ### Task-Specific Model Settings
 
