@@ -94,10 +94,12 @@ task_models:
 ### Required and Optional Fields
 
 Each task model configuration requires:
+
 - `provider`: Currently only "openrouter" is supported, but the system is designed to allow other providers in the future
 - `model`: The model identifier to use for this task
 
 Optional fields include:
+
 - `params`: A dictionary of model parameters (e.g., temperature, max_tokens)
 
 ### Fallback Mechanism

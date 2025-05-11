@@ -26,34 +26,33 @@ from src.ai_whisperer.plan_parser import (
 VALID_SINGLE_FILE_PLAN_CONTENT = {
     "task_id": "task-123",
     "natural_language_goal": "Test the single file plan ingestion.",
-    "overall_context": "This is a test.",
     "input_hashes": {"requirements_md": "hash1", "config_yaml": "hash2", "prompt_file": "hash3"},
     "plan": [
         {
-            "subtask_id": "subtask-001",  # Added subtask_id
-            "description": "First step: Generate code.",  # Combined description and instructions
-            "instructions": ["Generate code according to requirements."],  # Instructions as array
+            "subtask_id": "subtask-001",
+            "description": "First step: Generate code.",
+            "instructions": ["Generate code according to requirements."],
             "input_artifacts": ["input.txt"],
             "output_artifacts": ["output.txt"],
             "constraints": ["Must be Python."],
             "validation_criteria": ["Runs without errors."],
-            "type": "code_generation",  # Added required field
-            "depends_on": [],  # Added required field
-            "model_preference": None,  # Added required field
+            "type": "code_generation",
+            "depends_on": [],
+            "model_preference": None,
         },
         {
-            "subtask_id": "subtask-002",  # Added subtask_id
-            "description": "Second step: Validate output.",  # Combined description and instructions
-            "instructions": ["Validate the generated output."],  # Instructions as array
-            "input_artifacts": ["output.txt"],  # Added input_artifacts
-            "output_artifacts": [],  # Added output_artifacts
-            "constraints": [],  # Added constraints
-            "validation_criteria": ["Output matches expected format."],  # Updated validation_criteria
-            "type": "validation",  # Added required field
-            "depends_on": ["subtask-001"],  # Added required field
-            "model_preference": None,  # Added required field
+            "subtask_id": "subtask-002",
+            "description": "Second step: Validate output.",
+            "instructions": ["Validate the generated output."],
+            "input_artifacts": ["output.txt"],
+            "output_artifacts": [],
+            "constraints": [],
+            "validation_criteria": ["Output matches expected format."],
+            "type": "validation",
+            "depends_on": ["subtask-001"],
+            "model_preference": None,
         },
-    ],
+    ]
 }
 
 VALID_OVERVIEW_PLAN_CONTENT = {
