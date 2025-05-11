@@ -45,41 +45,42 @@ def main(args=None) -> list[BaseCommand]:
         "--project-dir", type=str, default=None, help="Path to the project directory (overrides auto-detection)."
     )
 
-    # --- Generate Initial Plan Command ---
-    generate_initial_plan_parser = subparsers.add_parser("generate-initial-plan", help="Generate the initial task plan YAML")
-    generate_initial_plan_parser.add_argument(
-        "--requirements",
-        required=True, # Requirements path is required for initial plan generation
-        help="Path to the requirements Markdown file. Required for initial plan generation.",
+    # --- Generate Command with Subcommands ---
+    generate_parser = subparsers.add_parser("generate", help="Generate plans and projects")
+    generate_subparsers = generate_parser.add_subparsers(dest="subcommand", required=True, help="Type of generation")
+    
+    # Initial Plan Subcommand
+    initial_plan_parser = generate_subparsers.add_parser("initial-plan", help="Generate the initial task plan YAML")
+    initial_plan_parser.add_argument(
+        "requirements_path", 
+        help="Path to the requirements Markdown file. Required for initial plan generation."
     )
-    generate_initial_plan_parser.add_argument(
+    initial_plan_parser.add_argument(
         "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
     )
-    generate_initial_plan_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
+    initial_plan_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
 
-    # --- Generate Overview Plan Command ---
-    generate_overview_plan_parser = subparsers.add_parser("generate-overview-plan", help="Generate the overview plan and subtasks from an initial plan")
-    generate_overview_plan_parser.add_argument(
-        "--initial-plan",
-        required=True,
+    # Overview Plan Subcommand
+    overview_plan_parser = generate_subparsers.add_parser("overview-plan", help="Generate the overview plan and subtasks from an initial plan")
+    overview_plan_parser.add_argument(
+        "initial_plan_path",
         help="Path to the initial task plan JSON file.",
     )
-    generate_overview_plan_parser.add_argument(
+    overview_plan_parser.add_argument(
         "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
     )
-    generate_overview_plan_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
+    overview_plan_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
 
-    # --- Generate Full Project Command ---
-    generate_full_project_parser = subparsers.add_parser("generate-full-project", help="Generate a complete project plan (initial plan, overview, and subtasks)")
-    generate_full_project_parser.add_argument(
-        "--requirements",
-        required=True,
+    # Full Plan Subcommand
+    full_plan_parser = generate_subparsers.add_parser("full-plan", help="Generate a complete project plan (initial plan, overview, and subtasks)")
+    full_plan_parser.add_argument(
+        "requirements_path",
         help="Path to the requirements Markdown file.",
     )
-    generate_full_project_parser.add_argument(
+    full_plan_parser.add_argument(
         "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
     )
-    generate_full_project_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
+    full_plan_parser.add_argument("--output", type=str, default="output", help="Directory for output files.")
 
     # --- List Models Command ---
     list_models_parser = subparsers.add_parser("list-models", help="List available OpenRouter models")
@@ -145,36 +146,34 @@ def main(args=None) -> list[BaseCommand]:
                 config_path=parsed_args.config,
                 output_csv=parsed_args.output_csv
             )]
-        elif parsed_args.command == "generate-initial-plan":
-            commands = [GenerateInitialPlanCommand(
-                config_path=parsed_args.config,
-                output_dir=parsed_args.output,
-                requirements_path=parsed_args.requirements,
-            )]
-        elif parsed_args.command == "generate-overview-plan":
-             commands = [GenerateOverviewPlanCommand(
-                 config_path=parsed_args.config,
-                 output_dir=parsed_args.output,
-                 initial_plan_path=parsed_args.initial_plan
-             )]
-        elif parsed_args.command == "generate-full-project":
-            # This command returns a list of the two sub-commands
-            commands = [
-                GenerateInitialPlanCommand(
+        elif parsed_args.command == "generate":
+            if parsed_args.subcommand == "initial-plan":
+                commands = [GenerateInitialPlanCommand(
                     config_path=parsed_args.config,
                     output_dir=parsed_args.output,
-                    requirements_path=parsed_args.requirements
-                ),
-                # The initial_plan_path for GenerateOverviewPlanCommand will need to be
-                # determined after the GenerateInitialPlanCommand is executed.
-                # For now, we'll use a placeholder. The execution logic outside of main()
-                # will need to handle this dependency.
-                GenerateOverviewPlanCommand(
+                    requirements_path=parsed_args.requirements_path,
+                )]
+            elif parsed_args.subcommand == "overview-plan":
+                commands = [GenerateOverviewPlanCommand(
                     config_path=parsed_args.config,
                     output_dir=parsed_args.output,
-                    initial_plan_path="<output_of_generate_initial_plan_command>" # Placeholder
-                )
-            ]
+                    initial_plan_path=parsed_args.initial_plan_path
+                )]
+            elif parsed_args.subcommand == "full-plan":
+                commands = [
+                    GenerateInitialPlanCommand(
+                        config_path=parsed_args.config,
+                        output_dir=parsed_args.output,
+                        requirements_path=parsed_args.requirements_path
+                    ),
+                    GenerateOverviewPlanCommand(
+                        config_path=parsed_args.config,
+                        output_dir=parsed_args.output,
+                        initial_plan_path="<output_of_generate_initial_plan_command>"
+                    )
+                ]
+            else:
+                raise ValueError(f"Unknown subcommand for generate: {parsed_args.subcommand}")
         elif parsed_args.command == "refine":
             commands = [RefineCommand(
                 config_path=parsed_args.config,

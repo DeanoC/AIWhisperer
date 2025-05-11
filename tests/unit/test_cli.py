@@ -79,8 +79,8 @@ def test_list_models_command_missing_config(capsys_sys_exit):
     assert "the following arguments are required: --config" in captured.err
 
 def test_generate_initial_plan_command_valid_args(mock_commands):
-    """Test parsing valid arguments for the generate-initial-plan command."""
-    args = ["generate-initial-plan", "--requirements", "reqs.md", "--config", "config.yaml"]
+    """Test parsing valid arguments for the generate initial-plan command."""
+    args = ["generate", "initial-plan", "reqs.md", "--config", "config.yaml"]
     commands = main(args)
 
     assert len(commands) == 1
@@ -93,7 +93,7 @@ def test_generate_initial_plan_command_valid_args(mock_commands):
 
 def test_generate_initial_plan_command_with_output(mock_commands):
     """Test parsing valid arguments for the generate-initial-plan command with --output."""
-    args = ["generate-initial-plan", "--requirements", "reqs.md", "--config", "config.yaml", "--output", "plans"]
+    args = ["generate", "initial-plan", "reqs.md", "--config", "config.yaml", "--output", "plans"]
     commands = main(args)
 
     assert len(commands) == 1
@@ -105,18 +105,18 @@ def test_generate_initial_plan_command_with_output(mock_commands):
     assert isinstance(commands[0], MagicMock)
 
 def test_generate_initial_plan_command_missing_requirements(capsys_sys_exit):
-    """Test generate-initial-plan command with missing --requirements argument."""
-    args = ["generate-initial-plan", "--config", "config.yaml"]
+    """Test generate-initial-plan command with missing requirements argument."""
+    args = ["generate", "initial-plan", "--config", "config.yaml"]
     with pytest.raises(SystemExit) as e:
         main(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
-    assert "the following arguments are required: --requirements" in captured.err
+    assert "the following arguments are required: requirements_path" in captured.err
 
 def test_generate_initial_plan_command_missing_config(capsys_sys_exit):
     """Test generate-initial-plan command with missing --config argument."""
-    args = ["generate-initial-plan", "--requirements", "reqs.md"]
+    args = ["generate", "initial-plan", "reqs.md"]
     with pytest.raises(SystemExit) as e:
         main(args)
     assert e.type == SystemExit
@@ -125,8 +125,8 @@ def test_generate_initial_plan_command_missing_config(capsys_sys_exit):
     assert "the following arguments are required: --config" in captured.err
 
 def test_generate_overview_plan_command_valid_args(mock_commands):
-    """Test parsing valid arguments for the generate-overview-plan command."""
-    args = ["generate-overview-plan", "--initial-plan", "initial.json", "--config", "config.yaml"]
+    """Test parsing valid arguments for the generate overview-plan command."""
+    args = ["generate", "overview-plan", "initial.json", "--config", "config.yaml"]
     commands = main(args)
 
     assert len(commands) == 1
@@ -138,8 +138,8 @@ def test_generate_overview_plan_command_valid_args(mock_commands):
     assert isinstance(commands[0], MagicMock)
 
 def test_generate_overview_plan_command_with_output(mock_commands):
-    """Test parsing valid arguments for the generate-overview-plan command with --output."""
-    args = ["generate-overview-plan", "--initial-plan", "initial.json", "--config", "config.yaml", "--output", "overview_plans"]
+    """Test parsing valid arguments for the generate overview-plan command with --output."""
+    args = ["generate", "overview-plan", "initial.json", "--config", "config.yaml", "--output", "overview_plans"]
     commands = main(args)
 
     assert len(commands) == 1
@@ -151,18 +151,18 @@ def test_generate_overview_plan_command_with_output(mock_commands):
     assert isinstance(commands[0], MagicMock)
 
 def test_generate_overview_plan_command_missing_initial_plan(capsys_sys_exit):
-    """Test generate-overview-plan command with missing --initial-plan argument."""
-    args = ["generate-overview-plan", "--config", "config.yaml"]
+    """Test generate overview-plan command with missing initial-plan argument."""
+    args = ["generate", "overview-plan", "--config", "config.yaml"]
     with pytest.raises(SystemExit) as e:
         main(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
-    assert "the following arguments are required: --initial-plan" in captured.err
+    assert "the following arguments are required: initial_plan_path" in captured.err
 
 def test_generate_overview_plan_command_missing_config(capsys_sys_exit):
-    """Test generate-overview-plan command with missing --config argument."""
-    args = ["generate-overview-plan", "--initial-plan", "initial.json"]
+    """Test generate overview-plan command with missing --config argument."""
+    args = ["generate", "overview-plan", "initial.json"]
     with pytest.raises(SystemExit) as e:
         main(args)
     assert e.type == SystemExit
@@ -170,6 +170,23 @@ def test_generate_overview_plan_command_missing_config(capsys_sys_exit):
     captured = capsys_sys_exit.readouterr()
     assert "the following arguments are required: --config" in captured.err
 
+def test_generate_full_plan_command_valid_args(mock_commands):
+    """Test parsing valid arguments for the generate full-plan command."""
+    args = ["generate", "full-plan", "reqs.md", "--config", "config.yaml", "--output", "plans"]
+    commands = main(args)
+
+    assert len(commands) == 2
+    mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
+        config_path="config.yaml",
+        output_dir="plans",
+        requirements_path="reqs.md"
+    )
+    mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
+        config_path="config.yaml",
+        output_dir="plans",
+        initial_plan_path="<output_of_generate_initial_plan_command>"
+    )
+    assert all(isinstance(command, MagicMock) for command in commands)
 
 def test_refine_command_valid_args(mock_commands):
     """Test parsing valid arguments for the refine command."""
