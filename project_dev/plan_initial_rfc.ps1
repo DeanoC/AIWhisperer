@@ -6,9 +6,6 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$RfcFile,
 
-    [Parameter(HelpMessage = "Switch to skip generating subtasks and only create the main plan.")]
-    [switch]$NoSubtasks,
-    
     [Parameter(HelpMessage = "Switch to clean the output directory before generating new content.")]
     [switch]$Clean,
 
@@ -20,7 +17,6 @@ param (
 # --- Script Initialization ---
 Write-Verbose "Script starting. PowerShell version: $($PSVersionTable.PSVersion)"
 Write-Verbose "Raw RFC File Parameter: '$RfcFile'"
-Write-Verbose "NoSubtasks switch set: $NoSubtasks"
 Write-Verbose "Clean switch set: $Clean"
 Write-Verbose "Yes switch set: $Yes"
 
@@ -48,15 +44,10 @@ try {
     $RfcDir = Join-Path -Path $ScriptDir -ChildPath "rfc"
 
     # Normalize RFC file input
-    $inputPath = $RfcFile
-    $isExplicitPath = $false
-
     if ($RfcFile -like "project_dev*") {
         $RfcPath = Join-Path -Path $ProjectRoot -ChildPath $RfcFile
-        $isExplicitPath = $true
     } elseif ($RfcFile -like ".\*" -or $RfcFile -like "./*") {
         $RfcPath = Resolve-Path -Path $RfcFile | Select-Object -ExpandProperty Path
-        $isExplicitPath = $true
     } else {
         $RfcPath = Join-Path -Path $RfcDir -ChildPath ([System.IO.Path]::GetFileNameWithoutExtension($RfcFile) + ".md")
     }
@@ -161,12 +152,7 @@ try {
         "--requirements", $RfcPath,
         "--output", $OutputFolder
     )
-    if (-not $NoSubtasks) {
-        $pythonArgs += "--full-project"
-        Write-Verbose "Adding '--full-project' flag."
-    } else {
-        Write-Verbose "'--full-project' flag skipped due to -NoSubtasks switch."
-    }
+    Write-Verbose "Adding '--full-project' flag."
 
     Write-Verbose "Executing Python script from Project Root: $ProjectRoot"
     Write-Verbose "Command: $VenvPythonPath $($pythonArgs -join ' ')"
