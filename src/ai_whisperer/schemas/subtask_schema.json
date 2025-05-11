@@ -81,9 +81,8 @@
     "validation_criteria",
     "subtask_id",
     "task_id",
-    "depends_on",
-    "model_preference"
-  ],
+    "depends_on"
+    ],
 
   "additionalProperties": false
 }

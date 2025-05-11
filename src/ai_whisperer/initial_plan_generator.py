@@ -245,12 +245,11 @@ class InitialPlanGenerator:
                 result_data = {
                     "items_to_add": {
                         "top_level": {
-                            "task_id": str(uuid.uuid4()),  # Generate a unique task ID
+                            "task_id": (lambda: str(uuid.uuid4())),  # Generate a unique task ID each time
                             "input_hashes": input_hashes,
-                            
                         },
                         "step_level": {
-                            "subtask_id": str(uuid.uuid4()),  # Generate a unique task ID
+                            "subtask_id": (lambda: str(uuid.uuid4())),  # Generate a unique subtask ID each time
                         }
                     },
                     "success": True,
@@ -305,8 +304,7 @@ class InitialPlanGenerator:
 
             # 7. Save Output JSON
             # Create output filename based on the input requirements file
-            config_stem = Path(config_path_str).stem  # Get the stem of the config file path
-            output_filename = f"{requirements_md_path.stem}_{config_stem}.json"  # Combine stems, change extension
+            output_filename = f"{requirements_md_path.stem}.json"  # change extension
 
             logger.info(f"Saving validated JSON to: {self.output_dir}")
             try:

@@ -41,6 +41,10 @@
           "type": {
             "type": "string",
             "description": "Type of the subtask."
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Indicates if the subtask is completed."
           }
         },
         "required": ["subtask_id", "file_path", "type"]

@@ -139,6 +139,8 @@ class SubtaskGenerator:
             # Ensure items_to_add is present up to date in result_data
             result_data["items_to_add"] = {
                 "top_level": {
+                    "type": input_step.get("type", "ai_assistance"),
+                    "depends_on": input_step.get("depends_on", []),
                     "description": input_step.get("description", ""),
                     "task_id": input_step.get("task_id", ""), # Add task_id from input_step
                     "subtask_id": str(uuid.uuid4()),  # Generate a unique subtask ID

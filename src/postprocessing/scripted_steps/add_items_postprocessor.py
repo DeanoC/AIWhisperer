@@ -111,8 +111,9 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
     top_level_items = items_to_add.get("top_level", {})
     if isinstance(parsed_content, dict) and top_level_items:
         for key, value in top_level_items.items():
-            # Always add/overwrite top-level items from items_to_add
-            parsed_content[key] = value
+            # If the value is callable (e.g., lambda), call it to get the value
+            actual_value = value() if callable(value) else value
+            parsed_content[key] = actual_value
             step_result["changes"].append(f"Added/Overwrote top-level item: {key}")
     elif top_level_items:
         step_result["warnings"].append(
@@ -138,7 +139,9 @@ def add_items_postprocessor(content: Union[str, dict, list], data: dict) -> Tupl
                             for item in value:
                                 if isinstance(item, dict):
                                     for item_key, item_value in items_to_add_dict.items():
-                                        item[item_key] = item_value
+                                        # If the value is callable (e.g., lambda), call it to get the value
+                                        actual_value = item_value() if callable(item_value) else item_value
+                                        item[item_key] = actual_value
                                         step_result["changes"].append(f"Added or updated step-level item: {item_key}")
                                         logger.debug(f"Added or updated step-level item '{item_key}' to a step.")
                                 else:

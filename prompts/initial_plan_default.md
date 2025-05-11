@@ -32,8 +32,7 @@ Produce **only** a JSON document, enclosed in ```json fences, adhering strictly 
       "output_artifacts": ["string"],
       "instructions": ["string"],
       "constraints": ["string"],
-      "validation_criteria": ["string"],
-      "model_preference": "object?"
+      "validation_criteria": ["string"]
     }
   ]
 }
@@ -174,8 +173,7 @@ No additional properties are allowed at the top level.
       "validation_criteria": [
         "Tests must cover all specified cases",
         "Tests must pass without errors"
-      ],
-      "model_preference": null
+      ]
     }
   ]
 }

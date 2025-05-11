@@ -48,6 +48,11 @@ class OverviewPlanGenerator:
             IOError: If there's an error reading files or writing output.
             OrchestratorError: For issues during subtask generation or plan processing.
         """
+
+        # Ensure initial_plan_path is a Path object
+        if isinstance(initial_plan_path, str):
+            initial_plan_path = Path(initial_plan_path)
+
         logger.info(f"Starting full project plan generation from initial plan: {initial_plan_path}")
 
         if not initial_plan_path.is_file():
@@ -90,7 +95,7 @@ class OverviewPlanGenerator:
                         logger.info(f"Generating subtask {i}/{steps_count}: {subtask_id}")
 
                         # some preprocessing of the step data
-                        step_data_for_subtask = {k: v for k, v in step.items() if k != "depends_on"}
+                        step_data_for_subtask = {k: v for k, v in step.items()}
                         step_data_for_subtask["task_id"] = task_data["task_id"]
 
                         (subtask_path, subtask) = subtask_generator.generate_subtask(step_data_for_subtask)
