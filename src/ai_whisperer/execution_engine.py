@@ -1,9 +1,8 @@
-import copy
-import html
-import uuid
 import time  # Import time for duration calculation
 from pathlib import Path  # Import Path
-import json  # Import json
+import json
+
+from ai_whisperer.exceptions import TaskExecutionError  # Import json
 
 from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger  # Import logging components
 from .monitoring import TerminalMonitor  # Import TerminalMonitor
@@ -20,13 +19,6 @@ from .ai_service_interaction import (
 import traceback  # Import traceback for detailed error logging
 
 logger = get_logger(__name__)  # Get logger for execution engine
-
-
-class TaskExecutionError(Exception):
-    """Custom exception for task execution errors."""
-
-    pass
-
 
 class ExecutionEngine:
     """
@@ -109,12 +101,18 @@ class ExecutionEngine:
             # Decide whether to raise an exception here or allow execution to continue
             # For now, we'll allow execution to continue but AI tasks will fail
 
+        # Import agent handler functions
+        from .agent_handlers.ai_interaction import handle_ai_interaction
+        from .agent_handlers.planning import handle_planning
+        from .agent_handlers.validation import handle_validation
+        from .agent_handlers.no_op import handle_no_op
+
         # Initialize the agent type handler table
         self.agent_type_handlers = {
-            "ai_interaction": self._handle_ai_interaction,
-            "planning": self._handle_planning,
-            "validation": self._handle_validation,
-            "no_op": self._handle_no_op,
+            "ai_interaction": lambda task_definition, task_id: handle_ai_interaction(self, task_definition, task_id),
+            "planning": lambda task_definition, task_id: handle_planning(self, task_definition, task_id),
+            "validation": lambda task_definition, task_id: handle_validation(self, task_definition, task_id),
+            "no_op": lambda task_definition, task_id: handle_no_op(self, task_definition, task_id),
             # Add other agent types and their handlers here
         }
 

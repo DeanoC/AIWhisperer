@@ -140,3 +140,7 @@ class SchemaValidationError(AIWhispererError):
     """Exception raised when generated data fails schema validation."""
 
     pass
+class TaskExecutionError(Exception):
+    """Custom exception for task execution errors."""
+
+    pass

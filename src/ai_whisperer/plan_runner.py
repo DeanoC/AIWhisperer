@@ -39,7 +39,7 @@ class PlanRunner:
 
     def run_plan(self, plan_parser: ParserPlan, state_file_path: str) -> bool:
         """
-        Executes a project plan from a parsed plan object.
+        Executes a overview plan from a parsed plan object.
 
         Args:
             plan_parser: A ParserPlan instance with the loaded plan.
