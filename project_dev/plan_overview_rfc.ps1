@@ -113,10 +113,11 @@ try {
 
             Write-Verbose "Cleaning output directory: $OutputFolder"
             try {
-                Remove-Item -Path "$OutputFolder\*" -Recurse -Force -ErrorAction Stop
-                Write-Host "Output directory cleaned successfully."
+                # Only delete files starting with 'overview_' or 'subtask_' (recursively)
+                Get-ChildItem -Path $OutputFolder -Recurse -File | Where-Object { $_.Name -like 'overview_*' -or $_.Name -like 'subtask_*' } | Remove-Item -Force -ErrorAction Stop
+                Write-Host "Selected files (overview_*, subtask_*) deleted successfully from output directory."
             } catch {
-                Write-Error "Failed to clean output directory: $_"
+                Write-Error "Failed to clean selected files in output directory: $_"
                 exit 1
             }
         } else {
