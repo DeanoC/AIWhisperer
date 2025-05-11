@@ -167,7 +167,7 @@ class ParserPlan:
             subtask_id_for_error = step_json.get("subtask_id", f"index {i}")
 
             try:
-                validate_against_schema(step, "subinitial_plan_schema.json")
+                validate_against_schema(step, "subtask_schema.json")
             except ValidationError as e:
                 raise SubtaskValidationError(
                     f"Subtask validation failed for {step_path} (referenced in step '{subtask_id_for_error}'): {e}"

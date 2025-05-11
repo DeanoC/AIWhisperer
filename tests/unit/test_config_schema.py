@@ -51,13 +51,13 @@ prompts:
 
 # --- Task-Specific Model Settings ---
 task_models:
-  "Subtask Generation":
+  "subtask_generation":
     provider: "openrouter"
     model: "anthropic/claude-3-opus"
     params:
       temperature: 0.5
       max_tokens: 4096
-  "Initial Plan":
+  "initial_plan":
     provider: "openrouter"
     model: "mistralai/mistral-large"
     params:
@@ -82,8 +82,8 @@ output_dir: "./output/"
         task_models = config["task_models"]
 
         # Verify Subtask Generation configuration
-        assert "Subtask Generation" in task_models, "Subtask Generation task is missing"
-        subtask_gen = task_models["Subtask Generation"]
+        assert "subtask_generation" in task_models, "Subtask Generation task is missing"
+        subtask_gen = task_models["subtask_generation"]
         assert subtask_gen["provider"] == "openrouter", "Provider should be 'openrouter'"
         assert subtask_gen["model"] == "anthropic/claude-3-opus", "Model is incorrect"
         assert subtask_gen["params"]["temperature"] == 0.5, "Temperature is incorrect"
@@ -124,20 +124,6 @@ prompts:
 # --- Task-Specific Model Settings ---
 task_models:
   # Missing 'Subtask Generation' and 'Initial Plan' tasks
-  "subtask_generation": {
-    "model": "anthropic/claude-3-opus",
-    "params": {
-      "temperature": 0.5,
-      "max_tokens": 4096
-    }
-  },
-  "initial_plan": {
-    "model": "mistralai/mistral-large",
-    "params": {
-      "temperature": 0.8,
-      "max_tokens": 8192
-    }
-  }
 
 # --- Other Application Settings ---
 output_dir: "./output/"
@@ -169,7 +155,7 @@ def test_invalid_task_model_definition(mock_load_prompt, mock_env_vars, monkeypa
 openrouter:
   model: "mistralai/mistral-7b-instruct"
   params:
-    temperature: 0.7
+    temperature: 0.7`
     max_tokens: 2048
   site_url: "http://localhost:8000"
   app_name: "AIWhisperer"
@@ -181,19 +167,8 @@ prompts:
 
 # --- Task-Specific Model Settings ---
 task_models:
-  "subtask_generation":
-    # Missing 'provider' field
-    model: "anthropic/claude-3-opus"
-    params:
-      temperature: 0.5
-      max_tokens: 4096
-  "initial_plan":
-    provider: "openrouter"
-    # Missing 'model' field
-    params:
-      temperature: 0.8
-      max_tokens: 8192
-
+  subtask_generation: {}
+  initial_plan: {}
 # --- Other Application Settings ---
 output_dir: "./output/"
 """
@@ -211,8 +186,8 @@ output_dir: "./output/"
         task_models = config["task_models"]
 
         # Verify Subtask Generation configuration is invalid (missing provider)
-        assert "Subtask Generation" in task_models, "Subtask Generation task is missing"
-        subtask_gen = task_models["Subtask Generation"]
+        assert "subtask_generation" in task_models, "Subtask Generation task is missing"
+        subtask_gen = task_models["subtask_generation"]
         assert "provider" not in subtask_gen, "Provider should be missing"
 
         # Verify Initial Plan configuration is invalid (missing model)
@@ -277,8 +252,8 @@ output_dir: "./output/"
         task_models = config["task_models"]
 
         # Verify Subtask Generation configuration has unexpected key
-        assert "Subtask Generation" in task_models, "Subtask Generation task is missing"
-        subtask_gen = task_models["Subtask Generation"]
+        assert "subtask_generation" in task_models, "Subtask Generation task is missing"
+        subtask_gen = task_models["subtask_generation"]
         assert "unexpected_key" in subtask_gen, "Unexpected key is missing"
         assert subtask_gen["unexpected_key"] == "unexpected_value", "Unexpected value is incorrect"
 

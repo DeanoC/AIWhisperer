@@ -37,8 +37,7 @@ VALID_SINGLE_FILE_PLAN_CONTENT = {
             "constraints": ["Must be Python."],
             "validation_criteria": ["Runs without errors."],
             "type": "code_generation",
-            "depends_on": [],
-            "model_preference": None,
+            "depends_on": []
         },
         {
             "subtask_id": "subtask-002",
@@ -49,8 +48,7 @@ VALID_SINGLE_FILE_PLAN_CONTENT = {
             "constraints": [],
             "validation_criteria": ["Output matches expected format."],
             "type": "validation",
-            "depends_on": ["subtask-001"],
-            "model_preference": None,
+            "depends_on": ["subtask-001"]
         },
     ]
 }
@@ -64,13 +62,13 @@ VALID_OVERVIEW_PLAN_CONTENT = {
             "subtask_id": "step-o1",
             "file_path": "subtasks/subtask1.json",
             "depends_on": [],  # depends_on is still in overview plan step
-            "type": "overview_step_type",  # Added required field
+            "type": "overview_step_type"  # Required by overview_plan_schema.json
         },
         {
             "subtask_id": "step-o2",
             "file_path": "subtasks/subtask2.json",
             "depends_on": ["step-o1"],  # depends_on is still in overview plan step
-            "type": "overview_step_type",  # Added required field
+            "type": "overview_step_type"  # Required by overview_plan_schema.json
         },
     ],
 }
@@ -125,10 +123,10 @@ def create_overview_plan_with_subtasks(tmp_path: Path, request):
     schema_temp_dir = tmp_path / "schemas"
     schema_temp_dir.mkdir()
 
-    # Copy schema files to the temporary directory
+    # Copy correct schema files to the temporary directory
     source_schema_dir = os.path.join(os.path.dirname(__file__), "../../src/ai_whisperer/schemas")
-    shutil.copy(os.path.join(source_schema_dir, "subinitial_plan_schema.json"), schema_temp_dir)
-    shutil.copy(os.path.join(source_schema_dir, "initial_plan_schema.json"), schema_temp_dir)
+    shutil.copy(os.path.join(source_schema_dir, "overview_plan_schema.json"), schema_temp_dir)
+    shutil.copy(os.path.join(source_schema_dir, "subtask_schema.json"), schema_temp_dir)
 
     # Set the schema directory for the validator
     set_schema_directory(str(schema_temp_dir))
@@ -267,8 +265,6 @@ def test_load_single_file_plan_extra_property_in_subtask(create_plan_file):
 
 
 # --- Tests for load_overview_plan ---
-
-
 def test_load_overview_plan_success(create_overview_plan_with_subtasks):
     """Test successful loading of a valid overview plan with subtasks."""
     overview_path = create_overview_plan_with_subtasks(
@@ -352,6 +348,7 @@ def test_load_overview_plan_subtask_file_not_found(create_overview_plan_with_sub
                 "description": "Step with missing subtask",
                 "file_path": "subtasks/missing_subtask.json",  # This file won't be created
                 "depends_on": [],
+                "type": "overview_step_type",  # Required by schema
                 "agent_spec": {"type": "subtask_runner"},
             }
         ],
@@ -368,9 +365,11 @@ def test_load_overview_plan_subtask_malformed_json(create_overview_plan_with_sub
     """Test overview plan referencing a subtask with malformed JSON."""
     # Provide syntactically valid but semantically incorrect JSON to trigger validation error
     invalid_subtask_content = {}  # Empty object is valid JSON but fails schema validation
+    # Patch the overview plan to ensure required 'type' field is present
+    patched_overview_content = json.loads(json.dumps(VALID_OVERVIEW_PLAN_CONTENT))
     overview_path = create_overview_plan_with_subtasks(
         "overview_invalid_subtask_content.json",
-        VALID_OVERVIEW_PLAN_CONTENT,
+        patched_overview_content,
         "subtasks",
         {
             "subtask1.json": VALID_SUBTASK_CONTENT_1,
@@ -387,9 +386,11 @@ def test_load_overview_plan_subtask_validation_error(create_overview_plan_with_s
     """Test overview plan referencing a subtask that fails schema validation."""
     invalid_subtask_content = VALID_SUBTASK_CONTENT_1.copy()
     del invalid_subtask_content["description"]  # Missing required field 'description'
+    # Patch the overview plan to ensure required 'type' field is present
+    patched_overview_content = json.loads(json.dumps(VALID_OVERVIEW_PLAN_CONTENT))
     overview_path = create_overview_plan_with_subtasks(
         "overview_invalid_subtask.json",
-        VALID_OVERVIEW_PLAN_CONTENT,
+        patched_overview_content,
         "subtasks",
         {"subtask1.json": invalid_subtask_content, "subtask2.json": VALID_SUBTASK_CONTENT_2},  # subtask1 is invalid
     )
@@ -453,8 +454,7 @@ def test_plan_with_optional_fields_missing_single_file(create_plan_file):
                 "constraints": [],  # Added required field
                 "validation_criteria": [],  # Added required field
                 "type": "minimal_step",  # Added required field
-                "depends_on": [],  # Added required field
-                "model_preference": None,  # Added required field
+                "depends_on": []  # Added required field
             }
         ],
     }
@@ -492,6 +492,7 @@ def test_overview_plan_with_optional_subtask_fields_missing(create_overview_plan
                 "description": "Step with minimal subtask",
                 "file_path": "subtasks/minimal_subtask.json",
                 "depends_on": [],
+                "type": "overview_step_type",  # Required by overview_plan_schema.json
                 "agent_spec": {"type": "subtask_runner"},
             }
         ],

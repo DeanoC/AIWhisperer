@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for the Subtask Generator functionality."""
 
+import builtins
 import pytest
 import json
 from pathlib import Path
@@ -236,6 +237,9 @@ Produce **only** the JSON document, enclosed in ```json fences.
     m_open = MagicMock()
     mock_write_handle = mock_open()()  # Create a single mock handle for writing
 
+    # Save the real open
+    real_open = builtins.open
+
     # Define a side effect function for mock_open
     def open_side_effect(file_path, mode="r", encoding=None):
         # Convert Path objects to string for consistent comparison
@@ -251,8 +255,8 @@ Produce **only** the JSON document, enclosed in ```json fences.
             # Return the dedicated mock write handle for writing
             return mock_write_handle
         else:
-            # For other files or modes, raise FileNotFoundError
-            raise FileNotFoundError(f"Mocked file not found: {file_path}")
+            # For files not handled by the mock, use the real open
+            return real_open(file_path, mode, encoding=encoding)
 
     # Set the side effect for the mock_open instance
     m_open.side_effect = open_side_effect
@@ -415,7 +419,7 @@ def test_generate_subtask_ai_error(mock_load_config, mock_openrouter_client):
         generator.generate_subtask(VALID_INPUT_STEP)
 
 
-def test_generate_subtask_schema_validation_error(mock_load_config, mock_openrouter_client, mock_schema_validation):
+def test_generate_subtask_schema_validation_error(mock_load_config, mock_openrouter_client, mock_schema_validation, mock_filesystem):
     """Tests handling of schema validation errors."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
 
@@ -478,7 +482,7 @@ def test_generate_subtask_file_write_error(
         generator.generate_subtask(VALID_INPUT_STEP, result_data=result_data)
 
 
-def test_generate_subtask_json_parsing_error(mock_load_config, mock_openrouter_client):
+def test_generate_subtask_json_parsing_error(mock_load_config, mock_openrouter_client, mock_filesystem):
     """Tests handling of invalid JSON responses from the AI."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
 

@@ -17,7 +17,7 @@ from .utils import build_ascii_directory_tree, save_json_to_file # Assuming save
 
 logger = logging.getLogger(__name__)
 
-class ProjectPlanGenerator:
+class OverviewPlanGenerator:
     """
     Generates a complete project plan including an overview file and detailed subtask files.
     """

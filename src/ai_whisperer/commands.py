@@ -15,7 +15,7 @@ from rich.console import Console
 from .model_info_provider import ModelInfoProvider
 from .plan_runner import PlanRunner
 from .initial_plan_generator import InitialPlanGenerator
-from .project_plan_generator import ProjectPlanGenerator
+from .project_plan_generator import OverviewPlanGenerator
 from .plan_parser import ParserPlan
 
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ class GenerateOverviewPlanCommand(BaseCommand):
         logger.info("Starting AI Whisperer overview plan and subtask generation...")
         logger.debug("Configuration loaded successfully.")
 
-        project_plan_generator = ProjectPlanGenerator(self.config, self.output_dir)
+        project_plan_generator = OverviewPlanGenerator(self.config, self.output_dir)
         result = project_plan_generator.generate_full_plan(self.initial_plan_path, self.config_path)
 
         console.print(f"[green]Successfully generated project plan:[/green]")
