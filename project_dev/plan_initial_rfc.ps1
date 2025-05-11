@@ -152,8 +152,6 @@ try {
         "--requirements", $RfcPath,
         "--output", $OutputFolder
     )
-    Write-Verbose "Adding '--full-project' flag."
-
     Write-Verbose "Executing Python script from Project Root: $ProjectRoot"
     Write-Verbose "Command: $VenvPythonPath $($pythonArgs -join ' ')"
 
