@@ -9,10 +9,6 @@
       "type": "string",
       "description": "The original, high-level user request"
     },
-    "overall_context": {
-      "type": "string",
-      "description": "Shared background information, constraints, style guides, etc., applicable to all steps"
-    },
     "input_hashes": {
       "type": "object",
       "properties": {

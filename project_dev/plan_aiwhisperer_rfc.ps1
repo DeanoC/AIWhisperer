@@ -156,7 +156,7 @@ try {
     # Build the arguments for the Python script
     $pythonArgs = @(
         "-m", $MainModulePath,
-        "generate", # <-- Add the required subcommand
+        "generate-initial-plan",
         "--config", $ConfigFile,
         "--requirements", $RfcPath,
         "--output", $OutputFolder

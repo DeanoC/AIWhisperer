@@ -13,27 +13,33 @@ Produce **only** a JSON document, enclosed in ```json fences, adhering strictly 
 
 **Required Schema Structure:**
 
-```json {{
-  "natural_language_goal": string, // Concise objective summary
-  "overall_context": string?,      // Optional shared context
-  "plan": [                        // Array of step objects
-    {{
-      "subtask_id": string,           // e.g., "setup_environment"
-      "description": string,       // Human-readable purpose
-      "depends_on": string[],      // Default: []
-      "type": string,            // See agent types below
-      "input_artifacts": string[],
-      "output_artifacts": string[],
-      "instructions": string[],  
-      "constraints": string[],
-      "validation_criteria": string[],
-      "model_preference": object?
-    }}
+```json
+{
+  "task_id": "string",               // Unique identifier for the task
+  "natural_language_goal": "string", // Concise objective summary
+  "input_hashes": {                   // Hashes of input files
+    "requirements_md": "string",
+    "config_yaml": "string",
+    "prompt_file": "string"
+  },
+  "plan": [                           // Array of step objects
+    {
+      "subtask_id": "string",           // e.g., "setup_environment"
+      "description": "string",          // Human-readable purpose
+      "depends_on": ["string"],         // Default: []
+      "type": "string",                 // See agent types below
+      "input_artifacts": ["string"],
+      "output_artifacts": ["string"],
+      "instructions": ["string"],
+      "constraints": ["string"],
+      "validation_criteria": ["string"],
+      "model_preference": "object?"
+    }
   ]
-}}
+}
 ```
 
-Required properties: `natural_language_goal`, `plan`
+Required properties: `task_id`, `natural_language_goal`, `input_hashes`, `plan`
 No additional properties are allowed at the top level.
 
 **Instructions:**
@@ -44,8 +50,10 @@ No additional properties are allowed at the top level.
    * **If the `User Requirements` describes Feature X, the generated plan MUST implement Feature X and ONLY Feature X.**
 
 2. **Plan Creation Process:**
+   * Set the `task_id` field to a unique identifier for the task.
    * Set the `natural_language_goal` field to a concise summary of the user's main objective.
    * If applicable, populate the `overall_context` field with shared background information as a single string.
+   * Populate the `input_hashes` field with hashes of relevant input files.
    * Decompose the requirements into a logical sequence of steps (plan).
    * Use concise, descriptive, `snake_case` names for `subtask_id` (e.g., `generate_tests`, `implement_feature`).
    * Ensure `depends_on` is always present, using an empty list `[]` for initial steps.
@@ -82,7 +90,7 @@ No additional properties are allowed at the top level.
    6. `documentation`: README/docstring/comment updates
    7. `file_io`: Directory/file operations
    8. `analysis`: Code/data understanding
- 
+
    Use these types whenever possible; only use other descriptive types if none of the above fit well.
 
 5. **Strict Test-Driven Development (TDD) Flow:**
@@ -139,11 +147,17 @@ No additional properties are allowed at the top level.
 9. **Minimal Valid Example:**
 
 ```json
-{{
+{
+  "task_id": "unique_task_id_placeholder",
   "natural_language_goal": "Create a tool to fetch dog food information",
   "overall_context": "Building a utility that supports future extensions",
+  "input_hashes": {
+    "requirements_md": "hash_placeholder",
+    "config_yaml": "hash_placeholder",
+    "prompt_file": "hash_placeholder"
+  },
   "plan": [
-    {{
+    {
       "subtask_id": "setup_tests",
       "description": "Create tests for the dog food fetcher",
       "depends_on": [],
@@ -154,11 +168,17 @@ No additional properties are allowed at the top level.
         "Create tests for the dog food fetcher that verify:",
         "- It handles 'dog' parameter correctly",
         "- It properly errors on other animal types",
-        "- It correctly fetches from the specified URL"],
-      "validation_criteria": []
-    }}
+        "- It correctly fetches from the specified URL"
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "Tests must cover all specified cases",
+        "Tests must pass without errors"
+      ],
+      "model_preference": null
+    }
   ]
-}}
+}
 ```
 
 **User Requirements Provided:**

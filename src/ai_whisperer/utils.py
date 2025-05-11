@@ -17,6 +17,8 @@ from .json_validator import validate_against_schema
 
 def setup_logging(level=logging.INFO):
     """Sets up basic logging configuration to output to stderr."""
+    # Add debug logging to confirm setup_logging is invoked
+    print("DEBUG: setup_logging invoked")
     logging.basicConfig(level=level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", stream=sys.stderr)
 
 
@@ -54,6 +56,18 @@ def calculate_sha256(file_path: str | Path) -> str:
         # Raise a more general IOError for other read issues
         raise IOError(f"Error reading file {file_path}: {e}") from e
 
+def save_json_to_file(data: Dict[str, Any], output_path: str | Path):
+    """
+    Saves a dictionary as a JSON file with indentation.
+
+    Args:
+        data: The dictionary to save.
+        output_path: The path to the output JSON file (as a string or Path object).
+    """
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)  # Ensure output directory exists
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
 def _parse_gitignore(gitignore_path):
     """
     Parses a .gitignore file.

@@ -1,1 +1,0 @@
-Validation failed: The country should be France.

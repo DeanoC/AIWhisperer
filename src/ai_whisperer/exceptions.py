@@ -71,6 +71,9 @@ class OrchestratorError(AIWhispererError):
 
     pass
 
+class PlanNotLoadedError(OrchestratorError):
+    """Exception raised when a plan is expected but has not been loaded."""
+    pass
 
 class HashMismatchError(OrchestratorError):
     """Error raised when input hashes in the API response do not match calculated hashes."""

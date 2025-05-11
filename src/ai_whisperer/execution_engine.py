@@ -5,7 +5,7 @@ import time  # Import time for duration calculation
 from pathlib import Path  # Import Path
 import json  # Import json
 
-from .logging import LogMessage, LogLevel, ComponentType, get_logger  # Import logging components
+from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger  # Import logging components
 from .monitoring import TerminalMonitor  # Import TerminalMonitor
 from .state_management import StateManager  # Import StateManager
 from .plan_parser import ParserPlan  # Import ParserPlan

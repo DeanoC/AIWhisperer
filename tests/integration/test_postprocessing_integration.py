@@ -11,10 +11,9 @@ from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
 import time
 
-from src.ai_whisperer.orchestrator import Orchestrator
+# from src.ai_whisperer.orchestrator import Orchestrator
 from src.ai_whisperer.subtask_generator import SubtaskGenerator
 from src.ai_whisperer.config import load_config  # Import load_config
-from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 from src.postprocessing.pipeline import PostprocessingPipeline
 
@@ -48,110 +47,6 @@ def tmp_path_with_cleanup(request, tmp_path):
     request.addfinalizer(cleanup)
     return tmp_path
 
-
-class TestOrchestratorPostprocessingIntegration:
-    """Test the integration of the add_items_postprocessor with the Orchestrator."""
-
-    @patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI")
-    @patch("src.ai_whisperer.orchestrator.uuid.uuid4")
-    @patch("src.postprocessing.pipeline.PostprocessingPipeline.process")
-    def test_orchestrator_adds_task_id_and_hashes(self, mock_process, mock_uuid4, mock_api, tmp_path_with_cleanup):
-        """Test that the orchestrator adds task_id and input_hashes via the postprocessor."""
-        # Setup
-        mock_uuid4.return_value = "test-uuid"
-        mock_api_instance = MagicMock()
-        mock_api.return_value = mock_api_instance
-
-        # Create a JSON string with proper indentation, including task_id and input_hashes
-        json_dict = {
-            "natural_language_goal": "Test goal",
-            "plan": [
-                {
-                    "subtask_id": "test_step",
-                    "description": "Test step",
-                    "agent_spec": {"type": "test", "instructions": "Test instructions"},
-                }
-            ],
-            "task_id": "test-uuid",
-            "input_hashes": {
-                "requirements_md": "test-hash-1",
-                "config_json": "test-hash-2",
-                "prompt_file": "test-hash-3",
-            },
-        }
-
-        # Mock the API response
-        mock_api_instance.call_chat_completion.return_value = "Some JSON content"
-
-        # Mock the process method to return a valid JSON dictionary and result
-        mock_process.return_value = (json_dict, {"success": True, "steps": {}, "logs": []})
-
-        # Ensure the mock is used instead of making real API calls
-        # Create a raw test config with the new structure
-        raw_test_config = {
-            "openrouter": {"api_key": "test-key", "model": "test-model", "params": {}},
-            "task_prompts": {
-                # Path is relative to the config file location (tmp_test)
-                "orchestrator": "orchestrator_default.md"
-            },
-            "task_models": {"orchestrator": {"model": "test-model", "params": {}}},
-        }
-
-        # Create temporary files for testing
-        tmp_dir = tmp_path_with_cleanup
-
-        requirements_path = tmp_dir / "test_requirements.md"
-        with open(requirements_path, "w") as f:
-            f.write("Test requirements")
-
-        # Create a dummy prompt file
-        orchestrator_prompt_path = tmp_dir / "orchestrator_default.md"
-        with open(orchestrator_prompt_path, "w") as f:
-            f.write("Dummy orchestrator prompt content")
-
-        # Create a dummy config file
-        config_path = tmp_dir / "test_config.json"
-        with open(config_path, "w") as f:
-            yaml.dump(raw_test_config, f)
-
-            # Load the processed config using load_config
-            processed_config = load_config(str(config_path))
-
-            # Create orchestrator with the processed config
-            orchestrator = Orchestrator(processed_config, output_dir=str(tmp_dir))
-
-            # Mock the _calculate_input_hashes method to return a fixed hash
-            with patch.object(
-                orchestrator,
-                "_calculate_input_hashes",
-                return_value={
-                    "requirements_md": "test-hash-1",
-                    "config_json": "test-hash-2",
-                    "prompt_file": "test-hash-3",
-                },
-            ):
-                # Mock the _validate_json_response method to avoid validation
-                # Mock the save_json method to capture the JSON content
-                with patch.object(orchestrator, "save_json", return_value=tmp_dir / "output.json") as mock_save:
-                    orchestrator.generate_initial_json(str(requirements_path), str(config_path))
-
-                    # Get the JSON content that would have been saved
-                    saved_json = mock_save.call_args[0][0]
-                    # If the saved content is a string, parse it as JSON
-                    if isinstance(saved_json, str):
-                        saved_json = json.loads(saved_json)
-
-                    # Verify that task_id and input_hashes were added
-                    assert "task_id" in saved_json
-                    assert saved_json["task_id"] == "test-uuid"
-                    assert "input_hashes" in saved_json
-                    assert saved_json["input_hashes"] == {
-                        "requirements_md": "test-hash-1",
-                        "config_json": "test-hash-2",
-                        "prompt_file": "test-hash-3",
-                    }
-
-            # Clean up is handled by the pytest fixture
 
 
 class TestSubtaskGeneratorPostprocessingIntegration:

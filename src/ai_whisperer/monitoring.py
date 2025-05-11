@@ -26,7 +26,7 @@ from rich.prompt import Prompt
 from rich.style import Style
 
 # Import real classes from the respective modules
-from src.ai_whisperer.logging import LogMessage, LogLevel, ComponentType
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
 from src.ai_whisperer.state_management import StateManager
 
 

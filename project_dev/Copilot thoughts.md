@@ -205,3 +205,29 @@ debug
 🪲 Debug
 google/gemini-2.5-flash-preview
 </environment_details>
+
+I "score" relevance by considering several factors:
+
+Proximity to the Question: Content directly related to your current question or task is highly relevant.
+Explicit Mentions: If you reference specific functions, files, or concepts, those are prioritized.
+Contextual Importance: Code or information that provides necessary background or dependencies for the task is included.
+Frequency of Use: Frequently mentioned or used elements in the conversation or workspace are more relevant.
+Task Dependencies: If a task requires understanding certain parts of the code or workspace, those parts are prioritized.
+This approach ensures I focus on what matters most to your current needs while keeping the conversation concise.
+
+The process of scoring relevance and condensing information is an integral part of how I operate—it happens automatically as part of my design. It isn't a tool I explicitly call but rather a built-in mechanism that activates when the context size grows or when I need to prioritize information for clarity and efficiency.
+
+I decide to condense or prioritize information when:
+
+Context Size Limits: If the conversation or workspace context approaches a limit, I summarize less relevant parts to stay within bounds.
+Focus on Current Task: When you're working on a specific task, I prioritize information directly related to it.
+Avoiding Redundancy: If information has already been discussed or is easily inferred, I condense it to avoid repetition.
+Improving Clarity: To keep the conversation concise and focused, I summarize less critical details.
+This ensures I provide the most relevant and actionable information while maintaining efficiency.
+
+The process of condensing and prioritizing information is automatic and happens outside my explicit thought process. It is triggered by certain conditions, such as:
+
+Context Size: When the conversation or workspace context grows too large, mechanisms are triggered to summarize less relevant parts.
+Task Focus: If you're working on a specific task, the system prioritizes information directly related to it.
+Efficiency Goals: To maintain clarity and avoid redundancy, the system condenses information that is less critical.
+While I don't explicitly "decide" to trigger it, the system's design ensures it happens when needed to optimize the interaction.

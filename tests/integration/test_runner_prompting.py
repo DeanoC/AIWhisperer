@@ -5,7 +5,7 @@ import json  # Import the json module
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
-from src.ai_whisperer.main import main
+from src.ai_whisperer.cli import main
 from src.ai_whisperer.config import load_config
 from src.ai_whisperer.exceptions import TaskExecutionError
 
@@ -291,7 +291,7 @@ def setup_temp_files():
         shutil.rmtree(TEMP_DIR)
 
 
-@patch("src.ai_whisperer.execution_engine.OpenRouterAPI")
+@patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI") # Patch the OpenRouterAPI in ai_service_interaction
 def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses agent-type default prompt and appends task instructions."""
     # Configure the mock instance returned by the mocked class
@@ -334,14 +334,14 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
         assert actual_prompt_text_arg == expected_prompt
 
 
-@patch("src.ai_whisperer.execution_engine.OpenRouterAPI")
+@patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI") # Patch the OpenRouterAPI in ai_service_interaction
 def test_runner_uses_agent_prompt_only(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses agent-type default prompt when no task instructions."""
     # This test is now covered by the assertions in test_runner_uses_agent_prompt_with_instructions
     pass
 
 
-@patch("src.ai_whisperer.execution_engine.OpenRouterAPI")
+@patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI") # Patch the OpenRouterAPI in ai_service_interaction
 def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses global default prompt with embedded instructions when only instructions are present."""
     # Configure the mock instance returned by the mocked class

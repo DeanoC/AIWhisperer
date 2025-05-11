@@ -7,7 +7,7 @@ from pathlib import Path
 original_argv = sys.argv.copy()
 
 # Import the actual function
-from src.ai_whisperer.main import main
+from src.ai_whisperer.cli import main
 
 # Define dummy data for mocking
 DUMMY_CONFIG = {
@@ -74,10 +74,10 @@ def test_main_generate_subtask_missing_step(monkeypatch, capsys):
 
 
 # Test successful subtask generation
-@patch("src.ai_whisperer.main.SubtaskGenerator")
+@patch("src.ai_whisperer.subtask_generator.SubtaskGenerator") # Patch the new SubtaskGenerator
 @patch("yaml.safe_load")
 @patch("builtins.open", new_callable=MagicMock)
-@patch("src.ai_whisperer.main.load_config")
+@patch("src.ai_whisperer.cli.load_config")
 def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_load, mock_generator_cls, monkeypatch):
     """Test the --generate-subtask flag with a successful outcome."""
     # Set up test data
@@ -100,9 +100,9 @@ def test_main_generate_subtask_success(mock_load_config, mock_open, mock_yaml_lo
     )
 
     # Run with additional mocks
-    with patch("src.ai_whisperer.main.setup_rich_output", return_value=mock_console), patch(
-        "src.ai_whisperer.main.setup_logging"
-    ), patch("src.ai_whisperer.main.Orchestrator"), patch("sys.exit"):
+    with patch("src.ai_whisperer.cli.setup_rich_output", return_value=mock_console), patch(
+        "src.ai_whisperer.cli.setup_logging"
+    ), patch("src.ai_whisperer.cli.Orchestrator"), patch("sys.exit"): # Orchestrator patch will need further update
 
         # Call the function - we're only interested in what gets called,
         # not whether it exits properly in this test
