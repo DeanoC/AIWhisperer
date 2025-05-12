@@ -124,8 +124,14 @@ class OrchestrationError(AIWhispererError):
 class TaskExecutionError(AIWhispererError):
     """Exception raised for errors during the execution of a task."""
 
-    pass
+    def __init__(self, message: str, details: dict | None = None):
+        super().__init__(message)
+        self.details = details
 
+
+class ToolNotFound(AIWhispererError):
+    """Exception raised when a requested tool is not found in the registry."""
+    pass
 
 # --- Add the missing exceptions ---
 
@@ -138,9 +144,5 @@ class SubtaskGenerationError(AIWhispererError):
 
 class SchemaValidationError(AIWhispererError):
     """Exception raised when generated data fails schema validation."""
-
-    pass
-class TaskExecutionError(Exception):
-    """Custom exception for task execution errors."""
 
     pass

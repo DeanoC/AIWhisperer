@@ -2,7 +2,8 @@ import time  # Import time for duration calculation
 from pathlib import Path  # Import Path
 import json
 
-from ai_whisperer.exceptions import TaskExecutionError  # Import json
+from ai_whisperer.exceptions import TaskExecutionError
+from ai_whisperer.tools.tool_registry import get_tool_registry  # Import json
 
 from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger  # Import logging components
 from .monitoring import TerminalMonitor  # Import TerminalMonitor
@@ -102,10 +103,12 @@ class ExecutionEngine:
             # For now, we'll allow execution to continue but AI tasks will fail
 
         # Import agent handler functions
+        # Import agent handler functions
         from .agent_handlers.ai_interaction import handle_ai_interaction
         from .agent_handlers.planning import handle_planning
         from .agent_handlers.validation import handle_validation
         from .agent_handlers.no_op import handle_no_op
+        from .agent_handlers.code_generation import handle_code_generation
 
         # Initialize the agent type handler table
         self.agent_type_handlers = {
@@ -113,6 +116,7 @@ class ExecutionEngine:
             "planning": lambda task_definition, task_id: handle_planning(self, task_definition, task_id),
             "validation": lambda task_definition, task_id: handle_validation(self, task_definition, task_id),
             "no_op": lambda task_definition, task_id: handle_no_op(self, task_definition, task_id),
+            "code_generation": lambda task_definition, task_id: handle_code_generation(self, task_definition, task_id),
             # Add other agent types and their handlers here
         }
 
@@ -315,19 +319,135 @@ class ExecutionEngine:
                 # Assuming the first choice is the relevant one
                 message = ai_response["choices"][0].get("message", {})
                 if message.get("tool_calls"):
-                    # Handle tool calls - for now, just store the raw response
-                    logger.info(f"Task {task_id}: Received tool calls.")
+                    logger.info(f"Task {task_id}: Received tool calls. Executing tools...")
                     self.monitor.add_log_message(
                         LogMessage(
                             LogLevel.INFO,
                             ComponentType.EXECUTION_ENGINE,
                             "ai_task_tool_calls",
-                            f"Task {task_id}: Received tool calls.",
+                            f"Task {task_id}: Received tool calls. Executing tools...",
                             subtask_id=task_id,
                         )
                     )
-                    # Store the raw response including tool calls
-                    result = ai_response
+                    tool_outputs = {}
+                    tool_registry = get_tool_registry() # Get the tool registry
+
+                    for tool_call in message["tool_calls"]:
+                        tool_name = tool_call.get("function", {}).get("name")
+                        tool_arguments_str = tool_call.get("function", {}).get("arguments", "{}")
+
+                        if not tool_name:
+                            logger.warning(f"Task {task_id}: Tool call missing function name: {tool_call}. Skipping.")
+                            self.monitor.add_log_message(
+                                LogMessage(
+                                    LogLevel.WARNING,
+                                    ComponentType.EXECUTION_ENGINE,
+                                    "tool_call_missing_name",
+                                    f"Task {task_id}: Tool call missing function name. Skipping.",
+                                    subtask_id=task_id,
+                                    details={"tool_call": tool_call},
+                                )
+                            )
+                            continue
+
+                        try:
+                            tool_arguments = json.loads(tool_arguments_str)
+                        except json.JSONDecodeError as e:
+                            error_message = f"Task {task_id}: Failed to parse tool arguments for tool '{tool_name}': {e}. Arguments: {tool_arguments_str}"
+                            logger.error(error_message)
+                            self.monitor.add_log_message(
+                                LogMessage(
+                                    LogLevel.ERROR,
+                                    ComponentType.EXECUTION_ENGINE,
+                                    "tool_call_invalid_arguments",
+                                    error_message,
+                                    subtask_id=task_id,
+                                    details={"tool_name": tool_name, "arguments": tool_arguments_str, "error": str(e)},
+                                )
+                            )
+                            # Decide whether to fail the task or just skip this tool call
+                            # For now, we'll log and skip this specific tool call
+                            continue
+
+                        logger.info(f"Task {task_id}: Executing tool '{tool_name}' with arguments: {tool_arguments}")
+                        self.monitor.add_log_message(
+                            LogMessage(
+                                LogLevel.INFO,
+                                ComponentType.EXECUTION_ENGINE,
+                                "executing_tool",
+                                f"Task {task_id}: Executing tool '{tool_name}'.",
+                                subtask_id=task_id,
+                                details={"tool_name": tool_name, "arguments": tool_arguments},
+                            )
+                        )
+
+                        try:
+                            tool_instance = tool_registry.get_tool(tool_name)
+                            if tool_instance:
+                                # Execute the tool and store its output
+                                tool_output = tool_instance.execute(**tool_arguments)
+                                tool_outputs[tool_name] = tool_output # Store output by tool name or call ID
+                                logger.info(f"Task {task_id}: Tool '{tool_name}' executed successfully. Output: {tool_output}")
+                                self.monitor.add_log_message(
+                                    LogMessage(
+                                        LogLevel.INFO,
+                                        ComponentType.EXECUTION_ENGINE,
+                                        "tool_executed_successfully",
+                                        f"Task {task_id}: Tool '{tool_name}' executed successfully.",
+                                        subtask_id=task_id,
+                                        details={"tool_name": tool_name, "output": str(tool_output)[:200] + "..."}, # Log truncated output
+                                    )
+                                )
+                            else:
+                                error_message = f"Task {task_id}: Tool '{tool_name}' not found in registry."
+                                logger.error(error_message)
+                                self.monitor.add_log_message(
+                                    LogMessage(
+                                        LogLevel.ERROR,
+                                        ComponentType.EXECUTION_ENGINE,
+                                        "tool_not_found",
+                                        error_message,
+                                        subtask_id=task_id,
+                                        details={"tool_name": tool_name},
+                                    )
+                                )
+                                # Decide whether to fail the task or just skip this tool call
+                                # For now, we'll log and skip this specific tool call
+                                continue # Skip to the next tool call
+
+                        except Exception as e:
+                            error_message = f"Task {task_id}: Error executing tool '{tool_name}': {e}"
+                            logger.error(error_message, exc_info=True)
+                            self.monitor.add_log_message(
+                                LogMessage(
+                                    LogLevel.ERROR,
+                                    ComponentType.EXECUTION_ENGINE,
+                                    "tool_execution_error",
+                                    error_message,
+                                    subtask_id=task_id,
+                                    details={"tool_name": tool_name, "error": str(e), "traceback": traceback.format_exc()},
+                                )
+                            )
+                            # Decide whether to fail the task or just skip this tool call
+                            # For now, we'll log and skip this specific tool call
+                            continue # Skip to the next tool call
+
+                    # Store the AI response (including tool calls) and the tool outputs
+                    result = {
+                        "ai_response": ai_response,
+                        "tool_outputs": tool_outputs
+                    }
+                    logger.info(f"Task {task_id}: Finished executing tools. Stored AI response and tool outputs.")
+                    self.monitor.add_log_message(
+                        LogMessage(
+                            LogLevel.INFO,
+                            ComponentType.EXECUTION_ENGINE,
+                            "ai_task_tool_execution_finished",
+                            f"Task {task_id}: Finished executing tools.",
+                            subtask_id=task_id,
+                        )
+                    )
+
                 elif message.get("content") is not None:
                     # Extract and store the content
                     result = message["content"]
@@ -554,363 +674,6 @@ class ExecutionEngine:
         # Return a simple result
         result = f"Planning task {task_id} completed"
         return result
-
-    def _handle_validation(self, task_definition, task_id):
-        """
-        Handle a validation task.
-
-        Args:
-            task_definition (dict): The definition of the task to execute.
-            task_id (str): The ID of the task.
-
-        Returns:
-            str: The result of the task execution.
-
-        Raises:
-            TaskExecutionError: If the task execution fails.
-        """
-        logger.info(f"Executing validation task {task_id}")
-        self.monitor.add_log_message(
-            LogMessage(
-                LogLevel.INFO,
-                ComponentType.EXECUTION_ENGINE,
-                "executing_validation_task",
-                f"Executing validation task {task_id}",
-                subtask_id=task_id,
-            )
-        )
-
-        # Special handling for validate_country task
-        if task_id == "validate_country":
-            try:
-                # Read the AI's response from the previous task
-                ai_response_file_path = Path("ai_response_country.txt").resolve()
-
-                # Check if the file exists
-                if not ai_response_file_path.exists():
-                    # Create the file with the result from the ask_country task
-                    ask_country_result = self.state_manager.get_task_result("ask_country")
-                    if ask_country_result:
-                        with open(ai_response_file_path, "w", encoding="utf-8") as f:
-                            f.write(ask_country_result)
-                        logger.info(f"Created ai_response_country.txt with content: {ask_country_result}")
-                        self.monitor.add_log_message(
-                            LogMessage(
-                                LogLevel.INFO,
-                                ComponentType.EXECUTION_ENGINE,
-                                "ai_response_file_created",
-                                f"Created ai_response_country.txt with content: {ask_country_result}",
-                                subtask_id=task_id,
-                            )
-                        )
-
-                # Validate that the country is France
-                with open(ai_response_file_path, "r", encoding="utf-8") as f:
-                    content = f.read().lower()
-
-                logger.info(
-                    f"Task {task_id}: Content read from ai_response_country.txt: {content}"
-                )  # Added logging for content
-
-                if "france" in content:
-                    validation_result = "Validation passed: The country is correctly identified as France."
-                    logger.info(validation_result)
-                    self.monitor.add_log_message(
-                        LogMessage(
-                            LogLevel.INFO,
-                            ComponentType.EXECUTION_ENGINE,
-                            "validation_passed",
-                            validation_result,
-                            subtask_id=task_id,
-                        )
-                    )
-                    logger.info(
-                        f"Task {task_id}: Country validation result: Passed"
-                    )  # Added logging for validation result
-
-                    # Create the output artifact file
-                    output_artifacts = task_definition.get("output_artifacts", [])
-                    if output_artifacts and "country_validation_result.md" in output_artifacts:
-                        validation_file_path = Path("country_validation_result.md").resolve()
-                        try:
-                            with open(validation_file_path, "w", encoding="utf-8") as f:
-                                f.write(validation_result)
-                            logger.info(f"Created country_validation_result.md with content: {validation_result}")
-                            self.monitor.add_log_message(
-                                LogMessage(
-                                    LogLevel.INFO,
-                                    ComponentType.EXECUTION_ENGINE,
-                                    "validation_file_created",
-                                    f"Created country_validation_result.md with content: {validation_result}",
-                                    subtask_id=task_id,
-                                )
-                            )
-                        except Exception as e:
-                            logger.warning(f"Failed to create country_validation_result.md: {e}")
-                            self.monitor.add_log_message(
-                                LogMessage(
-                                    LogLevel.WARNING,
-                                    ComponentType.EXECUTION_ENGINE,
-                                    "validation_file_creation_failed",
-                                    f"Failed to create country_validation_result.md: {e}",
-                                    subtask_id=task_id,
-                                )
-                            )
-                else:
-                    validation_result = "Validation failed: The country should be France."
-                    logger.error(validation_result)
-                    self.monitor.add_log_message(
-                        LogMessage(
-                            LogLevel.ERROR,
-                            ComponentType.EXECUTION_ENGINE,
-                            "validation_failed",
-                            validation_result,
-                            subtask_id=task_id,
-                        )
-                    )
-                    logger.info(
-                        f"Task {task_id}: Country validation result: Failed"
-                    )  # Added logging for validation result
-
-                    # Create the output artifact file with failure message
-                    output_artifacts = task_definition.get("output_artifacts", [])
-                    if output_artifacts and "country_validation_result.md" in output_artifacts:
-                        validation_file_path = Path("country_validation_result.md").resolve()
-                        try:
-                            with open(validation_file_path, "w", encoding="utf-8") as f:
-                                f.write(validation_result)
-                            logger.info(f"Created country_validation_result.md with content: {validation_result}")
-                            self.monitor.add_log_message(
-                                LogMessage(
-                                    LogLevel.INFO,
-                                    ComponentType.EXECUTION_ENGINE,
-                                    "validation_file_created",
-                                    f"Created country_validation_result.md with content: {validation_result}",
-                                    subtask_id=task_id,
-                                )
-                            )
-                        except Exception as e:
-                            logger.warning(f"Failed to create country_validation_result.md: {e}")
-                            self.monitor.add_log_message(
-                                LogMessage(
-                                    LogLevel.WARNING,
-                                    ComponentType.EXECUTION_ENGINE,
-                                    "validation_file_creation_failed",
-                                    f"Failed to create country_validation_result.md: {e}",
-                                    subtask_id=task_id,
-                                )
-                            )
-
-                    raise TaskExecutionError(validation_result)
-
-                return validation_result
-
-            except Exception as e:
-                error_message = f"Failed to validate country: {e}"
-                logger.error(error_message)
-                self.monitor.add_log_message(
-                    LogMessage(
-                        LogLevel.ERROR,
-                        ComponentType.EXECUTION_ENGINE,
-                        "validation_failed",
-                        error_message,
-                        subtask_id=task_id,
-                    )
-                )
-                raise TaskExecutionError(error_message) from e
-        # Special handling for validate_capital task
-        elif task_id == "validate_capital":
-            try:
-                ask_capital_status = self.state_manager.get_task_status("ask_capital")
-                ai_response_file_path = Path("ai_response_capital.txt").resolve()
-                validation_result = ""
-
-                if ask_capital_status != "completed":
-                    validation_result = f"Validation skipped: ask_capital task status is {ask_capital_status}."
-                    logger.warning(validation_result)
-                elif not ai_response_file_path.exists():
-                    # This case implies ask_capital completed but didn't create its output, which is an issue.
-                    validation_result = (
-                        "Validation failed: ai_response_capital.txt not found, though ask_capital completed."
-                    )
-                    logger.error(validation_result)
-                    # We will still create the output artifact below, then raise error.
-                else:
-                    # Proceed with validation
-                    with open(ai_response_file_path, "r", encoding="utf-8") as f:
-                        content = f.read().lower()
-                    logger.info(f"Task {task_id}: Content read from ai_response_capital.txt: {content}")
-                    if "paris" in content:
-                        validation_result = "Validation passed: The capital is correctly identified as Paris."
-                        logger.info(validation_result)
-                    else:
-                        validation_result = "Validation failed: The capital should be Paris. Got: " + content
-                        logger.error(validation_result)
-
-                # Create the output artifact file regardless of outcome before potentially raising an error
-                output_artifacts = task_definition.get("output_artifacts", [])
-                if output_artifacts and "capital_validation_result.md" in output_artifacts:
-                    validation_file_path = Path("capital_validation_result.md").resolve()
-                    try:
-                        with open(validation_file_path, "w", encoding="utf-8") as f:
-                            f.write(validation_result)
-                        logger.info(f"Created capital_validation_result.md with content: {validation_result}")
-                        self.monitor.add_log_message(
-                            LogMessage(
-                                LogLevel.INFO,
-                                ComponentType.EXECUTION_ENGINE,
-                                "validation_file_created",
-                                f"Created capital_validation_result.md with content: {validation_result}",
-                                subtask_id=task_id,
-                            )
-                        )
-                    except Exception as e:
-                        logger.warning(f"Failed to create capital_validation_result.md: {e}")
-                        self.monitor.add_log_message(
-                            LogMessage(
-                                LogLevel.WARNING,
-                                ComponentType.EXECUTION_ENGINE,
-                                "validation_file_creation_failed",
-                                f"Failed to create capital_validation_result.md: {e}",
-                                subtask_id=task_id,
-                            )
-                        )
-
-                if "failed" in validation_result.lower() or (
-                    "skipped" in validation_result.lower() and ask_capital_status != "completed"
-                ):
-                    raise TaskExecutionError(validation_result)
-
-                return validation_result
-
-            except TaskExecutionError:  # Re-raise TaskExecutionError to ensure it's handled by the main loop
-                raise
-            except Exception as e:
-                error_message = f"Failed to validate capital: {e}"
-                logger.error(error_message, exc_info=True)
-                # Ensure output artifact is created even on unexpected exception
-                output_artifacts = task_definition.get("output_artifacts", [])
-                if output_artifacts and "capital_validation_result.md" in output_artifacts:
-                    validation_file_path = Path("capital_validation_result.md").resolve()
-                    try:
-                        with open(validation_file_path, "w", encoding="utf-8") as f:
-                            f.write(f"Validation failed unexpectedly: {e}")
-                        logger.info(f"Created capital_validation_result.md with unexpected error: {e}")
-                    except Exception as e_write:
-                        logger.warning(f"Failed to create capital_validation_result.md on unexpected error: {e_write}")
-                raise TaskExecutionError(error_message) from e
-
-        # Special handling for validate_landmark_in_capital task
-        elif task_id == "validate_landmark_in_capital":
-            try:
-                ask_landmark_status = self.state_manager.get_task_status("ask_landmark_in_capital")
-                validate_capital_status = self.state_manager.get_task_status("validate_capital")
-
-                ai_response_landmark_file_path = Path("ai_response_landmark_in_capital.txt").resolve()
-                capital_validation_file_path = Path("capital_validation_result.md").resolve()
-                validation_result = ""
-
-                if validate_capital_status != "completed":
-                    validation_result = (
-                        f"Validation skipped: validate_capital task status is {validate_capital_status}."
-                    )
-                    logger.warning(validation_result)
-                elif ask_landmark_status != "completed":
-                    validation_result = (
-                        f"Validation skipped: ask_landmark_in_capital task status is {ask_landmark_status}."
-                    )
-                    logger.warning(validation_result)
-                elif not capital_validation_file_path.exists():
-                    validation_result = "Validation skipped: capital_validation_result.md not found."
-                    logger.warning(validation_result)
-                else:
-                    with open(capital_validation_file_path, "r", encoding="utf-8") as f:
-                        capital_validation_content = f.read().lower()
-                    if "passed" not in capital_validation_content:
-                        validation_result = "Validation skipped: Capital validation did not pass."
-                        logger.warning(validation_result)
-                    elif not ai_response_landmark_file_path.exists():
-                        validation_result = "Validation failed: ai_response_landmark_in_capital.txt not found, though preceding tasks completed."
-                        logger.error(validation_result)
-                    else:
-                        with open(ai_response_landmark_file_path, "r", encoding="utf-8") as f:
-                            ai_response_content = f.read().lower()
-                        logger.info(
-                            f"Task {task_id}: Content read from ai_response_landmark_in_capital.txt: {ai_response_content}"
-                        )
-                        # For Eiffel Tower, the landmark is in the capital (Paris)
-                        if (
-                            "yes" in ai_response_content
-                            or "is in paris" in ai_response_content
-                            or "is in the capital" in ai_response_content
-                        ):
-                            validation_result = (
-                                "Validation passed: The landmark is correctly identified as being in the capital."
-                            )
-                            logger.info(validation_result)
-                        else:
-                            validation_result = (
-                                "Validation failed: The landmark should be in the capital (Paris). Got: "
-                                + ai_response_content
-                            )
-                            logger.error(validation_result)
-
-                # Create the output artifact file
-                output_artifacts = task_definition.get("output_artifacts", [])
-                if output_artifacts and "landmark_in_capital_validation_result.md" in output_artifacts:
-                    validation_file_path = Path("landmark_in_capital_validation_result.md").resolve()
-                    try:
-                        with open(validation_file_path, "w", encoding="utf-8") as f:
-                            f.write(validation_result)
-                        logger.info(
-                            f"Created landmark_in_capital_validation_result.md with content: {validation_result}"
-                        )
-                        self.monitor.add_log_message(
-                            LogMessage(
-                                LogLevel.INFO,
-                                ComponentType.EXECUTION_ENGINE,
-                                "validation_file_created",
-                                f"Created landmark_in_capital_validation_result.md with content: {validation_result}",
-                                subtask_id=task_id,
-                            )
-                        )
-                    except Exception as e:
-                        logger.warning(f"Failed to create landmark_in_capital_validation_result.md: {e}")
-                        self.monitor.add_log_message(
-                            LogMessage(
-                                LogLevel.WARNING,
-                                ComponentType.EXECUTION_ENGINE,
-                                "validation_file_creation_failed",
-                                f"Failed to create landmark_in_capital_validation_result.md: {e}",
-                                subtask_id=task_id,
-                            )
-                        )
-
-                if "failed" in validation_result.lower() or (
-                    "skipped" in validation_result.lower()
-                    and (validate_capital_status != "completed" or ask_landmark_status != "completed")
-                ):
-                    raise TaskExecutionError(validation_result)
-
-                return validation_result
-
-            except TaskExecutionError:  # Re-raise TaskExecutionError
-                raise
-            except Exception as e:
-                error_message = f"Failed to validate landmark in capital: {e}"
-                logger.error(error_message, exc_info=True)
-                output_artifacts = task_definition.get("output_artifacts", [])
-                if output_artifacts and "landmark_in_capital_validation_result.md" in output_artifacts:
-                    validation_file_path = Path("landmark_in_capital_validation_result.md").resolve()
-                    try:
-                        with open(validation_file_path, "w", encoding="utf-8") as f:
-                            f.write(f"Validation failed unexpectedly: {e}")
-                        logger.info(f"Created landmark_in_capital_validation_result.md with unexpected error: {e}")
-                    except Exception as e_write:
-                        logger.warning(
-                            f"Failed to create landmark_in_capital_validation_result.md on unexpected error: {e_write}"
-                        )
-                raise TaskExecutionError(error_message) from e
 
         # For other validation tasks, return a simple result
         result = f"Validation task {task_id} completed"
@@ -1275,6 +1038,9 @@ class ExecutionEngine:
             if not can_execute:
                 continue
 
+            if self.config.get('logger'):
+                self.config['logger'].debug(f"Executing task: {task_id}")
+
             self.state_manager.set_task_state(task_id, "in-progress")
             self.monitor.set_runner_status_info(f"In Progress: {task_id}")
             self.monitor.add_log_message(
@@ -1314,46 +1080,58 @@ class ExecutionEngine:
                         duration_ms=duration_ms,
                     )
                 )
-
-            except TaskExecutionError as e:
+            except Exception as e: # This block will now handle all exceptions
                 end_time = time.time()  # End timing
                 duration_ms = (end_time - start_time) * 1000  # Duration in milliseconds
-                error_message = str(e)
-                logger.error(f"Task {task_id} failed: {error_message}")
-                self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                self.monitor.set_runner_status_info(f"Failed: {task_id}")
-                self.monitor.add_log_message(
-                    LogMessage(
-                        LogLevel.ERROR,
-                        ComponentType.EXECUTION_ENGINE,
-                        "task_failed",
-                        f"Task {task_id} failed: {error_message}",
-                        subtask_id=task_id,
-                        duration_ms=duration_ms,
-                        details={"error": error_message},
+                if type(e).__name__ == 'TaskExecutionError':
+                     # Handle TaskExecutionError specifically based on class name
+                    print(f"DEBUG: Task {task_id}: Caught TaskExecutionError in execute_plan: {e}") # Debug print
+                    error_message = str(e)
+                    logger.error(f"Task {task_id} failed: {error_message}")
+                    self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
+                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    self.monitor.add_log_message(
+                        LogMessage(
+                            LogLevel.ERROR,
+                            ComponentType.EXECUTION_ENGINE,
+                            "task_failed",
+                            f"Task {task_id} failed: {error_message}",
+                            subtask_id=task_id,
+                            duration_ms=duration_ms,
+                            details={"error": error_message},
+                        )
                     )
-                )
-                self.state_manager.save_state()
-                # Design document implies continuing with other tasks if one fails.
-            except Exception as e:
-                end_time = time.time()  # End timing
-                duration_ms = (end_time - start_time) * 1000  # Duration in milliseconds
-                # Catch any other unexpected error during task execution
-                error_message = f"Unexpected error during execution of task {task_id}: {str(e)}"
-                logger.exception(f"Unexpected error during execution of task {task_id}")  # Log with traceback
-                self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                self.monitor.set_runner_status_info(f"Failed: {task_id}")
-                self.monitor.add_log_message(
-                    LogMessage(
-                        LogLevel.CRITICAL,
-                        ComponentType.EXECUTION_ENGINE,
-                        "task_failed_unexpected",
-                        error_message,
-                        subtask_id=task_id,
-                        duration_ms=duration_ms,
-                        details={"error": error_message, "traceback": traceback.format_exc()},
+                    # Store the task result with error details
+                    task_result_details = {
+                        "status": "failed",
+                        "error": error_message,
+                        "error_details": e.details if isinstance(e, TaskExecutionError) and e.details else None
+                    }
+                    print(f"DEBUG: Task {task_id}: About to call store_task_result with result: {task_result_details}") # Debug print
+                    self.state_manager.save_state()
+                    # Store the task result with error details
+                    self.state_manager.store_task_result(task_id, {
+                        "status": "failed",
+                        "error": error_message,
+                        "error_details": e.details if isinstance(e, TaskExecutionError) and e.details else None
+                    })
+                else:
+                    # Handle any other unexpected error during task execution                
+                    error_message = f"Unexpected error during execution of task {task_id}: {str(e)}"
+                    logger.exception(f"Unexpected error during execution of task {task_id}")  # Log with traceback
+                    self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
+                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    self.monitor.add_log_message(
+                        LogMessage(
+                            LogLevel.CRITICAL,
+                            ComponentType.EXECUTION_ENGINE,
+                            "task_failed_unexpected",
+                            error_message,
+                            subtask_id=task_id,
+                            duration_ms=duration_ms,
+                            details={"error": error_message, "traceback": traceback.format_exc()},
+                        )
                     )
-                )
         # After each task, clear the active step in the monitor
         self.monitor.set_active_step(None)
 

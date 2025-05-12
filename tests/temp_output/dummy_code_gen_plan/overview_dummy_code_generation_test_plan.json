@@ -1,0 +1,21 @@
+{
+    "task_id": "dummy-code-gen-integration-test",
+    "natural_language_goal": "Test the integration of the code_generation handler with a dummy task.",
+    "input_hashes": {
+        "requirements_md": "dummy_hash_req",
+        "config_yaml": "dummy_hash_config",
+        "prompt_file": "dummy_hash_prompt"
+    },
+    "plan": [
+        {
+            "name": "dummy_code_gen_task",
+            "subtask_id": "dummy-code-gen-subtask-1",
+            "file_path": "tests/temp_output/dummy_code_gen_plan/subtask_dummy-code-gen-subtask-1.json",
+            "depends_on": [],
+            "type": "code_generation",
+            "input_artifacts": [],
+            "output_artifacts": [],
+            "completed": false
+        }
+    ]
+}

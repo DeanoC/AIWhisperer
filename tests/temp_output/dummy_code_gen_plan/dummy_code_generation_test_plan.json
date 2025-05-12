@@ -1,0 +1,28 @@
+{
+  "natural_language_goal": "Test the integration of the code_generation handler with a dummy task.",
+  "plan": [
+    {
+      "name": "dummy_code_gen_task",
+      "description": "A dummy code generation task to test handler invocation.",
+      "depends_on": [],
+      "type": "code_generation",
+      "input_artifacts": [],
+      "output_artifacts": [],
+      "instructions": [
+        "This is a dummy instruction for code generation."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "Confirm that the code_generation handler was invoked successfully.",
+        "Verify that no errors occurred during the dummy code generation task."
+      ],
+      "subtask_id": "f34203c5-35de-4ab5-9a20-b36dc33dc9df"
+    }
+  ],
+  "task_id": "1ee09a7d-132f-4ebb-8774-b12c5c29a861",
+  "input_hashes": {
+    "requirements_md": "e978bcf0d3e8fcc3519dc85853a9d76daa064f755336f6d51fdbe3cf478baa00",
+    "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+    "prompt_file": "hash_not_available"
+  }
+}

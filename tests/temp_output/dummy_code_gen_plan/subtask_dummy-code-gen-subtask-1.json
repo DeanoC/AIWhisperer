@@ -1,0 +1,21 @@
+{
+  "description": "A dummy code generation task to test handler invocation.",
+  "instructions": [
+    "This is a dummy instruction for code generation. As this is a dummy task for testing, no actual code generation is required. The handler should simply acknowledge the instruction and proceed."
+  ],
+  "input_artifacts": [],
+  "output_artifacts": [],
+  "constraints": [
+    "This is a dummy task and should not produce any actual code files.",
+    "The handler should not interact with external systems or APIs beyond the basic AI service interaction for processing the instruction."
+  ],
+  "validation_criteria": [
+    "The handler successfully processed the subtask without errors.",
+    "No code files were created or modified as a result of this subtask."
+  ],
+  "type": "code_generation",
+  "name": "dummy_code_gen_task",
+  "depends_on": [],
+  "task_id": "dummy-code-gen-integration-test",
+  "subtask_id": "dummy-code-gen-subtask-1"
+}

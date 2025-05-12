@@ -1,0 +1,78 @@
+{
+    "natural_language_goal": "Ensure the AIWhisperer plan runner successfully executes the 1st_runner_test plan via both integration tests and command line.",
+    "plan": [
+        {
+            "name": "analyze_existing_tests",
+            "subtask_id": "3e280947-0358-475f-ab5e-92dc9cebbc10",
+            "file_path": "project_dev/in_dev/test_1st_runner_test/subtask_3e280947-0358-475f-ab5e-92dc9cebbc10.json",
+            "depends_on": [],
+            "type": "analysis",
+            "input_artifacts": [
+                "tests/integration/test_ai_tool_usage.py",
+                "tests/runner_tests/first_full_test/"
+            ],
+            "output_artifacts": [
+                "docs/runner_test_analysis.md"
+            ],
+            "completed": true
+        },
+        {
+            "name": "update_runner_code_based_on_analysis",
+            "subtask_id": "dec2dd0d-5b9e-476d-ab6b-7e01a9540773",
+            "file_path": "project_dev/in_dev/test_1st_runner_test/subtask_dec2dd0d-5b9e-476d-ab6b-7e01a9540773.json",
+            "depends_on": [
+                "analyze_existing_tests"
+            ],
+            "type": "file_edit",
+            "input_artifacts": [
+                "docs/runner_test_analysis.md",
+                "src/ai_whisperer/plan_runner.py",
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/plan_runner.py",
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/cli.py"
+            ],
+            "completed": true
+        },
+        {
+            "name": "validate_runner_execution_via_integration_test",
+            "subtask_id": "ab9d8335-5e01-472f-b273-303ab956caab",
+            "file_path": "project_dev/in_dev/test_1st_runner_test/subtask_ab9d8335-5e01-472f-b273-303ab956caab.json",
+            "depends_on": [
+                "update_runner_code_based_on_analysis"
+            ],
+            "type": "validation",
+            "input_artifacts": [
+                "tests/integration/test_ai_tool_usage.py",
+                "tests/1st_runner_test/current_test_plan/",
+                "requirements.txt"
+            ],
+            "output_artifacts": [],
+            "completed": false
+        },
+        {
+            "name": "validate_runner_execution_via_cli_test",
+            "subtask_id": "317f7f9f-7ac5-44f3-8301-d28b987ee817",
+            "file_path": "project_dev/in_dev/test_1st_runner_test/subtask_317f7f9f-7ac5-44f3-8301-d28b987ee817.json",
+            "depends_on": [
+                "update_runner_code_based_on_analysis"
+            ],
+            "type": "validation",
+            "input_artifacts": [
+                "tests/runner_tests/first_full_test/",
+                "tests/1st_runner_test/current_test_plan/"
+            ],
+            "output_artifacts": [],
+            "completed": false
+        }
+    ],
+    "task_id": "74e0a334-b61d-4b35-99ee-b79836a0d712",
+    "input_hashes": {
+        "requirements_md": "cc671c57ab4d85722256e8fa4903bd95af391da96be467c0aa2ee727b3610608",
+        "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+        "prompt_file": "hash_not_available"
+    }
+}

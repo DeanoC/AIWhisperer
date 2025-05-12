@@ -1,0 +1,34 @@
+{
+  "description": "Run the integration tests to validate the `code_generation` handler integration.",
+  "instructions": [
+    "Navigate to the root directory of the AIWhisperer project.",
+    "Ensure the Python environment with necessary dependencies (including pytest) is activated.",
+    "Execute the integration tests specifically for the `code_generation` handler integration using pytest. The command should target the file `tests/integration/test_code_generation_handler_integration.py`.",
+    "Monitor the test execution output to confirm that all tests within `test_code_generation_handler_integration.py` pass without errors.",
+    "If any tests fail, carefully examine the pytest output to understand the nature of the failure.",
+    "Analyze the code in `src/ai_whisperer/agent_handlers/code_generation.py` and `src/ai_whisperer/execution_engine.py` to identify the root cause of the test failures, focusing on the integration points between the handler and the engine.",
+    "Document any test failures and the identified potential causes."
+  ],
+  "input_artifacts": [
+    "tests/integration/test_code_generation_handler_integration.py",
+    "src/ai_whisperer/execution_engine.py",
+    "src/ai_whisperer/agent_handlers/code_generation.py"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "All integration tests in `tests/integration/test_code_generation_handler_integration.py` must pass for this step to be considered complete.",
+    "The test execution must be performed in the correct project environment."
+  ],
+  "validation_criteria": [
+    "The command to run the tests completes successfully with a zero exit code.",
+    "The pytest output explicitly states that all tests in `tests/integration/test_code_generation_handler_integration.py` passed.",
+    "No test failures are reported in the pytest output."
+  ],
+  "type": "validation",
+  "name": "validate_integration",
+  "depends_on": [
+    "create_integration_tests"
+  ],
+  "task_id": "28b11d1a-aeb6-4c57-8c3d-a85d3dbba0db",
+  "subtask_id": "3efe38a3-0b1d-4a0f-a707-aeed49af9223"
+}

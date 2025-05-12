@@ -9,28 +9,28 @@
     {
       "subtask_id": "11111111-2222-3333-4444-555555555555",
       "name": "Generate Python Script",
-      "file_path": "tests/runner_tests/first_full_test/subtask_generate_script.json",
+      "file_path": "subtask_generate_script.json",
       "depends_on": [],
       "type": "code_generation"
     },
     {
       "subtask_id": "22222222-3333-4444-5555-666666666666",
       "name": "Execute Python Script",
-      "file_path": "tests/runner_tests/first_full_test/subtask_execute_script.json",
+      "file_path": "subtask_execute_script.json",
       "depends_on": ["11111111-2222-3333-4444-555555555555"],
       "type": "ai_assistance"
     },
     {
       "subtask_id": "33333333-4444-5555-6666-777777777777",
       "name": "Read Output File",
-      "file_path": "tests/runner_tests/first_full_test/subtask_read_output.json",
+      "file_path": "subtask_read_output.json",
       "depends_on": ["22222222-3333-4444-5555-666666666666"],
       "type": "file_io"
     },
     {
       "subtask_id": "44444444-5555-6666-7777-888888888888",
       "name": "Verify Output File Content",
-      "file_path": "tests/runner_tests/first_full_test/subtask_verify_output.json",
+      "file_path": "subtask_verify_output.json",
       "depends_on": ["33333333-4444-5555-6666-777777777777"],
       "type": "validation"
     }

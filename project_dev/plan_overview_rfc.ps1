@@ -1,9 +1,7 @@
-
 [CmdletBinding()] # Enables common parameters like -Verbose, -Debug
-param (
-    [Parameter(Position = 0, Mandatory = $true, HelpMessage = "Path or name of the Initial Plan file (relative to project_dev/in_dev/). '.md' extension is optional. Can also be a path starting with 'project_dev'.")]
-    [ValidateNotNullOrEmpty()]
-    [string]$IndevDir,
+param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [string]$InputArg,
 
     [Parameter(HelpMessage = "Switch to clean the output directory before generating new content.")]
     [switch]$Clean,
@@ -13,9 +11,40 @@ param (
     [switch]$Yes
 )
 
+function Show-Usage {
+    Write-Host "Usage:"
+    Write-Host "  .\plan_overview_rfc.ps1 <plan_json_path>"
+    Write-Host "  .\plan_overview_rfc.ps1 <plan_name>"
+    Write-Host ""
+    Write-Host "Examples:"
+    Write-Host "  .\plan_overview_rfc.ps1 .\project_dev\in_dev\add_1st_runner_test\add_1st_runner_test.json"
+    Write-Host "  .\plan_overview_rfc.ps1 add_1st_runner_test"
+}
+
+# Resolve argument to JSON file path if needed
+if ($InputArg -eq "-h" -or $InputArg -eq "--help" -or $InputArg -eq "/?") {
+    Show-Usage
+    exit 0
+}
+
+if (Test-Path $InputArg -PathType Leaf) {
+    $planJsonPath = $InputArg
+} else {
+    # Assume it's a plan name, try to resolve to JSON file
+    $candidate = Join-Path -Path ".\project_dev\in_dev\$InputArg" -ChildPath "$InputArg.json"
+    if (Test-Path $candidate -PathType Leaf) {
+        $planJsonPath = $candidate
+    } else {
+        Write-Host "Could not find plan JSON file for input: $InputArg"
+        Show-Usage
+        exit 1
+    }
+}
+
 # --- Script Initialization ---
 Write-Verbose "Script starting. PowerShell version: $($PSVersionTable.PSVersion)"
-Write-Verbose "Raw Initial Plan File Parameter: '$IndevDir'"
+Write-Verbose "Raw Input Argument: '$InputArg'"
+Write-Verbose "Resolved Plan JSON Path: '$planJsonPath'"
 Write-Verbose "Clean switch set: $Clean"
 Write-Verbose "Yes switch set: $Yes"
 
@@ -39,29 +68,17 @@ Write-Verbose "Original location saved: $OriginalLocation"
 try {
     # --- Parameter Validation and Path Construction ---
 
-    # Normalize RFC file input (user parameter $IndevDir)
-    $RfcPath = $IndevDir
-    if ($RfcPath -like "project_dev*") {
-        $RfcPath = Join-Path -Path $ProjectRoot -ChildPath $RfcPath
-    } elseif ($RfcPath -like ".\*" -or $RfcPath -like "./*") {
-        $RfcPath = Resolve-Path -Path $RfcPath | Select-Object -ExpandProperty Path
-    } elseif (-not ([System.IO.Path]::IsPathRooted($RfcPath))) {
-        # If it's a bare filename, assume it's relative to in_dev
-        $RfcPath = Join-Path -Path $ScriptDir -ChildPath "in_dev"
-        $RfcPath = Join-Path -Path $RfcPath -ChildPath $IndevDir
-    }
-
     # Always get the base name for output folder
-    $RfcBaseName = [System.IO.Path]::GetFileNameWithoutExtension($RfcPath)
+    $RfcBaseName = [System.IO.Path]::GetFileNameWithoutExtension($planJsonPath)
 
-    Write-Verbose "Constructed RFC Path: $RfcPath"
+    Write-Verbose "Constructed RFC Base Name: $RfcBaseName"
 
     # Validate RFC file existence
-    if (-not (Test-Path $RfcPath -PathType Leaf)) {
-        Write-Error "RFC file not found at expected location: '$RfcPath'. Please ensure the file exists."
+    if (-not (Test-Path $planJsonPath -PathType Leaf)) {
+        Write-Error "Plan JSON file not found at expected location: '$planJsonPath'. Please ensure the file exists."
         exit 1
     }
-    Write-Verbose "Confirmed RFC file exists: $RfcPath"
+    Write-Verbose "Confirmed Plan JSON file exists: $planJsonPath"
 
     # Locate the .venv Python environment
     $VenvPythonPath = Join-Path -Path $ProjectRoot -ChildPath ".venv\Scripts\python.exe" # Windows default
@@ -145,7 +162,7 @@ try {
         "--config", $ConfigFile,
         "generate",
         "overview-plan",
-        $IndevDir,
+        $planJsonPath,
         "--output", $OutputFolder
     )
     Write-Verbose "Executing Python script from Project Root: $ProjectRoot"

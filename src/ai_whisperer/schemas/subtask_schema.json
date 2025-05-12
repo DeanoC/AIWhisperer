@@ -5,6 +5,10 @@
       "type": "string",
       "description": "A detailed description of the subtask's purpose and instructions."
     },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the subtask."
+    },
     "description": {
       "type": "string",
       "description": "A detailed description of the subtask's purpose and instructions."
@@ -72,6 +76,7 @@
     }
   },
   "required": [
+    "name",
     "type",
     "description",
     "instructions",

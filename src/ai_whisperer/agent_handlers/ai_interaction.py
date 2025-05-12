@@ -1,3 +1,4 @@
+from src.ai_whisperer.utils import build_ascii_directory_tree
 
 # Handler dependencies
 import json
@@ -10,7 +11,6 @@ from src.ai_whisperer.exceptions import TaskExecutionError, OpenRouterAPIError, 
 def handle_ai_interaction(engine, task_definition, task_id):
     """
     Handle an AI interaction task.
-    Implementation moved from ExecutionEngine._handle_ai_interaction.
     """
     # 'engine' is the ExecutionEngine instance
     self = engine
@@ -50,10 +50,25 @@ def handle_ai_interaction(engine, task_definition, task_id):
             for artifact in input_artifacts:
                 artifact_path = Path(artifact).resolve()
                 if artifact_path.exists():
-                    with open(artifact_path, "r", encoding="utf-8") as f:
-                        content = f.read().strip()
-                        artifact_contents[artifact] = content
-                        prompt_context += f"Content of {artifact}:\n{content}\n\n"
+                    if artifact_path.is_file():
+                        with open(artifact_path, "r", encoding="utf-8") as f:
+                            content = f.read().strip()
+                            artifact_contents[artifact] = content
+                            prompt_context += f"Content of {artifact}:\n{content}\n\n"
+                    elif artifact_path.is_dir():
+                        # If it's a directory, list its contents using the tree function
+                        try:
+                            tree_output = build_ascii_directory_tree(str(artifact_path))
+                            artifact_contents[artifact] = tree_output # Store tree output as content
+                            prompt_context += f"Directory structure of {artifact}:\n{tree_output}\n\n"
+                            if logger:
+                                logger.info(f"Task {task_id}: Listed directory contents for {artifact}")
+                        except Exception as tree_e:
+                            error_message = f"Failed to list directory contents for {artifact} in task {task_id}: {tree_e}"
+                            if logger:
+                                logger.error(error_message)
+                            # Optionally add error to prompt context or logs
+                            prompt_context += f"Error listing directory {artifact}: {tree_e}\n\n"
             if prompt_context and logger:
                 logger.info(f"Read input artifacts for task {task_id}: {list(artifact_contents.keys())}")
         except Exception as e:

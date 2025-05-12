@@ -1,0 +1,44 @@
+{
+  "description": "Design the structure and logic of the `code_generation` execution engine handler based on the research findings.",
+  "instructions": [
+    "Review the research findings in `docs/code_generation_handler_research.md` to understand the requirements and potential approaches for the code generation handler.",
+    "Analyze the existing execution engine structure (`src/ai_whisperer/execution_engine.py`) and the AI interaction handler (`src/ai_whisperer/agent_handlers/ai_interaction.py`) to ensure compatibility with the new handler design.",
+    "Define the class or function structure for the `code_generation` handler, considering how it will integrate with the existing `ExecutionEngine` class.",
+    "Specify the necessary methods or functions within the handler to manage the code generation process.",
+    "Detail the expected input parameters for the handler (e.g., instructions, constraints, file context, test specifications) and the structure of its output (e.g., generated code, test results).",
+    "Describe the interaction flow between the `code_generation` handler, the AI service interaction module (`src/ai_whisperer/ai_service_interaction.py`), and the AI interaction handler (`src/ai_whisperer/agent_handlers/ai_interaction.py`).",
+    "Outline the detailed steps for constructing the prompt for the AI agent, including how to incorporate user instructions, system constraints, and relevant existing file content.",
+    "Design the logic for processing the AI's response, including parsing the generated code, handling potential file creation or modification requests, and performing initial validation of the output format.",
+    "Plan the mechanism for executing and verifying tests if the subtask includes test specifications, considering how test results will be captured and reported.",
+    "Document the complete technical design of the `code_generation` handler in `docs/code_generation_handler_design.md`, including class/function definitions, method signatures, data structures, interaction diagrams (if helpful), and detailed logic descriptions.",
+    "Ensure the design explicitly addresses how code reuse will be handled during generation and how test execution results will be integrated into the process."
+  ],
+  "input_artifacts": [
+    "docs/code_generation_handler_research.md",
+    "src/ai_whisperer/execution_engine.py",
+    "src/ai_whisperer/agent_handlers/ai_interaction.py",
+    "src/ai_whisperer/ai_service_interaction.py"
+  ],
+  "output_artifacts": [
+    "docs/code_generation_handler_design.md"
+  ],
+  "constraints": [
+    "The design must be compatible with the existing execution engine architecture defined in `src/ai_whisperer/execution_engine.py`.",
+    "The design must explicitly address the requirements for code reuse and test execution as identified in the research.",
+    "The design document (`docs/code_generation_handler_design.md`) must be clear, concise, and technically detailed."
+  ],
+  "validation_criteria": [
+    "docs/code_generation_handler_design.md exists.",
+    "docs/code_generation_handler_design.md provides a detailed technical design for the `code_generation` handler.",
+    "The design in `docs/code_generation_handler_design.md` addresses all aspects outlined in the research document (`docs/code_generation_handler_research.md`).",
+    "The design clearly defines the interfaces and interactions with other system components, including `src/ai_whisperer/execution_engine.py`, `src/ai_whisperer/agent_handlers/ai_interaction.py`, and `src/ai_whisperer/ai_service_interaction.py`.",
+    "The design in `docs/code_generation_handler_design.md` explicitly details the plan for handling code reuse and test execution."
+  ],
+  "type": "planning",
+  "name": "design_code_generation_handler",
+  "depends_on": [
+    "research_code_generation_handler"
+  ],
+  "task_id": "28b11d1a-aeb6-4c57-8c3d-a85d3dbba0db",
+  "subtask_id": "4ba030be-6c65-43c3-a557-df284d4d552e"
+}

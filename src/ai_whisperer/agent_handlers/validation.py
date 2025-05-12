@@ -1,22 +1,12 @@
+import os
+import json
+import traceback
+from pathlib import Path
+from ai_whisperer.agent_handlers.code_generation import _execute_validation
+from ai_whisperer.tools.tool_registry import ToolRegistry
+from src.ai_whisperer.exceptions import TaskExecutionError
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
-
-def handle_validation(engine, task_definition, task_id):
-    """
-    Handle a validation task.
-    Implementation moved from ExecutionEngine._handle_validation.
-    """
-    self = engine
-    logger = self.config.get('logger', None)
-    if logger:
-        logger.info(f"Executing validation task {task_id}")
-    self.monitor.add_log_message(
-        LogMessage(
-            LogLevel.INFO,
-            ComponentType.EXECUTION_ENGINE,
-            "executing_validation_task",
-            f"Executing validation task {task_id}",
-            subtask_id=task_id,
-        )
-    )
-    # The rest of the implementation should be moved here as needed
-    return f"Validation task {task_id} completed"
+def handle_validation(engine, task_definition, task_id) -> tuple[bool, dict]:
+    """Executes validation criteria, typically shell commands."""
+    logger = engine.config.get('logger', None) # Get logger from engine config
+    return _execute_validation(engine, task_definition, task_id, logger)

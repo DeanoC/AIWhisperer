@@ -1,0 +1,182 @@
+{
+    "natural_language_goal": "Implement an execution engine handler for the `code_generation` task type.",
+    "plan": [
+        {
+            "name": "research_code_generation_handler",
+            "subtask_id": "9bf2e43d-9da1-4cfb-9f9c-ee9c63095320",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_9bf2e43d-9da1-4cfb-9f9c-ee9c63095320.json",
+            "depends_on": [],
+            "type": "planning",
+            "input_artifacts": [
+                "project_dev/rfc/code_generator_task_type.md",
+                "src/ai_whisperer/schemas/subtask_schema.json",
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/agent_handlers/"
+            ],
+            "output_artifacts": [
+                "docs/code_generation_handler_research.md"
+            ],
+            "completed": true
+        },
+        {
+            "name": "design_code_generation_handler",
+            "subtask_id": "4ba030be-6c65-43c3-a557-df284d4d552e",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_4ba030be-6c65-43c3-a557-df284d4d552e.json",
+            "depends_on": [
+                "research_code_generation_handler"
+            ],
+            "type": "planning",
+            "input_artifacts": [
+                "docs/code_generation_handler_research.md",
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/agent_handlers/ai_interaction.py",
+                "src/ai_whisperer/ai_service_interaction.py"
+            ],
+            "output_artifacts": [
+                "docs/code_generation_handler_design.md"
+            ],
+            "completed": true
+        },
+        {
+            "name": "create_code_generation_handler_tests",
+            "subtask_id": "1596da6e-2d01-48d6-8d36-9ae273b16dc2",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_1596da6e-2d01-48d6-8d36-9ae273b16dc2.json",
+            "depends_on": [
+                "design_code_generation_handler"
+            ],
+            "type": "test_generation",
+            "input_artifacts": [
+                "docs/code_generation_handler_design.md",
+                "src/ai_whisperer/schemas/subtask_schema.json"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_code_generation_handler.py"
+            ],
+            "completed": true
+        },
+        {
+            "name": "implement_code_generation_handler_scaffold",
+            "subtask_id": "59609cec-39ff-48db-b64f-84f70baccdca",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_59609cec-39ff-48db-b64f-84f70baccdca.json",
+            "depends_on": [
+                "create_code_generation_handler_tests"
+            ],
+            "type": "code_generation",
+            "input_artifacts": [
+                "docs/code_generation_handler_design.md",
+                "tests/unit/test_code_generation_handler.py",
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/agent_handlers/__init__.py",
+                "src/ai_whisperer/agent_handlers/ai_interaction.py",
+                "src/ai_whisperer/agent_handlers/planning.py",
+                "src/ai_whisperer/agent_handlers/validation.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/agent_handlers/code_generation.py",
+                "src/ai_whisperer/agent_handlers/__init__.py"
+            ],
+            "completed": true
+        },
+        {
+            "name": "implement_code_generation_handler_logic",
+            "subtask_id": "de2532d1-1ea3-454a-81dd-14cfd583879b",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_de2532d1-1ea3-454a-81dd-14cfd583879b.json",
+            "depends_on": [
+                "implement_code_generation_handler_scaffold"
+            ],
+            "type": "file_edit",
+            "input_artifacts": [
+                "docs/code_generation_handler_design.md",
+                "tests/unit/test_code_generation_handler.py",
+                "src/ai_whisperer/agent_handlers/code_generation.py",
+                "src/ai_whisperer/ai_service_interaction.py",
+                "src/ai_whisperer/agent_handlers/ai_interaction.py",
+                "src/ai_whisperer/tools/"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/agent_handlers/code_generation.py"
+            ],
+            "completed": true
+        },
+        {
+            "name": "integrate_code_generation_handler",
+            "subtask_id": "b7daf4b4-34bc-4aac-b5fc-59ef7efca931",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_b7daf4b4-34bc-4aac-b5fc-59ef7efca931.json",
+            "depends_on": [
+                "implement_code_generation_handler_logic"
+            ],
+            "type": "file_edit",
+            "input_artifacts": [
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/agent_handlers/__init__.py",
+                "src/ai_whisperer/agent_handlers/code_generation.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/agent_handlers/__init__.py"
+            ],
+            "completed": true
+        },
+        {
+            "name": "create_integration_tests",
+            "subtask_id": "e372da35-9b96-446a-ada4-bdec5dca5f72",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_e372da35-9b96-446a-ada4-bdec5dca5f72.json",
+            "depends_on": [
+                "integrate_code_generation_handler"
+            ],
+            "type": "test_generation",
+            "input_artifacts": [
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/agent_handlers/code_generation.py",
+                "tests/unit/test_code_generation_handler.py"
+            ],
+            "output_artifacts": [
+                "tests/integration/test_code_generation_handler_integration.py"
+            ],
+            "completed": true
+        },
+        {
+            "name": "validate_integration",
+            "subtask_id": "3efe38a3-0b1d-4a0f-a707-aeed49af9223",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_3efe38a3-0b1d-4a0f-a707-aeed49af9223.json",
+            "depends_on": [
+                "create_integration_tests"
+            ],
+            "type": "validation",
+            "input_artifacts": [
+                "tests/integration/test_code_generation_handler_integration.py",
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/agent_handlers/code_generation.py"
+            ],
+            "output_artifacts": [],
+            "completed": false
+        },
+        {
+            "name": "update_documentation",
+            "subtask_id": "a1e7221f-1510-493e-9ad3-ff00da31da61",
+            "file_path": "project_dev/in_dev/code_generator_task_type/subtask_a1e7221f-1510-493e-9ad3-ff00da31da61.json",
+            "depends_on": [
+                "validate_integration"
+            ],
+            "type": "documentation",
+            "input_artifacts": [
+                "docs/code_generation_handler_research.md",
+                "docs/code_generation_handler_design.md",
+                "docs/execution_engine.md",
+                "docs/usage.md",
+                "src/ai_whisperer/schemas/subtask_schema.json"
+            ],
+            "output_artifacts": [
+                "docs/execution_engine.md",
+                "docs/usage.md"
+            ],
+            "completed": false
+        }
+    ],
+    "task_id": "28b11d1a-aeb6-4c57-8c3d-a85d3dbba0db",
+    "input_hashes": {
+        "requirements_md": "6a7ea493a2edbc1f4eff363813be1e2a05448f461f79ebd81428b870827b6862",
+        "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+        "prompt_file": "hash_not_available"
+    }
+}
