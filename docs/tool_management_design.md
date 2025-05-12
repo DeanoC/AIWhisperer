@@ -22,12 +22,12 @@ AIWhisperer will primarily use a plugin-based system for tool discovery.
   * Tools will be packaged as Python libraries and declare themselves via `setuptools` entry points, specifically under a group like `aiwhisperer.tools`.
   * Example `pyproject.toml` or `setup.cfg` entry:
 
-        ```toml
-        # pyproject.toml
-        [project.entry-points."aiwhisperer.tools"]
-        my_custom_tool = "my_tool_package.module:MyCustomToolClass"
-        another_tool = "another_package.tools:AnotherTool"
-        ```
+    ```toml
+    # pyproject.toml
+    [project.entry-points."aiwhisperer.tools"]
+    my_custom_tool = "my_tool_package.module:MyCustomToolClass"
+    another_tool = "another_package.tools:AnotherTool"
+    ```
 
   * This method is highly recommended as it integrates well with Python's packaging ecosystem, allows for clear dependency management, and supports tools from various sources (internal or third-party).
 
@@ -214,7 +214,7 @@ The system must be able to retrieve a single, specific tool by its unique identi
 * **`ToolRegistry` internal store:** `Dict[str, AITool]` (tool name to tool instance).
 * **Listing all tools (instances):** `List[AITool]`.
 * **Listing all tool definitions (for AI):** `List[Dict[str, Any]]` (list of Openrouter JSON schemas).
-* **Filtering criteria:** `Dict[str, Any]` (e.g., `{"tags": ["io"], "category": "file"}`).
+* **Filtering criteria:** `Dict[str, Any]` (e.g., `{"tags": ["io"], "category": "file"}).
 
 ## 8. Efficiency and Flexibility
 
