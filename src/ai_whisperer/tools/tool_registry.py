@@ -7,6 +7,9 @@ from .base_tool import AITool
 
 logger = logging.getLogger(__name__)
 
+# Actual registration of tools is not done here. 
+# The plan_runner.py is the standard place for adding tools for running plans
+
 class ToolRegistry:
     """
     Central registry for managing AI-usable tools.

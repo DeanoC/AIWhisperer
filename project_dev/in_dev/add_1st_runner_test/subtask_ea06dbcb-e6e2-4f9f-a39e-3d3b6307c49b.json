@@ -1,0 +1,48 @@
+{
+  "description": "Implement the 'execute_command' tool based on the design document.",
+  "instructions": [
+    "Navigate to the 'src/ai_whisperer/tools/' directory.",
+    "Create a new Python file named 'execute_command_tool.py'.",
+    "Open 'execute_command_tool.py' and define a new class named 'ExecuteCommandTool'.",
+    "Ensure the 'ExecuteCommandTool' class inherits from the 'BaseTool' class defined in 'src/ai_whisperer/tools/base_tool.py'.",
+    "Implement the `execute` method within the `ExecuteCommandTool` class.",
+    "The `execute` method should accept a dictionary as input, which is expected to contain a 'command' key with the string command to be executed.",
+    "Use Python's `subprocess` module (e.g., `subprocess.run`) to execute the command provided in the input.",
+    "Capture the standard output (stdout), standard error (stderr), and the return code of the executed command.",
+    "Return a dictionary containing the captured stdout, stderr, and return code.",
+    "Add necessary error handling for cases where the command execution fails (e.g., command not found, permission errors).",
+    "Import the `ExecuteCommandTool` class in `src/ai_whisperer/tools/tool_registry.py`.",
+    "Register the `ExecuteCommandTool` in the `TOOL_REGISTRY` dictionary within `src/ai_whisperer/tools/tool_registry.py`, using a descriptive key (e.g., 'execute_command')."
+  ],
+  "input_artifacts": [
+    "docs/execute_command_tool_design.md",
+    "src/ai_whisperer/tools/base_tool.py",
+    "src/ai_whisperer/tools/tool_registry.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/tools/execute_command_tool.py"
+  ],
+  "constraints": [
+    "The implemented tool class must be a direct subclass of `src/ai_whisperer/tools/base_tool.py`.",
+    "The tool must be correctly registered in the `TOOL_REGISTRY` dictionary within `src/ai_whisperer/tools/tool_registry.py`.",
+    "The tool's `execute` method must handle input and output as dictionaries.",
+    "Use the `subprocess` module for command execution."
+  ],
+  "validation_criteria": [
+    "The file `src/ai_whisperer/tools/execute_command_tool.py` exists.",
+    "The file `src/ai_whisperer/tools/execute_command_tool.py` contains a Python class named `ExecuteCommandTool`.",
+    "`ExecuteCommandTool` inherits from `BaseTool`.",
+    "The `ExecuteCommandTool` class has an `execute` method.",
+    "The `execute` method uses `subprocess` to run a command.",
+    "The `execute` method captures and returns stdout, stderr, and the return code.",
+    "The `ExecuteCommandTool` is imported and registered in `src/ai_whisperer/tools/tool_registry.py`.",
+    "Basic tests (can be manual initially) confirm that the tool can execute a simple command and return the correct output."
+  ],
+  "type": "code_generation",
+  "name": "implement_execute_command_tool",
+  "depends_on": [
+    "design_execute_command_tool"
+  ],
+  "task_id": "70127728-bd49-48bc-be8b-afbb5d07757a",
+  "subtask_id": "ea06dbcb-e6e2-4f9f-a39e-3d3b6307c49b"
+}

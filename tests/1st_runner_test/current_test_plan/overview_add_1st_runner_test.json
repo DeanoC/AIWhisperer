@@ -1,0 +1,34 @@
+{
+  "task_id": "70127728-bd49-48bc-be8b-afbb5d07757a",
+  "natural_language_goal": "Define a plan to test the runner by generating a Python script that writes squares of 1-10 to 'test.txt', executing this script, and then validating the contents of 'test.txt'.",
+  "plan": [
+    {
+      "subtask_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "name": "Generate Python Script",
+      "file_path": "tests/1st_runner_test/current_test_plan/subtask_generate_script.json",
+      "depends_on": [],
+      "type": "code_generation",
+      "completed": false
+    },
+    {
+      "subtask_id": "b2c3d4e5-f678-9012-3456-7890abcdef12",
+      "name": "Run Python Script",
+      "file_path": "tests/1st_runner_test/current_test_plan/subtask_run_script.json",
+      "depends_on": [
+        "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      ],
+      "type": "ai_assistance",
+      "completed": false
+    },
+    {
+      "subtask_id": "c3d4e5f6-7890-1234-5678-90abcdef1234",
+      "name": "Validate Script Output",
+      "file_path": "tests/1st_runner_test/current_test_plan/subtask_validate_output.json",
+      "depends_on": [
+        "b2c3d4e5-f678-9012-3456-7890abcdef12"
+      ],
+      "type": "validation",
+      "completed": false
+    }
+  ]
+}

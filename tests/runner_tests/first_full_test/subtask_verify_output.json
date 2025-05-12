@@ -1,0 +1,26 @@
+{
+  "task_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "subtask_id": "44444444-5555-6666-7777-888888888888",
+  "type": "validation",
+  "description": "Verify that the content of 'test.txt' contains the correct sequence of squares as specified in the test requirements.",
+  "instructions": [
+    "Calculate the expected sequence of squares starting at 2 and doubling at each stage, for 32 iterations.",
+    "Compare the calculated expected sequence with the content of the 'test.txt' file.",
+    "Report 'Success' if the content of 'test.txt' exactly matches the expected sequence (each number on a new line).",
+    "Report 'Failure' otherwise, providing details of the discrepancy."
+  ],
+  "input_artifacts": [
+    "test.txt"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "The verification must be based on the content of 'test.txt'.",
+    "The expected sequence is squares of numbers starting at 2, doubling each time, for 32 iterations."
+  ],
+  "validation_criteria": [
+    "The content of 'test.txt' is compared against the correct sequence.",
+    "The AI reports 'Success' if the content is correct.",
+    "The AI reports 'Failure' with details if the content is incorrect."
+  ],
+  "depends_on": ["33333333-4444-5555-6666-777777777777"]
+}

@@ -9,6 +9,7 @@ from src.ai_whisperer.ai_service_interaction import OpenRouterAPI
 from src.ai_whisperer.tools.tool_registry import ToolRegistry
 from src.ai_whisperer.tools.read_file_tool import ReadFileTool
 from src.ai_whisperer.tools.write_file_tool import WriteTextFileTool
+from src.ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
 from src.ai_whisperer.exceptions import OpenRouterAPIError
 
 # Load environment variables from .env file
@@ -38,6 +39,7 @@ def tool_registry():
     # Manually register the file tools for testing
     registry.register_tool(ReadFileTool())
     registry.register_tool(WriteTextFileTool())
+    registry.register_tool(ExecuteCommandTool())
     return registry
 
 @pytest.fixture
@@ -216,6 +218,62 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: T
         # Clean up the file if the test failed after the tool call was identified
         if os.path.exists(file_path):
             os.remove(file_path)
+
+
+@pytest.mark.integration
+def test_ai_execute_command_tool_call(openrouter_api: OpenRouterAPI, tool_registry: ToolRegistry):
+    """
+    Test that the AI correctly identifies the need to use the execute_command tool
+    and formulates the correct tool call when prompted to execute a command.
+    """
+    command_to_execute = "echo 'hello'"
+    prompt = f"Please execute the following command: {command_to_execute}"
+
+    messages = [{"role": "user", "content": prompt}]
+    tools = tool_registry.get_all_tool_definitions()
+
+    try:
+        response_obj = openrouter_api.call_chat_completion(
+            prompt_text=prompt,
+            model=openrouter_api.model,
+            params={},
+            tools=tools,
+            messages_history=messages
+        )
+
+        assert isinstance(response_obj, dict)
+        assert "tool_calls" in response_obj
+        tool_calls = response_obj["tool_calls"]
+        assert isinstance(tool_calls, list)
+        assert len(tool_calls) > 0
+
+        # Find the execute_command tool call
+        execute_command_call = None
+        for call in tool_calls:
+            if call.get("function", {}).get("name") == "execute_command":
+                execute_command_call = call
+                break
+
+        assert execute_command_call is not None, "AI did not call the execute_command tool"
+        assert "function" in execute_command_call
+        assert "arguments" in execute_command_call["function"]
+
+        # Parse the arguments
+        try:
+            args = json.loads(execute_command_call["function"]["arguments"])
+        except json.JSONDecodeError:
+            pytest.fail("Failed to decode tool call arguments JSON")
+
+        # Assert the arguments are correct
+        assert isinstance(args, dict)
+        assert "command" in args
+        assert args["command"] == command_to_execute
+        # The execute_command tool has an optional 'cwd' parameter, no need to assert its presence
+
+    except OpenRouterAPIError as e:
+        pytest.fail(f"OpenRouter API error during test_ai_execute_command_tool_call: {e}")
+    except Exception as e:
+        pytest.fail(f"An unexpected error occurred during test_ai_execute_command_tool_call: {e}")
 
 
 @pytest.mark.integration

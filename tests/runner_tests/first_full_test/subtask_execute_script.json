@@ -1,0 +1,26 @@
+{
+  "task_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "subtask_id": "22222222-3333-4444-5555-666666666666",
+  "type": "ai_assistance",
+  "description": "Execute the Python script 'generate_squares.py' to produce the output file 'test.txt'.",
+  "instructions": [
+    "Execute the Python script located at 'generate_squares.py' using the system's Python interpreter.",
+    "Use the `execute_command` tool with the command `python generate_squares.py`.",
+    "Ensure the command is executed in the directory where 'generate_squares.py' is located (which is the current workspace directory for this test)."
+  ],
+  "input_artifacts": [
+    "generate_squares.py"
+  ],
+  "output_artifacts": [
+    "test.txt"
+  ],
+  "constraints": [
+    "The script must be executed using the `execute_command` tool.",
+    "The command should be `python generate_squares.py`."
+  ],
+  "validation_criteria": [
+    "The `execute_command` tool is successfully invoked.",
+    "A file named 'test.txt' is created or updated in the current directory."
+  ],
+  "depends_on": ["11111111-2222-3333-4444-555555555555"]
+}
