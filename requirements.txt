@@ -11,3 +11,4 @@ python-dotenv # For loading .env files
 jsonschema>=4.0,<5.0 # For validating YAML/JSON structures
 deepdiff
 
+pytest-asyncio

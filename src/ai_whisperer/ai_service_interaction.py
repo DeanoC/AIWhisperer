@@ -4,6 +4,7 @@ import json
 from unittest.mock import MagicMock
 import logging
 
+from .tools.tool_registry import ToolRegistry
 from .exceptions import (
     OpenRouterAPIError,
     OpenRouterAuthError,
@@ -269,14 +270,20 @@ class OpenRouterAPI:
         # Merge default parameters with provided parameters
         merged_params = {**self.params, **params}
 
+        # Merge default parameters with provided parameters
+        merged_params = {**self.params, **params}
+
+        # Get tool definitions from the registry
+        tool_registry = ToolRegistry()
+        registered_tools = tool_registry.get_all_tools()
+        openrouter_tool_definitions = [tool.get_openrouter_tool_definition() for tool in registered_tools]
+
         payload = {
             "model": model,
             "messages": current_messages,
             **merged_params,  # Merge parameters directly into the payload
+            "tools": openrouter_tool_definitions, # Add tool definitions
         }
-
-        if tools:
-            payload["tools"] = tools
 
         if response_format:
             payload["response_format"] = response_format
@@ -485,10 +492,22 @@ class OpenRouterAPI:
             else:
                 current_messages.append({"role": "user", "content": user_content_parts})
 
-        payload = {"model": model, "messages": current_messages, **params, "stream": True}  # Enable streaming
+        # Merge default parameters with provided parameters (although params is already merged in call_chat_completion,
+        # we do it here again for consistency and in case stream is called directly)
+        merged_params = {**self.params, **params}
 
-        if tools:
-            payload["tools"] = tools
+        # Get tool definitions from the registry
+        tool_registry = ToolRegistry()
+        registered_tools = tool_registry.get_all_tools()
+        openrouter_tool_definitions = [tool.get_openrouter_tool_definition() for tool in registered_tools]
+
+        payload = {
+            "model": model,
+            "messages": current_messages,
+            **merged_params,  # Merge parameters directly into the payload
+            "stream": True,  # Enable streaming
+            "tools": openrouter_tool_definitions, # Add tool definitions
+        }
 
         if response_format:
             payload["response_format"] = response_format
