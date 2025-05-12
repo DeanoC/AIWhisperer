@@ -104,6 +104,7 @@ class OverviewPlanGenerator:
 
                         # Create step info JSON object for the overview plan
                         step_info[i - 1] = {
+                            "name": step.get("name", f"Step {i}"),
                             "subtask_id": subtask_id,
                             "file_path": os.path.relpath(subtask_path, start=".").replace(os.sep, "/"),
                             "depends_on": step.get("depends_on"),

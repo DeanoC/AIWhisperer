@@ -1,0 +1,46 @@
+{
+  "description": "Generate integration tests for verifying AI's ability to use the file tools.",
+  "instructions": [
+    "Navigate to the `tests/integration` directory.",
+    "Create a new Python file named `test_ai_tool_usage.py` if it doesn't exist.",
+    "Import necessary testing frameworks (e.g., `pytest`) and modules from `src/ai_whisperer` for interacting with the AI service and tools.",
+    "Define a test function (or class with multiple test methods) within `test_ai_tool_usage.py`.",
+    "Configure the test environment to use the Openrouter backend, ensuring the API key is accessible (e.g., via environment variables or a test-specific configuration).",
+    "Implement a test case that simulates the AI being prompted to read the content of a specific file. This will involve setting up the prompt and verifying that the AI's response includes the correct tool call for reading the file and, subsequently, the expected file content.",
+    "Implement a test case that simulates the AI being prompted to write content to a new file. This will involve setting up the prompt and verifying that the AI's response includes the correct tool call for writing to a file and, subsequently, verifying that the file is created with the correct content.",
+    "Implement a test case that simulates the AI attempting to use a file tool with valid parameters (e.g., a valid file path for reading, a valid file path and content for writing). Verify the successful tool execution within the test.",
+    "Implement a test case that simulates the AI attempting to use a file tool with incorrect parameters (e.g., an invalid file path, missing content for writing). Verify that the AI's response or the tool execution handler correctly indicates an error or invalid usage.",
+    "Ensure the tests clean up any created files after execution.",
+    "Add appropriate assertions to validate the AI's responses, tool calls, and the state of the file system after tool execution.",
+    "Add comments to explain the purpose of each test case and the expected behavior."
+  ],
+  "input_artifacts": [
+    "docs/tool_testing_strategy.md",
+    "src/ai_whisperer/ai_service_interaction.py"
+  ],
+  "output_artifacts": [
+    "tests/integration/test_ai_tool_usage.py"
+  ],
+  "constraints": [
+    "Requires a configured Openrouter API key for execution, typically provided via an environment variable in the test environment.",
+    "These tests will make actual API calls to the Openrouter service, which will be slow and incur costs.",
+    "Tests should be designed to be as isolated as possible, cleaning up any side effects (like created files)."
+  ],
+  "validation_criteria": [
+    "The file `tests/integration/test_ai_tool_usage.py` must exist.",
+    "The file `tests/integration/test_ai_tool_usage.py` must contain test functions or methods using a testing framework like `pytest`.",
+    "Test cases must explicitly cover scenarios where the AI is expected to use the read file tool.",
+    "Test cases must explicitly cover scenarios where the AI is expected to use the write file tool.",
+    "Test cases must include scenarios that test the AI's handling of both correct and incorrect tool usage attempts.",
+    "Running the tests (`pytest tests/integration/test_ai_tool_usage.py`) should execute the defined test cases.",
+    "Successful test execution indicates that the AI service interaction and tool handling logic are functioning correctly for file operations."
+  ],
+  "type": "test_generation",
+  "name": "testgen_ai_tool_usage_integration",
+  "depends_on": [
+    "design_tool_testing_strategy",
+    "update_ai_service_interaction_for_tools"
+  ],
+  "task_id": "a3fd54c4-30ec-4c58-a5a4-85fa7ad110ed",
+  "subtask_id": "22fccac5-db75-4d37-8ce2-29a6ffabce52"
+}

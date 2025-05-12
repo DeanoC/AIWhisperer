@@ -29,6 +29,10 @@
             "type": "string",
             "description": "Unique identifier for the subtask."
           },
+          "name": {
+            "type": "string",
+            "description": "Name of the subtask."
+          },
           "file_path": {
             "type": "string",
             "description": "Path to the subtask file."

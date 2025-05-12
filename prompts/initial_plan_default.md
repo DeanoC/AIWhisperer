@@ -18,8 +18,9 @@ Produce **only** a JSON document, enclosed in ```json fences, adhering strictly 
   "natural_language_goal": "string", // Concise objective summary
   "plan": [                           // Array of step objects
     {
+      "name": "string",                 // Human-readable name
       "description": "string",          // Human-readable purpose
-      "depends_on": ["string"],         // Default: []
+      "depends_on": ["string"],         // Default: [] should be list of names
       "type": "string",                 // See agent types below
       "input_artifacts": ["string"],
       "output_artifacts": ["string"],
@@ -80,7 +81,7 @@ No additional properties are allowed at the top level.
    8. `analysis`: Code/data understanding
    9. `ai_assistance`: A generic catch-all that an AI can help to process
 
-   Use these types whenever possible; only use other descriptive types if none of the above fit well.
+   You MUST use these types; If hard to fit, use the ai_assistance type and structure it as a question to the AI who will assist.
 
 5. **Strict Test-Driven Development (TDD) Flow:**
     For each distinct piece of functionality involving new or modified code/logic (handled by `code_generation` or `file_edit` steps):
@@ -140,6 +141,7 @@ No additional properties are allowed at the top level.
   "overall_context": "Building a utility that supports future extensions",
   "plan": [
     {
+      "name": "create_tests",
       "description": "Create tests for the dog food fetcher",
       "depends_on": [],
       "type": "test_generation",

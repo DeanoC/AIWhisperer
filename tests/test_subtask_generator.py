@@ -365,8 +365,9 @@ def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock
         assert "constraints" in validation_args[0]
         assert "validation_criteria" in validation_args[0]
 
-        # Verify 'depends_on' is NOT in the validated data
-        assert "depends_on" not in validation_args[0]
+        # Verify 'depends_on' is in the validated data (it's added by postprocessing)
+        assert "depends_on" in validation_args[0]
+        assert isinstance(validation_args[0]["depends_on"], list) # Ensure it's a list
 
         # 3. Verify output file path generation
         expected_output_filename = f"subtask_{VALID_INPUT_STEP['subtask_id']}.json"
@@ -378,7 +379,8 @@ def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock
         assert isinstance(generated_data, dict)
         assert "subtask_id" in generated_data
         assert "task_id" in generated_data
-        assert "depends_on" not in generated_data  # Ensure depends_on is not in the final output
+        assert "depends_on" in generated_data  # Ensure depends_on is in the final output
+        assert isinstance(generated_data["depends_on"], list) # Ensure it's a list
 
         # 4. Verify directory creation and file writing
         mock_filesystem["path_mkdir"].assert_called_once_with(parents=True, exist_ok=True)
@@ -477,7 +479,7 @@ def test_generate_subtask_file_write_error(
     }
 
     with pytest.raises(
-        SubtaskGenerationError, match="An unexpected error occurred during subtask generation: Disk full"
+        SubtaskGenerationError, match=r"Failed to write output file .*?: Disk full"
     ):
         generator.generate_subtask(VALID_INPUT_STEP, result_data=result_data)
 

@@ -1,0 +1,47 @@
+{
+  "description": "Modify the AI service interaction layer to pass tool definitions to Openrouter.",
+  "instructions": [
+    "Open the file `src/ai_whisperer/ai_service_interaction.py`.",
+    "Identify the function or method responsible for making API calls to Openrouter.",
+    "Import the `ToolRegistry` class from `src/ai_whisperer/tools/tool_registry.py`.",
+    "Instantiate the `ToolRegistry` within the AI interaction logic.",
+    "Call a method on the `ToolRegistry` instance to get a list of all registered tools.",
+    "For each tool obtained from the registry, access its Openrouter API definition.",
+    "Construct a list of these Openrouter tool definitions.",
+    "Modify the Openrouter API request payload to include a `tools` parameter.",
+    "Set the value of the `tools` parameter to the list of Openrouter tool definitions.",
+    "Update the code that processes the AI's response to handle potential tool calls.",
+    "This might involve checking the response for a `tool_calls` field and processing its contents (though the execution of the tool call itself will be handled elsewhere)."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/ai_service_interaction.py",
+    "src/ai_whisperer/tools/tool_registry.py",
+    "src/ai_whisperer/tools/read_file_tool.py",
+    "src/ai_whisperer/tools/write_file_tool.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/ai_service_interaction.py"
+  ],
+  "constraints": [
+    "Maintain compatibility with existing AI interaction logic.",
+    "The tool calling mechanism via Openrouter must be correctly implemented.",
+    "Only include the Openrouter API definitions for the tools obtained from the tool registry.",
+    "Do not implement the actual execution of the tool calls within this file; focus only on passing the definitions and handling the AI's response indicating a tool call."
+  ],
+  "validation_criteria": [
+    "The file `src/ai_whisperer/ai_service_interaction.py` has been modified.",
+    "The modified code successfully imports and uses the `ToolRegistry`.",
+    "The Openrouter API call includes a `tools` parameter in the request payload.",
+    "The value of the `tools` parameter is a list containing the Openrouter API definitions for the registered tools (at least the file tools).",
+    "The code includes logic to identify when the AI's response contains a `tool_calls` field."
+  ],
+  "type": "file_edit",
+  "name": "update_ai_service_interaction_for_tools",
+  "depends_on": [
+    "implement_read_text_file_tool",
+    "implement_write_text_file_tool",
+    "implement_tool_management"
+  ],
+  "task_id": "a3fd54c4-30ec-4c58-a5a4-85fa7ad110ed",
+  "subtask_id": "c4508207-6eb4-4407-9f6e-50314ff38a42"
+}

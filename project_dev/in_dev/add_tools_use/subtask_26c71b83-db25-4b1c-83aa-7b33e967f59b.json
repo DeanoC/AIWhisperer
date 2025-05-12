@@ -1,0 +1,36 @@
+{
+  "description": "Define a standard interface for AI tools, including structure for Openrouter API instructions and AI prompt instructions.",
+  "instructions": [
+    "Review the existing project structure and documentation, particularly `project_dev/rfc/add_tools_use.md`, to understand the context and requirements for adding tool usage.",
+    "Design a standard Python class or interface structure for representing AI tools within the AIWhisperer project.",
+    "This interface should include methods or attributes to facilitate:",
+    "- Generating the tool definition in a format compatible with the Openrouter API (e.g., a dictionary or JSON structure).",
+    "- Generating clear and concise instructions for the AI model on how and when to use the tool, including details about its purpose, parameters, and expected output.",
+    "Consider how tool inputs will be passed to the tool's execution logic and how the tool's outputs will be handled and potentially returned to the AI or integrated into the workflow.",
+    "Document the designed interface in `docs/tool_interface_design.md`, providing clear examples and explanations.",
+    "Ensure the design allows for easy extension to incorporate new tools in the future without significant modifications to the core interface or the tool usage logic within the AIWhisperer system."
+  ],
+  "input_artifacts": [
+    "project_dev/rfc/add_tools_use.md"
+  ],
+  "output_artifacts": [
+    "docs/tool_interface_design.md"
+  ],
+  "constraints": [
+    "The interface must be easily extendable for new tools.",
+    "The design must be documented in `docs/tool_interface_design.md`."
+  ],
+  "validation_criteria": [
+    "docs/tool_interface_design.md exists.",
+    "docs/tool_interface_design.md clearly defines the tool interface structure.",
+    "The design includes methods/attributes for generating Openrouter API tool definitions.",
+    "The design includes methods/attributes for generating AI prompt instructions for tool usage.",
+    "The design considers how tool inputs and outputs will be handled.",
+    "The documented interface appears extendable for adding new tools."
+  ],
+  "type": "planning",
+  "name": "design_tool_interface",
+  "depends_on": [],
+  "task_id": "a3fd54c4-30ec-4c58-a5a4-85fa7ad110ed",
+  "subtask_id": "26c71b83-db25-4b1c-83aa-7b33e967f59b"
+}

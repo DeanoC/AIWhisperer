@@ -29,6 +29,10 @@
             "type": "string",
             "description": "Unique identifier for this step within the task"
           },
+          "name": {
+            "type": "string",
+            "description": "Name of this step within the task"
+          },
           "description": {
             "type": "string",
             "description": "Human-readable description of the step's purpose"
