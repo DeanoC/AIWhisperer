@@ -91,13 +91,13 @@ ai_whisperer run --plan-file <path_to_plan.json> --state-file <path_to_state.jso
 
 **Arguments:**
 
-*   `--plan-file <path_to_plan.json>` (Required): Path to the input overview JSON file containing the task plan. This file defines the sequence of steps and their details.
-*   `--state-file <path_to_state.json>` (Required): Path to the state file. This file is used to load the previous state of a plan execution (if any) and save the current state after each step. This allows for resuming interrupted runs.
-*   `--config <path_to_config.yaml>` (Required): Path to the configuration YAML file. This file contains necessary settings for the orchestrator and any AI interactions required by the plan steps.
+* `--plan-file <path_to_plan.json>` (Required): Path to the input overview JSON file containing the task plan. This file defines the sequence of steps and their details.
+* `--state-file <path_to_state.json>` (Required): Path to the state file. This file is used to load the previous state of a plan execution (if any) and save the current state after each step. This allows for resuming interrupted runs.
+* `--config <path_to_config.yaml>` (Required): Path to the configuration YAML file. This file contains necessary settings for the orchestrator and any AI interactions required by the plan steps.
 
 **Examples:**
 
-1.  **Running a plan and saving state:**
+1. **Running a plan and saving state:**
 
     ```bash
     ai_whisperer run --plan-file project_plans/my_feature_plan.json --state-file run_state.json --config config.yaml
@@ -105,7 +105,7 @@ ai_whisperer run --plan-file <path_to_plan.json> --state-file <path_to_state.jso
 
     This will start executing the plan defined in `my_feature_plan.json`, loading and saving the execution state to `run_state.json` using the configuration in `config.yaml`.
 
-2.  **Resuming a plan execution:**
+2. **Resuming a plan execution:**
 
     ```bash
     ai_whisperer run --plan-file project_plans/my_feature_plan.json --state-file run_state.json --config config.yaml
@@ -239,6 +239,7 @@ except Exception as e:
 ```
 
 For more advanced usage, including tool calling, structured output, and multimodal inputs, please refer to the [AI Service Interaction Module Documentation](ai_service_interaction.md).
+
 ## Advanced OpenRouter API Usage (via AI Whisperer Library)
 
 The AI Whisperer library's `OpenRouterAPI` class ([`src/ai_whisperer/openrouter_api.py`](src/ai_whisperer/openrouter_api.py:1)) has been enhanced to support several advanced features of the OpenRouter API. While these are primarily intended for programmatic use within the AI Whisperer system or by developers using the library, understanding them can be beneficial.
@@ -481,6 +482,7 @@ print(response_content)
 ### 5. Caching
 
 The `OpenRouterAPI` client has a built-in caching mechanism. If enabled in the configuration (see [`docs/configuration.md`](docs/configuration.md:1)), responses for identical requests (model, messages, params, tools, response_format) will be cached in memory for the lifetime of the `OpenRouterAPI` object. This can save costs and reduce latency for repeated calls.
+
 ### 6. Cost and Token Tracking
 
 When using the `OpenRouterAPI` client programmatically, AIWhisperer now tracks the estimated cost and token usage (prompt and completion) for each interaction with OpenRouter models. This information is stored within the `OpenRouterAPI` object after each call.

@@ -308,6 +308,7 @@ Common exceptions raised by the module include:
 * [`OpenRouterAPIError`](src/ai_whisperer/exceptions.py:8): A general exception for other API-related errors returned by OpenRouter (e.g., invalid parameters, model not found, internal server errors). This can also be raised for errors occurring mid-stream during streaming calls.
 
 It is recommended to wrap your API calls in `try...except` blocks to catch these exceptions and handle them appropriately based on your application's needs.
+
 ## Cost and Token Tracking
 
 The `OpenRouterAPI` client now automatically tracks estimated cost and token usage for interactions with OpenRouter models. This provides insights into API consumption.
@@ -316,10 +317,10 @@ The `OpenRouterAPI` client now automatically tracks estimated cost and token usa
 
 For each call made through `call_chat_completion()` or `stream_chat_completion()` to an OpenRouter model, the following information is tracked:
 
-*   **Prompt Tokens:** The number of tokens in the input prompt.
-*   **Completion Tokens:** The number of tokens in the generated response.
-*   **Total Tokens:** The sum of prompt and completion tokens.
-*   **Estimated Cost:** The estimated cost of the API call, calculated based on the model's pricing and the token counts.
+* **Prompt Tokens:** The number of tokens in the input prompt.
+* **Completion Tokens:** The number of tokens in the generated response.
+* **Total Tokens:** The sum of prompt and completion tokens.
+* **Estimated Cost:** The estimated cost of the API call, calculated based on the model's pricing and the token counts.
 
 This information is typically extracted from the response headers or body provided by the OpenRouter API.
 

@@ -3,9 +3,10 @@
 **Overall Goal:** Update documentation to reflect the new cost and token tracking feature for OpenRouter models.
 
 **Affected Files:**
-1.  [`docs/ai_service_interaction.md`](docs/ai_service_interaction.md:1)
-2.  [`docs/usage.md`](docs/usage.md:1)
-3.  [`docs/index.md`](docs/index.md:1)
+
+1. [`docs/ai_service_interaction.md`](docs/ai_service_interaction.md:1)
+2. [`docs/usage.md`](docs/usage.md:1)
+3. [`docs/index.md`](docs/index.md:1)
 
 ---
 
@@ -13,9 +14,10 @@
 
 **1. Update [`docs/ai_service_interaction.md`](docs/ai_service_interaction.md:1)**
 
-*   **Location:** A new subsection titled "Cost and Token Tracking" will be added after the "Error Handling" section.
-*   **Content Rationale:** This file is the primary source of truth for the `OpenRouterAPI` client, so it needs the most detailed explanation.
-*   **Proposed Text:**
+* **Location:** A new subsection titled "Cost and Token Tracking" will be added after the "Error Handling" section.
+* **Content Rationale:** This file is the primary source of truth for the `OpenRouterAPI` client, so it needs the most detailed explanation.
+* **Proposed Text:**
+
     ```markdown
     ## Cost and Token Tracking
 
@@ -57,15 +59,15 @@
     ```
 
     This information is primarily for internal tracking and can be leveraged for future features such as detailed usage analysis, reporting, or budget management within applications built on AIWhisperer. Currently, this data is not aggregated across calls or exposed through a dedicated CLI command for end-users but is available programmatically.
-    ```
 
 ---
 
 **2. Update [`docs/usage.md`](docs/usage.md:1)**
 
-*   **Location:** A new subsection "6. Cost and Token Tracking" will be added under the "Advanced OpenRouter API Usage (via AI Whisperer Library)" section. This will follow the "5. Caching" subsection.
-*   **Content Rationale:** This file describes general usage, so a brief mention and a link to the detailed documentation is appropriate.
-*   **Proposed Text:**
+* **Location:** A new subsection "6. Cost and Token Tracking" will be added under the "Advanced OpenRouter API Usage (via AI Whisperer Library)" section. This will follow the "5. Caching" subsection.
+* **Content Rationale:** This file describes general usage, so a brief mention and a link to the detailed documentation is appropriate.
+* **Proposed Text:**
+
     ```markdown
     ### 6. Cost and Token Tracking
 
@@ -78,9 +80,10 @@
 
 **3. Update [`docs/index.md`](docs/index.md:1)**
 
-*   **Location:** An additional sentence will be added to the existing "AI Service Interaction Module" section.
-*   **Content Rationale:** The index provides a high-level overview, so a brief mention of this new capability within the relevant module description is suitable.
-*   **Proposed Text (showing the modified section):**
+* **Location:** An additional sentence will be added to the existing "AI Service Interaction Module" section.
+* **Content Rationale:** The index provides a high-level overview, so a brief mention of this new capability within the relevant module description is suitable.
+* **Proposed Text (showing the modified section):**
+
     ```markdown
     ## AI Service Interaction Module
 
