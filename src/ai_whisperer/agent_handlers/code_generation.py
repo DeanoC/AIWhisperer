@@ -1,7 +1,7 @@
 # src/ai_whisperer/agent_handlers/code_generation.py
 from src.ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.exceptions import TaskExecutionError
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event # Import log_event
 from src.ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistry is accessible
 from src.ai_whisperer.context_management import ContextManager # Import ContextManager
 from src.ai_whisperer.ai_loop import run_ai_loop # Import the refactored AI loop
@@ -21,8 +21,8 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_
     """
     logger.info(f"Starting code_generation handler for task: {task_id}")
     logger.debug(f"Task {task_id}: Received task_definition: {task_definition}")
-    engine.monitor.add_log_message(
-        LogMessage(
+    log_event(
+        log_message=LogMessage(
             LogLevel.INFO, ComponentType.EXECUTION_ENGINE, "code_gen_start",
             f"Starting code generation handler for task {task_id}.", subtask_id=task_id,
             details={"task_definition_keys": list(task_definition.keys())}
@@ -61,8 +61,8 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_
                 "validation_details": validation_details
             }
             logger.info(f"Task {task_id} completed successfully.")
-            engine.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.INFO, ComponentType.EXECUTION_ENGINE, "code_gen_success",
                     f"Code generation task {task_id} completed and validated successfully.", subtask_id=task_id,
                     details=validation_details
@@ -74,8 +74,8 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_
             print(f"DEBUG: Task {task_id}: Validation failed. Raising TaskExecutionError.") # Debug print
             error_message = f"Code generation task {task_id} failed validation."
             logger.error(f"{error_message} Details: {validation_details}")
-            engine.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "code_gen_validation_failed",
                     error_message, subtask_id=task_id, details=validation_details
                 )
@@ -91,8 +91,8 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_
         # Handle unexpected errors
         error_message = f"Unexpected error in handle_code_generation for task {task_id}: {e}"
         logger.error(error_message, exc_info=True)
-        engine.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.CRITICAL, ComponentType.EXECUTION_ENGINE, "code_gen_unexpected_error",
                 error_message, subtask_id=task_id, details={"error": str(e), "traceback": traceback.format_exc()}
             )
@@ -168,15 +168,15 @@ def _construct_initial_prompt(engine, task_definition, task_id, prompt_context, 
 
     if logger:
         logger.debug(f"Task {task_id}: Constructed initial prompt.")
-    engine.monitor.add_log_message(
-        LogMessage(
+    log_event(
+        log_message=LogMessage(
             LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "code_gen_initial_prompt",
             f"Initial prompt for task {task_id}", subtask_id=task_id, details={"prompt": initial_prompt}
         )
     )
     logger.debug(f"Task {task_id}: Constructed initial prompt:\n{initial_prompt}")
-    engine.monitor.add_log_message(
-        LogMessage(
+    log_event(
+        log_message=LogMessage(
             LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "code_gen_initial_prompt",
             f"Initial prompt for task {task_id}", subtask_id=task_id, details={"prompt": initial_prompt}
         )

@@ -5,7 +5,7 @@ import json
 import traceback
 from pathlib import Path
 from datetime import datetime, timezone
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 from src.ai_whisperer.exceptions import TaskExecutionError, OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError
 
 def handle_ai_interaction(engine, task_definition, task_id):
@@ -21,8 +21,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
         logger = self.config.get('logger', None)
         if logger:
             logger.error(error_message)
-        self.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.ERROR,
                 ComponentType.EXECUTION_ENGINE,
                 "ai_task_api_not_initialized",
@@ -75,8 +75,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
             error_message = f"Failed to read input artifacts for task {task_id}: {e}"
             if logger:
                 logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "artifacts_read_failed",
@@ -109,8 +109,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
             )
             if logger:
                 logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "no_prompt_found",
@@ -145,8 +145,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
             if message.get("tool_calls"):
                 if logger:
                     logger.info(f"Task {task_id}: Received tool calls.")
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.INFO,
                         ComponentType.EXECUTION_ENGINE,
                         "ai_task_tool_calls",
@@ -159,8 +159,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
                 result = message["content"]
                 if logger:
                     logger.info(f"Task {task_id}: Received content.")
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.INFO,
                         ComponentType.EXECUTION_ENGINE,
                         "ai_task_content",
@@ -172,8 +172,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
                 error_message = f"AI interaction task {task_id} received unexpected message format: {message}"
                 if logger:
                     logger.error(error_message)
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.ERROR,
                         ComponentType.EXECUTION_ENGINE,
                         "ai_task_unexpected_message_format",
@@ -226,8 +226,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
                             f.write(str(result))
                     if logger:
                         logger.info(f"Task {task_id}: Wrote result to output artifact: {output_artifact_path_str}")
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.INFO,
                             ComponentType.EXECUTION_ENGINE,
                             "output_artifact_written",
@@ -242,8 +242,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
                     )
                     if logger:
                         logger.error(error_message)
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.ERROR,
                             ComponentType.EXECUTION_ENGINE,
                             "output_artifact_write_failed",
@@ -258,8 +258,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
             error_message = f"AI interaction task {task_id} received empty or unexpected response: {ai_response}"
             if logger:
                 logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "ai_task_empty_response",
@@ -274,8 +274,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
         error_message = f"AI interaction task {task_id} failed due to AI service error: {e}"
         if logger:
             logger.error(error_message, exc_info=True)
-        self.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.ERROR,
                 ComponentType.EXECUTION_ENGINE,
                 "ai_task_service_error",
@@ -289,8 +289,8 @@ def handle_ai_interaction(engine, task_definition, task_id):
         error_message = f"An unexpected error occurred during AI interaction task {task_id} execution: {e}"
         if logger:
             logger.exception(error_message)
-        self.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.CRITICAL,
                 ComponentType.EXECUTION_ENGINE,
                 "ai_task_unexpected_error",

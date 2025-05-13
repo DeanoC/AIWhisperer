@@ -11,6 +11,7 @@ from .config import load_config
 from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
 from .utils import setup_logging, setup_rich_output
 from .ai_service_interaction import OpenRouterAPI
+from .logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import logging components for log_event
 from rich.console import Console
 from .model_info_provider import ModelInfoProvider
 from .plan_runner import PlanRunner
@@ -161,7 +162,7 @@ class RunCommand(BaseCommand):
         logger.debug(f"plan_runner.run_plan returned: {plan_successful}")
 
         if plan_successful:
-            console.print("[green]Plan execution completed successfully.[/green]")
+            log_event(log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_completed", "Plan execution completed successfully."))
             logger.debug("Returning 0 for success.")
             return 0
         else:

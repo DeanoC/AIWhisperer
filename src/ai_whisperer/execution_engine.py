@@ -5,7 +5,7 @@ import json
 from ai_whisperer.exceptions import TaskExecutionError
 from ai_whisperer.tools.tool_registry import get_tool_registry  # Import json
 
-from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger  # Import logging components
+from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
 from .monitoring import TerminalMonitor  # Import TerminalMonitor
 from .state_management import StateManager  # Import StateManager
 from .plan_parser import ParserPlan  # Import ParserPlan
@@ -60,8 +60,8 @@ class ExecutionEngine:
             ai_config = self.config.get("openrouter", {})
             if not ai_config:
                 logger.warning("OpenRouter configuration not found in config. AI interaction tasks may fail.")
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.WARNING,
                         ComponentType.EXECUTION_ENGINE,
                         "openrouter_config_missing",
@@ -74,8 +74,8 @@ class ExecutionEngine:
         except ConfigError as e:
             error_message = f"Failed to initialize OpenRouter API due to configuration error: {e}"
             logger.error(error_message, exc_info=True)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "ai_service_init_config_error",
@@ -89,8 +89,8 @@ class ExecutionEngine:
         except Exception as e:
             error_message = f"An unexpected error occurred during OpenRouter API initialization: {e}"
             logger.exception(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.CRITICAL,
                     ComponentType.EXECUTION_ENGINE,
                     "ai_service_init_unexpected_error",
@@ -139,8 +139,8 @@ class ExecutionEngine:
                 f"AI interaction task {task_id} cannot be executed because OpenRouter API failed to initialize."
             )
             logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "ai_task_api_not_initialized",
@@ -184,8 +184,8 @@ class ExecutionEngine:
             except Exception as e:
                 error_message = f"Failed to read input artifacts for task {task_id}: {e}"
                 logger.error(error_message)
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.ERROR,
                         ComponentType.EXECUTION_ENGINE,
                         "artifacts_read_failed",
@@ -263,8 +263,8 @@ class ExecutionEngine:
                     f"No suitable prompt found for AI interaction task {task_id} (agent type: {agent_type})."
                 )
                 logger.error(error_message)
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.ERROR,
                         ComponentType.EXECUTION_ENGINE,
                         "no_prompt_found",
@@ -299,7 +299,8 @@ class ExecutionEngine:
             #             input_artifact_content[artifact_id] = content
             #         else:
             #             logger.warning(f"Input artifact {artifact_id} not found for task {task_id}.")
-            #             self.monitor.add_log_message(LogMessage(LogLevel.WARNING, ComponentType.EXECUTION_ENGINE, "missing_input_artifact", f"Input artifact {artifact_id} not found for task {task_id}.", subtask_id=task_id, details={"artifact_id": artifact_id}))
+            #             log_event(log_message=LogMessage(LogLevel.WARNING, ComponentType.EXECUTION_ENGINE, "missing_input_artifact", f"Input artifact {artifact_id} not found for task {task_id}.", subtask_id=task_id, details={"artifact_id": artifact_id}))
+
 
             # Retrieve conversation history from all preceding AI interaction tasks
             messages_history = self._collect_ai_history(task_id)  # Call _collect_ai_history
@@ -320,8 +321,8 @@ class ExecutionEngine:
                 message = ai_response["choices"][0].get("message", {})
                 if message.get("tool_calls"):
                     logger.info(f"Task {task_id}: Received tool calls. Executing tools...")
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.INFO,
                             ComponentType.EXECUTION_ENGINE,
                             "ai_task_tool_calls",
@@ -338,8 +339,8 @@ class ExecutionEngine:
 
                         if not tool_name:
                             logger.warning(f"Task {task_id}: Tool call missing function name: {tool_call}. Skipping.")
-                            self.monitor.add_log_message(
-                                LogMessage(
+                            log_event(
+                                log_message=LogMessage(
                                     LogLevel.WARNING,
                                     ComponentType.EXECUTION_ENGINE,
                                     "tool_call_missing_name",
@@ -355,8 +356,8 @@ class ExecutionEngine:
                         except json.JSONDecodeError as e:
                             error_message = f"Task {task_id}: Failed to parse tool arguments for tool '{tool_name}': {e}. Arguments: {tool_arguments_str}"
                             logger.error(error_message)
-                            self.monitor.add_log_message(
-                                LogMessage(
+                            log_event(
+                                log_message=LogMessage(
                                     LogLevel.ERROR,
                                     ComponentType.EXECUTION_ENGINE,
                                     "tool_call_invalid_arguments",
@@ -370,8 +371,8 @@ class ExecutionEngine:
                             continue
 
                         logger.info(f"Task {task_id}: Executing tool '{tool_name}' with arguments: {tool_arguments}")
-                        self.monitor.add_log_message(
-                            LogMessage(
+                        log_event(
+                            log_message=LogMessage(
                                 LogLevel.INFO,
                                 ComponentType.EXECUTION_ENGINE,
                                 "executing_tool",
@@ -388,8 +389,8 @@ class ExecutionEngine:
                                 tool_output = tool_instance.execute(**tool_arguments)
                                 tool_outputs[tool_name] = tool_output # Store output by tool name or call ID
                                 logger.info(f"Task {task_id}: Tool '{tool_name}' executed successfully. Output: {tool_output}")
-                                self.monitor.add_log_message(
-                                    LogMessage(
+                                log_event(
+                                    log_message=LogMessage(
                                         LogLevel.INFO,
                                         ComponentType.EXECUTION_ENGINE,
                                         "tool_executed_successfully",
@@ -401,8 +402,8 @@ class ExecutionEngine:
                             else:
                                 error_message = f"Task {task_id}: Tool '{tool_name}' not found in registry."
                                 logger.error(error_message)
-                                self.monitor.add_log_message(
-                                    LogMessage(
+                                log_event(
+                                    log_message=LogMessage(
                                         LogLevel.ERROR,
                                         ComponentType.EXECUTION_ENGINE,
                                         "tool_not_found",
@@ -418,8 +419,8 @@ class ExecutionEngine:
                         except Exception as e:
                             error_message = f"Task {task_id}: Error executing tool '{tool_name}': {e}"
                             logger.error(error_message, exc_info=True)
-                            self.monitor.add_log_message(
-                                LogMessage(
+                            log_event(
+                                log_message=LogMessage(
                                     LogLevel.ERROR,
                                     ComponentType.EXECUTION_ENGINE,
                                     "tool_execution_error",
@@ -438,8 +439,8 @@ class ExecutionEngine:
                         "tool_outputs": tool_outputs
                     }
                     logger.info(f"Task {task_id}: Finished executing tools. Stored AI response and tool outputs.")
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.INFO,
                             ComponentType.EXECUTION_ENGINE,
                             "ai_task_tool_execution_finished",
@@ -452,8 +453,8 @@ class ExecutionEngine:
                     # Extract and store the content
                     result = message["content"]
                     logger.info(f"Task {task_id}: Received content.")
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.INFO,
                             ComponentType.EXECUTION_ENGINE,
                             "ai_task_content",
@@ -465,8 +466,8 @@ class ExecutionEngine:
                     # Handle unexpected message format
                     error_message = f"AI interaction task {task_id} received unexpected message format: {message}"
                     logger.error(error_message)
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.ERROR,
                             ComponentType.EXECUTION_ENGINE,
                             "ai_task_unexpected_message_format",
@@ -513,8 +514,8 @@ class ExecutionEngine:
                                 f.write(str(result))
 
                         logger.info(f"Task {task_id}: Wrote result to output artifact: {output_artifact_path_str}")
-                        self.monitor.add_log_message(
-                            LogMessage(
+                        log_event(
+                            log_message=LogMessage(
                                 LogLevel.INFO,
                                 ComponentType.EXECUTION_ENGINE,
                                 "output_artifact_written",
@@ -529,8 +530,8 @@ class ExecutionEngine:
                             f"Failed to write output artifact {output_artifact_path_str} for task {task_id}: {e}"
                         )
                         logger.error(error_message)
-                        self.monitor.add_log_message(
-                            LogMessage(
+                        log_event(
+                            log_message=LogMessage(
                                 LogLevel.ERROR,
                                 ComponentType.EXECUTION_ENGINE,
                                 "output_artifact_write_failed",
@@ -549,8 +550,8 @@ class ExecutionEngine:
                 # Handle cases where the AI response is empty or unexpected
                 error_message = f"AI interaction task {task_id} received empty or unexpected response: {ai_response}"
                 logger.error(error_message)
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.ERROR,
                         ComponentType.EXECUTION_ENGINE,
                         "ai_task_empty_response",
@@ -564,8 +565,8 @@ class ExecutionEngine:
         except (OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError) as e:
             error_message = f"AI interaction task {task_id} failed due to AI service error: {e}"
             logger.error(error_message, exc_info=True)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "ai_task_service_error",
@@ -579,8 +580,8 @@ class ExecutionEngine:
         except Exception as e:
             error_message = f"An unexpected error occurred during AI interaction task {task_id} execution: {e}"
             logger.exception(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.CRITICAL,
                     ComponentType.EXECUTION_ENGINE,
                     "ai_task_unexpected_error",
@@ -603,8 +604,8 @@ class ExecutionEngine:
             str: A success message indicating the no-op task was completed.
         """
         logger.info(f"Executing no-op task {task_id}")
-        self.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.INFO,
                 ComponentType.EXECUTION_ENGINE,
                 "executing_no_op_task",
@@ -629,8 +630,8 @@ class ExecutionEngine:
             TaskExecutionError: If the task execution fails.
         """
         logger.info(f"Executing planning task {task_id}")
-        self.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.INFO,
                 ComponentType.EXECUTION_ENGINE,
                 "executing_planning_task",
@@ -649,8 +650,8 @@ class ExecutionEngine:
                 with open(landmark_file_path, "w", encoding="utf-8") as f:
                     f.write(landmark)
                 logger.info(f"Created landmark_selection.md with landmark: {landmark}")
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.INFO,
                         ComponentType.EXECUTION_ENGINE,
                         "landmark_file_created",
@@ -661,8 +662,8 @@ class ExecutionEngine:
             except Exception as e:
                 error_message = f"Failed to create landmark_selection.md: {e}"
                 logger.error(error_message)
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.ERROR,
                         ComponentType.EXECUTION_ENGINE,
                         "landmark_file_creation_failed",
@@ -737,8 +738,8 @@ class ExecutionEngine:
         if not file_path:
             error_message = f"Planning task {task_id} is missing 'file_path'."
             logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "planning_task_missing_filepath",
@@ -751,8 +752,8 @@ class ExecutionEngine:
         try:
             subtask_file_path = Path(file_path).resolve()
             logger.info(f"Executing planning task {task_id} from subtask file: {subtask_file_path}")
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.INFO,
                     ComponentType.EXECUTION_ENGINE,
                     "executing_subtask_file",
@@ -769,8 +770,8 @@ class ExecutionEngine:
             if isinstance(subtask_data, dict):
                 result = self._execute_single_task(subtask_data)
                 logger.info(f"Planning task {task_id} (from subtask) completed.")
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.INFO,
                         ComponentType.EXECUTION_ENGINE,
                         "planning_task_subtask_completed",
@@ -784,8 +785,8 @@ class ExecutionEngine:
                     f"Invalid subtask file format for task {task_id}: {subtask_file_path}. Expected a dictionary."
                 )
                 logger.error(error_message)
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.ERROR,
                         ComponentType.EXECUTION_ENGINE,
                         "invalid_subtask_file_format",
@@ -799,8 +800,8 @@ class ExecutionEngine:
         except FileNotFoundError:
             error_message = f"Subtask file not found for planning task {task_id}: {subtask_file_path}"
             logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "subtask_file_not_found",
@@ -813,8 +814,8 @@ class ExecutionEngine:
         except json.JSONDecodeError as e:
             error_message = f"Error decoding subtask file {subtask_file_path} for task {task_id}: {e}"
             logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "subtask_file_json_error",
@@ -827,8 +828,8 @@ class ExecutionEngine:
         except Exception as e:
             error_message = f"An unexpected error occurred during planning task {task_id} execution from subtask file {subtask_file_path}: {e}"
             logger.exception(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.CRITICAL,
                     ComponentType.EXECUTION_ENGINE,
                     "planning_task_subtask_unexpected_error",
@@ -869,8 +870,8 @@ class ExecutionEngine:
         agent_type = task_definition.get("type")
 
         logger.info(f"Executing task {task_id} with agent type: {agent_type}")
-        self.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.INFO,
                 ComponentType.EXECUTION_ENGINE,
                 "task_execution_start",
@@ -884,8 +885,8 @@ class ExecutionEngine:
             error_message = f"Task {task_id} is missing type."
             logger.info("Processing task: %s", task_definition)
             logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "task_missing_type",
@@ -902,8 +903,8 @@ class ExecutionEngine:
             # Handle unsupported agent types
             error_message = f"Unsupported agent type for task {task_id}: {agent_type}"
             logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "unsupported_agent_type",
@@ -923,8 +924,8 @@ class ExecutionEngine:
         """
         if plan_parser is None:
             logger.error("Attempted to execute a None plan parser.")
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "execute_none_plan_parser",
@@ -938,17 +939,15 @@ class ExecutionEngine:
         logger.info(f"Starting execution of plan: {plan_id}")
         self.monitor.set_plan_name(plan_id)
         self.monitor.set_runner_status_info(f"Executing plan: {plan_id}")
-        self.monitor.add_log_message(
-            LogMessage(
-                LogLevel.INFO, ComponentType.RUNNER, "plan_execution_started", f"Starting execution of plan: {plan_id}"
-            )
+        log_event(
+            log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_started", f"Starting execution of plan: {plan_id}")
         )
 
         if not isinstance(plan_data.get("plan"), list):
             # Handle empty or invalid plan (e.g., log a warning or error)
             logger.warning(f"Invalid plan data provided for plan {plan_id}. 'plan' key is missing or not a list.")
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.WARNING,
                     ComponentType.EXECUTION_ENGINE,
                     "invalid_plan_structure",
@@ -956,8 +955,8 @@ class ExecutionEngine:
                 )
             )
             self.monitor.set_runner_status_info(f"Plan {plan_id} finished with warning: Invalid plan structure.")
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.WARNING,
                     ComponentType.RUNNER,
                     "plan_execution_finished",
@@ -974,8 +973,8 @@ class ExecutionEngine:
             if not task_id:
                 # Handle missing subtask_id (e.g., log error, skip task)
                 logger.error(f"Task definition missing 'subtask_id': {task_def_overview}. Skipping task.")
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.ERROR,
                         ComponentType.EXECUTION_ENGINE,
                         "missing_subtask_id",
@@ -991,8 +990,8 @@ class ExecutionEngine:
                 try:
                     subtask_file_path = Path(file_path).resolve()
                     logger.info(f"Loading detailed task definition from file: {subtask_file_path}")
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.INFO,
                             ComponentType.EXECUTION_ENGINE,
                             "loading_detailed_task_def",
@@ -1008,8 +1007,8 @@ class ExecutionEngine:
                     if not isinstance(task_def_detailed, dict):
                          error_message = f"Invalid detailed task file format for task {task_id}: {subtask_file_path}. Expected a dictionary."
                          logger.error(error_message)
-                         self.monitor.add_log_message(
-                             LogMessage(
+                         log_event(
+                             log_message=LogMessage(
                                  LogLevel.ERROR,
                                  ComponentType.EXECUTION_ENGINE,
                                  "invalid_detailed_task_file_format",
@@ -1032,8 +1031,8 @@ class ExecutionEngine:
                 except FileNotFoundError:
                     error_message = f"Detailed task file not found for task {task_id}: {subtask_file_path}"
                     logger.error(error_message)
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.ERROR,
                             ComponentType.EXECUTION_ENGINE,
                             "detailed_task_file_not_found",
@@ -1048,8 +1047,8 @@ class ExecutionEngine:
                 except json.JSONDecodeError as e:
                     error_message = f"Error decoding detailed task file {subtask_file_path} for task {task_id}: {e}"
                     logger.error(error_message)
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.ERROR,
                             ComponentType.EXECUTION_ENGINE,
                             "detailed_task_file_json_error",
@@ -1064,8 +1063,8 @@ class ExecutionEngine:
                 except Exception as e:
                     error_message = f"An unexpected error occurred loading detailed task file {subtask_file_path} for task {task_id}: {e}"
                     logger.exception(error_message)
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.CRITICAL,
                             ComponentType.EXECUTION_ENGINE,
                             "detailed_task_file_unexpected_error",
@@ -1086,8 +1085,8 @@ class ExecutionEngine:
             self.state_manager.set_task_state(task_id, "pending")
             self.monitor.set_active_step(task_id)
             self.monitor.set_runner_status_info(f"Pending: {task_id}")
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.INFO,
                     ComponentType.EXECUTION_ENGINE,
                     "task_pending",
@@ -1101,8 +1100,8 @@ class ExecutionEngine:
             can_execute = True
             if dependencies:
                 logger.info(f"Checking dependencies for task {task_id}: {dependencies}")
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.INFO,
                         ComponentType.EXECUTION_ENGINE,
                         "checking_dependencies",
@@ -1121,8 +1120,8 @@ class ExecutionEngine:
                         self.state_manager.set_task_state(
                             task_id, "skipped", {"reason": f"Dependency {dep_id} not met. Status: {dep_status}"}
                         )
-                        self.monitor.add_log_message(
-                            LogMessage(
+                        log_event(
+                            log_message=LogMessage(
                                 LogLevel.WARNING,
                                 ComponentType.EXECUTION_ENGINE,
                                 "task_skipped_dependency",
@@ -1142,8 +1141,8 @@ class ExecutionEngine:
 
             self.state_manager.set_task_state(task_id, "in-progress")
             self.monitor.set_runner_status_info(f"In Progress: {task_id}")
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.INFO,
                     ComponentType.EXECUTION_ENGINE,
                     "task_in_progress",
@@ -1164,8 +1163,8 @@ class ExecutionEngine:
                 self.state_manager.store_task_result(task_id, result)
                 self.state_manager.save_state()
                 self.monitor.set_runner_status_info(f"Completed: {task_id}")
-                self.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.INFO,
                         ComponentType.EXECUTION_ENGINE,
                         "task_completed",
@@ -1184,8 +1183,8 @@ class ExecutionEngine:
                     logger.error(f"Task {task_id} failed: {error_message}")
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
                     self.monitor.set_runner_status_info(f"Failed: {task_id}")
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.ERROR,
                             ComponentType.EXECUTION_ENGINE,
                             "task_failed",
@@ -1215,8 +1214,8 @@ class ExecutionEngine:
                     logger.exception(f"Unexpected error during execution of task {task_id}")  # Log with traceback
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
                     self.monitor.set_runner_status_info(f"Failed: {task_id}")
-                    self.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.CRITICAL,
                             ComponentType.EXECUTION_ENGINE,
                             "task_failed_unexpected",
@@ -1231,10 +1230,8 @@ class ExecutionEngine:
 
         logger.info(f"Finished execution of plan: {plan_id}")
         self.monitor.set_runner_status_info(f"Plan execution finished: {plan_id}")
-        self.monitor.add_log_message(
-            LogMessage(
-                LogLevel.INFO, ComponentType.RUNNER, "plan_execution_finished", f"Finished execution of plan: {plan_id}"
-            )
+        log_event(
+            log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_finished", f"Finished execution of plan: {plan_id}")
         )
 
     def get_task_status(self, task_id):

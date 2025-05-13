@@ -1,5 +1,5 @@
 from ai_whisperer.exceptions import TaskExecutionError
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 
 def handle_planning(engine, task_definition, task_id):
     """
@@ -10,8 +10,8 @@ def handle_planning(engine, task_definition, task_id):
     logger = self.config.get('logger', None)
     if logger:
         logger.info(f"Executing planning task {task_id}")
-    self.monitor.add_log_message(
-        LogMessage(
+    log_event(
+        log_message=LogMessage(
             LogLevel.INFO,
             ComponentType.EXECUTION_ENGINE,
             "executing_planning_task",
@@ -29,8 +29,8 @@ def handle_planning(engine, task_definition, task_id):
                 f.write(landmark)
             if logger:
                 logger.info(f"Created landmark_selection.md with landmark: {landmark}")
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.INFO,
                     ComponentType.EXECUTION_ENGINE,
                     "landmark_file_created",
@@ -42,8 +42,8 @@ def handle_planning(engine, task_definition, task_id):
             error_message = f"Failed to create landmark_selection.md: {e}"
             if logger:
                 logger.error(error_message)
-            self.monitor.add_log_message(
-                LogMessage(
+            log_event(
+                log_message=LogMessage(
                     LogLevel.ERROR,
                     ComponentType.EXECUTION_ENGINE,
                     "landmark_file_creation_failed",

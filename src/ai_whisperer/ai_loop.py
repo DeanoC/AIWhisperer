@@ -6,7 +6,7 @@ from unittest.mock import MagicMock # Assuming MagicMock might be used for testi
 
 from src.ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.exceptions import TaskExecutionError
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event # Import log_event
 from src.ai_whisperer.tools.tool_registry import ToolRegistry
 from src.ai_whisperer.context_management import ContextManager
 
@@ -54,8 +54,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
     # First AI call with prompt_text and history from context manager
     try:
         logger.debug(f"Task {task_id}: Calling AI with initial prompt_text and history from ContextManager.")
-        engine.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_calling_ai_initial",
                 f"Calling AI for task {task_id} with initial prompt_text", subtask_id=task_id, details={"prompt_text": initial_prompt}
             )
@@ -79,8 +79,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
     except Exception as e:
         error_message = f"Task {task_id}: Error during initial AI call: {e}"
         logger.error(error_message, exc_info=True)
-        engine.monitor.add_log_message(
-            LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_initial_ai_call_error", error_message, subtask_id=task_id, details={"error": str(e), "traceback": traceback.format_exc()})
+        log_event(
+            log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_initial_ai_call_error", error_message, subtask_id=task_id, details={"error": str(e), "traceback": traceback.format_exc()})
         )
         raise TaskExecutionError(error_message) from e
 
@@ -94,8 +94,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
         content = ai_response.get('content')
 
         logger.debug(f"Task {task_id}: Processing AI response in loop. tool_calls type: {type(tool_calls)}, content type: {type(content)}, content: '{content}'")
-        engine.monitor.add_log_message(
-            LogMessage(
+        log_event(
+            log_message=LogMessage(
                 LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_processing_ai_response",
                 f"Task {task_id}: Processing AI response in loop", subtask_id=task_id,
                 details={"tool_calls_type": str(type(tool_calls)), "content_type": str(type(content)), "content_preview": str(content)[:100]}
@@ -108,8 +108,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
             if consecutive_tool_calls > MAX_CONSECUTIVE_TOOL_CALLS:
                 error_message = f"Task {task_id}: Exceeded maximum consecutive tool calls ({MAX_CONSECUTIVE_TOOL_CALLS}). Potential infinite loop detected."
                 logger.error(error_message)
-                engine.monitor.add_log_message(
-                    LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_infinite_loop", error_id=task_id, details={"message": error_message})
+                log_event(
+                    log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_infinite_loop", error_id=task_id, details={"message": error_message})
                 )
                 raise TaskExecutionError(error_message)
 
@@ -123,8 +123,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
 
                 if not tool_name or not tool_call_id:
                     logger.error(f"Task {task_id}: Invalid tool call received: {tool_call}")
-                    engine.monitor.add_log_message(
-                        LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_invalid_tool_call", f"Task {task_id}: Invalid tool call received: {tool_call}", subtask_id=task_id, details={"tool_call": tool_call})
+                    log_event(
+                        log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_invalid_tool_call", f"Task {task_id}: Invalid tool call received: {tool_call}", subtask_id=task_id, details={"tool_call": tool_call})
                     )
                     tool_outputs.append({
                         "tool_call_id": tool_call_id or "unknown",
@@ -135,16 +135,16 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                 try:
                     tool_arguments = json.loads(tool_arguments_str)
                     logger.debug(f"Task {task_id}: Executing tool: {tool_name} with args: {tool_arguments}")
-                    engine.monitor.add_log_message(
-                        LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_executing_tool", f"Task {task_id}: Executing tool: {tool_name}", subtask_id=task_id, details={"tool_name": tool_name, "arguments": tool_arguments})
+                    log_event(
+                        log_message=LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_executing_tool", f"Task {task_id}: Executing tool: {tool_name}", subtask_id=task_id, details={"tool_name": tool_name, "arguments": tool_arguments})
                     )
 
                     tool_instance = tool_registry.get_tool_by_name(tool_name)
                     if tool_instance is None:
                         error_message = f"Task {task_id}: Tool not found: {tool_name}"
                         logger.error(error_message)
-                        engine.monitor.add_log_message(
-                            LogMessage(
+                        log_event(
+                            log_message=LogMessage(
                                 LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_tool_not_found",
                                 error_message, subtask_id=task_id, details={"tool_name": tool_name}
                             )
@@ -162,8 +162,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                         "output": json.dumps(tool_output_data) if isinstance(tool_output_data, (dict, list)) else str(tool_output_data)
                     })
                     logger.debug(f"Task {task_id}: Tool {tool_name} executed successfully.")
-                    engine.monitor.add_log_message(
-                        LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_tool_executed", f"Task {task_id}: Tool {tool_name} executed successfully.", subtask_id=task_id, details={"tool_name": tool_name, "output_preview": str(tool_outputs[-1]['output'])[:100]})
+                    log_event(
+                        log_message=LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_tool_executed", f"Task {task_id}: Tool {tool_name} executed successfully.", subtask_id=task_id, details={"tool_name": tool_name, "output_preview": str(tool_outputs[-1]['output'])[:100]})
                     )
 
 
@@ -171,8 +171,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                     print(f"DEBUG: Task {task_id}: Caught JSONDecodeError for tool {tool_name}. Arguments: {tool_arguments_str}") # Debug print
                     error_message = f"Task {task_id}: Failed to parse tool arguments JSON for tool '{tool_name}': {e}. Arguments: {tool_arguments_str}"
                     logger.error(error_message)
-                    engine.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_tool_call_invalid_arguments",
                             error_message, subtask_id=task_id, details={"tool_name": tool_name, "arguments": tool_arguments_str, "error": str(e)}
                         )
@@ -183,8 +183,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                 except Exception as e:
                     error_message = f"Task {task_id}: Error executing tool '{tool_name}': {e}"
                     logger.error(error_message, exc_info=True)
-                    engine.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_tool_execution_error",
                             error_message, subtask_id=task_id, details={"tool_name": tool_name, "error": str(e), "traceback": traceback.format_exc()}
                         )
@@ -203,8 +203,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
             # Call AI again with updated history from context manager
             try:
                 logger.debug(f"Task {task_id}: Calling AI with updated conversation history from ContextManager.")
-                engine.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_calling_ai_subsequent",
                         f"Calling AI for task {task_id} with updated history", subtask_id=task_id, details={"history_length": len(context_manager.get_history())}
                     )
@@ -225,8 +225,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                 if not isinstance(ai_response, dict):
                     error_message = f"Task {task_id}: AI response is not a dict, which is unexpected."
                     logger.error(error_message)
-                    engine.monitor.add_log_message(
-                        LogMessage(
+                    log_event(
+                        log_message=LogMessage(
                             LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_invalid_ai_response",
                             error_message, subtask_id=task_id, details={"ai_response": ai_response}
                         )
@@ -234,8 +234,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                     raise TaskExecutionError(error_message)
 
                 logger.debug(f"Task {task_id}: AI call with updated history completed.")
-                engine.monitor.add_log_message(
-                    LogMessage(
+                log_event(
+                    log_message=LogMessage(
                         LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_ai_call_completed",
                         f"Task {task_id}: AI call with updated history completed.", subtask_id=task_id, details={"ai_response_preview": str(ai_response)[:100]}
                     )
@@ -248,8 +248,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
             except Exception as e:
                 error_message = f"Task {task_id}: Error during AI call with updated history: {e}"
                 logger.error(error_message, exc_info=True)
-                engine.monitor.add_log_message(
-                    LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_subsequent_ai_call_error", error_message, subtask_id=task_id, details={"error": str(e), "traceback": traceback.format_exc()})
+                log_event(
+                    log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_subsequent_ai_call_error", error_message, subtask_id=task_id, details={"error": str(e), "traceback": traceback.format_exc()})
                     )
                 raise TaskExecutionError(error_message) from e
 
@@ -259,8 +259,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
             consecutive_tool_calls = 0 # Reset counter on receiving content or stop signal
             final_result = ai_response
             logger.debug(f"Task {task_id}: AI provided final content or signaled stop.")
-            engine.monitor.add_log_message(
-                LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_completion_signal", f"Task {task_id}: AI provided final content or signaled stop.", subtask_id=task_id)
+            log_event(
+                log_message=LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_completion_signal", f"Task {task_id}: AI provided final content or signaled stop.", subtask_id=task_id)
             )
             break # Exit the loop
 
@@ -268,8 +268,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
             # Unexpected response format (neither tool calls, non-empty content, nor stop signal)
             error_message = f"Task {task_id}: Unexpected AI response format or finish reason in subsequent turn: {ai_response}"
             logger.error(error_message)
-            engine.monitor.add_log_message(
-                LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_ai_response_error_subsequent", error_message, subtask_id=task_id)
+            log_event(
+                log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_ai_response_error_subsequent", error_message, subtask_id=task_id)
             )
             raise TaskExecutionError(error_message)
 

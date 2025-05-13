@@ -1,0 +1,35 @@
+{
+  "description": "Analyze the requirements for the new terminal monitor layout, including screen splitting, segment sizing, ASCII outlines, output suppression, and coloring.",
+  "instructions": [
+    "Carefully review the user requirements related to the terminal monitor layout.",
+    "Document the specific requirements for splitting the terminal screen into 3 horizontal segments.",
+    "Document the specific requirements for the relative widths of these segments, ensuring the center segment is the widest and the left/right segments are empty.",
+    "Document the specific requirements for outlining each segment using ASCII art boxes.",
+    "Document the specific requirements for suppressing non-monitor output to keep the monitor display clean.",
+    "Document the specific requirements for coloring different types of terminal events, levels, JSON data, and plain strings.",
+    "Investigate potential Python libraries or standard library modules that could be used to implement terminal manipulation features like screen splitting, cursor positioning, and coloring (e.g., `curses`, `colorama`, `rich`).",
+    "Consider how the existing monitoring logic in `src/ai_whisperer/monitoring.py` might need to be adapted or extended to support this new terminal layout.",
+    "Outline the necessary code changes at a high level, identifying which files or classes will likely be affected.",
+    "Synthesize the findings into a markdown document located at `docs/monitor_terminal_analysis.md`."
+  ],
+  "input_artifacts": [],
+  "output_artifacts": [
+    "docs/monitor_terminal_analysis.md"
+  ],
+  "constraints": [
+    "The solution must work within a standard terminal environment.",
+    "Avoid external dependencies that are not strictly necessary.",
+    "The analysis should focus on technical feasibility and potential implementation strategies within the current codebase structure."
+  ],
+  "validation_criteria": [
+    "A file named `docs/monitor_terminal_analysis.md` has been created.",
+    "The content of `docs/monitor_terminal_analysis.md` accurately describes the requirements for screen splitting, segment sizing, ASCII outlines, output suppression, and coloring.",
+    "The document `docs/monitor_terminal_analysis.md` suggests potential libraries or approaches for implementing these features.",
+    "The document `docs/monitor_terminal_analysis.md` outlines the necessary code changes at a high level and references relevant files like `src/ai_whisperer/monitoring.py`."
+  ],
+  "type": "planning",
+  "name": "analyze_terminal_requirements",
+  "depends_on": [],
+  "task_id": "73d077d3-8e90-44c3-8da2-65c9aa7538d0",
+  "subtask_id": "463eaf43-b366-4027-9a83-929722bb40b8"
+}

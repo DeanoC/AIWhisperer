@@ -1,0 +1,93 @@
+{
+    "natural_language_goal": "Improve the monitor terminal display by splitting it into three segmented, outlined sections with colored output and suppressed non-monitor content.",
+    "plan": [
+        {
+            "subtask_id": "463eaf43-b366-4027-9a83-929722bb40b8",
+            "name": "analyze_terminal_requirements",
+            "description": "Analyze the requirements for the new terminal monitor layout, including screen splitting, segment sizing, ASCII outlines, output suppression, and coloring.",
+            "file_path": "project_dev/in_dev/monitor_terminal_improvements/subtask_463eaf43-b366-4027-9a83-929722bb40b8.json",
+            "type": "planning",
+            "depends_on": [],
+            "input_artifacts": [],
+            "output_artifacts": [
+                "docs/monitor_terminal_analysis.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "b855fe9d-ff29-4139-bdb8-197185566e37",
+            "name": "generate_terminal_display_tests",
+            "description": "Generate test cases for the terminal monitor display improvements, focusing on segment layout, outlining, output suppression, and coloring.",
+            "file_path": "project_dev/in_dev/monitor_terminal_improvements/subtask_b855fe9d-ff29-4139-bdb8-197185566e37.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_terminal_requirements"
+            ],
+            "input_artifacts": [
+                "docs/monitor_terminal_analysis.md"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_terminal_monitor.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "eec7cd52-2417-44a1-92dd-aa967d542a42",
+            "name": "implement_terminal_display",
+            "description": "Implement the terminal monitor display improvements, including segment layout, outlining, output suppression, and coloring.",
+            "file_path": "project_dev/in_dev/monitor_terminal_improvements/subtask_eec7cd52-2417-44a1-92dd-aa967d542a42.json",
+            "type": "file_edit",
+            "depends_on": [
+                "generate_terminal_display_tests"
+            ],
+            "input_artifacts": [
+                "docs/monitor_terminal_analysis.md",
+                "tests/unit/test_terminal_monitor.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/monitoring.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "2b15e65e-89d7-4b5f-a5ac-eefea956893b",
+            "name": "validate_terminal_display",
+            "description": "Validate that the terminal display improvements are correctly implemented by running the tests and visually inspecting the output.",
+            "file_path": "project_dev/in_dev/monitor_terminal_improvements/subtask_2b15e65e-89d7-4b5f-a5ac-eefea956893b.json",
+            "type": "validation",
+            "depends_on": [
+                "implement_terminal_display"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/monitoring.py",
+                "tests/unit/test_terminal_monitor.py"
+            ],
+            "output_artifacts": [],
+            "completed": true
+        },
+        {
+            "subtask_id": "c9dc2c0e-eb53-4280-946a-a15de7ee85ed",
+            "name": "update_documentation",
+            "description": "Update documentation to reflect the new terminal monitor features.",
+            "file_path": "project_dev/in_dev/monitor_terminal_improvements/subtask_c9dc2c0e-eb53-4280-946a-a15de7ee85ed.json",
+            "type": "documentation",
+            "depends_on": [
+                "validate_terminal_display"
+            ],
+            "input_artifacts": [
+                "docs/monitor_terminal_analysis.md"
+            ],
+            "output_artifacts": [
+                "docs/logging_monitoring.md",
+                "README.md"
+            ],
+            "completed": true
+        }
+    ],
+    "task_id": "73d077d3-8e90-44c3-8da2-65c9aa7538d0",
+    "input_hashes": {
+        "requirements_md": "80088d2db35871ec04e9f9630f5cc4440fea3dfd98f8f8b575eda98f1c8369e8",
+        "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+        "prompt_file": "hash_not_available"
+    }
+}

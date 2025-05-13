@@ -1,5 +1,3 @@
-# Renaming the file to avoid conflict with Python's standard logging module.
-# This file should be renamed to avoid conflicts.
 
 import logging
 import logging.config
@@ -49,6 +47,7 @@ class ComponentType(Enum):
     TERMINAL_INTERACTION = "terminal_interaction"  # Executing shell commands.
     STATE_MANAGEMENT = "state_management"  # Changes to the runner's internal state.
     USER_INTERACTION = "user_interaction"  # Actions initiated directly by the user (pause, cancel, etc.).
+    MONITOR = "monitor" # Terminal monitor display updates.
 
 
 @dataclass
@@ -169,3 +168,39 @@ def log_event(log_message: LogMessage, logger_name: str = "aiwhisperer"):
 
     # Use logger.log() to pass the level dynamically
     logger.log(level_int, log_message.event_summary, extra=extra_data)  # Use the new field name
+
+# Global variable to hold the active monitor handler
+active_monitor_handler: Optional[logging.Handler] = None
+
+# Global variable to store original levels of suppressed handlers
+_suppressed_handlers_state = []
+
+def set_active_monitor_handler(handler: Optional[logging.Handler]):
+    """
+    Sets or unsets the active monitor handler.
+    When set, adds the handler to the root logger and suppresses other console handlers.
+    When unset, removes the active handler and restores other console handlers.
+    """
+    global active_monitor_handler, _suppressed_handlers_state
+
+    if active_monitor_handler:
+        # Remove the previous active monitor handler
+        logging.root.removeHandler(active_monitor_handler)
+        # Restore suppressed handlers
+        for hdlr, original_level in _suppressed_handlers_state:
+            hdlr.setLevel(original_level)
+        _suppressed_handlers_state = [] # Clear the stored state
+
+    active_monitor_handler = handler
+
+    if active_monitor_handler:
+        # Suppress other console handlers
+        _suppressed_handlers_state = [] # Ensure it's empty before suppressing
+        for hdlr in logging.root.handlers[:]: # Iterate over a copy of the list
+            # Check if it's a StreamHandler or RichHandler and not the monitor handler itself
+            if isinstance(hdlr, (logging.StreamHandler, RichHandler)) and hdlr is not active_monitor_handler:
+                _suppressed_handlers_state.append((hdlr, hdlr.level)) # Store handler and original level
+                hdlr.setLevel(logging.CRITICAL) # Suppress output
+
+        # Add the new active monitor handler
+        logging.root.addHandler(active_monitor_handler)

@@ -44,11 +44,25 @@ The AIWhisperer runner provides a real-time, terminal-based monitoring interface
 The terminal monitor is typically active by default when the AIWhisperer runner executes a plan.
 
 ### Information Displayed
-The Rich-based terminal UI is divided into several panels to provide a comprehensive overview:
-- **Header**: Displays the overall plan name and its current status.
-- **Plan Overview Panel**: A table listing all steps defined in the plan, showing their unique IDs, descriptions, and current execution statuses (e.g., Pending, Running, Completed, Failed, Paused, Skipped).
-- **Current Step Logs Panel**: This panel displays log messages specifically related to the currently executing or the most recently active step. This provides a running commentary of the actions and interactions occurring within that step, including details of AI service calls, file operations, and command executions.
-- **Status Bar/Footer**: Provides general status information about the runner and includes a prompt for user input.
+The terminal monitor provides a real-time view of plan execution, organized into three main horizontal segments visually separated by ASCII art:
+
+-   **Left Segment:** Currently reserved for future use.
+-   **Center Segment:** The primary display area, further subdivided vertically:
+    *   **Monitor Output Area (Top):** Displays real-time monitor events and information.
+    *   **Command Box (Bottom):** Reserved for future user command input.
+-   **Right Segment:** Currently reserved for future use.
+
+The central Monitor Output Area is the main focus for observing the execution flow.
+
+### Key Monitor Features
+
+-   **Output Suppression:** When the terminal monitor is active, it suppresses general CLI tool logs and other non-monitor output from the main display, focusing only on relevant monitor events in the designated area for a cleaner view.
+-   **Colored Output:** Different types and severity levels of monitor events (e.g., INFO, WARNING, ERROR from the logging system) are color-coded for easier identification and readability.
+-   **JSON Pretty-Printing:** Any JSON data included as part of a monitor event is automatically pretty-printed and syntax-highlighted with colors to enhance readability and structure.
+
+### Integration with the Logging System
+
+The terminal monitor acts as a specialized real-time viewer for the main AIWhisperer logging system. It displays specific `LogMessage` entries that are relevant to monitoring plan execution, such as step status changes, AI interactions, and critical errors. Comprehensive logs are still generated and stored in files as described in the "Log Storage" section, providing a complete history for later analysis, while the monitor offers a focused, live view of the most critical events.
 
 ### Interactive Features
 Users can interact with the running plan through the terminal monitor by typing commands:

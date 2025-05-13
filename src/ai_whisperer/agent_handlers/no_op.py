@@ -1,4 +1,4 @@
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 
 def handle_no_op(engine, task_definition, task_id):
     """
@@ -9,8 +9,8 @@ def handle_no_op(engine, task_definition, task_id):
     logger = self.config.get('logger', None)
     if logger:
         logger.info(f"Executing no-op task {task_id}")
-    self.monitor.add_log_message(
-        LogMessage(
+    log_event(
+        log_message=LogMessage(
             LogLevel.INFO,
             ComponentType.EXECUTION_ENGINE,
             "executing_no_op_task",

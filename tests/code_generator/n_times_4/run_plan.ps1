@@ -238,8 +238,6 @@ try {
         exit $exitCode
     }
 
-    Write-Host "Successfully generated planning artifacts in '$OutputFolder'." # Use Write-Host for final success message
-
 } catch {
     # Catch any unexpected errors during the main script logic
     Write-Error "An unexpected error occurred: $_"

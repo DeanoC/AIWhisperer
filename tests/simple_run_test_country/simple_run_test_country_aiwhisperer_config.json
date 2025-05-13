@@ -105,8 +105,7 @@
           "If not skipped, ai_response_capital.txt is not empty."
         ],
         "model_preference": null
-      }
-    },
+      },
     {
       "subtask_id": "validate_capital",
       "description": "Check if the AI's capital city answer is correct.",

@@ -19,6 +19,7 @@ AI Whisperer is a Python command-line tool that takes your project requirements 
   * More postprocessing steps can be added as needed
 * **New:** Refine requirement documents using AI to improve clarity and completeness.
 
+*   **Improved Terminal Monitor:** A redesigned real-time terminal monitor display featuring three segmented, ASCII-outlined sections, colored output for event types, pretty-printed and syntax-highlighted JSON for monitor events, and suppression of non-monitor output for a cleaner view of plan execution.
 ## Demonstrating Core Functionality: The Simple Country Test
 
 The enhanced AIWhisperer runner is capable of executing complex plans that involve real-time interactions with AI services. The `simple_country_test` serves as a key integration test designed to showcase and validate this core functionality.

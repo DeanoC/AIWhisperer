@@ -1,0 +1,40 @@
+{
+  "description": "Generate test cases for the terminal monitor display improvements, focusing on segment layout, outlining, output suppression, and coloring.",
+  "instructions": [
+    "Read and understand the terminal monitor requirements and analysis from `docs/monitor_terminal_analysis.md`.",
+    "Create a new Python test file at `tests/unit/test_terminal_monitor.py`.",
+    "Inside `tests/unit/test_terminal_monitor.py`, define test functions for each of the following aspects of the terminal monitor display:",
+    "- **Segment Layout:** Write a test that simulates output and verifies it adheres to the expected 3-segment layout. This may require mocking terminal width and output capturing.",
+    "- **ASCII Art Outlining:** Write a test to check if the ASCII art boxes are correctly generated and positioned around the simulated segments.",
+    "- **Output Suppression/Redirection:** Create a test to ensure that output not intended for the monitor segments is either suppressed or redirected away from the main monitor display area. Mocking `sys.stdout` or similar mechanisms might be necessary.",
+    "- **Coloring:** Implement tests that simulate output with different log levels or event types and verify that the correct colors are applied. This will likely involve mocking the coloring logic and checking the output string for expected color codes.",
+    "- **JSON Formatting:** Add a test that simulates output containing JSON or JSON-like strings and verifies that they are detected and formatted/colored prettily within the monitor.",
+    "For each test, write the test structure and assertions based on the expected behavior, but initially leave the implementation such that the test will fail. This creates clear targets for the subsequent implementation task.",
+    "Ensure the test file is syntactically correct Python and can be run by a test runner (like pytest), even though the tests themselves will initially fail."
+  ],
+  "input_artifacts": [
+    "docs/monitor_terminal_analysis.md"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_terminal_monitor.py"
+  ],
+  "constraints": [
+    "Tests must be automated and not require manual visual inspection of terminal output.",
+    "Use mocking, simulation, or dependency injection to isolate the terminal display logic and avoid direct interaction with a real terminal environment during testing.",
+    "The tests should focus on verifying the *logic* of formatting, layout, and coloring, not on the actual rendering in a specific terminal emulator."
+  ],
+  "validation_criteria": [
+    "The file `tests/unit/test_terminal_monitor.py` must exist.",
+    "The file `tests/unit/test_terminal_monitor.py` must contain distinct test functions covering segment layout, ASCII art outlining, output suppression/redirection, coloring, and JSON formatting.",
+    "The test functions must be structured with assertions that reflect the expected behavior.",
+    "The tests must compile and be executable using `pytest` or a similar runner.",
+    "When run, the newly created tests in `tests/unit/test_terminal_monitor.py` should initially fail, indicating they are test stubs for unimplemented features."
+  ],
+  "type": "test_generation",
+  "name": "generate_terminal_display_tests",
+  "depends_on": [
+    "analyze_terminal_requirements"
+  ],
+  "task_id": "73d077d3-8e90-44c3-8da2-65c9aa7538d0",
+  "subtask_id": "b855fe9d-ff29-4139-bdb8-197185566e37"
+}
