@@ -969,20 +969,119 @@ class ExecutionEngine:
 
         self.task_queue = list(plan_data.get("plan", []))
 
-        for task_def in self.task_queue:
-            task_id = task_def.get("subtask_id")
+        for task_def_overview in self.task_queue:
+            task_id = task_def_overview.get("subtask_id")
             if not task_id:
                 # Handle missing subtask_id (e.g., log error, skip task)
-                logger.error(f"Task definition missing 'subtask_id': {task_def}. Skipping task.")
+                logger.error(f"Task definition missing 'subtask_id': {task_def_overview}. Skipping task.")
                 self.monitor.add_log_message(
                     LogMessage(
                         LogLevel.ERROR,
                         ComponentType.EXECUTION_ENGINE,
                         "missing_subtask_id",
-                        f"Task definition missing 'subtask_id': {task_def}. Skipping task.",
+                        f"Task definition missing 'subtask_id': {task_def_overview}. Skipping task.",
                     )
                 )
                 continue
+
+            # Determine the effective task definition: either from file_path or the overview definition
+            task_def_effective = task_def_overview
+            file_path = task_def_overview.get("file_path")
+            if file_path:
+                try:
+                    subtask_file_path = Path(file_path).resolve()
+                    logger.info(f"Loading detailed task definition from file: {subtask_file_path}")
+                    self.monitor.add_log_message(
+                        LogMessage(
+                            LogLevel.INFO,
+                            ComponentType.EXECUTION_ENGINE,
+                            "loading_detailed_task_def",
+                            f"Loading detailed task definition for task {task_id} from file: {subtask_file_path}",
+                            subtask_id=task_id,
+                            details={"subtask_file": str(subtask_file_path)},
+                        )
+                    )
+                    with open(subtask_file_path, "r", encoding="utf-8") as f:
+                        task_def_detailed = json.load(f)
+
+                    # Ensure the loaded task definition is a dictionary
+                    if not isinstance(task_def_detailed, dict):
+                         error_message = f"Invalid detailed task file format for task {task_id}: {subtask_file_path}. Expected a dictionary."
+                         logger.error(error_message)
+                         self.monitor.add_log_message(
+                             LogMessage(
+                                 LogLevel.ERROR,
+                                 ComponentType.EXECUTION_ENGINE,
+                                 "invalid_detailed_task_file_format",
+                                 error_message,
+                                 subtask_id=task_id,
+                                 details={"subtask_file": str(subtask_file_path)},
+                             )
+                         )
+                         self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
+                         self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                         continue # Skip to the next task in the overview
+
+                    # Use the loaded detailed task definition for execution
+                    task_def_effective = task_def_detailed
+                    # Ensure task_id is consistent between overview and detailed definition
+                    if task_def_effective.get("subtask_id") != task_id:
+                         logger.warning(f"Subtask ID mismatch for task {task_id}. Overview ID: {task_id}, Detailed ID: {task_def_effective.get('subtask_id')}. Using Overview ID.")
+                         task_def_effective["subtask_id"] = task_id # Prioritize overview ID for state management
+
+                except FileNotFoundError:
+                    error_message = f"Detailed task file not found for task {task_id}: {subtask_file_path}"
+                    logger.error(error_message)
+                    self.monitor.add_log_message(
+                        LogMessage(
+                            LogLevel.ERROR,
+                            ComponentType.EXECUTION_ENGINE,
+                            "detailed_task_file_not_found",
+                            error_message,
+                            subtask_id=task_id,
+                            details={"subtask_file": str(subtask_file_path)},
+                        )
+                    )
+                    self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
+                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    continue # Skip to the next task in the overview
+                except json.JSONDecodeError as e:
+                    error_message = f"Error decoding detailed task file {subtask_file_path} for task {task_id}: {e}"
+                    logger.error(error_message)
+                    self.monitor.add_log_message(
+                        LogMessage(
+                            LogLevel.ERROR,
+                            ComponentType.EXECUTION_ENGINE,
+                            "detailed_task_file_json_error",
+                            error_message,
+                            subtask_id=task_id,
+                            details={"subtask_file": str(subtask_file_path), "error": str(e)},
+                        )
+                    )
+                    self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
+                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    continue # Skip to the next task in the overview
+                except Exception as e:
+                    error_message = f"An unexpected error occurred loading detailed task file {subtask_file_path} for task {task_id}: {e}"
+                    logger.exception(error_message)
+                    self.monitor.add_log_message(
+                        LogMessage(
+                            LogLevel.CRITICAL,
+                            ComponentType.EXECUTION_ENGINE,
+                            "detailed_task_file_unexpected_error",
+                            error_message,
+                            subtask_id=task_id,
+                            details={
+                                "subtask_file": str(subtask_file_path),
+                                "error": str(e),
+                                "traceback": traceback.format_exc(),
+                            },
+                        )
+                    )
+                    self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
+                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    continue # Skip to the next task in the overview
+
 
             self.state_manager.set_task_state(task_id, "pending")
             self.monitor.set_active_step(task_id)
@@ -998,7 +1097,7 @@ class ExecutionEngine:
             )
 
             # Check dependencies
-            dependencies = task_def.get("depends_on", [])
+            dependencies = task_def_effective.get("depends_on", []) # Check dependencies in the effective task definition
             can_execute = True
             if dependencies:
                 logger.info(f"Checking dependencies for task {task_id}: {dependencies}")
@@ -1055,13 +1154,8 @@ class ExecutionEngine:
 
             start_time = time.time()  # Start timing the task execution
             try:
-                agent_type = task_def.get("type")
-
-                if agent_type == "planning":
-                    result = self._execute_planning_task(task_id, task_def)
-                else:
-                    # For other agent types, execute the task directly
-                    result = self._execute_single_task(task_def)
+                # Always call _execute_single_task with the effective task definition
+                result = self._execute_single_task(task_def_effective)
 
                 end_time = time.time()  # End timing
                 duration_ms = (end_time - start_time) * 1000  # Duration in milliseconds
@@ -1116,7 +1210,7 @@ class ExecutionEngine:
                         "error_details": e.details if isinstance(e, TaskExecutionError) and e.details else None
                     })
                 else:
-                    # Handle any other unexpected error during task execution                
+                    # Handle any other unexpected error during task execution
                     error_message = f"Unexpected error during execution of task {task_id}: {str(e)}"
                     logger.exception(f"Unexpected error during execution of task {task_id}")  # Log with traceback
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
@@ -1132,7 +1226,7 @@ class ExecutionEngine:
                             details={"error": error_message, "traceback": traceback.format_exc()},
                         )
                     )
-        # After each task, clear the active step in the monitor
+         # After each task, clear the active step in the monitor
         self.monitor.set_active_step(None)
 
         logger.info(f"Finished execution of plan: {plan_id}")

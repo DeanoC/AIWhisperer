@@ -8,7 +8,7 @@ from unittest.mock import patch
 from src.ai_whisperer.ai_service_interaction import OpenRouterAPI
 from src.ai_whisperer.tools.tool_registry import ToolRegistry
 from src.ai_whisperer.tools.read_file_tool import ReadFileTool
-from src.ai_whisperer.tools.write_file_tool import WriteTextFileTool
+from src.ai_whisperer.tools.write_file_tool import WriteFileTool
 from src.ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
 from src.ai_whisperer.exceptions import OpenRouterAPIError
 
@@ -38,7 +38,7 @@ def tool_registry():
     registry = ToolRegistry()
     # Manually register the file tools for testing
     registry.register_tool(ReadFileTool())
-    registry.register_tool(WriteTextFileTool())
+    registry.register_tool(WriteFileTool())
     registry.register_tool(ExecuteCommandTool())
     return registry
 
@@ -405,14 +405,14 @@ def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAPI, tool_reg
 
     # Scenario 2: Simulate AI calling write_text_file with missing content
     invalid_write_path = "temp_invalid_write.txt"
-    # The WriteTextFileTool.execute method expects 'file_path' and 'content'
+    # The WriteFileTool.execute method expects 'file_path' and 'content'
     write_call_args_missing_content = {"file_path": invalid_write_path} # Missing 'content'
 
     write_tool_instance = tool_registry.get_tool_by_name("write_text_file")
     assert write_tool_instance is not None, "write_text_file tool not found in registry"
 
     # Expecting the tool's execute method to handle missing required parameters
-    # Based on WriteTextFileTool implementation, it expects 'file_path' and 'content'
+    # Based on WriteFileTool implementation, it expects 'file_path' and 'content'
     # and will likely raise a TypeError or KeyError if 'content' is missing.
     # Let's adjust the assertion based on the expected behavior for missing 'content'.
     # The execute method signature is `execute(self, file_path: str, content: str)`.

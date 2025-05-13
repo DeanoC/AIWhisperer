@@ -8,7 +8,10 @@ param(
 
     [Parameter(HelpMessage = "Automatically confirm prompts without user interaction. Alias: -y.")]
     [Alias("y")]
-    [switch]$Yes
+    [switch]$Yes,
+
+    [Parameter(HelpMessage = "Pass --debug to the Python CLI to wait for debugger attach.")]
+    [switch]$DebugPython
 )
 
 function Show-Usage {
@@ -31,7 +34,7 @@ if (Test-Path $InputArg -PathType Leaf) {
     $planJsonPath = $InputArg
 } else {
     # Assume it's a plan name, try to resolve to JSON file
-    $candidate = Join-Path -Path ".\project_dev\in_dev\$InputArg" -ChildPath "$InputArg.json"
+    $candidate = Join-Path -Path ".\tests\code_generation\$InputArg" -ChildPath "$InputArg.json"
     if (Test-Path $candidate -PathType Leaf) {
         $planJsonPath = $candidate
     } else {
@@ -47,6 +50,7 @@ Write-Verbose "Raw Input Argument: '$InputArg'"
 Write-Verbose "Resolved Plan JSON Path: '$planJsonPath'"
 Write-Verbose "Clean switch set: $Clean"
 Write-Verbose "Yes switch set: $Yes"
+Write-Verbose "DebugPython switch set: $DebugPython"
 
 # Use the automatic variable $PSScriptRoot for the script's directory
 $ScriptDir = $PSScriptRoot
@@ -81,36 +85,77 @@ try {
     Write-Verbose "Confirmed Plan JSON file exists: $planJsonPath"
 
     # Locate the .venv Python environment
-    $VenvPythonPath = Join-Path -Path $ProjectRoot -ChildPath ".venv\Scripts\python.exe" # Windows default
-    if (-not (Test-Path $VenvPythonPath -PathType Leaf)) {
-        $VenvPythonPath = Join-Path -Path $ProjectRoot -ChildPath ".venv\bin\python" # Linux/macOS/other default
+    # 1. Check for .venv in current directory
+    $LocalVenvPythonWin = ".venv\Scripts\python.exe"
+    $LocalVenvPythonUnix = ".venv/bin/python"
+    if (Test-Path $LocalVenvPythonWin -PathType Leaf) {
+        $VenvPythonPath = (Resolve-Path $LocalVenvPythonWin).Path
+    } elseif (Test-Path $LocalVenvPythonUnix -PathType Leaf) {
+        $VenvPythonPath = (Resolve-Path $LocalVenvPythonUnix).Path
+    } else {
+        # 2. Fallback to project root .venv
+        $VenvPythonPath = Join-Path -Path $ProjectRoot -ChildPath ".venv\Scripts\python.exe" # Windows default
         if (-not (Test-Path $VenvPythonPath -PathType Leaf)) {
-            Write-Error "Python executable not found in the virtual environment (.venv/Scripts/python.exe or .venv/bin/python) within '$ProjectRoot'. Please ensure the virtual environment is set up correctly and activated, or adjust the path."
-            exit 1
+            $VenvPythonPath = Join-Path -Path $ProjectRoot -ChildPath ".venv\bin\python" # Linux/macOS/other default
+            if (-not (Test-Path $VenvPythonPath -PathType Leaf)) {
+                Write-Error "Python executable not found in the virtual environment (.venv/Scripts/python.exe or .venv/bin/python) in current directory or within '$ProjectRoot'. Please ensure the virtual environment is set up correctly and activated, or adjust the path."
+                exit 1
+            }
         }
     }
     Write-Verbose "Using Python executable from virtual environment: $VenvPythonPath"
 
     # Locate the main Python script (using module path relative to ProjectRoot)
     $MainModulePath = "src.ai_whisperer.main" # Path used with python -m
-    $MainPyCheckPath = Join-Path -Path $ProjectRoot -ChildPath "src\ai_whisperer\main.py" # Path for existence check
-    if (-not (Test-Path $MainPyCheckPath -PathType Leaf)) {
-        Write-Error "The main Python script was not found at '$MainPyCheckPath'. Please verify the project structure."
+
+    # Try all possible locations for main.py (project root first)
+    $TrueProjectRoot = (Resolve-Path -Path (Join-Path -Path $ScriptDir -ChildPath "..\..")).Path
+    $MainPyCheckPaths = @(
+        (Join-Path -Path $TrueProjectRoot -ChildPath "src\ai_whisperer\main.py"),
+        (Join-Path -Path (Split-Path $TrueProjectRoot -Parent) -ChildPath "src\ai_whisperer\main.py"),
+        (Join-Path -Path $ProjectRoot    -ChildPath "src\ai_whisperer\main.py"),
+        (Join-Path -Path (Join-Path $ProjectRoot "..") -ChildPath "src\ai_whisperer\main.py"),
+        (Join-Path -Path $ScriptDir      -ChildPath "src\ai_whisperer\main.py")
+    )
+    $MainPyCheckPath = $null
+    foreach ($candidatePath in $MainPyCheckPaths) {
+        if (Test-Path $candidatePath -PathType Leaf) {
+            $MainPyCheckPath = $candidatePath
+            break
+        }
+    }
+    if (-not $MainPyCheckPath) {
+        Write-Error "The main Python script was not found at any of the expected locations:`n$($MainPyCheckPaths -join "`n")`nPlease verify the project structure. If your project root is 'D:\Projects\AIWhisperer', ensure 'src\ai_whisperer\main.py' exists there."
         exit 1
     }
-    Write-Verbose "Confirmed main Python script exists for module '$MainModulePath'"
+    Write-Verbose "Confirmed main Python script exists for module '$MainModulePath' at '$MainPyCheckPath'"
 
     # Locate the configuration file
-    $ConfigFile = Join-Path -Path $ScriptDir -ChildPath "aiwhisperer_config.yaml"
-    if (-not (Test-Path $ConfigFile -PathType Leaf)) {
-        Write-Error "Configuration file '$ConfigFile' not found in the script directory '$ScriptDir'."
+    # Try config in script dir, then parent dirs up to project root
+    $ConfigSearchDirs = @(
+        $ScriptDir,
+        (Join-Path -Path $ScriptDir -ChildPath ".."),
+        (Join-Path -Path $ScriptDir -ChildPath "..\.."),
+        $ProjectRoot,
+        $TrueProjectRoot
+    ) | ForEach-Object { (Resolve-Path $_).Path } | Select-Object -Unique
+
+    $ConfigFile = $null
+    foreach ($dir in $ConfigSearchDirs) {
+        $candidate = Join-Path -Path $dir -ChildPath "aiwhisperer_config.yaml"
+        if (Test-Path $candidate -PathType Leaf) {
+            $ConfigFile = $candidate
+            break
+        }
+    }
+    if (-not $ConfigFile) {
+        Write-Error "Configuration file 'aiwhisperer_config.yaml' not found in any of:`n$($ConfigSearchDirs -join "`n")"
         exit 1
     }
     Write-Verbose "Using configuration file: $ConfigFile"
 
     # Create the output directory ('in_dev/<rfc_basename>')
-    $InDevBaseFolder = Join-Path -Path $ScriptDir -ChildPath "in_dev"
-    $OutputFolder = Join-Path -Path $InDevBaseFolder -ChildPath $RfcBaseName
+    $OutputFolder = Join-Path -Path $ScriptDir -ChildPath "output"
     Write-Verbose "Target output folder: $OutputFolder"
 
     # Handle the Clean option if output directory exists
@@ -159,16 +204,26 @@ try {
     # Build the arguments for the Python script
     $pythonArgs = @(
         "-m", $MainModulePath,
-        "--config", $ConfigFile,
+        "--config", $ConfigFile
+    )
+    if ($DebugPython) {
+        $pythonArgs += "--debug"
+    }
+    $pythonArgs += @(
         "run",
-        $planJsonPath,
-        "--output", $OutputFolder
+        "--plan-file",$planJsonPath,
+        "--state-file", (Join-Path -Path $OutputFolder -ChildPath "state.json")
     )
     Write-Verbose "Executing Python script from Project Root: $ProjectRoot"
     Write-Verbose "Command: $VenvPythonPath $($pythonArgs -join ' ')"
-
-    # Change to Project Root for correct Python module resolution
-    Set-Location -Path $ProjectRoot
+    
+    # Change to the parent directory of 'src' for correct Python module resolution
+    $SrcParentDir = $TrueProjectRoot
+    if (-not (Test-Path (Join-Path $SrcParentDir "src") -PathType Container)) {
+        # Fallback: try one level up if 'src' is not found
+        $SrcParentDir = (Split-Path $TrueProjectRoot -Parent)
+    }
+    Set-Location -Path $SrcParentDir
 
     # Execute the command
     & $VenvPythonPath $pythonArgs

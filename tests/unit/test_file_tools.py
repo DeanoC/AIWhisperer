@@ -5,7 +5,7 @@ from unittest.mock import patch
 import shutil
 
 from src.ai_whisperer.tools.read_file_tool import ReadFileTool
-from src.ai_whisperer.tools.write_file_tool import WriteTextFileTool
+from src.ai_whisperer.tools.write_file_tool import WriteFileTool
 
 # Fixture to create a temporary directory within the project and a test file
 @pytest.fixture
@@ -155,21 +155,21 @@ def test_read_file_tool_execute_unsupported_file_type(temp_project_dir):
     assert "Error: File type not supported." in result
     assert "Only text files are allowed." in result
 
-# Tests for WriteTextFileTool
+# Tests for WriteFileTool
 def test_write_file_tool_name():
-    """Tests the name property of WriteTextFileTool."""
-    tool = WriteTextFileTool()
-    assert tool.name == 'write_text_file'
+    """Tests the name property of WriteFileTool."""
+    tool = WriteFileTool()
+    assert tool.name == 'write_file'
 
 def test_write_file_tool_description():
-    """Tests the description property of WriteTextFileTool."""
-    tool = WriteTextFileTool()
+    """Tests the description property of WriteFileTool."""
+    tool = WriteFileTool()
     assert isinstance(tool.description, str)
     assert len(tool.description) > 0
 
 def test_write_file_tool_parameters_schema():
-    """Tests the parameters_schema property of WriteTextFileTool."""
-    tool = WriteTextFileTool()
+    """Tests the parameters_schema property of WriteFileTool."""
+    tool = WriteFileTool()
     schema = tool.parameters_schema
 
     assert isinstance(schema, dict)
@@ -184,36 +184,36 @@ def test_write_file_tool_parameters_schema():
     assert 'content' in schema['required']
 
 def test_write_file_tool_openrouter_api_definition():
-    """Tests the Openrouter API definition for WriteTextFileTool."""
-    tool = WriteTextFileTool()
+    """Tests the Openrouter API definition for WriteFileTool."""
+    tool = WriteFileTool()
     definition = tool.get_openrouter_tool_definition()
 
     assert isinstance(definition, dict)
-    assert definition['function']['name'] == 'write_text_file'
+    assert definition['function']['name'] == 'write_file'
     assert 'description' in definition['function']
     assert 'parameters' in definition['function']
     assert definition['function']['parameters'] == tool.parameters_schema
 
 def test_write_file_tool_ai_prompt_instructions():
-    """Tests the AI prompt instructions for WriteTextFileTool."""
-    tool = WriteTextFileTool()
+    """Tests the AI prompt instructions for WriteFileTool."""
+    tool = WriteFileTool()
     instructions = tool.get_ai_prompt_instructions()
 
     assert isinstance(instructions, str)
     assert len(instructions) > 0
-    assert 'write_text_file' in instructions
+    assert 'write_file' in instructions
     assert 'file_path' in instructions
     assert 'content' in instructions
 
 @pytest.mark.asyncio # Mark the test as async
 async def test_write_file_tool_run_success(temp_project_dir):
-    """Tests successful file writing using WriteTextFileTool."""
+    """Tests successful file writing using WriteFileTool."""
     temp_dir_relative = temp_project_dir
     file_name = "new_test_file.txt"
     file_path_relative = os.path.join(temp_dir_relative, file_name)
     content_to_write = "This is the content to write."
 
-    tool = WriteTextFileTool()
+    tool = WriteFileTool()
     arguments = {'file_path': file_path_relative, 'content': content_to_write}
     # Call the execute method, not run
     result = await tool.execute(file_path=arguments['file_path'], content=arguments['content'])
@@ -228,11 +228,11 @@ async def test_write_file_tool_run_success(temp_project_dir):
 
 @pytest.mark.asyncio # Mark the test as async
 async def test_write_file_tool_run_overwrite(temp_project_file):
-    """Tests that WriteTextFileTool overwrites an existing file."""
+    """Tests that WriteFileTool overwrites an existing file."""
     file_path_relative, original_content, _ = temp_project_file
     new_content = "This content overwrites the original."
 
-    tool = WriteTextFileTool()
+    tool = WriteFileTool()
     arguments = {'file_path': file_path_relative, 'content': new_content}
     # Call the execute method, not run
     result = await tool.execute(file_path=arguments['file_path'], content=arguments['content'])
@@ -248,11 +248,11 @@ async def test_write_file_tool_run_overwrite(temp_project_file):
 
 @pytest.mark.asyncio # Mark the test as async
 async def test_write_file_tool_run_permission_denied(temp_project_file):
-    """Tests WriteTextFileTool handling of PermissionError."""
+    """Tests WriteFileTool handling of PermissionError."""
     file_path_relative, _, _ = temp_project_file
     content_to_write = "Attempting to write."
 
-    tool = WriteTextFileTool()
+    tool = WriteFileTool()
     arguments = {'file_path': file_path_relative, 'content': content_to_write}
 
     # Simulate permission denied error
@@ -266,28 +266,47 @@ async def test_write_file_tool_run_permission_denied(temp_project_file):
     assert file_path_relative in result['message']
 
 @pytest.mark.asyncio # Mark the test as async
-async def test_write_file_tool_run_directory_not_exists(temp_project_dir):
-    """Tests WriteTextFileTool handling when the directory does not exist."""
+@pytest.mark.asyncio # Mark the test as async
+async def test_write_file_tool_run_directory_created(temp_project_dir):
+    """Tests WriteFileTool creates parent directories if they do not exist."""
     non_existent_dir_relative = os.path.join(temp_project_dir, "non_existent_dir")
     file_path_relative = os.path.join(non_existent_dir_relative, "test_file.txt")
     content_to_write = "Content for non-existent directory."
 
-    tool = WriteTextFileTool()
+    # Ensure the directory does NOT exist before the test
+    non_existent_dir_abs = os.path.join(os.getcwd(), non_existent_dir_relative)
+    if os.path.exists(non_existent_dir_abs):
+        shutil.rmtree(non_existent_dir_abs)
+
+    tool = WriteFileTool()
     arguments = {'file_path': file_path_relative, 'content': content_to_write}
 
-    # Call the execute method, not run
+    # Call the execute method
     result = await tool.execute(file_path=arguments['file_path'], content=arguments['content'])
 
-    assert result['status'] == 'error'
-    assert "Error writing to file" in result['message']
-    # The exact error message might vary by OS, but it should indicate a problem with the path/directory
-    assert "No such file or directory" in result['message'] or "The system cannot find the path specified" in result['message']
+    # Assert success
+    assert result['status'] == 'success'
     assert file_path_relative in result['message']
+
+    # Verify the directory was created
+    assert os.path.exists(non_existent_dir_abs)
+    assert os.path.isdir(non_existent_dir_abs)
+
+    # Verify the file was created and content is correct
+    file_path_abs = os.path.join(os.getcwd(), file_path_relative)
+    assert os.path.exists(file_path_abs)
+    assert os.path.isfile(file_path_abs)
+    with open(file_path_abs, 'r') as f:
+        read_content = f.read()
+    assert read_content == content_to_write
+
+    # Clean up the created directory and file
+    shutil.rmtree(non_existent_dir_abs)
 
 @pytest.mark.asyncio # Mark the test as async
 async def test_write_file_tool_run_missing_arguments():
-    """Tests WriteTextFileTool handling of missing arguments."""
-    tool = WriteTextFileTool()
+    """Tests WriteFileTool handling of missing arguments."""
+    tool = WriteFileTool()
 
     # Missing content
     arguments_missing_content = {'file_path': 'some/path/file.txt'}

@@ -41,6 +41,9 @@ def main(args=None) -> list[BaseCommand]:
     parser.add_argument(
         "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
     )
+    parser.add_argument(
+        "--debug", action="store_true", help="Wait for a debugger to attach before running."
+    )
 
     # Create subparsers for different commands
     subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
@@ -107,6 +110,18 @@ def main(args=None) -> list[BaseCommand]:
             parsed_args = parser.parse_args(args)
         else:
             parsed_args = parser.parse_args()
+
+        # --- Debugger Wait Logic ---
+        if getattr(parsed_args, "debug", False):
+            try:
+                import debugpy
+                print("Waiting for debugger attach on port 5678...")
+                debugpy.listen(("0.0.0.0", 5678))
+                debugpy.wait_for_client()
+                print("Debugger attached.")
+            except ImportError:
+                print("debugpy is not installed. Please install it to use --debug.", file=sys.stderr)
+                sys.exit(1)
 
         logger.debug("Using parse_args.")
         logger.debug(f"Parsed arguments: {parsed_args}")

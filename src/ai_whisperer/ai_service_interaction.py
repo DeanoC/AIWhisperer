@@ -381,12 +381,7 @@ class OpenRouterAPI:
                 if self.enable_cache and self._cache_store is not None and cache_key is not None:
                     self._cache_store[cache_key] = message_obj
 
-                # Return only the content for simple text responses,
-                # otherwise return the full message object (e.g., for tool calls)
-                if message_obj.get("content") is not None and message_obj.get("tool_calls") is None:
-                    return message_obj.get("content")
-                else:
-                    return message_obj
+                return message_obj
 
             except ValueError as e:
                 logger.error(f"JSONDecodeError in call_chat_completion: {e}. Response text: {response.text[:500]}")

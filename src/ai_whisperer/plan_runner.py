@@ -9,7 +9,7 @@ from typing import Dict, Any
 from .config import load_config
 from .tools.tool_registry import get_tool_registry
 from .tools.read_file_tool import ReadFileTool
-from .tools.write_file_tool import WriteTextFileTool
+from .tools.write_file_tool import WriteFileTool
 from .tools.execute_command_tool import ExecuteCommandTool
 from .exceptions import OrchestratorError, PlanNotLoadedError
 from .plan_parser import ParserPlan
@@ -46,7 +46,7 @@ class PlanRunner:
         """Registers the necessary tools with the ToolRegistry."""
         tool_registry = get_tool_registry()
         tool_registry.register_tool(ReadFileTool())
-        tool_registry.register_tool(WriteTextFileTool())
+        tool_registry.register_tool(WriteFileTool())
         tool_registry.register_tool(ExecuteCommandTool())
         logger.debug("Tools registered with ToolRegistry.")
 
