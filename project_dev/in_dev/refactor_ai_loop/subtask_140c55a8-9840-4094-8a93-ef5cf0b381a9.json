@@ -1,0 +1,33 @@
+{
+  "description": "Design the structure and methods for the new ContextManager class to handle message history.",
+  "instructions": [
+    "Open `src/ai_whisperer/agent_handlers/code_generation.py` to understand the current approach to managing message history, specifically looking for how messages are stored, passed, and used in AI interactions.",
+    "Based on the analysis, define the core responsibilities of the `ContextManager` class. It should be responsible for storing and retrieving the conversation history between the AI and the user/system.",
+    "Design the structure of the `ContextManager` class, including its initialization and internal data structures (e.g., a list of message objects). Consider how messages will be represented (e.g., using a simple dictionary or a dedicated message object).",
+    "Define the essential methods for the `ContextManager`. This should include methods like `add_message(message)`, `get_history(limit=None)`, and potentially `clear_history()`. Detail the parameters and return types for each method.",
+    "Outline how the `StateManager` (if applicable in the current architecture) will interact with the `ContextManager`. Consider if the `StateManager` will hold an instance of the `ContextManager` or if the `ContextManager` will be passed around as needed.",
+    "Document the complete design in a new Markdown file at `docs/context_manager_design.md`. Include the class structure, method definitions, and the interaction outline with `StateManager`."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/agent_handlers/code_generation.py"
+  ],
+  "output_artifacts": [
+    "docs/context_manager_design.md"
+  ],
+  "constraints": [
+    "The design must be documented in Markdown format.",
+    "The design document must be placed in the `docs` directory.",
+    "The design should focus solely on managing message history for AI interactions."
+  ],
+  "validation_criteria": [
+    "The file `docs/context_manager_design.md` must exist.",
+    "The file `docs/context_manager_design.md` must contain a clear definition of the proposed `ContextManager` class structure.",
+    "The file `docs/context_manager_design.md` must list and describe the methods of the `ContextManager` class.",
+    "The file `docs/context_manager_design.md` must outline the planned interaction between the `StateManager` and the `ContextManager`."
+  ],
+  "type": "planning",
+  "name": "design_context_manager",
+  "depends_on": [],
+  "task_id": "1bc14942-c2cc-4e02-aa1a-78cfb861d8e9",
+  "subtask_id": "140c55a8-9840-4094-8a93-ef5cf0b381a9"
+}

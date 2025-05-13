@@ -161,6 +161,38 @@ The runner, via the `PlanParser` ([`src/ai_whisperer/plan_parser.py`](src/ai_whi
 
 Relevant configuration for running JSON plans (e.g., API keys for AI models used by the steps, default model preferences if not specified in the plan itself) will be managed through the main `config.yaml` file provided with the `--config` argument. Ensure this configuration is correctly set up before running a plan.
 
+## AI Loop and Context Management
+
+The AI Whisperer utilizes a reusable AI loop component (`src/ai_whisperer/ai_loop.py`) and a ContextManager (`src/ai_whisperer/context_management.py`) to handle AI interactions and manage conversation history. These components are designed for flexibility and reusability across different agent handlers and workflows.
+
+### AI Loop (`src/ai_whisperer/ai_loop.py`)
+
+The AI loop encapsulates the core logic for interacting with the AI service. This includes:
+
+* Sending prompts to the AI.
+* Processing AI responses, including extracting content and identifying tool calls.
+* Executing requested tools.
+* Managing the flow of conversation turns.
+* Handling potential issues like consecutive tool calls.
+
+This component is designed to be independent of specific agent handler logic, making it reusable for any task that requires iterative AI interaction.
+
+### ContextManager (`src/ai_whisperer/context_management.py`)
+
+The ContextManager is responsible for maintaining the conversation history for each task. It provides methods to:
+
+* Add new messages (user prompts, AI responses, tool outputs) to the history.
+* Retrieve the conversation history, optionally with a limit on the number of recent messages.
+* Clear the conversation history.
+
+The ContextManager centralizes the management of conversation state, ensuring that the AI loop and other components have access to the necessary historical context for effective interaction.
+
+### Integration
+
+The AI loop component utilizes an instance of the ContextManager to manage the conversation history during an AI interaction. The StateManager is responsible for providing the appropriate ContextManager instance for each task, ensuring that conversation history is preserved across different stages of plan execution.
+
+Other agent handlers or custom code can also utilize the AI loop and ContextManager directly for their AI interaction needs, promoting code reuse and consistency.
+
 ## Programmatic AI Service Interaction
 
 Beyond the command-line interface, you can interact with AI services programmatically using the `OpenRouterAPI` class provided by the AIWhisperer library. This is useful for integrating AI capabilities directly into your Python code or for building custom workflows.

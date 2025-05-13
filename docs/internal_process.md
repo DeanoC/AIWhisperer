@@ -4,11 +4,12 @@ This document describes the internal processes and components of the AI Whispere
 
 ## Overall Architecture
 
-AI Whisperer follows a multi-stage process to generate structured task plans and detailed subtasks:
+AI Whisperer follows a multi-stage process to generate structured task plans and detailed subtasks, involving key components for AI interaction and state management:
 
-1. **Orchestrator**: Generates the initial task plan YAML from requirements
-2. **Subtask Generator**: Expands each step in the task plan into a detailed subtask
-3. **Postprocessing Pipeline**: Enhances and standardizes the AI-generated content
+1. **Orchestrator**: Generates the initial task plan from requirements.
+2. **Subtask Generator**: Expands each step in the task plan into a detailed subtask definition.
+3. **Execution Engine**: Manages the execution of individual subtasks, including AI interaction via the AI Loop and managing state via the StateManager.
+4. **Postprocessing Pipeline**: Enhances and standardizes the AI-generated content.
 
 ## Orchestrator
 
@@ -123,13 +124,27 @@ When creating or modifying AI prompts for the system:
 
 4. **Clear Instructions**: Provide clear instructions for the AI to focus on the core task requirements and structure.
 
+## AI Interaction Flow
+
+The core AI interaction within the AI Whisperer is managed by the reusable AI loop component (`src/ai_whisperer/ai_loop.py`) in conjunction with the ContextManager (`src/ai_whisperer/context_management.py`).
+
+1.  **Context Initialization**: For each task requiring AI interaction, a dedicated instance of the `ContextManager` is created and managed by the `StateManager`. This instance will hold the conversation history specific to that task.
+2.  **AI Loop Execution**: The `Execution Engine` invokes the AI loop (`run_ai_loop`) for tasks of type `code_generation` (and potentially others in the future). The `run_ai_loop` function receives the task details, the execution engine (providing access to AI services and tools), and the task's `ContextManager` instance.
+3.  **Iterative Interaction**: Inside the AI loop, the `ContextManager` is used to maintain the conversation history. User prompts, AI responses, and tool outputs are added to the `ContextManager`'s history. This history is then passed to the AI service for subsequent turns.
+4.  **Tool Execution**: If the AI requests a tool call, the AI loop uses the `ToolRegistry` (provided via the `Execution Engine`) to find and execute the requested tool. The output of the tool is then added to the `ContextManager`'s history and sent back to the AI.
+5.  **Loop Termination**: The AI loop continues until the AI provides a final response (content) or signals completion. The final AI response is returned by the `run_ai_loop` function.
+
+This modular design allows for consistent and efficient management of AI interactions and conversation history across different parts of the AI Whisperer.
+
 ## State Management
 
-The State Management feature is integrated into the runner's internal process to provide persistence and resume capabilities. The `StateManager` class is responsible for handling the saving, loading, and updating of the execution state.
+The State Management feature is integrated into the runner's internal process to provide persistence and resume capabilities. The `StateManager` class (`src/ai_whisperer/state_management.py`) is responsible for handling the saving, loading, and updating of the execution state.
 
 - **Initialization**: When a plan execution starts, the `StateManager` is initialized with a path to the state file. If a state file exists at this path, the state is loaded, allowing the runner to potentially resume a previous execution. If no state file is found, a new, empty state is initialized.
 - **Saving State**: The execution state is periodically saved to the state file during the plan execution. This ensures that the progress is preserved and can be resumed if the process is interrupted. The saving process is designed to be atomic to prevent data corruption.
 - **Updating State**: As the runner progresses through the plan, the state is updated to reflect the current status of tasks, store intermediate results, and manage global context such as generated file paths. This includes marking tasks as pending, in-progress, completed, or failed, and storing any output or relevant information from each step.
+
+- **Updating State**: As the runner progresses through the plan, the state is updated to reflect the current status of tasks, store intermediate results, and manage global context such as generated file paths. This includes marking tasks as pending, in-progress, completed, or failed, and storing any output or relevant information from each step. The `StateManager` now also manages the `ContextManager` instance for each task as part of the state, ensuring conversation history is persisted.
 
 This integration of state management allows the AI Whisperer runner to maintain context across the execution of a plan, enabling more robust and fault-tolerant task automation.
 

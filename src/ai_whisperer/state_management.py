@@ -1,5 +1,6 @@
 import json
 import os
+from src.ai_whisperer.context_management import ContextManager # Import ContextManager
 
 
 def save_state(state, file_path):
@@ -11,7 +12,8 @@ def save_state(state, file_path):
     temp_file_path = file_path + ".tmp"
     try:
         with open(temp_file_path, "w") as f:
-            json.dump(state, f, indent=4)
+            # Custom encoder to handle ContextManager during serialization
+            json.dump(state, f, indent=4, cls=StateManagerEncoder)
         # os.replace is atomic on most modern OSes
         os.replace(temp_file_path, file_path)
     except Exception as e:
@@ -35,7 +37,8 @@ def load_state(file_path):
         raise FileNotFoundError(f"State file not found: {file_path}")
     try:
         with open(file_path, "r") as f:
-            return json.load(f)
+            # Custom decoder to handle ContextManager during deserialization
+            return json.load(f, cls=StateManagerDecoder)
     except json.JSONDecodeError as e:
         raise IOError(f"Failed to decode JSON from state file {file_path}: {e}")
     except Exception as e:
@@ -98,9 +101,34 @@ def get_global_state(state, key):
     return state.get("global_state", {}).get(key, None)
 
 
+class StateManagerEncoder(json.JSONEncoder):
+    """Custom JSONEncoder to serialize ContextManager."""
+    def default(self, obj):
+        if isinstance(obj, ContextManager):
+            # Serialize ContextManager by saving its history
+            return {"__type__": "ContextManager", "history": obj.get_history()}
+        # Let the base class default method raise a TypeError for other types
+        return json.JSONEncoder.default(self, obj)
+
+class StateManagerDecoder(json.JSONDecoder):
+    """Custom JSONDecoder to deserialize ContextManager."""
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj):
+        if "__type__" in obj and obj["__type__"] == "ContextManager":
+            # Deserialize ContextManager by creating an instance and adding history
+            cm = ContextManager()
+            for message in obj.get("history", []):
+                cm.add_message(message)
+            return cm
+        return obj
+
+
 class StateManager:
     """
-    Manages the state of the execution for tasks and global context.
+    Manages the state of the execution for tasks and global context,
+    including conversation history via ContextManager.
 
     This class provides methods to load, save, and manipulate state data,
     including task statuses, results, and global context.
@@ -157,7 +185,12 @@ class StateManager:
             for task in plan_data["plan"]:
                 task_id = task.get("subtask_id")
                 if task_id:
-                    self.state["tasks"][task_id] = {"status": "pending", "result": None}
+                    # Initialize task state with a ContextManager instance
+                    self.state["tasks"][task_id] = {
+                        "status": "pending",
+                        "result": None,
+                        "context_manager": ContextManager() # Instantiate ContextManager for each task
+                    }
 
         # Save the initialized state
         self.save_state()
@@ -225,42 +258,59 @@ class StateManager:
 
         Args:
             key: The key to retrieve.
-
         Returns:
             The value associated with the key, or None if the key is not found.
         """
         return get_global_state(self.state, key)
 
-    def store_conversation_turn(self, task_id, turn):
+    def get_context_manager(self, task_id) -> ContextManager | None:
         """
-        Store a single conversation turn for a task.
-
-        Args:
-            task_id: The ID of the task.
-            turn: The conversation turn (message dictionary).
-        """
-        if "tasks" not in self.state or task_id not in self.state["tasks"]:
-            # Task state should be initialized before storing conversation turns
-            # This might indicate an issue in the plan execution flow if this happens
-            # For now, we'll initialize a minimal task state to avoid errors
-            if "tasks" not in self.state:
-                self.state["tasks"] = {}
-            if task_id not in self.state["tasks"]:
-                self.state["tasks"][task_id] = {"status": "unknown", "result": None}  # Initialize with basic info
-
-        if "conversation_history" not in self.state["tasks"][task_id]:
-            self.state["tasks"][task_id]["conversation_history"] = []
-
-        self.state["tasks"][task_id]["conversation_history"].append(turn)
-
-    def get_conversation_history(self, task_id):
-        """
-        Retrieve the conversation history for a task.
+        Retrieve the ContextManager instance for a task.
 
         Args:
             task_id: The ID of the task.
 
         Returns:
-            A list of conversation turns, or an empty list if no history is found.
+            The ContextManager instance for the task, or None if the task is not found
+            or does not have a ContextManager.
         """
-        return self.state.get("tasks", {}).get(task_id, {}).get("conversation_history", [])
+        task_state = self.state.get("tasks", {}).get(task_id)
+        if task_state and "context_manager" in task_state:
+            return task_state["context_manager"]
+        return None
+
+    def store_conversation_turn(self, task_id, turn):
+        """
+        Store a single conversation turn for a task using the ContextManager.
+
+        Args:
+            task_id: The ID of the task.
+            turn: The conversation turn (message dictionary).
+        """
+        context_manager = self.get_context_manager(task_id)
+        if context_manager:
+            context_manager.add_message(turn)
+        else:
+            # Handle case where ContextManager is not found for the task
+            # This might indicate an issue in task initialization
+            # For now, we'll log a warning or raise an error
+            print(f"WARNING: ContextManager not found for task {task_id}. Conversation turn not stored.") # Replace with proper logging
+            # Optionally, raise an error:
+            # raise ValueError(f"ContextManager not found for task {task_id}")
+
+
+    def get_conversation_history(self, task_id):
+        """
+        Retrieve the conversation history for a task from the ContextManager.
+
+        Args:
+            task_id: The ID of the task.
+
+        Returns:
+            A list of conversation turns, or an empty list if no history is found
+            or ContextManager is not available.
+        """
+        context_manager = self.get_context_manager(task_id)
+        if context_manager:
+            return context_manager.get_history()
+        return [] # Return empty list if ContextManager is not available

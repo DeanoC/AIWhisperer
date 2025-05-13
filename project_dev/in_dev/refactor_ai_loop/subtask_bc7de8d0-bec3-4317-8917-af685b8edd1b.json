@@ -1,0 +1,52 @@
+{
+  "description": "Update documentation to reflect the new reusable AI loop and ContextManager.",
+  "instructions": [
+    "Open the `docs/usage.md` file.",
+    "Locate relevant sections where the AI interaction flow or context handling is discussed.",
+    "Update these sections to describe the new reusable AI loop component (`src/ai_whisperer/ai_loop.py`) and the `ContextManager` (`src/ai_whisperer/context_management.py`).",
+    "Explain how these components work together and how they improve the AI interaction process.",
+    "Provide examples or guidance on how other agent handlers or parts of the system can utilize the new AI loop and ContextManager.",
+    "Open the `docs/internal_process.md` file.",
+    "Find sections related to the internal workings of the AI Whisperer, particularly regarding AI calls and state management.",
+    "Update these sections to incorporate the details of the new AI loop and ContextManager.",
+    "Describe the role of these components in managing conversation history, state, and interacting with the AI service.",
+    "Ensure the documentation accurately reflects the refactored architecture.",
+    "Open the `src/ai_whisperer/ai_loop.py` file.",
+    "Add comprehensive docstrings to the `AILoop` class and any methods or functions within it, explaining their purpose, parameters, and return values.",
+    "Open the `src/ai_whisperer/context_management.py` file.",
+    "Add comprehensive docstrings to the `ContextManager` class and any methods or functions within it, explaining their purpose, parameters, and return values.",
+    "Review all updated documentation files for clarity, accuracy, and completeness.",
+    "Ensure consistent terminology and formatting across the documentation."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/ai_loop.py",
+    "src/ai_whisperer/context_management.py",
+    "docs/usage.md",
+    "docs/internal_process.md"
+  ],
+  "output_artifacts": [
+    "docs/usage.md",
+    "docs/internal_process.md",
+    "src/ai_whisperer/ai_loop.py",
+    "src/ai_whisperer/context_management.py"
+  ],
+  "constraints": [
+    "Documentation updates must be accurate and reflect the current implementation of the AI loop and ContextManager.",
+    "Docstrings must follow standard Python docstring conventions (e.g., Google, NumPy, or reST style)."
+  ],
+  "validation_criteria": [
+    "The `docs/usage.md` file has been modified and includes descriptions of the new AI loop and ContextManager.",
+    "The `docs/internal_process.md` file has been modified and includes descriptions of the new AI loop and ContextManager.",
+    "The documentation explains how other handlers can potentially utilize the new components.",
+    "The `src/ai_whisperer/ai_loop.py` file contains docstrings for the main class and its methods.",
+    "The `src/ai_whisperer/context_management.py` file contains docstrings for the main class and its methods.",
+    "The updated documentation is clear, concise, and easy to understand."
+  ],
+  "type": "documentation",
+  "name": "update_documentation",
+  "depends_on": [
+    "validate_refactor_with_existing_tests"
+  ],
+  "task_id": "1bc14942-c2cc-4e02-aa1a-78cfb861d8e9",
+  "subtask_id": "bc7de8d0-bec3-4317-8917-af685b8edd1b"
+}

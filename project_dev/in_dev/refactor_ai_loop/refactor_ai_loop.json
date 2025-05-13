@@ -1,0 +1,268 @@
+{
+  "natural_language_goal": "Refactor AI loop functionality from code_generation.py into a reusable component and integrate it with a new ContextManager for message history.",
+  "plan": [
+    {
+      "name": "design_context_manager",
+      "description": "Design the structure and methods for the new ContextManager class to handle message history.",
+      "depends_on": [],
+      "type": "planning",
+      "input_artifacts": [
+        "src/ai_whisperer/agent_handlers/code_generation.py"
+      ],
+      "output_artifacts": [
+        "docs/context_manager_design.md"
+      ],
+      "instructions": [
+        "Analyze the message history handling in code_generation.py.",
+        "Design a ContextManager class that can store and retrieve AI messages and responses.",
+        "Define the methods required for adding, retrieving, and potentially clearing message history.",
+        "Outline how StateManager will interact with ContextManager.",
+        "Document the design in docs/context_manager_design.md."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "docs/context_manager_design.md exists.",
+        "docs/context_manager_design.md clearly defines the ContextManager class structure.",
+        "docs/context_manager_design.md outlines the interaction between StateManager and ContextManager."
+      ],
+      "subtask_id": "140c55a8-9840-4094-8a93-ef5cf0b381a9"
+    },
+    {
+      "name": "design_ai_loop_refactor",
+      "description": "Design the approach for extracting the AI loop into a separate reusable component.",
+      "depends_on": [
+        "design_context_manager"
+      ],
+      "type": "planning",
+      "input_artifacts": [
+        "src/ai_whisperer/agent_handlers/code_generation.py",
+        "docs/context_manager_design.md"
+      ],
+      "output_artifacts": [
+        "docs/ai_loop_refactor_plan.md"
+      ],
+      "instructions": [
+        "Identify the core AI loop logic within code_generation.py.",
+        "Determine how to separate this logic into a reusable function or class.",
+        "Plan how the refactored AI loop will receive context from the ContextManager.",
+        "Outline the changes needed in code_generation.py to use the new AI loop component and ContextManager.",
+        "Document the refactoring plan in docs/ai_loop_refactor_plan.md."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "docs/ai_loop_refactor_plan.md exists.",
+        "docs/ai_loop_refactor_plan.md clearly identifies the AI loop logic to be extracted.",
+        "docs/ai_loop_refactor_plan.md outlines how the AI loop will use the ContextManager.",
+        "docs/ai_loop_refactor_plan.md details the necessary changes in code_generation.py."
+      ],
+      "subtask_id": "df78916c-bf49-4174-a33c-0ea9818cb9f6"
+    },
+    {
+      "name": "generate_context_manager_tests",
+      "description": "Generate unit tests for the new ContextManager class.",
+      "depends_on": [
+        "design_context_manager"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/context_manager_design.md"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_context_manager.py"
+      ],
+      "instructions": [
+        "Create a new test file tests/unit/test_context_manager.py.",
+        "Write unit tests to verify the functionality of the designed ContextManager class.",
+        "Ensure tests cover adding messages, retrieving history, and any other defined methods.",
+        "Run the tests to ensure they compile and run but fail the actual implementation."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "tests/unit/test_context_manager.py exists.",
+        "tests/unit/test_context_manager.py contains tests covering ContextManager functionality.",
+        "Tests compile and run without errors, but fail due to missing implementation."
+      ],
+      "subtask_id": "c3f9c7bc-f177-498d-9a09-82776b39e0b3"
+    },
+    {
+      "name": "implement_context_manager",
+      "description": "Implement the ContextManager class based on the design.",
+      "depends_on": [
+        "generate_context_manager_tests",
+        "design_context_manager"
+      ],
+      "type": "code_generation",
+      "input_artifacts": [
+        "docs/context_manager_design.md",
+        "tests/unit/test_context_manager.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/context_management.py"
+      ],
+      "instructions": [
+        "Create a new file src/ai_whisperer/context_management.py.",
+        "Implement the ContextManager class as designed in docs/context_manager_design.md.",
+        "Ensure the implementation passes the tests in tests/unit/test_context_manager.py.",
+        "Move all message history and message formatting functionality from code_generation.py to this class."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "src/ai_whisperer/context_management.py exists.",
+        "The ContextManager class is implemented.",
+        "All tests in tests/unit/test_context_manager.py pass."
+      ],
+      "subtask_id": "71610858-1e73-4d20-88a8-b51cfdfad79c"
+    },
+    {
+      "name": "generate_ai_loop_tests",
+      "description": "Generate unit tests for the refactored AI loop logic.",
+      "depends_on": [
+        "design_ai_loop_refactor"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/ai_loop_refactor_plan.md",
+        "src/ai_whisperer/agent_handlers/code_generation.py"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_ai_loop.py"
+      ],
+      "instructions": [
+        "Create a new test file tests/unit/test_ai_loop.py.",
+        "Write unit tests to verify the functionality of the AI loop logic identified in docs/ai_loop_refactor_plan.md.",
+        "Consider mocking AI service calls and testing the interaction with the ContextManager.",
+        "Run the tests to ensure they compile and run but fail the actual implementation."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "tests/unit/test_ai_loop.py exists.",
+        "tests/unit/test_ai_loop.py contains tests covering the AI loop logic.",
+        "Tests compile and run without errors, but fail due to missing implementation."
+      ],
+      "subtask_id": "ece29abe-6f9c-44b8-9b22-b55981073bac"
+    },
+    {
+      "name": "refactor_ai_loop",
+      "description": "Extract and refactor the AI loop into a reusable component.",
+      "depends_on": [
+        "generate_ai_loop_tests",
+        "design_ai_loop_refactor",
+        "implement_context_manager"
+      ],
+      "type": "code_generation",
+      "input_artifacts": [
+        "docs/ai_loop_refactor_plan.md",
+        "tests/unit/test_ai_loop.py",
+        "src/ai_whisperer/agent_handlers/code_generation.py",
+        "src/ai_whisperer/context_management.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/ai_loop.py"
+      ],
+      "instructions": [
+        "Create a new file src/ai_whisperer/ai_loop.py.",
+        "Extract the core AI loop logic from src/ai_whisperer/agent_handlers/code_generation.py into a function or class in src/ai_whisperer/ai_loop.py.",
+        "Modify the extracted logic to receive context from the ContextManager.",
+        "Ensure the refactored code passes the tests in tests/unit/test_ai_loop.py."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "src/ai_whisperer/ai_loop.py exists.",
+        "Core AI loop logic is extracted into src/ai_whisperer/ai_loop.py.",
+        "All tests in tests/unit/test_ai_loop.py pass."
+      ],
+      "subtask_id": "36268add-7b9a-4d46-8822-9a1d3f8027d1"
+    },
+    {
+      "name": "integrate_context_manager_and_ai_loop",
+      "description": "Modify code_generation.py and StateManager to use the new ContextManager and refactored AI loop.",
+      "depends_on": [
+        "refactor_ai_loop",
+        "implement_context_manager"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "src/ai_whisperer/agent_handlers/code_generation.py",
+        "src/ai_whisperer/state_management.py",
+        "src/ai_whisperer/ai_loop.py",
+        "src/ai_whisperer/context_management.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/agent_handlers/code_generation.py",
+        "src/ai_whisperer/state_management.py"
+      ],
+      "instructions": [
+        "Modify src/ai_whisperer/agent_handlers/code_generation.py to use the refactored AI loop function/class from src/ai_whisperer/ai_loop.py.",
+        "Update code_generation.py to get the message history context from an instance of ContextManager.",
+        "Modify src/ai_whisperer/state_management.py to instantiate and provide the ContextManager to relevant parts of the system, including the AI loop calls.",
+        "Ensure the AI loop calls in code_generation.py now take their context from the ContextManager provided by StateManager."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "src/ai_whisperer/agent_handlers/code_generation.py is updated to use the new components.",
+        "src/ai_whisperer/state_management.py is updated to manage the ContextManager.",
+        "Code builds and passes existing tests (excluding those intentionally failing before this refactor)."
+      ],
+      "subtask_id": "be55d1d3-b68a-4996-82f1-904bee35daca"
+    },
+    {
+      "name": "validate_refactor_with_existing_tests",
+      "description": "Run existing integration tests to ensure the refactor hasn't broken anything.",
+      "depends_on": [
+        "integrate_context_manager_and_ai_loop"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "src/ai_whisperer/",
+        "tests/integration/test_run_plan_script.py"
+      ],
+      "output_artifacts": [],
+      "instructions": [
+        "Run the test script tests/integration/test_run_plan_script.py.",
+        "Verify that all relevant tests pass after the refactor."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "The script tests/integration/test_run_plan_script.py executes successfully.",
+        "All applicable tests within test_run_plan_script.py pass.",
+        "No new test failures are introduced by the refactor."
+      ],
+      "subtask_id": "492fcf21-2643-4aa1-9cfb-768e600e9a1f"
+    },
+    {
+      "name": "update_documentation",
+      "description": "Update documentation to reflect the new reusable AI loop and ContextManager.",
+      "depends_on": [
+        "validate_refactor_with_existing_tests"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "src/ai_whisperer/ai_loop.py",
+        "src/ai_whisperer/context_management.py",
+        "docs/"
+      ],
+      "output_artifacts": [
+        "docs/usage.md",
+        "docs/internal_process.md"
+      ],
+      "instructions": [
+        "Update relevant documentation files (e.g., docs/usage.md, docs/internal_process.md) to describe the new AI loop component and ContextManager.",
+        "Explain how other handlers can potentially utilize these new components.",
+        "Add docstrings to the new classes and functions."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "Documentation files are updated.",
+        "New components are described and their usage explained.",
+        "Docstrings are added to src/ai_whisperer/ai_loop.py and src/ai_whisperer/context_management.py."
+      ],
+      "subtask_id": "bc7de8d0-bec3-4317-8917-af685b8edd1b"
+    }
+  ],
+  "task_id": "1bc14942-c2cc-4e02-aa1a-78cfb861d8e9",
+  "input_hashes": {
+    "requirements_md": "93c2285cc0b04c309022492c428d0abf9ded1b009fc71b27ec25ec35a54aabed",
+    "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+    "prompt_file": "hash_not_available"
+  }
+}
