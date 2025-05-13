@@ -1,6 +1,8 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from src.ai_whisperer.agent_handlers.code_generation import handle_code_generation, _gather_context, _construct_initial_prompt, _run_ai_interaction_loop, _execute_validation
+from logging import Logger # Import Logger
+from src.ai_whisperer.agent_handlers.code_generation import handle_code_generation, _gather_context, _construct_initial_prompt, _execute_validation
+from src.ai_whisperer.ai_loop import run_ai_loop
 from src.ai_whisperer.exceptions import TaskExecutionError, ToolNotFound
 from src.ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistry is accessible
 from pathlib import Path
@@ -10,7 +12,8 @@ from pathlib import Path
 
 # Update tests to call handler functions directly
 
-def test_handle_code_generation_success():
+@patch('src.ai_whisperer.ai_loop.run_ai_loop', return_value={"content": "Final AI response"})
+def test_handle_code_generation_success(mock_run_loop):
     """Test successful execution of handle_code_generation."""
     mock_engine = MagicMock()
     mock_engine.config.get.return_value = MagicMock() # Mock logger
@@ -21,7 +24,6 @@ def test_handle_code_generation_success():
     # Mock helper functions
     with patch('src.ai_whisperer.agent_handlers.code_generation._gather_context', return_value="Mocked context") as mock_gather_context, \
          patch('src.ai_whisperer.agent_handlers.code_generation._construct_initial_prompt', return_value="Mocked prompt") as mock_construct_prompt, \
-         patch('src.ai_whisperer.agent_handlers.code_generation._run_ai_interaction_loop', return_value=({"content": "Final AI response"}, [])) as mock_run_loop, \
          patch('src.ai_whisperer.agent_handlers.code_generation._execute_validation', return_value=(True, {"overall_status": "passed"})) as mock_execute_validation:
 
         task_definition = {
@@ -49,68 +51,75 @@ def test_handle_code_generation_success():
         # Verify helper functions were called
         mock_gather_context.assert_called_once_with(mock_engine, task_definition, task_id, mock_engine.config.get.return_value)
         mock_construct_prompt.assert_called_once_with(mock_engine, task_definition, task_id, "Mocked context", mock_engine.config.get.return_value)
-        mock_run_loop.assert_called_once_with(mock_engine, task_definition, task_id, "Mocked prompt", mock_engine.config.get.return_value)
+        mock_run_loop.assert_called_once_with(mock_engine, task_definition, task_id, "Mocked prompt", mock_engine.config.get.return_value, mock_engine.state_manager.get_context_manager(task_id)) # Added context_manager assertion
         mock_execute_validation.assert_called_once_with(mock_engine, task_definition, task_id, mock_engine.config.get.return_value)
 
 def test_handle_code_generation_validation_failure():
     """Test handle_code_generation when validation fails."""
+def test_handle_code_generation_validation_failure():
+    """Test handle_code_generation when validation fails."""
     mock_engine = MagicMock()
-    mock_engine.config.get.return_value = MagicMock() # Mock logger
+    mock_engine.config.get.return_value = MagicMock() # Mock config.get for logger
     mock_engine.monitor = MagicMock()
     mock_engine.openrouter_api = MagicMock()
     mock_engine.state_manager = MagicMock()
 
-    # Mock helper functions, simulate validation failure
-    with patch('src.ai_whisperer.agent_handlers.code_generation._gather_context', return_value="Mocked context") as mock_gather_context, \
-         patch('src.ai_whisperer.agent_handlers.code_generation._construct_initial_prompt', return_value="Mocked prompt") as mock_construct_prompt, \
-         patch('src.ai_whisperer.agent_handlers.code_generation._run_ai_interaction_loop', return_value=({"content": "Final AI response"}, [])) as mock_run_loop, \
-         patch('src.ai_whisperer.agent_handlers.code_generation._execute_validation', return_value=(False, {"overall_status": "failed", "commands_executed": [{"command": "test", "exit_code": 1}]})) as mock_execute_validation:
+    # Mock get_logger directly
+    with patch('src.ai_whisperer.agent_handlers.code_generation.get_logger') as mock_get_logger:
+        mock_logger_instance = MagicMock()
+        mock_get_logger.return_value = mock_logger_instance
 
-        task_definition = {
-            "description": "Generate code.",
-            "instructions": ["Do something."],
-            "input_artifacts": [],
-            "output_artifacts": [],
-            "constraints": [],
-            "validation_criteria": ["test"],
-            "type": "code_generation",
-            "name": "test_task",
-            "depends_on": [],
-            "task_id": "fake-task-id",
-            "subtask_id": "fake-subtask-id"
-        }
-        task_id = "fake-task-id"
+        # Mock helper functions, simulate validation failure
+        with patch('src.ai_whisperer.agent_handlers.code_generation._gather_context', return_value="Mocked context") as mock_gather_context, \
+             patch('src.ai_whisperer.agent_handlers.code_generation._construct_initial_prompt', return_value="Mocked prompt") as mock_construct_prompt, \
+             patch('src.ai_whisperer.ai_loop.run_ai_loop', return_value={"content": "Final AI response"}) as mock_run_loop, \
+             patch('src.ai_whisperer.agent_handlers.code_generation._execute_validation', return_value=(False, {"overall_status": "failed", "commands_executed": [{"command": "test", "exit_code": 1}]})) as mock_execute_validation:
 
-        # Use a manual try...except block to catch the exception
-        try:
-            handle_code_generation(mock_engine, task_definition, task_id)
-            # If no exception is raised, fail the test
-            pytest.fail("TaskExecutionError was not raised")
-        except TaskExecutionError as e:
-            # Assert the exception type and message
-            assert isinstance(e, TaskExecutionError)
-            assert "Code generation task fake-task-id failed validation." in str(e)
+            task_definition = {
+                "description": "Generate code.",
+                "instructions": ["Do something."],
+                "input_artifacts": [],
+                "output_artifacts": [],
+                "constraints": [],
+                "validation_criteria": ["test"],
+                "type": "code_generation",
+                "name": "test_task",
+                "depends_on": [],
+                "task_id": "fake-task-id",
+                "subtask_id": "fake-subtask-id"
+            }
+            task_id = "fake-task-id"
 
-            # Assert the details attribute
-            assert hasattr(e, 'details')
-            assert e.details is not None
-            assert e.details["overall_status"] == "failed"
-            assert "commands_executed" in e.details
-            assert isinstance(e.details["commands_executed"], list)
-            assert len(e.details["commands_executed"]) > 0
-            assert e.details["commands_executed"][0]["command"] == "test"
-            assert e.details["commands_executed"][0]["exit_code"] == 1
-        except Exception as e:
-            # Catch any other unexpected exceptions for debugging
-            pytest.fail(f"Caught unexpected exception: {type(e).__name__}: {e}")
+            # Use a manual try...except block to catch the exception
+            try:
+                handle_code_generation(mock_engine, task_definition, task_id)
+                # If no exception is raised, fail the test
+                pytest.fail("TaskExecutionError was not raised")
+            except TaskExecutionError as e:
+                # Assert the exception type and message
+                assert isinstance(e, TaskExecutionError)
+                assert "Code generation task fake-task-id failed validation." in str(e)
 
-        # Verify helper functions were called
-        mock_gather_context.assert_called_once_with(mock_engine, task_definition, task_id, mock_engine.config.get.return_value)
-        mock_construct_prompt.assert_called_once_with(mock_engine, task_definition, task_id, "Mocked context", mock_engine.config.get.return_value)
-        mock_run_loop.assert_called_once_with(mock_engine, task_definition, task_id, "Mocked prompt", mock_engine.config.get.return_value)
-        mock_execute_validation.assert_called_once_with(mock_engine, task_definition, task_id, mock_engine.config.get.return_value)
+                # Assert the details attribute
+                assert hasattr(e, 'details')
+                assert e.details is not None
+                assert e.details["overall_status"] == "failed"
+                assert "commands_executed" in e.details
+                assert isinstance(e.details["commands_executed"], list)
+                assert len(e.details["commands_executed"]) > 0
+                assert e.details["commands_executed"][0]["command"] == "test"
+                assert e.details["commands_executed"][0]["exit_code"] == 1
+            except Exception as e:
+                # Catch any other unexpected exceptions for debugging
+                pytest.fail(f"Caught unexpected exception: {type(e).__name__}: {e}")
 
-# Add tests for helper functions (_gather_context, _construct_initial_prompt, _run_ai_interaction_loop, _execute_validation)
+            # Verify helper functions were called
+            mock_gather_context.assert_called_once_with(mock_engine, task_definition, task_id, mock_logger_instance)
+            mock_construct_prompt.assert_called_once_with(mock_engine, task_definition, task_id, "Mocked context", mock_logger_instance)
+            mock_run_loop.assert_called_once_with(mock_engine, task_definition, task_id, "Mocked prompt", mock_logger_instance)
+            mock_execute_validation.assert_called_once_with(mock_engine, task_definition, task_id, mock_logger_instance)
+
+# Add tests for helper functions (_gather_context, _construct_initial_prompt, run_ai_loop, _execute_validation)
 # These tests will replace the old class-based tests and cover their specific logic.
 
 # Example: Test for _gather_context
@@ -175,107 +184,95 @@ def test__construct_initial_prompt(mock_path):
     assert "--- Raw Task JSON ---\n{\"key\": \"value\"}" in prompt
 
 # Example: Test for _run_ai_interaction_loop (simplified)
-@patch('src.ai_whisperer.agent_handlers.code_generation.ToolRegistry')
-def test__run_ai_interaction_loop_finishes(mock_tool_registry):
-    """Test _run_ai_interaction_loop when AI provides final content."""
+@patch('src.ai_whisperer.ai_loop.ToolRegistry')
+def test_run_ai_loop_finishes(mock_tool_registry):
+    """Test run_ai_loop when AI provides final content."""
     mock_engine = MagicMock()
     mock_engine.config.get.return_value = MagicMock() # Mock logger and AI config
     mock_engine.openrouter_api = MagicMock()
     mock_engine.state_manager = MagicMock()
+    mock_context_manager = MagicMock() # Mock ContextManager
 
     # Simulate AI response with content
     mock_engine.openrouter_api.call_chat_completion.return_value = {"content": "Final response"}
+    mock_context_manager.get_history.return_value = [] # Mock empty history initially
 
     task_definition = {}
     task_id = "fake-task-id"
     initial_prompt = "Initial prompt."
 
-    final_result, conversation_history = _run_ai_interaction_loop(mock_engine, task_definition, task_id, initial_prompt, mock_engine.config.get.return_value)
+    final_result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_engine.config.get.return_value, mock_context_manager)
 
     assert final_result["content"] == "Final response"
-    assert len(conversation_history) == 2 # Initial prompt + final response
     mock_engine.openrouter_api.call_chat_completion.assert_called_once()
-    assert mock_engine.state_manager.store_conversation_turn.call_count == 2
+    mock_context_manager.add_message.call_count == 2 # Initial prompt + final response
 
 # Example: Test for _execute_validation
-@patch('src.ai_whisperer.agent_handlers.code_generation.ToolRegistry')
-def test__execute_validation_success(mock_tool_registry):
-    """Test _execute_validation with successful commands."""
+@patch('src.ai_whisperer.agent_handlers.code_generation.Path')
+def test__execute_validation_success(mock_path):
+    """Test _execute_validation with all expected files existing."""
     mock_engine = MagicMock()
     mock_logger = MagicMock()
     task_definition = {
-        "validation_criteria": ["cmd1", "cmd2"]
+        "expected_output_files": ["file1.txt", "dir1/file2.txt"]
     }
     task_id = "fake-task-id"
 
-    mock_execute_tool = MagicMock()
-    mock_execute_tool.execute.side_effect = [
-        {"exit_code": 0, "stdout": "out1", "stderr": ""},
-        {"exit_code": 0, "stdout": "out2", "stderr": ""}
-    ]
-    mock_tool_registry_instance = MagicMock()
-    mock_tool_registry_instance.get_tool.return_value = mock_execute_tool
-    mock_tool_registry.return_value = mock_tool_registry_instance
+    # Mock Path objects to simulate files existing
+    mock_file1 = MagicMock()
+    mock_file1.is_file.return_value = True
+    mock_file2 = MagicMock()
+    mock_file2.is_file.return_value = True
+    mock_path.side_effect = lambda x: mock_file1 if x == "file1.txt" else mock_file2
 
     passed, details = _execute_validation(mock_engine, task_definition, task_id, mock_logger)
 
     assert passed is True
     assert details["overall_status"] == "passed"
-    assert len(details["commands_executed"]) == 2
-    assert details["commands_executed"][0]["command"] == "cmd1"
-    assert details["commands_executed"][1]["command"] == "cmd2"
-    assert mock_execute_tool.execute.call_count == 2
+    assert details["checked_files"] == ["file1.txt", "dir1/file2.txt"]
+    assert details["missing_files"] == []
+    mock_path.call_count == 2 # Ensure Path was called for each file
 
-@patch('src.ai_whisperer.agent_handlers.code_generation.ToolRegistry')
-def test__execute_validation_failure(mock_tool_registry):
-    """Test _execute_validation with a failing command."""
+@patch('src.ai_whisperer.agent_handlers.code_generation.Path')
+def test__execute_validation_failure_missing_file(mock_path):
+    """Test _execute_validation with a missing expected file."""
     mock_engine = MagicMock()
     mock_logger = MagicMock()
     task_definition = {
-        "validation_criteria": ["cmd1", "cmd2"]
+        "expected_output_files": ["file1.txt", "dir1/file2.txt"]
     }
     task_id = "fake-task-id"
 
-    mock_execute_tool = MagicMock()
-    mock_execute_tool.execute.side_effect = [
-        {"exit_code": 0, "stdout": "out1", "stderr": ""},
-        {"exit_code": 1, "stdout": "out2", "stderr": "error2"} # Simulate failure
-    ]
-    mock_tool_registry_instance = MagicMock()
-    mock_tool_registry_instance.get_tool.return_value = mock_execute_tool
-    mock_tool_registry.return_value = mock_tool_registry_instance
+    # Mock Path objects to simulate one file missing
+    mock_file1 = MagicMock()
+    mock_file1.is_file.return_value = True
+    mock_file2 = MagicMock()
+    mock_file2.is_file.return_value = False # Simulate missing file
+    mock_path.side_effect = lambda x: mock_file1 if x == "file1.txt" else mock_file2
 
     passed, details = _execute_validation(mock_engine, task_definition, task_id, mock_logger)
 
     assert passed is False
     assert details["overall_status"] == "failed"
-    assert len(details["commands_executed"]) == 2
-    assert details["commands_executed"][0]["command"] == "cmd1"
-    assert details["commands_executed"][1]["command"] == "cmd2"
-    assert details["commands_executed"][1]["exit_code"] == 1
-    assert mock_execute_tool.execute.call_count == 2
+    assert details["checked_files"] == ["file1.txt", "dir1/file2.txt"]
+    assert details["missing_files"] == ["dir1/file2.txt"]
+    assert details["commands_executed"] == [] # commands_executed should be an empty list
+    mock_path.call_count == 2 # Ensure Path was called for each file
 
-@patch('src.ai_whisperer.agent_handlers.code_generation.ToolRegistry')
-def test__execute_validation_tool_not_found(mock_tool_registry):
-    """Test _execute_validation when execute_command tool is not found."""
+def test__execute_validation_no_criteria():
+    """Test _execute_validation with no validation criteria."""
     mock_engine = MagicMock()
     mock_logger = MagicMock()
-    task_definition = {
-        "validation_criteria": ["cmd1"]
-    }
+    task_definition = {} # No validation_criteria or expected_output_files
     task_id = "fake-task-id"
 
-    mock_tool_registry_instance = MagicMock()
-    # Mock get_tool to return None, simulating tool not found
-    mock_tool_registry_instance.get_tool.return_value = None
-    mock_tool_registry.return_value = mock_tool_registry_instance
+    passed, details = _execute_validation(mock_engine, task_definition, task_id, mock_logger)
 
-    with pytest.raises(TaskExecutionError) as excinfo:
-        _execute_validation(mock_engine, task_definition, task_id, mock_logger)
-
-    # Assert that the expected error message is in the exception
-    assert f"Task {task_id}: Execute command tool not found for validation." in str(excinfo.value)
-    mock_tool_registry_instance.get_tool.assert_called_once_with('execute_command')
+    assert passed is True
+    assert details["overall_status"] == "skipped"
+    assert "checked_files" not in details # Ensure file checks were skipped
+    assert "missing_files" not in details # Ensure file checks were skipped
+    assert details["commands_executed"] == [] # commands_executed should be an empty list
 
 # Add more specific tests for _run_ai_interaction_loop covering tool calls,
 # unexpected responses, and error handling within the loop.

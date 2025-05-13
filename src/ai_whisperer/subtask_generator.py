@@ -182,7 +182,7 @@ class SubtaskGenerator:
             except (json.JSONDecodeError, ValueError) as e:
                 logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
                 raise SubtaskGenerationError(
-                    f"Failed to parse AI response as JSON: {e}\nResponse:\n{ai_response_text}"
+                    f"Failed to parse AI response as JSON: {e}\nResponse:\n{ai_response_content.get('content')}"
                 ) from e
             except ProcessingError as e:  # Catch errors from within the pipeline steps
                 logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")

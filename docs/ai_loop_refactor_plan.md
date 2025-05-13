@@ -33,21 +33,22 @@ The `ContextManager` will be instantiated in the calling code (e.g., within the 
 
 The following modifications will be made to `src/ai_whisperer/agent_handlers/code_generation.py`:
 
-1.  **Import the new AI loop component:**
+1. **Import the new AI loop component:**
+
     ```python
     from src.ai_whisperer.ai_loop import run_ai_loop
     from src.ai_whisperer.context_management import ContextManager # Import ContextManager
     ```
 
-2.  **Instantiate `ContextManager`:**
+2. **Instantiate `ContextManager`:**
     - Within the `handle_code_generation` function, create an instance of `ContextManager`.
     - Initialize the `ContextManager` with the initial prompt.
 
-3.  **Replace `_run_ai_interaction_loop` content:**
+3. **Replace `_run_ai_interaction_loop` content:**
     - Remove the existing logic within `_run_ai_interaction_loop`.
     - Call the new `run_ai_loop` function, passing the necessary parameters, including the `ContextManager` instance, the `ExecutionEngine` instance (or relevant parts like the AI service and tool registry), and the task definition.
 
-4.  **Update StateManager interaction:**
+4. **Update StateManager interaction:**
     - The `run_ai_loop` function will be responsible for adding messages to the `ContextManager`.
     - The interaction with the `StateManager` for persistence will need to be reviewed. It might be handled within `run_ai_loop` or remain in `handle_code_generation`, potentially serializing the `ContextManager`'s history to the StateManager. For the initial refactor, the `run_ai_loop` function will handle adding messages to the `ContextManager`, and the calling code (`handle_code_generation`) will be responsible for persisting the `ContextManager`'s state via the `StateManager` if necessary after the loop completes.
 

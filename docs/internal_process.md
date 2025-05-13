@@ -128,11 +128,11 @@ When creating or modifying AI prompts for the system:
 
 The core AI interaction within the AI Whisperer is managed by the reusable AI loop component (`src/ai_whisperer/ai_loop.py`) in conjunction with the ContextManager (`src/ai_whisperer/context_management.py`).
 
-1.  **Context Initialization**: For each task requiring AI interaction, a dedicated instance of the `ContextManager` is created and managed by the `StateManager`. This instance will hold the conversation history specific to that task.
-2.  **AI Loop Execution**: The `Execution Engine` invokes the AI loop (`run_ai_loop`) for tasks of type `code_generation` (and potentially others in the future). The `run_ai_loop` function receives the task details, the execution engine (providing access to AI services and tools), and the task's `ContextManager` instance.
-3.  **Iterative Interaction**: Inside the AI loop, the `ContextManager` is used to maintain the conversation history. User prompts, AI responses, and tool outputs are added to the `ContextManager`'s history. This history is then passed to the AI service for subsequent turns.
-4.  **Tool Execution**: If the AI requests a tool call, the AI loop uses the `ToolRegistry` (provided via the `Execution Engine`) to find and execute the requested tool. The output of the tool is then added to the `ContextManager`'s history and sent back to the AI.
-5.  **Loop Termination**: The AI loop continues until the AI provides a final response (content) or signals completion. The final AI response is returned by the `run_ai_loop` function.
+1. **Context Initialization**: For each task requiring AI interaction, a dedicated instance of the `ContextManager` is created and managed by the `StateManager`. This instance will hold the conversation history specific to that task.
+2. **AI Loop Execution**: The `Execution Engine` invokes the AI loop (`run_ai_loop`) for tasks of type `code_generation` (and potentially others in the future). The `run_ai_loop` function receives the task details, the execution engine (providing access to AI services and tools), and the task's `ContextManager` instance.
+3. **Iterative Interaction**: Inside the AI loop, the `ContextManager` is used to maintain the conversation history. User prompts, AI responses, and tool outputs are added to the `ContextManager`'s history. This history is then passed to the AI service for subsequent turns.
+4. **Tool Execution**: If the AI requests a tool call, the AI loop uses the `ToolRegistry` (provided via the `Execution Engine`) to find and execute the requested tool. The output of the tool is then added to the `ContextManager`'s history and sent back to the AI.
+5. **Loop Termination**: The AI loop continues until the AI provides a final response (content) or signals completion. The final AI response is returned by the `run_ai_loop` function.
 
 This modular design allows for consistent and efficient management of AI interactions and conversation history across different parts of the AI Whisperer.
 
@@ -154,17 +154,15 @@ This integration of state management allows the AI Whisperer runner to maintain 
 
 Logging and monitoring are integral to understanding and debugging the internal processes of the AIWhisperer system. As the Orchestrator, Subtask Generator, Execution Engine, and other components perform their functions, detailed logs are generated. These logs capture:
 
-*   Interactions with AI services.
-*   File system operations.
-*   Execution of terminal commands.
-*   State changes within the system.
-*   User interactions with the runner.
+- Interactions with AI services.
+- File system operations.
+- Execution of terminal commands.
+- State changes within the system.
+- User interactions with the runner.
 
 This comprehensive audit trail, coupled with the real-time terminal monitoring view, provides developers with the necessary insights to trace execution flows, diagnose issues, and verify that internal processes are operating as expected.
 
 For a complete guide to these features, please consult the [Logging and Monitoring Documentation](./logging_monitoring.md).
-
-## Error Handling
 
 The system includes comprehensive error handling for various scenarios:
 
