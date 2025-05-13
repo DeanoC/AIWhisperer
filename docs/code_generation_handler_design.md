@@ -15,7 +15,7 @@ The handler is responsible for managing the interaction with an AI agent to gene
     # src/ai_whisperer/agent_handlers/code_generation.py
     from src.ai_whisperer.execution_engine import ExecutionEngine
     from src.ai_whisperer.exceptions import TaskExecutionError
-    from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
+    from src.ai_whisperer.logging_custom_custom import LogMessage, LogLevel, ComponentType
     from src.ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistry is accessible
     from pathlib import Path
     import json

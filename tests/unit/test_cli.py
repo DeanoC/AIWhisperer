@@ -5,14 +5,6 @@ import os
 
 # Import the main function and command classes
 from ai_whisperer.cli import main
-from ai_whisperer.commands import (
-    ListModelsCommand,
-    GenerateInitialPlanCommand,
-    GenerateOverviewPlanCommand,
-    RefineCommand,
-    RunCommand,
-)
-
 # Define a fixture to capture stdout/stderr for testing SystemExit messages
 @pytest.fixture
 def capsys_sys_exit(capsys):
@@ -286,7 +278,8 @@ def test_run_command_valid_args(mock_commands):
     mock_commands["RunCommand"].assert_called_once_with(
         config_path="config.yaml",
         plan_file="plan.json",
-        state_file="state.json"
+        state_file="state.json",
+        monitor=False # Added expected monitor argument
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -319,6 +312,34 @@ def test_run_command_missing_config(capsys_sys_exit):
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
     assert "the following arguments are required: --config" in captured.err
+
+def test_run_command_with_monitor(mock_commands):
+    """Test parsing arguments for the run command with --monitor."""
+    args = ["--config", "config.yaml", "run", "--plan-file", "plan.json", "--state-file", "state.json", "--monitor"]
+    commands = main(args)
+
+    assert len(commands) == 1
+    mock_commands["RunCommand"].assert_called_once_with(
+        config_path="config.yaml",
+        plan_file="plan.json",
+        state_file="state.json",
+        monitor=True
+    )
+    assert isinstance(commands[0], MagicMock)
+
+def test_run_command_without_monitor(mock_commands):
+    """Test parsing arguments for the run command without --monitor."""
+    args = ["--config", "config.yaml", "run", "--plan-file", "plan.json", "--state-file", "state.json"]
+    commands = main(args)
+
+    assert len(commands) == 1
+    mock_commands["RunCommand"].assert_called_once_with(
+        config_path="config.yaml",
+        plan_file="plan.json",
+        state_file="state.json",
+        monitor=False # Default value
+    )
+    assert isinstance(commands[0], MagicMock)
 
 def test_invalid_command(capsys_sys_exit):
     """Test with an invalid command."""

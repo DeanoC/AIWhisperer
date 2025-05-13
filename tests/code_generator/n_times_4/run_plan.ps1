@@ -212,18 +212,20 @@ try {
     $pythonArgs += @(
         "run",
         "--plan-file",$planJsonPath,
-        "--state-file", (Join-Path -Path $OutputFolder -ChildPath "state.json")
+        "--state-file", (Join-Path -Path $OutputFolder -ChildPath "state.json"),
+        "--monitor"
     )
     Write-Verbose "Executing Python script from Project Root: $ProjectRoot"
     Write-Verbose "Command: $VenvPythonPath $($pythonArgs -join ' ')"
     
-    # Change to the parent directory of 'src' for correct Python module resolution
-    $SrcParentDir = $TrueProjectRoot
-    if (-not (Test-Path (Join-Path $SrcParentDir "src") -PathType Container)) {
-        # Fallback: try one level up if 'src' is not found
-        $SrcParentDir = (Split-Path $TrueProjectRoot -Parent)
+    # Ensure current directory contains 'src' for correct Python module resolution
+    if (-not (Test-Path -Path (Join-Path (Get-Location) "src") -PathType Container)) {
+        Set-Location -Path $ProjectRoot
+        Write-Verbose "Changed location to Project Root: $ProjectRoot"
+    } else {
+        Write-Verbose "Current directory already contains 'src'."
     }
-    Set-Location -Path $SrcParentDir
+    $env:PYTHONPATH = "./src"
 
     # Execute the command
     & $VenvPythonPath $pythonArgs

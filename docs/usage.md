@@ -86,7 +86,7 @@ The `run` command is used to execute a project plan from an overview JSON file a
 **Command Syntax:**
 
 ```bash
-ai_whisperer run --plan-file <path_to_plan.json> --state-file <path_to_state.json> --config <path_to_config.yaml>
+ai_whisperer run --plan-file <path_to_plan.json> --state-file <path_to_state.json> --config <path_to_config.yaml> [--monitor | -m]
 ```
 
 **Arguments:**
@@ -94,6 +94,7 @@ ai_whisperer run --plan-file <path_to_plan.json> --state-file <path_to_state.jso
 * `--plan-file <path_to_plan.json>` (Required): Path to the input overview JSON file containing the task plan. This file defines the sequence of steps and their details.
 * `--state-file <path_to_state.json>` (Required): Path to the state file. This file is used to load the previous state of a plan execution (if any) and save the current state after each step. This allows for resuming interrupted runs.
 * `--config <path_to_config.yaml>` (Required): Path to the configuration YAML file. This file contains necessary settings for the orchestrator and any AI interactions required by the plan steps.
+* `--monitor`, `-m` (Optional): Enables the terminal monitor during the task execution. When this flag is present, the AI Whisperer will display real-time updates on the plan's progress directly in the terminal.
 
 **Examples:**
 
@@ -105,7 +106,15 @@ ai_whisperer run --plan-file <path_to_plan.json> --state-file <path_to_state.jso
 
     This will start executing the plan defined in `my_feature_plan.json`, loading and saving the execution state to `run_state.json` using the configuration in `config.yaml`.
 
-2. **Resuming a plan execution:**
+2. **Running a plan with the terminal monitor enabled:**
+
+    ```bash
+    ai_whisperer run --plan-file project_plans/my_feature_plan.json --state-file run_state.json --config config.yaml --monitor
+    ```
+
+    This command will execute the plan and display the progress in the terminal using the monitor.
+
+3. **Resuming a plan execution:**
 
     ```bash
     ai_whisperer run --plan-file project_plans/my_feature_plan.json --state-file run_state.json --config config.yaml

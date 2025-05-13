@@ -6,13 +6,12 @@ from enum import Enum
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 
-# Assuming LogLevel, ComponentType, and LogMessage are defined in src/ai_whisperer/logging.py
-# If the actual implementation path is different, this import will need adjustment.
+
 try:
-    from src.ai_whisperer.logging import LogLevel, ComponentType, LogMessage
+    from src.ai_whisperer.logging_custom import LogLevel, ComponentType, LogMessage
 
     # Assuming a logging function or class exists, e.g., setup_logging and a logger instance
-    from src.ai_whisperer.logging import setup_logging, get_logger
+    from src.ai_whisperer.logging_custom import setup_logging, get_logger
 except ImportError:
     # Provide dummy implementations for testing if the actual module doesn't exist yet
     # This allows the tests themselves to be generated and checked for structure/logic

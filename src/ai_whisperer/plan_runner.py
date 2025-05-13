@@ -4,6 +4,7 @@ This module contains the PlanRunner class, responsible for executing a project p
 
 import logging
 import traceback
+import threading # Import threading
 from typing import Dict, Any
 
 from .config import load_config
@@ -31,7 +32,7 @@ class PlanRunner:
     """
     Executes a project plan from a parsed plan object.
     """
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], monitor: bool = False):
         """
         Initializes the PlanRunner with application configuration.
 
@@ -39,6 +40,7 @@ class PlanRunner:
             config: The loaded application configuration dictionary.
         """
         self.config = config
+        self.monitor_enabled = monitor # Store the monitor flag
         self._register_tools()
         logger.info("PlanRunner initialized.")
 
@@ -136,7 +138,7 @@ class PlanRunner:
             ) from e
 
         # Initialize Execution Engine
-        monitor = TerminalMonitor(state_manager)  # Initialize TerminalMonitor
+        monitor = TerminalMonitor(state_manager, monitor_enabled=self.monitor_enabled)  # Initialize TerminalMonitor
         execution_engine = ExecutionEngine(state_manager, monitor, self.config)
         logger.info("Execution Engine initialized.")
         log_event(
@@ -144,6 +146,16 @@ class PlanRunner:
                 LogLevel.INFO, ComponentType.RUNNER, "execution_engine_initialized", "Execution Engine initialized."
             )
         )
+
+        # Conditionally start the monitor thread
+        if self.monitor_enabled:
+            logger.info("Starting terminal monitor thread.")
+            monitor_thread = threading.Thread(target=monitor.run, daemon=True)
+            monitor_thread.start()
+            log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "monitor_thread_started", "Terminal monitor thread started."))
+        else:
+            logger.info("Terminal monitor is disabled.")
+            log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "monitor_disabled", "Terminal monitor is disabled."))
 
         # Execute the plan
         plan_successful = True  # Flag to track overall plan success

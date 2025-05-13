@@ -1,0 +1,47 @@
+{
+  "description": "Modify the execution engine to conditionally start the monitor thread based on the received option value.",
+  "instructions": [
+    "Analyze `docs/monitor_integration_plan.md` to determine whether `src/ai_whisperer/execution_engine.py` or `src/ai_whisperer/plan_runner.py` is the appropriate location to handle the monitor option and conditional thread start.",
+    "Open the identified file (`src/ai_whisperer/execution_engine.py` or `src/ai_whisperer/plan_runner.py`).",
+    "Locate the function or method responsible for initializing or starting the execution process.",
+    "Modify the function/method signature or initial setup to accept the monitor option value, which should be received from the CLI handling logic (implemented in a previous step).",
+    "Add a conditional statement (e.g., an `if` statement) that checks the value of the monitor option.",
+    "Move the code that starts the monitor thread (likely found or related to `src/ai_whisperer/monitoring.py`) inside this conditional block.",
+    "Ensure that the monitor thread is started only when the monitor option is enabled (e.g., its value is `True`).",
+    "Review `tests/integration/test_runner_logging_monitoring.py` to understand how the conditional start of the monitor is tested and ensure your implementation aligns with these test cases.",
+    "Make sure the monitor thread is created as a daemon thread to prevent it from blocking the main program exit.",
+    "Verify that the changes do not negatively impact the existing execution flow when the monitor option is disabled."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/execution_engine.py",
+    "src/ai_whisperer/plan_runner.py",
+    "src/ai_whisperer/monitoring.py",
+    "docs/monitor_integration_plan.md",
+    "tests/integration/test_runner_logging_monitoring.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/execution_engine.py",
+    "src/ai_whisperer/plan_runner.py"
+  ],
+  "constraints": [
+    "Ensure the monitor thread, if started, is a daemon thread.",
+    "The conditional logic must be based on the monitor option value received from the CLI.",
+    "Do not introduce unintended side effects or break existing core execution logic.",
+    "Adhere to existing code style and conventions."
+  ],
+  "validation_criteria": [
+    "Either `src/ai_whisperer/execution_engine.py` or `src/ai_whisperer/plan_runner.py` has been modified.",
+    "The modified code includes a conditional check based on a variable representing the monitor option.",
+    "The code responsible for starting the monitor thread is located within this conditional block.",
+    "The monitor thread, when started, is configured as a daemon thread.",
+    "Running `pytest tests/integration/test_runner_logging_monitoring.py` successfully passes all tests."
+  ],
+  "type": "file_edit",
+  "name": "implement_conditional_monitor_start",
+  "depends_on": [
+    "implement_cli_option",
+    "generate_execution_tests"
+  ],
+  "task_id": "84759553-314a-45d3-993c-4805c7fb1e6f",
+  "subtask_id": "e144be00-3e05-46fb-a9ab-f68cf093cbc4"
+}

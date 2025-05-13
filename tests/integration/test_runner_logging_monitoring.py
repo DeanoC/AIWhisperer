@@ -1,11 +1,13 @@
 import pytest
 import logging
+import threading
 from unittest.mock import MagicMock, patch
 
 # Assuming these modules exist and have the necessary classes/functions
 from src.ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.state_management import StateManager
-from src.ai_whisperer.logging import LogMessage, LogLevel, ComponentType
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
+from src.ai_whisperer.commands import RunCommand
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
 
@@ -333,3 +335,31 @@ def test_runner_logs_and_state_updates_on_user_interaction(MockExecutionEngine, 
 # - Testing the interaction between different components' logs (e.g., ExecutionEngine step log followed by AI_SERVICE logs).
 # - If the terminal monitoring view logic is testable separately, add tests for that.
 # - If the plan structure is more complex, use actual Plan/Step objects and potentially mock their dependencies.
+
+@patch('threading.Thread.start')
+@patch('src.ai_whisperer.plan_runner.PlanRunner')
+@patch('src.ai_whisperer.commands.load_config')
+@patch('src.ai_whisperer.commands.ParserPlan')
+def test_monitor_thread_not_started_without_option(mock_parser_plan, mock_load_config, mock_plan_runner, mock_thread_start):
+    """
+    Tests that the monitor thread is not started when the --monitor option is not used.
+    """
+    mock_load_config.return_value = {} # Return a mock config dictionary
+    mock_parser_plan.return_value.get_parsed_plan.return_value = {"plan_id": "mock_plan"} # Return a mock plan dictionary
+    run_command_instance = RunCommand(config_path="dummy_config_path", plan_file="dummy_plan_path", state_file="dummy_state_path", monitor=False)
+    run_command_instance.execute()
+    mock_thread_start.assert_not_called()
+
+@patch('threading.Thread.start')
+@patch('src.ai_whisperer.plan_runner.PlanRunner')
+@patch('src.ai_whisperer.commands.load_config')
+@patch('src.ai_whisperer.commands.ParserPlan')
+def test_monitor_thread_started_with_option(mock_parser_plan, mock_load_config, mock_plan_runner, mock_thread_start):
+    """
+    Tests that the monitor thread is started when the --monitor option is used.
+    """
+    mock_load_config.return_value = {} # Return a mock config dictionary
+    mock_parser_plan.return_value.get_parsed_plan.return_value = {"plan_id": "mock_plan"} # Return a mock plan dictionary
+    run_command_instance = RunCommand(config_path="dummy_config_path", plan_file="dummy_plan_path", state_file="dummy_state_path", monitor=True)
+    run_command_instance.execute()
+    mock_thread_start.assert_called_once()

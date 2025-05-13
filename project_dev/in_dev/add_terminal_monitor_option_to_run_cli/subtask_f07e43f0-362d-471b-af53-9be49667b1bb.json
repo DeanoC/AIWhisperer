@@ -1,0 +1,42 @@
+{
+  "description": "Generate tests to verify that the monitor thread is conditionally started based on the CLI option.",
+  "instructions": [
+    "Open the file `tests/integration/test_runner_logging_monitoring.py`.",
+    "Based on the plan outlined in `docs/monitor_integration_plan.md`, identify the specific test cases required to verify the conditional starting of the monitor thread.",
+    "Add new test methods within the appropriate test class in `test_runner_logging_monitoring.py`.",
+    "Create one test case that simulates running the plan execution without the `--monitor` CLI option.",
+    "Create another test case that simulates running the plan execution with the `--monitor` CLI option.",
+    "Within the test case simulating the absence of the `--monitor` option, use `unittest.mock.patch` or `pytest.mock.patch` to mock `threading.Thread.start`.",
+    "Assert that the mocked `threading.Thread.start` was NOT called in the test case without the `--monitor` option.",
+    "Within the test case simulating the presence of the `--monitor` option, use `unittest.mock.patch` or `pytest.mock.patch` to mock `threading.Thread.start`.",
+    "Assert that the mocked `threading.Thread.start` WAS called in the test case with the `--monitor` option.",
+    "Ensure the test cases are structured correctly according to pytest conventions.",
+    "Run the tests using `pytest tests/integration/test_runner_logging_monitoring.py` to verify that the new tests are discovered and the test structure is valid. It is expected that these new tests will initially fail as the implementation for conditional starting is not yet complete."
+  ],
+  "input_artifacts": [
+    "docs/monitor_integration_plan.md",
+    "tests/integration/test_runner_logging_monitoring.py"
+  ],
+  "output_artifacts": [
+    "tests/integration/test_runner_logging_monitoring.py"
+  ],
+  "constraints": [
+    "Only modify the specified test file.",
+    "Do not implement the actual logic for conditionally starting the monitor thread in this subtask.",
+    "Use appropriate mocking techniques (e.g., `unittest.mock.patch` or `pytest.mock.patch`) to verify the call to `threading.Thread.start` without relying on the actual thread execution."
+  ],
+  "validation_criteria": [
+    "The file `tests/integration/test_runner_logging_monitoring.py` has been modified.",
+    "New test methods specifically designed to verify the conditional starting of the monitor thread based on the `--monitor` CLI option are present in `tests/integration/test_runner_logging_monitoring.py`.",
+    "At least one test case verifies that `threading.Thread.start` is called when `--monitor` is used.",
+    "At least one test case verifies that `threading.Thread.start` is NOT called when `--monitor` is NOT used.",
+    "Running `pytest tests/integration/test_runner_logging_monitoring.py` successfully discovers and attempts to run the newly added test cases (they are expected to fail at this stage)."
+  ],
+  "type": "test_generation",
+  "name": "generate_execution_tests",
+  "depends_on": [
+    "analyze_execution_engine_monitor_integration"
+  ],
+  "task_id": "84759553-314a-45d3-993c-4805c7fb1e6f",
+  "subtask_id": "f07e43f0-362d-471b-af53-9be49667b1bb"
+}

@@ -9,35 +9,18 @@ from rich.table import Table
 from rich.prompt import Prompt
 from rich.style import Style
 
-# Assuming LogMessage, LogLevel, ComponentType are defined in logging.py
-# and StateManager is defined in state_management.py
-# We will need to import them or define local mocks for standalone testing if necessary.
-# For the actual implementation, we will import from the respective modules.
-
-import time
-from typing import Optional, List, Dict, Any
-from rich.console import Console
-from rich.layout import Layout
-from rich.live import Live
-from rich.panel import Panel
-from rich.text import Text
-from rich.table import Table
-from rich.prompt import Prompt
-from rich.style import Style
-
 # Import real classes from the respective modules
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
 from src.ai_whisperer.state_management import StateManager
-
-
 class TerminalMonitor:
     """
     Provides a terminal-based monitoring view for the AIWhisperer runner.
     """
 
-    def __init__(self, state_manager: StateManager):
+    def __init__(self, state_manager: StateManager, monitor_enabled: bool = True):
         self.console = Console()
         self.state_manager = state_manager
+        self.monitor_enabled = monitor_enabled # Store the flag
         self._live: Optional[Live] = None
         self._layout = self._create_layout()
         self._current_step_logs: List[LogMessage] = []  # Logs for the currently displayed step
@@ -144,31 +127,39 @@ class TerminalMonitor:
             self._general_logs.append(log_message)
         # Note: Logs for steps other than the active one are not stored in this simple monitor.
         # A more advanced monitor would store all logs and allow switching views.
-        self.update_display()
+        if self.monitor_enabled: # Conditionally update display
+            self.update_display()
 
     def set_active_step(self, subtask_id: Optional[str]):
         """Sets the step whose logs should be displayed."""
         self._active_subtask_id = subtask_id
         self._current_step_logs = []  # Clear previous step logs when switching
         # In a real implementation, you would load logs for this step from a log store.
-        self.update_display()
+        if self.monitor_enabled: # Conditionally update display
+            self.update_display()
 
     def set_runner_status_info(self, info: str):
         """Sets the information displayed in the status bar."""
         self._runner_status_info = info
-        self.update_display()
+        if self.monitor_enabled: # Conditionally update display
+            self.update_display()
 
     def set_plan_name(self, plan_name: str):
         """Sets the name of the plan being executed."""
         self._plan_name = plan_name
-        self.update_display()
+        if self.monitor_enabled: # Conditionally update display
+            self.update_display()
 
     def run(self):
         """Starts the terminal monitoring interface."""
-        with Live(self._layout, console=self.console, screen=True, refresh_per_second=4) as live:
-            self._live = live
-            self.update_display()  # Initial display
-            # The main runner loop would drive updates to the state manager and call update_display
-            # This run method would likely be called in a separate thread or async task
-            # to allow the main runner logic to proceed.
-            # For a simple example, we can keep it running until interrupted.
+        if self.monitor_enabled: # Only start live display if monitoring is enabled
+            with Live(self._layout, console=self.console, screen=True, refresh_per_second=4) as live:
+                self._live = live
+                self.update_display()  # Initial display
+                # The main runner loop would drive updates to the state manager and call update_display
+                # This run method would likely be called in a separate thread or async task
+                # to allow the main runner logic to proceed.
+                # For a simple example, we can keep it running until interrupted.
+        else:
+            # If monitoring is disabled, just log that the monitor is "running" without display
+            print("Terminal monitoring is disabled.") # Or use a logger if appropriate

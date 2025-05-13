@@ -1,0 +1,148 @@
+{
+    "natural_language_goal": "Add a CLI option to the run command to enable the terminal monitor during execution.",
+    "plan": [
+        {
+            "subtask_id": "2006acaf-d076-42a4-bb6b-1cb8a89ca32b",
+            "name": "analyze_cli_structure",
+            "description": "Analyze the existing CLI structure to determine where to add the new option for the terminal monitor.",
+            "file_path": "project_dev/in_dev/add_terminal_monitor_option_to_run_cli/subtask_2006acaf-d076-42a4-bb6b-1cb8a89ca32b.json",
+            "type": "planning",
+            "depends_on": [],
+            "input_artifacts": [
+                "src/ai_whisperer/cli.py",
+                "src/ai_whisperer/commands.py",
+                "src/ai_whisperer/main.py"
+            ],
+            "output_artifacts": [
+                "docs/cli_analysis_monitor_option.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "34e4d6c1-0ce8-42e2-9ede-e8fb8a893039",
+            "name": "analyze_execution_engine_monitor_integration",
+            "description": "Analyze the execution engine and monitor code to determine how to conditionally start the monitor thread based on the new CLI option.",
+            "file_path": "project_dev/in_dev/add_terminal_monitor_option_to_run_cli/subtask_34e4d6c1-0ce8-42e2-9ede-e8fb8a893039.json",
+            "type": "planning",
+            "depends_on": [
+                "analyze_cli_structure"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/monitoring.py",
+                "src/ai_whisperer/plan_runner.py",
+                "docs/cli_analysis_monitor_option.md"
+            ],
+            "output_artifacts": [
+                "docs/monitor_integration_plan.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "1f45bb2b-4dbf-4240-b5bd-a4fc505b3d05",
+            "name": "generate_cli_tests",
+            "description": "Generate tests for the new CLI option to ensure it is parsed correctly and the value is passed as expected.",
+            "file_path": "project_dev/in_dev/add_terminal_monitor_option_to_run_cli/subtask_1f45bb2b-4dbf-4240-b5bd-a4fc505b3d05.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_cli_structure"
+            ],
+            "input_artifacts": [
+                "docs/cli_analysis_monitor_option.md",
+                "tests/unit/test_cli.py"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_cli.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "b415fda0-9339-4760-bf68-5a2bca45568d",
+            "name": "implement_cli_option",
+            "description": "Add the new CLI option to the run command based on the analysis.",
+            "file_path": "project_dev/in_dev/add_terminal_monitor_option_to_run_cli/subtask_b415fda0-9339-4760-bf68-5a2bca45568d.json",
+            "type": "file_edit",
+            "depends_on": [
+                "generate_cli_tests"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/cli.py",
+                "src/ai_whisperer/commands.py",
+                "docs/cli_analysis_monitor_option.md",
+                "tests/unit/test_cli.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/cli.py",
+                "src/ai_whisperer/commands.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "f07e43f0-362d-471b-af53-9be49667b1bb",
+            "name": "generate_execution_tests",
+            "description": "Generate tests to verify that the monitor thread is conditionally started based on the CLI option.",
+            "file_path": "project_dev/in_dev/add_terminal_monitor_option_to_run_cli/subtask_f07e43f0-362d-471b-af53-9be49667b1bb.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_execution_engine_monitor_integration"
+            ],
+            "input_artifacts": [
+                "docs/monitor_integration_plan.md",
+                "tests/integration/test_runner_logging_monitoring.py"
+            ],
+            "output_artifacts": [
+                "tests/integration/test_runner_logging_monitoring.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "e144be00-3e05-46fb-a9ab-f68cf093cbc4",
+            "name": "implement_conditional_monitor_start",
+            "description": "Modify the execution engine to conditionally start the monitor thread based on the received option value.",
+            "file_path": "project_dev/in_dev/add_terminal_monitor_option_to_run_cli/subtask_e144be00-3e05-46fb-a9ab-f68cf093cbc4.json",
+            "type": "file_edit",
+            "depends_on": [
+                "implement_cli_option",
+                "generate_execution_tests"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/plan_runner.py",
+                "src/ai_whisperer/monitoring.py",
+                "docs/monitor_integration_plan.md",
+                "tests/integration/test_runner_logging_monitoring.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/execution_engine.py",
+                "src/ai_whisperer/plan_runner.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "f19ab392-7825-43a5-b69c-c0518ac5fbcb",
+            "name": "update_documentation",
+            "description": "Update documentation to reflect the new CLI option.",
+            "file_path": "project_dev/in_dev/add_terminal_monitor_option_to_run_cli/subtask_f19ab392-7825-43a5-b69c-c0518ac5fbcb.json",
+            "type": "documentation",
+            "depends_on": [
+                "implement_conditional_monitor_start"
+            ],
+            "input_artifacts": [
+                "README.md",
+                "docs/usage.md",
+                "src/ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [
+                "README.md",
+                "docs/usage.md"
+            ],
+            "completed": true
+        }
+    ],
+    "task_id": "84759553-314a-45d3-993c-4805c7fb1e6f",
+    "input_hashes": {
+        "requirements_md": "5beba31b42dbd0d669e6fa6f2513ecea0fdc669ab51e93526b897d9becf8a6e9",
+        "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+        "prompt_file": "hash_not_available"
+    }
+}

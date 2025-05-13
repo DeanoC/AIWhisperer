@@ -12,7 +12,7 @@ from typing import Optional
 import os  # Import os for StateManager
 
 # Import real classes from the source code
-from src.ai_whisperer.logging import LogMessage, LogLevel, ComponentType
+from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
 from src.ai_whisperer.state_management import StateManager
 from src.ai_whisperer.monitoring import TerminalMonitor  # Import the real TerminalMonitor
 

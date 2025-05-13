@@ -1,0 +1,44 @@
+{
+  "description": "Add the new CLI option to the run command based on the analysis.",
+  "instructions": [
+    "Locate the `run` command definition within `src/ai_whisperer/cli.py` or `src/ai_whisperer/commands.py`.",
+    "Add a new boolean flag option to the `run` command. The option name should be based on the analysis in `docs/cli_analysis_monitor_option.md`. A likely candidate is `--monitor` or `--no-monitor`.",
+    "Ensure the new option is defined as a boolean flag using the appropriate Click library decorators.",
+    "Modify the function signature of the handler for the `run` command to accept the value of the new monitor option.",
+    "Trace the command handling logic within `src/ai_whisperer/commands.py` (or relevant files) to identify where the option value needs to be passed to the execution engine or relevant components.",
+    "Modify the calls to the execution engine or related functions to include the value of the new monitor option.",
+    "Review `tests/unit/test_cli.py` to understand how CLI options are parsed and passed to the command handlers. Ensure your changes align with this pattern and the tests for the new option.",
+    "Add necessary imports if required for the new option."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/cli.py",
+    "src/ai_whisperer/commands.py",
+    "docs/cli_analysis_monitor_option.md",
+    "tests/unit/test_cli.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/cli.py",
+    "src/ai_whisperer/commands.py"
+  ],
+  "constraints": [
+    "Do not break existing CLI commands or options.",
+    "The new option should not require any arguments.",
+    "The option should be a simple boolean flag (present or absent).",
+    "Maintain the existing code style and structure.",
+    "Only modify the specified files unless absolutely necessary for passing the option value."
+  ],
+  "validation_criteria": [
+    "src/ai_whisperer/cli.py or src/ai_whisperer/commands.py are modified to include the new option.",
+    "Running `python -m ai_whisperer run --help` displays the newly added monitor option with a clear description.",
+    "The new option is a boolean flag and does not accept arguments.",
+    "The value of the monitor option is correctly passed to the downstream execution logic.",
+    "Running `pytest tests/unit/test_cli.py` passes all tests, including the newly added ones for the monitor option."
+  ],
+  "type": "file_edit",
+  "name": "implement_cli_option",
+  "depends_on": [
+    "generate_cli_tests"
+  ],
+  "task_id": "84759553-314a-45d3-993c-4805c7fb1e6f",
+  "subtask_id": "b415fda0-9339-4760-bf68-5a2bca45568d"
+}

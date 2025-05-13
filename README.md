@@ -172,8 +172,10 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
 *   **`run`**: Executes a project plan from an overview JSON file and manages the state file. See the [Usage Documentation](docs/usage.md) for detailed information.
 
     ```bash
-    python -m src.ai_whisperer.main run --plan-file <path/to/plan.json> --state-file <path/to/state.json> --config <path/to/config.yaml>
+    python -m src.ai_whisperer.main run --plan-file <path/to/plan.json> --state-file <path/to/state.json> --config <path/to/config.yaml> [--monitor | -m]
     ```
+
+    *   **`--monitor`**, **`-m`**: Enables the terminal monitor during the task execution, providing real-time updates on the plan's progress.
 
 The project_dev folder shows how I currently use aiwhisperer to implement features in it self.
 A starting feature request can be generated with any AI chat with a prompt similar to

@@ -4,17 +4,8 @@ from unittest.mock import MagicMock, patch
 # Assuming the refactored AI loop will be in src/ai_whisperer/ai_loop.py
 # and ContextManager is in src/ai_whisperer/context_management.py
 # from src.ai_whisperer.ai_loop import run_ai_loop 
+from ai_whisperer.ai_loop import run_ai_loop
 from src.ai_whisperer.context_management import ContextManager
-
-# Placeholder for the refactored AI loop function/class for test structure
-# This will be replaced by the actual import once implemented.
-def run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager):
-    """Placeholder for the refactored AI loop."""
-    # This placeholder is designed to allow tests to run without import errors,
-    # but the tests themselves will assert against the expected behavior of the
-    # *actual* AI loop implementation, causing them to fail initially.
-    raise NotImplementedError("Refactored AI loop not yet implemented")
-
 
 @pytest.fixture
 def mock_engine():

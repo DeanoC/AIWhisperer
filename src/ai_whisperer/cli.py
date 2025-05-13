@@ -103,6 +103,9 @@ def main(args=None) -> list[BaseCommand]:
         required=True,
         help="Path to the state file. Used for loading previous state and saving current state.",
     )
+    run_parser.add_argument(
+        "--monitor", action="store_true", help="Enable terminal monitoring during plan execution."
+    )
 
      # Use parse_args (let argparse handle errors and exit codes)
     try:
@@ -182,7 +185,8 @@ def main(args=None) -> list[BaseCommand]:
             commands = [RunCommand(
                 config_path=parsed_args.config,
                 plan_file=parsed_args.plan_file,
-                state_file=parsed_args.state_file
+                state_file=parsed_args.state_file,
+                monitor=parsed_args.monitor
             )]
         else:
             parser.print_help()

@@ -136,10 +136,11 @@ class RefineCommand(BaseCommand):
 
 class RunCommand(BaseCommand):
     """Command to execute a project plan."""
-    def __init__(self, config_path: str, plan_file: str, state_file: str):
+    def __init__(self, config_path: str, plan_file: str, state_file: str, monitor: bool = False):
         super().__init__(config_path)
         self.plan_file = plan_file
         self.state_file = state_file
+        self.monitor = monitor
 
     def execute(self):
         """Executes a project plan."""
@@ -153,7 +154,7 @@ class RunCommand(BaseCommand):
         plan_parser.load_overview_plan(str(plan_file_path))
         logger.debug("Plan file parsed and validated successfully.")
 
-        plan_runner = PlanRunner(self.config)
+        plan_runner = PlanRunner(self.config, monitor=self.monitor)
 
         logger.debug("Calling plan_runner.run_plan...")
         plan_successful = plan_runner.run_plan(plan_parser=plan_parser, state_file_path=self.state_file)
