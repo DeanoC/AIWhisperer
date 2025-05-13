@@ -35,7 +35,7 @@ class WriteFileTool(AITool):
             "required": ["file_path", "content"]
         }
 
-    async def execute(self, file_path: str, content: str) -> Dict[str, Any]:
+    def execute(self, file_path: str, content: str) -> Dict[str, Any]:
         """
         Writes the provided content to the specified file path.
 
@@ -55,8 +55,9 @@ class WriteFileTool(AITool):
 
             with open(file_path, 'w') as f:
                 f.write(content)
-            logger.info(f"Successfully wrote content to {file_path}")
-            return {"status": "success", "message": f"Content successfully written to {file_path}"}
+            absolute_path = pathlib.Path(file_path).resolve()
+            logger.info(f"Successfully wrote content to {absolute_path}")
+            return {"status": "success", "message": f"Content successfully written to {absolute_path}"}
         except IOError as e:
             logger.error(f"Error writing to file {file_path}: {e}")
             return {"status": "error", "message": f"Error writing to file {file_path}: {e}"}

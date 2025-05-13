@@ -189,19 +189,29 @@ def _execute_validation(engine, task_definition, task_id, logger) -> tuple[bool,
     validation_details = {"commands_executed": [], "overall_status": "skipped"}
     overall_passed = True
 
-    if isinstance(validation_criteria, list) and all(isinstance(cmd, str) for cmd in validation_criteria):
-        validation_details["overall_status"] = "pending"
-        logger.debug(f"Task {task_id}: Executing validation commands: {validation_criteria}")
-
-        # NOTE: Validation is currently faked as per user instruction.
-        overall_passed = True # Treat skipped validation as passed for now
-        validation_details["overall_status"] = "passed" if overall_passed else "failed"
-        logger.info(f"Task {task_id}: Fake Validation finished. Overall status: {validation_details['overall_status']}")
-
+    # Basic validation: check that files listed in 'expected_output_files' exist
+    expected_files = task_definition.get('expected_output_files', [])
+    missing_files = []
+    checked_files = []
+    if isinstance(expected_files, list) and all(isinstance(f, str) for f in expected_files):
+        for file_path in expected_files:
+            checked_files.append(file_path)
+            if not Path(file_path).is_file():
+                missing_files.append(file_path)
+        validation_details["checked_files"] = checked_files
+        validation_details["missing_files"] = missing_files
+        if missing_files:
+            validation_details["overall_status"] = "failed"
+            overall_passed = False
+            logger.warning(f"Task {task_id}: Validation failed. Missing files: {missing_files}")
+        else:
+            validation_details["overall_status"] = "passed"
+            overall_passed = True
+            logger.info(f"Task {task_id}: Validation passed. All expected files exist.")
     else:
         if logger:
-            logger.warning(f"Task {task_id}: No executable validation criteria found or format is incorrect.")
+            logger.warning(f"Task {task_id}: No 'expected_output_files' found or format is incorrect.")
         validation_details["overall_status"] = "skipped"
-        overall_passed = True # Treat skipped validation as passed for now
+        overall_passed = True
 
     return overall_passed, validation_details
