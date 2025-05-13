@@ -103,14 +103,17 @@ class OverviewPlanGenerator:
                         logger.info(f"Generated subtask: {subtask_path}")
 
                         # Create step info JSON object for the overview plan
+                        # some fields are not needed in the overview plan
+                        # and are omitted to keep it clean
                         step_info[i - 1] = {
-                            "name": step.get("name", f"Step {i}"),
                             "subtask_id": subtask_id,
+                            "name": step.get("name", f"Step {i}"),
+                            "description": step.get("description"),
                             "file_path": os.path.relpath(subtask_path, start=".").replace(os.sep, "/"),
-                            "depends_on": step.get("depends_on"),
                             "type": subtask.get("type"),
-                            "input_artifacts": subtask.get("input_artifacts"),
-                            "output_artifacts": subtask.get("output_artifacts"),
+                            "depends_on": step.get("depends_on"),
+                            "input_artifacts": step.get("input_artifacts"),
+                            "output_artifacts": step.get("output_artifacts"),
                             "completed": False,
                         }
                     except Exception as e:

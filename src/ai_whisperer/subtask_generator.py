@@ -124,13 +124,14 @@ class SubtaskGenerator:
             prompt_content = prompt_content.replace("{workspace_context}", self.workspace_context) 
 
             # 2. Call AI Model using the initialized openrouter_client
-            ai_response_text = self.openrouter_client.call_chat_completion(
+            # Extract the 'content' field from the message object
+            ai_response_content = self.openrouter_client.call_chat_completion(
                 prompt_text=prompt_content,
                 model=self.openrouter_client.model,  # Get model from client
                 params=self.openrouter_client.params,  # Get params from client
             )
 
-            if not ai_response_text:
+            if not ai_response_content:
                 raise SubtaskGenerationError("Received empty response from AI.")
 
             if result_data is None:
@@ -166,7 +167,7 @@ class SubtaskGenerator:
                 )
 
                 # Pass the AI response text through the postprocessing pipeline
-                (generated_data, result_data) = pipeline.process(ai_response_text, result_data)
+                (generated_data, result_data) = pipeline.process(ai_response_content.get("content"), result_data)
 
                 # Log the postprocessing results
                 logger.info("Postprocessing completed successfully.")

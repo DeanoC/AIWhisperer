@@ -160,7 +160,8 @@ try {
     $pythonArgs = @(
         "-m", $MainModulePath,
         "--config", $ConfigFile,
-        "run",
+        "generate",
+        "overview-plan"
         $planJsonPath,
         "--output", $OutputFolder
     )

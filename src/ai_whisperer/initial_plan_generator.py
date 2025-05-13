@@ -268,7 +268,8 @@ class InitialPlanGenerator:
                     ]
                 )
                 # Pass the JSON data through the postprocessing pipeline
-                (processed_data, postprocessing_result) = pipeline.process(api_response_content, result_data)
+                # Extract the 'content' field from the message object
+                (processed_data, postprocessing_result) = pipeline.process(api_response_content.get("content"), result_data)
 
                 # The pipeline should return a dictionary if successful
                 if not isinstance(processed_data, dict):
