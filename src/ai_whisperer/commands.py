@@ -155,7 +155,7 @@ class RunCommand(BaseCommand):
 
         try:
             # Use asyncio.run to execute the async run_plan method in this thread (only once)
-            plan_successful = asyncio.run(plan_runner.run_plan(plan_parser=plan_parser, state_file_path=state_file_path))
+            plan_successful = plan_runner.run_plan(plan_parser=plan_parser, state_file_path=state_file_path)
             logger.debug(f"plan_runner.run_plan returned: {plan_successful}")
             logger.debug("_run_plan_in_thread finished plan execution.")
 
@@ -289,27 +289,3 @@ class RunCommand(BaseCommand):
         # This is a temporary simplification for this specific subtask.
         return 0 # Needs refinement to capture actual plan success/failure
 
-
-class ExitCommand(BaseCommand):
-    """Placeholder command to exit the application."""
-    def execute(self):
-        """Executes the exit command."""
-        print("Exit command executed (placeholder).")
-        # Actual exit logic will be implemented later
-        pass
-
-class DebuggerCommand(BaseCommand):
-    """Placeholder command to attach a debugger."""
-    def execute(self):
-        """Executes the debugger command."""
-        print("Debugger command executed (placeholder).")
-        # Actual debugger attachment logic will be implemented later
-        pass
-
-class AskCommand(BaseCommand):
-    """Placeholder command to send a query to the AI."""
-    def execute(self):
-        """Executes the ask command."""
-        print("Ask command executed (placeholder).")
-        # Actual AI interaction logic will be implemented later
-        pass

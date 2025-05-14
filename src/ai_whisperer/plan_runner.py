@@ -55,7 +55,7 @@ class PlanRunner:
         tool_registry.register_tool(ExecuteCommandTool())
         logger.debug("Tools registered with ToolRegistry.")
 
-    async def run_plan(self, plan_parser: ParserPlan, state_file_path: str) -> bool:
+    def run_plan(self, plan_parser: ParserPlan, state_file_path: str) -> bool:
         """
         Executes a overview plan from a parsed plan object.
 
