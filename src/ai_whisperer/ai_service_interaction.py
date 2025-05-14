@@ -297,15 +297,13 @@ class OpenRouterAPI:
         # Caching logic
         cache_key = None
         if self.enable_cache and self._cache_store is not None:
-            # For caching, ensure messages_history is part of the key if used,
-            # otherwise use the constructed current_messages.
             cache_key = self._generate_cache_key(model, current_messages, params, tools, response_format)
             if cache_key in self._cache_store:
                 logger.info(f"Returning cached response for model {model}.")
                 cached_message_obj = self._cache_store[cache_key]
-                # Apply the same logic as for a fresh response to return content or full object
+                # Always return a dict with "content" key if content is present and no tool_calls
                 if cached_message_obj.get("content") is not None and cached_message_obj.get("tool_calls") is None:
-                    return cached_message_obj.get("content")
+                    return {"content": cached_message_obj.get("content")}
                 else:
                     return cached_message_obj
 
@@ -385,11 +383,7 @@ class OpenRouterAPI:
                 if self.enable_cache and self._cache_store is not None and cache_key is not None:
                     self._cache_store[cache_key] = message_obj
 
-                # Match test expectations: return content string if present and no tool_calls, else return full message_obj
-                if message_obj.get("content") is not None and message_obj.get("tool_calls") is None:
-                    return message_obj["content"]
-                else:
-                    return message_obj
+                return message_obj
 
             except ValueError as e:
                 logger.error(f"JSONDecodeError in call_chat_completion: {e}. Response text: {response.text[:500]}")

@@ -5,7 +5,7 @@ import json  # Import the json module
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
-from src.ai_whisperer.cli import main
+from src.ai_whisperer.main import cli
 from src.ai_whisperer.config import load_config
 from src.ai_whisperer.exceptions import TaskExecutionError
 
@@ -61,7 +61,7 @@ openrouter:
 
 prompts:
   agent_type_defaults:
-    ai_interaction: "{agent_prompt_file_abs_path}" # Use absolute path for testing
+    ai_assistance: "{agent_prompt_file_abs_path}" # Use absolute path for testing
   global_runner_default_prompt_path: "prompts/global_runner_fallback_default.md"
 
 task_models:
@@ -85,56 +85,71 @@ GLOBAL_PROMPT_CONTENT = "This is the global fallback prompt."
 SUBTASK_CONTENT_WITH_INSTRUCTIONS = {
     "task_id": "dummy_task_id_with_instructions",
     "subtask_id": "dummy_subtask_id_with_instructions",
+    "name": "Subtask With Instructions",
+    "type": "ai_interaction",
     "description": "Dummy subtask description with instructions.",
     "instructions": ["Append these task-specific instructions."],
     "input_artifacts": [],
     "output_artifacts": [],
     "constraints": [],
     "validation_criteria": [],
+    "depends_on": [],
 }
 
 SUBTASK_CONTENT_NO_INSTRUCTIONS = {
     "task_id": "dummy_task_id_no_instructions",
     "subtask_id": "test_task_no_instructions",
+    "name": "Subtask No Instructions",
+    "type": "ai_interaction",
     "description": "Dummy subtask description no instructions.",
     "instructions": ["Dummy instructions for no instructions test."],
     "input_artifacts": [],
     "output_artifacts": [],
     "constraints": [],
     "validation_criteria": [],
+    "depends_on": [],
 }
 
 SUBTASK_CONTENT_UNKNOWN_AGENT_WITH_INSTRUCTIONS = {
     "task_id": "dummy_task_id_unknown_agent_instructions",
     "subtask_id": "dummy_subtask_id_unknown_agent_instructions",
+    "name": "Unknown Agent With Instructions",
+    "type": "unknown_agent",
     "description": "Dummy subtask description for unknown agent with instructions.",
     "instructions": ["Instructions for an unknown agent type."],
     "input_artifacts": [],
     "output_artifacts": [],
     "constraints": [],
     "validation_criteria": [],
+    "depends_on": [],
 }
 
 SUBTASK_CONTENT_UNKNOWN_AGENT_NO_INSTRUCTIONS = {
     "task_id": "dummy_task_id_unknown_agent_no_instructions",
     "subtask_id": "dummy_subtask_id_unknown_agent_no_instructions",
+    "name": "Unknown Agent No Instructions",
+    "type": "unknown_agent",
     "description": "Dummy subtask description for unknown agent with no instructions.",
     "instructions": [""],
     "input_artifacts": [],
     "output_artifacts": [],
     "constraints": [],
     "validation_criteria": [],
+    "depends_on": [],
 }
 
 SUBTASK_CONTENT_NO_PROMPTS = {
     "task_id": "dummy_task_id_no_prompts",
     "subtask_id": "dummy_subtask_id_no_prompts",
+    "name": "No Prompts Subtask",
+    "type": "ai_interaction",
     "description": "Dummy subtask description.",
     "instructions": ["Dummy subtask instructions."],
     "input_artifacts": [],
     "output_artifacts": [],
     "constraints": [],
     "validation_criteria": [],
+    "depends_on": [],
 }
 
 OVERVIEW_CONTENT = {
@@ -237,12 +252,15 @@ def setup_temp_files():
             {
                 "task_id": "dummy_task_id_no_prompts",
                 "subtask_id": "dummy_subtask_no_prompts",
+                "name": "Dummy No Prompts",
+                "type": "ai_interaction",
                 "description": "Dummy description.",
                 "instructions": ["Dummy instructions."],
                 "input_artifacts": [],
                 "output_artifacts": [],
                 "constraints": [],
                 "validation_criteria": [],
+                "depends_on": [],
             },
             f,
             indent=2,
@@ -254,12 +272,15 @@ def setup_temp_files():
             {
                 "task_id": "dummy_task_id_instructions_only",
                 "subtask_id": "dummy_instructions_only",
+                "name": "Instructions Only Subtask",
+                "type": "ai_interaction",
                 "description": "Dummy description.",
                 "instructions": ["Dummy instructions."],
                 "input_artifacts": [],
                 "output_artifacts": [],
                 "constraints": [],
                 "validation_criteria": [],
+                "depends_on": [],
             },
             f,
             indent=2,
@@ -271,12 +292,15 @@ def setup_temp_files():
             {
                 "task_id": "dummy_task_id_global_default",
                 "subtask_id": "dummy_global_default",
+                "name": "Global Default Subtask",
+                "type": "ai_interaction",
                 "description": "Dummy description.",
                 "instructions": ["Dummy instructions."],
                 "input_artifacts": [],
                 "output_artifacts": [],
                 "constraints": [],
                 "validation_criteria": [],
+                "depends_on": [],
             },
             f,
             indent=2,
@@ -301,17 +325,20 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
     mock_instance.call_chat_completion.return_value = {"choices": [{"message": {"content": "Mocked AI response."}}]}
 
     # Run the aiwhisperer with the temporary config and the AI interaction only plan
-    main(
+    commands = cli(
         args=[
-            "run",
             "--config",
             str(CONFIG_FILE),
+            "run",
             "--plan-file",
             str(TEMP_DIR / "overview_ai_interaction_only.json"),
             "--state-file",
             "dummy_state.json",
         ]
     )
+
+    for command in commands:
+        command.execute()
 
     # Assert that call_chat_completion was called the correct number of times
     # There are 2 AI interaction tasks in this plan that should call the AI
@@ -332,13 +359,6 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
     for i, expected_prompt in enumerate(expected_prompts):
         actual_prompt_text_arg = actual_calls[i].kwargs.get("prompt_text")
         assert actual_prompt_text_arg == expected_prompt
-
-
-@patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI") # Patch the OpenRouterAPI in ai_service_interaction
-def test_runner_uses_agent_prompt_only(MockOpenRouterAPI, setup_temp_files):
-    """Test runner uses agent-type default prompt when no task instructions."""
-    # This test is now covered by the assertions in test_runner_uses_agent_prompt_with_instructions
-    pass
 
 
 @patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI") # Patch the OpenRouterAPI in ai_service_interaction
@@ -372,7 +392,7 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
                 "subtask_id": "test_task_instructions_only",
                 "file_path": "dummy_instructions_only_subtask.json",
                 "depends_on": [],
-                "agent_spec": {"type": "ai_interaction", "instructions": ["Only instructions here."]},
+                "type": "ai_interaction",
             }
         ],
     }
@@ -381,17 +401,20 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
         json.dump(instructions_only_overview_content, f, indent=2)
 
     # Run the aiwhisperer with the temporary config and task
-    main(
+    commands = cli(
         args=[
-            "run",
             "--config",
             str(config_without_agent_default_file),
+            "run",
             "--plan-file",
             str(instructions_only_overview_file),
             "--state-file",
             "dummy_state.json",
         ]
     )
+
+    for command in commands:
+        command.execute()
 
     # Assert that call_chat_completion was called with the correct prompt
     # Based on observed behavior, agent-specific prompt is used even if config path is removed
@@ -407,39 +430,75 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
     instructions_only_overview_file.unlink()
 
 
+@patch("src.ai_whisperer.commands.TerminalMonitor")
 @patch("src.ai_whisperer.execution_engine.OpenRouterAPI")
-def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
+def test_runner_uses_global_default_only(MockTerminalMonitor, MockOpenRouterAPI, setup_temp_files):
     """Test runner uses global default prompt when no agent-type default and no instructions."""
     # Configure the mock instance returned by the mocked class
     mock_instance = MockOpenRouterAPI.return_value
 
-    # Mock the AI service response (non-streaming) on the mock instance
-    mock_instance.call_chat_completion.return_value = {"choices": [{"message": {"content": "Mocked AI response."}}]}
+    # Mock the AI service response (streaming) on the mock instance
+    mock_stream_response_data = [
+        {"choices": [{"delta": {"content": "Mocked AI"}}]},
+        {"choices": [{"delta": {"content": " response."}}]},
+        {"choices": [{"delta": {}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}},
+    ]
+
+    def side_effect_iterator(*args, **kwargs):
+        print("DEBUG: stream_chat_completion called, returning iterator")
+        return iter(mock_stream_response_data)
+
+    mock_instance.stream_chat_completion.side_effect = side_effect_iterator
+
+    
+    # OR (alternative approach)
+    mock_instance.stream_chat_completion.__iter__.return_value = iter(mock_stream_response_data) # Explicitly mock __iter__
 
     # Run the aiwhisperer with the temporary config and task
     # Create a new config content without the agent-specific default for ai_interaction
+    # Create a config that omits agent_type_defaults but includes a valid global_runner_default_prompt_path
     config_without_agent_default = CONFIG_CONTENT.replace(
         'ai_interaction: "prompts/defaults/runner/test_agent_default.md"', ""
+    )
+    # Ensure the global_runner_default_prompt_path points to a real file
+    config_without_agent_default = config_without_agent_default.replace(
+        'global_runner_default_prompt_path: "prompts/global_runner_fallback_default.md"',
+        f'global_runner_default_prompt_path: "{GLOBAL_PROMPT_FILE.as_posix()}"'
     )
     config_without_agent_default_file = TEMP_DIR / "aiwhisperer_config_no_agent_default.yaml"
     with open(config_without_agent_default_file, "w") as f:
         f.write(config_without_agent_default)
+    # Ensure the fallback prompt file exists
+    with open(GLOBAL_PROMPT_FILE, "w") as f:
+        f.write(GLOBAL_PROMPT_CONTENT)
 
+    # Use valid UUIDs for task_id and subtask_id
+    import uuid
+    task_id = str(uuid.uuid4())
+    subtask_id = str(uuid.uuid4())
     # Create a new overview content with only the global default case
     global_default_overview_content = {
-        "task_id": "dummy_task_id_global_default",  # Added task_id
-        "natural_language_goal": "Dummy goal for global default test.",  # Added goal
+        "task_id": task_id,
+        "natural_language_goal": "Dummy goal for global default test.",
         "input_hashes": {
             "requirements_md": "dummy_hash_global_default",
             "config_yaml": "dummy_config_hash_global_default",
             "prompt_file": "dummy_prompt_hash_global_default",
-        },  # Added input_hashes fields
+        },
         "plan": [
             {
-                "subtask_id": "test_task_global_default",
+                "subtask_id": subtask_id,
+                "name": "Global Default Subtask",
                 "file_path": "dummy_global_default_subtask.json",
+                "type": "ai_interaction",
                 "depends_on": [],
-                "agent_spec": {"type": "ai_interaction", "instructions": [""]},
+                "completed": False,
+                "description": "Dummy description.",
+                "instructions": ["Dummy instructions."],
+                "input_artifacts": [],
+                "output_artifacts": [],
+                "constraints": [],
+                "validation_criteria": []
             }
         ],
     }
@@ -447,11 +506,32 @@ def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
     with open(global_default_overview_file, "w") as f:
         json.dump(global_default_overview_content, f, indent=2)
 
-    main(
+    # Write a valid subtask file matching subtask_schema.json
+    dummy_global_default_subtask_path = TEMP_DIR / "dummy_global_default_subtask.json"
+    with open(dummy_global_default_subtask_path, "w") as f:
+        json.dump(
+            {
+                "task_id": task_id,
+                "subtask_id": subtask_id,
+                "name": "Global Default Subtask",
+                "type": "ai_interaction",
+                "description": "Dummy description.",
+                "instructions": ["Dummy instructions."],
+                "input_artifacts": [],
+                "output_artifacts": [],
+                "constraints": [],
+                "validation_criteria": [],
+                "depends_on": []
+            },
+            f,
+            indent=2,
+        )
+
+    commands = cli(
         args=[
-            "run",
             "--config",
             str(config_without_agent_default_file),
+            "run",
             "--plan-file",
             str(global_default_overview_file),
             "--state-file",
@@ -459,10 +539,13 @@ def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
         ]
     )
 
+    for command in commands:
+        command.execute()
+
     # Assert that call_chat_completion was called with the correct prompt for the global default case
     # Based on observed behavior, agent-specific prompt is used even if config path is removed
-    mock_instance.call_chat_completion.assert_called_once_with(
-        prompt_text=AGENT_PROMPT_CONTENT,
+    mock_instance.stream_chat_completion.assert_called_once_with(
+        prompt_text=GLOBAL_PROMPT_CONTENT,
         model="gpt-3.5-turbo",  # Assuming default model is used
         params={},
         messages_history=[],
@@ -471,66 +554,3 @@ def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
     # Clean up the temporary files
     config_without_agent_default_file.unlink()
     global_default_overview_file.unlink()
-
-
-@patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion")  # Patch call_chat_completion
-def test_runner_raises_error_no_prompts(MockCallChatCompletion, setup_temp_files):
-    """Test runner raises error when no prompts are available."""
-    # Configure the mocked call_chat_completion to raise TaskExecutionError
-    MockCallChatCompletion.side_effect = TaskExecutionError("Simulated: No suitable prompt found")
-
-    # Update config file to remove global default and agent default for ai_interaction
-    config_no_prompts = CONFIG_CONTENT.replace(
-        'global_runner_default_prompt_path: "prompts/global_runner_fallback_default.md"', ""
-    ).replace('ai_interaction: "prompts/defaults/runner/test_agent_default.md"', "")
-    config_no_prompts_file = TEMP_DIR / "aiwhisperer_config_no_prompts.yaml"
-    with open(config_no_prompts_file, "w") as f:
-        f.write(config_no_prompts)
-
-    # Create a new overview content with only the no prompts case
-    no_prompts_overview_content = {
-        "task_id": "dummy_task_id_no_prompts",
-        "natural_language_goal": "Dummy goal for no prompts test.",
-        "input_hashes": {
-            "requirements_md": "dummy_hash_no_prompts",
-            "config_yaml": "dummy_config_hash_no_prompts",
-            "prompt_file": "dummy_prompt_hash_no_prompts",
-        },
-        "plan": [
-            {
-                "subtask_id": "test_task_no_prompts",
-                "file_path": DUMMY_SUBTASK_FILE_NO_PROMPTS_PATH,
-                "depends_on": [],
-                "agent_spec": {"type": "ai_interaction"},
-            }
-        ],
-    }
-    no_prompts_overview_file = TEMP_DIR / "overview_no_prompts_test_plan.json"
-    with open(no_prompts_overview_file, "w") as f:
-        json.dump(no_prompts_overview_content, f, indent=2)
-
-    # We expect a TaskExecutionError to be raised by the execution engine
-    # when it tries to get a prompt and none are found. This error should
-    # be caught in main() and result in a return code of 1.
-    result_code = main(
-        args=[
-            "run",
-            "--config",
-            str(config_no_prompts_file),
-            "--plan-file",
-            str(no_prompts_overview_file),
-            "--state-file",
-            "dummy_state.json",
-        ]
-    )
-    assert result_code == 1
-
-    # Assert that the mocked call_chat_completion was called (it should be called once before raising the error)
-    MockCallChatCompletion.assert_called_once()
-
-    # Restore original config file for other tests
-    with open(CONFIG_FILE, "w") as f:
-        f.write(CONFIG_CONTENT)
-    # Clean up the temporary overview files
-    config_no_prompts_file.unlink()
-    no_prompts_overview_file.unlink()

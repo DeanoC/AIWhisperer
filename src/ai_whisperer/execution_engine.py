@@ -53,7 +53,7 @@ class ExecutionEngine:
         self.state_manager = state_manager
         self.monitor = monitor
         self.config = config  # Store the global configuration
-        self.shutdown_event = shutdown_event if shutdown_event else threading.Event() # Store the shutdown event or create a new one
+        self.shutdown_event = threading.Event()
         self.task_queue = []
         # In a real scenario, a TaskExecutor component would handle individual task logic.
         # This would be responsible for interacting with different agent types.
@@ -118,11 +118,11 @@ class ExecutionEngine:
         # Initialize the agent type handler table
         # Lambdas now accept engine, task_definition, task_id, and shutdown_event
         self.agent_type_handlers = {
-            "ai_interaction": lambda engine, task_definition, task_id, shutdown_event: handle_ai_interaction(engine, task_definition, task_id, shutdown_event),
-            "planning": lambda engine, task_definition, task_id, shutdown_event: handle_planning(engine, task_definition, task_id, shutdown_event),
-            "validation": lambda engine, task_definition, task_id, shutdown_event: handle_validation(engine, task_definition, task_id, shutdown_event),
-            "no_op": lambda engine, task_definition, task_id, shutdown_event: handle_no_op(engine, task_definition, task_id, shutdown_event),
-            "code_generation": lambda engine, task_definition, task_id, shutdown_event: handle_code_generation(engine, task_definition, task_id, shutdown_event),
+            "ai_interaction": lambda engine, task_definition, task_id, shutdown_event: handle_ai_interaction(engine, task_definition, task_id),
+            "planning": lambda engine, task_definition, task_id, shutdown_event: handle_planning(engine, task_definition, task_id),
+            "validation": lambda engine, task_definition, task_id, shutdown_event: handle_validation(engine, task_definition, task_id),
+            "no_op": lambda engine, task_definition, task_id, shutdown_event: handle_no_op(engine, task_definition, task_id),
+            "code_generation": lambda engine, task_definition, task_id, shutdown_event: handle_code_generation(engine, task_definition, task_id),
             # Add other agent types and their handlers here, ensuring they accept all 4 arguments
         }
 
@@ -850,7 +850,7 @@ class ExecutionEngine:
             )
             raise TaskExecutionError(error_message) from e
 
-    async def _execute_single_task(self, task_definition):
+    def _execute_single_task(self, task_definition):
         """
         Executes a single task based on its agent type.
 
@@ -904,7 +904,7 @@ class ExecutionEngine:
 
         # Use the agent type handler table to execute the task
         if agent_type in self.agent_type_handlers:
-            return await self.agent_type_handlers[agent_type](self, task_definition, task_id, self.shutdown_event) # Await and pass self, task_definition, task_id, and shutdown_event
+            return self.agent_type_handlers[agent_type](self, task_definition, task_id, self.shutdown_event)
         else:
             # Handle unsupported agent types
             error_message = f"Unsupported agent type for task {task_id}: {agent_type}"

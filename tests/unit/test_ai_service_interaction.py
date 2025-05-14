@@ -168,7 +168,7 @@ class TestOpenRouterAPIUnit:
             json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.5},
             timeout=10,
         )
-        assert response == "This is a non-streaming response."
+        assert response['content'] == "This is a non-streaming response."
 
     @patch("requests.post")
     def test_call_chat_completion_with_history(self, mock_post, api_client):
@@ -197,7 +197,7 @@ class TestOpenRouterAPIUnit:
             },
             timeout=10,
         )
-        assert response == "This is a non-streaming response."
+        assert response['content'] == "This is a non-streaming response."
 
     @patch("requests.post")
     def test_call_chat_completion_with_tool_calls(self, mock_post, api_client):
@@ -512,7 +512,7 @@ class TestOpenRouterAPIUnit:
 
         # requests.post should NOT have been called
         mock_post.assert_not_called()
-        assert response == "Cached response"
+        assert response['content'] == "Cached response"
 
     @patch("requests.post")
     def test_call_chat_completion_cache_miss(self, mock_post):
@@ -531,7 +531,7 @@ class TestOpenRouterAPIUnit:
 
         # requests.post should have been called
         mock_post.assert_called_once()
-        assert response == "This is a non-streaming response."
+        assert response['content'] == "This is a non-streaming response."
 
         # Verify cache was populated
         cache_key = api._generate_cache_key(model, [{"role": "user", "content": prompt}], params)

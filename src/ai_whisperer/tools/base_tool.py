@@ -74,11 +74,10 @@ class AITool(ABC):
         pass
 
     @abstractmethod
-    async def execute(self, **kwargs: Any) -> Any:
+    def execute(self, **kwargs: Any) -> Any:
         """
         The core logic for the tool's operation.
         It receives parameters as keyword arguments, validated against parameters_schema.
-        The method should be asynchronous if it involves I/O operations.
 
         Args:
             **kwargs: The parameters for the tool, matching the parameters_schema.

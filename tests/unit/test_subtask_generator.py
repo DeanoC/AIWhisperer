@@ -313,13 +313,8 @@ def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock
     # Pass the output_dir from MOCK_CONFIG during instantiation
     generator = SubtaskGenerator("dummy_config.json", output_dir=MOCK_CONFIG["output_dir"])
 
-    # The test is failing because the actual output contains 'subtask_id: test_step_1'
-    # but we're asserting 'subtask_id: test_step_1_refined'
-    # Either modify the mock response to match what's expected or update the assertion
-
-    # Option 1: Update the mock AI response to match our expected output
-    # Mock AI response using the correct method name with the expected subtask_id
-    mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_JSON_VALID
+    # Always return a dict with 'content' for the AI response
+    mock_openrouter_client.call_chat_completion.return_value = {"content": MOCK_AI_RESPONSE_JSON_VALID}
 
     # Mock os.path.exists to simulate output file not existing initially
     mock_filesystem["exists"].return_value = False
@@ -407,9 +402,6 @@ def test_generate_subtask_success(mock_load_config, mock_openrouter_client, mock
         )
 
 
-# Note: We don't need to call generate_subtask again, as we've already verified it works
-
-
 def test_generate_subtask_ai_error(mock_load_config, mock_openrouter_client):
     """Tests handling of API errors from OpenRouter."""
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
@@ -426,7 +418,7 @@ def test_generate_subtask_schema_validation_error(mock_load_config, mock_openrou
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
 
     generator = SubtaskGenerator("dummy_config.json")
-    mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_JSON_INVALID_SCHEMA
+    mock_openrouter_client.call_chat_completion.return_value = {"content": MOCK_AI_RESPONSE_JSON_INVALID_SCHEMA}
     # The expected error message should reflect the new schema validation failure
     mock_schema_validation.side_effect = SchemaValidationError(
         "Schema validation failed: 'subtask_id' is a required property"
@@ -443,7 +435,7 @@ def test_generate_subtask_file_write_error(
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
 
     generator = SubtaskGenerator("dummy_config.json", output_dir=MOCK_CONFIG["output_dir"])
-    mock_openrouter_client.call_chat_completion.return_value = MOCK_AI_RESPONSE_JSON_VALID
+    mock_openrouter_client.call_chat_completion.return_value = {"content": MOCK_AI_RESPONSE_JSON_VALID}
     mock_filesystem["open"].side_effect = IOError("Disk full")
 
     # Create a result_data with a schema to trigger the special case in subtask_generator.py
@@ -489,7 +481,8 @@ def test_generate_subtask_json_parsing_error(mock_load_config, mock_openrouter_c
     from src.ai_whisperer.subtask_generator import SubtaskGenerator
 
     generator = SubtaskGenerator("dummy_config.json")
-    mock_openrouter_client.call_chat_completion.return_value = "invalid json content"
+    # Return a dict with 'content' as a string that is not valid JSON
+    mock_openrouter_client.call_chat_completion.return_value = {"content": "invalid json content"}
 
     with pytest.raises(SubtaskGenerationError, match="Failed to parse AI response as JSON"):
         generator.generate_subtask(VALID_INPUT_STEP)

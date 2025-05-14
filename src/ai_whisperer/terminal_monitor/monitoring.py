@@ -30,8 +30,6 @@ from src.ai_whisperer.state_management import StateManager
 
 logger = logging.getLogger(__name__)
 
-
-
 class TerminalMonitor(logging.Handler):
     """
     Provides a terminal-based monitoring view for the AIWhisperer runner
@@ -40,6 +38,7 @@ class TerminalMonitor(logging.Handler):
 
     def __init__(self, state_manager: StateManager, config_path: str, monitor_enabled: bool = True, ai_runner_shutdown_event: Optional[threading.Event] = None):
         super().__init__()
+        return
         self.level = logging.DEBUG
         self.state_manager = state_manager
         self.config_path = config_path # Store config_path
@@ -153,6 +152,7 @@ class TerminalMonitor(logging.Handler):
         return "\n".join(log_lines)
 
     def update_display(self):
+        return
         if self._application:
             self._log_buffer.text = self._get_log_text()
             overall_status = self.state_manager.get_global_state("plan_status") or "Unknown"

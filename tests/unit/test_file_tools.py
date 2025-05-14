@@ -205,8 +205,7 @@ def test_write_file_tool_ai_prompt_instructions():
     assert 'file_path' in instructions
     assert 'content' in instructions
 
-@pytest.mark.asyncio # Mark the test as async
-async def test_write_file_tool_run_success(temp_project_dir):
+def test_write_file_tool_run_success(temp_project_dir):
     """Tests successful file writing using WriteFileTool."""
     temp_dir_relative = temp_project_dir
     file_name = "new_test_file.txt"
@@ -216,7 +215,7 @@ async def test_write_file_tool_run_success(temp_project_dir):
     tool = WriteFileTool()
     arguments = {'file_path': file_path_relative, 'content': content_to_write}
     # Call the execute method, not run
-    result = await tool.execute(file_path=arguments['file_path'], content=arguments['content'])
+    result = tool.execute(file_path=arguments['file_path'], content=arguments['content'])
 
     assert result['status'] == 'success'
     assert file_path_relative in result['message']
@@ -226,8 +225,7 @@ async def test_write_file_tool_run_success(temp_project_dir):
         read_content = f.read()
     assert read_content == content_to_write
 
-@pytest.mark.asyncio # Mark the test as async
-async def test_write_file_tool_run_overwrite(temp_project_file):
+def test_write_file_tool_run_overwrite(temp_project_file):
     """Tests that WriteFileTool overwrites an existing file."""
     file_path_relative, original_content, _ = temp_project_file
     new_content = "This content overwrites the original."
@@ -235,7 +233,7 @@ async def test_write_file_tool_run_overwrite(temp_project_file):
     tool = WriteFileTool()
     arguments = {'file_path': file_path_relative, 'content': new_content}
     # Call the execute method, not run
-    result = await tool.execute(file_path=arguments['file_path'], content=arguments['content'])
+    result = tool.execute(file_path=arguments['file_path'], content=arguments['content'])
 
     assert result['status'] == 'success'
     assert file_path_relative in result['message']
@@ -246,8 +244,7 @@ async def test_write_file_tool_run_overwrite(temp_project_file):
     assert read_content == new_content
     assert read_content != original_content
 
-@pytest.mark.asyncio # Mark the test as async
-async def test_write_file_tool_run_permission_denied(temp_project_file):
+def test_write_file_tool_run_permission_denied(temp_project_file):
     """Tests WriteFileTool handling of PermissionError."""
     file_path_relative, _, _ = temp_project_file
     content_to_write = "Attempting to write."
@@ -258,16 +255,14 @@ async def test_write_file_tool_run_permission_denied(temp_project_file):
     # Simulate permission denied error
     with patch('builtins.open', side_effect=IOError("Permission denied")):
         # Call the execute method, not run
-        result = await tool.execute(file_path=arguments['file_path'], content=arguments['content'])
+        result = tool.execute(file_path=arguments['file_path'], content=arguments['content'])
 
     assert result['status'] == 'error'
     assert "Error writing to file" in result['message']
     assert "Permission denied" in result['message']
     assert file_path_relative in result['message']
 
-@pytest.mark.asyncio # Mark the test as async
-@pytest.mark.asyncio # Mark the test as async
-async def test_write_file_tool_run_directory_created(temp_project_dir):
+def test_write_file_tool_run_directory_created(temp_project_dir):
     """Tests WriteFileTool creates parent directories if they do not exist."""
     non_existent_dir_relative = os.path.join(temp_project_dir, "non_existent_dir")
     file_path_relative = os.path.join(non_existent_dir_relative, "test_file.txt")
@@ -282,7 +277,7 @@ async def test_write_file_tool_run_directory_created(temp_project_dir):
     arguments = {'file_path': file_path_relative, 'content': content_to_write}
 
     # Call the execute method
-    result = await tool.execute(file_path=arguments['file_path'], content=arguments['content'])
+    result = tool.execute(file_path=arguments['file_path'], content=arguments['content'])
 
     # Assert success
     assert result['status'] == 'success'
@@ -303,8 +298,7 @@ async def test_write_file_tool_run_directory_created(temp_project_dir):
     # Clean up the created directory and file
     shutil.rmtree(non_existent_dir_abs)
 
-@pytest.mark.asyncio # Mark the test as async
-async def test_write_file_tool_run_missing_arguments():
+def test_write_file_tool_run_missing_arguments():
     """Tests WriteFileTool handling of missing arguments."""
     tool = WriteFileTool()
 
@@ -312,16 +306,16 @@ async def test_write_file_tool_run_missing_arguments():
     arguments_missing_content = {'file_path': 'some/path/file.txt'}
     with pytest.raises(TypeError): # The execute method signature requires both arguments
          # Call the execute method, not run
-         await tool.execute(file_path=arguments_missing_content['file_path'])
+         tool.execute(file_path=arguments_missing_content['file_path'])
 
     # Missing file_path
     arguments_missing_filepath = {'content': 'some content'}
     with pytest.raises(TypeError): # The execute method signature requires both arguments
          # Call the execute method, not run
-         await tool.execute(content=arguments_missing_filepath['content'])
+         tool.execute(content=arguments_missing_filepath['content'])
 
     # Missing both
     arguments_missing_both = {}
     with pytest.raises(TypeError): # The execute method signature requires both arguments
          # Call the execute method, not run
-         await tool.execute()
+         tool.execute()

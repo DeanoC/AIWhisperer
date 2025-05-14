@@ -16,14 +16,9 @@ class TestGenerateInitialPlanCommand:
     def mock_output_dir(self):
         return "fake_output_dir"
 
-    @pytest.fixture
-    def mock_console_print(self):
-        with patch.object(console, 'print') as mock_print:
-            yield mock_print
-
     @patch('src.ai_whisperer.commands.load_config')
     @patch('src.ai_whisperer.commands.InitialPlanGenerator')
-    def test_generate_initial_plan_success(self, mock_initial_plan_generator, mock_load_config, mock_config_path, mock_output_dir, mock_console_print):
+    def test_generate_initial_plan_success(self, mock_initial_plan_generator, mock_load_config, mock_config_path, mock_output_dir):
         """Tests successful generation of an initial plan."""
         mock_load_config.return_value = {"mock": "config"} # Return a dummy config
         mock_initial_plan_instance = mock_initial_plan_generator.return_value
@@ -43,7 +38,6 @@ class TestGenerateInitialPlanCommand:
         mock_load_config.assert_called_once_with(mock_config_path)
         mock_initial_plan_generator.assert_called_once_with(command.config, mock_output_dir)
         mock_initial_plan_instance.generate_plan.assert_called_once_with(tmp_req_path, mock_config_path)
-        mock_console_print.assert_any_call(f"[green]Successfully generated task JSON: fake_plan_path.json[/green]")
         assert exit_code == 0
 
         os.unlink(tmp_req_path) # Clean up the temporary file

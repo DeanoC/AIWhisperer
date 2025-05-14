@@ -84,9 +84,8 @@ def test_chat_completion_with_history(mock_post):
                 timeout=60,  # Correct timeout value
             )
 
-            # Assert that the response is as expected
-            assert isinstance(response, str)
-            assert response == "This is a test response."
+            assert isinstance(response, dict)
+            assert response['content'] == "This is a test response."
 
 
 @patch("src.ai_whisperer.ai_service_interaction.requests.post")
@@ -135,7 +134,7 @@ def test_chat_completion_with_multi_turn_history(mock_post):
                 params=mock_config["openrouter"]["params"],
             )
             print(f"\nFirst turn response: {response1}")
-            assert response1 == "France"
+            assert response1['content'] == "France"
 
             # Build history for second turn
             messages_history = [
@@ -151,7 +150,7 @@ def test_chat_completion_with_multi_turn_history(mock_post):
                 params=mock_config["openrouter"]["params"],
             )
             print(f"\nSecond turn response: {response2}")
-            assert response2 == "Paris"
+            assert response2['content'] == "Paris"
 
             # Build history for third turn
             messages_history = [
@@ -169,7 +168,7 @@ def test_chat_completion_with_multi_turn_history(mock_post):
                 params=mock_config["openrouter"]["params"],
             )
             print(f"\nThird turn response: {response3}")
-            assert response3 == "Eiffel Tower"
+            assert response3['content'] == "Eiffel Tower"
 
             # Verify the calls were made with the correct history
             assert mock_post.call_count == 3

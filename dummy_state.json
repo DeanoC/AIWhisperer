@@ -1,0 +1,86 @@
+{
+    "tasks": {
+        "test_task_with_instructions": {
+            "status": "pending",
+            "result": null,
+            "context_manager": {
+                "__type__": "ContextManager",
+                "history": []
+            }
+        },
+        "test_task_no_instructions": {
+            "status": "pending",
+            "result": null,
+            "context_manager": {
+                "__type__": "ContextManager",
+                "history": []
+            }
+        },
+        "c2da03d9-f385-4314-a701-b0b35e6fe8c4": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "Unsupported agent type for task c2da03d9-f385-4314-a701-b0b35e6fe8c4: ai_assistance",
+                "error_details": null
+            }
+        },
+        "9cdbb5bf-a72f-4441-acaa-d5fe0316619f": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "An unexpected error occurred during AI interaction task 9cdbb5bf-a72f-4441-acaa-d5fe0316619f execution: can only concatenate str (not \"list\") to str",
+                "error_details": null
+            }
+        },
+        "6ea7e865-20cf-449c-b51e-7e9e3c4371d6": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "AI interaction task 6ea7e865-20cf-449c-b51e-7e9e3c4371d6 received empty or unexpected streamed response.",
+                "error_details": null
+            }
+        },
+        "27acad88-ed58-492d-901b-6d9e0675e644": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "AI interaction task 27acad88-ed58-492d-901b-6d9e0675e644 received empty or unexpected streamed response.",
+                "error_details": null
+            }
+        },
+        "5978e4e9-5f57-4da1-8fe9-1f5b9dfc9f40": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "AI interaction task 5978e4e9-5f57-4da1-8fe9-1f5b9dfc9f40 received empty or unexpected streamed response.",
+                "error_details": null
+            }
+        },
+        "824fac97-aa23-4347-bd11-6cb44cff03a5": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "AI interaction task 824fac97-aa23-4347-bd11-6cb44cff03a5 received empty or unexpected streamed response.",
+                "error_details": null
+            }
+        },
+        "10b37791-e0f6-412c-8240-a8728c577381": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "AI interaction task 10b37791-e0f6-412c-8240-a8728c577381 received empty or unexpected streamed response.",
+                "error_details": null
+            }
+        },
+        "6a05e058-e68e-48ca-b76b-7d8e2d8ea3de": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "AI interaction task 6a05e058-e68e-48ca-b76b-7d8e2d8ea3de received empty or unexpected streamed response.",
+                "error_details": null
+            }
+        }
+    },
+    "global_state": {},
+    "plan_id": "dummy_task_id_ai_interaction_only"
+}

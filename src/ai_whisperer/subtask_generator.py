@@ -32,7 +32,12 @@ class SubtaskGenerator:
     """
 
     def __init__(
-        self, config_path: str, overall_context: str = "", workspace_context: str = "", output_dir: str = "output"
+        self, 
+        config_path: str, 
+        overall_context: str = "", 
+        workspace_context: str = "", 
+        output_dir: str = "output",
+        openrouter_client=None  # <-- Add this parameter
     ):
         """
         Initializes the SubtaskGenerator.
@@ -42,6 +47,7 @@ class SubtaskGenerator:
             overall_context: The overall context string from the main task plan.
             workspace_context: A string representing relevant workspace context (optional).
             output_dir: Directory where output files will be saved.
+            openrouter_client: (Optional) An existing OpenRouterAPI client instance.
 
         Raises:
             ConfigError: If configuration loading fails.
@@ -61,8 +67,11 @@ class SubtaskGenerator:
 
             logger.info(f"subtaskgenerator Model: {model_config.get('model')}, Params: {model_config.get('params')}")
 
-            # Initialize the OpenRouterAPI client with the task-specific model configuration
-            self.openrouter_client = OpenRouterAPI(config=model_config)
+            # Use provided OpenRouterAPI client or create a new one
+            if openrouter_client is not None:
+                self.openrouter_client = openrouter_client
+            else:
+                self.openrouter_client = OpenRouterAPI(config=model_config)
             self.output_dir = output_dir  # Store the output directory
             self.overall_context = overall_context
             self.workspace_context = workspace_context  # Store context

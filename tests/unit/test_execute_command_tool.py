@@ -62,11 +62,10 @@ def test_execute_command_tool_ai_prompt_instructions(tool):
     assert "stderr" in instructions
     assert "returncode" in instructions
 
-@pytest.mark.asyncio
-async def test_execute_success_simple(tool):
+def test_execute_success_simple(tool):
     """Tests successful execution of a simple command."""
     command_to_run = get_simple_success_command()
-    result = await tool.execute(command=command_to_run)
+    result = tool.execute(command=command_to_run)
 
     assert isinstance(result, dict)
     assert "stdout" in result
@@ -84,8 +83,7 @@ async def test_execute_success_simple(tool):
     assert result["stderr"] == ""
 
 
-@pytest.mark.asyncio
-async def test_execute_success_with_cwd(tool, tmp_path):
+def test_execute_success_with_cwd(tool, tmp_path):
     """Tests successful command execution with a specified cwd."""
     # tmp_path is a pytest fixture providing a temporary directory path (pathlib.Path object)
     test_file_name = "test_in_cwd.txt"
@@ -96,7 +94,7 @@ async def test_execute_success_with_cwd(tool, tmp_path):
     else:
         command_to_run = f"echo test_content > {test_file_name}"
 
-    result = await tool.execute(command=command_to_run, cwd=str(tmp_path))
+    result = tool.execute(command=command_to_run, cwd=str(tmp_path))
 
     assert result["returncode"] == 0
     assert os.path.exists(tmp_path / test_file_name)
@@ -108,11 +106,10 @@ async def test_execute_success_with_cwd(tool, tmp_path):
             assert "test_content" in content
 
 
-@pytest.mark.asyncio
-async def test_execute_command_not_found(tool):
+def test_execute_command_not_found(tool):
     """Tests execution of a non-existent command."""
     non_existent_command = "my_super_non_existent_command_12345"
-    result = await tool.execute(command=non_existent_command)
+    result = tool.execute(command=non_existent_command)
 
     assert isinstance(result, dict)
     assert "stdout" in result
@@ -124,11 +121,10 @@ async def test_execute_command_not_found(tool):
     assert "Error: Command not found" in result["stderr"] or "is not recognized" in result["stderr"] or "No such file or directory" in result["stderr"]
 
 
-@pytest.mark.asyncio
-async def test_execute_command_produces_stderr_and_nonzero_return(tool):
+def test_execute_command_produces_stderr_and_nonzero_return(tool):
     """Tests a command that is expected to produce stderr and a non-zero return code."""
     command_to_run = get_simple_error_command()
-    result = await tool.execute(command=command_to_run)
+    result = tool.execute(command=command_to_run)
     
     assert isinstance(result, dict)
     assert "stdout" in result
@@ -141,12 +137,11 @@ async def test_execute_command_produces_stderr_and_nonzero_return(tool):
     else:
         assert "No such file or directory" in result["stderr"]
 
-@pytest.mark.asyncio
-async def test_execute_empty_command(tool):
+def test_execute_empty_command(tool):
     """Tests execution of an empty command string."""
     # Behavior of empty command can vary. Some shells might do nothing, others error.
     # The tool should handle it gracefully. subprocess.run with shell=True might just return 0.
-    result = await tool.execute(command="")
+    result = tool.execute(command="")
     
     assert isinstance(result, dict)
     # Depending on the shell, an empty command might be a no-op (return 0) or an error.

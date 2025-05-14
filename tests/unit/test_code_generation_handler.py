@@ -55,10 +55,8 @@ def test_handle_code_generation_success(mock_run_loop, mock_get_logger):
             "subtask_id": "fake-subtask-id"
         }
         task_id = "fake-task-id"
-        shutdown_event = threading.Event()
 
-        # Use asyncio.run to avoid DeprecationWarning about no current event loop
-        result = asyncio.run(handle_code_generation(mock_engine, task_definition, task_id, shutdown_event))
+        result = handle_code_generation(mock_engine, task_definition, task_id)
 
         assert result is not None
         assert result["message"] == "Code generation completed and validation passed."
@@ -78,16 +76,12 @@ def test_handle_code_generation_success(mock_run_loop, mock_get_logger):
 
 def test_handle_code_generation_validation_failure():
     """Test handle_code_generation when validation fails."""
-def test_handle_code_generation_validation_failure():
-    """Test handle_code_generation when validation fails."""
     mock_engine = MagicMock()
     mock_engine.config.get.return_value = MagicMock() # Mock config.get for logger
     mock_engine.monitor = MagicMock()
     mock_engine.openrouter_api = MagicMock()
     mock_engine.state_manager = MagicMock()
 
-    import asyncio
-    import threading
     # Mock get_logger directly
     with patch('src.ai_whisperer.agent_handlers.code_generation.get_logger') as mock_get_logger:
         mock_logger_instance = MagicMock()
@@ -98,7 +92,7 @@ def test_handle_code_generation_validation_failure():
              patch('src.ai_whisperer.ai_loop.run_ai_loop') as mock_run_loop, \
              patch('src.ai_whisperer.agent_handlers.code_generation._execute_validation', return_value=(False, {"overall_status": "failed", "commands_executed": [{"command": "test", "exit_code": 1}]})) as mock_execute_validation:
 
-            async def fake_run_ai_loop(*args, **kwargs):
+            def fake_run_ai_loop(*args, **kwargs):
                 return {"content": "Final AI response"}
             mock_run_loop.side_effect = fake_run_ai_loop
 
@@ -116,10 +110,9 @@ def test_handle_code_generation_validation_failure():
                 "subtask_id": "fake-subtask-id"
             }
             task_id = "fake-task-id"
-            shutdown_event = threading.Event()
 
             try:
-                asyncio.run(handle_code_generation(mock_engine, task_definition, task_id, shutdown_event))
+                result = handle_code_generation(mock_engine, task_definition, task_id)
                 pytest.fail("TaskExecutionError was not raised")
             except TaskExecutionError as e:
                 assert isinstance(e, TaskExecutionError)
@@ -145,9 +138,6 @@ def test_handle_code_generation_validation_failure():
             mock_construct_prompt.assert_called_once_with(mock_engine, task_definition, task_id, "Mocked context", called_args[3])
             # Don't require run_ai_loop to be called if validation fails before it
             mock_execute_validation.assert_called_once_with(mock_engine, task_definition, task_id, called_args[3])
-
-# Add tests for helper functions (_gather_context, _construct_initial_prompt, run_ai_loop, _execute_validation)
-# These tests will replace the old class-based tests and cover their specific logic.
 
 # Example: Test for _gather_context
 @patch('src.ai_whisperer.agent_handlers.code_generation.Path')
@@ -233,11 +223,8 @@ def test_run_ai_loop_finishes(mock_tool_registry):
     task_definition = {}
     task_id = "fake-task-id"
     initial_prompt = "Initial prompt."
-    shutdown_event = threading.Event()
 
-    result = asyncio.run(
-        run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_engine.config.get.return_value, mock_context_manager, shutdown_event)
-    )
+    result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_engine.config.get.return_value, mock_context_manager)
 
     assert result["content"] == "Final response"
     mock_engine.openrouter_api.call_chat_completion.assert_called_once()

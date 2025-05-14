@@ -4,7 +4,7 @@ import sys
 import os
 
 # Import the main function and command classes
-from ai_whisperer.cli import main
+from ai_whisperer.cli import cli
 # Define a fixture to capture stdout/stderr for testing SystemExit messages
 @pytest.fixture
 def capsys_sys_exit(capsys):
@@ -38,7 +38,7 @@ def mock_setup():
 def test_list_models_command_valid_args(mock_commands):
     """Test parsing valid arguments for the list-models command."""
     args = ["--config", "path/to/config.yaml", "list-models"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["ListModelsCommand"].assert_called_once_with(
@@ -50,7 +50,7 @@ def test_list_models_command_valid_args(mock_commands):
 def test_list_models_command_global_config_before_command(mock_commands):
     """Test parsing valid arguments for the list-models command with --config before the command."""
     args = ["--config", "path/to/config.yaml", "list-models"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["ListModelsCommand"].assert_called_once_with(
@@ -62,7 +62,7 @@ def test_list_models_command_global_config_before_command(mock_commands):
 def test_list_models_command_with_output_csv(mock_commands):
     """Test parsing valid arguments for the list-models command with --output-csv."""
     args = ["--config", "path/to/config.yaml", "list-models", "--output-csv", "output.csv"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["ListModelsCommand"].assert_called_once_with(
@@ -75,7 +75,7 @@ def test_list_models_command_missing_config(capsys_sys_exit):
     """Test list-models command with missing --config argument."""
     args = ["list-models"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0 # Should exit with a non-zero code on error
     captured = capsys_sys_exit.readouterr()
@@ -84,7 +84,7 @@ def test_list_models_command_missing_config(capsys_sys_exit):
 def test_generate_initial_plan_command_valid_args(mock_commands):
     """Test parsing valid arguments for the generate initial-plan command."""
     args = ["--config", "config.yaml", "generate", "initial-plan", "reqs.md"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
@@ -97,7 +97,7 @@ def test_generate_initial_plan_command_valid_args(mock_commands):
 def test_generate_initial_plan_command_global_config_before_command(mock_commands):
     """Test parsing valid arguments for the generate initial-plan command with --config before the command."""
     args = ["--config", "config.yaml", "generate", "initial-plan", "reqs.md"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
@@ -111,7 +111,7 @@ def test_generate_initial_plan_command_global_config_before_command(mock_command
 def test_generate_initial_plan_command_with_output(mock_commands):
     """Test parsing valid arguments for the generate-initial-plan command with --output."""
     args = ["--config", "config.yaml", "generate", "initial-plan", "reqs.md", "--output", "plans"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
@@ -125,7 +125,7 @@ def test_generate_initial_plan_command_missing_requirements(capsys_sys_exit):
     """Test generate-initial-plan command with missing requirements argument."""
     args = ["generate", "initial-plan", "--config", "config.yaml"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -135,7 +135,7 @@ def test_generate_initial_plan_command_missing_config(capsys_sys_exit):
     """Test generate-initial-plan command with missing --config argument."""
     args = ["generate", "initial-plan", "reqs.md"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -144,7 +144,7 @@ def test_generate_initial_plan_command_missing_config(capsys_sys_exit):
 def test_generate_overview_plan_command_valid_args(mock_commands):
     """Test parsing valid arguments for the generate overview-plan command."""
     args = ["--config", "config.yaml", "generate", "overview-plan", "initial.json"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
@@ -157,7 +157,7 @@ def test_generate_overview_plan_command_valid_args(mock_commands):
 def test_generate_overview_plan_command_global_config_before_command(mock_commands):
     """Test parsing valid arguments for the generate overview-plan command with --config before the command."""
     args = ["--config", "config.yaml", "generate", "overview-plan", "initial.json"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
@@ -170,7 +170,7 @@ def test_generate_overview_plan_command_global_config_before_command(mock_comman
 def test_generate_overview_plan_command_with_output(mock_commands):
     """Test parsing valid arguments for the generate overview-plan command with --output."""
     args = ["--config", "config.yaml", "generate", "overview-plan", "initial.json", "--output", "overview_plans"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
@@ -184,7 +184,7 @@ def test_generate_overview_plan_command_missing_initial_plan(capsys_sys_exit):
     """Test generate overview-plan command with missing initial-plan argument."""
     args = ["generate", "overview-plan", "--config", "config.yaml"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -194,7 +194,7 @@ def test_generate_overview_plan_command_missing_config(capsys_sys_exit):
     """Test generate overview-plan command with missing --config argument."""
     args = ["generate", "overview-plan", "initial.json"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -203,7 +203,7 @@ def test_generate_overview_plan_command_missing_config(capsys_sys_exit):
 def test_generate_full_plan_command_valid_args(mock_commands):
     """Test parsing valid arguments for the generate full-plan command."""
     args = ["--config", "config.yaml", "generate", "full-plan", "reqs.md", "--output", "plans"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 2
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
@@ -221,7 +221,7 @@ def test_generate_full_plan_command_valid_args(mock_commands):
 def test_refine_command_valid_args(mock_commands):
     """Test parsing valid arguments for the refine command."""
     args = ["--config", "config.yaml", "refine", "input.md"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["RefineCommand"].assert_called_once_with(
@@ -236,7 +236,7 @@ def test_refine_command_valid_args(mock_commands):
 def test_refine_command_with_optional_args(mock_commands):
     """Test parsing valid arguments for the refine command with optional args."""
     args = ["--config", "config.yaml", "refine", "input.md", "--iterations", "5", "--prompt-file", "prompt.txt", "--output", "refined.md"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["RefineCommand"].assert_called_once_with(
@@ -252,7 +252,7 @@ def test_refine_command_missing_input_file(capsys_sys_exit):
     """Test refine command with missing input_file argument."""
     args = ["--config", "config.yaml", "refine"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -262,7 +262,7 @@ def test_refine_command_missing_config(capsys_sys_exit):
     """Test refine command with missing --config argument."""
     args = ["refine", "input.md"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -271,7 +271,7 @@ def test_refine_command_missing_config(capsys_sys_exit):
 def test_run_command_valid_args(mock_commands):
     """Test parsing valid arguments for the run command."""
     args = ["--config", "config.yaml", "run", "--plan-file", "plan.json", "--state-file", "state.json"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["RunCommand"].assert_called_once_with(
@@ -286,7 +286,7 @@ def test_run_command_missing_plan_file(capsys_sys_exit):
     """Test run command with missing --plan-file argument."""
     args = ["--config", "config.yaml", "run", "--state-file", "state.json"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -296,7 +296,7 @@ def test_run_command_missing_state_file(capsys_sys_exit):
     """Test run command with missing --state-file argument."""
     args = ["--config", "config.yaml", "run", "--plan-file", "plan.json"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -306,7 +306,7 @@ def test_run_command_missing_config(capsys_sys_exit):
     """Test run command with missing --config argument."""
     args = ["run", "--plan-file", "plan.json", "--state-file", "state.json"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -315,7 +315,7 @@ def test_run_command_missing_config(capsys_sys_exit):
 def test_run_command_with_monitor(mock_commands):
     """Test parsing arguments for the run command with --monitor."""
     args = ["--config", "config.yaml", "run", "--plan-file", "plan.json", "--state-file", "state.json", "--monitor"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["RunCommand"].assert_called_once_with(
@@ -329,7 +329,7 @@ def test_run_command_with_monitor(mock_commands):
 def test_run_command_without_monitor(mock_commands):
     """Test parsing arguments for the run command without --monitor."""
     args = ["--config", "config.yaml", "run", "--plan-file", "plan.json", "--state-file", "state.json"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["RunCommand"].assert_called_once_with(
@@ -344,7 +344,7 @@ def test_invalid_command(capsys_sys_exit):
     """Test with an invalid command."""
     args = ["invalid-command"]
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -354,7 +354,7 @@ def test_no_command(capsys_sys_exit):
     """Test with no command provided."""
     args = []
     with pytest.raises(SystemExit) as e:
-        main(args)
+        cli(args)
     assert e.type == SystemExit
     assert e.value.code != 0
     captured = capsys_sys_exit.readouterr()
@@ -363,7 +363,7 @@ def test_no_command(capsys_sys_exit):
 def test_project_dir_argument(mock_commands):
     """Test the --project-dir argument."""
     args = ["--project-dir", "/fake/project", "--config", "config.yaml", "list-models"]
-    commands = main(args)
+    commands = cli(args)
 
     assert len(commands) == 1
     mock_commands["ListModelsCommand"].assert_called_once_with(

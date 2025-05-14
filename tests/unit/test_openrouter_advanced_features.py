@@ -226,12 +226,12 @@ class TestOpenRouterAdvancedFeatures:
         # First call - should call API and cache
         response1 = api.call_chat_completion(prompt_text, DEFAULT_MODEL, DEFAULT_PARAMS)
         mock_post.assert_called_once()
-        assert response1 == "Cached response"  # Assuming it returns content directly
+        assert response1['content'] == "Cached response"  # Assuming it returns content directly
 
         # Second call - should use cache
         response2 = api.call_chat_completion(prompt_text, DEFAULT_MODEL, DEFAULT_PARAMS)
         mock_post.assert_called_once()  # Still 1, meaning API wasn't called again
-        assert response2 == "Cached response"
+        assert response2['content'] == "Cached response"
 
         # Call with different params - should call API again
         mock_post.reset_mock()

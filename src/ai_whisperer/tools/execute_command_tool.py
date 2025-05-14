@@ -58,7 +58,7 @@ class ExecuteCommandTool(AITool):
         """
 
 
-    async def execute(self, command: str, cwd: str = ".", shutdown_event: Optional[threading.Event] = None) -> Dict[str, Any]:
+    def execute(self, command: str, cwd: str = ".", shutdown_event: Optional[threading.Event] = None) -> Dict[str, Any]:
         """
         Executes a shell command and returns the output, error, and return code.
         Checks for shutdown_event during execution.
@@ -114,9 +114,7 @@ class ExecuteCommandTool(AITool):
                 except IOError:
                     # Handle case where pipe is closed unexpectedly
                     pass
-
-                await asyncio.sleep(0.1) # Small delay to avoid busy-waiting
-
+                
             # If the loop exited because the process finished (not terminated by shutdown)
             if returncode is None:
                  returncode = process.returncode

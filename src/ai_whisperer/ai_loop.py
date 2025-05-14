@@ -15,7 +15,7 @@ import threading # Import threading for shutdown_event type hint
 
 logger = get_logger(__name__)
 
-async def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, initial_prompt: str, logger, context_manager: ContextManager, shutdown_event: threading.Event) -> dict:
+def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, initial_prompt: str, logger, context_manager: ContextManager) -> dict:
     """
     Manages the iterative AI interaction loop for a task, including sending prompts,
     processing AI responses, executing tool calls, and managing conversation history
@@ -165,9 +165,9 @@ async def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: s
                     if asyncio.iscoroutinefunction(tool_instance.execute):
                         # If it's the execute_command tool, pass the shutdown_event
                         if tool_name == "execute_command":
-                             tool_output_data = await tool_instance.execute(**tool_arguments, shutdown_event=shutdown_event)
+                             tool_output_data = tool_instance.execute(**tool_arguments, shutdown_event=shutdown_event)
                         else:
-                             tool_output_data = await tool_instance.execute(**tool_arguments)
+                             tool_output_data = tool_instance.execute(**tool_arguments)
                     else:
                         # If it's a synchronous tool, call it directly
                         # Pass shutdown_event to ExecuteCommandTool if it's the execute_command tool

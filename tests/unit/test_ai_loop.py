@@ -34,9 +34,8 @@ def mock_logger():
 import threading
 import asyncio
 
-@pytest.mark.asyncio
 @patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
-async def test_ai_loop_handles_content_response(mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
+def test_ai_loop_handles_content_response(mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop correctly handles an AI response with content."""
     # Configure the mock AI service to return a response with content
     mock_call_chat_completion.return_value = {
@@ -46,17 +45,14 @@ async def test_ai_loop_handles_content_response(mock_call_chat_completion, mock_
     initial_prompt = "Test prompt"
     task_definition = {"description": "Test task"}
     task_id = "test-task-123"
-    shutdown_event = threading.Event()
 
-    final_result = await run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager, shutdown_event)
+    final_result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager)
     assert final_result is not None
     mock_context_manager.add_message.assert_called() # Verify message was added to context
 
-@pytest.mark.asyncio
-@pytest.mark.asyncio
 @patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
 @patch('src.ai_whisperer.tools.tool_registry.ToolRegistry.get_tool_by_name')
-async def test_ai_loop_handles_tool_calls(mock_get_tool_by_name, mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
+def test_ai_loop_handles_tool_calls(mock_get_tool_by_name, mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop correctly handles AI responses with tool calls."""
     # Configure the mock AI service to return a response with a tool call
     mock_call_chat_completion.side_effect = [
@@ -78,19 +74,16 @@ async def test_ai_loop_handles_tool_calls(mock_get_tool_by_name, mock_call_chat_
     initial_prompt = "Test prompt with tool call"
     task_definition = {"description": "Test task with tool"}
     task_id = "test-task-456"
-    shutdown_event = threading.Event()
 
-    final_result = await run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager, shutdown_event)
+    final_result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager)
     # Once run_ai_loop is implemented, assertions would verify:
     # - AI service called twice
     # - ToolRegistry.get_tool_by_name was called
     # - Tool instance execute was called
     # - ContextManager.add_message was called for assistant response and tool output
 
-@pytest.mark.asyncio
-@pytest.mark.asyncio
 @patch('src.ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
-async def test_ai_loop_adds_messages_to_context(mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
+def test_ai_loop_adds_messages_to_context(mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop adds user, assistant, and tool messages to the ContextManager."""
     mock_call_chat_completion.side_effect = [
         { # First response: tool call
@@ -110,7 +103,7 @@ async def test_ai_loop_adds_messages_to_context(mock_call_chat_completion, mock_
     task_id = "test-task-789"
     shutdown_event = threading.Event()
 
-    final_result = await run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager, shutdown_event)
+    final_result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager)
     # Once run_ai_loop is implemented, assertions would verify:
     # - mock_context_manager.add_message was called at least 3 times (user, assistant, tool output)
     # mock_context_manager.add_message.assert_any_call({"role": "user", "content": initial_prompt})

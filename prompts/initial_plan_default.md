@@ -79,9 +79,9 @@ No additional properties are allowed at the top level.
    6. `documentation`: README/docstring/comment updates
    7. `file_io`: Directory/file operations
    8. `analysis`: Code/data understanding
-   9. `ai_assistance`: A generic catch-all that an AI can help to process
+   9. `ai_interaction`: A generic catch-all that an AI can help to process
 
-   You MUST use these types; If hard to fit, use the ai_assistance type and structure it as a question to the AI who will assist.
+   You MUST use these types; If hard to fit, use the `ai_interaction` type and structure it as a question to the AI who will assist.
 
 5. **Strict Test-Driven Development (TDD) Flow:**
     For each distinct piece of functionality involving new or modified code/logic (handled by `code_generation` or `file_edit` steps):

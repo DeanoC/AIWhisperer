@@ -15,7 +15,7 @@ from . import logging_custom # Import module directly
 
 logger = None # Will be initialized in main after logging is configured
 
-def main(args=None) -> list[BaseCommand]:
+def cli(args=None) -> list[BaseCommand]:
     """Main entry point for the AI Whisperer CLI application.
 
     Parses command-line arguments and instantiates the appropriate command object.
@@ -210,4 +210,4 @@ def main(args=None) -> list[BaseCommand]:
 
 # Add entry point to invoke main function
 if __name__ == "__main__":
-    main()
+    cli()

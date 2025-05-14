@@ -5,6 +5,7 @@ import json
 import traceback
 from pathlib import Path
 from datetime import datetime, timezone
+from unittest.mock import MagicMock
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 from src.ai_whisperer.exceptions import TaskExecutionError, OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError
 from src.ai_whisperer.utils import build_ascii_directory_tree # Ensure this is imported
@@ -14,14 +15,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def handle_ai_interaction(engine, task_definition, task_id, shutdown_event: threading.Event):
+def handle_ai_interaction(
+    engine, 
+    task_definition, 
+    task_id
+) -> dict:
     """
     Handle an AI interaction task.
+
+    Returns:
+        dict: The result of the AI interaction, always as a dictionary.
     """
     # 'engine' is the ExecutionEngine instance
     self = engine
-    # Store the shutdown event
-    self.shutdown_event = shutdown_event # Make shutdown_event available within the handler
 
     if self.openrouter_api is None:
         error_message = (
@@ -109,7 +115,7 @@ def handle_ai_interaction(engine, task_definition, task_id, shutdown_event: thre
             selected_prompt = agent_type_prompt
         elif instructions and self.config.get("global_runner_default_prompt_content"):
             global_default_prompt = self.config["global_runner_default_prompt_content"]
-            selected_prompt = global_default_prompt + "\n\n" + instructions
+            selected_prompt = global_default_prompt + "\n\n" + "\n\n".join(instructions)
         elif self.config.get("global_runner_default_prompt_content"):
             selected_prompt = self.config["global_runner_default_prompt_content"]
         else:
@@ -154,7 +160,9 @@ def handle_ai_interaction(engine, task_definition, task_id, shutdown_event: thre
         tool_calls = []
         usage_info = None # To capture usage info from the last chunk
 
+
         try: # Try block for processing the stream
+            print(f'DEBUG: stream_generator type: {type(stream_generator)}, is_mock: {isinstance(stream_generator, MagicMock)}')
             for chunk in stream_generator:
                 # Check for shutdown signal during streaming
                 if self.shutdown_event.is_set():
@@ -308,6 +316,9 @@ def handle_ai_interaction(engine, task_definition, task_id, shutdown_event: thre
                         )
                     )
                     raise TaskExecutionError(error_message) from e
+            assert isinstance(result, dict), (
+                f"Unexpected result type for task {task_id}: {type(result)}. Expected dict."
+            )
             return result # Return the processed result
 
         except (OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError) as e:

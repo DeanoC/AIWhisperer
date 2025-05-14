@@ -1,6 +1,6 @@
 import sys
 import logging # Import logging
-from .cli import main
+from .cli import cli
 from src.ai_whisperer.ai_service_interaction import OpenRouterAPI
 
 logger = logging.getLogger(__name__) # Get logger instance
@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__) # Get logger instance
 # Entry point for the application
 if __name__ == "__main__":
     # Retrieve the list of command objects from the CLI main function
-    commands = main()
+    commands = cli()
     # Execute each command in the list
     logger.debug("Executing commands...")
     for command in commands:

@@ -178,14 +178,14 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: T
         assert isinstance(tool_calls, list)
         assert len(tool_calls) > 0
 
-        # Find the write_text_file tool call
+        # Find the write_file tool call (updated from write_text_file)
         write_file_call = None
         for call in tool_calls:
-            if call.get("function", {}).get("name") == "write_text_file":
+            if call.get("function", {}).get("name") == "write_file":
                 write_file_call = call
                 break
 
-        assert write_file_call is not None, "AI did not call the write_text_file tool"
+        assert write_file_call is not None, "AI did not call the write_file tool"
         assert "function" in write_file_call
         assert "arguments" in write_file_call["function"]
 
@@ -202,13 +202,6 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: T
         assert os.path.normpath(args["file_path"]) == os.path.normpath(file_path)
         assert "content" in args
         assert args["content"] == file_content
-        # The write_text_file tool does not have a line_count parameter in its schema
-        # Remove the assertion for line_count
-        # assert "line_count" in args
-        # Calculate expected line count (including empty lines)
-        # expected_line_count = len(file_content.splitlines())
-        # assert args["line_count"] == expected_line_count
-
 
     except OpenRouterAPIError as e:
         pytest.fail(f"OpenRouter API error during test_ai_write_file_tool_call: {e}")
@@ -343,17 +336,14 @@ async def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, too
         write_tool_calls = write_response_obj["tool_calls"]
         assert len(write_tool_calls) > 0
 
-        # Assuming the first tool call is the write_text_file call
+        # Assuming the first tool call is the write_file call (updated from write_text_file)
         write_call_args = json.loads(write_tool_calls[0]["function"]["arguments"])
         assert write_call_args.get("file_path") == write_file_path
         assert write_call_args.get("content") == write_content
-        # The write_text_file tool does not have a line_count parameter in its schema
-        # Remove the assertion for line_count
-        # assert write_call_args.get("line_count") == len(write_content.splitlines())
 
         # Simulate the system executing the tool call
-        write_tool_instance = tool_registry.get_tool_by_name("write_text_file")
-        assert write_tool_instance is not None, "write_text_file tool not found in registry"
+        write_tool_instance = tool_registry.get_tool_by_name("write_file")
+        assert write_tool_instance is not None, "write_file tool not found in registry"
 
         # Execute the tool with the AI's provided arguments, unpacking the dictionary
         write_tool_output = await write_tool_instance.execute(**write_call_args)
@@ -403,13 +393,13 @@ def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAPI, tool_reg
     assert isinstance(read_tool_output, str)
     assert "Error: Access denied" in read_tool_output
 
-    # Scenario 2: Simulate AI calling write_text_file with missing content
+    # Scenario 2: Simulate AI calling write_file with missing content
     invalid_write_path = "temp_invalid_write.txt"
     # The WriteFileTool.execute method expects 'file_path' and 'content'
     write_call_args_missing_content = {"file_path": invalid_write_path} # Missing 'content'
 
-    write_tool_instance = tool_registry.get_tool_by_name("write_text_file")
-    assert write_tool_instance is not None, "write_text_file tool not found in registry"
+    write_tool_instance = tool_registry.get_tool_by_name("write_file")
+    assert write_tool_instance is not None, "write_file tool not found in registry"
 
     # Expecting the tool's execute method to handle missing required parameters
     # Based on WriteFileTool implementation, it expects 'file_path' and 'content'
@@ -420,7 +410,7 @@ def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAPI, tool_reg
     with pytest.raises(TypeError):
          write_tool_instance.execute(**write_call_args_missing_content)
 
-    # Scenario 3: Simulate AI calling write_text_file with missing file_path
+    # Scenario 3: Simulate AI calling write_file with missing file_path
     write_call_args_missing_filepath = {"content": "some content"} # Missing 'file_path'
     with pytest.raises(TypeError):
          write_tool_instance.execute(**write_call_args_missing_filepath)

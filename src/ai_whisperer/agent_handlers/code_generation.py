@@ -17,7 +17,7 @@ logger = get_logger(__name__)  # Get logger for execution engine
 
 import threading # Import threading for shutdown_event type hint
 
-async def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_id: str, shutdown_event: threading.Event):
+def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_id: str):
     """
     Handles the execution of a 'code_generation' task.
     """
@@ -45,7 +45,7 @@ async def handle_code_generation(engine: ExecutionEngine, task_definition: dict,
         if context_manager is None:
             raise TaskExecutionError(f"ContextManager not found for task {task_id} in StateManager.")
 
-        final_ai_result = await run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager, shutdown_event) # Await and pass shutdown_event
+        final_ai_result = run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager)
         logger.info(f"Task {task_id}: AI interaction loop finished.")
 
 
