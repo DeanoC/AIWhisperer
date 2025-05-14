@@ -5,7 +5,6 @@ requests-mock
 
 requests>=2.30,<3.0
 pytest>=7.0,<8.0
-rich>=13.0,<14.0
 requests-mock>=1.11,<2.0 # For mocking HTTP requests in tests
 python-dotenv # For loading .env files
 jsonschema>=4.0,<5.0 # For validating YAML/JSON structures

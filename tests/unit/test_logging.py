@@ -258,12 +258,6 @@ def test_logging_with_metadata(mock_logger):
 #     # or requires mocking lower-level logging internals.
 #     pass
 
-# Example of testing console output (similarly complex)
-# def test_console_handler_output():
-#     # Mock sys.stdout or the Rich Console object used by RichHandler
-#     # and check the output.
-#     pass
-
 # Concurrent logging tests would require simulating multiple threads
 # logging simultaneously and verifying thread-safety, which is also more complex
 # and often relies on the guarantees of the standard library's logging module.

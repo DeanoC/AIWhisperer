@@ -27,11 +27,10 @@ def mock_commands():
             "RunCommand": MockRunCommand,
         }
 
-# Mock setup_logging and setup_rich_output to prevent side effects during tests
+# Mock setup_logging and to prevent side effects during tests
 @pytest.fixture(autouse=True)
 def mock_setup():
-    with patch('ai_whisperer.logging_custom.setup_logging'), \
-         patch('ai_whisperer.cli.setup_rich_output'):
+    with patch('ai_whisperer.logging_custom.setup_logging'):
         yield
 
 # --- Test Cases for Each Command ---

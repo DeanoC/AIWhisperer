@@ -21,6 +21,7 @@ from .ai_service_interaction import (
 import traceback  # Import traceback for detailed error logging
 
 logger = get_logger(__name__)  # Get logger for execution engine
+logger.propagate = False
 
 class ExecutionEngine:
     """
@@ -1003,97 +1004,43 @@ class ExecutionEngine:
                 continue
 
             # Determine the effective task definition: either from file_path or the overview definition
+            # Determine the effective task definition: either from file_path or the overview definition
             task_def_effective = task_def_overview
             file_path = task_def_overview.get("file_path")
             if file_path:
-                try:
-                    subtask_file_path = Path(file_path).resolve()
-                    logger.info(f"Loading detailed task definition from file: {subtask_file_path}")
+                # Get the loaded subtask content from the PlanParser
+                task_def_detailed = plan_parser.get_subtask_content(task_id)
+
+                if task_def_detailed:
+                    logger.info(f"Using detailed task definition from file for task {task_id}.")
                     log_event(
                         log_message=LogMessage(
                             LogLevel.INFO,
                             ComponentType.EXECUTION_ENGINE,
-                            "loading_detailed_task_def",
-                            f"Loading detailed task definition for task {task_id} from file: {subtask_file_path}",
+                            "using_detailed_task_def",
+                            f"Using detailed task definition for task {task_id} from file.",
                             subtask_id=task_id,
-                            details={"subtask_file": str(subtask_file_path)},
+                            details={"file_path": file_path},
                         )
                     )
-                    with open(subtask_file_path, "r", encoding="utf-8") as f:
-                        task_def_detailed = json.load(f)
-
-                    # Ensure the loaded task definition is a dictionary
-                    if not isinstance(task_def_detailed, dict):
-                         error_message = f"Invalid detailed task file format for task {task_id}: {subtask_file_path}. Expected a dictionary."
-                         logger.error(error_message)
-                         log_event(
-                             log_message=LogMessage(
-                                 LogLevel.ERROR,
-                                 ComponentType.EXECUTION_ENGINE,
-                                 "invalid_detailed_task_file_format",
-                                 error_message,
-                                 subtask_id=task_id,
-                                 details={"subtask_file": str(subtask_file_path)},
-                             )
-                         )
-                         self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                         self.monitor.set_runner_status(f"Failed: {task_id}")
-                         continue # Skip to the next task in the overview
-
-                    # Use the loaded detailed task definition for execution
                     task_def_effective = task_def_detailed
                     # Ensure task_id is consistent between overview and detailed definition
                     if task_def_effective.get("subtask_id") != task_id:
                          logger.warning(f"Subtask ID mismatch for task {task_id}. Overview ID: {task_id}, Detailed ID: {task_def_effective.get('subtask_id')}. Using Overview ID.")
                          task_def_effective["subtask_id"] = task_id # Prioritize overview ID for state management
-
-                except FileNotFoundError:
-                    error_message = f"Detailed task file not found for task {task_id}: {subtask_file_path}"
+                else:
+                    # This case should ideally not happen if PlanParser loaded correctly,
+                    # but handle defensively.
+                    error_message = f"Detailed task definition not found in PlanParser for task {task_id} referenced by file_path: {file_path}"
                     logger.error(error_message)
                     log_event(
                         log_message=LogMessage(
                             LogLevel.ERROR,
                             ComponentType.EXECUTION_ENGINE,
-                            "detailed_task_file_not_found",
+                            "detailed_task_def_not_found_in_parser",
                             error_message,
                             subtask_id=task_id,
-                            details={"subtask_file": str(subtask_file_path)},
-                        )
-                    )
-                    self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status(f"Failed: {task_id}")
-                    continue # Skip to the next task in the overview
-                except json.JSONDecodeError as e:
-                    error_message = f"Error decoding detailed task file {subtask_file_path} for task {task_id}: {e}"
-                    logger.error(error_message)
-                    log_event(
-                        log_message=LogMessage(
-                            LogLevel.ERROR,
-                            ComponentType.EXECUTION_ENGINE,
-                            "detailed_task_file_json_error",
-                            error_message,
-                            subtask_id=task_id,
-                            details={"subtask_file": str(subtask_file_path), "error": str(e)},
-                        )
-                    )
-                    self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status(f"Failed: {task_id}")
-                    continue # Skip to the next task in the overview
-                except Exception as e:
-                    error_message = f"An unexpected error occurred loading detailed task file {subtask_file_path} for task {task_id}: {e}"
-                    logger.exception(error_message)
-                    log_event(
-                        log_message=LogMessage(
-                            LogLevel.CRITICAL,
-                            ComponentType.EXECUTION_ENGINE,
-                            "detailed_task_file_unexpected_error",
-                            error_message,
-                            subtask_id=task_id,
-                            details={
-                                "subtask_file": str(subtask_file_path),
-                                "error": str(e),
-                                "traceback": traceback.format_exc(),
-                            },
+                            details={"file_path": file_path},
                         )
                     )
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})

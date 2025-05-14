@@ -64,6 +64,7 @@ class ParserPlan:
         self._plan_data: Optional[Dict[str, Any]] = None
         self._is_loaded: bool = False
         self._plan_file_path: Optional[str] = None
+        self._project_root = os.getcwd()
 
     def _ensure_loaded(self):
         """Checks if a plan has been loaded and raises an error if not."""
@@ -152,8 +153,10 @@ class ParserPlan:
             try:
                 step_path = step_json.get("file_path")
                 # Resolve step_path relative to the overview file's directory if not absolute
-                if step_path and not os.path.isabs(step_path):
-                    step_path = os.path.normpath(os.path.join(base_dir, step_path))
+                if step_path:
+                   if not os.path.isabs(step_path):
+                       # Join with the base_dir (directory of the overview plan)
+                       step_path = os.path.normpath(os.path.join(base_dir, step_path))
                 step = self._read_json_file(step_path)
             except FileNotFoundError:
                 raise SubtaskFileNotFoundError(f"Step file not found: {step_path} (at index {i})")

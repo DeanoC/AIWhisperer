@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 import tempfile
 import os
 
-from src.ai_whisperer.commands import GenerateInitialPlanCommand, console
+from src.ai_whisperer.commands import GenerateInitialPlanCommand
 from src.ai_whisperer.initial_plan_generator import InitialPlanGenerator
 
 class TestGenerateInitialPlanCommand:

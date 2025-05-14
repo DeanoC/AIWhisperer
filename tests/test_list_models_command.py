@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.ai_whisperer.commands import ListModelsCommand, console
+from src.ai_whisperer.commands import ListModelsCommand
 from src.ai_whisperer.model_info_provider import ModelInfoProvider
 
 # Mocked tests for list-models
@@ -25,11 +25,11 @@ def test_list_models_mocked(mock_model_info_provider, mock_load_config, mock_con
 
     mock_instance.list_models.assert_called_once()
     # Assertions on console output
-    mock_console.print.assert_any_call("Loading configuration from: dummy_config.yaml")
-    mock_console.print.assert_any_call("[bold green]Available OpenRouter Models:[/bold green]")
-    mock_console.print.assert_any_call("- mock_server_1/model_a")
-    mock_console.print.assert_any_call("- mock_server_1/model_b")
-    mock_console.print.assert_any_call("- mock_server_2/model_c")
+    mock_logger.debug.assert_any_call("Loading configuration from: dummy_config.yaml")
+    mock_logger.debug.assert_any_call("[bold green]Available OpenRouter Models:[/bold green]")
+    mock_logger.debug.assert_any_call("- mock_server_1/model_a")
+    mock_logger.debug.assert_any_call("- mock_server_1/model_b")
+    mock_logger.debug.assert_any_call("- mock_server_2/model_c")
 
 # Mocked tests for list-models CSV output
 @patch('src.ai_whisperer.commands.console')
@@ -46,8 +46,8 @@ def test_list_models_csv_mocked(mock_model_info_provider, mock_load_config, mock
 
     mock_instance.list_models_to_csv.assert_called_once_with(output_csv_path)
     # Assertions on console output for CSV case
-    mock_console.print.assert_any_call("Loading configuration from: dummy_config.yaml")
-    mock_console.print.assert_any_call(f"[green]Successfully wrote model list to CSV: {output_csv_path}[/green]")
+    mock_logger.debug.assert_any_call("Loading configuration from: dummy_config.yaml")
+    mock_logger.debug.assert_any_call(f"[green]Successfully wrote model list to CSV: {output_csv_path}[/green]")
 
 
 # Tests interacting with actual servers (marked as integration/slow)
@@ -65,13 +65,13 @@ def test_list_models_actual_servers(mock_console):
     # For this example, we'll use a placeholder and assume a config exists for the test environment
     command = ListModelsCommand(config_path="config.yaml") # Use a real config path
 
-    # Capture output by mocking console.print
-    with patch('src.ai_whisperer.commands.console.print') as mock_print:
+    # Capture output by mocking logger.debug
+    with patch('src.ai_whisperer.commands.logger.debug') as mock_print:
         command.execute()
 
     # Basic assertion: command should run without error (exit code is returned by execute)
     # We can't easily check exit code here, but we can check if execute ran without raising exception
-    # and if console.print was called with expected output structure.
+    # and if logger.debug was called with expected output structure.
     mock_print.assert_any_call("Loading configuration from: config.yaml")
     mock_print.assert_any_call("[bold green]Available OpenRouter Models:[/bold green]")
     # Further assertions would depend on the expected output from actual servers.

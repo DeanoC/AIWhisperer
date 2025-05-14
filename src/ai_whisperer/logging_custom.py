@@ -1,8 +1,5 @@
-
-
 import logging
 import logging.config
-import logging.handlers
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Any, Optional
@@ -11,36 +8,13 @@ import yaml
 import os
 import sys
 
-# Rich for terminal output
-try:
-    from rich.logging import RichHandler
-
-    RICH_AVAILABLE = True
-except ImportError:
-    RICH_AVAILABLE = False
-
-    # Define a dummy RichHandler if rich is not available
-    class RichHandler(logging.StreamHandler):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
-        def emit(self, record):
-            # Simple fallback formatting
-            log_entry = self.format(record)
-            self.stream.write(log_entry + "\n")
-            self.flush()
-
 
 class LogLevel(Enum):
     DEBUG = "DEBUG"  # Detailed information, typically of interest only when diagnosing problems.
     INFO = "INFO"  # Confirmation that things are working as expected.
-    WARNING = (
-        "WARNING"  # An indication that something unexpected happened, or indicative of some problem in the near future.
-    )
+    WARNING = "WARNING"  # An indication that something unexpected happened, or indicative of some problem in the near future.
     ERROR = "ERROR"  # Due to a more serious problem, the software has not been able to perform some function.
     CRITICAL = "CRITICAL"  # A serious error, indicating that the program itself may be unable to continue running.
-
-
 class ComponentType(Enum):
     RUNNER = "runner"  # Overall runner operations, lifecycle events.
     EXECUTION_ENGINE = "execution_engine"  # Orchestration and execution of plan steps.
@@ -97,14 +71,10 @@ def setup_logging(config_path: Optional[str] = None):
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
         try:
+            # Remove any existing handlers from the root logger to avoid duplicates
+            for handler in logging.root.handlers[:]:
+                logging.root.removeHandler(handler)
             logging.config.dictConfig(config)
-            # Ensure RichHandler is used if available and configured
-            for handler_config in config.get("handlers", {}).values():
-                if handler_config.get("class") == "rich.logging.RichHandler" and not RICH_AVAILABLE:
-                    logging.warning("RichHandler configured but 'rich' library not found. Using basic handler.")
-                    # Fallback to a basic handler if Rich is not available
-                    # This part might need more sophisticated handling depending on desired fallback
-                    pass  # dictConfig might handle class not found, or we need to replace it
         except Exception as e:
             logging.error(f"Error loading logging configuration from {config_path}: {e}")
             # Fallback to basic configuration on error
@@ -118,6 +88,9 @@ def setup_logging(config_path: Optional[str] = None):
 def setup_basic_logging():
     """Sets up a basic console logger."""
     try:
+        if logging.root.handlers:
+            # Root logger already has handlers, assume it's configured
+            return
         # Remove any existing handlers from the root logger to avoid duplicates
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
@@ -126,12 +99,8 @@ def setup_basic_logging():
         # Use the same formatter for both handlers, without timestamp
         log_format = "%(name)s - %(levelname)s - %(message)s"
 
-        if RICH_AVAILABLE:
-            console_handler = RichHandler(level=logging.DEBUG, show_path=False, markup=True)
-            formatter = logging.Formatter("%(message)s")  # RichHandler formats message
-        else:
-            console_handler = logging.StreamHandler()
-            formatter = logging.Formatter(log_format)
+        console_handler = logging.StreamHandler()
+        formatter = logging.Formatter(log_format)
 
         console_handler.setFormatter(formatter)
 
@@ -209,6 +178,9 @@ def set_active_monitor_handler(handler: Optional[logging.Handler]):
     """
     global active_monitor_handler, _suppressed_handlers_state
 
+# Always remove all existing handlers from the root logger
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
     if active_monitor_handler:
         # Remove the previous active monitor handler
         logging.root.removeHandler(active_monitor_handler)
@@ -223,8 +195,8 @@ def set_active_monitor_handler(handler: Optional[logging.Handler]):
         # Temporarily disable suppression of other handlers for debugging
         # _suppressed_handlers_state = [] # Ensure it's empty before suppressing
         # for hdlr in logging.root.handlers[:]: # Iterate over a copy of the list
-        #     # Check if it's a StreamHandler or RichHandler and not the monitor handler itself
-        #     if isinstance(hdlr, (logging.StreamHandler, RichHandler)) and hdlr is not active_monitor_handler:
+        #     # Check if it's a StreamHandler and not the monitor handler itself
+        #     if isinstance(hdlr, logging.StreamHandler) and hdlr is not active_monitor_handler:
         #         _suppressed_handlers_state.append((hdlr, hdlr.level)) # Store handler and original level
         #         hdlr.setLevel(logging.CRITICAL) # Suppress output
 

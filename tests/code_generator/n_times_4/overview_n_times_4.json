@@ -5,7 +5,7 @@
     {
       "subtask_id": "a3b2c4d5-e5f6-7890-1234-567890abcdef",
       "name": "Generate Python Script",
-      "file_path": "tests/code_generator/n_times_4/subtask_generate_script.json",
+      "file_path": "./subtask_generate_script.json",
       "depends_on": [],
       "type": "code_generation",
       "completed": false

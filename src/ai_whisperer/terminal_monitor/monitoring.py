@@ -216,6 +216,7 @@ class TerminalMonitor(logging.Handler):
 
     def _ui_thread_loop(self):
         logger.debug("_ui_thread_loop started.")
+        logging.getLogger().propagate = False
         logger.debug("_ui_thread_loop: Initializing prompt_toolkit application.")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

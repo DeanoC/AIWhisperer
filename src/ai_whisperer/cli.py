@@ -10,8 +10,6 @@ import csv
 # Import necessary components from the application
 from .config import load_config
 from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
-from .utils import setup_rich_output # setup_logging removed
-from rich.console import Console
 from .commands import ListModelsCommand, GenerateInitialPlanCommand, GenerateOverviewPlanCommand, RefineCommand, RunCommand, BaseCommand # Import command classes
 from . import logging_custom # Import module directly
 
@@ -25,8 +23,6 @@ def main(args=None) -> list[BaseCommand]:
     Returns the instantiated command object.
     """
     # Logging will be set up after argument parsing to use the config path.
-    # The 'console' variable will be initialized after logging setup.
-
     # --- Argument Parsing ---
     parser = argparse.ArgumentParser(
         description="AI Whisperer CLI application for generating task plans and refining requirements.",
@@ -133,9 +129,6 @@ def main(args=None) -> list[BaseCommand]:
         # Initialize the module-level logger for cli.py after setup
         global logger # Declare intention to modify the module-level logger
         logger = logging_custom.get_logger(__name__)
-
-        # Setup Rich Console for other uses if needed (logging uses its own RichHandler)
-        console = setup_rich_output() # Initialize console here
 
         if logger: # Check if logger was successfully initialized
             logger.debug("Custom logging initialized and cli.py logger is active.")

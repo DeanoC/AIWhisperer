@@ -5,14 +5,7 @@ import json
 from typing import Dict, Any
 import os
 import fnmatch
-
-from jsonschema import validate, ValidationError  # Potential library
-
-from pathlib import Path  # Import Path
-from rich.console import Console
-
-from .exceptions import SchemaValidationError
-from .json_validator import validate_against_schema
+from pathlib import Path 
 
 
 def setup_logging(level=logging.INFO):
@@ -20,11 +13,6 @@ def setup_logging(level=logging.INFO):
     # Add debug logging to confirm setup_logging is invoked
     print("DEBUG: setup_logging invoked")
     logging.basicConfig(level=level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", stream=sys.stderr)
-
-
-def setup_rich_output() -> Console:
-    """Creates and returns a Rich Console object for styled terminal output."""
-    return Console(stderr=True)
 
 
 def calculate_sha256(file_path: str | Path) -> str:

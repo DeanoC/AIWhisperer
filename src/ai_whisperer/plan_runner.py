@@ -27,6 +27,7 @@ from .logging_custom import (
 from .terminal_monitor.monitoring import TerminalMonitor
 
 logger = logging.getLogger(__name__)
+logger.propagate = False
 
 class PlanRunner:
     """

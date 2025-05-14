@@ -4,7 +4,7 @@ import tempfile
 import os
 from pathlib import Path
 
-from src.ai_whisperer.commands import GenerateOverviewPlanCommand, console
+from src.ai_whisperer.commands import GenerateOverviewPlanCommand
 from src.ai_whisperer.project_plan_generator import OverviewPlanGenerator
 
 class TestGenerateOverviewPlanCommand:

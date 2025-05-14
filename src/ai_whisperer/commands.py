@@ -1,27 +1,17 @@
-import argparse
 from abc import ABC, abstractmethod
 import asyncio
 from pathlib import Path
 import logging
 import yaml
 import json
-import logging
-import yaml
-import json
 from pathlib import Path
-import os
-import csv
 import threading # Import threading
 from typing import Optional # Import Optional
 from .terminal_monitor.monitoring import TerminalMonitor # Import TerminalMonitor
 from .state_management import StateManager # Import StateManager
 
 from .config import load_config
-from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
-from .utils import setup_logging, setup_rich_output
-from .ai_service_interaction import OpenRouterAPI
 from .logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import logging components for log_event
-from rich.console import Console
 from .model_info_provider import ModelInfoProvider
 from .plan_runner import PlanRunner
 from .initial_plan_generator import InitialPlanGenerator
@@ -29,7 +19,6 @@ from .project_plan_generator import OverviewPlanGenerator
 from .plan_parser import ParserPlan
 
 logger = logging.getLogger(__name__)
-console = Console() # Initialize console here for use in command classes
 
 class BaseCommand(ABC):
     """Base class for all CLI commands."""
@@ -50,22 +39,22 @@ class ListModelsCommand(BaseCommand):
 
     def execute(self):
         """Lists available OpenRouter models."""
-        console.print(f"Loading configuration from: {self.config_path}")
+        logger.debug(f"Loading configuration from: {self.config_path}")
         logger.debug("Configuration loaded successfully for listing models.")
 
         model_provider = ModelInfoProvider(self.config)
 
         if self.output_csv:
             model_provider.list_models_to_csv(self.output_csv)
-            console.print(f"[green]Successfully wrote model list to CSV: {self.output_csv}[/green]")
+            logger.debug(f"Successfully wrote model list to CSV: {self.output_csv}")
         else:
             detailed_models = model_provider.list_models()
-            console.print("[bold green]Available OpenRouter Models:[/bold green]")
+            logger.debug("Available OpenRouter Models:")
             for model in detailed_models:
                  if isinstance(model, str):
-                    console.print(f"- {model}")
+                    logger.debug(f"- {model}")
                  else:
-                    console.print(f"- {model.get('id', 'N/A')}")
+                    logger.debug(f"- {model.get('id', 'N/A')}")
         return 0
 
 class GenerateInitialPlanCommand(BaseCommand):
@@ -77,18 +66,17 @@ class GenerateInitialPlanCommand(BaseCommand):
 
     def execute(self):
         """Generates initial task YAML or a detailed subtask."""
-        console.print(f"Loading configuration from: {self.config_path}")
-        logger.debug("Configuration loaded successfully.")
-
+        logger.debug(f"Loading configuration from: {self.config_path}")
+ 
         if not self.requirements_path:
             raise ValueError("Requirements path is required for initial plan generation.")
 
         plan_generator = InitialPlanGenerator(self.config, self.output_dir)
-        console.print(f"Generating initial task plan from: {self.requirements_path}")
+        logger.debug(f"Generating initial task plan from: {self.requirements_path}")
 
         result_path = plan_generator.generate_plan(self.requirements_path, self.config_path)
 
-        console.print(f"[green]Successfully generated task JSON: {result_path}[/green]")
+        logger.debug(f"[green]Successfully generated task JSON: {result_path}[/green]")
         return 0
 
 class GenerateOverviewPlanCommand(BaseCommand):
@@ -106,13 +94,13 @@ class GenerateOverviewPlanCommand(BaseCommand):
         project_plan_generator = OverviewPlanGenerator(self.config, self.output_dir)
         result = project_plan_generator.generate_full_plan(self.initial_plan_path, self.config_path)
 
-        console.print(f"[green]Successfully generated project plan:[/green]")
-        console.print(f"- Task plan: {result['task_plan']}")
+        logger.debug(f"[green]Successfully generated project plan:[/green]")
+        logger.debug(f"- Task plan: {result['task_plan']}")
         if result["task_plan"] != result["overview_plan"]:
-            console.print(f"- Overview plan: {result['overview_plan']}")
-        console.print(f"- Subtasks generated: {len(result['subtasks'])}")
+            logger.debug(f"- Overview plan: {result['overview_plan']}")
+        logger.debug(f"- Subtasks generated: {len(result['subtasks'])}")
         for i, subtask_path in enumerate(result["subtasks"], 1):
-            console.print(f"  {i}. {subtask_path}")
+            logger.debug(f"  {i}. {subtask_path}")
 
         return 0
 
@@ -128,20 +116,20 @@ class RefineCommand(BaseCommand):
     def execute(self):
         """Refines a requirements document."""
         logger.info("Starting AI Whisperer refine process...")
-        console.print(f"Loading configuration from: {self.config_path}")
+        logger.debug(f"Loading configuration from: {self.config_path}")
         logger.debug("Configuration loaded successfully.")
 
         # Placeholder for refine logic - will need to integrate Orchestrator or similar
-        console.print("[yellow]Refine command not fully implemented in command object yet.[/yellow]")
+        logger.debug("[yellow]Refine command not fully implemented in command object yet.[/yellow]")
         # Example of how it might look, based on original cli.py:
         # from .orchestrator import Orchestrator
         # orchestrator = Orchestrator(self.config, self.output)
         # current_input_file = self.input_file
         # for i in range(self.iterations):
-        #     console.print(f"[yellow]Refinement iteration {i+1} of {self.iterations}...[/yellow]")
+        #     logger.debug(f"[yellow]Refinement iteration {i+1} of {self.iterations}...[/yellow]")
         #     result = orchestrator.refine_requirements(input_filepath_str=current_input_file)
         #     current_input_file = result
-        # console.print(f"[green]Successfully refined requirements: {result}[/green]")
+        # logger.debug(f"[green]Successfully refined requirements: {result}[/green]")
         return 0 # Or appropriate exit code
 
 class RunCommand(BaseCommand):
@@ -188,13 +176,15 @@ class RunCommand(BaseCommand):
     def execute(self):
         """Executes a project plan."""
         logger.info("Starting AI Whisperer run process...")
-        console.print(f"Loading configuration from: {self.config_path}")
+        logger.debug(f"Loading configuration from: {self.config_path}")
         logger.debug("Configuration loaded successfully.")
 
-        plan_file_path = Path(self.plan_file)
-        console.print(f"Loading plan from: {plan_file_path}")
+        # Get the absolute path of the plan file
+        plan_file_path_abs = Path(self.plan_file).resolve()
+        logger.debug(f"Loading plan from: {plan_file_path_abs}")
         plan_parser = ParserPlan()
-        plan_parser.load_overview_plan(str(plan_file_path))
+        # Pass the absolute path to load_overview_plan
+        plan_parser.load_overview_plan(str(plan_file_path_abs))
         logger.debug("Plan file parsed and validated successfully.")
 
         monitor_instance = None

@@ -3,9 +3,6 @@ import logging
 import threading
 from unittest.mock import MagicMock, patch
 
-# Assuming these modules exist and have the necessary classes/functions
-from src.ai_whisperer.execution_engine import ExecutionEngine
-from src.ai_whisperer.state_management import StateManager
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
 from src.ai_whisperer.commands import RunCommand
 from dataclasses import dataclass, field
