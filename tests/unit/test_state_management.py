@@ -22,6 +22,7 @@ from src.ai_whisperer.state_management import StateManager
 class TestStateManagement(unittest.TestCase):
 
     def setUp(self):
+        from src.ai_whisperer.context_management import ContextManager
         self.temp_dir = tempfile.TemporaryDirectory()
         self.state_file_path = os.path.join(self.temp_dir.name, "test_state.json")
         self.state_manager = StateManager(self.state_file_path)
@@ -33,7 +34,10 @@ class TestStateManagement(unittest.TestCase):
             "global_state": {"file_paths": ["/path/to/file1.txt"], "other_context": {"key": "value"}},
         }
         # Initialize the state manager's state for tests that need it pre-populated
-        self.state_manager.state = self.initial_state_data.copy()
+        self.state_manager.state = json.loads(json.dumps(self.initial_state_data))
+        # Add ContextManager to each task
+        for task in self.state_manager.state["tasks"].values():
+            task["context_manager"] = ContextManager()
 
 
     def tearDown(self):
@@ -44,7 +48,12 @@ class TestStateManagement(unittest.TestCase):
         self.assertTrue(os.path.exists(self.state_file_path))
         loaded_state_manager = StateManager(self.state_file_path)
         loaded_state = loaded_state_manager.load_state()
-        self.assertEqual(loaded_state, self.initial_state_data)
+        # Compare only the relevant fields (status, result, global_state), ignore 'context_manager'
+        for task_id, expected_task in self.initial_state_data["tasks"].items():
+            loaded_task = loaded_state["tasks"][task_id]
+            for key in expected_task:
+                self.assertEqual(loaded_task[key], expected_task[key])
+        self.assertEqual(loaded_state["global_state"], self.initial_state_data["global_state"])
 
     def test_load_state_file_not_found(self):
         with self.assertRaises(FileNotFoundError):

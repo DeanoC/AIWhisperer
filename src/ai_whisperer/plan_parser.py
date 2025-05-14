@@ -151,6 +151,9 @@ class ParserPlan:
         for i, step_json in enumerate(raw_plan_data.get("plan", [])):
             try:
                 step_path = step_json.get("file_path")
+                # Resolve step_path relative to the overview file's directory if not absolute
+                if step_path and not os.path.isabs(step_path):
+                    step_path = os.path.normpath(os.path.join(base_dir, step_path))
                 step = self._read_json_file(step_path)
             except FileNotFoundError:
                 raise SubtaskFileNotFoundError(f"Step file not found: {step_path} (at index {i})")

@@ -1,6 +1,7 @@
 import sys
 import logging # Import logging
 from .cli import main
+from src.ai_whisperer.ai_service_interaction import OpenRouterAPI
 
 logger = logging.getLogger(__name__) # Get logger instance
 

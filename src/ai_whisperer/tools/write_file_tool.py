@@ -35,7 +35,7 @@ class WriteFileTool(AITool):
             "required": ["file_path", "content"]
         }
 
-    def execute(self, file_path: str, content: str) -> Dict[str, Any]:
+    async def execute(self, file_path: str, content: str) -> Dict[str, Any]:
         """
         Writes the provided content to the specified file path.
 

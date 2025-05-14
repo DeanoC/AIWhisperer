@@ -188,7 +188,13 @@ def _execute_validation(engine, task_definition, task_id, logger) -> tuple[bool,
     expected_files = task_definition.get('expected_output_files', [])
     missing_files = []
     checked_files = []
-    if isinstance(expected_files, list) and all(isinstance(f, str) for f in expected_files):
+    # If no validation_criteria and no expected_output_files, skip validation
+    if not task_definition.get('validation_criteria') and not expected_files:
+        validation_details["overall_status"] = "skipped"
+        validation_details["commands_executed"] = []
+        return True, validation_details
+
+    if isinstance(expected_files, list) and all(isinstance(f, str) for f in expected_files) and expected_files:
         for file_path in expected_files:
             checked_files.append(file_path)
             if not Path(file_path).is_file():

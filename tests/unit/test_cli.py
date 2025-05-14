@@ -30,7 +30,7 @@ def mock_commands():
 # Mock setup_logging and setup_rich_output to prevent side effects during tests
 @pytest.fixture(autouse=True)
 def mock_setup():
-    with patch('ai_whisperer.cli.setup_logging'), \
+    with patch('ai_whisperer.logging_custom.setup_logging'), \
          patch('ai_whisperer.cli.setup_rich_output'):
         yield
 

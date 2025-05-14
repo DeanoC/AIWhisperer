@@ -318,7 +318,12 @@ class TestOpenRouterAPIUnit:
                 "HTTP-Referer": "test_site_url",
                 "X-Title": "test_app_name",
             },
-            json={"model": model, "messages": history, "stream": True},  # Should use history
+            json={
+                "model": model,
+                "messages": history,
+                "temperature": 0.7,  # From MOCK_CONFIG["params"]
+                "stream": True
+            },
             stream=True,
             timeout=10,
         )

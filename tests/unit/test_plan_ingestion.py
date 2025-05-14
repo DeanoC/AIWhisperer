@@ -76,6 +76,7 @@ VALID_OVERVIEW_PLAN_CONTENT = {
 VALID_SUBTASK_CONTENT_1 = {
     "subtask_id": "subtask-abc",
     "task_id": "task-overview-456",
+    "name": "Test Subtask 1",
     "description": "A subtask for testing overview.",  # Updated description
     "instructions": ["Do something specific for subtask 1."],  # Instructions as array
     "input_artifacts": [],  # Added required field
@@ -90,6 +91,7 @@ VALID_SUBTASK_CONTENT_1 = {
 VALID_SUBTASK_CONTENT_2 = {
     "subtask_id": "subtask-def",
     "task_id": "task-overview-456",
+    "name": "Test Subtask 2",
     "description": "Another subtask for testing overview.",  # Updated description
     "instructions": ["Do something specific for subtask 2."],  # Instructions as array
     "input_artifacts": [],  # Added required field
@@ -472,6 +474,7 @@ def test_overview_plan_with_optional_subtask_fields_missing(create_overview_plan
     subtask_content_minimal = {
         "subtask_id": "subtask-minimal",
         "task_id": "task-overview-optional",
+        "name": "Minimal Subtask",
         "description": "Minimal subtask.",
         "instructions": ["Do minimal work."],
         "input_artifacts": [],
