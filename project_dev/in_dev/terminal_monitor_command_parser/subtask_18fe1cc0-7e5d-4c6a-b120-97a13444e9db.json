@@ -1,0 +1,40 @@
+{
+  "description": "Run the unit tests and manually verify command coloring, help, shortcuts, and aliases.",
+  "instructions": [
+    "Open a terminal in the project root directory.",
+    "Ensure your Python environment is activated.",
+    "Run the unit tests specifically for terminal command features using pytest. The command should target the file: `pytest tests/unit/test_terminal_command_features.py`.",
+    "Verify that all tests in the output pass without errors.",
+    "After the tests pass, run the AI Whisperer application manually in the terminal using the command: `python src/ai_whisperer/main.py` (or the appropriate command to start the monitor).",
+    "Within the running AI Whisperer terminal monitor, perform the following manual checks:",
+    "- Type various valid commands (e.g., `help`, `config`, `exit`) and observe if they and their arguments are displayed with the expected color highlighting.",
+    "- Type the `help` command and press Enter. Verify that the output displays accurate and up-to-date information about the available commands and their usage.",
+    "- Type `q` and press Enter. Verify that this shortcut correctly initiates the exit process for the terminal monitor.",
+    "- Attempt to define an alias using the appropriate command (refer to the help output if needed). For example, `alias qc exit`. Then, type the defined alias (`qc`) and press Enter. Verify that the alias executes the intended command (`exit`).",
+    "- Attempt to define another alias and use it to confirm alias functionality is robust."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/terminal_monitor/command_parser.py",
+    "src/ai_whisperer/terminal_monitor/commands.py",
+    "tests/unit/test_terminal_command_features.py"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "The unit tests must be run using the pytest framework.",
+    "Manual verification must be performed within a running instance of the AI Whisperer terminal monitor."
+  ],
+  "validation_criteria": [
+    "The command `pytest tests/unit/test_terminal_command_features.py` exits with a zero status code, indicating all tests passed.",
+    "During manual testing, commands and arguments are visibly colored according to the defined scheme.",
+    "The output of the `help` command is accurate and complete.",
+    "Typing `q` successfully initiates the application exit.",
+    "Defined aliases execute the commands they are mapped to within the monitor."
+  ],
+  "type": "validation",
+  "name": "validate_coloring_help_shortcuts_aliases",
+  "depends_on": [
+    "implement_coloring_help_shortcuts_aliases"
+  ],
+  "task_id": "8765da11-b5e1-4946-99d7-7b6cadf9fcfc",
+  "subtask_id": "18fe1cc0-7e5d-4c6a-b120-97a13444e9db"
+}

@@ -1,0 +1,44 @@
+{
+  "description": "Implement command coloring, help generation, shortcut handling, and alias support.",
+  "instructions": [
+    "Analyze the existing code in `src/ai_whisperer/terminal_monitor/command_parser.py` and `src/ai_whisperer/terminal_monitor/commands.py` to understand the current command handling structure.",
+    "Review the design document `docs/terminal_command_mode_design.md` for any specific requirements or guidelines related to coloring, help, shortcuts, and aliases.",
+    "Implement logic within `src/ai_whisperer/terminal_monitor/command_parser.py` or `src/ai_whisperer/terminal_monitor/commands.py` to color commands and arguments. Consider using the integrated terminal library's capabilities for this.",
+    "Add a mechanism for commands to store and provide help text. This could involve adding a `help_text` attribute to command objects or a separate help registry.",
+    "Create a handler for a 'help' command (or similar) that retrieves and displays the help text for other commands.",
+    "Implement logic to handle shortcuts. Specifically, configure the terminal monitor to recognize 'q' as a shortcut for the 'exit' command.",
+    "Develop functionality for defining and resolving command aliases. This might involve maintaining a dictionary or similar structure mapping aliases to their corresponding commands.",
+    "Ensure the implemented features are integrated correctly into the command parsing and execution flow.",
+    "Run the unit tests in `tests/unit/test_terminal_command_features.py` and fix any failures.",
+    "Manually test the implemented features in the terminal monitor to verify they work as expected according to the validation criteria."
+  ],
+  "input_artifacts": [
+    "docs/terminal_command_mode_design.md",
+    "tests/unit/test_terminal_command_features.py",
+    "src/ai_whisperer/terminal_monitor/command_parser.py",
+    "src/ai_whisperer/terminal_monitor/commands.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/terminal_monitor/command_parser.py",
+    "src/ai_whisperer/terminal_monitor/commands.py"
+  ],
+  "constraints": [
+    "The implementation must be contained within the specified output artifacts.",
+    "The changes should not introduce new dependencies unless absolutely necessary and approved.",
+    "The implementation must pass all existing and newly added tests in `tests/unit/test_terminal_command_features.py`."
+  ],
+  "validation_criteria": [
+    "When commands and arguments are entered in the terminal monitor, they are displayed with appropriate coloring.",
+    "Executing the help command (or similar) displays a list of available commands and their help text.",
+    "Typing 'q' at the command prompt results in the 'exit' command being executed.",
+    "Users can define an alias for a command (e.g., `alias ls list-files`) and then use the alias (e.g., `ls`) to execute the original command (`list-files`).",
+    "The implementation passes all tests in `tests/unit/test_terminal_command_features.py`."
+  ],
+  "type": "file_edit",
+  "name": "implement_coloring_help_shortcuts_aliases",
+  "depends_on": [
+    "generate_tests_for_coloring_help_shortcuts_aliases"
+  ],
+  "task_id": "8765da11-b5e1-4946-99d7-7b6cadf9fcfc",
+  "subtask_id": "d3fb385d-0c64-49bd-a18f-3f68790e4e59"
+}

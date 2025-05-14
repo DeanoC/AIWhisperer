@@ -12,3 +12,5 @@ jsonschema>=4.0,<5.0 # For validating YAML/JSON structures
 deepdiff
 
 pytest-asyncio
+
+prompt_toolkit>=3.0.0 # For interactive terminal command mode

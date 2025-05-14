@@ -1,0 +1,41 @@
+{
+  "description": "Implement the core terminal command parsing logic, command history, and integrate basic editing capabilities.",
+  "instructions": [
+    "Create the file `src/ai_whisperer/terminal_monitor/command_parser.py`.",
+    "Within `command_parser.py`, implement a class or functions responsible for parsing user input from the terminal.",
+    "The parser should be able to identify commands and their arguments based on the design documented in `docs/terminal_command_mode_design.md`.",
+    "Implement a mechanism to store and retrieve previously entered commands, providing a command history feature.",
+    "Explore using a library like `prompt_toolkit` to enhance the command line editing experience (e.g., arrow key navigation, basic text editing). If `prompt_toolkit` is not feasible or desired, implement basic editing features manually.",
+    "Ensure the implemented parsing logic and features correctly handle various command formats and edge cases as specified in the design document.",
+    "Run the unit tests located in `tests/unit/test_terminal_command_parser.py` and ensure all tests pass.",
+    "Modify `src/ai_whisperer/terminal_monitor/__init__.py` to include necessary imports or initialization code for the new `command_parser` module."
+  ],
+  "input_artifacts": [
+    "docs/terminal_command_mode_design.md",
+    "tests/unit/test_terminal_command_parser.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/terminal_monitor/command_parser.py",
+    "src/ai_whisperer/terminal_monitor/__init__.py"
+  ],
+  "constraints": [
+    "The implementation must adhere to the design specifications in `docs/terminal_command_mode_design.md`.",
+    "The code must be written in Python.",
+    "Prioritize using standard Python libraries where possible, but consider `prompt_toolkit` for enhanced editing.",
+    "The implementation should be modular and testable."
+  ],
+  "validation_criteria": [
+    "The file `src/ai_whisperer/terminal_monitor/command_parser.py` exists and contains the core command parsing logic.",
+    "The implemented command history functionality stores and retrieves commands correctly.",
+    "Basic command line editing features (or `prompt_toolkit` integration) function as expected.",
+    "All unit tests in `tests/unit/test_terminal_command_parser.py` execute without errors and pass successfully.",
+    "`src/ai_whisperer/terminal_monitor/__init__.py` is updated to integrate the new module."
+  ],
+  "type": "code_generation",
+  "name": "implement_terminal_command_parser_and_basic_features",
+  "depends_on": [
+    "generate_tests_for_command_parsing_and_basic_features"
+  ],
+  "task_id": "8765da11-b5e1-4946-99d7-7b6cadf9fcfc",
+  "subtask_id": "41526869-8828-47bc-908b-a2c49fbb0acc"
+}

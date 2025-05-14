@@ -8,56 +8,56 @@ This document outlines the plan to update the project documentation to reflect t
 
 Based on [`docs/monitor_terminal_analysis.md`](docs/monitor_terminal_analysis.md), the key features are:
 
-*   **Screen Splitting:**
-    *   Three main horizontal segments: Left, Center, Right.
-    *   Central segment subdivided vertically:
-        *   Top (larger): Primary monitor output.
-        *   Bottom (smaller): Command box (future use).
-    *   Left/Right segments: Currently empty, reserved for future content.
-*   **ASCII Outlines:**
-    *   All primary segments and the central subdivision are visually separated by ASCII art boxes/lines.
-*   **Output Suppression:**
-    *   Non-monitor related output (general CLI logs, etc.) is suppressed from the main terminal window when the monitor is active.
-    *   Only designated monitor events appear in the primary monitor output area.
-*   **Coloring & Formatting:**
-    *   Different types/levels of terminal events are distinguished using colors.
-    *   JSON strings displayed in the monitor are pretty-printed.
-    *   Pretty-printed JSON utilizes syntax highlighting with colors.
-*   **Logging Integration:**
-    *   The monitor displays designated monitor events, implying it filters or processes messages from the main logging system.
+* **Screen Splitting:**
+  * Three main horizontal segments: Left, Center, Right.
+  * Central segment subdivided vertically:
+    * Top (larger): Primary monitor output.
+    * Bottom (smaller): Command box (future use).
+  * Left/Right segments: Currently empty, reserved for future content.
+* **ASCII Outlines:**
+  * All primary segments and the central subdivision are visually separated by ASCII art boxes/lines.
+* **Output Suppression:**
+  * Non-monitor related output (general CLI logs, etc.) is suppressed from the main terminal window when the monitor is active.
+  * Only designated monitor events appear in the primary monitor output area.
+* **Coloring & Formatting:**
+  * Different types/levels of terminal events are distinguished using colors.
+  * JSON strings displayed in the monitor are pretty-printed.
+  * Pretty-printed JSON utilizes syntax highlighting with colors.
+* **Logging Integration:**
+  * The monitor displays designated monitor events, implying it filters or processes messages from the main logging system.
 
 ## 2. Update [`docs/logging_monitoring.md`](docs/logging_monitoring.md)
 
-*   **Modify the "Terminal Monitoring View" section:**
-    *   **Update "Information Displayed":**
-        *   Replace the current panel description with the new three-segment layout:
-            *   Clearly describe the left, center, and right horizontal segments.
-            *   Detail the central segment's vertical subdivision: main monitor output area and command box.
-            *   Mention the use of ASCII art for outlining.
-        *   Specify that the central monitor output area is the primary focus.
-    *   **Add/Integrate "Key Monitor Features":**
-        *   **Output Suppression:** Explain suppression of non-monitor output.
-        *   **Colored Output:** Describe color-coding for event types/levels.
-        *   **JSON Pretty-Printing:** State automatic pretty-printing and syntax highlighting for JSON.
-    *   **Add new subsection: "Integration with the Logging System":**
-        *   Explain the monitor as a specialized real-time viewer for the logging system.
-        *   Clarify it displays relevant `LogMessage` entries.
-        *   Reiterate that comprehensive logs are still stored in files.
-    *   **Review "Interactive Features":** Confirm relevance and interaction with the new layout.
+* **Modify the "Terminal Monitoring View" section:**
+  * **Update "Information Displayed":**
+    * Replace the current panel description with the new three-segment layout:
+      * Clearly describe the left, center, and right horizontal segments.
+      * Detail the central segment's vertical subdivision: main monitor output area and command box.
+      * Mention the use of ASCII art for outlining.
+    * Specify that the central monitor output area is the primary focus.
+  * **Add/Integrate "Key Monitor Features":**
+    * **Output Suppression:** Explain suppression of non-monitor output.
+    * **Colored Output:** Describe color-coding for event types/levels.
+    * **JSON Pretty-Printing:** State automatic pretty-printing and syntax highlighting for JSON.
+  * **Add new subsection: "Integration with the Logging System":**
+    * Explain the monitor as a specialized real-time viewer for the logging system.
+    * Clarify it displays relevant `LogMessage` entries.
+    * Reiterate that comprehensive logs are still stored in files.
+  * **Review "Interactive Features":** Confirm relevance and interaction with the new layout.
 
 ## 3. Update [`README.md`](README.md)
 
-*   **In the "Features" section:**
-    *   Add a new bullet point:
-        *   "**Improved Terminal Monitor:** A redesigned real-time terminal monitor display featuring three segmented, ASCII-outlined sections, colored output for event types, pretty-printed and syntax-highlighted JSON for monitor events, and suppression of non-monitor output for a cleaner view of plan execution."
-*   **Optionally, enhance the `run` command description:**
-    *   After mentioning `--monitor` or `-m`, add a brief note like: "(now with an enhanced multi-section display, colored output, and more!)."
+* **In the "Features" section:**
+  * Add a new bullet point:
+    * "**Improved Terminal Monitor:** A redesigned real-time terminal monitor display featuring three segmented, ASCII-outlined sections, colored output for event types, pretty-printed and syntax-highlighted JSON for monitor events, and suppression of non-monitor output for a cleaner view of plan execution."
+* **Optionally, enhance the `run` command description:**
+  * After mentioning `--monitor` or `-m`, add a brief note like: "(now with an enhanced multi-section display, colored output, and more!)."
 
 ## 4. Review and Ensure Consistency
 
-*   Thoroughly review changes in both documentation files.
-*   Ensure descriptions accurately reflect features from [`docs/monitor_terminal_analysis.md`](docs/monitor_terminal_analysis.md).
-*   Check for clarity, conciseness, and consistent terminology.
+* Thoroughly review changes in both documentation files.
+* Ensure descriptions accurately reflect features from [`docs/monitor_terminal_analysis.md`](docs/monitor_terminal_analysis.md).
+* Check for clarity, conciseness, and consistent terminology.
 
 ## Mermaid Diagram of the Plan
 

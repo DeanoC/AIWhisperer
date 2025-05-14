@@ -1,6 +1,7 @@
 import requests
-from typing import Dict, Any, List, Generator
+from typing import Dict, Any, List, Generator, Optional # Import Optional
 import json
+import threading # Import threading
 from unittest.mock import MagicMock
 import logging
 
@@ -26,24 +27,26 @@ class OpenRouterAPI:
     including streaming chat completions.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], shutdown_event: Optional[threading.Event] = None):
         """
         Initialize the OpenRouter API client with configuration.
 
         Args:
             config: The 'openrouter' section of the application configuration dictionary,
                    expected to contain 'api_key', 'model', 'cache' (optional), etc.
+            shutdown_event: An optional threading.Event to signal shutdown.
 
         Raises:
             ConfigError: If required configuration keys are missing.
         """
         logger.debug(f"OpenRouterAPI __init__ received config type: {type(config)}")
-        logger.debug(f"OpenRouterAPI __init__ received config: {config}")
+        # logger.debug(f"OpenRouterAPI __init__ received config: {config}")  # Too verbose, remove or summarize
 
         if not isinstance(config, dict):
             raise ConfigError(f"Invalid 'openrouter' configuration: Expected a dictionary, got {type(config)}")
 
         self.openrouter_config = config
+        self.shutdown_event = shutdown_event # Store the shutdown event
 
         required_keys = ["api_key", "model"]
         missing_keys = [
@@ -55,10 +58,10 @@ class OpenRouterAPI:
             )
 
         self.api_key = self.openrouter_config["api_key"]
-        logger.debug(f"OpenRouterAPI __init__ self.api_key after setting: {self.api_key}")
+        # logger.debug(f"OpenRouterAPI __init__ self.api_key after setting: {self.api_key}")  # Too verbose, remove
         self.model = self.openrouter_config["model"]  # Now required
         self.params = self.openrouter_config.get("params", {})  # Default params
-        logger.debug(f"OpenRouterAPI __init__ self.params after setting: {self.params}")
+        # logger.debug(f"OpenRouterAPI __init__ self.params after setting: {self.params}")  # Too verbose, remove
         self.site_url = self.openrouter_config.get("site_url", "https://github.com/DeanoC/AIWhisperer")
         self.app_name = self.openrouter_config.get("app_name", "AIWhisperer")
 
@@ -133,9 +136,7 @@ class OpenRouterAPI:
             response.raise_for_status()
 
             logger.debug(f"OpenRouter API list_models raw response type: {type(response.text)}")
-            logger.debug(
-                f"OpenRouter API list_models raw response content: {response.text[:500]}"
-            )  # Log first 500 chars
+            logger.debug(f"OpenRouter API list_models raw response content: <truncated, {len(response.text)} chars>")
 
             try:
                 data = response.json()
@@ -150,7 +151,7 @@ class OpenRouterAPI:
                 # Add logging to inspect elements in data["data"]
                 for i, item in enumerate(data["data"]):
                     logger.debug(f"Element {i} in data['data'] type: {type(item)}")
-                    logger.debug(f"Element {i} in data['data'] content: {item}")
+                    # logger.debug(f"Element {i} in data['data'] content: {str(item)[:200]}... <truncated>")
 
                 return data["data"]
 
@@ -308,9 +309,7 @@ class OpenRouterAPI:
             if not isinstance(timeout, (int, float)) or timeout <= 0:
                 timeout = 60  # Default fallback
 
-            logger.debug(f"OpenRouter API call_chat_completion self.params: {self.params}")
-            logger.debug(f"OpenRouter API call_chat_completion params argument: {params}")
-            logger.debug(f"OpenRouter API call_chat_completion payload before post: {payload}")
+            logger.debug(f"OpenRouter API call_chat_completion: params and payload sizes: params={len(str(self.params))}, input_params={len(str(params))}, payload={len(str(payload))}")
 
             response = requests.post(API_URL, headers=headers, json=payload, timeout=timeout)
 
@@ -349,7 +348,7 @@ class OpenRouterAPI:
             # If we reach here, the HTTP status is 2xx. Proceed to process the JSON response.
             try:
                 data = response.json()
-                logger.debug(f"OpenRouter API call_chat_completion response data: {data}")
+                logger.debug(f"OpenRouter API call_chat_completion response received: size={len(str(data))} chars")
 
                 # Extract and store cost and token data
                 self._last_cost, self._last_input_tokens, self._last_output_tokens = self._extract_cost_tokens(data)
@@ -512,7 +511,7 @@ class OpenRouterAPI:
             if not isinstance(timeout, (int, float)) or timeout <= 0:
                 timeout = 60  # Default fallback
 
-            logger.debug(f"OpenRouter API stream_chat_completion payload: {payload}")
+            logger.debug(f"OpenRouter API stream_chat_completion payload: <payload with {len(str(payload))} chars>")
 
             # Use stream=True for streaming responses
             response = requests.post(API_URL, headers=headers, json=payload, stream=True, timeout=timeout)
@@ -550,6 +549,10 @@ class OpenRouterAPI:
 
             # Process the streaming response
             for line in response.iter_lines():
+                if self.shutdown_event and self.shutdown_event.is_set():
+                    logger.info("Shutdown event detected during stream. Breaking.")
+                    break # Exit loop if shutdown is signaled
+
                 if line:  # Filter out keep-alive newlines
                     if line.startswith(b"data: "):  # Check for byte string prefix
                         decoded_line = line.decode("utf-8")

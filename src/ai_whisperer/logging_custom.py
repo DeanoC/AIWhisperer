@@ -1,4 +1,5 @@
 
+
 import logging
 import logging.config
 import logging.handlers
@@ -8,6 +9,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 import yaml
 import os
+import sys
 
 # Rich for terminal output
 try:
@@ -115,21 +117,45 @@ def setup_logging(config_path: Optional[str] = None):
 
 def setup_basic_logging():
     """Sets up a basic console logger."""
-    # Remove any existing handlers from the root logger to avoid duplicates
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
+    try:
+        # Remove any existing handlers from the root logger to avoid duplicates
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
 
-    if RICH_AVAILABLE:
-        console_handler = RichHandler(level=logging.DEBUG, show_path=False, markup=True)
-        formatter = logging.Formatter("%(message)s")  # RichHandler formats message
-    else:
-        console_handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    console_handler.setFormatter(formatter)
-    logging.basicConfig(
-        level=logging.DEBUG, handlers=[console_handler]
-    )  # Set root logger level to DEBUG to capture all
+        # Use the same formatter for both handlers, without timestamp
+        log_format = "%(name)s - %(levelname)s - %(message)s"
+
+        if RICH_AVAILABLE:
+            console_handler = RichHandler(level=logging.DEBUG, show_path=False, markup=True)
+            formatter = logging.Formatter("%(message)s")  # RichHandler formats message
+        else:
+            console_handler = logging.StreamHandler()
+            formatter = logging.Formatter(log_format)
+
+        console_handler.setFormatter(formatter)
+
+        # Add a file handler for debug logs
+        log_dir = "logs"
+        os.makedirs(log_dir, exist_ok=True) # Create the logs directory if it doesn't exist
+        log_file_path = os.path.join(log_dir, "aiwhisperer_debug.log") # Write log file to logs directory
+        file_handler = logging.FileHandler(log_file_path, mode='w')
+        file_handler.setLevel(logging.DEBUG) # Capture all debug messages
+        file_formatter = logging.Formatter(log_format)
+        file_handler.setFormatter(file_formatter)
+
+        logging.basicConfig(
+            level=logging.DEBUG, handlers=[console_handler, file_handler]
+        )  # Set root logger level to DEBUG and add both handlers
+
+        # Add a log message to confirm logging setup and file path
+        logging.info(f"Logging configured. Debug log file is at: {os.path.abspath(log_file_path)}")
+
+    except Exception as e:
+        # If basic logging setup fails, print an error to stderr as a fallback
+        print(f"FATAL ERROR: Failed to set up basic logging: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -194,13 +220,18 @@ def set_active_monitor_handler(handler: Optional[logging.Handler]):
     active_monitor_handler = handler
 
     if active_monitor_handler:
-        # Suppress other console handlers
-        _suppressed_handlers_state = [] # Ensure it's empty before suppressing
-        for hdlr in logging.root.handlers[:]: # Iterate over a copy of the list
-            # Check if it's a StreamHandler or RichHandler and not the monitor handler itself
-            if isinstance(hdlr, (logging.StreamHandler, RichHandler)) and hdlr is not active_monitor_handler:
-                _suppressed_handlers_state.append((hdlr, hdlr.level)) # Store handler and original level
-                hdlr.setLevel(logging.CRITICAL) # Suppress output
+        # Temporarily disable suppression of other handlers for debugging
+        # _suppressed_handlers_state = [] # Ensure it's empty before suppressing
+        # for hdlr in logging.root.handlers[:]: # Iterate over a copy of the list
+        #     # Check if it's a StreamHandler or RichHandler and not the monitor handler itself
+        #     if isinstance(hdlr, (logging.StreamHandler, RichHandler)) and hdlr is not active_monitor_handler:
+        #         _suppressed_handlers_state.append((hdlr, hdlr.level)) # Store handler and original level
+        #         hdlr.setLevel(logging.CRITICAL) # Suppress output
 
         # Add the new active monitor handler
-        logging.root.addHandler(active_monitor_handler)
+        # Ensure the handler is not already added to avoid duplicates
+        if active_monitor_handler not in logging.root.handlers:
+             logging.root.addHandler(active_monitor_handler)
+             logging.getLogger(__name__).debug("Added active monitor handler to root logger.")
+        else:
+             logging.getLogger(__name__).debug("Active monitor handler already present in root logger.")

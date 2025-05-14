@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 from src.ai_whisperer.state_management import StateManager
 from src.ai_whisperer.execution_engine import ExecutionEngine, TaskExecutionError
 from src.ai_whisperer.exceptions import OrchestratorError
-from src.ai_whisperer.monitoring import TerminalMonitor  # Import TerminalMonitor
+from src.ai_whisperer.terminal_monitor.monitoring import TerminalMonitor  # Import TerminalMonitor
 from src.ai_whisperer.plan_parser import ParserPlan
 
 

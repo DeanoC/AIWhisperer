@@ -307,5 +307,5 @@ def load_config(config_path: str) -> Dict[str, Any]:
         raise ConfigError(
             f"Missing or empty required keys in 'openrouter' section of {config_path}: {', '.join(missing_openrouter_keys)}"
         )
-    logging.debug(f"Loaded config: {config}")
+    # Removed verbose config log to avoid leaking sensitive data and reduce log size
     return config

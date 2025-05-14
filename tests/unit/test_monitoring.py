@@ -14,7 +14,7 @@ import os  # Import os for StateManager
 # Import real classes from the source code
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType
 from src.ai_whisperer.state_management import StateManager
-from src.ai_whisperer.monitoring import TerminalMonitor  # Import the real TerminalMonitor
+from src.ai_whisperer.terminal_monitor.monitoring import TerminalMonitor  # Import the real TerminalMonitor
 
 # --- Unit Tests ---
 
@@ -40,8 +40,8 @@ class TestMonitoring:
     @pytest.fixture
     def terminal_monitor(self, state_manager):
         # Patch Rich Live and Console to prevent actual terminal output during tests
-        with patch("src.ai_whisperer.monitoring.Live") as mock_live, patch(
-            "src.ai_whisperer.monitoring.Console"
+        with patch("src.ai_whisperer.terminal_monitor.monitoring.Live") as mock_live, patch(
+            "src.ai_whisperer.terminal_monitor.monitoring.Console"
         ) as mock_console:
             # Instantiate the real TerminalMonitor with the state_manager
             monitor = TerminalMonitor(state_manager)

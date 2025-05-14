@@ -15,7 +15,9 @@ from src.ai_whisperer.utils import build_ascii_directory_tree
 
 logger = get_logger(__name__)  # Get logger for execution engine
 
-def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_id: str):
+import threading # Import threading for shutdown_event type hint
+
+async def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_id: str, shutdown_event: threading.Event):
     """
     Handles the execution of a 'code_generation' task.
     """
@@ -43,7 +45,7 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_
         if context_manager is None:
             raise TaskExecutionError(f"ContextManager not found for task {task_id} in StateManager.")
 
-        final_ai_result = run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager)
+        final_ai_result = await run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager, shutdown_event) # Await and pass shutdown_event
         logger.info(f"Task {task_id}: AI interaction loop finished.")
 
 
@@ -167,18 +169,11 @@ def _construct_initial_prompt(engine, task_definition, task_id, prompt_context, 
     initial_prompt = "\n".join(prompt_parts)
 
     if logger:
-        logger.debug(f"Task {task_id}: Constructed initial prompt.")
+        logger.debug(f"Task {task_id}: Constructed initial prompt (length: {len(initial_prompt)} chars)")
     log_event(
         log_message=LogMessage(
             LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "code_gen_initial_prompt",
-            f"Initial prompt for task {task_id}", subtask_id=task_id, details={"prompt": initial_prompt}
-        )
-    )
-    logger.debug(f"Task {task_id}: Constructed initial prompt:\n{initial_prompt}")
-    log_event(
-        log_message=LogMessage(
-            LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "code_gen_initial_prompt",
-            f"Initial prompt for task {task_id}", subtask_id=task_id, details={"prompt": initial_prompt}
+            f"Initial prompt for task {task_id} (length: {len(initial_prompt)} chars)", subtask_id=task_id
         )
     )
     return initial_prompt

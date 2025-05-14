@@ -1,0 +1,28 @@
+{
+  "description": "Run the unit tests to validate the command parsing, history, and basic editing implementation.",
+  "instructions": [
+    "Navigate to the root directory of the project.",
+    "Ensure you have the necessary dependencies installed (e.g., by running `pip install -r requirements.txt`).",
+    "Execute the specific unit test file using pytest: `pytest tests/unit/test_terminal_command_parser.py`."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/terminal_monitor/command_parser.py",
+    "tests/unit/test_terminal_command_parser.py"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "The tests must be run from the project's root directory.",
+    "All required dependencies must be installed."
+  ],
+  "validation_criteria": [
+    "The pytest command should complete without errors.",
+    "All individual tests within `tests/unit/test_terminal_command_parser.py` must report as 'PASSED'."
+  ],
+  "type": "validation",
+  "name": "validate_command_parsing_and_basic_features",
+  "depends_on": [
+    "implement_terminal_command_parser_and_basic_features"
+  ],
+  "task_id": "8765da11-b5e1-4946-99d7-7b6cadf9fcfc",
+  "subtask_id": "60a445eb-ab2c-4a07-9b16-4a541840e1b7"
+}

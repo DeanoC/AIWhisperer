@@ -11,7 +11,10 @@ param(
     [switch]$Yes,
 
     [Parameter(HelpMessage = "Pass --debug to the Python CLI to wait for debugger attach.")]
-    [switch]$DebugPython
+    [switch]$DebugPython,
+
+    [Parameter(HelpMessage = "Enable terminal monitor mode.")]
+    [switch]$Monitor
 )
 
 function Show-Usage {
@@ -211,10 +214,12 @@ try {
     }
     $pythonArgs += @(
         "run",
-        "--plan-file",$planJsonPath,
-        "--state-file", (Join-Path -Path $OutputFolder -ChildPath "state.json"),
-        "--monitor"
+        "--plan-file", $planJsonPath,
+        "--state-file", (Join-Path -Path $OutputFolder -ChildPath "state.json")
     )
+    if ($Monitor) {
+        $pythonArgs += "--monitor"
+    }
     Write-Verbose "Executing Python script from Project Root: $ProjectRoot"
     Write-Verbose "Command: $VenvPythonPath $($pythonArgs -join ' ')"
     

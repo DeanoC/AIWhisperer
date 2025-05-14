@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call, patch
 import uuid
 
 from src.ai_whisperer.execution_engine import ExecutionEngine, TaskExecutionError
-from src.ai_whisperer.monitoring import TerminalMonitor  # Import TerminalMonitor
+from src.ai_whisperer.terminal_monitor.monitoring import TerminalMonitor  # Import TerminalMonitor
 from src.ai_whisperer.plan_parser import ParserPlan  # Import ParserPlan
 
 

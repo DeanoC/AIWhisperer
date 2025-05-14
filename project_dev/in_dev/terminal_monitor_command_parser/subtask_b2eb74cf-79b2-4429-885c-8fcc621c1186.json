@@ -1,0 +1,50 @@
+{
+  "description": "Generate unit tests for the core command parsing logic, history, editing, and basic command recognition.",
+  "instructions": [
+    "Create a new Python file `tests/unit/test_terminal_command_parser.py`.",
+    "Import necessary testing frameworks (e.g., `pytest`).",
+    "Define a test class or functions to group tests for the terminal command parser.",
+    "Based on the design document `docs/terminal_command_mode_design.md`, write unit tests covering:",
+    "- Successful parsing of simple commands without arguments (e.g., `exit`).",
+    "- Successful parsing of commands with one or more arguments (e.g., `debugger arg1 arg2`).",
+    "- Handling of quotes and special characters within arguments.",
+    "- Testing the command history functionality:",
+    "  - Adding commands to history.",
+    "  - Navigating history (e.g., simulating up/down arrow key presses if applicable, or testing history retrieval methods).",
+    "  - Handling empty history.",
+    "- Testing basic command line editing features (if implemented or integrated, e.g., backspace, cursor movement). If a third-party library is used, focus on testing the integration points.",
+    "- Verifying that valid registered commands are recognized.",
+    "- Testing how unregistered or invalid commands are handled (e.g., raising an error or returning a specific status).",
+    "Include test stubs (empty test functions or functions with a `pytest.mark.skip` or `pass`) for the specific initial commands (`exit`, `debugger`, `ask`) that will be implemented in later steps. These stubs should indicate where tests for the command execution logic will eventually go.",
+    "Ensure tests cover edge cases for command parsing (e.g., multiple spaces, leading/trailing spaces, empty input) and history (e.g., history size limits if applicable).",
+    "Use clear and descriptive test names."
+  ],
+  "input_artifacts": [
+    "docs/terminal_command_mode_design.md"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_terminal_command_parser.py"
+  ],
+  "constraints": [
+    "Tests must be written using the pytest framework.",
+    "The tests should focus strictly on the command parsing, history, and basic recognition logic, not the execution of the commands themselves.",
+    "The output file must be `tests/unit/test_terminal_command_parser.py`."
+  ],
+  "validation_criteria": [
+    "The file `tests/unit/test_terminal_command_parser.py` exists.",
+    "The file contains test functions or methods.",
+    "The tests cover command parsing with and without arguments.",
+    "The tests cover command history functionality (adding and navigation).",
+    "The tests include coverage for basic command recognition.",
+    "Test stubs for `exit`, `debugger`, and `ask` commands are present.",
+    "The tests compile and can be run using pytest.",
+    "The tests for the core parsing/history logic should fail if the corresponding code is not yet implemented, but the test structure should be valid."
+  ],
+  "type": "test_generation",
+  "name": "generate_tests_for_command_parsing_and_basic_features",
+  "depends_on": [
+    "analyze_requirements_and_design_terminal_command_mode"
+  ],
+  "task_id": "8765da11-b5e1-4946-99d7-7b6cadf9fcfc",
+  "subtask_id": "b2eb74cf-79b2-4429-885c-8fcc621c1186"
+}

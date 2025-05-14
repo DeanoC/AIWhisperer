@@ -1,0 +1,39 @@
+{
+  "description": "Update documentation to include information on the new terminal command mode.",
+  "instructions": [
+    "Open the file `docs/usage.md`.",
+    "Locate or create a suitable section for describing the terminal monitor command mode. A new top-level section or a subsection within 'Usage' might be appropriate.",
+    "Write a clear and concise description of the terminal monitor command mode, explaining its purpose and how it is entered (e.g., when the AI is waiting for input).",
+    "Detail the available commands: 'exit', 'debugger', and 'ask'. For each command, explain its function and provide examples of its usage.",
+    "Describe the features of the command line interface within the terminal monitor, including command history (how to access previous commands), command editing (how to modify commands before execution), coloring (if applicable, explain the color scheme or features), help functionality (how to get help on commands), shortcuts (any defined keyboard shortcuts), and aliases (how aliases work if implemented). Refer to `docs/terminal_command_mode_design.md` for details on these features.",
+    "Ensure the language is accessible to users and the information is easy to follow.",
+    "Save the changes to `docs/usage.md`."
+  ],
+  "input_artifacts": [
+    "docs/usage.md",
+    "docs/terminal_command_mode_design.md"
+  ],
+  "output_artifacts": [
+    "docs/usage.md"
+  ],
+  "constraints": [
+    "The documentation must be updated within the existing `docs/usage.md` file.",
+    "The new section should be logically placed within the document structure.",
+    "All implemented features of the terminal command mode must be accurately documented."
+  ],
+  "validation_criteria": [
+    "The file `docs/usage.md` has been modified.",
+    "A new section or subsection describing the terminal monitor command mode is present in `docs/usage.md`.",
+    "The documentation explains how to enter the command mode.",
+    "The commands 'exit', 'debugger', and 'ask' are listed and their usage is described.",
+    "The documentation covers command history, editing, coloring, help, shortcuts, and aliases.",
+    "The descriptions are clear, accurate, and easy for a user to understand."
+  ],
+  "type": "documentation",
+  "name": "update_documentation",
+  "depends_on": [
+    "validate_coloring_help_shortcuts_aliases"
+  ],
+  "task_id": "8765da11-b5e1-4946-99d7-7b6cadf9fcfc",
+  "subtask_id": "e04bf9fe-a086-4b9f-a0a3-064977a625fb"
+}

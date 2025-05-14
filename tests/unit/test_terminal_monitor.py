@@ -1,7 +1,7 @@
 import pytest
 import time # Import time
 import logging # Import logging module
-from src.ai_whisperer.monitoring import TerminalMonitor
+from src.ai_whisperer.terminal_monitor.monitoring import TerminalMonitor
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType # Import ComponentType
 import io
 import sys

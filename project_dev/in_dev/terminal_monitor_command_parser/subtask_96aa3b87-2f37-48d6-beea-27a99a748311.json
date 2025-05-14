@@ -1,0 +1,28 @@
+{
+  "description": "Run the unit tests to validate the 'exit', 'debugger', and 'ask' command implementations.",
+  "instructions": [
+    "Navigate to the root directory of the project.",
+    "Run the unit tests specifically targeting the test_terminal_commands.py file using pytest.",
+    "Ensure the test execution completes without errors."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/terminal_monitor/commands.py",
+    "tests/unit/test_terminal_commands.py"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "Must use pytest for running tests.",
+    "Tests should be executed from the project root directory."
+  ],
+  "validation_criteria": [
+    "All tests defined within tests/unit/test_terminal_commands.py must pass.",
+    "The test runner should report 0 failures and 0 errors."
+  ],
+  "type": "validation",
+  "name": "validate_initial_commands_implementation",
+  "depends_on": [
+    "implement_initial_commands"
+  ],
+  "task_id": "8765da11-b5e1-4946-99d7-7b6cadf9fcfc",
+  "subtask_id": "96aa3b87-2f37-48d6-beea-27a99a748311"
+}

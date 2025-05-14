@@ -10,12 +10,12 @@ import csv
 # Import necessary components from the application
 from .config import load_config
 from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
-from .utils import setup_logging, setup_rich_output
+from .utils import setup_rich_output # setup_logging removed
 from rich.console import Console
 from .commands import ListModelsCommand, GenerateInitialPlanCommand, GenerateOverviewPlanCommand, RefineCommand, RunCommand, BaseCommand # Import command classes
-from . import logging_custom as logging
+from . import logging_custom # Import module directly
 
-logger = logging.get_logger(__name__)
+logger = None # Will be initialized in main after logging is configured
 
 def main(args=None) -> list[BaseCommand]:
     """Main entry point for the AI Whisperer CLI application.
@@ -24,9 +24,8 @@ def main(args=None) -> list[BaseCommand]:
     Accepts an optional 'args' parameter for testability (list of CLI args, or None to use sys.argv).
     Returns the instantiated command object.
     """
-    # Setup logging and rich console output first (keep this here for initial setup)
-    setup_logging()
-    console = setup_rich_output()
+    # Logging will be set up after argument parsing to use the config path.
+    # The 'console' variable will be initialized after logging setup.
 
     # --- Argument Parsing ---
     parser = argparse.ArgumentParser(
@@ -125,6 +124,21 @@ def main(args=None) -> list[BaseCommand]:
             except ImportError:
                 print("debugpy is not installed. Please install it to use --debug.", file=sys.stderr)
                 sys.exit(1)
+
+        # --- Setup Custom Logging ---
+        # Load the configuration path from parsed arguments
+        config_file_path = getattr(parsed_args, "config", None)
+        logging_custom.setup_logging(config_path=config_file_path)
+
+        # Initialize the module-level logger for cli.py after setup
+        global logger # Declare intention to modify the module-level logger
+        logger = logging_custom.get_logger(__name__)
+
+        # Setup Rich Console for other uses if needed (logging uses its own RichHandler)
+        console = setup_rich_output() # Initialize console here
+
+        if logger: # Check if logger was successfully initialized
+            logger.debug("Custom logging initialized and cli.py logger is active.")
 
         logger.debug("Using parse_args.")
         logger.debug(f"Parsed arguments: {parsed_args}")

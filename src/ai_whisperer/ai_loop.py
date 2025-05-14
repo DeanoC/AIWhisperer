@@ -3,6 +3,7 @@
 import json
 import traceback
 from unittest.mock import MagicMock # Assuming MagicMock might be used for testing within the loop itself, though ideally tests mock the loop. Keep for now.
+import asyncio # Import asyncio
 
 from src.ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.exceptions import TaskExecutionError
@@ -10,9 +11,11 @@ from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType,
 from src.ai_whisperer.tools.tool_registry import ToolRegistry
 from src.ai_whisperer.context_management import ContextManager
 
+import threading # Import threading for shutdown_event type hint
+
 logger = get_logger(__name__)
 
-def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, initial_prompt: str, logger, context_manager: ContextManager) -> dict:
+async def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, initial_prompt: str, logger, context_manager: ContextManager, shutdown_event: threading.Event) -> dict:
     """
     Manages the iterative AI interaction loop for a task, including sending prompts,
     processing AI responses, executing tool calls, and managing conversation history
@@ -153,17 +156,46 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                             "tool_call_id": tool_call_id,
                             "output": f"Error: Tool '{tool_name}' not found."
                         })
-                        continue
-                    tool_output_data = tool_instance.execute(**tool_arguments)
+                        # The continue statement was incorrectly placed here, skipping tool execution.
+                        # It should only skip if tool_instance is None, which is handled by the 'if' block.
+                        # Removing the misplaced continue.
 
+                    # Pass shutdown_event to ExecuteCommandTool if it's the execute_command tool
+                    # Check if the tool's execute method is a coroutine function
+                    if asyncio.iscoroutinefunction(tool_instance.execute):
+                        # If it's the execute_command tool, pass the shutdown_event
+                        if tool_name == "execute_command":
+                             tool_output_data = await tool_instance.execute(**tool_arguments, shutdown_event=shutdown_event)
+                        else:
+                             tool_output_data = await tool_instance.execute(**tool_arguments)
+                    else:
+                        # If it's a synchronous tool, call it directly
+                        # Pass shutdown_event to ExecuteCommandTool if it's the execute_command tool
+                        if tool_name == "execute_command":
+                             tool_output_data = tool_instance.execute(**tool_arguments, shutdown_event=shutdown_event)
+                        else:
+                             tool_output_data = tool_instance.execute(**tool_arguments)
+    
+    
                     # Format tool output for the next AI turn
                     tool_outputs.append({
                         "tool_call_id": tool_call_id,
                         "output": json.dumps(tool_output_data) if isinstance(tool_output_data, (dict, list)) else str(tool_output_data)
                     })
                     logger.debug(f"Task {task_id}: Tool {tool_name} executed successfully.")
+                    output_preview = ""
+                    if tool_outputs: # Check if the list is not empty
+                        try:
+                            # Safely access the output and get a preview
+                            output_data = tool_outputs[-1].get('output')
+                            if output_data is not None:
+                                output_preview = str(output_data)[:100]
+                        except Exception as preview_e:
+                            logger.warning(f"Task {task_id}: Failed to get output preview for tool {tool_name}: {preview_e}")
+                            output_preview = "Error getting preview"
+
                     log_event(
-                        log_message=LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_tool_executed", f"Task {task_id}: Tool {tool_name} executed successfully.", subtask_id=task_id, details={"tool_name": tool_name, "output_preview": str(tool_outputs[-1]['output'])[:100]})
+                        log_message=LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_tool_executed", f"Task {task_id}: Tool {tool_name} executed successfully.", subtask_id=task_id, details={"tool_name": tool_name, "output_preview": output_preview})
                     )
 
 

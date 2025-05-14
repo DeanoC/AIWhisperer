@@ -5,7 +5,7 @@ This module contains the PlanRunner class, responsible for executing a project p
 import logging
 import traceback
 import threading # Import threading
-from typing import Dict, Any
+from typing import Dict, Any, Optional # Import Optional
 
 from .config import load_config
 from .tools.tool_registry import get_tool_registry
@@ -24,7 +24,7 @@ from .logging_custom import (
     ComponentType,
     log_event,
 )
-from .monitoring import TerminalMonitor
+from .terminal_monitor.monitoring import TerminalMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class PlanRunner:
     """
     Executes a project plan from a parsed plan object.
     """
-    def __init__(self, config: Dict[str, Any], monitor: bool = False):
+    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False, monitor_instance: Optional[TerminalMonitor] = None):
         """
         Initializes the PlanRunner with application configuration.
 
@@ -40,7 +40,9 @@ class PlanRunner:
             config: The loaded application configuration dictionary.
         """
         self.config = config
+        self.shutdown_event = shutdown_event # Store the shutdown event
         self.monitor_enabled = monitor # Store the monitor flag
+        self.monitor_instance = monitor_instance # Store the monitor instance
         self._register_tools()
         logger.info("PlanRunner initialized.")
 
@@ -52,7 +54,7 @@ class PlanRunner:
         tool_registry.register_tool(ExecuteCommandTool())
         logger.debug("Tools registered with ToolRegistry.")
 
-    def run_plan(self, plan_parser: ParserPlan, state_file_path: str) -> bool:
+    async def run_plan(self, plan_parser: ParserPlan, state_file_path: str) -> bool:
         """
         Executes a overview plan from a parsed plan object.
 
@@ -138,8 +140,17 @@ class PlanRunner:
             ) from e
 
         # Initialize Execution Engine
-        monitor = TerminalMonitor(state_manager, monitor_enabled=self.monitor_enabled)  # Initialize TerminalMonitor
-        execution_engine = ExecutionEngine(state_manager, monitor, self.config)
+        # Use the provided monitor instance if available, otherwise create a new one
+        # Pass config_path to TerminalMonitor as required by its constructor
+        config_path = self.config.get('config_path') if isinstance(self.config, dict) and 'config_path' in self.config else None
+        if self.monitor_instance:
+            monitor = self.monitor_instance
+        else:
+            if config_path is None:
+                raise ValueError("config_path must be provided in config for TerminalMonitor.")
+            monitor = TerminalMonitor(state_manager, config_path, monitor_enabled=self.monitor_enabled)
+        # Pass the shutdown event to the ExecutionEngine
+        execution_engine = ExecutionEngine(state_manager, monitor, self.config, self.shutdown_event)
         logger.info("Execution Engine initialized.")
         log_event(
             LogMessage(
@@ -160,7 +171,7 @@ class PlanRunner:
         # Execute the plan
         plan_successful = True  # Flag to track overall plan success
         try:
-            execution_engine.execute_plan(plan_parser)
+            await execution_engine.execute_plan(plan_parser)
             logger.info("Execution Engine finished plan execution.")
             log_event(
                 LogMessage(

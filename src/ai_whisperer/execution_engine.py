@@ -1,12 +1,13 @@
 import time  # Import time for duration calculation
 from pathlib import Path  # Import Path
 import json
+import threading  # Import threading for Event
 
 from ai_whisperer.exceptions import TaskExecutionError
 from ai_whisperer.tools.tool_registry import get_tool_registry  # Import json
 
 from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
-from .monitoring import TerminalMonitor  # Import TerminalMonitor
+from .terminal_monitor.monitoring import TerminalMonitor  # Import TerminalMonitor
 from .state_management import StateManager  # Import StateManager
 from .plan_parser import ParserPlan  # Import ParserPlan
 from .ai_service_interaction import (
@@ -27,7 +28,7 @@ class ExecutionEngine:
     Integrates logging and monitoring for visibility into the execution process.
     """
 
-    def __init__(self, state_manager: StateManager, monitor: TerminalMonitor, config: dict):
+    def __init__(self, state_manager: StateManager, monitor: TerminalMonitor, config: dict, shutdown_event: threading.Event = None):
         """
         Initializes the ExecutionEngine.
 
@@ -39,6 +40,7 @@ class ExecutionEngine:
                      It is expected to have methods like add_log_message, set_active_step,
                      and update_display.
             config: The global configuration dictionary.
+            shutdown_event: An event that signals when execution should stop.
         """
         if state_manager is None:
             raise ValueError("State manager cannot be None.")
@@ -50,6 +52,7 @@ class ExecutionEngine:
         self.state_manager = state_manager
         self.monitor = monitor
         self.config = config  # Store the global configuration
+        self.shutdown_event = shutdown_event if shutdown_event else threading.Event() # Store the shutdown event or create a new one
         self.task_queue = []
         # In a real scenario, a TaskExecutor component would handle individual task logic.
         # This would be responsible for interacting with different agent types.
@@ -70,7 +73,7 @@ class ExecutionEngine:
                 )
                 self.openrouter_api = None  # Set to None if config is missing
             else:
-                self.openrouter_api = OpenRouterAPI(ai_config)
+                self.openrouter_api = OpenRouterAPI(ai_config, shutdown_event=self.shutdown_event) # Pass shutdown_event
         except ConfigError as e:
             error_message = f"Failed to initialize OpenRouter API due to configuration error: {e}"
             logger.error(error_message, exc_info=True)
@@ -111,13 +114,15 @@ class ExecutionEngine:
         from .agent_handlers.code_generation import handle_code_generation
 
         # Initialize the agent type handler table
+        # Initialize the agent type handler table
+        # Lambdas now accept engine, task_definition, task_id, and shutdown_event
         self.agent_type_handlers = {
-            "ai_interaction": lambda task_definition, task_id: handle_ai_interaction(self, task_definition, task_id),
-            "planning": lambda task_definition, task_id: handle_planning(self, task_definition, task_id),
-            "validation": lambda task_definition, task_id: handle_validation(self, task_definition, task_id),
-            "no_op": lambda task_definition, task_id: handle_no_op(self, task_definition, task_id),
-            "code_generation": lambda task_definition, task_id: handle_code_generation(self, task_definition, task_id),
-            # Add other agent types and their handlers here
+            "ai_interaction": lambda engine, task_definition, task_id, shutdown_event: handle_ai_interaction(engine, task_definition, task_id, shutdown_event),
+            "planning": lambda engine, task_definition, task_id, shutdown_event: handle_planning(engine, task_definition, task_id, shutdown_event),
+            "validation": lambda engine, task_definition, task_id, shutdown_event: handle_validation(engine, task_definition, task_id, shutdown_event),
+            "no_op": lambda engine, task_definition, task_id, shutdown_event: handle_no_op(engine, task_definition, task_id, shutdown_event),
+            "code_generation": lambda engine, task_definition, task_id, shutdown_event: handle_code_generation(engine, task_definition, task_id, shutdown_event),
+            # Add other agent types and their handlers here, ensuring they accept all 4 arguments
         }
 
     def _handle_ai_interaction(self, task_definition, task_id):
@@ -844,7 +849,7 @@ class ExecutionEngine:
             )
             raise TaskExecutionError(error_message) from e
 
-    def _execute_single_task(self, task_definition):
+    async def _execute_single_task(self, task_definition):
         """
         Executes a single task based on its agent type.
 
@@ -898,7 +903,7 @@ class ExecutionEngine:
 
         # Use the agent type handler table to execute the task
         if agent_type in self.agent_type_handlers:
-            return self.agent_type_handlers[agent_type](task_definition, task_id)
+            return await self.agent_type_handlers[agent_type](self, task_definition, task_id, self.shutdown_event) # Await and pass self, task_definition, task_id, and shutdown_event
         else:
             # Handle unsupported agent types
             error_message = f"Unsupported agent type for task {task_id}: {agent_type}"
@@ -915,7 +920,7 @@ class ExecutionEngine:
             )
             raise TaskExecutionError(error_message)
 
-    def execute_plan(self, plan_parser: ParserPlan):
+    async def execute_plan(self, plan_parser: ParserPlan):
         """
         Executes the given plan sequentially.
 
@@ -938,7 +943,7 @@ class ExecutionEngine:
         plan_id = plan_data.get("task_id", "unknown_plan")
         logger.info(f"Starting execution of plan: {plan_id}")
         self.monitor.set_plan_name(plan_id)
-        self.monitor.set_runner_status_info(f"Executing plan: {plan_id}")
+        self.monitor.set_runner_status(f"Executing plan: {plan_id}")
         log_event(
             log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_started", f"Starting execution of plan: {plan_id}")
         )
@@ -954,7 +959,7 @@ class ExecutionEngine:
                     f"Invalid plan data provided for plan {plan_id}. 'plan' key is missing or not a list.",
                 )
             )
-            self.monitor.set_runner_status_info(f"Plan {plan_id} finished with warning: Invalid plan structure.")
+            self.monitor.set_runner_status(f"Plan {plan_id} finished with warning: Invalid plan structure.")
             log_event(
                 log_message=LogMessage(
                     LogLevel.WARNING,
@@ -969,6 +974,20 @@ class ExecutionEngine:
         self.task_queue = list(plan_data.get("plan", []))
 
         for task_def_overview in self.task_queue:
+            # Check for shutdown signal before executing each task
+            if self.shutdown_event.is_set():
+                logger.info("Shutdown signal received. Stopping plan execution.")
+                log_event(
+                    log_message=LogMessage(
+                        LogLevel.INFO,
+                        ComponentType.EXECUTION_ENGINE,
+                        "plan_execution_interrupted",
+                        "Plan execution interrupted by shutdown signal.",
+                        details={"plan_id": plan_id},
+                    )
+                )
+                break # Exit the loop if shutdown is requested
+
             task_id = task_def_overview.get("subtask_id")
             if not task_id:
                 # Handle missing subtask_id (e.g., log error, skip task)
@@ -1018,7 +1037,7 @@ class ExecutionEngine:
                              )
                          )
                          self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                         self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                         self.monitor.set_runner_status(f"Failed: {task_id}")
                          continue # Skip to the next task in the overview
 
                     # Use the loaded detailed task definition for execution
@@ -1042,7 +1061,7 @@ class ExecutionEngine:
                         )
                     )
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    self.monitor.set_runner_status(f"Failed: {task_id}")
                     continue # Skip to the next task in the overview
                 except json.JSONDecodeError as e:
                     error_message = f"Error decoding detailed task file {subtask_file_path} for task {task_id}: {e}"
@@ -1058,7 +1077,7 @@ class ExecutionEngine:
                         )
                     )
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    self.monitor.set_runner_status(f"Failed: {task_id}")
                     continue # Skip to the next task in the overview
                 except Exception as e:
                     error_message = f"An unexpected error occurred loading detailed task file {subtask_file_path} for task {task_id}: {e}"
@@ -1078,13 +1097,13 @@ class ExecutionEngine:
                         )
                     )
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    self.monitor.set_runner_status(f"Failed: {task_id}")
                     continue # Skip to the next task in the overview
 
 
             self.state_manager.set_task_state(task_id, "pending")
-            self.monitor.set_active_step(task_id)
-            self.monitor.set_runner_status_info(f"Pending: {task_id}")
+            self.monitor.set_active_subtask_id(task_id)
+            self.monitor.set_runner_status(f"Pending: {task_id}")
             log_event(
                 log_message=LogMessage(
                     LogLevel.INFO,
@@ -1140,7 +1159,7 @@ class ExecutionEngine:
                 self.config['logger'].debug(f"Executing task: {task_id}")
 
             self.state_manager.set_task_state(task_id, "in-progress")
-            self.monitor.set_runner_status_info(f"In Progress: {task_id}")
+            self.monitor.set_runner_status(f"In Progress: {task_id}")
             log_event(
                 log_message=LogMessage(
                     LogLevel.INFO,
@@ -1154,7 +1173,7 @@ class ExecutionEngine:
             start_time = time.time()  # Start timing the task execution
             try:
                 # Always call _execute_single_task with the effective task definition
-                result = self._execute_single_task(task_def_effective)
+                result = await self._execute_single_task(task_def_effective) # Await the async call
 
                 end_time = time.time()  # End timing
                 duration_ms = (end_time - start_time) * 1000  # Duration in milliseconds
@@ -1162,7 +1181,7 @@ class ExecutionEngine:
                 self.state_manager.set_task_state(task_id, "completed")
                 self.state_manager.store_task_result(task_id, result)
                 self.state_manager.save_state()
-                self.monitor.set_runner_status_info(f"Completed: {task_id}")
+                self.monitor.set_runner_status(f"Completed: {task_id}")
                 log_event(
                     log_message=LogMessage(
                         LogLevel.INFO,
@@ -1182,7 +1201,7 @@ class ExecutionEngine:
                     error_message = str(e)
                     logger.error(f"Task {task_id} failed: {error_message}")
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    self.monitor.set_runner_status(f"Failed: {task_id}")
                     log_event(
                         log_message=LogMessage(
                             LogLevel.ERROR,
@@ -1213,7 +1232,7 @@ class ExecutionEngine:
                     error_message = f"Unexpected error during execution of task {task_id}: {str(e)}"
                     logger.exception(f"Unexpected error during execution of task {task_id}")  # Log with traceback
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status_info(f"Failed: {task_id}")
+                    self.monitor.set_runner_status(f"Failed: {task_id}")
                     log_event(
                         log_message=LogMessage(
                             LogLevel.CRITICAL,
@@ -1226,10 +1245,10 @@ class ExecutionEngine:
                         )
                     )
          # After each task, clear the active step in the monitor
-        self.monitor.set_active_step(None)
+        self.monitor.set_active_subtask_id(None)
 
         logger.info(f"Finished execution of plan: {plan_id}")
-        self.monitor.set_runner_status_info(f"Plan execution finished: {plan_id}")
+        self.monitor.set_runner_status(f"Plan execution finished: {plan_id}")
         log_event(
             log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_finished", f"Finished execution of plan: {plan_id}")
         )

@@ -1,0 +1,32 @@
+{
+    "subtask_id": "f1e2d3c4-b5a6-7890-1234-567890abcdef",
+    "name": "fix_terminal_input_handling",
+    "description": "Investigate and resolve issues with terminal monitor input handling.",
+    "type": "file_edit",
+    "depends_on": [
+        "d3fb385d-0c64-49bd-a18f-3f68790e4e59"
+    ],
+    "input_artifacts": [
+        "src/ai_whisperer/monitoring.py",
+        "docs/terminal_command_mode_design.md"
+    ],
+    "output_artifacts": [
+        "src/ai_whisperer/monitoring.py"
+    ],
+    "instructions": [
+        "Analyze the code in src/ai_whisperer/monitoring.py related to terminal input handling.",
+        "Identify the root cause of commands not appearing correctly in the input box and unexpected exits.",
+        "Implement necessary fixes to ensure stable and correct input handling.",
+        "Verify the fixes by manually testing the terminal monitor."
+    ],
+    "constraints": [
+        "Ensure the fixes do not introduce regressions.",
+        "Adhere to existing code style and practices."
+    ],
+    "validation_criteria": [
+        "The file src/ai_whisperer/monitoring.py is modified.",
+        "Commands appear correctly in the terminal monitor input box during manual testing.",
+        "The terminal monitor does not exit unexpectedly during manual testing."
+    ],
+    "completed": false
+}

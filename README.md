@@ -19,18 +19,19 @@ AI Whisperer is a Python command-line tool that takes your project requirements 
   * More postprocessing steps can be added as needed
 * **New:** Refine requirement documents using AI to improve clarity and completeness.
 
-*   **Improved Terminal Monitor:** A redesigned real-time terminal monitor display featuring three segmented, ASCII-outlined sections, colored output for event types, pretty-printed and syntax-highlighted JSON for monitor events, and suppression of non-monitor output for a cleaner view of plan execution.
+* **Improved Terminal Monitor:** A redesigned real-time terminal monitor display featuring three segmented, ASCII-outlined sections, colored output for event types, pretty-printed and syntax-highlighted JSON for monitor events, and suppression of non-monitor output for a cleaner view of plan execution.
+
 ## Demonstrating Core Functionality: The Simple Country Test
 
 The enhanced AIWhisperer runner is capable of executing complex plans that involve real-time interactions with AI services. The `simple_country_test` serves as a key integration test designed to showcase and validate this core functionality.
 
 This test confirms the runner's ability to:
 
-*   Orchestrate a sequence of diverse tasks, including planning, AI queries, and validation steps.
-*   Successfully interact with an AI service (OpenRouter) to obtain dynamic responses.
-*   Manage and pass data (as artifacts) between different tasks in the plan.
-*   Maintain conversation history across multiple AI interactions to ensure context awareness.
-*   Execute validation logic based on the outputs received from the AI.
+* Orchestrate a sequence of diverse tasks, including planning, AI queries, and validation steps.
+* Successfully interact with an AI service (OpenRouter) to obtain dynamic responses.
+* Manage and pass data (as artifacts) between different tasks in the plan.
+* Maintain conversation history across multiple AI interactions to ensure context awareness.
+* Execute validation logic based on the outputs received from the AI.
 
 The high-level flow of the `simple_country_test` involves: selecting a landmark, asking the AI for its country, validating the country, asking the AI for the capital, validating the capital, asking the AI if the landmark is in the capital, and finally validating this fact. The successful execution of this test demonstrates the runner's readiness for more complex automated workflows involving AI.
 
@@ -148,13 +149,13 @@ python -m src.ai_whisperer.main --requirements requirements.md --config config.y
 
 This will read `requirements.md`, use the settings in `config.yaml`, call the OpenRouter API, and save the resulting task list to `generated_tasks.yaml`.
 
-*   **`--list-models`**: Displays a list of available models from the OpenRouter API. Requires the `--config` argument to be specified as well.
+* **`--list-models`**: Displays a list of available models from the OpenRouter API. Requires the `--config` argument to be specified as well.
 
     ```bash
     python -m src.ai_whisperer.main --list-models --config config.yaml
     ```
 
-*   **`--generate-subtask`**: Generates a detailed task implementation YAML from a step definition file. Requires both `--config` and `--step` arguments.
+* **`--generate-subtask`**: Generates a detailed task implementation YAML from a step definition file. Requires both `--config` and `--step` arguments.
 
     ```bash
     python -m src.ai_whisperer.main --generate-subtask --config config.yaml --step path/to/step.yaml
@@ -162,7 +163,7 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
 
     This will process the step definition from `step.yaml`, refine it into a detailed implementation plan, and save the result to a file in the output directory.
 
-*   **`refine`**: Refines an existing requirement document using an AI model.
+* **`refine`**: Refines an existing requirement document using an AI model.
 
     ```bash
     python -m src.ai_whisperer.main refine <path/to/requirements.md> --config config.yaml [--prompt-file <path/to/prompt.txt>] [--iterations <number>]
@@ -170,13 +171,13 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
 
     This command will take the specified requirements file, process it with an AI model (optionally using a custom prompt and multiple iterations), rename the original file with a `.original` suffix, and save the refined content back to the original filename.
 
-*   **`run`**: Executes a project plan from an overview JSON file and manages the state file. See the [Usage Documentation](docs/usage.md) for detailed information.
+* **`run`**: Executes a project plan from an overview JSON file and manages the state file. See the [Usage Documentation](docs/usage.md) for detailed information.
 
     ```bash
     python -m src.ai_whisperer.main run --plan-file <path/to/plan.json> --state-file <path/to/state.json> --config <path/to/config.yaml> [--monitor | -m]
     ```
 
-    *   **`--monitor`**, **`-m`**: Enables the terminal monitor during the task execution, providing real-time updates on the plan's progress.
+  * **`--monitor`**, **`-m`**: Enables the terminal monitor during the task execution, providing real-time updates on the plan's progress.
 
 The project_dev folder shows how I currently use aiwhisperer to implement features in it self.
 A starting feature request can be generated with any AI chat with a prompt similar to
