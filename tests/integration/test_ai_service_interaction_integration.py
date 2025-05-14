@@ -278,7 +278,7 @@ class TestOpenRouterAPIIntegration:
         task_id = "mock-task-cost-token-123"
 
         # Simulate AI interaction by calling the handler
-        handle_ai_interaction(mock_engine, mock_task_definition, task_id)
+        handle_ai_interaction(mock_engine, mock_task_definition)
 
         # Access and verify state management
         # Assert that store_conversation_turn was called for the assistant message with usage_info

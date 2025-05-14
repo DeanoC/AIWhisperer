@@ -200,10 +200,10 @@ def cli(args=None) -> list[BaseCommand]:
             ))
         elif parsed_args.command == "run":
             commands.append(RunCommand(
-                config=config, # Pass the loaded config object
+                config_path=config_file_path, # Pass the loaded config object
                 plan_file=parsed_args.plan_file,
                 state_file=parsed_args.state_file,
-                monitor=parsed_args.monitor
+                monitor=False
             ))
         else:
             parser.print_help()

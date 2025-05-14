@@ -32,10 +32,6 @@ def test_handle_code_generation_success(mock_run_loop, mock_get_logger):
     mock_logger_instance = MagicMock()
     mock_get_logger.return_value = mock_logger_instance
 
-    # Prepare the async mock for run_ai_loop
-    async def fake_run_ai_loop(*args, **kwargs):
-        return {"content": "Final AI response"}
-    mock_run_loop.side_effect = fake_run_ai_loop
 
     with patch('src.ai_whisperer.agent_handlers.code_generation._gather_context', return_value="Mocked context") as mock_gather_context, \
          patch('src.ai_whisperer.agent_handlers.code_generation._construct_initial_prompt', return_value="Mocked prompt") as mock_construct_prompt, \

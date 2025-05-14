@@ -172,7 +172,7 @@ class PlanRunner:
         # Execute the plan
         plan_successful = True  # Flag to track overall plan success
         try:
-            await execution_engine.execute_plan(plan_parser)
+            execution_engine.execute_plan(plan_parser)
             logger.info("Execution Engine finished plan execution.")
             log_event(
                 LogMessage(
