@@ -15,12 +15,11 @@ from src.ai_whisperer.utils import build_ascii_directory_tree
 
 logger = get_logger(__name__)  # Get logger for execution engine
 
-import threading # Import threading for shutdown_event type hint
-
-def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_id: str):
+def handle_code_generation(engine: ExecutionEngine, task_definition: dict):
     """
     Handles the execution of a 'code_generation' task.
     """
+    task_id = task_definition.get('subtask_id')
     logger.info(f"Starting code_generation handler for task: {task_id}")
     logger.debug(f"Task {task_id}: Received task_definition: {task_definition}")
     log_event(

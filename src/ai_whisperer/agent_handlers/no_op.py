@@ -1,11 +1,13 @@
+from ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 
-def handle_no_op(engine, task_definition, task_id):
+def handle_no_op(engine: ExecutionEngine, task_definition: dict):
     """
     Handle a no-op (no operation) task.
     Implementation moved from ExecutionEngine._handle_no_op.
     """
     self = engine
+    task_id = task_definition.get('subtask_id')
     logger = self.config.get('logger', None)
     if logger:
         logger.info(f"Executing no-op task {task_id}")

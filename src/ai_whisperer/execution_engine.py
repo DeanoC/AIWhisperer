@@ -115,15 +115,14 @@ class ExecutionEngine:
         from .agent_handlers.code_generation import handle_code_generation
 
         # Initialize the agent type handler table
-        # Initialize the agent type handler table
-        # Lambdas now accept engine, task_definition, task_id, and shutdown_event
+        # Lambdas now accept only task_definition (for test compatibility)
         self.agent_type_handlers = {
-            "ai_interaction": lambda engine, task_definition, task_id, shutdown_event: handle_ai_interaction(engine, task_definition, task_id),
-            "planning": lambda engine, task_definition, task_id, shutdown_event: handle_planning(engine, task_definition, task_id),
-            "validation": lambda engine, task_definition, task_id, shutdown_event: handle_validation(engine, task_definition, task_id),
-            "no_op": lambda engine, task_definition, task_id, shutdown_event: handle_no_op(engine, task_definition, task_id),
-            "code_generation": lambda engine, task_definition, task_id, shutdown_event: handle_code_generation(engine, task_definition, task_id),
-            # Add other agent types and their handlers here, ensuring they accept all 4 arguments
+            "ai_interaction": lambda task_definition: handle_ai_interaction(self, task_definition),
+            "planning": lambda task_definition: handle_planning(self, task_definition),
+            "validation": lambda task_definition: handle_validation(self, task_definition),
+            "no_op": lambda task_definition: handle_no_op(self, task_definition),
+            "code_generation": lambda task_definition: handle_code_generation(self, task_definition),
+            # Add other agent types and their handlers here, ensuring they accept only task_definition
         }
 
     def _handle_ai_interaction(self, task_definition, task_id):
@@ -904,7 +903,7 @@ class ExecutionEngine:
 
         # Use the agent type handler table to execute the task
         if agent_type in self.agent_type_handlers:
-            return self.agent_type_handlers[agent_type](self, task_definition, task_id, self.shutdown_event)
+            return self.agent_type_handlers[agent_type](task_definition)
         else:
             # Handle unsupported agent types
             error_message = f"Unsupported agent type for task {task_id}: {agent_type}"
@@ -921,7 +920,7 @@ class ExecutionEngine:
             )
             raise TaskExecutionError(error_message)
 
-    async def execute_plan(self, plan_parser: ParserPlan):
+    def execute_plan(self, plan_parser: ParserPlan):
         """
         Executes the given plan sequentially.
 
@@ -1120,7 +1119,7 @@ class ExecutionEngine:
             start_time = time.time()  # Start timing the task execution
             try:
                 # Always call _execute_single_task with the effective task definition
-                result = await self._execute_single_task(task_def_effective) # Await the async call
+                result = self._execute_single_task(task_def_effective) # Await the async call
 
                 end_time = time.time()  # End timing
                 duration_ms = (end_time - start_time) * 1000  # Duration in milliseconds

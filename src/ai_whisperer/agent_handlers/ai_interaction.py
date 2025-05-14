@@ -17,8 +17,7 @@ logger = logging.getLogger(__name__)
 
 def handle_ai_interaction(
     engine, 
-    task_definition, 
-    task_id
+    task_definition
 ) -> dict:
     """
     Handle an AI interaction task.
@@ -28,6 +27,7 @@ def handle_ai_interaction(
     """
     # 'engine' is the ExecutionEngine instance
     self = engine
+    task_id = task_definition.get("task_id")
 
     if self.openrouter_api is None:
         error_message = (

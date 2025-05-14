@@ -8,6 +8,7 @@ import logging  # Import logging
 logging.basicConfig(level=logging.DEBUG)
 
 from .exceptions import ConfigError
+from .path_management import PathManager # Import PathManager
 
 # Default values for optional config settings
 DEFAULT_SITE_URL = "http://localhost:8000"
@@ -41,19 +42,20 @@ def _load_prompt_content(
             error_msg = f"Specified prompt file not found: {prompt_path_str} (relative to {config_dir})"
             raise ConfigError(error_msg)
     else:
-        # No specific path given, use the default - relative to the CONFIG directory first
-        default_path_config_dir = config_dir / default_path_str
-        if default_path_config_dir.is_file():
-            resolved_path = default_path_config_dir
+        # No specific path given, use the default - try relative to PathManager's project_path first
+        path_manager = PathManager.get_instance()
+        project_path_from_manager = Path(path_manager.project_path)
+        default_path_project_root = project_path_from_manager / default_path_str
+        if default_path_project_root.is_file():
+            resolved_path = default_path_project_root
         else:
-            # Default path not found relative to config dir, try relative to project root as a fallback
-            project_root = Path(__file__).parent.parent.parent
-            default_path_project_root = project_root / default_path_str
-            if default_path_project_root.is_file():
-                resolved_path = default_path_project_root
+            # Default path not found relative to PathManager's project_path, try relative to the CONFIG directory as a fallback
+            default_path_config_dir = config_dir / default_path_str
+            if default_path_config_dir.is_file():
+                resolved_path = default_path_config_dir
             else:
                 # Default path not found in either location.
-                error_msg = f"Default prompt file not found: {default_path_str} (relative to config dir: {config_dir} or project root: {project_root})"
+                error_msg = f"Default prompt file not found: {default_path_str} (relative to PathManager project_path: {project_path_from_manager} or config dir: {config_dir})"
                 raise ConfigError(error_msg)
 
     # This check should technically be redundant now if logic above is correct, but kept for safety.
@@ -68,15 +70,62 @@ def _load_prompt_content(
         raise ConfigError(f"Error reading prompt file {resolved_path}: {e}") from e
 
 
-def load_config(config_path: str) -> Dict[str, Any]:
+def _load_default_prompt_content(task_name: str, config_dir: Path) -> str:
+    """
+    Loads the default prompt content for a given task name.
+    """
+    if task_name not in DEFAULT_TASKS:
+        raise ConfigError(f"No default prompt available for unknown task: {task_name}")
+    default_path_str = f"prompts/{task_name}_default.md"
+    return _load_prompt_content(
+        prompt_path_str=None,
+        default_path_str=default_path_str,
+        config_dir=config_dir
+    )
+
+class TaskPromptsContentOnDemand(dict):
+    """
+    Dictionary-like object that loads default prompt content on demand for known tasks.
+    Also supports test-specific prompts, falling back to the global runner default if not found.
+    """
+    def __init__(self, initial, config_dir, global_runner_default_loader=None):
+        super().__init__(initial)
+        self._config_dir = config_dir
+        self._global_runner_default_loader = global_runner_default_loader
+
+    def __getitem__(self, key):
+        value = super().get(key, None)
+        if value is None and key in DEFAULT_TASKS:
+            # Try to load the default prompt content on demand
+            try:
+                value = _load_default_prompt_content(key, self._config_dir)
+                self[key] = value  # Cache it
+            except Exception:
+                value = None
+        # For test-specific prompts, fallback to global runner default if not found
+        if value is None and self._global_runner_default_loader is not None:
+            try:
+                value = self._global_runner_default_loader()
+                self[key] = value  # Cache it
+            except Exception:
+                value = None
+        return value
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except Exception:
+            return default
+
+
+def load_config(config_path: str, cli_args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Loads configuration from a YAML file, validates required keys, handles API key precedence,
-    and loads prompt file contents.
+    and loads prompt file contents. Initializes the PathManager with config and CLI values.
 
     Args:
         config_path: The path to the configuration file.
-        env_vars: Optional dictionary of environment variables for testing purposes.
-                  If provided, these override any environment variables loaded from .env file.
+        cli_args: Optional dictionary of parsed CLI arguments.
 
     Returns:
         A dictionary containing the loaded and validated configuration, including prompt content.
@@ -123,6 +172,14 @@ def load_config(config_path: str) -> Dict[str, Any]:
     if not isinstance(openrouter_config, dict):
         raise ConfigError(f"Invalid 'openrouter' section in {config_path}. Expected a dictionary.")
 
+    # --- Validate required keys in openrouter section ---
+    required_openrouter_keys = ["model"]
+    missing_openrouter_keys = [key for key in required_openrouter_keys if not openrouter_config.get(key)]
+    if missing_openrouter_keys:
+        raise ConfigError(
+            f"Missing or empty required keys in 'openrouter' section of {config_path}: {', '.join(missing_openrouter_keys)}"
+        )
+
     # --- API Key Handling (Simplified) ---
     # Assign the key from environment (already validated)
     openrouter_config["api_key"] = api_key_from_env
@@ -131,8 +188,25 @@ def load_config(config_path: str) -> Dict[str, Any]:
     openrouter_config["site_url"] = openrouter_config.get("site_url", DEFAULT_SITE_URL)
     openrouter_config["app_name"] = openrouter_config.get("app_name", DEFAULT_APP_NAME)
 
-    config["output_dir"] = config.get("output_dir", DEFAULT_OUTPUT_DIR)
-    config.pop("prompt_override_path", None)  # Remove old prompt override key - handled by new prompt loading
+    # Extract path-related configurations
+    path_config = {
+        'project_path': config.get('project_path'),
+        'output_path': config.get('output_dir', DEFAULT_OUTPUT_DIR),  # Map output_dir from config to output_path in PathManager
+        'workspace_path': config.get('workspace_path'),
+        # app_path is determined by the application's location and should not be configurable
+    }
+
+    # Initialize PathManager with config values and CLI arguments
+    path_manager = PathManager.get_instance()
+    # Pass both config_values and cli_args to initialize
+    # Note: app_path is not passed here as it's determined internally by PathManager
+    path_manager.initialize(config_values=path_config, cli_args=cli_args)
+
+    # Remove individual path keys from the main config dict after initializing PathManager
+    config.pop("app_path", None)
+    config.pop("project_path", None)
+    config.pop("output_dir", None)
+    config.pop("workspace_path", None)
 
     # --- Process Task-Specific Settings (Models and Prompts) ---
     # Ensure task_models and task_prompts sections exist and are dictionaries
@@ -145,54 +219,68 @@ def load_config(config_path: str) -> Dict[str, Any]:
         config["task_models"] = task_models_config  # Use the existing dictionary
 
     task_prompts_config = config.get("task_prompts")
-    if not isinstance(task_prompts_config, dict):
-        if task_prompts_config is not None:  # Only warn if the key exists but is wrong type
-            logging.warning(f"'task_prompts' section in {config_path} is not a dictionary. Using empty dictionary.")
-        # Raise ConfigError if task_prompts is explicitly set but not a dictionary
-        if "task_prompts" in config and not isinstance(config["task_prompts"], dict):
-            raise ConfigError(f"Invalid 'task_prompts' section in {config_path}. Expected a dictionary.")
+    if task_prompts_config is None:
+        # If missing, fill with default keys set to None
+        config["task_prompts"] = {k: None for k in DEFAULT_TASKS}
+    elif isinstance(task_prompts_config, dict):
+        # If present but not all keys, fill missing with None
+        for k in DEFAULT_TASKS:
+            if k not in task_prompts_config:
+                task_prompts_config[k] = None
+        config["task_prompts"] = task_prompts_config
     else:
-        config["task_prompts"] = task_prompts_config  # Use the existing dictionary
+        raise ConfigError("Invalid 'task_prompts' section. Expected a dictionary.")
+
+    # Determine which tasks to process (only those explicitly in task_prompts)
+    task_prompts = config.get("task_prompts", {})
+    if not isinstance(task_prompts, dict):
+        raise ConfigError("Invalid 'task_prompts' section. Expected a dictionary.")
+
+    # Only use the keys present in the config's task_prompts
+    tasks_to_process = list(task_prompts.keys())
 
     config["task_prompts_content"] = {}
-    config["task_model_configs"] = {}
-    config["runner_agent_type_prompts_content"] = {}  # New: For runner agent defaults
-    config["global_runner_default_prompt_content"] = None  # New: For global runner default
+    config["task_model_configs"] = {}  # <-- Ensure this dict exists before use
 
-    # Load prompt content for each task specified in task_prompts (Existing logic)
-    config_dir = path.parent  # Get the directory containing the config file
-    # Use config.get('task_prompts', {}) to safely iterate even if task_prompts is missing
-    for task_name, prompt_path_str in config.get("task_prompts", {}).items():
-        if not isinstance(prompt_path_str, (str, type(None))):  # Allow None for default path
-            raise ConfigError(
-                f"Invalid prompt path for task '{task_name}' in {config_path}. Expected a string or null."
+    # Load prompt content for each task specified in task_prompts
+    for task_name in tasks_to_process:
+        prompt_path_str = config["task_prompts"][task_name]
+        # Only load if a specific prompt_path_str is provided
+        if prompt_path_str is None:
+            # If prompt_path_str is None, content is None, default will be loaded on demand
+            config["task_prompts_content"][task_name] = None
+        elif isinstance(prompt_path_str, str):
+            config["task_prompts_content"][task_name] = _load_prompt_content(
+                prompt_path_str, "", config_dir # Pass empty string for default_path_str as it's not used here
             )
-        # Determine default prompt path based on task name
-        default_prompt_path_str = f"prompts/{task_name}_default.md"
-        config["task_prompts_content"][task_name] = _load_prompt_content(
-            prompt_path_str, default_prompt_path_str, config_dir
-        )
+        else:
+            # If prompt_path_str is not a string, raise an error
+            raise ConfigError(f"Invalid prompt path for task '{task_name}'. Expected a string.")
 
-    # Load default prompts for known tasks if not explicitly specified (Existing logic)
-    default_tasks = DEFAULT_TASKS
-    project_root = Path(__file__).parent.parent.parent
-    for task_name in default_tasks:
-        if task_name not in config["task_prompts_content"]:
-            default_prompt_path_str = f"prompts/{task_name}_default.md"
-            try:
-                config["task_prompts_content"][task_name] = _load_prompt_content(
-                    None, default_prompt_path_str, config_dir, project_dir=project_root  # Pass project_root as fallback
-                )
-                # Also add to task_prompts with None to indicate default was used
-                if "task_prompts" not in config or not isinstance(config["task_prompts"], dict):
-                    config["task_prompts"] = {}  # Ensure it's a dict if missing or wrong type
-                config["task_prompts"][task_name] = None
-            except ConfigError as e:
-                logging.warning(f"Could not load default prompt for '{task_name}': {e}")
-            except Exception as e:
-                logging.error(f"Unexpected error loading default prompt for '{task_name}': {e}")
+    # Helper to load the global runner default prompt on demand
+    def _global_runner_default_loader():
+        content = config.get("global_runner_default_prompt_content")
+        if content is not None:
+            return content
+        # Try to load it if not already loaded
+        default_global_prompt_path_str = "prompts/global_runner_fallback_default.md"
+        path_manager = PathManager.get_instance()
+        resolved_default_path = path_manager.resolve_path(default_global_prompt_path_str)
+        default_prompt_file_path = Path(resolved_default_path)
+        if default_prompt_file_path.is_file():
+            with open(default_prompt_file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            config["global_runner_default_prompt_content"] = content
+            return content
+        return None
+
+    # Replace the dict with the on-demand loader, passing the global fallback loader
+    config["task_prompts_content"] = TaskPromptsContentOnDemand(
+        config["task_prompts_content"], config_dir, global_runner_default_loader=_global_runner_default_loader
+    )
 
     # --- New: Load Runner Agent Type Defaults ---
+    # Keep this section as it loads specific runner agent defaults, not general task defaults
     if "prompts" in config and isinstance(config["prompts"], dict):
         prompts_config = config["prompts"]
 
@@ -200,28 +288,19 @@ def load_config(config_path: str) -> Dict[str, Any]:
             for agent_type, prompt_path_str in prompts_config["agent_type_defaults"].items():
                 if isinstance(prompt_path_str, str):
                     try:
-                        # Try to load from config directory first
-                        prompt_file_path = config_dir / prompt_path_str
+                        # Use PathManager to resolve the path
+                        resolved_prompt_path = path_manager.resolve_path(prompt_path_str)
+                        prompt_file_path = Path(resolved_prompt_path)
                         if prompt_file_path.is_file():
                             with open(prompt_file_path, "r", encoding="utf-8") as f:
                                 config["runner_agent_type_prompts_content"][agent_type] = f.read()
                             logging.debug(
                                 f"Loaded runner agent type default prompt for '{agent_type}': {config['runner_agent_type_prompts_content'][agent_type][:100]}..."
-                            )  # Add logging
+                            )
                         else:
-                            # Try project root as fallback
-                            project_root = Path(__file__).parent.parent.parent
-                            prompt_file_path = project_root / prompt_path_str
-                            if prompt_file_path.is_file():
-                                with open(prompt_file_path, "r", encoding="utf-8") as f:
-                                    config["runner_agent_type_prompts_content"][agent_type] = f.read()
-                                logging.debug(
-                                    f"Loaded runner agent type default prompt for '{agent_type}': {config['runner_agent_type_prompts_content'][agent_type][:100]}..."
-                                )  # Add logging
-                            else:
-                                logging.warning(
-                                    f"Runner agent type default prompt file not found: {prompt_path_str} for agent type '{agent_type}'."
-                                )
+                            logging.warning(
+                                f"Runner agent type default prompt file not found: {prompt_path_str} (resolved to {resolved_prompt_path}) for agent type '{agent_type}'."
+                            )
                     except Exception as e:
                         logging.error(
                             f"Error reading runner agent type default prompt file {prompt_path_str} for '{agent_type}': {e}"
@@ -230,65 +309,55 @@ def load_config(config_path: str) -> Dict[str, Any]:
                     logging.warning(f"Invalid prompt path for runner agent type '{agent_type}': must be a string.")
 
         # --- New: Load Global Runner Default Prompt ---
+        # Keep this section as it loads a specific global default, not general task defaults
         if "global_runner_default_prompt_path" in prompts_config and isinstance(
             prompts_config["global_runner_default_prompt_path"], str
         ):
             try:
                 global_prompt_path_str = prompts_config["global_runner_default_prompt_path"]
-                # Try to load from config directory first
-                prompt_file_path = config_dir / global_prompt_path_str
+                # Use PathManager to resolve the path
+                resolved_prompt_path = path_manager.resolve_path(global_prompt_path_str)
+                prompt_file_path = Path(resolved_prompt_path)
                 if prompt_file_path.is_file():
                     with open(prompt_file_path, "r", encoding="utf-8") as f:
                         config["global_runner_default_prompt_content"] = f.read()
                     logging.debug(
                         f"Loaded global runner default prompt: {config['global_runner_default_prompt_content'][:100]}..."
-                    )  # Add logging
+                    )
                 else:
-                    # Try project root as fallback
-                    project_root = Path(__file__).parent.parent.parent
-                    prompt_file_path = project_root / global_prompt_path_str
-                    if prompt_file_path.is_file():
-                        with open(prompt_file_path, "r", encoding="utf-8") as f:
-                            config["global_runner_default_prompt_content"] = f.read()
-                        logging.debug(
-                            f"Loaded global runner default prompt: {config['global_runner_default_prompt_content'][:100]}..."
-                        )  # Add logging
-                    else:
-                        logging.warning(f"Global runner default prompt file not found: {global_prompt_path_str}.")
+                    logging.warning(f"Global runner default prompt file not found: {global_prompt_path_str} (resolved to {resolved_prompt_path}).")
             except Exception as e:
                 logging.error(f"Error reading global runner default prompt file {global_prompt_path_str}: {e}")
 
         # --- New: Load Default Global Runner Prompt if not specified ---
-        if config["global_runner_default_prompt_content"] is None:
-            project_root = Path(__file__).parent.parent.parent
+        # Keep this section as it loads a specific global default, not general task defaults
+        if getattr(config, "global_runner_default_prompt_content", None) is None:
             default_global_prompt_path_str = "prompts/global_runner_fallback_default.md"
             try:
-                config["global_runner_default_prompt_content"] = _load_prompt_content(
-                    None,
-                    default_global_prompt_path_str,
-                    config_dir,
-                    project_dir=project_root,  # Pass project_root as fallback
-                )
-                logging.debug(f"Loaded default global runner prompt.")
-            except ConfigError as e:
-                logging.warning(f"Could not load default global runner prompt: {e}")
+                # Use PathManager to resolve the default path
+                resolved_default_path = path_manager.resolve_path(default_global_prompt_path_str)
+                default_prompt_file_path = Path(resolved_default_path)
+
+                if default_prompt_file_path.is_file():
+                     with open(default_prompt_file_path, "r", encoding="utf-8") as f:
+                        config["global_runner_default_prompt_content"] = f.read()
+                     logging.debug(f"Loaded default global runner prompt.")
+                else:
+                    logging.warning(f"Default global runner prompt file not found: {default_global_prompt_path_str} (resolved to {resolved_default_path}).")
+
             except Exception as e:
                 logging.error(f"Unexpected error loading default global runner prompt: {e}")
 
-    # Determine model config for each task that has a prompt defined (Existing logic)
-    # If a task has a prompt, it must have a model config (either default or task-specific)
+
+    # Determine model config for each task that has a prompt defined
     for task_name in config["task_prompts_content"].keys():
         task_model_settings = config["task_models"].get(task_name, {})
         if not isinstance(task_model_settings, dict):
-            # This check is already present, but ensure it's correctly placed after getting the value
             raise ConfigError(f"Invalid model settings for task '{task_name}' in {config_path}. Expected a dictionary.")
 
-        # Merge task-specific settings with default openrouter settings
-        # Task-specific settings override defaults
-        merged_model_config = openrouter_config.copy()  # Start with default openrouter config
-        merged_model_config.update(task_model_settings)  # Apply task-specific overrides
+        merged_model_config = openrouter_config.copy()
+        merged_model_config.update(task_model_settings)
 
-        # Ensure required keys are present after merging (at least 'model')
         required_task_model_keys = ["model"]
         missing_task_model_keys = [key for key in required_task_model_keys if not merged_model_config.get(key)]
         if missing_task_model_keys:
@@ -298,14 +367,10 @@ def load_config(config_path: str) -> Dict[str, Any]:
 
         config["task_model_configs"][task_name] = merged_model_config
 
-    # --- Final Validation --- (Existing logic)
-    # Validate only 'model' is present in openrouter config, as api_key is handled via env var
-    # This check is now less critical as task_model_configs are validated, but keep for base config
-    required_openrouter_keys = ["model"]  # Only model is required *in the file*
+    required_openrouter_keys = ["model"]
     missing_openrouter_keys = [key for key in required_openrouter_keys if not openrouter_config.get(key)]
     if missing_openrouter_keys:
         raise ConfigError(
             f"Missing or empty required keys in 'openrouter' section of {config_path}: {', '.join(missing_openrouter_keys)}"
         )
-    # Removed verbose config log to avoid leaking sensitive data and reduce log size
     return config

@@ -1,0 +1,52 @@
+{
+  "description": "Add integration tests to verify the path management system works correctly in real-world scenarios, including config and CLI overrides.",
+  "instructions": [
+    "Navigate to the 'tests/integration/' directory.",
+    "Create a new Python file named 'test_path_management_integration.py'.",
+    "Import necessary modules, including 'pytest', 'os', 'tempfile', and relevant classes from 'src.ai_whisperer.path_management', 'src.ai_whisperer.config', and 'src.ai_whisperer.cli'.",
+    "Define test functions within 'test_path_management_integration.py' using the 'pytest' framework.",
+    "Implement a test function to verify the path management system when no specific configuration or CLI arguments are provided. This test should simulate file operations (e.g., creating temporary files or directories) using the path singleton and assert that they are created in the expected default locations.",
+    "Implement a test function to verify path overrides via a configuration file. Create a temporary configuration file with specific path settings, load this configuration using the config module, initialize the path singleton with this config, and simulate file operations to assert that they use the paths specified in the config file.",
+    "Implement a test function to verify path overrides via CLI arguments. Simulate command-line arguments that specify different paths (e.g., using argparse or a similar mechanism), initialize the path singleton with these CLI arguments (ensuring they take precedence over any default or config settings), and simulate file operations to assert that they use the paths specified by the CLI.",
+    "Implement a test function to verify that CLI arguments correctly override settings from the configuration file when both are provided. Create a temporary config file and simulate CLI arguments that specify different paths for the same settings, initialize the path singleton, and assert that the CLI-specified paths are used.",
+    "Implement a test function to verify templated path expansion within the application context. This test should ensure that placeholders (if any) within the configured or provided paths are correctly expanded by the path management system.",
+    "Ensure that the tests use temporary directories and files to avoid side effects on the actual project structure.",
+    "Add necessary setup and teardown logic (e.g., using pytest fixtures) to manage temporary files and directories created during tests.",
+    "Include assertions within each test function to verify the expected behavior of the path management system under different input conditions.",
+    "Ensure the tests are structured logically and clearly demonstrate the intended functionality and override hierarchy (CLI > Config > Default)."
+  ],
+  "input_artifacts": [
+    "docs/path_management_design.md",
+    "docs/path_explanation.md",
+    "src/ai_whisperer/path_management.py",
+    "src/ai_whisperer/config.py",
+    "src/ai_whisperer/cli.py"
+  ],
+  "output_artifacts": [
+    "tests/integration/test_path_management_integration.py"
+  ],
+  "constraints": [
+    "Integration tests should simulate realistic usage scenarios.",
+    "Tests must verify the interaction between config, CLI, and the path singleton.",
+    "Tests should use temporary resources and clean them up properly.",
+    "Tests should be independent and not rely on the order of execution.",
+    "The tests must be written using the pytest framework."
+  ],
+  "validation_criteria": [
+    "tests/integration/test_path_management_integration.py exists and contains test functions.",
+    "The integration tests cover default path usage.",
+    "The integration tests cover path overrides via a configuration file.",
+    "The integration tests cover path overrides via CLI arguments.",
+    "The integration tests verify that CLI overrides take precedence over config overrides.",
+    "The integration tests verify templated path expansion.",
+    "The generated tests compile and run without errors (syntax and basic execution).",
+    "The tests should initially fail if the path management system is not yet fully implemented or has bugs related to overrides and templating, confirming they correctly target the functionality."
+  ],
+  "type": "test_generation",
+  "name": "add_integration_tests_for_path_management",
+  "depends_on": [
+    "create_path_explanation_document"
+  ],
+  "task_id": "da0bff86-233d-4f69-bd5f-b4804aa4b3da",
+  "subtask_id": "43489d1e-ffd1-4de0-9895-005326c2a414"
+}

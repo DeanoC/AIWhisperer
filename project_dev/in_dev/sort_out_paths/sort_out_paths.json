@@ -1,0 +1,281 @@
+{
+  "natural_language_goal": "Implement a consistent path management system based on four core directories (app, project, output, workspace) with a global singleton and templated paths.",
+  "plan": [
+    {
+      "name": "analyze_requirements_and_design_path_singleton",
+      "description": "Analyze the requirements for the path management system and design the structure of the global path singleton, including how it will store and provide access to the four core paths and handle templated path expansion.",
+      "depends_on": [],
+      "type": "planning",
+      "input_artifacts": [
+        "project_dev/rfc/sort_out_paths.md"
+      ],
+      "output_artifacts": [
+        "docs/path_management_design.md"
+      ],
+      "instructions": [
+        "Read and understand the requirements in project_dev/rfc/sort_out_paths.md.",
+        "Design a Python class or module for the global path singleton.",
+        "Define how the four core paths (app, project, output, workspace) will be stored and initialized.",
+        "Design a function within the singleton to take a templated path string (e.g., '{project_path}/input.txt') and return the full, absolute path.",
+        "Consider how default paths will be handled and how they can be overridden by config and CLI.",
+        "Document the design in docs/path_management_design.md."
+      ],
+      "constraints": [
+        "The path singleton must be accessible globally.",
+        "The templated path expansion must correctly handle all four path types."
+      ],
+      "validation_criteria": [
+        "docs/path_management_design.md exists.",
+        "docs/path_management_design.md clearly describes the path singleton structure and its methods.",
+        "The design addresses default paths, config overrides, and CLI overrides."
+      ],
+      "subtask_id": "b59acc1d-0f6e-4b12-a443-74a5bd308ca6"
+    },
+    {
+      "name": "create_path_management_tests",
+      "description": "Create unit tests for the path management singleton, covering initialization, default paths, setting paths, and templated path expansion for all four path types.",
+      "depends_on": [
+        "analyze_requirements_and_design_path_singleton"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/path_management_design.md"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_path_management.py"
+      ],
+      "instructions": [
+        "Based on the design in docs/path_management_design.md, create unit tests for the path management singleton.",
+        "Include tests for:",
+        "- Initializing the singleton with default paths.",
+        "- Setting custom paths for each of the four directory types.",
+        "- Expanding templated paths using different combinations of the {*_path} placeholders.",
+        "- Handling invalid templated paths.",
+        "- Ensuring the singleton behaves correctly when accessed from different parts of a simulated application.",
+        "The tests should be written in tests/unit/test_path_management.py."
+      ],
+      "constraints": [
+        "Tests must cover all core functionalities designed for the path singleton.",
+        "Tests should use mocked file system operations where necessary to avoid actual file I/O."
+      ],
+      "validation_criteria": [
+        "tests/unit/test_path_management.py exists.",
+        "The test file contains tests for initializing, setting, and expanding paths.",
+        "The generated tests compile and run without errors, but should initially fail expectedly before implementation."
+      ],
+      "subtask_id": "4900beb7-81e7-4a66-b57b-85da4e45e709"
+    },
+    {
+      "name": "implement_path_management_singleton",
+      "description": "Implement the global path management singleton based on the design and generated tests.",
+      "depends_on": [
+        "create_path_management_tests"
+      ],
+      "type": "code_generation",
+      "input_artifacts": [
+        "docs/path_management_design.md",
+        "tests/unit/test_path_management.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/path_management.py"
+      ],
+      "instructions": [
+        "Implement the path management singleton in src/ai_whisperer/path_management.py according to the design in docs/path_management_design.md.",
+        "Ensure the implementation passes all tests in tests/unit/test_path_management.py.",
+        "The singleton should provide methods for setting and retrieving the four core paths.",
+        "Implement the templated path expansion logic."
+      ],
+      "constraints": [
+        "The implementation must be a singleton.",
+        "All unit tests must pass."
+      ],
+      "validation_criteria": [
+        "src/ai_whisperer/path_management.py exists.",
+        "The code implements the path singleton with the required methods.",
+        "All tests in tests/unit/test_path_management.py pass successfully."
+      ],
+      "subtask_id": "1afc5e4a-e10a-4d2e-98c0-2a68a4e03444"
+    },
+    {
+      "name": "integrate_path_management_into_config_and_cli",
+      "description": "Modify the configuration loading and CLI argument parsing to initialize and override the path management singleton's values.",
+      "depends_on": [
+        "implement_path_management_singleton"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "src/ai_whisperer/path_management.py",
+        "src/ai_whisperer/config.py",
+        "src/ai_whisperer/cli.py",
+        "tests/unit/test_path_management.py",
+        "tests/unit/test_config.py",
+        "tests/unit/test_cli.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/config.py",
+        "src/ai_whisperer/cli.py"
+      ],
+      "instructions": [
+        "Modify src/ai_whisperer/config.py to load path values from the config file (config.yaml).",
+        "Modify src/ai_whisperer/cli.py to add CLI arguments for overriding the four path types.",
+        "Ensure that CLI arguments take precedence over config file values.",
+        "Update the application's initialization logic (likely in src/ai_whisperer/main.py) to initialize the path singleton early with values from config and CLI.",
+        "Update relevant unit tests (e.g., test_config.py, test_cli.py) or create new ones to cover the integration logic.",
+        "Ensure all existing and new tests pass."
+      ],
+      "constraints": [
+        "CLI arguments must override config values for paths.",
+        "The path singleton must be initialized before any path-dependent operations."
+      ],
+      "validation_criteria": [
+        "src/ai_whisperer/config.py and src/ai_whisperer/cli.py are modified.",
+        "New CLI options for paths are added and documented (implicitly via help messages).",
+        "Config loading includes path options.",
+        "Existing and new unit tests for config and cli pass."
+      ],
+      "subtask_id": "6654ad95-fef8-4e94-afad-149cd4c7ad96"
+    },
+    {
+      "name": "refactor_file_io_and_path_operations",
+      "description": "Refactor existing file I/O and path operations throughout the codebase to use the new path management singleton and templated paths.",
+      "depends_on": [
+        "integrate_path_management_into_config_and_cli"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "src/ai_whisperer/",
+        "tests/",
+        "docs/path_management_design.md",
+        "src/ai_whisperer/path_management.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/",
+        "tests/"
+      ],
+      "instructions": [
+        "Identify all places in src/ai_whisperer/ and tests/ where file paths are constructed or used.",
+        "Replace hardcoded or relative paths with calls to the path management singleton's expansion function using templated paths.",
+        "Ensure proper handling of relative paths provided in input (e.g., in config files or user input) by expanding them relative to the appropriate base path ({project_path} or {workspace_path}).",
+        "Update any tests that rely on specific hardcoded paths.",
+        "Ensure all existing unit and integration tests pass after the refactoring."
+      ],
+      "constraints": [
+        "All file I/O and path operations must now use the path singleton.",
+        "All existing tests must pass."
+      ],
+      "validation_criteria": [
+        "Codebase refactored to extensively use the path singleton.",
+        "No hardcoded paths remain where they should be managed by the singleton.",
+        "All existing tests pass successfully."
+      ],
+      "subtask_id": "355b9387-5632-4695-901c-eda4e451d98e"
+    },
+    {
+      "name": "create_path_explanation_document",
+      "description": "Create a markdown document explaining the four core directories and how paths are managed in the project.",
+      "depends_on": [
+        "refactor_file_io_and_path_operations"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "project_dev/rfc/sort_out_paths.md",
+        "docs/path_management_design.md"
+      ],
+      "output_artifacts": [
+        "docs/path_explanation.md"
+      ],
+      "instructions": [
+        "Create a new markdown file at docs/path_explanation.md.",
+        "Explain the purpose and default location of the four core directories: app, project, output, and workspace.",
+        "Describe how the path management singleton works and how templated paths ({app_path}, {project_path}, etc.) are used.",
+        "Explain how default paths are set and how they can be overridden via config and CLI.",
+        "Provide examples of how to use the templated paths in configuration or user input.",
+        "Ensure the document is clear, concise, and accurate based on the implemented system."
+      ],
+      "constraints": [
+        "The document must be easy to understand for new contributors.",
+        "It must accurately reflect the implemented path management system."
+      ],
+      "validation_criteria": [
+        "docs/path_explanation.md exists.",
+        "The document clearly defines and explains the four core directories.",
+        "The document describes the path management system and templated paths.",
+        "The document explains configuration and CLI overrides."
+      ],
+      "subtask_id": "de7b67c3-f359-4e20-903c-2ea18377de38"
+    },
+    {
+      "name": "add_integration_tests_for_path_management",
+      "description": "Add integration tests to verify the path management system works correctly in real-world scenarios, including config and CLI overrides.",
+      "depends_on": [
+        "create_path_explanation_document"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/path_management_design.md",
+        "docs/path_explanation.md",
+        "src/ai_whisperer/path_management.py",
+        "src/ai_whisperer/config.py",
+        "src/ai_whisperer/cli.py"
+      ],
+      "output_artifacts": [
+        "tests/integration/test_path_management_integration.py"
+      ],
+      "instructions": [
+        "Create integration tests in tests/integration/test_path_management_integration.py to verify the end-to-end path management system.",
+        "Include tests that:",
+        "- Run the application with default paths and verify file operations use the correct directories.",
+        "- Run the application with overridden paths via a config file and verify.",
+        "- Run the application with overridden paths via CLI arguments and verify (ensuring CLI overrides config).",
+        "- Verify templated path expansion works correctly within the application context.",
+        "These tests should simulate parts of the application that perform file I/O using the path system."
+      ],
+      "constraints": [
+        "Integration tests should simulate realistic usage scenarios.",
+        "Tests must verify the interaction between config, CLI, and the path singleton."
+      ],
+      "validation_criteria": [
+        "tests/integration/test_path_management_integration.py exists.",
+        "The integration tests cover default, config, and CLI path overrides.",
+        "The generated tests compile and run without errors, but should initially fail expectedly before implementation."
+      ],
+      "subtask_id": "43489d1e-ffd1-4de0-9895-005326c2a414"
+    },
+    {
+      "name": "implement_integration_tests_for_path_management",
+      "description": "Implement the integration tests for the path management system.",
+      "depends_on": [
+        "add_integration_tests_for_path_management"
+      ],
+      "type": "code_generation",
+      "input_artifacts": [
+        "tests/integration/test_path_management_integration.py",
+        "src/ai_whisperer/path_management.py",
+        "src/ai_whisperer/config.py",
+        "src/ai_whisperer/cli.py"
+      ],
+      "output_artifacts": [
+        "tests/integration/test_path_management_integration.py"
+      ],
+      "instructions": [
+        "Write the implementation code for the integration tests defined in tests/integration/test_path_management_integration.py.",
+        "Use temporary directories and mock files as needed to simulate file operations.",
+        "Ensure the tests correctly verify that file operations occur in the directories specified by default, config, and CLI."
+      ],
+      "constraints": [
+        "Tests must pass.",
+        "Tests should clean up any temporary files or directories created."
+      ],
+      "validation_criteria": [
+        "Existing and new integration tests in tests/integration/test_path_management_integration.py pass successfully."
+      ],
+      "subtask_id": "b4a42d4d-86b4-4ea7-8091-f6e4143271f3"
+    }
+  ],
+  "task_id": "da0bff86-233d-4f69-bd5f-b4804aa4b3da",
+  "input_hashes": {
+    "requirements_md": "e593a4342ab33527329dfb579b8a2a4f6d2ede9f2ddb6923ca02e54c519f12ed",
+    "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+    "prompt_file": "hash_not_available"
+  }
+}

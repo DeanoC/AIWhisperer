@@ -1,12 +1,15 @@
 from ai_whisperer.exceptions import TaskExecutionError
+from ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 
-def handle_planning(engine, task_definition, task_id):
+def handle_planning(engine: ExecutionEngine, task_definition: dict):
     """
     Handle a planning task.
     Implementation moved from ExecutionEngine._handle_planning.
     """
     self = engine
+    task_id = task_definition.get('subtask_id')
+
     logger = self.config.get('logger', None)
     if logger:
         logger.info(f"Executing planning task {task_id}")

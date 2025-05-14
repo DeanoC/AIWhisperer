@@ -217,8 +217,9 @@ pytest
 ```text
 We are implementing a feature request
 @/project_dev/in_dev/logging-and-monitoring/overview_logging-and-monitoring_aiwhisperer_config.json
-This is part of a much larger feature described here @/project_dev/rfc/runner/aiwhisperer_runner_plan.md This is purely for references, we are NOT to do anything but what is the feature request .json you have.
 We follow a strict test-first driven design metholodogy, and you are reasonable for enforcing this. The USER gets angry if not followed or any task gets down before the previous one is finished.
 It is also your responsibility to ensure the overview document step completed fields are keep upto date for each step
 
 Are you ready?
+```
+

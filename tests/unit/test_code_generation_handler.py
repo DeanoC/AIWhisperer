@@ -54,9 +54,9 @@ def test_handle_code_generation_success(mock_run_loop, mock_get_logger):
             "task_id": "fake-task-id",
             "subtask_id": "fake-subtask-id"
         }
-        task_id = "fake-task-id"
+        task_id = "fake-subtask-id"
 
-        result = handle_code_generation(mock_engine, task_definition, task_id)
+        result = handle_code_generation(mock_engine, task_definition)
 
         assert result is not None
         assert result["message"] == "Code generation completed and validation passed."
@@ -109,14 +109,14 @@ def test_handle_code_generation_validation_failure():
                 "task_id": "fake-task-id",
                 "subtask_id": "fake-subtask-id"
             }
-            task_id = "fake-task-id"
+            task_id = "fake-subtask-id"
 
             try:
-                result = handle_code_generation(mock_engine, task_definition, task_id)
+                result = handle_code_generation(mock_engine, task_definition)
                 pytest.fail("TaskExecutionError was not raised")
             except TaskExecutionError as e:
                 assert isinstance(e, TaskExecutionError)
-                assert "Code generation task fake-task-id failed validation." in str(e)
+                assert "Code generation task fake-subtask-id failed validation." in str(e)
                 assert hasattr(e, 'details')
                 assert e.details is not None
                 assert e.details["overall_status"] == "failed"

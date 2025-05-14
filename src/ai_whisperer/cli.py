@@ -12,6 +12,7 @@ from .config import load_config
 from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
 from .commands import ListModelsCommand, GenerateInitialPlanCommand, GenerateOverviewPlanCommand, RefineCommand, RunCommand, BaseCommand # Import command classes
 from . import logging_custom # Import module directly
+from .path_management import PathManager # Import PathManager
 
 logger = None # Will be initialized in main after logging is configured
 
@@ -31,13 +32,25 @@ def cli(args=None) -> list[BaseCommand]:
 
     # Add global arguments to the main parser
     parser.add_argument(
-        "--project-dir", type=str, default=None, help="Path to the project directory (overrides auto-detection)."
-    )
-    parser.add_argument(
         "--config", required=True, help="Path to the configuration YAML file. Required for most operations."
     )
     parser.add_argument(
         "--debug", action="store_true", help="Wait for a debugger to attach before running."
+    )
+
+    # Add path-related global arguments
+    # app_path is determined by the application's location and should not be configurable via CLI
+    # parser.add_argument( # Removed --app-path CLI argument
+    #     "--app-path", type=str, default=None, help="Path to the application directory (overrides config, maps to app_path in PathManager)."
+    # )
+    parser.add_argument(
+        "--project-path", type=str, default=None, help="Path to the project directory (overrides config, maps to project_path in PathManager)."
+    )
+    parser.add_argument(
+        "--output-path", type=str, default=None, help="Path to the output directory (overrides config, maps to output_path in PathManager)."
+    )
+    parser.add_argument(
+        "--workspace-path", type=str, default=None, help="Path to the workspace directory (overrides config, maps to workspace_path in PathManager)."
     )
 
     # Create subparsers for different commands
@@ -137,64 +150,61 @@ def cli(args=None) -> list[BaseCommand]:
         logger.debug(f"Parsed arguments: {parsed_args}")
         logger.debug(f"Command: {parsed_args.command}")
 
-        # Determine project directory (might need adjustment depending on how this is used later)
-        if parsed_args.project_dir:
-            project_dir = Path(parsed_args.project_dir).resolve()
-        else:
-            # Fallback to previous logic or default
-            project_dir = Path(__file__).parent.parent.parent.resolve()
-
+        # Load configuration, passing parsed_args for PathManager initialization
+        config = load_config(str(config_file_path), cli_args=vars(parsed_args))
 
         # --- Instantiate Command Object ---
-        command_object = None
+        commands = [] # Initialize commands list
         if parsed_args.command == "list-models":
-            commands = [ListModelsCommand(
-                config_path=parsed_args.config,
+            commands.append(ListModelsCommand(
+                config=config, # Pass the loaded config object
                 output_csv=parsed_args.output_csv
-            )]
+            ))
         elif parsed_args.command == "generate":
             if parsed_args.subcommand == "initial-plan":
-                commands = [GenerateInitialPlanCommand(
-                    config_path=parsed_args.config,
+                commands.append(GenerateInitialPlanCommand(
+                    config=config, # Pass the loaded config object
                     output_dir=parsed_args.output,
                     requirements_path=parsed_args.requirements_path,
-                )]
+                ))
             elif parsed_args.subcommand == "overview-plan":
-                commands = [GenerateOverviewPlanCommand(
-                    config_path=parsed_args.config,
+                commands.append(GenerateOverviewPlanCommand(
+                    config=config, # Pass the loaded config object
                     output_dir=parsed_args.output,
                     initial_plan_path=parsed_args.initial_plan_path
-                )]
+                ))
             elif parsed_args.subcommand == "full-plan":
-                commands = [
+                commands.append(
                     GenerateInitialPlanCommand(
-                        config_path=parsed_args.config,
+                        config=config, # Pass the loaded config object
                         output_dir=parsed_args.output,
                         requirements_path=parsed_args.requirements_path
-                    ),
+                    )
+                )
+                commands.append(
                     GenerateOverviewPlanCommand(
-                        config_path=parsed_args.config,
+                        config=config, # Pass the loaded config object
                         output_dir=parsed_args.output,
                         initial_plan_path="<output_of_generate_initial_plan_command>"
                     )
-                ]
+                )
             else:
                 raise ValueError(f"Unknown subcommand for generate: {parsed_args.subcommand}")
         elif parsed_args.command == "refine":
-            commands = [RefineCommand(
-                config_path=parsed_args.config,
+            commands.append(RefineCommand(
+                config=config, # Pass the loaded config object
                 input_file=parsed_args.input_file,
                 iterations=parsed_args.iterations,
                 prompt_file=parsed_args.prompt_file,
                 output=parsed_args.output
-            )]
+            ))
         elif parsed_args.command == "run":
-            commands = [RunCommand(
-                config_path=parsed_args.config,
+            commands.append(RunCommand(
+                config=config, # Pass the loaded config object
                 plan_file=parsed_args.plan_file,
                 state_file=parsed_args.state_file,
                 monitor=parsed_args.monitor
-            )]
+            ))
         else:
             parser.print_help()
             # This should not be reached due to required=True in subparsers, but as a fallback

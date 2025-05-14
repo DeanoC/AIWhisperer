@@ -156,26 +156,9 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                             "tool_call_id": tool_call_id,
                             "output": f"Error: Tool '{tool_name}' not found."
                         })
-                        # The continue statement was incorrectly placed here, skipping tool execution.
-                        # It should only skip if tool_instance is None, which is handled by the 'if' block.
-                        # Removing the misplaced continue.
+                        continue
 
-                    # Pass shutdown_event to ExecuteCommandTool if it's the execute_command tool
-                    # Check if the tool's execute method is a coroutine function
-                    if asyncio.iscoroutinefunction(tool_instance.execute):
-                        # If it's the execute_command tool, pass the shutdown_event
-                        if tool_name == "execute_command":
-                             tool_output_data = tool_instance.execute(**tool_arguments, shutdown_event=shutdown_event)
-                        else:
-                             tool_output_data = tool_instance.execute(**tool_arguments)
-                    else:
-                        # If it's a synchronous tool, call it directly
-                        # Pass shutdown_event to ExecuteCommandTool if it's the execute_command tool
-                        if tool_name == "execute_command":
-                             tool_output_data = tool_instance.execute(**tool_arguments, shutdown_event=shutdown_event)
-                        else:
-                             tool_output_data = tool_instance.execute(**tool_arguments)
-    
+                    tool_output_data = tool_instance.execute(**tool_arguments)    
     
                     # Format tool output for the next AI turn
                     tool_outputs.append({

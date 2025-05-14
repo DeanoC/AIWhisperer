@@ -5,6 +5,9 @@ import pytest
 from unittest.mock import MagicMock, patch, ANY
 
 # Import necessary modules from the execution engine and handler
+from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
+from ai_whisperer.tools.read_file_tool import ReadFileTool
+from ai_whisperer.tools.write_file_tool import WriteFileTool
 from src.ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.agent_handlers.code_generation import handle_code_generation
 from src.ai_whisperer.state_management import StateManager
@@ -29,9 +32,11 @@ class TestCodeGenerationHandlerIntegration:
         engine = ExecutionEngine(mock_state_manager, mock_monitor, mock_config)
         print(f"ExecutionEngine created: {engine}")
         # Ensure the engine's agent_type_handlers includes the code_generation handler
-        engine.agent_type_handlers['code_generation'] = lambda task_def, task_id: handle_code_generation(engine, task_def, task_id)
+        engine.agent_type_handlers['code_generation'] = lambda task_def: handle_code_generation(engine, task_def)
         print(f"Code generation handler assigned: {engine.agent_type_handlers.get('code_generation')}")
         print("setup_engine fixture finished")
+        
+
         return engine, mock_state_manager, mock_monitor
 
     def test_generate_new_file(self, setup_engine):
@@ -52,31 +57,19 @@ class TestCodeGenerationHandlerIntegration:
         expected_ai_responses = [
             # First response: Tool call
             {
-                "choices": [
+                "tool_calls": [
                     {
-                        "message": {
-                            "tool_calls": [
-                                {
-                                    "id": "call_123",
-                                    "function": {
-                                        "name": "write_to_file",
-                                        "arguments": '{"path": "new_file.py", "content": "print(\\"Hello, World!\\")\\n", "line_count": 2}'
-                                    }
-                                }
-                            ]
+                        "id": "call_123",
+                        "function": {
+                            "name": "write_file",
+                            "arguments": '{"file_path": "new_file.py", "content": "print(\\"Hello, World!\\")\\n"}'
                         }
                     }
                 ]
             },
             # Second response: Final content
             {
-                "choices": [
-                    {
-                        "message": {
-                            "content": "File generated successfully."
-                        }
-                    }
-                ]
+                "content": "File generated successfully."
             }
         ]
         mock_call_chat_completion.side_effect = expected_ai_responses
@@ -131,12 +124,11 @@ class TestCodeGenerationHandlerIntegration:
             plan_parser.load_overview_plan(overview_plan_path)
             parsed_plan = plan_parser.get_parsed_plan()
 
-            # Mock the ToolRegistry instance and the write_to_file tool
-            with patch('src.ai_whisperer.agent_handlers.code_generation.ToolRegistry') as mock_tool_registry_class:
+            with patch('src.ai_whisperer.tools.tool_registry.ToolRegistry') as mock_tool_registry_class:
                 mock_tool_registry_instance = MagicMock()
                 mock_tool_registry_class.return_value = mock_tool_registry_instance
                 mock_write_tool = MagicMock()
-                mock_tool_registry_instance.get_tool.return_value = mock_write_tool
+                mock_tool_registry_instance.get_tool_by_name.return_value = mock_write_tool
 
                 print("Executing engine.execute_plan...")
                 engine.execute_plan(plan_parser)

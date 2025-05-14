@@ -1,0 +1,46 @@
+{
+  "description": "Implement the integration tests for the path management system.",
+  "instructions": [
+    "Open the file `tests/integration/test_path_management_integration.py`.",
+    "Import necessary modules, including `pytest`, `os`, `tempfile`, `shutil`, and components from `src.ai_whisperer.path_management`, `src.ai_whisperer.config`, and `src.ai_whisperer.cli`.",
+    "Implement test functions within the `test_path_management_integration.py` file.",
+    "For each test case, use `tempfile.TemporaryDirectory` to create a temporary directory that will serve as the test environment.",
+    "Within the temporary directory, simulate file operations (e.g., creating files, directories) that the path management functions will interact with.",
+    "Write tests that verify the behavior of path management functions when using default paths.",
+    "Write tests that verify the behavior of path management functions when paths are specified via a configuration file (using a temporary config file and mocking `src.ai_whisperer.config.load_config` if necessary).",
+    "Write tests that verify the behavior of path management functions when paths are specified via command-line arguments (using mocking or other techniques to simulate CLI arguments and their parsing in `src.ai_whisperer.cli`).",
+    "Ensure tests cover scenarios where paths are absolute and relative.",
+    "Verify that files are created/accessed in the expected locations based on the default, config, and CLI specified paths.",
+    "Use assertions to check the existence of files/directories, their content (if applicable), and any return values from the path management functions.",
+    "Ensure that the temporary directories and their contents are automatically cleaned up after each test using `tempfile.TemporaryDirectory` or appropriate teardown methods.",
+    "Run the integration tests using `pytest tests/integration/test_path_management_integration.py` to verify they pass."
+  ],
+  "input_artifacts": [
+    "tests/integration/test_path_management_integration.py",
+    "src/ai_whisperer/path_management.py",
+    "src/ai_whisperer/config.py",
+    "src/ai_whisperer/cli.py"
+  ],
+  "output_artifacts": [
+    "tests/integration/test_path_management_integration.py"
+  ],
+  "constraints": [
+    "All implemented tests must pass when executed with pytest.",
+    "Tests must not leave any temporary files or directories behind after execution.",
+    "Tests should be isolated and not depend on the state of other tests.",
+    "Avoid modifying files outside of the temporary directories created for testing."
+  ],
+  "validation_criteria": [
+    "The file `tests/integration/test_path_management_integration.py` contains new test functions.",
+    "Executing `pytest tests/integration/test_path_management_integration.py` results in all existing and newly added tests passing.",
+    "The tests cover the path resolution logic for default, config, and CLI specified paths.",
+    "Temporary directories and files are properly handled and cleaned up by the tests."
+  ],
+  "type": "code_generation",
+  "name": "implement_integration_tests_for_path_management",
+  "depends_on": [
+    "add_integration_tests_for_path_management"
+  ],
+  "task_id": "da0bff86-233d-4f69-bd5f-b4804aa4b3da",
+  "subtask_id": "b4a42d4d-86b4-4ea7-8091-f6e4143271f3"
+}

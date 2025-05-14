@@ -270,8 +270,7 @@ def test_ai_execute_command_tool_call(openrouter_api: OpenRouterAPI, tool_regist
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
-async def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_registry: ToolRegistry, temp_test_file: tuple, temp_write_file_path: str):
+def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_registry: ToolRegistry, temp_test_file: tuple, temp_write_file_path: str):
     """
     Test the end-to-end execution of file tools when the AI provides valid parameters.
     This test simulates the full cycle: AI call -> System invokes tool -> Tool executes.
@@ -338,7 +337,8 @@ async def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, too
 
         # Assuming the first tool call is the write_file call (updated from write_text_file)
         write_call_args = json.loads(write_tool_calls[0]["function"]["arguments"])
-        assert write_call_args.get("file_path") == write_file_path
+        # Normalize paths for comparison
+        assert os.path.normpath(write_call_args.get("file_path")) == os.path.normpath(write_file_path)
         assert write_call_args.get("content") == write_content
 
         # Simulate the system executing the tool call
@@ -346,7 +346,7 @@ async def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, too
         assert write_tool_instance is not None, "write_file tool not found in registry"
 
         # Execute the tool with the AI's provided arguments, unpacking the dictionary
-        write_tool_output = await write_tool_instance.execute(**write_call_args)
+        write_tool_output = write_tool_instance.execute(**write_call_args)
 
         # Assert the tool execution was successful (write_to_file might return None or a success message)
         # Check the actual file content
