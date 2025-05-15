@@ -5,8 +5,8 @@ from jsonschema import validate, ValidationError
 import os
 from typing import Optional
 
-# Default schema directory relative to the module file
-DEFAULT_SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schemas")
+# Default schema directory at the project root
+DEFAULT_SCHEMA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "schemas"))
 
 # Global variable to hold the configured schema directory
 _schema_directory: Optional[str] = None

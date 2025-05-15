@@ -104,11 +104,11 @@ class TestPromptResolver(unittest.TestCase):
         self.mock_config.get_base_path.side_effect = lambda category: "prompts/custom" if category == "custom" else None # Mock default custom base path
 
         # Use real instances of Resolver and Loader, but pass PathManager
-        self.resolver = PromptResolver(self.mock_config, PathManager.get_instance())
+        self.resolver = PromptResolver(self.mock_config)
         self.loader = PromptLoader()
 
         # Initialize PromptSystem with real dependencies and PathManager
-        self.manager = PromptSystem(self.mock_config, path_manager=PathManager.get_instance())
+        self.manager = PromptSystem(self.mock_config)
         # Manually inject the real loader and resolver for testing purposes
         self.manager._loader = self.loader
         self.manager._resolver = self.resolver

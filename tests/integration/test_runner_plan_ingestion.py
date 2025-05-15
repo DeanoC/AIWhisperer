@@ -64,39 +64,58 @@ class Runner:
 
 # --- Test Data (Updated to match actual schemas) ---
 
+
+# Use valid UUIDs for subtask_id and task_id to match the schema's 'uuid' format
 VALID_OVERVIEW_PLAN_FOR_RUNNER = {
-    "task_id": "runner-task-001",
+    "task_id": "11111111-1111-1111-1111-111111111111",
     "natural_language_goal": "Test runner plan ingestion with overview.",
     "overall_context": "Integration testing context for overview plan.",
     "input_hashes": {"requirements_md": "r_hash", "config_yaml": "c_hash", "prompt_file": "p_hash"},
     "plan": [
         {
-            "subtask_id": "r_step_1",
+            "subtask_id": "22222222-2222-2222-2222-222222222222",
             "description": "Runner step 1 (initialization)",
-            "file_path": "subtasks/dummy_subtask_1.json", # Added file_path for schema compliance
+            "file_path": "subtasks/dummy_subtask_1.json",
             "depends_on": [],
-            "agent_spec": {"type": "initialization"},  # agent_spec in overview plan step
+            "agent_spec": {"type": "initialization"},
         },
         {
-            "subtask_id": "r_step_2",
+            "subtask_id": "33333333-3333-3333-3333-333333333333",
             "description": "Runner step 2 (execute subtask)",
-            "file_path": "subtasks/subtask_for_runner.json",  # Path to a subtask file
-            "depends_on": ["r_step_1"],
-            "agent_spec": {"type": "execute_subtask"},  # agent_spec in overview plan step
+            "file_path": "subtasks/subtask_for_runner.json",
+            "depends_on": ["22222222-2222-2222-2222-222222222222"],
+            "agent_spec": {"type": "execute_subtask"},
         },
     ],
 }
 
 VALID_SUBTASK_FOR_RUNNER = {
-    "subtask_id": "runner-subtask-xyz",
-    "task_id": "runner-task-001",  # Should match parent task_id
-    "description": "A subtask to be 'executed' by the runner.",  # Required field
-    "instructions": ["Perform subtask actions."],  # Required field (as array)
-    "input_artifacts": [],  # Required field
-    "output_artifacts": [],  # Required field
-    "constraints": [],  # Required field
-    "validation_criteria": [],  # Required field
-    "type": "test_subtask_type" # Added required type field
+    "subtask_id": "33333333-3333-3333-3333-333333333333",
+    "task_id": "11111111-1111-1111-1111-111111111111",
+    "name": "Runner Subtask Example",
+    "description": "A subtask to be 'executed' by the runner.",
+    "instructions": ["Perform subtask actions."],
+    "input_artifacts": [],
+    "output_artifacts": [],
+    "constraints": [],
+    "validation_criteria": [],
+    "type": "test_subtask_type",
+    "depends_on": [],
+}
+
+# Dummy subtask for r_step_1
+DUMMY_SUBTASK_FOR_RUNNER = {
+    "subtask_id": "22222222-2222-2222-2222-222222222222",
+    "task_id": "11111111-1111-1111-1111-111111111111",
+    "name": "Dummy Subtask 1",
+    "description": "Dummy subtask for step 1.",
+    "instructions": ["Do nothing."],
+    "input_artifacts": [],
+    "output_artifacts": [],
+    "constraints": [],
+    "validation_criteria": [],
+    "type": "dummy_type",
+    "depends_on": [],
 }
 
 MALFORMED_JSON_PLAN_STR = '{"task_id": "malformed-01", "plan": [error}'
@@ -114,13 +133,13 @@ def create_overview_plan_with_subtasks_for_runner(tmp_path: Path, request):
     # Initialize PathManager
     PathManager.get_instance().initialize()
 
-    # Copy actual schema files to the temporary directory
-    source_schema_dir = os.path.join(os.path.dirname(__file__), "../../src/ai_whisperer/schemas")
-    shutil.copy(os.path.join(source_schema_dir, "subtask_plan_schema.json"), schema_temp_dir)
-    shutil.copy(os.path.join(source_schema_dir, "initial_plan_schema.json"), schema_temp_dir)
-
     # Set the schema directory for the validator
     set_schema_directory(str(schema_temp_dir))
+
+    # Copy actual schema files to the temporary directory (fixed path)
+    source_schema_dir = Path(__file__).parent.parent.parent / "schemas"
+    shutil.copy(source_schema_dir / "subtask_schema.json", schema_temp_dir)
+    shutil.copy(source_schema_dir / "initial_plan_schema.json", schema_temp_dir)
 
     def _creator(overview_filename: str, overview_content: dict, subtask_dir: str, subtasks: Dict[str, dict]):
         overview_file_path = tmp_path / overview_filename
@@ -161,7 +180,7 @@ def test_runner_successfully_loads_valid_overview_plan(create_overview_plan_with
         "valid_overview_for_runner.json",
         VALID_OVERVIEW_PLAN_FOR_RUNNER,
         "subtasks_for_runner",
-        {"subtask_for_runner.json": VALID_SUBTASK_FOR_RUNNER, "dummy_subtask_1.json": VALID_SUBTASK_FOR_RUNNER}, # Added dummy subtask
+        {"subtask_for_runner.json": VALID_SUBTASK_FOR_RUNNER, "dummy_subtask_1.json": DUMMY_SUBTASK_FOR_RUNNER},
     )
     runner = Runner(overview_path)
 
@@ -169,7 +188,7 @@ def test_runner_successfully_loads_valid_overview_plan(create_overview_plan_with
     assert runner.parsed_plan is not None
     assert runner.parsed_plan["task_id"] == VALID_OVERVIEW_PLAN_FOR_RUNNER["task_id"]
     assert len(runner.get_executable_steps()) == 2
-    assert runner.parser.get_subtask_content("r_step_2") == VALID_SUBTASK_FOR_RUNNER
+    assert runner.parser.get_subtask_content("33333333-3333-3333-3333-333333333333") == VALID_SUBTASK_FOR_RUNNER
 
 
 def test_runner_handles_malformed_plan_json(tmp_path):
@@ -280,7 +299,7 @@ def test_runner_handles_subtask_validation_error(create_overview_plan_with_subta
     # Updated regex to match the actual error message format (Subtask file not found) with escaped backslashes and parentheses
     with pytest.raises(
         PlanValidationError,
-        match=r"Plan loading or validation failed: Subtask validation failed for .*subtask_for_runner\.json \(referenced in step 'r_step_2'\): Validation Error at 'root': 'description' is a required property",
+        match=r"Plan loading or validation failed: Subtask validation failed for .*subtask_for_runner\.json \(referenced in step '33333333-3333-3333-3333-333333333333'\): 'description' is a required property",
     ):
         runner.load_and_parse_plan()
 

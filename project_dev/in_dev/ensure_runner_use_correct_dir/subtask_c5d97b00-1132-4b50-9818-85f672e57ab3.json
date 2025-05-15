@@ -1,0 +1,45 @@
+{
+  "description": "Implement the designed strategy to restrict the runner's file system access.",
+  "instructions": [
+    "Review `docs/directory_restriction_strategy.md` to fully understand the defined strategy.",
+    "Identify the parts of the runner code (likely in `src/ai_whisperer/execution_engine.py` or related files) responsible for file system interactions (reading, writing, executing commands).",
+    "Implement checks within the runner's file handling logic to ensure that all file operations are confined to the specified workspace and output directories.",
+    "Ensure read access is granted only to the workspace directory.",
+    "Ensure read and write access is granted only to the output directory.",
+    "Implement a mechanism to pass the absolute paths of the workspace and output directories to the runner when they differ from the current working directory.",
+    "Modify the runner's path resolution logic to correctly interpret '{workspace}' and '{output}' shortcuts, resolving them to the actual provided workspace and output directory paths.",
+    "Refactor existing path handling code if necessary to support the new restriction and shortcut logic.",
+    "Run the tests located in `tests/runner_directory_access_tests.py`.",
+    "Debug and fix any issues until all tests in `tests/runner_directory_access_tests.py` pass."
+  ],
+  "input_artifacts": [
+    "docs/directory_restriction_strategy.md",
+    "tests/runner_directory_access_tests.py",
+    "src/ai_whisperer/execution_engine.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/execution_engine.py"
+  ],
+  "constraints": [
+    "The implementation must strictly adhere to the designed strategy outlined in `docs/directory_restriction_strategy.md`.",
+    "The runner must be absolutely prevented from accessing any files or directories outside of the designated workspace and output directories.",
+    "Read access is restricted to the workspace directory.",
+    "Read and write access is restricted to the output directory.",
+    "All tests in `tests/runner_directory_access_tests.py` must pass after the implementation is complete."
+  ],
+  "validation_criteria": [
+    "All automated tests in `tests/runner_directory_access_tests.py` execute successfully.",
+    "Manually attempt to use the runner to read a file outside the workspace directory (e.g., `../../../../etc/passwd`) and verify that the operation is blocked.",
+    "Manually attempt to use the runner to write a file outside the output directory and verify that the operation is blocked.",
+    "Verify that the runner can successfully read files from the workspace directory.",
+    "Verify that the runner can successfully read and write files to the output directory.",
+    "If the workspace and output directories are set to different paths, verify that the runner correctly resolves '{workspace}' and '{output}' shortcuts to the specified paths and adheres to the access restrictions for each."
+  ],
+  "type": "file_edit",
+  "name": "implement_directory_restriction",
+  "depends_on": [
+    "generate_tests_for_directory_access"
+  ],
+  "task_id": "b8519038-a48f-49db-b426-01c08b9d59a4",
+  "subtask_id": "c5d97b00-1132-4b50-9818-85f672e57ab3"
+}

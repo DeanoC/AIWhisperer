@@ -3,8 +3,9 @@ from pathlib import Path  # Import Path
 import json
 import threading  # Import threading for Event
 
-from ai_whisperer.exceptions import TaskExecutionError
+from ai_whisperer.exceptions import TaskExecutionError, FileRestrictionError
 from ai_whisperer.tools.tool_registry import get_tool_registry  # Import json
+from ai_whisperer.path_management import PathManager # Import PathManager
 
 from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
 from .state_management import StateManager
@@ -57,6 +58,7 @@ class ExecutionEngine:
         self.monitor = monitor  # Store the monitor (can be None)
         self.shutdown_event = shutdown_event
         self.task_queue = []
+        self.path_manager = PathManager.get_instance() # Get PathManager instance
         # In a real scenario, a TaskExecutor component would handle individual task logic.
         # This would be responsible for interacting with different agent types.
         # self.task_executor = TaskExecutor(state_manager)
@@ -179,7 +181,25 @@ class ExecutionEngine:
             try:
                 # Read all input artifacts
                 for artifact in input_artifacts:
-                    artifact_path = Path(artifact).resolve()
+                    artifact_path_str = artifact
+                    artifact_path = Path(artifact_path_str).resolve()
+
+                    # Validate if the input artifact path is within the workspace
+                    if not self.path_manager.is_path_within_workspace(artifact_path):
+                        error_message = f"Access to input artifact outside workspace denied: {artifact_path_str}"
+                        logger.error(error_message)
+                        log_event(
+                            log_message=LogMessage(
+                                LogLevel.ERROR,
+                                ComponentType.EXECUTION_ENGINE,
+                                "input_artifact_access_denied",
+                                error_message,
+                                subtask_id=task_id,
+                                details={"artifact_path": artifact_path_str},
+                            )
+                        )
+                        raise FileRestrictionError(error_message)
+
                     if artifact_path.exists():
                         with open(artifact_path, "r", encoding="utf-8") as f:
                             content = f.read().strip()
@@ -189,6 +209,8 @@ class ExecutionEngine:
                 if prompt_context:
                     logger.info(f"Read input artifacts for task {task_id}: {list(artifact_contents.keys())}")
 
+            except FileRestrictionError as e:
+                 raise TaskExecutionError(str(e)) from e
             except Exception as e:
                 error_message = f"Failed to read input artifacts for task {task_id}: {e}"
                 logger.error(error_message)
@@ -352,6 +374,26 @@ class ExecutionEngine:
                         try:
                             tool_instance = tool_registry.get_tool(tool_name)
                             if tool_instance:
+                                # Validate paths in tool arguments before execution
+                                for arg_name, arg_value in tool_arguments.items():
+                                    if isinstance(arg_value, str) and ('path' in arg_name or 'file' in arg_name):
+                                        # Assuming arguments with 'path' or 'file' in their name are file paths
+                                        arg_path = Path(arg_value).resolve()
+                                        if not (self.path_manager.is_path_within_workspace(arg_path) or self.path_manager.is_path_within_output(arg_path)):
+                                            error_message = f"Access to path outside allowed directories denied for tool '{tool_name}': {arg_value}"
+                                            logger.error(error_message)
+                                            log_event(
+                                                log_message=LogMessage(
+                                                    LogLevel.ERROR,
+                                                    ComponentType.EXECUTION_ENGINE,
+                                                    "tool_path_access_denied",
+                                                    error_message,
+                                                    subtask_id=task_id,
+                                                    details={"tool_name": tool_name, "argument_name": arg_name, "argument_value": arg_value},
+                                                )
+                                            )
+                                            raise FileRestrictionError(error_message)
+
                                 # Execute the tool and store its output
                                 tool_output = tool_instance.execute(**tool_arguments)
                                 tool_outputs[tool_name] = tool_output # Store output by tool name or call ID
@@ -383,6 +425,22 @@ class ExecutionEngine:
                                 # For now, we'll log and skip this specific tool call
                                 continue # Skip to the next tool call
 
+                        except FileRestrictionError as e:
+                            error_message = f"Task {task_id}: File access denied for tool '{tool_name}': {e}"
+                            logger.error(error_message)
+                            log_event(
+                                log_message=LogMessage(
+                                    LogLevel.ERROR,
+                                    ComponentType.EXECUTION_ENGINE,
+                                    "tool_file_restriction_error",
+                                    error_message,
+                                    subtask_id=task_id,
+                                    details={"tool_name": tool_name, "error": str(e)},
+                                )
+                            )
+                            # Decide whether to fail the task or just skip this tool call
+                            # For now, we'll log and skip this specific tool call
+                            continue # Skip to the next tool call
                         except Exception as e:
                             error_message = f"Task {task_id}: Error executing tool '{tool_name}': {e}"
                             logger.error(error_message, exc_info=True)
@@ -464,6 +522,23 @@ class ExecutionEngine:
                     # Assuming the first output artifact is where the result should be written
                     output_artifact_path_str = output_artifacts_spec[0]
                     output_artifact_path = Path(output_artifact_path_str).resolve()
+
+                    # Validate if the output artifact path is within the output directory
+                    if not self.path_manager.is_path_within_output(output_artifact_path):
+                        error_message = f"Writing to output artifact outside output directory denied: {output_artifact_path_str}"
+                        logger.error(error_message)
+                        log_event(
+                            log_message=LogMessage(
+                                LogLevel.ERROR,
+                                ComponentType.EXECUTION_ENGINE,
+                                "output_artifact_write_denied",
+                                error_message,
+                                subtask_id=task_id,
+                                details={"artifact_path": output_artifact_path_str},
+                            )
+                        )
+                        raise FileRestrictionError(error_message)
+
                     try:
                         # Ensure parent directory exists
                         output_artifact_path.parent.mkdir(parents=True, exist_ok=True)
@@ -492,6 +567,8 @@ class ExecutionEngine:
                             )
                         )
 
+                    except FileRestrictionError as e:
+                         raise TaskExecutionError(str(e)) from e
                     except Exception as e:
                         error_message = (
                             f"Failed to write output artifact {output_artifact_path_str} for task {task_id}: {e}"
@@ -543,6 +620,20 @@ class ExecutionEngine:
                 )
             )
             # Removed redundant state setting: self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
+            raise TaskExecutionError(error_message) from e
+        except FileRestrictionError as e:
+            error_message = f"AI interaction task {task_id} failed due to file restriction: {e}"
+            logger.error(error_message)
+            log_event(
+                log_message=LogMessage(
+                    LogLevel.ERROR,
+                    ComponentType.EXECUTION_ENGINE,
+                    "ai_task_file_restriction_error",
+                    error_message,
+                    subtask_id=task_id,
+                    details={"error": str(e)},
+                )
+            )
             raise TaskExecutionError(error_message) from e
         except Exception as e:
             error_message = f"An unexpected error occurred during AI interaction task {task_id} execution: {e}"
@@ -718,6 +809,23 @@ class ExecutionEngine:
 
         try:
             subtask_file_path = Path(file_path).resolve()
+
+            # Validate if the subtask file path is within the workspace
+            if not self.path_manager.is_path_within_workspace(subtask_file_path):
+                error_message = f"Access to subtask file outside workspace denied: {file_path}"
+                logger.error(error_message)
+                log_event(
+                    log_message=LogMessage(
+                        LogLevel.ERROR,
+                        ComponentType.EXECUTION_ENGINE,
+                        "subtask_file_access_denied",
+                        error_message,
+                        subtask_id=task_id,
+                        details={"file_path": file_path},
+                    )
+                )
+                raise FileRestrictionError(error_message)
+
             logger.info(f"Executing planning task {task_id} from subtask file: {subtask_file_path}")
             log_event(
                 log_message=LogMessage(
@@ -778,6 +886,20 @@ class ExecutionEngine:
                 )
             )
             raise TaskExecutionError(error_message)
+        except FileRestrictionError as e:
+            error_message = f"Planning task {task_id} failed due to file restriction: {e}"
+            logger.error(error_message)
+            log_event(
+                log_message=LogMessage(
+                    LogLevel.ERROR,
+                    ComponentType.EXECUTION_ENGINE,
+                    "planning_task_file_restriction_error",
+                    error_message,
+                    subtask_id=task_id,
+                    details={"error": str(e)},
+                )
+            )
+            raise TaskExecutionError(error_message) from e
         except json.JSONDecodeError as e:
             error_message = f"Error decoding subtask file {subtask_file_path} for task {task_id}: {e}"
             logger.error(error_message)

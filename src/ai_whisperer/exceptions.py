@@ -133,6 +133,10 @@ class ToolNotFound(AIWhispererError):
     """Exception raised when a requested tool is not found in the registry."""
     pass
 
+class FileRestrictionError(AIWhispererError):
+    """Exception raised when a file operation is restricted."""
+    pass
+
 # --- Add the missing exceptions ---
 
 

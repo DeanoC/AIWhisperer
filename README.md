@@ -126,6 +126,17 @@ Prompt files are typically organized under `prompts/core/` or `prompts/agents/` 
 * Project-specific agent or core prompts (e.g., `{prompt_path}/prompts/agents/` or `{prompt_path}/prompts/core/`)
 * Codebase (app) agent or core prompts (e.g., `{app_path}/prompts/agents/` or `{app_path}/prompts/core/`)
 
+### Runner Directory Restrictions
+
+To enhance security and predictability, the AI Whisperer runner operates within strict directory restrictions during plan execution. All file system interactions are mediated and validated by the `PathManager`.
+
+* **Workspace Directory (`workspace_path`):** The runner is restricted to reading files only from this directory and its subdirectories. This is where project source files, input artifacts, and subtask definition files should be located.
+* **Output Directory (`output_path`):** The runner is restricted to writing files only to this directory and its subdirectories. All generated output artifacts will be placed here.
+
+Any attempt by a task or tool to read from outside the workspace directory or write to outside the output directory will be blocked by the `PathManager`, resulting in an error. This ensures that the runner cannot access or modify arbitrary files on your system.
+
+Developers creating custom tools or tasks for the runner must ensure that all file paths used for reading are relative to the workspace directory and all file paths used for writing are relative to the output directory. The `PathManager` should be used to resolve and validate these paths.
+
 #### Current Core prompts
 
 * `initial_plan.prompt.md`: Generates a initial plan from requirements.  

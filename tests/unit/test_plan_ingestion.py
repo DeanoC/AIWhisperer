@@ -6,7 +6,9 @@ import pytest
 from pathlib import Path
 from typing import Dict
 
+
 from src.ai_whisperer.json_validator import set_schema_directory, get_schema_directory
+from src.ai_whisperer.path_management import PathManager
 
 # Import the new ParserPlan and exceptions
 from src.ai_whisperer.plan_parser import (
@@ -26,7 +28,7 @@ from src.ai_whisperer.plan_parser import (
 VALID_SINGLE_FILE_PLAN_CONTENT = {
     "task_id": "task-123",
     "natural_language_goal": "Test the single file plan ingestion.",
-    "input_hashes": {"requirements_md": "hash1", "config_yaml": "hash2", "prompt_file": "hash3"},
+    "input_hashes": {"requirements_md": "hash1", "config_yaml": "hash2"},
     "plan": [
         {
             "subtask_id": "subtask-001",
@@ -56,7 +58,7 @@ VALID_SINGLE_FILE_PLAN_CONTENT = {
 VALID_OVERVIEW_PLAN_CONTENT = {
     "task_id": "task-overview-456",
     "natural_language_goal": "Test the overview plan ingestion.",
-    "input_hashes": {"requirements_md": "hash_req", "config_yaml": "hash_config", "prompt_file": "hash_prompt"},
+    "input_hashes": {"requirements_md": "hash_req", "config_yaml": "hash_config"},
     "plan": [
         {
             "subtask_id": "step-o1",
@@ -126,12 +128,17 @@ def create_overview_plan_with_subtasks(tmp_path: Path, request):
     schema_temp_dir.mkdir()
 
     # Copy correct schema files to the temporary directory
-    source_schema_dir = os.path.join(os.path.dirname(__file__), "../../src/ai_whisperer/schemas")
-    shutil.copy(os.path.join(source_schema_dir, "overview_plan_schema.json"), schema_temp_dir)
-    shutil.copy(os.path.join(source_schema_dir, "subtask_schema.json"), schema_temp_dir)
+    source_schema_dir = Path(__file__).parent.parent.parent / "schemas"
+    
+    # Initialize PathManager
+    PathManager.get_instance().initialize()
 
     # Set the schema directory for the validator
     set_schema_directory(str(schema_temp_dir))
+
+    # Copy correct schema files to the temporary directory
+    shutil.copy(source_schema_dir / "overview_plan_schema.json", schema_temp_dir)
+    shutil.copy(source_schema_dir / "subtask_schema.json", schema_temp_dir)
 
     def _creator(overview_filename: str, overview_content: dict, subtask_dir: str, subtasks: Dict[str, dict]):
         overview_file_path = tmp_path / overview_filename
@@ -343,7 +350,7 @@ def test_load_overview_plan_subtask_file_not_found(create_overview_plan_with_sub
     overview_content = {
         "task_id": "task-sub-missing",
         "natural_language_goal": "Test missing subtask.",
-        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"},
+        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2"},
         "plan": [
             {
                 "subtask_id": "step-m1",
@@ -445,7 +452,7 @@ def test_plan_with_optional_fields_missing_single_file(create_plan_file):
     plan_content = {
         "task_id": "task-optional",
         "natural_language_goal": "Test optional fields.",
-        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"},
+        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2"},
         "plan": [
             {
                 "subtask_id": "subtask-opt1",  # Added required field
@@ -488,7 +495,7 @@ def test_overview_plan_with_optional_subtask_fields_missing(create_overview_plan
     overview_content = {
         "task_id": "task-overview-optional",
         "natural_language_goal": "Test optional subtask fields.",
-        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2", "prompt_file": "h3"},
+        "input_hashes": {"requirements_md": "h1", "config_yaml": "h2"},
         "plan": [
             {
                 "subtask_id": "step-min1",

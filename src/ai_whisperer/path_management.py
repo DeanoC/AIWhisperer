@@ -125,3 +125,29 @@ class PathManager:
         resolved = resolved.replace("{prompt_path}", str(self._prompt_path if self._prompt_path is not None else ""))
 
         return resolved
+
+    def is_path_within_workspace(self, path):
+        """Checks if the given path is within the configured workspace directory."""
+        if not self._initialized:
+            raise RuntimeError("PathManager not initialized.")
+        try:
+            # Resolve both paths to handle symlinks and relative paths correctly
+            resolved_path = Path(path).resolve()
+            resolved_workspace_path = self._workspace_path.resolve()
+            return resolved_path.is_relative_to(resolved_workspace_path)
+        except Exception:
+            # Handle cases where path might be invalid or not exist
+            return False
+
+    def is_path_within_output(self, path):
+        """Checks if the given path is within the configured output directory."""
+        if not self._initialized:
+            raise RuntimeError("PathManager not initialized.")
+        try:
+            # Resolve both paths to handle symlinks and relative paths correctly
+            resolved_path = Path(path).resolve()
+            resolved_output_path = self._output_path.resolve()
+            return resolved_path.is_relative_to(resolved_output_path)
+        except Exception:
+            # Handle cases where path might be invalid or not exist
+            return False

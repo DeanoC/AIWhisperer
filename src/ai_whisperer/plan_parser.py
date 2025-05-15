@@ -105,13 +105,20 @@ class ParserPlan:
                 raise PlanInvalidJSONError(str(e)) from e
             raise
 
+        # Validate against schema and handle (False, error) return
         try:
-            validate_against_schema(raw_plan_data, "initial_plan_schema.json")
-        except ValidationError as e:
-            raise PlanValidationError(f"Task validation failed: {e}") from e
-        except Exception as e:
-            raise PlanValidationError(f"Task unknown validation failed: {e}") from e    
-
+            valid = True
+            error_message = None
+            try:
+                valid, error_message = validate_against_schema(raw_plan_data, "initial_plan_schema.json")
+            except ValidationError as e:
+                raise PlanValidationError(f"Task validation failed: {e}") from e
+            except Exception as e:
+                raise PlanValidationError(f"Task unknown validation failed: {e}") from e
+            if not valid:
+                raise PlanValidationError(f"Task validation failed: {error_message}")
+        except PlanValidationError:
+            raise
         self._plan_data = raw_plan_data
         self._is_loaded = True
 
@@ -140,17 +147,23 @@ class ParserPlan:
                 raise PlanInvalidJSONError(str(e)) from e
             raise
         
+
+        # Validate the overview plan against its schema, wrap errors in PlanValidationError
         try:
             validate_against_schema(raw_plan_data, "overview_plan_schema.json")
-        except Exception as e:
+        except ValidationError as e:
             raise PlanValidationError(f"Overview plan validation failed: {e}") from e
-
 
         base_dir = os.path.dirname(self._plan_file_path)
         loaded_subtasks = {}
         loaded_steps = []
         for i, step_json in enumerate(raw_plan_data.get("plan", [])):
+            step_path = None  # Initialize step_path
             try:
+                # Ensure step_json is a dictionary before trying to get 'file_path'
+                if not isinstance(step_json, dict):
+                     raise PlanParsingError(f"Invalid step format at index {i}: Expected a dictionary, got {type(step_json).__name__}")
+
                 step_path = step_json.get("file_path")
                 # Resolve step_path relative to the overview file's directory if not absolute
                 if step_path:
@@ -165,7 +178,9 @@ class ParserPlan:
                     raise SubtaskInvalidJSONError(f"Malformed JSON in step file {step_path} (at index {i}): {e}")
                 raise
             except Exception as e:
-                raise PlanParsingError(f"Error reading or processing step file {step_path}: {e}") from e
+                # Ensure step_path is represented even if None
+                step_path_str = step_path if step_path is not None else "N/A"
+                raise PlanParsingError(f"Error reading or processing step file {step_path_str}: {e}") from e
 
             if not isinstance(step, dict):
                 raise PlanValidationError(f"subtask_id at index {i} in '{self._plan_file_path}' is not a dictionary.")
