@@ -8,6 +8,7 @@ from src.ai_whisperer.ai_loop import run_ai_loop # Import the refactored AI loop
 from pathlib import Path
 import json
 from src.ai_whisperer import PromptSystem # Import PromptSystem
+from src.ai_whisperer.prompt_system import PromptNotFoundError
 import traceback
 from datetime import datetime, timezone
 
@@ -167,7 +168,7 @@ def _construct_initial_prompt(prompt_system: PromptSystem, task_definition: dict
         )
         return initial_prompt
 
-    except prompt_system.PromptNotFoundError as e:
+    except PromptNotFoundError as e:
         error_message = f"Prompt not found for code generation task {task_id}: {e}"
         logger.error(error_message)
         log_event(

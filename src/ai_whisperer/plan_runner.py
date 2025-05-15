@@ -142,7 +142,11 @@ class PlanRunner:
         # Use the provided monitor instance if available, otherwise create a new one
         config_path = self.config.get('config_path') if isinstance(self.config, dict) and 'config_path' in self.config else None
         # Pass the shutdown event to the ExecutionEngine
-        execution_engine = ExecutionEngine(state_manager, self.config, self.shutdown_event)
+        # Create PromptSystem instance
+        from .prompt_system import PromptSystem, PromptConfiguration
+        prompt_system = PromptSystem(PromptConfiguration(self.config))
+        monitor = getattr(self, 'monitor_enabled', None)
+        execution_engine = ExecutionEngine(state_manager, self.config, prompt_system, monitor=monitor, shutdown_event=self.shutdown_event)
         logger.info("Execution Engine initialized.")
         log_event(
             LogMessage(

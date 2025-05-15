@@ -29,7 +29,7 @@ class ExecutionEngine:
     Integrates logging and monitoring for visibility into the execution process.
     """
 
-    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, shutdown_event: threading.Event = None):
+    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, monitor=None, shutdown_event: threading.Event = None):
         """
         Initializes the ExecutionEngine.
 
@@ -54,6 +54,7 @@ class ExecutionEngine:
         self.state_manager = state_manager
         self.config = config  # Store the global configuration
         self.prompt_system = prompt_system # Store the PromptSystem instance
+        self.monitor = monitor  # Store the monitor (can be None)
         self.shutdown_event = shutdown_event
         self.task_queue = []
         # In a real scenario, a TaskExecutor component would handle individual task logic.
@@ -122,7 +123,7 @@ class ExecutionEngine:
             "planning": lambda task_definition: handle_planning(self, task_definition),
             "validation": lambda task_definition: handle_validation(self, task_definition),
             "no_op": lambda task_definition: handle_no_op(self, task_definition),
-            "code_generation": lambda task_definition: handle_code_generation(self, task_definition),
+            "code_generation": lambda task_definition: handle_code_generation(self, task_definition, self.prompt_system),
             # Add other agent types and their handlers here, ensuring they accept only task_definition
         }
 
