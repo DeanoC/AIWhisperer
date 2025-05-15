@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Optional, List, Tuple, Dict
 from .exceptions import PromptNotFoundError
 from src.ai_whisperer.path_management import PathManager
-
+import logging
+logger = logging.getLogger(__name__)
 # Placeholder classes for testing purposes
 class Prompt:
     """Represents a loaded prompt with lazy content loading."""
@@ -161,18 +162,12 @@ class PromptSystem:
                 content += "\n\n## AVAILABLE TOOLS\n" + tool_instructions
 
         # Add simple placeholder for templating if kwargs are provided
-        # Support both {{{key}}} and {key} for compatibility
+        # Only replace {{{key}}} to avoid accidental formatting of JSON/code blocks
         if kwargs:
             import re
-            # Replace {{{key}}} with value
             for key, value in kwargs.items():
                 pattern = r"{{{" + re.escape(key) + r"}}}"
                 content = re.sub(pattern, str(value), content)
-            # Replace {key} with value (for legacy/simple templates)
-            try:
-                content = content.format(**kwargs)
-            except Exception:
-                pass  # If formatting fails, just leave as is
         return content
 
     def list_prompts(self, category: Optional[str] = None) -> List[Tuple[str, str]]:

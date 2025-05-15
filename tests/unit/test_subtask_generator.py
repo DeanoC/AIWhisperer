@@ -47,7 +47,7 @@ You are an AI assistant tasked with expanding a high-level step from a task plan
 
 **Input Step:**
 ```json
-{md_content}
+{requirements}
 ```
 
 **Instructions:**
@@ -187,7 +187,7 @@ You are an AI assistant tasked with expanding a high-level step from a task plan
 
 **Input Step:**
 ```json
-{md_content}
+{requirements}
 ```
 
 **Instructions:**

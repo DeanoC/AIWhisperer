@@ -52,7 +52,7 @@ A single, coherent, high-level natural language requirement that:
 ---
 **BEGIN ROUGH REQUIREMENTS DOCUMENT:**
 
-{md_content}
+{{{requirements}}}
 
 ---
 **END ROUGH REQUIREMENTS DOCUMENT.**

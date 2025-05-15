@@ -26,7 +26,7 @@ Produce **only** a JSON document, representing a refined version of the **exact 
 ```
 
 **Input Subtask:**
-{md_content}
+{{{requirements}}}
 
 **Workspace Context**
-{workspace_context}
+{{{workspace_context}}}

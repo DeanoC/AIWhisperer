@@ -55,13 +55,13 @@ def save_json(data: dict, file_path: str) -> None:
         raise ProcessingError(f"Error serializing data to JSON for file {file_path}: {e}") from e
 
 
-def format_prompt(template: str, md_content: str, config_vars: dict) -> str:
+def format_prompt(template: str, requirements: str, config_vars: dict) -> str:
     """
     Formats the prompt using a template string and provided variables.
 
     Args:
         template: The prompt template string (using .format() style placeholders).
-        md_content: The content read from the requirements Markdown file.
+        requirements: The content read from the requirements Markdown file.
         config_vars: A dictionary containing configuration variables.
 
     Returns:
@@ -69,12 +69,12 @@ def format_prompt(template: str, md_content: str, config_vars: dict) -> str:
 
     Raises:
         ProcessingError: If a placeholder in the template is not found in the
-                         combined variables (md_content + config_vars).
+                         combined variables (requirements + config_vars).
     """
     try:
-        # Combine md_content with other config variables for formatting
+        # Combine requirements with other config variables for formatting
         format_data = config_vars.copy()
-        format_data["md_content"] = md_content  # Correct key to match template placeholder
+        format_data["requirements"] = requirements  # Correct key to match template placeholder
         return template.format(**format_data)
     except KeyError as e:
         raise ProcessingError(f"Missing variable in config/markdown for prompt template placeholder: {e}") from e

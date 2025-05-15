@@ -91,29 +91,29 @@ def test_save_json_overwrite(tmp_path):
 
 def test_format_prompt_basic():
     """Test basic prompt formatting."""
-    template = "Analyze this: {md_content}\nUse model: {model_name}"
-    md_content = "# Requirement\nDetails here."
+    template = "Analyze this: {requirements}\nUse model: {model_name}"
+    requirements = "# Requirement\nDetails here."
     config_vars = {"model_name": "gpt-4", "other_var": "ignored"}
     expected = "Analyze this: # Requirement\nDetails here.\nUse model: gpt-4"
-    assert format_prompt(template, md_content, config_vars) == expected
+    assert format_prompt(template, requirements, config_vars) == expected
 
 
 def test_format_prompt_missing_vars_in_template():
     """Test when template doesn't use all provided vars."""
-    template = "Content: {md_content}"
-    md_content = "Some markdown."
+    template = "Content: {requirements}"
+    requirements = "Some markdown."
     config_vars = {"model_name": "claude-3", "temperature": 0.5}
     expected = "Content: Some markdown."
-    assert format_prompt(template, md_content, config_vars) == expected
+    assert format_prompt(template, requirements, config_vars) == expected
 
 
 def test_format_prompt_no_vars_in_template():
     """Test when template has no placeholders."""
     template = "Just static text."
-    md_content = "Input markdown."
+    requirements = "Input markdown."
     config_vars = {"model_name": "gemini-pro"}
     expected = "Just static text."
-    assert format_prompt(template, md_content, config_vars) == expected
+    assert format_prompt(template, requirements, config_vars) == expected
 
 
 # --- Tests for process_response ---

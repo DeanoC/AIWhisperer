@@ -161,7 +161,7 @@ or rely on the built-in prompt at:
 
 Prompts can use placeholders that are replaced at runtime:
 
-* `{md_content}`: Contents of the requirements Markdown file.
+* `{requirements}`: Contents of the requirements Markdown file.
 * `{step_content}`: Contents of a step definition file.
 * `{context}`: Additional context, if provided by the command.
 

@@ -197,9 +197,9 @@ class InitialPlanGenerator:
                 requirements=requirements_content,
                 input_hashes=input_hashes # Pass input hashes for potential use in prompt
             )
-            # logger.debug(
-            #     f"Constructed final prompt:\n{final_prompt}..."
-            # )
+            logger.debug(
+                f"Constructed final prompt:\n{final_prompt}..."
+            )
             # 4. Call OpenRouter API
             logger.info("Calling OpenRouter API...")
             try:

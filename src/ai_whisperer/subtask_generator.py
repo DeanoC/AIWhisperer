@@ -133,7 +133,7 @@ class SubtaskGenerator:
             prompt_content = self.prompt_system.get_formatted_prompt(
                 "core",  # category
                 "subtask_generator",  # name
-                md_content=subtask_json_str,
+                requirements=subtask_json_str,
                 overall_context=self.overall_context,
                 workspace_context=self.workspace_context
             )

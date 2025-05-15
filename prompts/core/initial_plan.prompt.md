@@ -164,7 +164,7 @@ No additional properties are allowed at the top level.
 ```
 
 **User Requirements Provided:**
-{md_content}
+{{{requirements}}}
 
 **Workspace Context**
-{workspace_context}
+{{{workspace_context}}}
