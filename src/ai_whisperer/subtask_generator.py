@@ -10,7 +10,7 @@ import uuid
 from pathlib import Path
 from typing import Dict, Any
 
-from ai_whisperer.json_validator import validate_against_schema
+from .json_validator import validate_against_schema
 from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 from src.postprocessing.scripted_steps.escape_text_fields import escape_text_fields
@@ -22,6 +22,8 @@ from .config import load_config
 from .ai_service_interaction import OpenRouterAPI
 from .exceptions import ConfigError, OrchestratorError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
 from src.postprocessing.pipeline import ProcessingError
+import src.ai_whisperer.prompt_system as prompt_system_module # Import PromptSystem
+from src.ai_whisperer.path_management import PathManager
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +59,16 @@ class SubtaskGenerator:
             self.config = load_config(config_path)
 
             # Get the model configuration and prompt content for the "subtask_generator" task
+
             model_config = self.config.get("task_model_configs", {}).get("subtask_generator")
+
             if not model_config:
                 raise ConfigError("Model configuration for 'subtask_generator' task is missing in the loaded config.")
 
-            self.subtask_prompt_template = self.config.get("task_prompts_content", {}).get("subtask_generator")
+            # Initialize the new PromptSystem
+            prompt_config = prompt_system_module.PromptConfiguration(config_data=self.config)
+            self.prompt_system = prompt_system_module.PromptSystem(prompt_config=prompt_config)
+            self.subtask_prompt_template = self.prompt_system.get_prompt("core", "subtask_generator")
             if not self.subtask_prompt_template:
                 raise ConfigError("Prompt content for 'subtask_generator' task is missing in the loaded config.")
 
@@ -77,16 +84,8 @@ class SubtaskGenerator:
             self.workspace_context = workspace_context  # Store context
         # Load the validation schema
             try:
-                # Determine the package root directory to locate default files relative to the package
-                try:
-                    PACKAGE_ROOT = Path(__file__).parent.resolve()
-                except NameError:
-                    # Fallback for environments where __file__ might not be defined (e.g., some test runners)
-                    PACKAGE_ROOT = Path(".").resolve() / "src" / "ai_whisperer"
-
-                DEFAULT_SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "subtask_schema.json"
-
-                schema_to_load = DEFAULT_SCHEMA_PATH
+                schema_to_load = PathManager().resolve_path( "{app_path}/schemas/subtask_schema.json")
+  
                 logger.info(f"Loading validation schema from: {schema_to_load}")
                 with open(schema_to_load, "r", encoding="utf-8") as f:
                     self.task_schema = json.load(f)
@@ -126,11 +125,18 @@ class SubtaskGenerator:
             raise SubtaskGenerationError("Invalid input_step format. Must be a dict with 'subtask_id' and 'description'.")
 
         try:
+
             # 1. Construct Final Prompt using the loaded template and context
             subtask_json_str = json.dumps(input_step, indent=2)
-            prompt_content = self.subtask_prompt_template.replace("{md_content}", subtask_json_str)
-            prompt_content = prompt_content.replace("{overall_context}", self.overall_context)
-            prompt_content = prompt_content.replace("{workspace_context}", self.workspace_context) 
+            # Use the PromptSystem to get the formatted prompt
+            # The new PromptSystem.get_formatted_prompt requires both category and name
+            prompt_content = self.prompt_system.get_formatted_prompt(
+                "core",  # category
+                "subtask_generator",  # name
+                md_content=subtask_json_str,
+                overall_context=self.overall_context,
+                workspace_context=self.workspace_context
+            )
 
             # 2. Call AI Model using the initialized openrouter_client
             # Extract the 'content' field from the message object
@@ -199,8 +205,9 @@ class SubtaskGenerator:
 
             # 4. Validate Schema (using placeholder function)
             try:
-                # Define the schema path relative to the project root
-                schema_path = Path("src/ai_whisperer/schemas/subtask_plan_schema.json")
+                # Use PathManager to resolve {app_path} for schema location
+                app_path = PathManager.get_instance().project_path
+                schema_path = Path(str(app_path) + "/src/ai_whisperer/schemas/subtask_plan_schema.json")
                 validate_against_schema(generated_data, schema_path)
             except SchemaValidationError as e:
                 # Re-raise schema validation errors specifically
@@ -245,5 +252,8 @@ class SubtaskGenerator:
             raise e
         except Exception as e:
             # Catch any other unexpected errors during generation
-            logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
+            if result_data is not None:
+                logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
+            else:
+                logger.debug("Postprocessing result logs: [] (result_data was None)")
             raise SubtaskGenerationError(f"An unexpected error occurred during subtask generation: {e}") from e

@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 import threading # Import threading
 from typing import Optional # Import Optional
-from .terminal_monitor.monitoring import TerminalMonitor # Import TerminalMonitor
 from .state_management import StateManager # Import StateManager
 
 from .config import load_config
@@ -134,21 +133,26 @@ class RefineCommand(BaseCommand):
 
 class RunCommand(BaseCommand):
     """Command to execute a project plan."""
-    def __init__(self, config_path: str, plan_file: str, state_file: str, monitor: bool = False):
-        super().__init__(config_path)
+    def __init__(self, config: dict, plan_file: str, state_file: str, monitor: bool = False):
+        # Accept config dict directly for consistency with other commands
+        self.config = config
         self.plan_file = plan_file
         self.state_file = state_file
         self.monitor = monitor
         self._ai_runner_shutdown_event = threading.Event() # Event to signal AI Runner thread shutdown
-        # Ensure config_path is available in config for downstream consumers (e.g., TerminalMonitor)
+        # Store config_path for logging/debugging compatibility
         if isinstance(self.config, dict):
-            self.config['config_path'] = config_path
+            self.config_path = self.config.get('config_path', None)
+            if 'config_path' not in self.config:
+                self.config['config_path'] = self.config_path
+        else:
+            self.config_path = None
 
-    def _run_plan_in_thread(self, plan_parser: ParserPlan, state_file_path: str, monitor_instance: Optional[TerminalMonitor] = None, shutdown_event: Optional[threading.Event] = None):
+    def _run_plan_in_thread(self, plan_parser: ParserPlan, state_file_path: str, shutdown_event: Optional[threading.Event] = None):
         logger.debug("_run_plan_in_thread started.")
         """Core plan execution logic to be run in a separate thread."""
-        # Pass the monitor_instance and shutdown_event to the PlanRunner
-        plan_runner = PlanRunner(self.config, shutdown_event=shutdown_event, monitor=self.monitor, monitor_instance=monitor_instance)
+        # Pass the shutdown_event to the PlanRunner
+        plan_runner = PlanRunner(self.config, shutdown_event=shutdown_event, monitor=self.monitor)
 
         logger.debug("Calling plan_runner.run_plan...")
         plan_successful = False # Initialize to False
@@ -173,10 +177,11 @@ class RunCommand(BaseCommand):
             pass
 
 
+
     def execute(self):
         """Executes a project plan."""
         logger.info("Starting AI Whisperer run process...")
-        logger.debug(f"Loading configuration from: {self.config_path}")
+        logger.debug("Loading configuration from config dict (no config_path, config passed as dict).")
         logger.debug("Configuration loaded successfully.")
 
         # Get the absolute path of the plan file
@@ -190,28 +195,11 @@ class RunCommand(BaseCommand):
         monitor_instance = None
         ui_thread = None # Declare ui_thread here
 
-        if self.monitor:
-            # Create a StateManager instance for the TerminalMonitor
-            state_manager = StateManager(state_file_path=self.state_file)
-            # Instantiate TerminalMonitor, passing state_manager, config_path, monitor_enabled, and the AI runner's shutdown event
-            monitor_instance = TerminalMonitor(
-                state_manager=state_manager,
-                config_path=self.config_path,
-                monitor_enabled=True,
-                ai_runner_shutdown_event=self._ai_runner_shutdown_event # Pass the event here
-            )
-            # Start the UI thread
-            logger.debug("Starting UI thread targeting _ui_thread_loop...")
-            ui_thread = threading.Thread(target=monitor_instance._ui_thread_loop, name="UITerminalMonitorThread", daemon=True) # Target _ui_thread_loop directly
-            ui_thread.start()
-            logger.debug("UI thread targeting _ui_thread_loop started.")
-
-
         # Create and start the AI Runner Thread
         logger.debug("Starting AI Runner thread...")
         ai_runner_thread = threading.Thread(
             target=self._run_plan_in_thread,
-            args=(plan_parser, self.state_file, monitor_instance, self._ai_runner_shutdown_event), # Pass monitor_instance and shutdown_event
+            args=(plan_parser, self.state_file, self._ai_runner_shutdown_event), # Pass shutdown_event
             name="AIRunnerThread"
         )
         ai_runner_thread.start()

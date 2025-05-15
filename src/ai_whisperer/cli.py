@@ -163,13 +163,13 @@ def cli(args=None) -> list[BaseCommand]:
         elif parsed_args.command == "generate":
             if parsed_args.subcommand == "initial-plan":
                 commands.append(GenerateInitialPlanCommand(
-                    config=config, # Pass the loaded config object
+                    config_path=str(config_file_path), # Pass the path to the config file
                     output_dir=parsed_args.output,
                     requirements_path=parsed_args.requirements_path,
                 ))
             elif parsed_args.subcommand == "overview-plan":
                 commands.append(GenerateOverviewPlanCommand(
-                    config=config, # Pass the loaded config object
+                    config_path=str(config_file_path), # Pass the path to the config file
                     output_dir=parsed_args.output,
                     initial_plan_path=parsed_args.initial_plan_path
                 ))
@@ -200,7 +200,7 @@ def cli(args=None) -> list[BaseCommand]:
             ))
         elif parsed_args.command == "run":
             commands.append(RunCommand(
-                config_path=config_file_path, # Pass the loaded config object
+                config=config, # Pass the loaded config object
                 plan_file=parsed_args.plan_file,
                 state_file=parsed_args.state_file,
                 monitor=parsed_args.monitor,

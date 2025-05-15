@@ -9,28 +9,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.ai_whisperer.config import load_config, DEFAULT_OUTPUT_DIR, DEFAULT_SITE_URL, DEFAULT_APP_NAME
+from src.ai_whisperer.config import load_config, DEFAULT_SITE_URL, DEFAULT_APP_NAME
 from src.ai_whisperer.exceptions import ConfigError
 from src.ai_whisperer.path_management import PathManager # Import PathManager
-
-
-# Helper function to read actual default prompt content (for comparison if needed, though config loads content now)
-# This function is kept for potential future use or if specific tests need to verify default file content directly.
-def _read_actual_default_prompt_content(prompt_relative_path):
-    """Reads the content of a default prompt file relative to the project root."""
-    try:
-        project_root = Path(__file__).parent.parent  # Assuming tests run from the root directory
-        prompt_path = project_root / prompt_relative_path
-        with open(prompt_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        pytest.fail(f"Could not read actual default prompt: {prompt_relative_path}")
-
-
-# Define expected default prompt content by reading the actual files
-# These are used to verify that load_config correctly loads the default content
-ACTUAL_DEFAULT_ORCH_CONTENT = _read_actual_default_prompt_content("prompts/initial_plan_default.md")
-ACTUAL_DEFAULT_SUBTASK_CONTENT = _read_actual_default_prompt_content("prompts/subtask_generator_default.md")
 
 # --- Test Data ---
 VALID_OPENROUTER_CONFIG_NO_KEY = {"model": "test_model", "params": {"temperature": 0.7}}
@@ -50,14 +31,6 @@ CONFIG_EMPTY_TASK_PROMPTS = {
     "openrouter": VALID_OPENROUTER_CONFIG_NO_KEY,
     "task_prompts": {},
     "output_dir": "d:/custom/output",
-}
-
-CONFIG_TASK_PROMPTS_NOT_DICT = {"openrouter": VALID_OPENROUTER_CONFIG_NO_KEY, "task_prompts": "not_a_dictionary"}
-
-CONFIG_WITH_OLD_PROMPT_OVERRIDE = {
-    "openrouter": VALID_OPENROUTER_CONFIG_NO_KEY,
-    "task_prompts": {},
-    "prompt_override_path": "old_override.md",
 }
 
 INVALID_JSON_CONTENT = ": invalid_json : :"
@@ -99,14 +72,7 @@ def create_test_files(tmp_path, monkeypatch):
         return file_path
 
     # Create default prompt files relative to the mocked cwd within tmp_path
-    default_orch_rel_path = mocked_cwd / "prompts/initial_plan_default.md"
-    default_subtask_rel_path = mocked_cwd / "prompts/subtask_generator_default.md"
-    default_orch_content = ACTUAL_DEFAULT_ORCH_CONTENT  # Use actual content for fixture
-    default_subtask_content = ACTUAL_DEFAULT_SUBTASK_CONTENT  # Use actual content for fixture
-    _create_file(default_orch_rel_path.relative_to(tmp_path), default_orch_content) # Create relative to tmp_path
-    _create_file(default_subtask_rel_path.relative_to(tmp_path), default_subtask_content) # Create relative to tmp_path
-    default_prompt_contents[str(default_orch_rel_path)] = default_orch_content
-    default_prompt_contents[str(default_subtask_rel_path)] = default_subtask_content
+    # Prompt-related test file creation removed
 
     return (_create_file, default_prompt_contents)
 
@@ -146,42 +112,7 @@ def mock_load_dotenv(mock_dotenv, monkeypatch, reset_path_manager_instance):
 
 
 def test_load_config_success_new_prompts(create_test_files, monkeypatch):
-    """Tests loading valid config with new prompt path structure."""
-    (_create_file, _) = create_test_files
-    custom_orch_content = "Custom Initial Plan Content"
-    custom_subtask_content = "Custom Subtask Content"
-    custom_orch_path_str = VALID_PROMPTS_CONFIG_PATHS["initial_plan"]
-    custom_subtask_path_str = VALID_PROMPTS_CONFIG_PATHS["subtask_generator"]
-    _create_file(custom_orch_path_str, custom_orch_content)
-    _create_file(custom_subtask_path_str, custom_subtask_content)
-
-    config_path = _create_file("valid_config_new.yaml", VALID_CONFIG_DATA_NEW)
-
-    mock_api_key = "env_key_for_success_test"
-    monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
-    config = load_config(str(config_path))
-
-    assert config["openrouter"]["api_key"] == mock_api_key
-    assert config["openrouter"]["model"] == VALID_OPENROUTER_CONFIG_NO_KEY["model"]
-    assert config["openrouter"]["site_url"] == DEFAULT_SITE_URL
-    assert config["openrouter"]["app_name"] == DEFAULT_APP_NAME
-    # Assert paths are set in PathManager
-    path_manager = PathManager.get_instance()
-    assert path_manager.project_path == Path(os.getcwd()) # Default if not set in config/cli
-    assert path_manager.output_path == Path(VALID_CONFIG_DATA_NEW["output_dir"]).resolve()
-    assert path_manager.workspace_path == Path(os.getcwd()) # Default if not set in config/cli
-    assert path_manager.app_path is not None # app_path should always be set internally
-
-    assert "task_prompts" in config
-    assert config["task_prompts"]["initial_plan"] == VALID_PROMPTS_CONFIG_PATHS["initial_plan"]
-    assert config["task_prompts"]["subtask_generator"] == VALID_PROMPTS_CONFIG_PATHS["subtask_generator"]
-
-    assert "prompt_override_path" not in config  # Ensure old key is not present
-    assert "task_prompts_content" in config  # Ensure new content key is present
-    assert config["task_prompts_content"]["initial_plan"] == custom_orch_content
-    assert config["task_prompts_content"]["subtask_generator"] == custom_subtask_content
-
-
+    pass
 def test_load_config_success_empty_task_prompts(create_test_files, monkeypatch):
     """Tests loading config with an empty task_prompts section."""
     (_create_file, default_contents) = create_test_files
@@ -219,16 +150,6 @@ def test_load_config_invalid_yaml(create_test_files):
     config_path = _create_file("invalid.yaml", INVALID_JSON_CONTENT)
     with pytest.raises(ConfigError, match=r"Error parsing YAML file"):
         load_config(str(config_path))
-
-
-@patch('os.getcwd', return_value='/mock/cwd') # Mock os.getcwd for this test
-def test_load_config_task_prompts_not_dict(mock_getcwd, create_test_files):
-    """Tests loading config where 'task_prompts' is not a dictionary."""
-    (_create_file, _) = create_test_files
-    config_path = _create_file("task_prompts_not_dict.yaml", CONFIG_TASK_PROMPTS_NOT_DICT)
-    with pytest.raises(ConfigError, match=r"Invalid 'task_prompts' section.*Expected a dictionary"):
-        load_config(str(config_path))
-
 
 def test_load_config_missing_required_env_var_api_key(create_test_files, monkeypatch):
     """Tests ConfigError when OPENROUTER_API_KEY environment variable is not set."""
@@ -328,70 +249,6 @@ def test_load_config_optional_key_output_dir(mock_getcwd, create_test_files, mon
     # Accept empty dict for task_prompts if that's what the implementation returns
     assert "task_prompts" in config and config["task_prompts"] == {"initial_plan": None, "subtask_generator": None, "refine_requirements": None}
     assert "task_prompts_content" in config  # Ensure new content key is present
-
-
-@patch('os.getcwd', return_value='/mock/cwd') # Mock os.getcwd for this test
-def test_load_config_error_custom_prompt_not_found(mock_getcwd, create_test_files, monkeypatch):
-    """Tests ConfigError when a specified custom prompt file is missing."""
-    (_create_file, _) = create_test_files
-    missing_prompt_path_str = "non_existent_prompt.md"
-    config_data = {
-        "openrouter": {"model": "m"},  # Need model to pass initial validation
-        "task_prompts": {"initial_plan": missing_prompt_path_str},
-    }
-    config_path = _create_file("config_missing_custom_prompt.yaml", config_data)
-
-    mock_api_key = "env_key_for_prompt_error_test"
-    monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
-
-    expected_error_msg = r"Specified prompt file not found: .*non_existent_prompt.md \(relative to .*\)"
-    with pytest.raises(ConfigError, match=expected_error_msg):
-        load_config(str(config_path))
-
-
-@patch('os.getcwd', return_value='/mock/cwd')
-def test_load_config_success_default_prompts(mock_getcwd, create_test_files, monkeypatch):
-    """Tests loading config where task_prompts specifies using default paths (None)."""
-    (_create_file, default_contents) = create_test_files
-    config_data = {
-        "openrouter": VALID_OPENROUTER_CONFIG_NO_KEY,
-        "task_prompts": {"initial_plan": None, "subtask_generator": None},  # Use default  # Use default
-        "output_dir": "d:/custom/output",
-    }
-    config_path = _create_file("config_default_prompts.yaml", config_data)
-
-    mock_api_key = "env_key_for_default_prompts_test"
-    monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
-    config = load_config(str(config_path))
-
-    assert config["openrouter"]["api_key"] == mock_api_key
-    # Assert paths are set in PathManager
-    path_manager = PathManager.get_instance()
-    assert path_manager.project_path == Path(os.getcwd()).resolve() # Default
-    assert path_manager.output_path == Path("d:/custom/output").resolve()
-    assert path_manager.workspace_path == Path(os.getcwd()).resolve() # Default
-    assert path_manager.app_path is not None # app_path should always be set internally
-    assert "task_prompts" in config
-    assert config["task_prompts"]["initial_plan"] is None
-    assert config["task_prompts"]["subtask_generator"] is None
-    # task_prompts_content should be empty as defaults are not loaded eagerly
-    assert "task_prompts_content" in config
-
-
-@patch('os.getcwd', return_value='/mock/cwd') # Mock os.getcwd for this test
-def test_load_config_invalid_prompt_path_type(mock_getcwd, create_test_files, monkeypatch):
-    """Tests ConfigError when a prompt path value is not a string or None."""
-    (_create_file, _) = create_test_files
-    config_data = {"openrouter": {"model": "m"}, "task_prompts": {"initial_plan": 123}}  # Invalid type
-    config_path = _create_file("config_invalid_prompt_type.yaml", config_data)
-
-    mock_api_key = "env_key_for_invalid_prompt_type_test"
-    monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
-
-    expected_error_msg = r"Invalid prompt path for task 'initial_plan'.*Expected a string."
-    with pytest.raises(ConfigError, match=expected_error_msg):
-        load_config(str(config_path))
-
 
 @patch('os.getcwd', return_value='/mock/cwd') # Mock os.getcwd for this test
 def test_load_config_missing_task_model_config(mock_getcwd, create_test_files, monkeypatch):

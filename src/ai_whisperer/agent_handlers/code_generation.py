@@ -7,6 +7,7 @@ from src.ai_whisperer.context_management import ContextManager # Import ContextM
 from src.ai_whisperer.ai_loop import run_ai_loop # Import the refactored AI loop
 from pathlib import Path
 import json
+from src.ai_whisperer import PromptSystem # Import PromptSystem
 import traceback
 from datetime import datetime, timezone
 
@@ -15,7 +16,7 @@ from src.ai_whisperer.utils import build_ascii_directory_tree
 
 logger = get_logger(__name__)  # Get logger for execution engine
 
-def handle_code_generation(engine: ExecutionEngine, task_definition: dict):
+def handle_code_generation(engine: ExecutionEngine, task_definition: dict, prompt_system: PromptSystem):
     """
     Handles the execution of a 'code_generation' task.
     """
@@ -36,8 +37,8 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict):
         prompt_context = _gather_context(engine, task_definition, task_id, logger)
 
         # 2. Prompt Construction
-        initial_prompt = _construct_initial_prompt(engine, task_definition, task_id, prompt_context, logger)
-
+        initial_prompt = _construct_initial_prompt(prompt_system, task_definition, task_id, prompt_context, logger)
+ 
         # 3. AI Interaction & Tool Execution Loop
         # Get ContextManager from StateManager
         context_manager = engine.state_manager.get_context_manager(task_id)
@@ -137,45 +138,63 @@ def _gather_context(engine, task_definition, task_id, logger) -> str:
 
     return "\n".join(context)
 
-def _construct_initial_prompt(engine, task_definition, task_id, prompt_context, logger) -> str:
-    """Constructs the initial prompt for the AI agent."""
-    # Get the base system prompt from the default prompt file
+
+def _construct_initial_prompt(prompt_system: PromptSystem, task_definition: dict, task_id: str, prompt_context: str, logger) -> str:
+    """Constructs the initial prompt for the AI agent using the PromptSystem."""
+    logger.info(f"Task {task_id}: Constructing initial prompt using PromptSystem.")
+
     try:
-        base_prompt_path = Path("prompts/code_generation_default.md")
-        base_prompt = base_prompt_path.read_text()
-        logger.debug(f"Task {task_id}: Read base prompt from {base_prompt_path}")
-    except FileNotFoundError:
-        base_prompt = "You are an expert software engineer AI agent."
-        logger.warning(f"Task {task_id}: Base prompt file not found. Using default: {base_prompt}")
-    except IOError as e:
-        base_prompt = "You are an expert software engineer AI agent."
-        logger.warning(f"Task {task_id}: Error reading base prompt file {base_prompt_path}: {e}. Using default.")
-
-    prompt_parts = [
-        base_prompt,
-        "\n\n--- Task Description ---",
-        task_definition.get('description', 'No description provided.'),
-        "\n\n--- Instructions ---",
-        "\n".join(task_definition.get('instructions', ['No instructions provided.'])),
-        "\n\n--- Context ---",
-        prompt_context if prompt_context else "No input artifacts provided or context gathered.",
-        "\n\n--- Constraints ---",
-        "\n".join(task_definition.get('constraints', ['No constraints provided.'])),
-        "\n\n--- Raw Task JSON ---",
-        task_definition.get('raw_text', json.dumps(task_definition, indent=2)) # Use raw_text if available, otherwise dump the dict
-    ]
-
-    initial_prompt = "\n".join(prompt_parts)
-
-    if logger:
-        logger.debug(f"Task {task_id}: Constructed initial prompt (length: {len(initial_prompt)} chars)")
-    log_event(
-        log_message=LogMessage(
-            LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "code_gen_initial_prompt",
-            f"Initial prompt for task {task_id} (length: {len(initial_prompt)} chars)", subtask_id=task_id
+        # Use PromptSystem to get the formatted prompt for code generation
+        # Assuming the prompt name is 'code_generation' in the 'agents' category
+        initial_prompt = prompt_system.get_formatted_prompt(
+            "agents",
+            "code_generation",
+            include_tools=True, # Include tool instructions
+            task_description=task_definition.get('description', 'No description provided.'),
+            instructions="\n".join(task_definition.get('instructions', ['No instructions provided.'])),
+            context=prompt_context if prompt_context else "No input artifacts provided or context gathered.",
+            constraints="\n".join(task_definition.get('constraints', ['No constraints provided.'])),
+            raw_task_json=task_definition.get('raw_text', json.dumps(task_definition, indent=2)) # Use raw_text if available, otherwise dump the dict
         )
-    )
-    return initial_prompt
+
+        if logger:
+            logger.debug(f"Task {task_id}: Constructed initial prompt (length: {len(initial_prompt)} chars)")
+        log_event(
+            log_message=LogMessage(
+                LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "code_gen_initial_prompt",
+                f"Initial prompt for task {task_id} (length: {len(initial_prompt)} chars)", subtask_id=task_id
+            )
+        )
+        return initial_prompt
+
+    except prompt_system.PromptNotFoundError as e:
+        error_message = f"Prompt not found for code generation task {task_id}: {e}"
+        logger.error(error_message)
+        log_event(
+            log_message=LogMessage(
+                LogLevel.ERROR,
+                ComponentType.EXECUTION_ENGINE,
+                "code_gen_prompt_not_found",
+                error_message,
+                subtask_id=task_id,
+                details={"error": str(e)},
+            )
+        )
+        raise TaskExecutionError(error_message) from e
+    except Exception as e:
+        error_message = f"An unexpected error occurred while constructing prompt for code generation task {task_id}: {e}"
+        logger.exception(error_message)
+        log_event(
+            log_message=LogMessage(
+                LogLevel.CRITICAL,
+                ComponentType.EXECUTION_ENGINE,
+                "code_gen_prompt_construction_error",
+                error_message,
+                subtask_id=task_id,
+                details={"error": str(e), "traceback": traceback.format_exc()},
+            )
+        )
+        raise TaskExecutionError(error_message) from e
 
 def _execute_validation(engine, task_definition, task_id, logger) -> tuple[bool, dict]:
     """Executes validation criteria, typically shell commands."""

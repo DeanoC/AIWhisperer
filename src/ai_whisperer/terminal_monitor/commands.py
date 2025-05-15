@@ -23,18 +23,17 @@ class ExitCommand(BaseCommand):
     aliases = ["quit", "q"]
     help_text = "Exits the AIWhisperer monitor application."
 
-    def __init__(self, config_path: str, monitor_instance: 'TerminalMonitor'):
+    def __init__(self, config_path: str,):
         super().__init__(config_path)
-        self.monitor_instance = monitor_instance
 
     def execute(self, args: list[str]):
-        # Removed print statements to avoid potential conflicts with terminal UI
+
         logger.debug("ExitCommand.execute called") # Keep debug log
         sys.stderr.write("DEBUG: ExitCommand.execute: Reached point before calling monitor_instance.stop()\n") # Added stderr write
-        logger.debug("ExitCommand.execute: About to call monitor_instance.stop()") # Keep debug log
+        logger.debug("ExitCommand.execute: About to call self.state_manager.stop()") # Keep debug log
         # Signal the monitor to stop gracefully
-        self.monitor_instance.stop()
-        logger.debug("ExitCommand.execute: monitor_instance.stop() returned.") # Keep debug log
+        self.state_manager.stop()
+        logger.debug("ExitCommand.execute: self.state_manager.stop() returned.") # Keep debug log
 
 from src.ai_whisperer.state_management import StateManager # Import StateManager
 
@@ -136,4 +135,4 @@ def register_command(command_class):
 register_command(ExitCommand)
 register_command(DebuggerCommand)
 register_command(AskCommand)
-register_command(HelpCommand) # Register the HelpCommand
+register_command(HelpCommand)

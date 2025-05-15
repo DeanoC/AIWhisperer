@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from src.ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.exceptions import TaskExecutionError
+from src.ai_whisperer.prompt_system import PromptSystem # Import PromptSystem
 
 # Mock configuration and task data
 MOCK_CONFIG = {
@@ -34,14 +35,11 @@ MOCK_TASK_DEFINITION_MINIMAL = {"instructions": "", "agent_spec": {}}
 
 @pytest.fixture
 def mock_execution_engine():
-    """Fixture to create a mock ExecutionEngine instance."""
-    mock_config = MagicMock()
-    mock_config.__getitem__.side_effect = MOCK_CONFIG.__getitem__
-    mock_ai_service = MagicMock()
+    """Fixture to create a mock ExecutionEngine instance with a real config dict."""
     mock_state_manager = MagicMock()
-    mock_logger = MagicMock()
-
-    engine = ExecutionEngine(mock_state_manager, mock_logger, mock_config)
+    mock_prompt_system = MagicMock(spec=PromptSystem) # Create a mock PromptSystem
+    # Use the real MOCK_CONFIG dict for config
+    engine = ExecutionEngine(mock_state_manager, MOCK_CONFIG, mock_prompt_system) # Add mock_prompt_system
     # We need to mock the internal method that calls the AI service to prevent actual calls
     engine._call_ai_service = MagicMock()
     return engine

@@ -7,8 +7,7 @@ from ai_whisperer.exceptions import TaskExecutionError
 from ai_whisperer.tools.tool_registry import get_tool_registry  # Import json
 
 from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
-from .terminal_monitor.monitoring import TerminalMonitor  # Import TerminalMonitor
-from .state_management import StateManager  # Import StateManager
+from .state_management import StateManager
 from .plan_parser import ParserPlan  # Import ParserPlan
 from .ai_service_interaction import (
     OpenRouterAPI,
@@ -19,6 +18,7 @@ from .ai_service_interaction import (
     OpenRouterConnectionError,
 )  # Import AI interaction components
 import traceback  # Import traceback for detailed error logging
+from .prompt_system import PromptSystem # Import PromptSystem
 
 logger = get_logger(__name__)  # Get logger for execution engine
 logger.propagate = False
@@ -29,7 +29,7 @@ class ExecutionEngine:
     Integrates logging and monitoring for visibility into the execution process.
     """
 
-    def __init__(self, state_manager: StateManager, monitor: TerminalMonitor, config: dict, shutdown_event: threading.Event = None):
+    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, shutdown_event: threading.Event = None):
         """
         Initializes the ExecutionEngine.
 
@@ -41,19 +41,20 @@ class ExecutionEngine:
                      It is expected to have methods like add_log_message, set_active_step,
                      and update_display.
             config: The global configuration dictionary.
+            prompt_system: An instance of the PromptSystem.
             shutdown_event: An event that signals when execution should stop.
         """
         if state_manager is None:
             raise ValueError("State manager cannot be None.")
-        if monitor is None:
-            raise ValueError("Monitor cannot be None.")
         if config is None:
             raise ValueError("Configuration cannot be None.")
+        if prompt_system is None:
+             raise ValueError("PromptSystem cannot be None.")
 
         self.state_manager = state_manager
-        self.monitor = monitor
         self.config = config  # Store the global configuration
-        self.shutdown_event = threading.Event()
+        self.prompt_system = prompt_system # Store the PromptSystem instance
+        self.shutdown_event = shutdown_event
         self.task_queue = []
         # In a real scenario, a TaskExecutor component would handle individual task logic.
         # This would be responsible for interacting with different agent types.
@@ -168,6 +169,7 @@ class ExecutionEngine:
             # Extract instructions and input artifacts
             instructions = task_definition.get("instructions", "")  # Get instructions from top level
             input_artifacts = task_definition.get("input_artifacts", [])
+            raw_subtask_text = task_definition.get("raw_text", "") # Get raw subtask text
 
             # Read input artifacts and construct the prompt context
             artifact_contents = {}
@@ -200,111 +202,70 @@ class ExecutionEngine:
                 )
                 raise TaskExecutionError(error_message) from e
 
-            # --- Prompt Selection Logic ---
+            # --- Prompt Construction using PromptSystem ---
             agent_type = task_definition.get("type")
-            instructions = task_definition.get("instructions", "")  # Get instructions from top level for logging
-            selected_prompt = ""
+            if agent_type is None:
+                 error_message = f"AI interaction task {task_id} is missing agent type."
+                 logger.error(error_message)
+                 log_event(
+                     log_message=LogMessage(
+                         LogLevel.ERROR,
+                         ComponentType.EXECUTION_ENGINE,
+                         "ai_task_missing_agent_type",
+                         error_message,
+                         subtask_id=task_id,
+                     )
+                 )
+                 raise TaskExecutionError(error_message)
 
-            # Add detailed logging for prompt selection
-            logger.debug(f"Task {task_id}: Prompt Selection - agent_type: {agent_type}")
-            logger.debug(
-                f"Task {task_id}: Prompt Selection - instructions: {instructions[:100]}..."
-            )  # Log first 100 chars
-            logger.debug(
-                f"Task {task_id}: Prompt Selection - self.config.get('runner_agent_type_prompts_content'): {self.config.get('runner_agent_type_prompts_content')}"
-            )
-            logger.debug(
-                f"Task {task_id}: Prompt Selection - self.config.get('global_runner_default_prompt_content'): {self.config.get('global_runner_default_prompt_content')}"
-            )
+            logger.info(f"Task {task_id}: Constructing prompt for agent type: {agent_type}")
 
-            # 1. Agent-Type Default Prompt
-            agent_type_prompt = self.config.get("runner_agent_type_prompts_content", {}).get(agent_type)
-
-            # Add check for None before stripping and logging
-            if agent_type_prompt is not None:
-                agent_type_prompt = agent_type_prompt.strip()
-                logger.debug(
-                    f"Task {task_id}: Prompt Selection - agent_type_prompt after lookup and strip: {agent_type_prompt[:100]}..."
-                )  # Log first 100 chars
-            else:
-                logger.debug(f"Task {task_id}: Prompt Selection - agent_type_prompt after lookup and strip: None")
-
-            selected_prompt = None  # Initialize selected_prompt
-
-            logger.debug(
-                f"Task {task_id}: agent_type_prompt value: '{agent_type_prompt}', type: {type(agent_type_prompt)}"
-            )
-            # Add logging to inspect task_definition before accessing instructions
-            logger.debug(f"Task {task_id}: task_definition value: {task_definition}, type: {type(task_definition)}")
-            logger.debug(f"Task {task_id}: instructions value: '{instructions}', type: {type(instructions)}")
-            # --- Corrected Prompt Selection Logic ---
-            # Priority: Agent Prompt + Instructions > Agent Prompt Only > Instructions Only > Global Default
-
-            # 1. Agent-Type Default Prompt + Instructions
-            if agent_type_prompt and instructions:
-                selected_prompt = agent_type_prompt + "\n\n" + instructions
-                logger.debug(
-                    f"Task {task_id}: Selected Agent-Type Default Prompt for '{agent_type}' and appended Instructions."
+            try:
+                # Use PromptSystem to get the formatted prompt
+                # Assuming agent_type maps directly to prompt name in 'agents' category
+                prompt = self.prompt_system.get_formatted_prompt(
+                    "agents",
+                    agent_type,
+                    instructions=instructions,
+                    prompt_context=prompt_context,
+                    raw_subtask_text=raw_subtask_text
                 )
-            # 2. Agent-Type Default Prompt Only
-            elif agent_type_prompt:
-                selected_prompt = agent_type_prompt
-                logger.debug(f"Task {task_id}: Selected Agent-Type Default Prompt for '{agent_type}' only.")
-            # 3. Task Instructions Only (embed in global default)
-            elif instructions and self.config.get("global_runner_default_prompt_content"):
-                global_default_prompt = self.config["global_runner_default_prompt_content"]
-                logger.debug(f"Global default prompt content: {global_default_prompt}")
-
-                selected_prompt = global_default_prompt + "\n\n" + instructions
-
-                logger.debug(f"Task {task_id}: Selected Global Default Prompt and appended Instructions.")
-            # 4. Global Default Prompt Only (Deano this make any sense??)
-            elif self.config.get("global_runner_default_prompt_content"):
-                selected_prompt = self.config["global_runner_default_prompt_content"]
-                logger.debug(f"Task {task_id}: Selected Global Default Prompt Only.")
-            # 5. Error State
-            else:
-                error_message = (
-                    f"No suitable prompt found for AI interaction task {task_id} (agent type: {agent_type})."
-                )
-                logger.error(error_message)
+                logger.info(f"Task {task_id}: Final constructed prompt (length: {len(prompt)} chars)")
                 log_event(
                     log_message=LogMessage(
-                        LogLevel.ERROR,
-                        ComponentType.EXECUTION_ENGINE,
-                        "no_prompt_found",
-                        error_message,
-                        subtask_id=task_id,
+                        LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_task_final_prompt",
+                        f"Final prompt for task {task_id} (length: {len(prompt)} chars)", subtask_id=task_id
                     )
                 )
-                raise TaskExecutionError(error_message)
 
-            # Append prompt context if it exists
-            if prompt_context and selected_prompt:  # Only append if there's a selected prompt
-                selected_prompt += "\n\n" + "## PROMPT CONTEXT " + prompt_context.strip()
-
-            prompt = selected_prompt  # Assign the selected prompt to the variable used later
-
-            # Add the raw subtask text to the end of the prompt
-            raw_subtask_text = task_definition.get("raw_text", "")
-            if raw_subtask_text:
-                prompt += "\n\n" + "## RAW SUBTASK TEXT\n" + raw_subtask_text
-
-            logger.info(f"Task {task_id}: Final constructed prompt: {prompt}")
-
-            # Get artifact content from state manager (This seems redundant with the artifact reading above, review if needed)
-            # input_artifacts = task_definition.get('input_artifacts', [])
-            # input_artifact_content = {}
-            # for artifact in input_artifacts:
-            #     artifact_id = artifact.get('artifact_id')
-            #     if artifact_id:
-            #         # Assuming StateManager can retrieve artifact content by ID
-            #         content = self.state_manager.get_artifact_content(artifact_id)
-            #         if content is not None:
-            #             input_artifact_content[artifact_id] = content
-            #         else:
-            #             logger.warning(f"Input artifact {artifact_id} not found for task {task_id}.")
-            #             log_event(log_message=LogMessage(LogLevel.WARNING, ComponentType.EXECUTION_ENGINE, "missing_input_artifact", f"Input artifact {artifact_id} not found for task {task_id}.", subtask_id=task_id, details={"artifact_id": artifact_id}))
+            except self.prompt_system.PromptNotFoundError as e:
+                 error_message = f"Prompt not found for agent type '{agent_type}' for task {task_id}: {e}"
+                 logger.error(error_message)
+                 log_event(
+                     log_message=LogMessage(
+                         LogLevel.ERROR,
+                         ComponentType.EXECUTION_ENGINE,
+                         "ai_task_prompt_not_found",
+                         error_message,
+                         subtask_id=task_id,
+                         details={"agent_type": agent_type, "error": str(e)},
+                     )
+                 )
+                 raise TaskExecutionError(error_message) from e
+            except Exception as e:
+                 error_message = f"An unexpected error occurred while constructing prompt for task {task_id}: {e}"
+                 logger.exception(error_message)
+                 log_event(
+                     log_message=LogMessage(
+                         LogLevel.CRITICAL,
+                         ComponentType.EXECUTION_ENGINE,
+                         "ai_task_prompt_construction_error",
+                         error_message,
+                         subtask_id=task_id,
+                         details={"agent_type": agent_type, "error": str(e), "traceback": traceback.format_exc()},
+                     )
+                 )
+                 raise TaskExecutionError(error_message) from e
 
 
             # Retrieve conversation history from all preceding AI interaction tasks
@@ -942,8 +903,6 @@ class ExecutionEngine:
         plan_data = plan_parser.get_parsed_plan()
         plan_id = plan_data.get("task_id", "unknown_plan")
         logger.info(f"Starting execution of plan: {plan_id}")
-        self.monitor.set_plan_name(plan_id)
-        self.monitor.set_runner_status(f"Executing plan: {plan_id}")
         log_event(
             log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_started", f"Starting execution of plan: {plan_id}")
         )
@@ -957,9 +916,10 @@ class ExecutionEngine:
                     ComponentType.EXECUTION_ENGINE,
                     "invalid_plan_structure",
                     f"Invalid plan data provided for plan {plan_id}. 'plan' key is missing or not a list.",
+                    )
                 )
-            )
-            self.monitor.set_runner_status(f"Plan {plan_id} finished with warning: Invalid plan structure.")
+            if self.monitor:
+                self.monitor.set_runner_status(f"Plan {plan_id} finished with warning: Invalid plan structure.")
             log_event(
                 log_message=LogMessage(
                     LogLevel.WARNING,
@@ -974,20 +934,6 @@ class ExecutionEngine:
         self.task_queue = list(plan_data.get("plan", []))
 
         for task_def_overview in self.task_queue:
-            # Check for shutdown signal before executing each task
-            if self.shutdown_event.is_set():
-                logger.info("Shutdown signal received. Stopping plan execution.")
-                log_event(
-                    log_message=LogMessage(
-                        LogLevel.INFO,
-                        ComponentType.EXECUTION_ENGINE,
-                        "plan_execution_interrupted",
-                        "Plan execution interrupted by shutdown signal.",
-                        details={"plan_id": plan_id},
-                    )
-                )
-                break # Exit the loop if shutdown is requested
-
             task_id = task_def_overview.get("subtask_id")
             if not task_id:
                 # Handle missing subtask_id (e.g., log error, skip task)
@@ -1043,13 +989,8 @@ class ExecutionEngine:
                         )
                     )
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status(f"Failed: {task_id}")
-                    continue # Skip to the next task in the overview
-
 
             self.state_manager.set_task_state(task_id, "pending")
-            self.monitor.set_active_subtask_id(task_id)
-            self.monitor.set_runner_status(f"Pending: {task_id}")
             log_event(
                 log_message=LogMessage(
                     LogLevel.INFO,
@@ -1105,7 +1046,6 @@ class ExecutionEngine:
                 self.config['logger'].debug(f"Executing task: {task_id}")
 
             self.state_manager.set_task_state(task_id, "in-progress")
-            self.monitor.set_runner_status(f"In Progress: {task_id}")
             log_event(
                 log_message=LogMessage(
                     LogLevel.INFO,
@@ -1127,7 +1067,6 @@ class ExecutionEngine:
                 self.state_manager.set_task_state(task_id, "completed")
                 self.state_manager.store_task_result(task_id, result)
                 self.state_manager.save_state()
-                self.monitor.set_runner_status(f"Completed: {task_id}")
                 log_event(
                     log_message=LogMessage(
                         LogLevel.INFO,
@@ -1147,7 +1086,6 @@ class ExecutionEngine:
                     error_message = str(e)
                     logger.error(f"Task {task_id} failed: {error_message}")
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status(f"Failed: {task_id}")
                     log_event(
                         log_message=LogMessage(
                             LogLevel.ERROR,
@@ -1190,11 +1128,8 @@ class ExecutionEngine:
                             details={"error": error_message, "traceback": traceback.format_exc()},
                         )
                     )
-         # After each task, clear the active step in the monitor
-        self.monitor.set_active_subtask_id(None)
 
         logger.info(f"Finished execution of plan: {plan_id}")
-        self.monitor.set_runner_status(f"Plan execution finished: {plan_id}")
         log_event(
             log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_finished", f"Finished execution of plan: {plan_id}")
         )

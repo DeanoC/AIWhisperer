@@ -1,0 +1,49 @@
+{
+  "description": "Design the architecture for the new centralized, structured, and lazy-loaded prompt system based on the analysis and requirements.",
+  "instructions": [
+    "Create a new file named `docs/prompt_system_design.md`.",
+    "In `docs/prompt_system_design.md`, define the proposed unified structure for how prompts will be represented within the application's configuration (e.g., `config.yaml`). Consider a nested dictionary structure.",
+    "Specify how section defaults (e.g., for 'planning', 'code_generation') will be defined in the configuration and how individual prompt overrides will be represented, potentially using a specific key or structure.",
+    "Outline the mechanism for lazy loading prompts. Describe when prompts should be loaded (e.g., on first access) rather than all at once at startup.",
+    "Detail the fallback logic for retrieving a prompt: first check for a user override (potentially via file path), then check for a section default in the config, then check for an application default in the config, and finally raise an error if the prompt is not found.",
+    "Describe the new Python class or module that will be responsible for accessing and managing prompts according to the defined structure and loading/fallback logic.",
+    "Explain how user overrides specified via file paths in the configuration will be handled, including how the system will locate and load the content from these paths.",
+    "Include clear examples in `docs/prompt_system_design.md` illustrating the proposed configuration structure for prompts, showing examples of section defaults and individual prompt definitions/overrides.",
+    "Specify the expected directory structure and naming conventions for default prompt files stored under the `{app_path}/prompts` directory (e.g., `prompts/initial_plan_default.md`)."
+  ],
+  "input_artifacts": [
+    "docs/prompt_loading_analysis.md",
+    "config.yaml",
+    "prompts/"
+  ],
+  "output_artifacts": [
+    "docs/prompt_system_design.md"
+  ],
+  "constraints": [
+    "The design must be documented in `docs/prompt_system_design.md`.",
+    "The design must align with the findings from `docs/prompt_loading_analysis.md`.",
+    "The design must support the requirements for centralized access, a unified structure, section defaults, user overrides, app defaults, and lazy loading.",
+    "The design must be clearly explained and feasible for implementation within the existing project structure."
+  ],
+  "validation_criteria": [
+    "The file `docs/prompt_system_design.md` exists.",
+    "`docs/prompt_system_design.md` contains a detailed description of the proposed prompt system architecture.",
+    "The design in `docs/prompt_system_design.md` clearly defines the unified configuration structure for prompts.",
+    "The design explicitly specifies how section defaults and individual prompt overrides are handled in the configuration.",
+    "The lazy loading mechanism is described in `docs/prompt_system_design.md`.",
+    "The fallback logic (user config -> section default -> app default -> error) is detailed in `docs/prompt_system_design.md`.",
+    "The design includes a description of the new class or module responsible for prompt access.",
+    "The handling of user overrides via file paths is explained in the design.",
+    "Examples of the proposed configuration structure for prompts are included in `docs/prompt_system_design.md`.",
+    "The expected organization of default prompt files under `{app_path}/prompts` is specified in the design.",
+    "The design addresses all stated requirements from the task description.",
+    "The design appears feasible for implementation based on the current project context."
+  ],
+  "type": "planning",
+  "name": "design_new_prompt_system",
+  "depends_on": [
+    "analyze_current_prompt_loading"
+  ],
+  "task_id": "3b2255a4-04a0-439a-a4da-4f2d8cec22b2",
+  "subtask_id": "d9f7b8ff-7be6-4b90-afde-9bc1688906a3"
+}

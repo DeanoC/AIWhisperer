@@ -14,7 +14,9 @@ from typing import Dict, Any, Optional
 from .config import load_config
 from .exceptions import ConfigError, OpenRouterAPIError, HashMismatchError, ProcessingError, OrchestratorError
 from .utils import calculate_sha256, build_ascii_directory_tree
-from .ai_service_interaction import OpenRouterAPI # Assuming this will be used internally
+from .ai_service_interaction import OpenRouterAPI
+from src.ai_whisperer.path_management import PathManager
+from .prompt_system import PromptSystem, PromptConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -22,20 +24,19 @@ class InitialPlanGenerator:
     """
     Generates the initial task plan JSON file based on input requirements markdown.
     """
-    def __init__(self, config: Dict[str, Any], output_dir="output", schema_path: Optional[Path] = None):
+    def __init__(self, config: Dict[str, Any], output_dir="output"):
         """
-        Initializes the InitialPlanGenerator with application configuration.
-
+        Initializes the InitialPlanGenerator with application configuration and PromptSystem.
         Args:
             config: The loaded application configuration dictionary.
             output_dir: Directory where output files will be saved.
-            schema_path: Optional path to the task schema file. If None, uses a default path.
 
         Raises:
             ConfigError: If essential configuration parts are missing or invalid.
             FileNotFoundError: If the schema file cannot be found.
             json.JSONDecodeError: If the schema file is invalid JSON.
         """
+        self.prompt_system = PromptSystem(PromptConfiguration(config))
         self.config = config
         self.output_dir = output_dir
 
@@ -59,16 +60,8 @@ class InitialPlanGenerator:
 
         # Load the validation schema
         try:
-            # Determine the package root directory to locate default files relative to the package
-            try:
-                PACKAGE_ROOT = Path(__file__).parent.resolve()
-            except NameError:
-                # Fallback for environments where __file__ might not be defined (e.g., some test runners)
-                PACKAGE_ROOT = Path(".").resolve() / "src" / "ai_whisperer"
-
-            DEFAULT_SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "initial_plan_schema.json"
-
-            schema_to_load = schema_path if schema_path is not None else DEFAULT_SCHEMA_PATH
+            schema_to_load = PathManager().resolve_path( "{app_path}/schemas/initial_plan_schema.json")
+            
             logger.info(f"Loading validation schema from: {schema_to_load}")
             with open(schema_to_load, "r", encoding="utf-8") as f:
                 self.task_schema = json.load(f)
@@ -104,9 +97,7 @@ class InitialPlanGenerator:
         try:
             hashes = {
                 "requirements_md": calculate_sha256(requirements_md_path),
-                "config_yaml": calculate_sha256(config_path),
-                # Prompt file hash is now calculated during config loading
-                "prompt_file": self.config.get("input_hashes", {}).get("prompt_file", "hash_not_available"),
+                "config_yaml": calculate_sha256(config_path)
             }
             logger.info(f"Calculated hashes: {hashes}")
             return hashes
@@ -144,13 +135,12 @@ class InitialPlanGenerator:
         Generates the initial task plan JSON file based on input requirements markdown.
 
         This method orchestrates the end-to-end process:
-        1. Gets the prompt template content from the loaded config.
-        2. Calculates SHA-256 hashes of input files (requirements and config).
-        3. Reads the requirements markdown content.
-        4. Constructs a prompt with markdown content and input hashes.
-        5. Calls the OpenRouter API.
-        6. Parses and validates the JSON response (checks hashes and schema).
-        7. Saves the validated JSON to the output directory.
+        1. Calculates SHA-256 hashes of input files (requirements and config).
+        2. Reads the requirements markdown content.
+        3. Constructs a prompt with markdown content and input hashes.
+        4. Calls the OpenRouter API.
+        5. Parses and validates the JSON response (checks hashes and schema).
+        6. Saves the validated JSON to the output directory.
 
         Args:
             requirements_md_path_str: Path string to the input requirements markdown file.
@@ -182,17 +172,12 @@ class InitialPlanGenerator:
             raise FileNotFoundError(f"Requirements file not found: {requirements_md_path}")
 
         try:
-            # 1. Get Prompt Template Content from loaded config
-            prompt_template = self.config.get("task_prompts_content", {}).get("initial_plan")
-            if not prompt_template:
-                raise ConfigError("Prompt content for initial plan generation task is missing in the loaded config.")
-
-            # 2. Calculate Input Hashes (prompt hash is from config loading)
+            # 1. Calculate Input Hashes (prompt hash is from config loading)
             input_hashes = self._calculate_input_hashes(requirements_md_path, config_path)
 
             workspace_context = build_ascii_directory_tree(".")
 
-            # 3. Read Requirements Content
+            # 2. Read Requirements Content
             logger.info(f"Reading requirements file: {requirements_md_path}")
             try:
                 with open(requirements_md_path, "r", encoding="utf-8") as f:
@@ -205,15 +190,17 @@ class InitialPlanGenerator:
                 logger.error(f"Error reading requirements file {requirements_md_path}: {e}")
                 raise ProcessingError(f"Error reading requirements file {requirements_md_path}: {e}") from e
 
-            # 4. Construct Final Prompt
-            logger.info("Constructing prompt for OpenRouter API...")
-            final_prompt = prompt_template.replace("{md_content}", requirements_content) 
-            final_prompt = final_prompt.replace("{workspace_context}", workspace_context) 
-
+            # 3. Construct Final Prompt
+            final_prompt = self.prompt_system.get_formatted_prompt(
+                category='core',
+                name="initial_plan",  # <-- add the missing argument
+                requirements=requirements_content,
+                input_hashes=input_hashes # Pass input hashes for potential use in prompt
+            )
             # logger.debug(
             #     f"Constructed final prompt:\n{final_prompt}..."
             # )
-            # 5. Call OpenRouter API
+            # 4. Call OpenRouter API
             logger.info("Calling OpenRouter API...")
             try:
                 # Get model and params from the openrouter_client
@@ -230,7 +217,7 @@ class InitialPlanGenerator:
                 logger.error(f"OpenRouter API call failed: {e}")
                 raise
 
-            # 6. Parse JSON Response and apply postprocessing
+            # 5. Parse JSON Response and apply postprocessing
             logger.info("Parsing JSON response from API and applying postprocessing...")
             try:
                 # Import postprocessing components here to avoid circular dependencies if they import Orchestrator
@@ -302,8 +289,7 @@ class InitialPlanGenerator:
                 logger.error(f"An unexpected error occurred during JSON postprocessing or validation: {e}")
                 raise OrchestratorError(f"JSON postprocessing or validation failed: {e}") from e
 
-
-            # 7. Save Output JSON
+            # 6. Save Output JSON
             # Create output filename based on the input requirements file
             output_filename = f"{requirements_md_path.stem}.json"  # change extension
 

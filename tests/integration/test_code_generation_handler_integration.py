@@ -11,10 +11,10 @@ from ai_whisperer.tools.write_file_tool import WriteFileTool
 from src.ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.agent_handlers.code_generation import handle_code_generation
 from src.ai_whisperer.state_management import StateManager
-from src.ai_whisperer.terminal_monitor.monitoring import TerminalMonitor
 from src.ai_whisperer.exceptions import TaskExecutionError
 from src.ai_whisperer.plan_parser import ParserPlan # Import ParserPlan
 from src.ai_whisperer.tools.tool_registry import ToolRegistry # Import ToolRegistry
+from src.ai_whisperer.prompt_system import PromptSystem # Import PromptSystem
 
 class TestCodeGenerationHandlerIntegration:
     """
@@ -26,10 +26,10 @@ class TestCodeGenerationHandlerIntegration:
         """Fixture to set up a mocked ExecutionEngine."""
         print("setup_engine fixture started")
         mock_state_manager = MagicMock(spec=StateManager)
-        mock_monitor = MagicMock(spec=TerminalMonitor)
         # Provide a basic config, including a dummy openrouter config if needed by the engine init
         mock_config = {"openrouter": {"api_key": "dummy_key", "model": "dummy_model"}}
-        engine = ExecutionEngine(mock_state_manager, mock_monitor, mock_config)
+        mock_prompt_system = MagicMock(spec=PromptSystem) # Create a mock PromptSystem
+        engine = ExecutionEngine(mock_state_manager, mock_config, mock_prompt_system) # Add mock_prompt_system
         print(f"ExecutionEngine created: {engine}")
         # Ensure the engine's agent_type_handlers includes the code_generation handler
         engine.agent_type_handlers['code_generation'] = lambda task_def: handle_code_generation(engine, task_def)
@@ -37,13 +37,13 @@ class TestCodeGenerationHandlerIntegration:
         print("setup_engine fixture finished")
         
 
-        return engine, mock_state_manager, mock_monitor
+        return engine, mock_state_manager
 
     def test_generate_new_file(self, setup_engine):
         """
         Tests the scenario where a code_generation task generates a new file.
         """
-        engine, mock_state_manager, mock_monitor = setup_engine
+        engine, mock_state_manager = setup_engine
 
         # Mock the OpenRouterAPI instance on the engine object
         mock_openrouter_api_instance = MagicMock()

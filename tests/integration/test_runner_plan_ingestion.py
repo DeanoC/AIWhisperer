@@ -22,6 +22,7 @@ from src.ai_whisperer.plan_parser import (
 # Import necessary components for schema directory handling
 from src.ai_whisperer.json_validator import set_schema_directory, get_schema_directory
 
+from src.ai_whisperer.path_management import PathManager
 
 # Placeholder for a Runner class (simplified for this test's focus on plan ingestion)
 class Runner:
@@ -110,6 +111,9 @@ def create_overview_plan_with_subtasks_for_runner(tmp_path: Path, request):
     schema_temp_dir = tmp_path / "schemas"
     schema_temp_dir.mkdir()
 
+    # Initialize PathManager
+    PathManager.get_instance().initialize()
+
     # Copy actual schema files to the temporary directory
     source_schema_dir = os.path.join(os.path.dirname(__file__), "../../src/ai_whisperer/schemas")
     shutil.copy(os.path.join(source_schema_dir, "subtask_plan_schema.json"), schema_temp_dir)
@@ -143,7 +147,7 @@ def create_overview_plan_with_subtasks_for_runner(tmp_path: Path, request):
         return str(overview_file_path)
 
     # Add a finalizer to reset the schema directory after the test
-    request.addfinalizer(lambda: set_schema_directory(original_schema_dir))
+    request.addfinalizer(lambda: (set_schema_directory(original_schema_dir), PathManager._reset_instance()))
 
     return _creator
 

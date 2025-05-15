@@ -61,7 +61,7 @@ openrouter:
 
 prompts:
   agent_type_defaults:
-    ai_assistance: "{agent_prompt_file_abs_path}" # Use absolute path for testing
+    ai_interaction: "{agent_prompt_file_abs_path}" # Use absolute path for testing
   global_runner_default_prompt_path: "prompts/global_runner_fallback_default.md"
 
 task_models:
@@ -315,14 +315,18 @@ def setup_temp_files():
         shutil.rmtree(TEMP_DIR)
 
 
-@patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI") # Patch the OpenRouterAPI in ai_service_interaction
+@patch("src.ai_whisperer.execution_engine.OpenRouterAPI") # Patch the OpenRouterAPI in execution_engine
 def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses agent-type default prompt and appends task instructions."""
     # Configure the mock instance returned by the mocked class
     mock_instance = MockOpenRouterAPI.return_value
 
-    # Mock the AI service response (non-streaming) on the mock instance
-    mock_instance.call_chat_completion.return_value = {"choices": [{"message": {"content": "Mocked AI response."}}]}
+    # Mock the AI service response (streaming) on the mock instance
+    mock_stream_response_data = [
+        {"choices": [{"delta": {"content": "Mocked AI response."}}]},
+        {"choices": [{"delta": {}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}},
+    ]
+    mock_instance.stream_chat_completion.return_value = iter(mock_stream_response_data)
 
     # Run the aiwhisperer with the temporary config and the AI interaction only plan
     commands = cli(
@@ -340,35 +344,33 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
     for command in commands:
         command.execute()
 
-    # Assert that call_chat_completion was called the correct number of times
-    # There are 2 AI interaction tasks in this plan that should call the AI
-    assert mock_instance.call_chat_completion.call_count == 2
+    # Assert that stream_chat_completion was called the correct number of times
+    assert mock_instance.stream_chat_completion.call_count == 2
 
-    # Assert that call_chat_completion was called with the correct prompts for each task
-    # Assert that call_chat_completion was called the correct number of times
-    assert mock_instance.call_chat_completion.call_count == 2
+    # The config loader puts the loaded prompt content into config["prompts"][agent_type]
+    # So we need to read the prompt content from the file, which is what the runner will use
+    with open(AGENT_PROMPT_FILE, "r", encoding="utf-8") as f:
+        expected_prompt_content = f.read()
 
-    # Assert that call_chat_completion was called with the correct prompts for each task
-    # Based on observed behavior, agent-specific prompt is used if available, ignoring subtask instructions
-    expected_prompts = [
-        AGENT_PROMPT_CONTENT,  # test_task_with_instructions
-        AGENT_PROMPT_CONTENT,  # test_task_no_instructions
-    ]
-
-    actual_calls = mock_instance.call_chat_completion.call_args_list
-    for i, expected_prompt in enumerate(expected_prompts):
+    actual_calls = mock_instance.stream_chat_completion.call_args_list
+    for i in range(2):
         actual_prompt_text_arg = actual_calls[i].kwargs.get("prompt_text")
-        assert actual_prompt_text_arg == expected_prompt
+        assert actual_prompt_text_arg == expected_prompt_content
 
 
-@patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI") # Patch the OpenRouterAPI in ai_service_interaction
+@patch("src.ai_whisperer.execution_engine.OpenRouterAPI") # Patch the OpenRouterAPI in execution_engine
 def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses global default prompt with embedded instructions when only instructions are present."""
     # Configure the mock instance returned by the mocked class
     mock_instance = MockOpenRouterAPI.return_value
 
-    # Mock the AI service response (non-streaming) on the mock instance
-    mock_instance.call_chat_completion.return_value = {"choices": [{"message": {"content": "Mocked AI response."}}]}
+
+    # Mock the AI service response (streaming) on the mock instance
+    mock_stream_response_data = [
+        {"choices": [{"delta": {"content": "Mocked AI response."}}]},
+        {"choices": [{"delta": {}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}},
+    ]
+    mock_instance.stream_chat_completion.return_value = iter(mock_stream_response_data)
 
     # Create a new config content without the agent-specific default for ai_interaction
     config_without_agent_default = CONFIG_CONTENT.replace(
@@ -416,9 +418,9 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
     for command in commands:
         command.execute()
 
-    # Assert that call_chat_completion was called with the correct prompt
-    # Based on observed behavior, agent-specific prompt is used even if config path is removed
-    mock_instance.call_chat_completion.assert_called_once_with(
+
+    # Assert that stream_chat_completion was called with the correct prompt
+    mock_instance.stream_chat_completion.assert_called_once_with(
         prompt_text=AGENT_PROMPT_CONTENT,
         model="gpt-3.5-turbo",  # Assuming default model is used
         params={},
@@ -430,12 +432,12 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
     instructions_only_overview_file.unlink()
 
 
-@patch("src.ai_whisperer.commands.TerminalMonitor")
 @patch("src.ai_whisperer.execution_engine.OpenRouterAPI")
-def test_runner_uses_global_default_only(MockTerminalMonitor, MockOpenRouterAPI, setup_temp_files):
+def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses global default prompt when no agent-type default and no instructions."""
     # Configure the mock instance returned by the mocked class
     mock_instance = MockOpenRouterAPI.return_value
+
 
     # Mock the AI service response (streaming) on the mock instance
     mock_stream_response_data = [
@@ -443,16 +445,7 @@ def test_runner_uses_global_default_only(MockTerminalMonitor, MockOpenRouterAPI,
         {"choices": [{"delta": {"content": " response."}}]},
         {"choices": [{"delta": {}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}},
     ]
-
-    def side_effect_iterator(*args, **kwargs):
-        print("DEBUG: stream_chat_completion called, returning iterator")
-        return iter(mock_stream_response_data)
-
-    mock_instance.stream_chat_completion.side_effect = side_effect_iterator
-
-    
-    # OR (alternative approach)
-    mock_instance.stream_chat_completion.__iter__.return_value = iter(mock_stream_response_data) # Explicitly mock __iter__
+    mock_instance.stream_chat_completion.return_value = iter(mock_stream_response_data)
 
     # Run the aiwhisperer with the temporary config and task
     # Create a new config content without the agent-specific default for ai_interaction

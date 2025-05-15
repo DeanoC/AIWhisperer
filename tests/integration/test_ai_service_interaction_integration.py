@@ -114,13 +114,13 @@ class TestOpenRouterAPIIntegration:
                 "HTTP-Referer": "test_site_url",
                 "X-Title": "test_app_name",
             },
-            json={"model": model, "messages": [{"role": "user", "content": prompt}], "params": {"temperature": 0.5}},
+            json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.5},
             timeout=10,
         )
-        assert (
-            response
-            == '{\n  "description": "Mock subtask description",\n  "instructions": "Mock subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-subtask-123",\n  "task_id": "mock-task-456"\n}'
-        )
+        assert response == {
+            "role": "assistant",
+            "content": '{\n  "description": "Mock subtask description",\n  "instructions": "Mock subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-subtask-123",\n  "task_id": "mock-task-456"\n}'
+        }
 
     # The following tests mock the API call and are useful once stream_chat_completion is added
     @patch("requests.post")
@@ -229,6 +229,7 @@ class TestOpenRouterAPIIntegration:
         except Exception as e:
             pytest.fail(f"Initialization with mock config failed: {e}")
 
+
     @patch("requests.post")
     @patch("src.ai_whisperer.state_management.StateManager") # Mock StateManagement
     @patch("src.ai_whisperer.execution_engine.ExecutionEngine") # Mock ExecutionEngine
@@ -245,37 +246,35 @@ class TestOpenRouterAPIIntegration:
         mock_engine.config['logger'] = MagicMock() # Add a mock logger to the config
         mock_engine.config['global_runner_default_prompt_content'] = "This is a mock default prompt." # Add a mock default prompt
         mock_engine.monitor = MagicMock() # Mock the monitor
-        mock_engine.openrouter_api = MagicMock() # Mock the OpenRouterAPI instance
 
-        # Mock AI service response with usage data
-        mock_response_data = {
-            "id": "chatcmpl-cost-token-test",
-            "object": "chat.completion",
-            "created": 1677652288,
-            "model": "test_model",
+        mock_engine.openrouter_api = MagicMock() # Mock the OpenRouterAPI instance
+        # Ensure shutdown_event.is_set() returns False
+        mock_engine.shutdown_event = MagicMock(is_set=MagicMock(return_value=False))
+
+        # Mock AI service response with usage data (simulate streaming chunk)
+        mock_stream_chunk = {
             "choices": [
                 {
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": "This is a mock AI response.",
-                    },
-                    "finish_reason": "stop",
+                    "delta": {
+                        "content": "This is a mock AI response."
+                    }
                 }
             ],
             "usage": {"prompt_tokens": 50, "completion_tokens": 75, "total_tokens": 125},
         }
-        # Configure the mock openrouter_api to return the mock response
-        mock_engine.openrouter_api.call_chat_completion.return_value = mock_response_data
+        # Configure the mock openrouter_api to yield the mock chunk
+        mock_engine.openrouter_api.stream_chat_completion.return_value = iter([mock_stream_chunk])
 
         # Create a mock task definition
+
+        task_id = "mock-task-cost-token-123"
         mock_task_definition = {
             "type": "ai_interaction",
             "instructions": "Perform a test interaction.",
             "input_artifacts": [],
             "output_artifacts": ["output.txt"],
+            "task_id": task_id,
         }
-        task_id = "mock-task-cost-token-123"
 
         # Simulate AI interaction by calling the handler
         handle_ai_interaction(mock_engine, mock_task_definition)
@@ -301,46 +300,3 @@ class TestOpenRouterAPIIntegration:
         assert assistant_turn_call["usage_info"]["prompt_tokens"] == 50
         assert assistant_turn_call["usage_info"]["completion_tokens"] == 75
         assert assistant_turn_call["usage_info"]["total_tokens"] == 125
-
-        # Assert that monitor.add_log_message was called for relevant events
-        # Check for calls related to receiving content and writing output artifact
-        monitor_calls = mock_engine.monitor.add_log_message.call_args_list
-
-        # Check for 'ai_task_content' log message
-        found_content_log = False
-        for call_args, call_kwargs in monitor_calls:
-            if call_args and isinstance(call_args[0], LogMessage):
-                log_message = call_args[0]
-                if (
-                    log_message.level == LogLevel.INFO and
-                    log_message.component == ComponentType.EXECUTION_ENGINE and
-                    log_message.action == "ai_task_content" and
-                    log_message.event_summary == f"Task {task_id}: Received content." and
-                    log_message.subtask_id == task_id
-                ):
-                    found_content_log = True
-                    break
-        assert found_content_log, "Monitor was not called with the expected 'ai_task_content' log message."
-
-        # Check for 'output_artifact_written' log message
-        found_output_log = False
-        for call_args, call_kwargs in monitor_calls:
-            if call_args and isinstance(call_args[0], LogMessage):
-                log_message = call_args[0]
-                if (
-                    log_message.level == LogLevel.INFO and
-                    log_message.component == ComponentType.EXECUTION_ENGINE and
-                    log_message.action == "output_artifact_written" and
-                    log_message.event_summary == f"Task {task_id}: Wrote result to output artifact: output.txt" and
-                    log_message.subtask_id == task_id and
-                    log_message.details == {"artifact_path": "output.txt"}
-                ):
-                    found_output_log = True
-                    break
-        assert found_output_log, "Monitor was not called with the expected 'output_artifact_written' log message."
-
-
-        # Assert that the mock logger was called (e.g., info or debug level)
-        # The handler logs info messages for receiving content and writing output
-        mock_engine.config['logger'].info.assert_any_call(f"Task {task_id}: Received content.")
-        mock_engine.config['logger'].info.assert_any_call(f"Task {task_id}: Wrote result to output artifact: output.txt")

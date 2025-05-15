@@ -145,4 +145,6 @@ class SubtaskGenerationError(AIWhispererError):
 class SchemaValidationError(AIWhispererError):
     """Exception raised when generated data fails schema validation."""
 
+class PromptNotFoundError(AIWhispererError):
+    """Exception raised when a prompt is not found in the resolution hierarchy."""
     pass

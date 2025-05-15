@@ -20,7 +20,6 @@ class ComponentType(Enum):
     EXECUTION_ENGINE = "execution_engine"  # Orchestration and execution of plan steps.
     AI_SERVICE = "ai_service"  # Interactions with AI models (e.g., OpenAI, local LLMs).
     FILE_OPERATIONS = "file_operations"  # Reading, writing, or modifying files.
-    TERMINAL_INTERACTION = "terminal_interaction"  # Executing shell commands.
     STATE_MANAGEMENT = "state_management"  # Changes to the runner's internal state.
     USER_INTERACTION = "user_interaction"  # Actions initiated directly by the user (pause, cancel, etc.).
     MONITOR = "monitor" # Terminal monitor display updates.

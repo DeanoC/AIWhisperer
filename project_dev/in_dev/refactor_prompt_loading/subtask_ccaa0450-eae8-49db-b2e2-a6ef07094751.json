@@ -1,0 +1,39 @@
+{
+  "description": "Update existing code to use the new prompt system for accessing prompts.",
+  "instructions": [
+    "Import the `PromptSystem` class from `src.ai_whisperer.prompt_system` into `src/ai_whisperer/ai_service_interaction.py` and `src/ai_whisperer/subtask_generator.py`.",
+    "Identify all instances in `src/ai_whisperer/ai_service_interaction.py` where prompts are loaded or accessed directly (e.g., reading from the `prompts` directory).",
+    "Replace these direct accesses with calls to a `PromptSystem` instance, using the appropriate section and prompt keys.",
+    "Identify all instances in `src/ai_whisperer/subtask_generator.py` where prompts are loaded or accessed directly.",
+    "Replace these direct accesses with calls to a `PromptSystem` instance, using the appropriate section and prompt keys.",
+    "Ensure that the `PromptSystem` is initialized correctly, potentially passing the path to the prompts directory if needed.",
+    "Verify that the application starts and runs without errors related to prompt loading or access.",
+    "Manually test key functionalities in `ai_service_interaction.py` and `subtask_generator.py` that rely on prompts to ensure they behave as expected."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/ai_service_interaction.py",
+    "src/ai_whisperer/subtask_generator.py",
+    "src/ai_whisperer/prompt_system.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/ai_service_interaction.py",
+    "src/ai_whisperer/subtask_generator.py"
+  ],
+  "constraints": [
+    "Only modify the specified files (`ai_service_interaction.py` and `subtask_generator.py`).",
+    "Do not introduce new dependencies or complex logic beyond integrating the `PromptSystem`."
+  ],
+  "validation_criteria": [
+    "All direct prompt access points in `src/ai_whisperer/ai_service_interaction.py` are replaced with `PromptSystem` calls.",
+    "All direct prompt access points in `src/ai_whisperer/subtask_generator.py` are replaced with `PromptSystem` calls.",
+    "The application successfully initializes and runs without errors related to prompt handling.",
+    "Core functionalities within `ai_service_interaction.py` and `subtask_generator.py` that utilize prompts continue to work correctly."
+  ],
+  "type": "file_edit",
+  "name": "update_prompt_usage",
+  "depends_on": [
+    "implement_prompt_system"
+  ],
+  "task_id": "3b2255a4-04a0-439a-a4da-4f2d8cec22b2",
+  "subtask_id": "ccaa0450-eae8-49db-b2e2-a6ef07094751"
+}

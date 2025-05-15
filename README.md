@@ -1,44 +1,36 @@
 # AI Whisperer
 
-AI Whisperer is a Python command-line tool that takes your project requirements written in Markdown and uses an AI model (via OpenRouter) to generate structured task definitions in YAML format.
+AI Whisperer is a Python command-line tool that takes your project requirements written in Markdown and uses an AI model (via OpenRouter) to generate an initial structured task definitions in json format.
+
+It is designed for code development and project management, allowing you to define tasks based on requirements, refine them, and generate an overview plan with subtasks. The tool can be used to automate the planning and execution of tasks, enhancing productivity and clarity in software development.
+
+It can then refine these plans, and generate an overview plan with
+separate subtasks for each task, which can be executed in a controlled manner either via IDE or CLI based AI systems.
+
+It has an experimental 'runner' that can execute these plans, managing state and artifacts, and providing a real-time terminal monitor for plan execution. Eventually this should be more focused
+than the more general tools like [roocode] but its thats a long way away off.
+
+It is designed to help automate the process of planning and executing tasks based on requirements, leveraging AI to enhance productivity and clarity.
 
 ## Features
 
-* Parses command-line arguments for requirements file, configuration file, and output file.
-* Loads configuration (API keys, model details, prompts) from a YAML file.
-* Reads requirements from a specified Markdown file.
-* Formats a prompt using a template from the configuration.
-* Interacts with the OpenRouter API to get AI model completions.
-* Processes the API response (expecting YAML) and saves it to a file.
-* Uses `rich` for colored console output and basic logging.
-* Includes custom exceptions for error handling.
+* Reads requirements and features from a Markdown file.
+* Uses OpenRouter API to get AIs to do work.
+* Generates structured task definitions in JSON format.
+* Supports refinement of plans and tasks using AI.
+* Generates an overview plan with subtasks for each task.
+* Executes plans with a runner that manages state and artifacts.
+* Provides a real-time terminal monitor for plan execution.
 * Developed using TDD with `pytest`.
 * Postprocessing pipeline for enhancing AI-generated content:
   * Clean backtick wrappers from YAML content
   * Add required items (task_id, input_hashes, subtask_id) automatically
   * More postprocessing steps can be added as needed
-* **New:** Refine requirement documents using AI to improve clarity and completeness.
-
-* **Improved Terminal Monitor:** A redesigned real-time terminal monitor display featuring three segmented, ASCII-outlined sections, colored output for event types, pretty-printed and syntax-highlighted JSON for monitor events, and suppression of non-monitor output for a cleaner view of plan execution.
-
-## Demonstrating Core Functionality: The Simple Country Test
-
-The enhanced AIWhisperer runner is capable of executing complex plans that involve real-time interactions with AI services. The `simple_country_test` serves as a key integration test designed to showcase and validate this core functionality.
-
-This test confirms the runner's ability to:
-
-* Orchestrate a sequence of diverse tasks, including planning, AI queries, and validation steps.
-* Successfully interact with an AI service (OpenRouter) to obtain dynamic responses.
-* Manage and pass data (as artifacts) between different tasks in the plan.
-* Maintain conversation history across multiple AI interactions to ensure context awareness.
-* Execute validation logic based on the outputs received from the AI.
-
-The high-level flow of the `simple_country_test` involves: selecting a landmark, asking the AI for its country, validating the country, asking the AI for the capital, validating the capital, asking the AI if the landmark is in the capital, and finally validating this fact. The successful execution of this test demonstrates the runner's readiness for more complex automated workflows involving AI.
 
 ## Project development
 
 The project_dev folder is used to track new features (rfc), done feature(done) and in progress (in_progress).
-This structure is delibrately structured to assist AI in the development process.
+This structure is deliberately structured to assist AI in the development process.
 
 AI Whisperer is a dog food tool, almost (so far all!) features and improvements go through its own system. This both improves and identifies issues and provides the benefits of controlled AI development process.
 
@@ -88,45 +80,96 @@ AI Whisperer is a dog food tool, almost (so far all!) features and improvements 
      params:
        temperature: 0.7
        # max_tokens: 1000 # Optional: Add other API parameters here
-
-   prompts:
-     task_generation: |
-       Analyze the following requirements provided in Markdown format.
-       Generate a list of tasks in YAML format based on these requirements.
-       Each task should have a 'task' name and a 'description'.
-
-       Requirements:
-       ```markdown
-       {md_content}
-       ```
-
-       YAML Output:
    ```
 
-### Task-Specific Model Configuration
+### Path Management System
 
-AI Whisperer now supports configuring different AI models for different tasks. This allows you to optimize performance and cost by selecting the most suitable model for each task type.
+AI Whisperer uses a flexible path management system, implemented in `src/ai_whisperer/path_management.py`, to resolve all important directories and file locations. These paths are available throughout the program and can be referenced in configuration or code:
 
-To configure task-specific models, add a `task_models` section to your `config.yaml`:
+* `{app_path}`: The root of the AI Whisperer codebase (for built-in resources).
+* `{project_path}`: The root of your current project (typically your working directory).
+* `{output_path}`: Where generated outputs are written (defaults to `{project_path}/output`).
+* `{workspace_path}`: The workspace root (defaults to `{project_path}`).
+* `{prompt_path}`: The base directory for prompt files (defaults to `{project_path}`, but can be overridden).
 
-```yaml
-# --- Task-Specific Model Settings ---
-task_models:
-  "Subtask Generation":
-    provider: "openrouter"
-    model: "anthropic/claude-3-opus"
-    params:
-      temperature: 0.5
-      max_tokens: 4096
-  "Orchestrator":
-    provider: "openrouter"
-    model: "mistralai/mistral-large"
-    params:
-      temperature: 0.8
-      max_tokens: 8192
+These variables are resolved at runtime by the `PathManager` and can be used in config values or anywhere a path template is accepted.
+
+### Prompt System
+
+AI Whisperer uses a robust prompt system, implemented in `src/ai_whisperer/prompt_system.py`. Prompts are always loaded from files, never inlined in the config. The system supports flexible prompt file resolution for project and codebase organization.
+
+#### Supported Prompt Sources
+
+* **Prompt Files Only:** Prompts must be stored as files in specific directories. Inlining prompt templates directly in the config is not supported.
+
+#### Prompt Resolution Order
+
+When a prompt is requested, the system resolves it using the following order:
+
+1. **Prompt File Override:** If you specify `--prompt-file <file>`, that file is used directly.
+2. **Prompt File Hierarchy:** If not overridden, the system searches for a prompt file using the following path hierarchy (see below).
+3. **Built-in Default:** If no prompt is found, a built-in default is used that is located in the codebase.
+
+#### Prompt Path Hierarchy
+
+Prompt files are resolved using the following five path types, as managed by `PathManager`:
+
+1. **app_path**: The root of the AI Whisperer codebase (e.g., for built-in prompts).
+2. **project_path**: The root of your current project (typically your working directory).
+3. **output_path**: Where generated outputs are written (defaults to `{project_path}/output`).
+4. **workspace_path**: The workspace root (defaults to `{project_path}`).
+5. **prompt_path**: The base directory for prompt files (defaults to `{project_path}`, but can be overridden).
+
+Prompt files are typically organized under `prompts/core/` or `prompts/agents/` within these paths. The system will look for prompts in the following order:
+
+* Project-specific custom prompts (e.g., `{prompt_path}/prompts/custom/{category}/{name}.prompt.md`)
+* Project-specific agent or core prompts (e.g., `{prompt_path}/prompts/agents/` or `{prompt_path}/prompts/core/`)
+* Codebase (app) agent or core prompts (e.g., `{app_path}/prompts/agents/` or `{app_path}/prompts/core/`)
+
+#### Current Core prompts
+
+* `initial_plan.prompt.md`: Generates a initial plan from requirements.  
+* `refine_requirements.prompt.md`: Generates a refined plan from an initial plan.  
+* `subtask_generator_plan.prompt.md`: Generates a subtask plan from an initial plan.  
+
+#### Current Agents prompts
+
+* `code_generation.prompt.md`: Used for generating code from a task definition.
+* `default.prompt.md`: Used for other agents without specific prompts.
+
+#### Example: Prompt File Organization
+
+You can place a prompt file at:
+
+```text
+{project_path}/prompts/custom/core/task_generation.prompt.md
 ```
 
-If a task-specific model is not defined, the system will fall back to the default model configuration in the `openrouter` section.
+or
+
+```text
+{project_path}/prompts/core/task_generation.prompt.md
+```
+
+or rely on the built-in prompt at:
+
+```text
+{app_path}/prompts/core/task_generation.prompt.md
+```
+
+#### Prompt Placeholders
+
+Prompts can use placeholders that are replaced at runtime:
+
+* `{md_content}`: Contents of the requirements Markdown file.
+* `{step_content}`: Contents of a step definition file.
+* `{context}`: Additional context, if provided by the command.
+
+#### Prompt Fallback Order (Summary)
+
+1. `--prompt-file` (highest priority)
+2. Prompt file in project or codebase (see path hierarchy above)
+3. Built-in default prompt (lowest priority)
 
 See [Configuration Examples](docs/config_examples.md) for more detailed examples and options.
 
@@ -144,24 +187,16 @@ python -m src.ai_whisperer.main list-models --config .\project_dev\aiwhisperer_c
 
 ```bash
 # Assuming you have requirements.md in the root
-python -m src.ai_whisperer.main --requirements requirements.md --config config.yaml --output generated_tasks.yaml
+python -m src.ai_whisperer.main --config config.yaml generate initial-plan requirements.md
 ```
 
 This will read `requirements.md`, use the settings in `config.yaml`, call the OpenRouter API, and save the resulting task list to `generated_tasks.yaml`.
 
-* **`--list-models`**: Displays a list of available models from the OpenRouter API. Requires the `--config` argument to be specified as well.
+* **`list-models`**: Displays a list of available models from the OpenRouter API. Requires the `--config` argument to be specified as well.
 
     ```bash
     python -m src.ai_whisperer.main --list-models --config config.yaml
     ```
-
-* **`--generate-subtask`**: Generates a detailed task implementation YAML from a step definition file. Requires both `--config` and `--step` arguments.
-
-    ```bash
-    python -m src.ai_whisperer.main --generate-subtask --config config.yaml --step path/to/step.yaml
-    ```
-
-    This will process the step definition from `step.yaml`, refine it into a detailed implementation plan, and save the result to a file in the output directory.
 
 * **`refine`**: Refines an existing requirement document using an AI model.
 
@@ -222,4 +257,3 @@ It is also your responsibility to ensure the overview document step completed fi
 
 Are you ready?
 ```
-

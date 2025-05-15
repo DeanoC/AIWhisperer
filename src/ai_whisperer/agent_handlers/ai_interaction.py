@@ -6,9 +6,11 @@ import traceback
 from pathlib import Path
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
+from ai_whisperer.execution_engine import ExecutionEngine
 from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 from src.ai_whisperer.exceptions import TaskExecutionError, OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError
 from src.ai_whisperer.utils import build_ascii_directory_tree # Ensure this is imported
+from src.ai_whisperer import PromptSystem # Import PromptSystem
 
 # Assuming logger is defined at the module level in the original file
 import logging
@@ -16,8 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 def handle_ai_interaction(
-    engine, 
-    task_definition
+        engine: ExecutionEngine,
+        task_definition: dict,
+        prompt_system: PromptSystem # Accept PromptSystem instance
 ) -> dict:
     """
     Handle an AI interaction task.
@@ -59,6 +62,7 @@ def handle_ai_interaction(
         input_artifacts = task_definition.get("input_artifacts", [])
         artifact_contents = {}
         prompt_context = ""
+
         try: # Inner try block for artifact reading
             for artifact in input_artifacts:
                 artifact_path = Path(artifact).resolve()
@@ -101,48 +105,61 @@ def handle_ai_interaction(
             raise TaskExecutionError(error_message) from e
 
 
+
         agent_type = task_definition.get("type")
         instructions = task_definition.get("instructions", "")
-        selected_prompt = None
-        agent_type_prompt = self.config.get("runner_agent_type_prompts_content", {}).get(agent_type)
-        if agent_type_prompt is not None:
-            agent_type_prompt = agent_type_prompt.strip()
-        # Use the module-level logger
-        logger.debug(f"Task {task_id}: agent_type_prompt value: '{agent_type_prompt}', type: {type(agent_type_prompt)}")
-        if agent_type_prompt and instructions:
-            selected_prompt = agent_type_prompt + "\n\n" + instructions
-        elif agent_type_prompt:
-            selected_prompt = agent_type_prompt
-        elif instructions and self.config.get("global_runner_default_prompt_content"):
-            global_default_prompt = self.config["global_runner_default_prompt_content"]
-            selected_prompt = global_default_prompt + "\n\n" + "\n\n".join(instructions)
-        elif self.config.get("global_runner_default_prompt_content"):
-            selected_prompt = self.config["global_runner_default_prompt_content"]
-        else:
-            error_message = (
-                f"No suitable prompt found for AI interaction task {task_id} (agent type: {agent_type})."
+        raw_subtask_text = task_definition.get("raw_text", "") # Get raw subtask text
+
+        logger.info(f"Task {task_id}: Constructing prompt for agent type: {agent_type}")
+
+        try:
+            # Use PromptSystem to get the formatted prompt
+            # Assuming agent_type maps directly to prompt name in 'agents' category
+            prompt = prompt_system.get_formatted_prompt(
+                "agents",
+                agent_type,
+                include_tools=True, # Include tool instructions
+                instructions=instructions,
+                prompt_context=prompt_context,
+                raw_subtask_text=raw_subtask_text
             )
-            # Use the module-level logger
-            logger.error(error_message)
+            logger.info(f"Task {task_id}: Final constructed prompt (length: {len(prompt)} chars)")
             log_event(
                 log_message=LogMessage(
-                    LogLevel.ERROR,
-                    ComponentType.EXECUTION_ENGINE,
-                    "no_prompt_found",
-                    error_message,
-                    subtask_id=task_id,
+                    LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_task_final_prompt",
+                    f"Final prompt for task {task_id} (length: {len(prompt)} chars)", subtask_id=task_id
                 )
             )
-            raise TaskExecutionError(error_message)
 
-        if prompt_context and selected_prompt:
-            selected_prompt += "\n\n" + "## PROMPT CONTEXT " + prompt_context.strip()
-        prompt = selected_prompt
-        raw_subtask_text = task_definition.get("raw_text", "")
-        if raw_subtask_text:
-            prompt += "\n\n" + "## RAW SUBTASK TEXT\n" + raw_subtask_text
-        # Use the module-level logger
-        logger.info(f"Task {task_id}: Final constructed prompt: {prompt}")
+        except prompt_system.PromptNotFoundError as e:
+             error_message = f"Prompt not found for agent type '{agent_type}' for task {task_id}: {e}"
+             logger.error(error_message)
+             log_event(
+                 log_message=LogMessage(
+                     LogLevel.ERROR,
+                     ComponentType.EXECUTION_ENGINE,
+                     "ai_task_prompt_not_found",
+                     error_message,
+                     subtask_id=task_id,
+                     details={"agent_type": agent_type, "error": str(e)},
+                 )
+             )
+             raise TaskExecutionError(error_message) from e
+        except Exception as e:
+             error_message = f"An unexpected error occurred while constructing prompt for task {task_id}: {e}"
+             logger.exception(error_message)
+             log_event(
+                 log_message=LogMessage(
+                     LogLevel.CRITICAL,
+                     ComponentType.EXECUTION_ENGINE,
+                     "ai_task_prompt_construction_error",
+                     error_message,
+                     subtask_id=task_id,
+                     details={"agent_type": agent_type, "error": str(e), "traceback": traceback.format_exc()},
+                 )
+             )
+             raise TaskExecutionError(error_message) from e
+
 
         messages_history = self._collect_ai_history(task_id)
         # Use the module-level logger
@@ -203,8 +220,11 @@ def handle_ai_interaction(
 
 
             # After the stream finishes, process the full response
+
+            # Always return a dict for consistency
+            result_dict = {}
             if tool_calls:
-                result = {"tool_calls": tool_calls}
+                result_dict["tool_calls"] = tool_calls
                 # Use the module-level logger
                 logger.info(f"Task {task_id}: Received tool calls from stream.")
                 log_event(
@@ -216,8 +236,8 @@ def handle_ai_interaction(
                         subtask_id=task_id,
                     )
                 )
-            elif full_response_content:
-                result = full_response_content
+            if full_response_content:
+                result_dict["content"] = full_response_content
                 # Use the module-level logger
                 logger.info(f"Task {task_id}: Received content from stream.")
                 log_event(
@@ -229,7 +249,7 @@ def handle_ai_interaction(
                         subtask_id=task_id,
                     )
                 )
-            else:
+            if not result_dict:
                 error_message = f"AI interaction task {task_id} received empty or unexpected streamed response."
                 # Use the module-level logger
                 logger.error(error_message)
@@ -257,17 +277,16 @@ def handle_ai_interaction(
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
 
-            if isinstance(result, str):
-                assistant_turn["content"] = result
-            elif isinstance(result, dict) and result.get("tool_calls"):
-                assistant_turn["tool_calls"] = result["tool_calls"]
+            if "content" in result_dict:
+                assistant_turn["content"] = result_dict["content"]
+            if "tool_calls" in result_dict:
+                assistant_turn["tool_calls"] = result_dict["tool_calls"]
 
             # Add usage_info if captured
             if usage_info:
                  assistant_turn["usage_info"] = usage_info
 
             self.state_manager.store_conversation_turn(task_id, assistant_turn)
-
 
             # Handle output artifacts (write the final result)
             output_artifacts_spec = task_definition.get("output_artifacts", [])
@@ -277,16 +296,16 @@ def handle_ai_interaction(
                 try: # Try block for writing output artifact
                     output_artifact_path.parent.mkdir(parents=True, exist_ok=True)
                     with open(output_artifact_path, "w", encoding="utf-8") as f:
-                        if isinstance(result, str):
-                            f.write(result)
-                        elif isinstance(result, dict):
-                            json.dump(result, f, indent=4)
+                        if "content" in result_dict:
+                            f.write(result_dict["content"])
+                        elif "tool_calls" in result_dict:
+                            json.dump(result_dict["tool_calls"], f, indent=4)
                         else:
                             # Use the module-level logger
                             logger.warning(
-                                f"Task {task_id}: Unexpected result type for output artifact: {type(result)}. Writing string representation."
+                                f"Task {task_id}: Unexpected result type for output artifact: {type(result_dict)}. Writing string representation."
                             )
-                            f.write(str(result))
+                            f.write(str(result_dict))
                     # Use the module-level logger
                     logger.info(f"Task {task_id}: Wrote result to output artifact: {output_artifact_path_str}")
                     log_event(
@@ -316,10 +335,7 @@ def handle_ai_interaction(
                         )
                     )
                     raise TaskExecutionError(error_message) from e
-            assert isinstance(result, dict), (
-                f"Unexpected result type for task {task_id}: {type(result)}. Expected dict."
-            )
-            return result # Return the processed result
+            return result_dict # Always return a dict
 
         except (OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError) as e:
             error_message = f"AI interaction task {task_id} failed due to AI service error: {e}"

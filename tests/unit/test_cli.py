@@ -1,7 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import sys
-import os
 
 # Import the main function and command classes
 from ai_whisperer.cli import cli

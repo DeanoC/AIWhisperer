@@ -18,6 +18,7 @@ class PathManager:
         self._project_path = None
         self._output_path = None
         self._workspace_path = None
+        self._prompt_path = None
         self._initialized = False # Use a flag to track initialization state
 
     @classmethod
@@ -34,6 +35,7 @@ class PathManager:
             cls._instance._project_path = None
             cls._instance._output_path = None
             cls._instance._workspace_path = None
+            cls._instance._prompt_path = None            
             cls._instance._initialized = False
         cls._instance = None
         cls._initialized = False
@@ -50,6 +52,8 @@ class PathManager:
             self._output_path = config_values['output_path']
         if 'workspace_path' in config_values and config_values['workspace_path'] is not None:
             self._workspace_path = config_values['workspace_path']
+        if 'prompt_path' in config_values and config_values['prompt_path'] is not None:
+            self._prompt_path = config_values['prompt_path']
 
         # 2. Apply CLI arguments (override config)
         if 'project_path' in cli_args and cli_args['project_path'] is not None:
@@ -58,6 +62,8 @@ class PathManager:
             self._output_path = cli_args['output_path']
         if 'workspace_path' in cli_args and cli_args['workspace_path'] is not None:
             self._workspace_path = cli_args['workspace_path']
+        if 'prompt_path' in cli_args and cli_args['prompt_path'] is not None:
+            self._prompt_path = cli_args['prompt_path']
 
         # 3. Apply defaults if not set by config or CLI
         if self._project_path is None:
@@ -66,13 +72,22 @@ class PathManager:
              self._output_path = os.path.join(self._project_path, "output") # Default output path
         if self._workspace_path is None and self._project_path is not None:
              self._workspace_path = self._project_path # Default workspace path
+        if self._prompt_path is None and self._project_path is not None:
+             self._prompt_path = self._project_path # Default prompt path
 
         self._project_path = Path(self._project_path).resolve()
         self._output_path = Path(self._output_path).resolve()
         self._workspace_path = Path(self._workspace_path).resolve()
-        self._app_path = Path(__file__).parent.parent.resolve() # Assuming this file is in src/ai_whisperer
+        self._prompt_path = Path(self._prompt_path).resolve()
+        # Set _app_path to the project root (where README.md is located)
+        self._app_path = Path(__file__).parent.parent.parent.resolve()  # Go up three levels from src/ai_whisperer
 
         self._initialized = True
+    @property
+    def prompt_path(self):
+        if not self._initialized:
+            raise RuntimeError("PathManager not initialized.")
+        return self._prompt_path
 
     @property
     def app_path(self):
@@ -100,12 +115,13 @@ class PathManager:
 
     def resolve_path(self, template_string):
         if not self._initialized:
-             raise RuntimeError("PathManager not initialized.")
+            raise RuntimeError("PathManager not initialized.")
 
         resolved = template_string
         resolved = resolved.replace("{app_path}", str(self._app_path if self._app_path is not None else ""))
         resolved = resolved.replace("{project_path}", str(self._project_path if self._project_path is not None else ""))
         resolved = resolved.replace("{output_path}", str(self._output_path if self._output_path is not None else ""))
         resolved = resolved.replace("{workspace_path}", str(self._workspace_path if self._workspace_path is not None else ""))
+        resolved = resolved.replace("{prompt_path}", str(self._prompt_path if self._prompt_path is not None else ""))
 
         return resolved

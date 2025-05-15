@@ -1,0 +1,81 @@
+{
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Unique identifier for the overall task (e.g., UUID)"
+    },
+    "natural_language_goal": {
+      "type": "string",
+      "description": "The original, high-level user request"
+    },
+    "input_hashes": {
+      "type": "object",
+      "properties": {
+        "requirements_md": { "type": "string" },
+        "config_yaml": { "type": "string" }
+      },
+      "required": ["requirements_md", "config_yaml"],
+      "description": "SHA-256 hashes of the input files used for generation.",
+      "additionalProperties": false
+    },
+    "plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subtask_id": {
+            "type": "string",
+            "description": "Unique identifier for this step within the task"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of this step within the task"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the step's purpose"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of subtask_ids that must be completed before this step"
+          },
+          "type": {
+            "type": "string",
+            "description": "Categorizes the step type (e.g., 'planning', 'code_generation')"
+          },
+          "input_artifacts": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of required input file paths or data identifiers"
+          },
+          "output_artifacts": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of expected output file paths or data identifiers"
+          },
+          "instructions": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Detailed instructions for the AI agent executing this step"
+          },
+          "constraints": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Specific rules or conditions the output must satisfy"
+          },
+          "validation_criteria": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Conditions to check for successful completion"
+          }
+        },
+        "required": ["subtask_id", "description", "type", "instructions", "depends_on", "input_artifacts", "output_artifacts", "constraints", "validation_criteria"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["task_id", "natural_language_goal", "input_hashes", "plan"],
+  "additionalProperties": false
+}

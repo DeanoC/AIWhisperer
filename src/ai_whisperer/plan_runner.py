@@ -24,7 +24,6 @@ from .logging_custom import (
     ComponentType,
     log_event,
 )
-from .terminal_monitor.monitoring import TerminalMonitor
 
 logger = logging.getLogger(__name__)
 logger.propagate = False
@@ -33,7 +32,7 @@ class PlanRunner:
     """
     Executes a project plan from a parsed plan object.
     """
-    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False, monitor_instance: Optional[TerminalMonitor] = None):
+    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False):
         """
         Initializes the PlanRunner with application configuration.
 
@@ -43,7 +42,6 @@ class PlanRunner:
         self.config = config
         self.shutdown_event = shutdown_event # Store the shutdown event
         self.monitor_enabled = monitor # Store the monitor flag
-        self.monitor_instance = monitor_instance # Store the monitor instance
         self._register_tools()
         logger.info("PlanRunner initialized.")
 
@@ -142,32 +140,15 @@ class PlanRunner:
 
         # Initialize Execution Engine
         # Use the provided monitor instance if available, otherwise create a new one
-        # Pass config_path to TerminalMonitor as required by its constructor
         config_path = self.config.get('config_path') if isinstance(self.config, dict) and 'config_path' in self.config else None
-        if self.monitor_instance:
-            monitor = self.monitor_instance
-        else:
-            if config_path is None:
-                raise ValueError("config_path must be provided in config for TerminalMonitor.")
-            monitor = TerminalMonitor(state_manager, config_path, monitor_enabled=self.monitor_enabled)
         # Pass the shutdown event to the ExecutionEngine
-        execution_engine = ExecutionEngine(state_manager, monitor, self.config, self.shutdown_event)
+        execution_engine = ExecutionEngine(state_manager, self.config, self.shutdown_event)
         logger.info("Execution Engine initialized.")
         log_event(
             LogMessage(
                 LogLevel.INFO, ComponentType.RUNNER, "execution_engine_initialized", "Execution Engine initialized."
             )
         )
-
-        # Conditionally start the monitor thread
-        if self.monitor_enabled:
-            logger.info("Starting terminal monitor thread.")
-            monitor_thread = threading.Thread(target=monitor.run, daemon=True)
-            monitor_thread.start()
-            log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "monitor_thread_started", "Terminal monitor thread started."))
-        else:
-            logger.info("Terminal monitor is disabled.")
-            log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "monitor_disabled", "Terminal monitor is disabled."))
 
         # Execute the plan
         plan_successful = True  # Flag to track overall plan success

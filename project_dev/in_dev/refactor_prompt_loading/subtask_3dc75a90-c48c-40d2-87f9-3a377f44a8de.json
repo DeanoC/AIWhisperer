@@ -1,0 +1,53 @@
+{
+  "description": "Create unit and integration tests for the new prompt loading system based on the design.",
+  "instructions": [
+    "Review the prompt system design document (docs/prompt_system_design.md) to fully understand the intended behavior, including configuration structure, override rules (user config, section defaults, app defaults), file path overrides, and lazy loading.",
+    "Create the unit test file at tests/unit/test_prompt_system.py.",
+    "Inside tests/unit/test_prompt_system.py, write unit tests focusing on the `PromptSystem` or equivalent class responsible for prompt access.",
+    "Implement unit tests to verify the following scenarios:",
+    "- Successfully loading a prompt using a section key and prompt key from a simulated configuration.",
+    "- Verifying that a user-specific override in the configuration takes precedence over other sources.",
+    "- Testing that a section default is used when a specific prompt key is not found in that section.",
+    "- Confirming that the application default is used when no specific prompt, user override, or section default is found.",
+    "- Creating tests that simulate configuration entries specifying a file path override and verifying the content is loaded from that file.",
+    "- Designing tests to confirm that prompt content is not loaded until the `get_prompt` method (or equivalent) is called, demonstrating lazy loading.",
+    "- Writing tests to ensure an appropriate error (e.g., `PromptNotFoundError`) is raised when a requested prompt cannot be found through any fallback mechanism and no default is specified.",
+    "Create the integration test file at tests/integration/test_prompt_loading_integration.py.",
+    "Inside tests/integration/test_prompt_loading_integration.py, set up dummy configuration files (e.g., YAML) and dummy prompt files (e.g., Markdown or text files) to simulate a realistic project structure.",
+    "Implement integration tests that instantiate the prompt loading system and use the dummy files.",
+    "Write integration tests to verify the end-to-end prompt loading process, covering:",
+    "- Loading prompts with various combinations of configuration settings (with and without overrides, section defaults, app defaults).",
+    "- Testing the correct loading of content when file path overrides are used.",
+    "- Ensuring the priority of overrides (user > section > app > file) is correctly applied in a realistic simulation.",
+    "Ensure all tests are written using a standard Python testing framework (e.g., pytest).",
+    "Add necessary test fixtures or setup code to create and clean up dummy files and configurations for integration tests.",
+    "Run the tests locally to ensure they pass when the prompt loading system is implemented correctly and fail otherwise.",
+    "Commit the new test files to the repository."
+  ],
+  "input_artifacts": [
+    "docs/prompt_system_design.md"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_prompt_system.py",
+    "tests/integration/test_prompt_loading_integration.py"
+  ],
+  "constraints": [
+    "Tests must adhere to the testing framework used in the project (likely pytest).",
+    "Integration tests should use isolated dummy files and configurations to avoid interfering with actual project settings.",
+    "Unit tests should mock dependencies where necessary to isolate the component being tested."
+  ],
+  "validation_criteria": [
+    "The files tests/unit/test_prompt_system.py and tests/integration/test_prompt_loading_integration.py exist.",
+    "The unit tests in tests/unit/test_prompt_system.py cover the specified scenarios: loading from config, user overrides, section defaults, app defaults, file path overrides, lazy loading, and error handling for missing prompts.",
+    "The integration tests in tests/integration/test_prompt_loading_integration.py simulate the full loading process with dummy files and configurations and verify the correct content is loaded based on the override and fallback rules.",
+    "All tests are passing when run against the correctly implemented prompt loading system.",
+    "Test code is clean, readable, and follows project coding standards."
+  ],
+  "type": "test_generation",
+  "name": "create_prompt_system_tests",
+  "depends_on": [
+    "design_new_prompt_system"
+  ],
+  "task_id": "3b2255a4-04a0-439a-a4da-4f2d8cec22b2",
+  "subtask_id": "3dc75a90-c48c-40d2-87f9-3a377f44a8de"
+}

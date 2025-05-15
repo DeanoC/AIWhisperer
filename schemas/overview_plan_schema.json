@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Unique identifier for the task."
+    },
+    "natural_language_goal": {
+      "type": "string",
+      "description": "A natural language description of the task's goal."
+    },
+    "input_hashes": {
+      "type": "object",
+      "properties": {
+        "requirements_md": { "type": "string" },
+        "config_yaml": { "type": "string" }
+      },
+      "required": ["requirements_md", "config_yaml"],
+      "description": "Hashes for input files."
+    },
+    "plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subtask_id": {
+            "type": "string",
+            "description": "Unique identifier for the subtask."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the subtask."
+          },
+          "file_path": {
+            "type": "string",
+            "description": "Path to the subtask file."
+          },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of dependencies for this subtask."
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the subtask."
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Indicates if the subtask is completed."
+          }
+        },
+        "required": ["subtask_id", "file_path", "type"]
+      },
+      "description": "List of subtasks in the plan."
+    }
+  },
+  "required": ["task_id", "natural_language_goal", "plan"],
+
+  "additionalProperties": false
+}
