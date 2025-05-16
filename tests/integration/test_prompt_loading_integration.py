@@ -69,12 +69,23 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         print(f"[DEBUG] expected: {self.temp_dir / 'custom/core/initial_plan.override.prompt.md'}")
         print(f"[DEBUG] exists: { (self.temp_dir / 'custom/core/initial_plan.override.prompt.md').exists() }")
         print(f"[DEBUG] fallback exists: { (self.temp_dir / 'prompts/core/initial_plan.prompt.md').exists() }")
-        self.assertEqual(str(prompt_override.path), str(self.temp_dir / "custom/core/initial_plan.override.prompt.md"))
+        # Normalize paths for robust comparison on Windows
+        expected_path = self.temp_dir / "custom/core/initial_plan.override.prompt.md"
+        actual_path = prompt_override.path
+        self.assertEqual(
+            os.path.normcase(os.path.normpath(str(actual_path))),
+            os.path.normcase(os.path.normpath(str(expected_path)))
+        )
         self.assertEqual(prompt_override.content, "Custom override initial plan prompt.")
 
         # Test definition
         prompt_definition = self.manager.get_prompt("project", "my_prompt")
-        self.assertEqual(prompt_definition.path, self.temp_dir / "project_prompts/my_project_prompt.prompt.md")
+        expected_path = self.temp_dir / "project_prompts/my_project_prompt.prompt.md"
+        actual_path = prompt_definition.path
+        self.assertEqual(
+            os.path.normcase(os.path.normpath(str(actual_path))),
+            os.path.normcase(os.path.normpath(str(expected_path)))
+        )
         self.assertEqual(prompt_definition.content, "Project specific prompt.")
 
         # Test custom directory with default base path (should not be hit due to override)
@@ -87,7 +98,12 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         config_default_custom = PromptConfiguration(self.config_data)
         manager_default_custom = PromptSystem(config_default_custom, self.temp_dir)
         prompt_default_custom = manager_default_custom.get_prompt("another_category", "test_custom")
-        self.assertEqual(prompt_default_custom.path, self.prompts_dir / "custom/another_category/test_custom.prompt.md")
+        expected_path = self.prompts_dir / "custom/another_category/test_custom.prompt.md"
+        actual_path = prompt_default_custom.path
+        self.assertEqual(
+            os.path.normcase(os.path.normpath(str(actual_path))),
+            os.path.normcase(os.path.normpath(str(expected_path)))
+        )
         self.assertEqual(prompt_default_custom.content, "Another custom prompt.")
         # Restore the config data
         self.config_data["prompt_settings"]["base_paths"]["custom"] = original_custom_base
@@ -95,7 +111,12 @@ class TestPromptLoadingIntegration(unittest.TestCase):
 
         # Test agent directory
         prompt_agent = self.manager.get_prompt("agents", "code_generation")
-        self.assertEqual(prompt_agent.path, self.prompts_dir / "agents/code_generation.prompt.md")
+        expected_path = self.prompts_dir / "agents/code_generation.prompt.md"
+        actual_path = prompt_agent.path
+        self.assertEqual(
+            os.path.normcase(os.path.normpath(str(actual_path))),
+            os.path.normcase(os.path.normpath(str(expected_path)))
+        )
         self.assertEqual(prompt_agent.content, "Agent code generation prompt.")
 
         # Test core directory (should not be hit due to override)
@@ -103,7 +124,12 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         # Let's test subtask_generator which is not overridden
         (self.prompts_dir / "core" / "subtask_generator.prompt.md").write_text("Core subtask generator prompt.")
         prompt_core = self.manager.get_prompt("core", "subtask_generator")
-        self.assertEqual(prompt_core.path, self.prompts_dir / "core/subtask_generator.prompt.md")
+        expected_path = self.prompts_dir / "core/subtask_generator.prompt.md"
+        actual_path = prompt_core.path
+        self.assertEqual(
+            os.path.normcase(os.path.normpath(str(actual_path))),
+            os.path.normcase(os.path.normpath(str(expected_path)))
+        )
         self.assertEqual(prompt_core.content, "Core subtask generator prompt.")
 
 

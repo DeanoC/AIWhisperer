@@ -1,8 +1,10 @@
+
 import shutil
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
 from pathlib import Path
+import os
 
 from src.ai_whisperer import PromptSystem, PromptResolver, PromptLoader, PromptConfiguration, Prompt, PromptNotFoundError
 from ai_whisperer.path_management import PathManager
@@ -251,7 +253,12 @@ class TestPromptResolver(unittest.TestCase):
         self.assertIsInstance(prompt, Prompt)
         self.assertEqual(prompt.category, "core")
         self.assertEqual(prompt.name, "test")
-        self.assertEqual(prompt.path, self.prompts_dir / "core" / "test.prompt.md")
+        expected_path = self.prompts_dir / "core" / "test.prompt.md"
+        actual_path = prompt.path
+        self.assertEqual(
+            os.path.normcase(os.path.normpath(str(actual_path))),
+            os.path.normcase(os.path.normpath(str(expected_path)))
+        )
         self.assertIsNotNone(prompt._loader) # Check if loader was injected
 
     def test_get_prompt_not_found(self):
