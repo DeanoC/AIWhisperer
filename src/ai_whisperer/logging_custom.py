@@ -73,7 +73,12 @@ def setup_logging(config_path: Optional[str] = None):
             # Remove any existing handlers from the root logger to avoid duplicates
             for handler in logging.root.handlers[:]:
                 logging.root.removeHandler(handler)
-            logging.config.dictConfig(config)
+            # Only use dictConfig if a valid logging config is present
+            logging_config = config.get('logging') if isinstance(config, dict) else None
+            if logging_config and isinstance(logging_config, dict) and 'version' in logging_config:
+                logging.config.dictConfig(logging_config)
+            else:
+                setup_basic_logging()
         except Exception as e:
             logging.error(f"Error loading logging configuration from {config_path}: {e}")
             # Fallback to basic configuration on error

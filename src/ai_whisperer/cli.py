@@ -12,7 +12,7 @@ from .config import load_config
 from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
 from .commands import ListModelsCommand, GenerateInitialPlanCommand, GenerateOverviewPlanCommand, RefineCommand, RunCommand, BaseCommand # Import command classes
 from . import logging_custom # Import module directly
-from .path_management import PathManager # Import PathManager
+from ai_whisperer.path_management import PathManager
 
 logger = None # Will be initialized in main after logging is configured
 
@@ -151,15 +151,19 @@ def cli(args=None) -> list[BaseCommand]:
         logger.debug(f"Command: {parsed_args.command}")
 
 
+
         # Load configuration, passing parsed_args for PathManager initialization
         config = load_config(str(config_file_path), cli_args=vars(parsed_args))
+        if config is None or not isinstance(config, dict) or not config:
+            logger.error(f"Configuration failed to load or is empty. Config path: {config_file_path}")
+            raise ConfigError(f"Configuration failed to load or is empty. Config path: {config_file_path}")
 
         # --- Ensure PathManager is always initialized with the loaded config ---
         try:
-            from .path_management import PathManager
+            from ai_whisperer.path_management import PathManager
             PathManager.get_instance().initialize(config_values=config, cli_args=vars(parsed_args))
             if logger:
-                logger.debug(f"PathManager initialized with config: {config.get('output_path', None)}")
+                logger.debug(f"PathManager initialized with config: {config}")
         except Exception as e:
             if logger:
                 logger.error(f"Failed to initialize PathManager with config: {e}")

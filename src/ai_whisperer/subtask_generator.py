@@ -34,18 +34,18 @@ class SubtaskGenerator:
     """
 
     def __init__(
-        self, 
-        config_path: str, 
-        overall_context: str = "", 
-        workspace_context: str = "", 
+        self,
+        config: Dict[str, Any],
+        overall_context: str = "",
+        workspace_context: str = "",
         output_dir: str = "output",
-        openrouter_client=None  # <-- Add this parameter
+        openrouter_client=None
     ):
         """
         Initializes the SubtaskGenerator.
 
         Args:
-            config_path: Path to the configuration file.
+            config: The loaded application configuration dictionary.
             overall_context: The overall context string from the main task plan.
             workspace_context: A string representing relevant workspace context (optional).
             output_dir: Directory where output files will be saved.
@@ -56,7 +56,9 @@ class SubtaskGenerator:
             SubtaskGenerationError: If the prompt template cannot be loaded.
         """
         try:
-            self.config = load_config(config_path)
+            if config is None or not isinstance(config, dict):
+                raise ConfigError("A valid config dictionary must be provided to SubtaskGenerator.")
+            self.config = config
 
             # Get the model configuration and prompt content for the "subtask_generator" task
 
@@ -84,7 +86,7 @@ class SubtaskGenerator:
             self.workspace_context = workspace_context  # Store context
         # Load the validation schema
             try:
-                schema_to_load = PathManager().resolve_path( "{app_path}/schemas/subtask_schema.json")
+                schema_to_load = PathManager.get_instance().resolve_path( "{app_path}/schemas/subtask_schema.json")
   
                 logger.info(f"Loading validation schema from: {schema_to_load}")
                 with open(schema_to_load, "r", encoding="utf-8") as f:

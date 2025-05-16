@@ -33,7 +33,7 @@ class OverviewPlanGenerator:
         self.output_dir = output_dir
         logger.info(f"ProjectPlanGenerator initialized. Output directory: {self.output_dir}")
 
-    def generate_full_plan(self, initial_plan_path: Path, config_path_str: str) -> Dict[str, Any]:
+    def generate_full_plan(self, initial_plan_path: Path, config_path_str: str = "") -> Dict[str, Any]:
         """
         Generates a complete project plan including initial task JSON and all subtasks.
 
@@ -74,7 +74,7 @@ class OverviewPlanGenerator:
 
             # Initialize subtask generator
             subtask_generator = SubtaskGenerator(
-                config_path=config_path_str,
+                config=self.config,
                 overall_context=overall_context,
                 workspace_context=workspace_context,
                 output_dir=self.output_dir,

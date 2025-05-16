@@ -65,15 +65,15 @@ class GenerateInitialPlanCommand(BaseCommand):
 
     def execute(self):
         """Generates initial task YAML or a detailed subtask."""
-        logger.debug(f"Loading configuration from: {self.config_path}")
- 
+        logger.debug("Generating initial task plan (config already loaded, not reloading).")
+
         if not self.requirements_path:
             raise ValueError("Requirements path is required for initial plan generation.")
 
         plan_generator = InitialPlanGenerator(self.config, self.output_dir)
         logger.debug(f"Generating initial task plan from: {self.requirements_path}")
 
-        result_path = plan_generator.generate_plan(self.requirements_path, self.config_path)
+        result_path = plan_generator.generate_plan(self.requirements_path, self.config.get('config_path', ''))
 
         logger.debug(f"[green]Successfully generated task JSON: {result_path}[/green]")
         return 0
@@ -91,7 +91,7 @@ class GenerateOverviewPlanCommand(BaseCommand):
         logger.debug("Configuration loaded successfully.")
 
         project_plan_generator = OverviewPlanGenerator(self.config, self.output_dir)
-        result = project_plan_generator.generate_full_plan(self.initial_plan_path, self.config_path)
+        result = project_plan_generator.generate_full_plan(self.initial_plan_path, self.config.get('config_path', ''))
 
         logger.debug(f"[green]Successfully generated project plan:[/green]")
         logger.debug(f"- Task plan: {result['task_plan']}")

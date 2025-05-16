@@ -59,9 +59,9 @@ class InitialPlanGenerator:
         logger.info(f"InitialPlanGenerator initialized. Output directory: {self.output_dir}")
 
         # Load the validation schema
+        schema_to_load = None
         try:
-            schema_to_load = PathManager().resolve_path( "{app_path}/schemas/initial_plan_schema.json")
-            
+            schema_to_load = PathManager.get_instance().resolve_path( "{app_path}/schemas/initial_plan_schema.json")
             logger.info(f"Loading validation schema from: {schema_to_load}")
             with open(schema_to_load, "r", encoding="utf-8") as f:
                 self.task_schema = json.load(f)
@@ -80,6 +80,7 @@ class InitialPlanGenerator:
     def _calculate_input_hashes(self, requirements_md_path: Path, config_path: Path) -> Dict[str, str]:
         """
         Calculates SHA-256 hashes for the input requirements and config files.
+        Uses the precomputed config file hash from the loaded config dict.
         Prompt file hash is assumed to be calculated during config loading.
 
         Args:
@@ -97,7 +98,7 @@ class InitialPlanGenerator:
         try:
             hashes = {
                 "requirements_md": calculate_sha256(requirements_md_path),
-                "config_yaml": calculate_sha256(config_path)
+                "config_yaml": self.config.get("config_file_hash")
             }
             logger.info(f"Calculated hashes: {hashes}")
             return hashes

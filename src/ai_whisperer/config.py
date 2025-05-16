@@ -8,7 +8,7 @@ import logging  # Import logging
 logging.basicConfig(level=logging.DEBUG)
 
 from .exceptions import ConfigError
-from .path_management import PathManager # Import PathManager
+from ai_whisperer.path_management import PathManager
 
 # Default values for optional config settings
 DEFAULT_SITE_URL = "http://localhost:8000"
@@ -53,13 +53,18 @@ def load_config(config_path: str, cli_args: Optional[Dict[str, Any]] = None) -> 
 
     config_dir = path.parent  # Get the directory containing the config file
 
+    # --- Calculate config file hash early ---
+    from .utils import calculate_sha256
     try:
+        config_file_hash = calculate_sha256(path)
         with open(path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
             if not isinstance(config, dict):
                 raise ConfigError(
                     f"Invalid configuration format in {config_path}. Expected a dictionary, got {type(config).__name__}."
                 )
+        # Store the config file hash in the config dict for downstream use
+        config["config_file_hash"] = config_file_hash
     except yaml.YAMLError as e:
         raise ConfigError(f"Error parsing YAML file {config_path}: {e}") from e
     except Exception as e:
