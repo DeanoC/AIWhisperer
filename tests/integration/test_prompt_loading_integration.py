@@ -87,10 +87,13 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         prompt_definition = self.manager.get_prompt("project", "my_prompt")
         expected_path = self.temp_dir / "project_prompts/my_project_prompt.prompt.md"
         actual_path = prompt_definition.path
-        self.assertEqual(
-            os.path.normcase(os.path.normpath(str(actual_path))),
-            os.path.normcase(os.path.normpath(str(expected_path)))
-        )
+        try:
+            self.assertTrue(os.path.samefile(actual_path, expected_path))
+        except (AttributeError, FileNotFoundError):
+            self.assertEqual(
+                os.path.realpath(str(actual_path)),
+                os.path.realpath(str(expected_path))
+            )
         self.assertEqual(prompt_definition.content, "Project specific prompt.")
 
         # Test custom directory with default base path (should not be hit due to override)
