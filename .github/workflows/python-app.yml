@@ -36,7 +36,6 @@ jobs:
       run: |
         python -m venv .venv
         .venv\Scripts\pip install -r requirements.txt
-      working-directory: tests/code_generator/n_times_4
       shell: pwsh 
     - name: Install dependencies
       run: |
