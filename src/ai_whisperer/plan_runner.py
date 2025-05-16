@@ -148,7 +148,8 @@ class PlanRunner:
         from .prompt_system import PromptSystem, PromptConfiguration
         prompt_system = PromptSystem(PromptConfiguration(self.config))
         monitor = getattr(self, 'monitor_enabled', None)
-        execution_engine = ExecutionEngine(state_manager, self.config, prompt_system, monitor=monitor, shutdown_event=self.shutdown_event)
+
+        execution_engine = ExecutionEngine(state_manager, self.config, prompt_system, shutdown_event=self.shutdown_event)
         logger.info("Execution Engine initialized.")
         log_event(
             LogMessage(

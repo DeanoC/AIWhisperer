@@ -8,7 +8,7 @@ from ai_whisperer.exceptions import TaskExecutionError
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.state_management import StateManager
 from ai_whisperer.context_management import ContextManager
-from project_dev.notes.thread_safe_delegates import DelegateManager
+from ai_whisperer.delegate_manager import DelegateManager
 
 # Mock dependencies
 @pytest.fixture

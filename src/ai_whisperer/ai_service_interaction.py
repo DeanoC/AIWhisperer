@@ -279,25 +279,30 @@ class OpenRouterAPI:
         registered_tools = tool_registry.get_all_tools()
         openrouter_tool_definitions = [tool.get_openrouter_tool_definition() for tool in registered_tools]
 
-
         payload = {
             "model": model,
             "messages": current_messages,
             **merged_params,  # Merge parameters directly into the payload
         }
-        # Priority: explicit tools argument, then registry tools
-        if tools is not None:
-            if tools:  # Only add if non-empty
-                payload["tools"] = tools
-        elif openrouter_tool_definitions:
-            payload["tools"] = openrouter_tool_definitions
+        # Only include tools if messages_history is not provided
+        include_tools = messages_history is None
+        actual_tools = None
+        if include_tools:
+            # Priority: explicit tools argument, then registry tools
+            if tools is not None:
+                if tools:  # Only add if non-empty
+                    payload["tools"] = tools
+                    actual_tools = tools
+            elif openrouter_tool_definitions:
+                payload["tools"] = openrouter_tool_definitions
+                actual_tools = openrouter_tool_definitions
         if response_format:
             payload["response_format"] = response_format
 
         # Caching logic
         cache_key = None
         if self.enable_cache and self._cache_store is not None:
-            cache_key = self._generate_cache_key(model, current_messages, params, tools, response_format)
+            cache_key = self._generate_cache_key(model, current_messages, params, actual_tools, response_format)
             if cache_key in self._cache_store:
                 logger.info(f"Returning cached response for model {model}.")
                 cached_message_obj = self._cache_store[cache_key]
@@ -505,8 +510,14 @@ class OpenRouterAPI:
             **merged_params,  # Merge parameters directly into the payload
             "stream": True,  # Enable streaming
         }
-        if openrouter_tool_definitions:
-            payload["tools"] = openrouter_tool_definitions
+        # Only include tools if messages_history is None
+        include_tools = messages_history is None
+        if include_tools:
+            if tools is not None:
+                if tools:
+                    payload["tools"] = tools
+            elif openrouter_tool_definitions:
+                payload["tools"] = openrouter_tool_definitions
         if response_format:
             payload["response_format"] = response_format
 

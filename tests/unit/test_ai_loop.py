@@ -46,7 +46,7 @@ def test_ai_loop_handles_content_response(mock_call_chat_completion, mock_engine
     task_definition = {"description": "Test task"}
     task_id = "test-task-123"
 
-    from project_dev.notes.thread_safe_delegates import DelegateManager
+    from ai_whisperer.delegate_manager import DelegateManager
     delegate_manager = DelegateManager()
     final_result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager, delegate_manager)
     assert final_result is not None
@@ -77,7 +77,7 @@ def test_ai_loop_handles_tool_calls(mock_get_tool_by_name, mock_call_chat_comple
     task_definition = {"description": "Test task with tool"}
     task_id = "test-task-456"
 
-    from project_dev.notes.thread_safe_delegates import DelegateManager
+    from ai_whisperer.delegate_manager import DelegateManager
     delegate_manager = DelegateManager()
     final_result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager, delegate_manager)
     # Once run_ai_loop is implemented, assertions would verify:
@@ -107,7 +107,7 @@ def test_ai_loop_adds_messages_to_context(mock_call_chat_completion, mock_engine
     task_id = "test-task-789"
     shutdown_event = threading.Event()
 
-    from project_dev.notes.thread_safe_delegates import DelegateManager
+    from ai_whisperer.delegate_manager import DelegateManager
     delegate_manager = DelegateManager()
     final_result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager, delegate_manager)
     # Once run_ai_loop is implemented, assertions would verify:

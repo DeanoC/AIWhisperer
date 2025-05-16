@@ -2,9 +2,14 @@ import pytest
 from unittest.mock import patch, MagicMock
 import json
 from io import BytesIO
-import requests  # Add this import
+import pytest
+from unittest.mock import patch, MagicMock
+import json
+from io import BytesIO
+import requests
 
 from ai_whisperer.ai_service_interaction import OpenRouterAPI, API_URL, MODELS_API_URL
+from ai_whisperer.tools.tool_registry import ToolRegistry # Import ToolRegistry
 from ai_whisperer.exceptions import (
     OpenRouterAPIError,
     OpenRouterAuthError,
@@ -145,10 +150,17 @@ class TestOpenRouterAPIUnit:
         """Test initialization fails with invalid config type."""
         with pytest.raises(ConfigError, match="Invalid 'openrouter' configuration: Expected a dictionary"):
             OpenRouterAPI("invalid_config")
-
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_call_chat_completion_success(self, mock_post, api_client):
+    def test_call_chat_completion_success(self, mock_post, mock_tool_registry, api_client):
         """Test successful non-streaming chat completion."""
+        # Configure the mock ToolRegistry to return a predictable list of tools
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        expected_tools = [tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value]
+
         mock_response = MockResponse(200, json_data=MOCK_NON_STREAMING_RESPONSE)
         mock_post.return_value = mock_response
 
@@ -165,14 +177,22 @@ class TestOpenRouterAPIUnit:
                 "HTTP-Referer": "test_site_url",
                 "X-Title": "test_app_name",
             },
-            json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.5},
+            json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.5, "tools": expected_tools}, # Include expected tools
             timeout=10,
         )
         assert response['content'] == "This is a non-streaming response."
 
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_call_chat_completion_with_history(self, mock_post, api_client):
+    def test_call_chat_completion_with_history(self, mock_post, mock_tool_registry, api_client):
         """Test non-streaming chat completion with message history."""
+        # Configure the mock ToolRegistry (needed for the API call logic, but tools won't be in payload with history)
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        # expected_tools are NOT included in the payload when messages_history is provided
+
         mock_response = MockResponse(200, json_data=MOCK_NON_STREAMING_RESPONSE)
         mock_post.return_value = mock_response
 
@@ -194,14 +214,23 @@ class TestOpenRouterAPIUnit:
                 "model": model,
                 "messages": history + [{"role": "user", "content": prompt}],  # Should use history + current prompt
                 "temperature": 0.5,
+                # tools are NOT included in the payload when messages_history is provided
             },
             timeout=10,
         )
         assert response['content'] == "This is a non-streaming response."
 
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_call_chat_completion_with_tool_calls(self, mock_post, api_client):
+    def test_call_chat_completion_with_tool_calls(self, mock_post, mock_tool_registry, api_client):
         """Test non-streaming chat completion returning tool calls."""
+        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        # No assertion on tools here as the response is what's being checked
+
         mock_response = MockResponse(200, json_data=MOCK_NON_STREAMING_TOOL_CALLS_RESPONSE)
         mock_post.return_value = mock_response
 
@@ -256,9 +285,17 @@ class TestOpenRouterAPIUnit:
         with pytest.raises(OpenRouterConnectionError, match="Request to OpenRouter API timed out"):
             api_client.call_chat_completion("prompt", "model", {})
 
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_stream_chat_completion_success(self, mock_post, api_client):
+    def test_stream_chat_completion_success(self, mock_post, mock_tool_registry, api_client):
         """Test successful streaming chat completion."""
+        # Configure the mock ToolRegistry to return a predictable list of tools
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        expected_tools = [tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value]
+
         mock_response = MockResponse(200, iter_lines_data=MOCK_STREAMING_CHUNKS)
         mock_post.return_value = mock_response
 
@@ -283,6 +320,7 @@ class TestOpenRouterAPIUnit:
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.9,
                 "stream": True,  # Crucial for streaming
+                "tools": expected_tools, # Include expected tools
             },
             stream=True,  # Crucial for streaming
             timeout=10,
@@ -296,9 +334,17 @@ class TestOpenRouterAPIUnit:
         ]
         assert chunks == expected_chunks
 
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_stream_chat_completion_with_history(self, mock_post, api_client):
+    def test_stream_chat_completion_with_history(self, mock_post, mock_tool_registry, api_client):
         """Test streaming chat completion with message history."""
+        # Configure the mock ToolRegistry (needed for the API call logic, but tools won't be in payload with history)
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        # expected_tools are NOT included in the payload when messages_history is provided
+
         mock_response = MockResponse(200, iter_lines_data=MOCK_STREAMING_CHUNKS)
         mock_post.return_value = mock_response
 
@@ -322,7 +368,9 @@ class TestOpenRouterAPIUnit:
                 "model": model,
                 "messages": history,
                 "temperature": 0.7,  # From MOCK_CONFIG["params"]
-                "stream": True
+
+                "stream": True,
+                # tools are NOT included in the payload when messages_history is provided
             },
             stream=True,
             timeout=10,
@@ -365,9 +413,18 @@ class TestOpenRouterAPIUnit:
         with pytest.raises(OpenRouterConnectionError, match="Request to OpenRouter API timed out"):
             list(api_client.stream_chat_completion("prompt", "model", {}))
 
+
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_stream_chat_completion_mid_stream_error(self, mock_post, api_client):
+    def test_stream_chat_completion_mid_stream_error(self, mock_post, mock_tool_registry, api_client):
         """Test streaming chat completion error occurring mid-stream."""
+        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        # No assertion on tools here as the response is what's being checked
+
 
         # Simulate a network error during iteration
         def iter_lines_with_error():
@@ -393,9 +450,18 @@ class TestOpenRouterAPIUnit:
         ):
             next(stream_generator)
 
+
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_stream_chat_completion_invalid_json_chunk(self, mock_post, api_client):
+    def test_stream_chat_completion_invalid_json_chunk(self, mock_post, mock_tool_registry, api_client):
         """Test streaming chat completion with an invalid JSON chunk."""
+        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        # No assertion on tools here as the response is what's being checked
+
         invalid_chunks = [
             b'data: {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{"role":"assistant","content":"Hello"}}]}\n',
             b"data: invalid json\n",  # Invalid JSON
@@ -420,9 +486,18 @@ class TestOpenRouterAPIUnit:
         ):
             next(stream_generator)
 
+
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_stream_chat_completion_non_data_lines(self, mock_post, api_client):
+    def test_stream_chat_completion_non_data_lines(self, mock_post, mock_tool_registry, api_client):
         """Test streaming chat completion ignores non-data lines."""
+        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        # No assertion on tools here as the response is what's being checked
+
         chunks_with_comments = [
             b": comment\n",
             b"event: message\n",
@@ -496,27 +571,53 @@ class TestOpenRouterAPIUnit:
         api = OpenRouterAPI(config)
         assert isinstance(api.cache, dict)
 
+
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_call_chat_completion_cache_hit(self, mock_post):
+    def test_call_chat_completion_cache_hit(self, mock_post, mock_tool_registry):
         """Test cache hit for non-streaming call."""
+        # Define the expected tool definition as a dictionary
+        expected_tool_definition = {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}}
+        expected_tools = [expected_tool_definition] # Use a list of dictionaries
+
+        # Configure the mock ToolRegistry to return the expected tool definition
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [MagicMock(get_openrouter_tool_definition=lambda: expected_tool_definition)]
+
+
         config = MOCK_CONFIG.copy()
         config["cache"] = True
         api = OpenRouterAPI(config)
 
-        # Populate cache
-        cache_key = api._generate_cache_key("test_model", [{"role": "user", "content": "Cached prompt"}], {})
+        # Populate cache with a key that includes tools (using the dictionary list)
+        cache_key = api._generate_cache_key("test_model", [{"role": "user", "content": "Cached prompt"}], {}, expected_tools)
         api._cache_store[cache_key] = {"role": "assistant", "content": "Cached response"}
 
-        # Call with the same parameters
+        # Call with the same parameters, including tools (which will be added by the API class)
+        # Mock the response for the internal call within call_chat_completion when cache is enabled
+        # This mock is actually not needed for a cache hit test, but keeping it doesn't hurt.
+        mock_response = MockResponse(200, json_data={"choices": [{"message": {"content": "Cached response"}}]})
+        mock_post.return_value = mock_response
+
         response = api.call_chat_completion("Cached prompt", "test_model", {})
 
         # requests.post should NOT have been called
         mock_post.assert_not_called()
         assert response['content'] == "Cached response"
 
+
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_call_chat_completion_cache_miss(self, mock_post):
+    def test_call_chat_completion_cache_miss(self, mock_post, mock_tool_registry):
         """Test cache miss for non-streaming call."""
+        # Define the expected tool definition as a dictionary
+        expected_tool_definition = {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}}
+        expected_tools = [expected_tool_definition] # Use a list of dictionaries
+
+        # Configure the mock ToolRegistry to return the expected tool definition
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [MagicMock(get_openrouter_tool_definition=lambda: expected_tool_definition)]
+
         config = MOCK_CONFIG.copy()
         config["cache"] = True
         api = OpenRouterAPI(config)
@@ -529,18 +630,37 @@ class TestOpenRouterAPIUnit:
         params = {}
         response = api.call_chat_completion(prompt, model, params)
 
+
         # requests.post should have been called
-        mock_post.assert_called_once()
+        mock_post.assert_called_once_with(
+            API_URL,
+            headers={
+                "Authorization": "Bearer test_api_key",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "test_site_url",
+                "X-Title": "test_app_name",
+            },
+            json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.7, "tools": expected_tools}, # Include expected tools
+            timeout=10,
+        )
         assert response['content'] == "This is a non-streaming response."
 
-        # Verify cache was populated
-        cache_key = api._generate_cache_key(model, [{"role": "user", "content": prompt}], params)
+        # Verify cache was populated with a key that includes tools
+        cache_key = api._generate_cache_key(model, [{"role": "user", "content": prompt}], params, expected_tools)
         assert cache_key in api._cache_store
         assert api._cache_store[cache_key] == MOCK_NON_STREAMING_RESPONSE["choices"][0]["message"]
 
+
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_stream_chat_completion_cache_disabled(self, mock_post):
+    def test_stream_chat_completion_cache_disabled(self, mock_post, mock_tool_registry):
         """Test that streaming calls do not use cache when disabled."""
+        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        # No assertion on tools here as the response is what's being checked
         api = OpenRouterAPI(MOCK_CONFIG)  # Cache is False by default
 
         mock_response = MockResponse(200, iter_lines_data=MOCK_STREAMING_CHUNKS)
@@ -557,9 +677,17 @@ class TestOpenRouterAPIUnit:
         mock_post.assert_called_once()
         assert api.cache is None  # Cache should still be None
 
+    @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_stream_chat_completion_cache_enabled_no_caching(self, mock_post):
+    def test_stream_chat_completion_cache_enabled_no_caching(self, mock_post, mock_tool_registry):
         """Test that streaming calls do not use or populate cache even when enabled."""
+        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
+        mock_tool_registry_instance = mock_tool_registry.return_value
+        mock_tool_registry_instance.get_all_tools.return_value = [
+            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        ]
+        # No assertion on tools here as the response is what's being checked
+
         config = MOCK_CONFIG.copy()
         config["cache"] = True
         api = OpenRouterAPI(config)
@@ -594,20 +722,8 @@ class TestOpenRouterAPIUnit:
                 "output_tokens": 10
             }
         }
-        # Assuming the extraction logic is in a method like _extract_cost_tokens
-        # This test will likely fail until that method is implemented.
-        # Replace with the actual method call when known.
-        # For now, we'll simulate calling a method that would process this response.
-        # The assertion will check for the expected (failing) outcome based on current code.
-        # If the current code doesn't extract this, it might return None or raise an error.
-        # We expect it to NOT return the correct values yet.
-        # Let's assume the current code doesn't process 'meta' and just returns None for cost/tokens.
-        # This assertion will need to be updated once the extraction logic is added.
-        # For now, we assert that the expected values are NOT returned.
-        # This is a placeholder assertion that will fail when the extraction is implemented.
-        # Replace with actual assertion against the extraction method's output.
-        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
-        assert extracted_data == (0.001, 10, 10) # This assertion is expected to FAIL initially
+        extracted_data = api_client._extract_cost_tokens(mock_response_data)
+        assert extracted_data == (0.001, 10, 10)
 
     def test_extract_cost_tokens_meta_missing(self, api_client):
         """Test extraction when the 'meta' section is missing."""
@@ -620,11 +736,9 @@ class TestOpenRouterAPIUnit:
             "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
             # 'meta' section is missing
         }
-        # Assuming the extraction logic is in _extract_cost_tokens
-        # This test is expected to FAIL initially, likely by returning None or raising an error.
-        # Replace with actual assertion against the extraction method's output.
-        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
-        assert extracted_data == (None, None, None) # This assertion is expected to FAIL initially
+        extracted_data = api_client._extract_cost_tokens(mock_response_data)
+        assert extracted_data == (None, None, None)
+
 
     def test_extract_cost_tokens_fields_missing(self, api_client):
         """Test extraction when cost/token fields are missing within 'meta'."""
@@ -639,11 +753,9 @@ class TestOpenRouterAPIUnit:
                 # cost, input_tokens, output_tokens are missing
             }
         }
-        # Assuming the extraction logic is in _extract_cost_tokens
-        # This test is expected to FAIL initially.
-        # Replace with actual assertion against the extraction method's output.
-        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
-        assert extracted_data == (None, None, None) # This assertion is expected to FAIL initially
+        extracted_data = api_client._extract_cost_tokens(mock_response_data)
+        assert extracted_data == (None, None, None)
+
 
     def test_extract_cost_tokens_partial_fields_missing(self, api_client):
         """Test extraction when some cost/token fields are missing within 'meta'."""
@@ -660,11 +772,9 @@ class TestOpenRouterAPIUnit:
                 # output_tokens is missing
             }
         }
-        # Assuming the extraction logic is in _extract_cost_tokens
-        # This test is expected to FAIL initially.
-        # Replace with actual assertion against the extraction method's output.
-        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
-        assert extracted_data == (0.002, 20, None) # This assertion is expected to FAIL initially
+        extracted_data = api_client._extract_cost_tokens(mock_response_data)
+        assert extracted_data == (0.002, 20, None)
+
 
     def test_extract_cost_tokens_none_values(self, api_client):
         """Test extraction when cost/token fields are present but have None values."""
@@ -681,8 +791,5 @@ class TestOpenRouterAPIUnit:
                 "output_tokens": None
             }
         }
-        # Assuming the extraction logic is in _extract_cost_tokens
-        # This test is expected to FAIL initially.
-        # Replace with actual assertion against the extraction method's output.
-        extracted_data = api_client._extract_cost_tokens(mock_response_data) # Assuming this method exists or will exist
-        assert extracted_data == (None, None, None) # This assertion is expected to FAIL initially
+        extracted_data = api_client._extract_cost_tokens(mock_response_data)
+        assert extracted_data == (None, None, None)

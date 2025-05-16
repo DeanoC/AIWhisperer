@@ -6,7 +6,7 @@ import threading  # Import threading for Event
 from ai_whisperer.exceptions import TaskExecutionError, FileRestrictionError, PromptNotFoundError
 from ai_whisperer.tools.tool_registry import get_tool_registry
 from ai_whisperer.path_management import PathManager
-from project_dev.notes.thread_safe_delegates import DelegateManager # Import DelegateManager
+from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManager
 
 from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
 from .state_management import StateManager
@@ -28,20 +28,16 @@ logger.propagate = False
 class ExecutionEngine:
     """
     Executes tasks defined in a plan, managing state and handling dependencies.
-    Integrates logging and monitoring for visibility into the execution process.
+    Integrates logging and a general delegation system for visibility and control of the execution process.
     """
 
-    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, monitor=None, shutdown_event: threading.Event = None):
+    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, shutdown_event: threading.Event = None):
         """
         Initializes the ExecutionEngine.
 
         Args:
             state_manager: An object responsible for managing the state of tasks.
-                           It is expected to have methods like set_task_state,
-                           get_task_status, store_task_result, and get_task_result.
-            monitor: An object responsible for displaying execution progress and logs.
-                     It is expected to have methods like add_log_message, set_active_step,
-                     and update_display.
+                Expected to have methods like set_task_state, get_task_status, store_task_result, and get_task_result.
             config: The global configuration dictionary.
             prompt_system: An instance of the PromptSystem.
             shutdown_event: An event that signals when execution should stop.
@@ -56,7 +52,6 @@ class ExecutionEngine:
         self.state_manager = state_manager
         self.config = config  # Store the global configuration
         self.prompt_system = prompt_system # Store the PromptSystem instance
-        self.monitor = monitor  # Store the monitor (can be None)
         self.shutdown_event = shutdown_event
         self.task_queue = []
         self.path_manager = PathManager.get_instance()
@@ -65,7 +60,6 @@ class ExecutionEngine:
         self._paused = False # Add paused state flag
         # In a real scenario, a TaskExecutor component would handle individual task logic.
         # This would be responsible for interacting with different agent types.
-        # self.task_executor = TaskExecutor(state_manager)
 
         # Initialize AI Service Interaction once
         try:
@@ -114,7 +108,6 @@ class ExecutionEngine:
             # Decide whether to raise an exception here or allow execution to continue
             # For now, we'll allow execution to continue but AI tasks will fail
 
-        # Import agent handler functions
         # Import agent handler functions
         from .agent_handlers.ai_interaction import handle_ai_interaction
         from .agent_handlers.planning import handle_planning

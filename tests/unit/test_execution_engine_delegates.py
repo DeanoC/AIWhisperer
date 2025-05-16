@@ -6,7 +6,7 @@ from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.state_management import StateManager
 from ai_whisperer.plan_parser import ParserPlan
 from ai_whisperer.prompt_system import PromptSystem
-from project_dev.notes.thread_safe_delegates import DelegateManager
+from ai_whisperer.delegate_manager import DelegateManager
 
 # Mock dependencies
 @pytest.fixture

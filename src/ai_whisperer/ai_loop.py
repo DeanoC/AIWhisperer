@@ -12,7 +12,7 @@ from ai_whisperer.tools.tool_registry import ToolRegistry
 from ai_whisperer.context_management import ContextManager
 
 import threading # Import threading for shutdown_event type hint
-from project_dev.notes.thread_safe_delegates import DelegateManager # Import DelegateManager
+from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManager
 
 logger = get_logger(__name__)
 
