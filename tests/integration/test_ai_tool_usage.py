@@ -53,6 +53,8 @@ def tool_registry():
     for integration tests.
     """
     registry = ToolRegistry()
+    # Clear the registry to ensure test isolation (important for singleton)
+    registry._registered_tools.clear()
     # Manually register the file tools for testing
     registry.register_tool(ReadFileTool())
     registry.register_tool(WriteFileTool())

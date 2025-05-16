@@ -274,28 +274,16 @@ class OpenRouterAPI:
         # Merge default parameters with provided parameters
         merged_params = {**self.params, **params}
 
-        # Get tool definitions from the registry
-        tool_registry = ToolRegistry()
-        registered_tools = tool_registry.get_all_tools()
-        openrouter_tool_definitions = [tool.get_openrouter_tool_definition() for tool in registered_tools]
-
         payload = {
             "model": model,
             "messages": current_messages,
             **merged_params,  # Merge parameters directly into the payload
         }
-        # Only include tools if messages_history is not provided
-        include_tools = messages_history is None
+        # Only include tools if explicitly provided (most common usage style)
         actual_tools = None
-        if include_tools:
-            # Priority: explicit tools argument, then registry tools
-            if tools is not None:
-                if tools:  # Only add if non-empty
-                    payload["tools"] = tools
-                    actual_tools = tools
-            elif openrouter_tool_definitions:
-                payload["tools"] = openrouter_tool_definitions
-                actual_tools = openrouter_tool_definitions
+        if tools is not None and tools:
+            payload["tools"] = tools
+            actual_tools = tools
         if response_format:
             payload["response_format"] = response_format
 
@@ -317,7 +305,7 @@ class OpenRouterAPI:
             if not isinstance(timeout, (int, float)) or timeout <= 0:
                 timeout = 60  # Default fallback
 
-            logger.debug(f"OpenRouter API call_chat_completion: params and payload sizes: params={len(str(self.params))}, input_params={len(str(params))}, payload={len(str(payload))}")
+            logger.debug(f"OpenRouter API call_chat_completion payload: {json.dumps(payload)[:1000]}")
 
             response = requests.post(API_URL, headers=headers, json=payload, timeout=timeout)
 

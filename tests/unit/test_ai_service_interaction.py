@@ -167,7 +167,7 @@ class TestOpenRouterAPIUnit:
         prompt = "Hello AI"
         model = "test_model"
         params = {"temperature": 0.5}
-        response = api_client.call_chat_completion(prompt, model, params)
+        response = api_client.call_chat_completion(prompt, model, params, tools=expected_tools)
 
         mock_post.assert_called_once_with(
             API_URL,
@@ -237,7 +237,7 @@ class TestOpenRouterAPIUnit:
         prompt = "What's the weather in London?"
         model = "test_model"
         params = {}
-        response = api_client.call_chat_completion(prompt, model, params)
+        response = api_client.call_chat_completion(prompt, model, params, tools=[tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value])
 
         # The response should be the full message object, not just content
         assert response == MOCK_NON_STREAMING_TOOL_CALLS_RESPONSE["choices"][0]["message"]
@@ -599,7 +599,7 @@ class TestOpenRouterAPIUnit:
         mock_response = MockResponse(200, json_data={"choices": [{"message": {"content": "Cached response"}}]})
         mock_post.return_value = mock_response
 
-        response = api.call_chat_completion("Cached prompt", "test_model", {})
+        response = api.call_chat_completion("Cached prompt", "test_model", {}, tools=expected_tools)
 
         # requests.post should NOT have been called
         mock_post.assert_not_called()
@@ -628,7 +628,7 @@ class TestOpenRouterAPIUnit:
         prompt = "Uncached prompt"
         model = "test_model"
         params = {}
-        response = api.call_chat_completion(prompt, model, params)
+        response = api.call_chat_completion(prompt, model, params, tools=expected_tools)
 
 
         # requests.post should have been called
