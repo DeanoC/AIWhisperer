@@ -130,10 +130,11 @@ def test_ai_read_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: To
             messages_history=messages # Pass messages history for context
         )
 
-        # Assert that the response contains tool calls
+        # Assert that the response contains tool calls in the 'message' key
         assert isinstance(response_obj, dict)
-        assert "tool_calls" in response_obj
-        tool_calls = response_obj["tool_calls"]
+        assert "message" in response_obj
+        assert "tool_calls" in response_obj["message"]
+        tool_calls = response_obj["message"]["tool_calls"]
         assert isinstance(tool_calls, list)
         assert len(tool_calls) > 0
 
@@ -195,8 +196,9 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: T
         )
 
         assert isinstance(response_obj, dict)
-        assert "tool_calls" in response_obj
-        tool_calls = response_obj["tool_calls"]
+        assert "message" in response_obj
+        assert "tool_calls" in response_obj["message"]
+        tool_calls = response_obj["message"]["tool_calls"]
         assert isinstance(tool_calls, list)
         assert len(tool_calls) > 0
 
@@ -263,8 +265,9 @@ def test_ai_execute_command_tool_call(openrouter_api: OpenRouterAPI, tool_regist
         )
 
         assert isinstance(response_obj, dict)
-        assert "tool_calls" in response_obj
-        tool_calls = response_obj["tool_calls"]
+        assert "message" in response_obj
+        assert "tool_calls" in response_obj["message"]
+        tool_calls = response_obj["message"]["tool_calls"]
         assert isinstance(tool_calls, list)
         assert len(tool_calls) > 0
 
@@ -325,8 +328,8 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_regi
                 messages_history=messages_read
             )
 
-        assert isinstance(read_response_obj, dict) and "tool_calls" in read_response_obj, "AI did not generate tool call for reading"
-        read_tool_calls = read_response_obj["tool_calls"]
+        assert isinstance(read_response_obj, dict) and "message" in read_response_obj and "tool_calls" in read_response_obj["message"], "AI did not generate tool call for reading"
+        read_tool_calls = read_response_obj["message"]["tool_calls"]
         assert len(read_tool_calls) > 0
 
 
@@ -366,8 +369,8 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_regi
             messages_history=messages_write
         )
 
-        assert isinstance(write_response_obj, dict) and "tool_calls" in write_response_obj, "AI did not generate tool call for writing"
-        write_tool_calls = write_response_obj["tool_calls"]
+        assert isinstance(write_response_obj, dict) and "message" in write_response_obj and "tool_calls" in write_response_obj["message"], "AI did not generate tool call for writing"
+        write_tool_calls = write_response_obj["message"]["tool_calls"]
         assert len(write_tool_calls) > 0
 
         # Assuming the first tool call is the write_to_file call

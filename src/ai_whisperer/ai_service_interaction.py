@@ -71,8 +71,7 @@ class OpenRouterAPI:
         else:
             self._cache_store = None
 
-        # Initialize attributes for storing cost and token data
-        self._last_cost: float | None = None
+        # Initialize attributes for token data
         self._last_input_tokens: int | None = None
         self._last_output_tokens: int | None = None
 
@@ -99,19 +98,33 @@ class OpenRouterAPI:
         }
         # Sort dicts for consistent key generation
         return json.dumps(key_parts, sort_keys=True)
-    def _extract_cost_tokens(self, response_data: Dict[str, Any]) -> tuple[float | None, int | None, int | None]:
+    def _extract_token_usage(self, response_data: Dict[str, Any]) -> tuple[int | None, int | None]:
         """
-        Extracts cost, input tokens, and output tokens from the API response data.
-        Assumes the presence of a 'meta' field with 'cost', 'input_tokens', and 'output_tokens'.
+        Extracts input and output tokens from the API response data (from 'usage' field).
         Returns None for any missing fields.
         """
-        meta = response_data.get("meta")
-        if meta:
-            cost = meta.get("cost")
-            input_tokens = meta.get("input_tokens")
-            output_tokens = meta.get("output_tokens")
-            return cost, input_tokens, output_tokens
-        return None, None, None
+        usage = response_data.get("usage")
+        if usage:
+            input_tokens = usage.get("prompt_tokens")
+            output_tokens = usage.get("completion_tokens")
+            return input_tokens, output_tokens
+        return None, None
+
+    def get_generation_stats(self, generation_id: str) -> dict:
+        """
+        Fetches detailed generation stats (including native token counts and cost) from OpenRouter's /generation endpoint.
+        """
+        url = f"https://openrouter.ai/api/v1/generation?id={generation_id}"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": self.site_url,
+            "X-Title": self.app_name,
+        }
+        response = requests.get(url, headers=headers, timeout=30)
+        if response.status_code != 200:
+            raise OpenRouterAPIError(f"Failed to fetch generation stats: {response.status_code} {response.text}", status_code=response.status_code, response=response)
+        return response.json()
 
     def list_models(self) -> List[Dict[str, Any]]:
         """
@@ -195,15 +208,15 @@ class OpenRouterAPI:
 
     def call_chat_completion(
         self,
-        prompt_text: str,
         model: str,
-        params: Dict[str, Any],
+        params: Dict[str, Any] = None,
+        messages_history: List[Dict[str, Any]] = None,
+        prompt_text: str = None,
         system_prompt: str = None,
         tools: List[Dict[str, Any]] = None,
         response_format: Dict[str, Any] = None,
         images: List[str] = None,
         pdfs: List[str] = None,
-        messages_history: List[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Calls the OpenRouter Chat Completions API with advanced features (non-streaming).
@@ -235,50 +248,48 @@ class OpenRouterAPI:
             "X-Title": self.app_name,
         }
 
-        current_messages: List[Dict[str, Any]]
 
-        current_messages = list(messages_history) if messages_history else []
-
-        if system_prompt and not messages_history:  # Add system prompt only for the first turn
-            current_messages.append({"role": "system", "content": system_prompt})
-
-        user_content_parts: List[Dict[str, Any]] = [{"type": "text", "text": prompt_text}]
-
-        if images:
-            for image_data in images:
-                # Basic check if it's a base64 string or URL
-                # A more robust check might be needed for production
-                if not image_data.startswith("data:image"):  # Assuming URLs don't start with data:image
-                    # It's a URL
-                    user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
-                else:  # It's base64
-                    user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
-
-        if pdfs:
-            for pdf_data in pdfs:  # Assuming pdf_data is a URL or base64 data URI
-                # OpenRouter expects type "file_url" for file uploads
-                user_content_parts.append(
-                    {"type": "file_url", "file_url": {"url": pdf_data, "media_type": "application/pdf"}}
-                )
-
-        # Append the current user message (prompt_text + artifacts)
-        # If only text is present, OpenRouter expects content as a string, not a list.
-        if len(user_content_parts) == 1 and user_content_parts[0]["type"] == "text":
-            current_messages.append({"role": "user", "content": user_content_parts[0]["text"]})
+        # Standard OpenAI-compatible logic:
+        # If messages_history is provided and non-empty, use it as the messages array.
+        # If not, build messages array from system_prompt and prompt_text.
+        current_messages: List[Dict[str, Any]] = []
+        if messages_history and len(messages_history) > 0:
+            current_messages = list(messages_history)
         else:
-            current_messages.append({"role": "user", "content": user_content_parts})
+            if system_prompt:
+                current_messages.append({"role": "system", "content": system_prompt})
+            # Only add user message if prompt_text is provided
+            if prompt_text:
+                user_content_parts: List[Dict[str, Any]] = [{"type": "text", "text": prompt_text}]
+                if images:
+                    for image_data in images:
+                        if not image_data.startswith("data:image"):
+                            user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
+                        else:
+                            user_content_parts.append({"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}})
+                if pdfs:
+                    for pdf_data in pdfs:
+                        user_content_parts.append({"type": "file_url", "file_url": {"url": pdf_data, "media_type": "application/pdf"}})
+                if len(user_content_parts) == 1 and user_content_parts[0]["type"] == "text":
+                    current_messages.append({"role": "user", "content": user_content_parts[0]["text"]})
+                else:
+                    current_messages.append({"role": "user", "content": user_content_parts})
 
         # Merge default parameters with provided parameters
-        merged_params = {**self.params, **params}
+        if params is None:
+            merged_params = dict(self.params)
+        else:
+            merged_params = {**self.params, **params}
 
         # Merge default parameters with provided parameters
-        merged_params = {**self.params, **params}
+        merged_params = {**self.params, **(params or {})}
 
         payload = {
             "model": model,
             "messages": current_messages,
-            **merged_params,  # Merge parameters directly into the payload
         }
+        if merged_params:
+            payload.update(merged_params)
         # Only include tools if explicitly provided (most common usage style)
         actual_tools = None
         if tools is not None and tools:
@@ -294,18 +305,12 @@ class OpenRouterAPI:
             if cache_key in self._cache_store:
                 logger.info(f"Returning cached response for model {model}.")
                 cached_message_obj = self._cache_store[cache_key]
-                # Always return a dict with "content" key if content is present and no tool_calls
-                if cached_message_obj.get("content") is not None and cached_message_obj.get("tool_calls") is None:
-                    return {"content": cached_message_obj.get("content")}
-                else:
-                    return cached_message_obj
+                return {"response": None, "message": cached_message_obj}
 
         try:
             timeout = self.openrouter_config.get("timeout_seconds", 60)
             if not isinstance(timeout, (int, float)) or timeout <= 0:
                 timeout = 60  # Default fallback
-
-            logger.debug(f"OpenRouter API call_chat_completion payload: {json.dumps(payload)[:1000]}")
 
             response = requests.post(API_URL, headers=headers, json=payload, timeout=timeout)
 
@@ -344,14 +349,33 @@ class OpenRouterAPI:
             # If we reach here, the HTTP status is 2xx. Proceed to process the JSON response.
             try:
                 data = response.json()
-                logger.debug(f"OpenRouter API call_chat_completion response received: size={len(str(data))} chars")
 
                 # Extract and store cost and token data
-                self._last_cost, self._last_input_tokens, self._last_output_tokens = self._extract_cost_tokens(data)
-                logger.debug(f"Extracted cost: {self._last_cost}, input_tokens: {self._last_input_tokens}, output_tokens: {self._last_output_tokens}")
+                self._last_input_tokens, self._last_output_tokens = self._extract_token_usage(data)
+                logger.debug(f"Extracted input_tokens: {self._last_input_tokens}, output_tokens: {self._last_output_tokens}")
+
+                # Special handling for OpenRouter error objects (e.g., 502, 500, etc.)
+                if "error" in data:
+                    error_obj = data["error"]
+                    error_code = error_obj.get("code")
+                    error_message = error_obj.get("message", "Unknown error")
+                    # Raise a specific exception for 502 and 500 errors
+                    if error_code in (500, 502):
+                        raise OpenRouterAPIError(
+                            f"OpenRouter provider/internal error ({error_code}): {error_message}",
+                            status_code=error_code,
+                            response=response,
+                        )
+                    # Otherwise, raise a generic API error
+                    raise OpenRouterAPIError(
+                        f"OpenRouter API error ({error_code}): {error_message}",
+                        status_code=error_code,
+                        response=response,
+                    )
 
                 choices = data.get("choices")
                 if not choices or not isinstance(choices, list) or len(choices) == 0:
+                    logging.error(f"Response missing 'choices': {data}")
                     raise OpenRouterAPIError(
                         "Unexpected response format: 'choices' array is missing, empty, or not an array.",
                         status_code=response.status_code,
@@ -368,15 +392,13 @@ class OpenRouterAPI:
 
                 # Handle potential tool_calls that are None but present
                 if "tool_calls" in message_obj and message_obj["tool_calls"] is None:
-                    # Some models might return "tool_calls": null instead of omitting it.
-                    # We can remove it for consistency if it's null, or ensure downstream handles it.
-                    # For now, let's keep it as is, as the model returned it.
                     pass
 
                 if self.enable_cache and self._cache_store is not None and cache_key is not None:
                     self._cache_store[cache_key] = message_obj
 
-                return message_obj
+                # Return both the full response and the message object for downstream use
+                return {"response": data, "message": message_obj}
 
             except ValueError as e:
                 logger.error(f"JSONDecodeError in call_chat_completion: {e}. Response text: {response.text[:500]}")

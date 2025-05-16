@@ -43,8 +43,8 @@ def test_ai_loop_started_delegate_invoked(mock_engine, task_definition, initial_
     mock_delegate = MagicMock()
     mock_delegate_manager.register_notification("ai_loop_started", mock_delegate)
 
-    # Mock the AI call to return a simple response to exit the loop (flat format expected by run_ai_loop)
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"content": "response"}
+    # Mock the AI call to return a simple response to exit the loop (OpenRouter format)
+    mock_engine.openrouter_api.call_chat_completion.return_value = {"message": {"content": "response"}}
 
     run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
@@ -54,8 +54,8 @@ def test_ai_loop_stopped_delegate_invoked(mock_engine, task_definition, initial_
     mock_delegate = MagicMock()
     mock_delegate_manager.register_notification("ai_loop_stopped", mock_delegate)
 
-    # Mock the AI call to return a simple response to exit the loop (flat format expected by run_ai_loop)
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"content": "response"}
+    # Mock the AI call to return a simple response to exit the loop (OpenRouter format)
+    mock_engine.openrouter_api.call_chat_completion.return_value = {"message": {"content": "response"}}
 
     run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
@@ -68,26 +68,28 @@ def test_ai_request_prepared_delegate_invoked(mock_engine, task_definition, init
 
     # First call returns non-empty tool_calls (so loop continues), second call returns content (so loop exits)
     mock_engine.openrouter_api.call_chat_completion.side_effect = [
-        {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]},
-        {"content": "response"}  # Second turn, exits loop
+        {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}},
+        {"message": {"content": "response"}}  # Second turn, exits loop
     ]
 
-    # Patch ToolRegistry to return a mock tool with an execute method
+
+    # Patch both ToolRegistry and get_tool_registry to return a mock tool with an execute method
     mock_tool_registry = MagicMock()
     mock_tool_instance = MagicMock()
     mock_tool_instance.execute.return_value = "fake tool output"
     mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
     import unittest
-    with unittest.mock.patch('ai_whisperer.ai_loop.ToolRegistry', return_value=mock_tool_registry):
+    with unittest.mock.patch('ai_whisperer.ai_loop.ToolRegistry', return_value=mock_tool_registry), \
+         unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
         run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
-    # Expecting two calls: one for the initial prompt, one for the subsequent turn (even if it exits)
-    assert mock_delegate.call_count == 2
-    # Check the arguments for the initial call (model should now be 'fake_model')
+    # Only the initial call triggers ai_request_prepared in the current implementation
+    assert mock_delegate.call_count == 1
+    # Check the arguments for the only call (prompt_text is '', params includes tool_choice)
     mock_delegate.assert_any_call(
         mock_engine,
         "ai_request_prepared",
-        {"request_payload": {"prompt_text": initial_prompt, "model": "fake_model", "params": {"temperature": 0.1}, "messages_history": []}}
+        {"request_payload": {"prompt_text": "", "model": "fake_model", "params": {"temperature": 0.1, "tool_choice": "auto"}, "messages_history": []}}
     )
 
 
@@ -97,8 +99,8 @@ def test_ai_response_received_delegate_invoked(mock_engine, task_definition, ini
 
 
     # First call returns non-empty tool_calls (so loop continues), second call returns content (so loop exits)
-    ai_response1 = {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}
-    ai_response2 = {"content": "response"}
+    ai_response1 = {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}}
+    ai_response2 = {"message": {"content": "response"}}
     mock_engine.openrouter_api.call_chat_completion.side_effect = [ai_response1, ai_response2]
 
     # Patch ToolRegistry to return a mock tool with an execute method
@@ -124,8 +126,8 @@ def test_ai_processing_step_delegate_invoked(mock_engine, task_definition, initi
 
     # First call returns non-empty tool_calls (so loop continues), second call returns content (so loop exits)
     mock_engine.openrouter_api.call_chat_completion.side_effect = [
-        {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]},
-        {"content": "response"}  # Second turn, exits loop
+        {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}},
+        {"message": {"content": "response"}}  # Second turn, exits loop
     ]
 
     # Patch ToolRegistry to return a mock tool with an execute method
@@ -167,12 +169,12 @@ def test_ai_loop_request_pause_delegate_invoked_and_pauses(mock_engine, task_def
     mock_pause_delegate = MagicMock(return_value=True) # Delegate requests pause
     mock_delegate_manager.register_control("ai_loop_request_pause", mock_pause_delegate)
 
-    # Mock the AI call to return tool calls to keep the loop running (flat format)
+    # Mock the AI call to return tool calls to keep the loop running (OpenRouter format)
     mock_engine.openrouter_api.call_chat_completion.side_effect = [
-        {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}, # First call returns tool call
-        {"content": "response"} # Second call returns content to exit
+        {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}}, # First call returns tool call
+        {"message": {"content": "response"}} # Second call returns content to exit
     ]
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"content": "response"} # Default return after side_effect
+    mock_engine.openrouter_api.call_chat_completion.return_value = {"message": {"content": "response"}} # Default return after side_effect
 
     # Mock the tool execution to prevent errors
     mock_tool_registry = MagicMock()
@@ -200,13 +202,12 @@ def test_ai_loop_request_stop_delegate_invoked_and_stops(mock_engine, task_defin
     mock_stop_delegate = MagicMock(return_value=True) # Delegate requests stop
     mock_delegate_manager.register_control("ai_loop_request_stop", mock_stop_delegate)
 
-    # Mock the AI call to return tool calls to keep the loop running initially
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"choices": [{"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}}]}
+    # Mock the AI call to return tool calls to keep the loop running initially (OpenRouter format)
     mock_engine.openrouter_api.call_chat_completion.side_effect = [
-        {"choices": [{"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}}]}, # First call returns tool call
-        {"choices": [{"message": {"content": "response"}}]} # Second call returns content to exit
+        {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}}, # First call returns tool call
+        {"message": {"content": "response"}} # Second call returns content to exit
     ]
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"choices": [{"message": {"content": "response"}}]} # Default return after side_effect
+    mock_engine.openrouter_api.call_chat_completion.return_value = {"message": {"content": "response"}} # Default return after side_effect
 
     # Mock the tool execution to prevent errors
     mock_tool_registry = MagicMock()

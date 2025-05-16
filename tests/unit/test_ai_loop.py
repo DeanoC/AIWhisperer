@@ -11,7 +11,10 @@ from ai_whisperer.context_management import ContextManager
 def mock_engine():
     """Fixture for a mock ExecutionEngine."""
     engine = MagicMock()
-    engine.config.get.side_effect = lambda key, default: default # Mock config access
+    # Accept both (key) and (key, default) signatures
+    def config_get(key, default=None):
+        return default
+    engine.config.get.side_effect = config_get # Mock config access
     engine.state_manager = MagicMock() # Mock StateManager
     engine.monitor = MagicMock() # Mock Monitor
     return engine
@@ -37,10 +40,17 @@ import asyncio
 @patch('ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
 def test_ai_loop_handles_content_response(mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop correctly handles an AI response with content."""
-    # Configure the mock AI service to return a response with content
-    mock_call_chat_completion.return_value = {
-        "choices": [{"message": {"role": "assistant", "content": "This is a response."}, "finish_reason": "stop"}]
-    }
+    # Ensure every call to call_chat_completion returns the correct structure
+    def always_content_response(*args, **kwargs):
+        return {
+            "response": {
+                "choices": [{"message": {"role": "assistant", "content": "This is a response."}, "finish_reason": "stop"}]
+            },
+            "message": {"role": "assistant", "content": "This is a response."}
+        }
+    # Patch the actual engine's openrouter_api.call_chat_completion
+    mock_engine.openrouter_api = MagicMock()
+    mock_engine.openrouter_api.call_chat_completion.side_effect = always_content_response
 
     initial_prompt = "Test prompt"
     task_definition = {"description": "Test task"}
@@ -57,14 +67,29 @@ def test_ai_loop_handles_content_response(mock_call_chat_completion, mock_engine
 def test_ai_loop_handles_tool_calls(mock_get_tool_by_name, mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop correctly handles AI responses with tool calls."""
     # Configure the mock AI service to return a response with a tool call
-    mock_call_chat_completion.side_effect = [
-        { # First response: tool call
+    tool_call_response = {
+        "response": {
             "choices": [{"message": {"role": "assistant", "tool_calls": [{"id": "call_abc", "function": {"name": "test_tool", "arguments": "{}"}}]}, "finish_reason": "tool_calls"}]
         },
-        { # Second response: content after tool output
+        "message": {"role": "assistant", "tool_calls": [{"id": "call_abc", "function": {"name": "test_tool", "arguments": "{}"}}]}
+    }
+    content_response = {
+        "response": {
             "choices": [{"message": {"role": "assistant", "content": "Tool executed."}, "finish_reason": "stop"}]
-        }
-    ]
+        },
+        "message": {"role": "assistant", "content": "Tool executed."}
+    }
+    def response_side_effect(*args, **kwargs):
+        if not hasattr(response_side_effect, "call_count"):
+            response_side_effect.call_count = 0
+        response_side_effect.call_count += 1
+        if response_side_effect.call_count == 1:
+            return tool_call_response
+        else:
+            return content_response
+    # Patch the actual engine's openrouter_api.call_chat_completion
+    mock_engine.openrouter_api = MagicMock()
+    mock_engine.openrouter_api.call_chat_completion.side_effect = response_side_effect
 
     # Mock the tool execution
     mock_tool_instance = MagicMock()
@@ -89,14 +114,32 @@ def test_ai_loop_handles_tool_calls(mock_get_tool_by_name, mock_call_chat_comple
 @patch('ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
 def test_ai_loop_adds_messages_to_context(mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop adds user, assistant, and tool messages to the ContextManager."""
-    mock_call_chat_completion.side_effect = [
-        { # First response: tool call
+    # Always return the correct structure for every call
+    tool_call_response = {
+        "response": {
             "choices": [{"message": {"role": "assistant", "tool_calls": [{"id": "call_abc", "function": {"name": "test_tool", "arguments": "{}"}}]}, "finish_reason": "tool_calls"}]
         },
-        { # Second response: content after tool output
+        "message": {"role": "assistant", "tool_calls": [{"id": "call_abc", "function": {"name": "test_tool", "arguments": "{}"}}]}
+    }
+    content_response = {
+        "response": {
             "choices": [{"message": {"role": "assistant", "content": "Tool executed."}, "finish_reason": "stop"}]
-        }
-    ]
+        },
+        "message": {"role": "assistant", "content": "Tool executed."}
+    }
+    def response_side_effect(*args, **kwargs):
+        # First call: tool call, second call: content
+        if not hasattr(response_side_effect, "call_count"):
+            response_side_effect.call_count = 0
+        response_side_effect.call_count += 1
+        if response_side_effect.call_count == 1:
+            return tool_call_response
+        else:
+            return content_response
+    # Patch the actual engine's openrouter_api.call_chat_completion
+    mock_engine.openrouter_api = MagicMock()
+    mock_engine.openrouter_api.call_chat_completion.side_effect = response_side_effect
+
     mock_tool_instance = MagicMock()
     mock_tool_instance.execute.return_value = {"status": "success"}
     mock_engine.tool_registry = MagicMock()
@@ -112,9 +155,6 @@ def test_ai_loop_adds_messages_to_context(mock_call_chat_completion, mock_engine
     final_result = run_ai_loop(mock_engine, task_definition, task_id, initial_prompt, mock_logger, mock_context_manager, delegate_manager)
     # Once run_ai_loop is implemented, assertions would verify:
     # - mock_context_manager.add_message was called at least 3 times (user, assistant, tool output)
-    # mock_context_manager.add_message.assert_any_call({"role": "user", "content": initial_prompt})
-    # mock_context_manager.add_message.assert_any_call({"role": "assistant", "tool_calls": [{"id": "call_abc", "function": {"name": "test_tool", "arguments": "{}"}}]}, "finish_reason": "tool_calls"}) # Adjust based on actual AI response structure
-    # mock_context_manager.add_message.assert_any_call({"role": "tool", "tool_call_id": "call_abc", "content": '{"status": "success"}'}) # Adjust based on actual tool output format
 
 # Add more tests here for other scenarios like:
 # - Handling different task types (if AI loop logic varies)

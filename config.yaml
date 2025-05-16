@@ -5,7 +5,7 @@
 # --- OpenRouter API Settings --- Required Section ---
 openrouter:
   # api_key: "sk-or-v1-abc...xyz" # Recommended: Set the OPENROUTER_API_KEY in a .env file (and ensure .env is in .gitignore) instead of putting your key here.
-  model: "google/gemini-2.5-flash-preview" # Required: Specify the model identifier from OpenRouter (e.g., "mistralai/mistral-7b-instruct", "openai/gpt-4o").
+  model: "openai/gpt-4o" # Required: Specify the model identifier from OpenRouter (e.g., "mistralai/mistral-7b-instruct", "openai/gpt-4o").
 
   # Optional: Parameters to pass to the OpenRouter API for chat completions.
   # Refer to the specific model's documentation on OpenRouter for available parameters.

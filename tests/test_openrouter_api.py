@@ -71,7 +71,7 @@ def test_chat_completion_success(mock_requests):
 
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     response = client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
-    assert response['content'] == expected_response_content
+    assert response['message']['content'] == expected_response_content
 
     history = mock_requests.request_history
     assert len(history) == 1
@@ -94,7 +94,7 @@ def test_chat_completion_success(mock_requests):
         API_URL, json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}}, status_code=200
     )
     response = client.call_chat_completion(prompt_text=PROMPT, model=override_model, params=client.params)
-    assert response["content"] == expected_response_content
+    assert response['message']['content'] == expected_response_content
 
     history = mock_requests.request_history
     assert len(history) == 1
@@ -111,7 +111,7 @@ def test_chat_completion_success(mock_requests):
         API_URL, json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}}, status_code=200
     )
     response = client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=override_params)
-    assert response["content"] == expected_response_content
+    assert response['message']['content'] == expected_response_content
 
     history = mock_requests.request_history
     assert len(history) == 1
@@ -232,7 +232,7 @@ def test_chat_completion_unexpected_response_format_no_content(mock_requests):
     # Adjusted expectation: The client should return the message object as is.
     # No error should be raised in this specific scenario if the message object itself is valid.
     response = client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
-    assert response == {"role": "assistant"}
+    assert response['message'] == {"role": "assistant"}
     # If an error is desired, the mock should be:
     # mock_requests.post(API_URL, json={"choices": [{"message": None}], "usage": {}}, status_code=200)
     # or client logic needs to enforce 'content' or 'tool_calls' to be present.
@@ -336,7 +336,7 @@ def test_call_openrouter_success_refactored(mock_requests):
 
     client = OpenRouterAPI(TEST_CONFIG_OPENROUTER_SECTION)
     response = client.call_chat_completion(prompt_text=PROMPT, model=client.model, params=client.params)
-    assert response['content'] == expected_response_content
+    assert response['message']['content'] == expected_response_content
 
     history = mock_requests.request_history
     assert len(history) == 1
@@ -353,7 +353,7 @@ def test_call_openrouter_success_refactored(mock_requests):
         API_URL, json={"choices": [{"message": {"content": expected_response_content}}], "usage": {}}, status_code=200
     )
     response = client.call_chat_completion(prompt_text=PROMPT, model=override_model, params=client.params)
-    assert response["content"] == expected_response_content
+    assert response['message']['content'] == expected_response_content
 
     history = mock_requests.request_history
     assert len(history) == 1
@@ -372,7 +372,7 @@ def test_call_openrouter_success_refactored(mock_requests):
     response = client.call_chat_completion(
         prompt_text=PROMPT, model=client.model, params=override_params  # Pass default model
     )
-    assert response["content"] == expected_response_content
+    assert response['message']['content'] == expected_response_content
 
     history = mock_requests.request_history
     assert len(history) == 1

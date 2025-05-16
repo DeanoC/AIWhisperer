@@ -36,7 +36,7 @@ class TestOpenRouterAdvancedFeatures:
         prompt_text = "User question"
         system_prompt_text = "You are a helpful assistant."
 
-        api.call_chat_completion(
+        result = api.call_chat_completion(
             prompt_text=prompt_text, model=DEFAULT_MODEL, params=DEFAULT_PARAMS, system_prompt=system_prompt_text
         )
 
@@ -48,6 +48,7 @@ class TestOpenRouterAdvancedFeatures:
         mock_post.assert_called_once()
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
+        assert result["message"]["content"] == "Test response"
 
     @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_system_prompt_with_caching_tags(self, mock_post):
@@ -61,7 +62,7 @@ class TestOpenRouterAdvancedFeatures:
         prompt_text = "User question"
         system_prompt_text = "Preamble. <!--cache_control_before-->Cached part.<!--cache_control_after--> Dynamic part."
 
-        api.call_chat_completion(
+        result = api.call_chat_completion(
             prompt_text=prompt_text,
             model="anthropic/claude-3-opus-20240229",  # Model that might use cache_control
             params=DEFAULT_PARAMS,
@@ -76,6 +77,7 @@ class TestOpenRouterAdvancedFeatures:
         mock_post.assert_called_once()
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
+        assert result["message"]["content"] == "Test response"
 
     @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_tools_basic_flow(self, mock_post):
@@ -137,11 +139,11 @@ class TestOpenRouterAdvancedFeatures:
         # Simulate only the first part of the interaction for this unit test
         # A full integration test would be needed for the multi-step process.
         try:
-            api.call_chat_completion(
+            result = api.call_chat_completion(
                 prompt_text=prompt_text, model=DEFAULT_MODEL, params=DEFAULT_PARAMS, tools=tool_definitions
             )
-        except Exception:  # Catching exception if the mock setup for multi-call is not perfect
-            pass
+        except Exception:
+            result = None
 
         expected_payload_first_call = {
             "model": DEFAULT_MODEL,
@@ -153,6 +155,8 @@ class TestOpenRouterAdvancedFeatures:
         assert mock_post.call_count >= 1  # Should be at least one call
         (first_call_args, first_call_kwargs) = mock_post.call_args_list[0]
         assert first_call_kwargs["json"] == expected_payload_first_call
+        if result is not None:
+            assert "message" in result
 
         # To test the full loop, OpenRouterAPI.call_chat_completion would need to:
         # 1. Make the first call.
@@ -180,7 +184,7 @@ class TestOpenRouterAdvancedFeatures:
             "strict": True,
         }
 
-        api.call_chat_completion(
+        result = api.call_chat_completion(
             prompt_text=prompt_text,
             model=DEFAULT_MODEL,
             params=DEFAULT_PARAMS,
@@ -196,6 +200,7 @@ class TestOpenRouterAdvancedFeatures:
         mock_post.assert_called_once()
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
+        assert result["message"]["content"] == '{"name": "Test", "value": 123}'
 
     def test_caching_initialization(self):
         """Test OpenRouterAPI initialization with cache enabled/disabled."""
@@ -224,18 +229,18 @@ class TestOpenRouterAdvancedFeatures:
         prompt_text = "Cache this"
 
         # First call - should call API and cache
-        response1 = api.call_chat_completion(prompt_text, DEFAULT_MODEL, DEFAULT_PARAMS)
+        response1 = api.call_chat_completion(model=DEFAULT_MODEL, prompt_text=prompt_text, params=DEFAULT_PARAMS)
         mock_post.assert_called_once()
-        assert response1['content'] == "Cached response"  # Assuming it returns content directly
+        assert response1["message"]["content"] == "Cached response"
 
         # Second call - should use cache
-        response2 = api.call_chat_completion(prompt_text, DEFAULT_MODEL, DEFAULT_PARAMS)
+        response2 = api.call_chat_completion(model=DEFAULT_MODEL, prompt_text=prompt_text, params=DEFAULT_PARAMS)
         mock_post.assert_called_once()  # Still 1, meaning API wasn't called again
-        assert response2['content'] == "Cached response"
+        assert response2["message"]["content"] == "Cached response"
 
         # Call with different params - should call API again
         mock_post.reset_mock()
-        api.call_chat_completion(prompt_text, DEFAULT_MODEL, {"temperature": 0.9})
+        api.call_chat_completion(model=DEFAULT_MODEL, prompt_text=prompt_text, params={"temperature": 0.9})
         mock_post.assert_called_once()
 
     @patch("ai_whisperer.ai_service_interaction.requests.post")
@@ -250,7 +255,7 @@ class TestOpenRouterAdvancedFeatures:
         prompt_text = "What is in this image?"
         image_url = "https_url_to_image.jpg"
 
-        api.call_chat_completion(
+        result = api.call_chat_completion(
             prompt_text=prompt_text,
             model="google/gemini-pro-vision",
             params=DEFAULT_PARAMS,
@@ -273,6 +278,7 @@ class TestOpenRouterAdvancedFeatures:
         mock_post.assert_called_once()
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
+        assert result["message"]["content"] == "Image described"
 
     @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_multimodal_image_base64(self, mock_post):
@@ -286,7 +292,7 @@ class TestOpenRouterAdvancedFeatures:
         prompt_text = "Describe this local image."
         base64_image_data = "data:image/jpeg;base64,your_base64_string_here"
 
-        api.call_chat_completion(
+        result = api.call_chat_completion(
             prompt_text=prompt_text, model="google/gemini-pro-vision", params=DEFAULT_PARAMS, images=[base64_image_data]
         )
 
@@ -306,6 +312,7 @@ class TestOpenRouterAdvancedFeatures:
         mock_post.assert_called_once()
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
+        assert result["message"]["content"] == "Local image described"
 
     @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_multimodal_pdf_base64(self, mock_post):
@@ -319,7 +326,7 @@ class TestOpenRouterAdvancedFeatures:
         prompt_text = "Summarize this PDF."
         base64_pdf_data = "data:application/pdf;base64,your_pdf_base64_string_here"
 
-        api.call_chat_completion(
+        result = api.call_chat_completion(
             prompt_text=prompt_text,
             model="anthropic/claude-2",  # Model that can handle files
             params=DEFAULT_PARAMS,
@@ -342,6 +349,7 @@ class TestOpenRouterAdvancedFeatures:
         mock_post.assert_called_once()
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
+        assert result["message"]["content"] == "PDF summarized"
 
     @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_multimodal_pdf_with_annotations_reuse(self, mock_post):
@@ -444,8 +452,8 @@ class TestOpenRouterAdvancedFeatures:
 
         api = self._get_api_client()
         # Update regex to match the new error message format
-        with pytest.raises(OpenRouterAPIError, match=r"OpenRouter API Error: 401 - .*"):
-            api.call_chat_completion("test", DEFAULT_MODEL, DEFAULT_PARAMS)
+        with pytest.raises(OpenRouterAPIError, match=r"OpenRouter API Error: 401 - .*|API request failed: .*Unauthorized.*"):
+            api.call_chat_completion(model=DEFAULT_MODEL, prompt_text="test", params=DEFAULT_PARAMS)
 
     @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_api_error_handling_non_json_response(self, mock_post):
@@ -459,5 +467,5 @@ class TestOpenRouterAdvancedFeatures:
 
         api = self._get_api_client()
         # Update regex to match the new error message format
-        with pytest.raises(OpenRouterAPIError, match=r"OpenRouter API Error: 500 - .*"):
-            api.call_chat_completion("test", DEFAULT_MODEL, DEFAULT_PARAMS)
+        with pytest.raises(OpenRouterAPIError, match=r"OpenRouter API Error: 500 - .*|API request failed: .*Internal Server Error.*"):
+            api.call_chat_completion(model=DEFAULT_MODEL, prompt_text="test", params=DEFAULT_PARAMS)

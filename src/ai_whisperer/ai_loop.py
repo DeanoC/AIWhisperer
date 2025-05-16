@@ -45,27 +45,49 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                             tool execution errors, or exceeding consecutive tool call limits.
     """
     final_result = None
-    tool_registry = ToolRegistry() # Get the tool registry instance
+    from ai_whisperer.tools.tool_registry import get_tool_registry
+    tool_registry = get_tool_registry() # Get the tool registry singleton instance
     consecutive_tool_calls = 0 # Counter for consecutive tool-only responses
     MAX_CONSECUTIVE_TOOL_CALLS = 5 # Threshold to detect potential infinite loops
 
     _ai_loop_pause_event = threading.Event() # Add AI loop pause event
     _ai_loop_paused = False # Add AI loop paused state flag
 
-    # Add the initial user prompt to the context manager
+
+    # Prepare system prompt for OpenRouter, including tool usage instructions. Do NOT add user message to context before first call.
+    context_manager.clear_history()  # Ensure history is clean for this task
+    # Gather tool usage instructions
+    tool_usage_instructions = []
+    for tool in tool_registry.get_all_tools():
+        if hasattr(tool, 'get_ai_prompt_instructions'):
+            instr = tool.get_ai_prompt_instructions()
+            if instr:
+                tool_usage_instructions.append(instr.strip())
+    tool_usage_block = "\n\n".join(tool_usage_instructions)
+    system_prompt = (
+        "You are an expert AI coding agent. You must use the OpenRouter tool call protocol for all tool use. "
+        "When you need to use a tool, respond with a tool call in the 'tool_calls' field, not as plain text. "
+        "Do not output tool calls as plain text in the 'content' field. Only output final answers or explanations in 'content' when the task is complete. "
+        "If you need to write a file, use the 'write_to_file' tool.\n\n"
+        "--- TOOL USAGE INSTRUCTIONS ---\n" + tool_usage_block
+    )
     user_prompt_entry = {"role": "user", "content": initial_prompt}
-    context_manager.add_message(user_prompt_entry)
+    # For OpenAI-compatible APIs, build messages array with system and user messages
+    first_call_messages = [
+        {"role": "system", "content": system_prompt},
+        user_prompt_entry
+    ]
 
     logger.debug(f"Task {task_id}: Entering AI interaction loop.")
     delegate_manager.invoke_notification(engine, "ai_loop_started") # Invoke ai_loop_started delegate
 
-    # First AI call with prompt_text and history from context manager
+    # First AI call: send system and user messages as the messages_history array
     try:
-        logger.debug(f"Task {task_id}: Calling AI with initial prompt_text and history from ContextManager.")
+        logger.debug(f"Task {task_id}: Calling AI with system and user messages in messages_history.")
         log_event(
             log_message=LogMessage(
                 LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_calling_ai_initial",
-                f"Calling AI for task {task_id} with initial prompt_text", subtask_id=task_id, details={"prompt_text": initial_prompt}
+                f"Calling AI for task {task_id} with system and user messages in messages_history", subtask_id=task_id, details={"prompt_text": initial_prompt}
             )
         )
         delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "initial_ai_call_preparation", "task_id": task_id}) # Add processing step notification
@@ -73,20 +95,43 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
         params = {
             'temperature': engine.config.get('ai_temperature', 0.1) # Use temperature from config
         }
-        delegate_manager.invoke_notification(engine, "ai_request_prepared", {"request_payload": {"prompt_text": initial_prompt, "model": engine.config.get('ai_model', 'google/gemini-2.5-flash-preview'), "params": params, "messages_history": context_manager.get_history()}}) # Invoke ai_request_prepared delegate
-        ai_response = engine.openrouter_api.call_chat_completion(
-            prompt_text=initial_prompt, # Pass initial prompt as prompt_text
-            model=engine.config.get('ai_model', 'google/gemini-2.5-flash-preview'), # Corrected model name
-            params=params,
-            messages_history=context_manager.get_history() # Include history from ContextManager
+        # Prepare tools for debug print
+        if hasattr(engine, 'openrouter_api') and hasattr(engine.openrouter_api, 'tools'):
+            tools_debug = engine.openrouter_api.tools
+        else:
+            tools_debug = tool_registry.get_all_tool_definitions()
+        # Use model from config, supporting both 'openrouter' and 'ai_model' keys
+        model = (
+            engine.config.get('openrouter', {}).get('model')
+            or engine.config.get('ai_model')
+            or engine.config.get('model')
+            or 'google/gemini-2.5-flash-preview'
         )
+
+        # Defensive: ensure the result is a dict with 'message' key
+        prompt_result = engine.openrouter_api.call_chat_completion(
+            prompt_text=initial_prompt,
+            messages_history=None,  # Use None so the API wrapper builds from prompt_text and system_prompt
+            model=model,
+            params={**params, 'tool_choice': 'auto'},
+            tools=tools_debug,
+        )
+        if not (isinstance(prompt_result, dict) and "message" in prompt_result):
+            error_message = f"Task {task_id}: AI response is not a valid dict with 'message' key: {prompt_result}"
+            logger.error(error_message)
+            log_event(
+                log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_invalid_ai_response_initial", error_message, subtask_id=task_id, details={"ai_response": str(prompt_result)})
+            )
+            raise TaskExecutionError(error_message)
+        ai_response = prompt_result
 
         logger.debug(f"Task {task_id}: Initial AI call completed.")
         delegate_manager.invoke_notification(engine, "ai_response_received", {"response_data": ai_response}) # Invoke ai_response_received delegate
         delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "initial_ai_response_processing", "task_id": task_id}) # Add processing step notification
 
-        # Store the assistant's response in the context manager
-        context_manager.add_message(ai_response)
+        # After the call, add the user message and the AI response to the context manager
+        context_manager.add_message(user_prompt_entry)
+        context_manager.add_message(ai_response["message"])
 
     except Exception as e:
         error_message = f"Task {task_id}: Error during initial AI call: {e}"
@@ -149,17 +194,16 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
         tool_calls = None
         content = None
         finish_reason = None
-        if isinstance(ai_response, dict) and "choices" in ai_response and isinstance(ai_response["choices"], list) and len(ai_response["choices"]) > 0:
-            choice = ai_response["choices"][0]
-            message = choice.get("message", {})
-            tool_calls = message.get("tool_calls")
-            content = message.get("content")
-            finish_reason = choice.get("finish_reason")
+        ai_message = ai_response["message"] if isinstance(ai_response, dict) and "message" in ai_response else ai_response
+        if isinstance(ai_message, dict) and "tool_calls" in ai_message:
+            tool_calls = ai_message.get("tool_calls")
+            content = ai_message.get("content")
+            finish_reason = ai_message.get("finish_reason")
         else:
             # fallback for legacy/flat responses (should not occur in normal operation)
-            tool_calls = ai_response.get("tool_calls")
-            content = ai_response.get("content")
-            finish_reason = ai_response.get("finish_reason")
+            tool_calls = ai_message.get("tool_calls") if isinstance(ai_message, dict) else None
+            content = ai_message.get("content") if isinstance(ai_message, dict) else None
+            finish_reason = ai_message.get("finish_reason") if isinstance(ai_message, dict) else None
 
         logger.debug(f"Task {task_id}: Processing AI response in loop. tool_calls type: {type(tool_calls)}, content type: {type(content)}, content: '{content}'")
         log_event(
@@ -297,14 +341,23 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
 
 
                 params = {
-                    'temperature': engine.config.get('ai_temperature', 0.1) # Use temperature from config
+                    'temperature': engine.config.get('ai_temperature', 0.1),
+                    'tool_choice': 'auto'  # Explicitly request tool call protocol
                 }
-                delegate_manager.invoke_notification(engine, "ai_request_prepared", {"request_payload": {"prompt_text": "", "model": engine.config.get('ai_model', 'google/gemini-2.5-flash-preview'), "params": params, "messages_history": context_manager.get_history()}}) # Invoke ai_request_prepared delegate
+                # Use model from config, supporting both 'openrouter' and 'ai_model' keys
+                model = (
+                    engine.config.get('openrouter', {}).get('model')
+                    or engine.config.get('ai_model')
+                    or engine.config.get('model')
+                    or 'google/gemini-2.5-flash-preview'
+                )
+                delegate_manager.invoke_notification(engine, "ai_request_prepared", {"request_payload": {"prompt_text": "", "model": model, "params": params, "messages_history": context_manager.get_history()}}) # Invoke ai_request_prepared delegate
                 ai_response = engine.openrouter_api.call_chat_completion(
                     prompt_text ="",
                     messages_history=context_manager.get_history(), # Use history from ContextManager
-                    model=engine.config.get('ai_model', 'google/gemini-2.5-flash-preview'), # Use model from config
-                    params=params
+                    model=model, # Use model from config
+                    params=params,
+                    tools=tools_debug,
                 )
                 if(ai_response is None):
                     raise TaskExecutionError("AI response is None. Check the AI model and parameters.")
@@ -331,7 +384,7 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
 
 
                 # Store the assistant's response in the context manager
-                context_manager.add_message(ai_response)
+                context_manager.add_message(ai_response["message"])
 
             except Exception as e:
                 error_message = f"Task {task_id}: Error during AI call with updated history: {e}"
@@ -345,13 +398,55 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
         # Check if AI provided content or if the finish reason is 'stop'
         elif (content is not None and (tool_calls is None or len(tool_calls) == 0)) or (finish_reason == 'stop'):
             # AI provided content or signaled completion
-            consecutive_tool_calls = 0 # Reset counter on receiving content or stop signal
-            final_result = ai_response
-            logger.debug(f"Task {task_id}: AI provided final content or signaled stop.")
-            log_event(
-                log_message=LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_completion_signal", f"Task {task_id}: AI provided final content or signaled stop.", subtask_id=task_id)
-            )
-            break # Exit the loop
+            # Fallback: Try to detect and execute a tool call in plain text content
+            import re
+            tool_call_pattern = re.compile(r"^(\w+)\((.*)\)$", re.DOTALL)
+            match = tool_call_pattern.match(content.strip()) if isinstance(content, str) else None
+            if match:
+                tool_name = match.group(1)
+                args_str = match.group(2)
+                # Try to parse arguments as Python kwargs (very basic, not secure for arbitrary code)
+                import ast
+                try:
+                    # Convert args string to a dict by wrapping in dict() and using ast.literal_eval
+                    # e.g., path='foo', content='bar' -> {'path': 'foo', 'content': 'bar'}
+                    args_dict = ast.literal_eval(f"dict({args_str})")
+                except Exception as e:
+                    logger.warning(f"Task {task_id}: Failed to parse tool call arguments from content fallback: {e}")
+                    args_dict = None
+                tool_instance = tool_registry.get_tool_by_name(tool_name) if args_dict else None
+                if tool_instance and args_dict:
+                    logger.warning(f"Task {task_id}: Fallback: Executing tool '{tool_name}' from plain text content.")
+                    try:
+                        tool_output_data = tool_instance.execute(**args_dict)
+                        # Add tool output to conversation history
+                        tool_output_entry = {"role": "tool", "tool_call_id": f"fallback_{tool_name}", "content": json.dumps(tool_output_data) if isinstance(tool_output_data, (dict, list)) else str(tool_output_data)}
+                        context_manager.add_message(tool_output_entry)
+                        # Optionally, set final_result to tool_output_data or continue loop
+                        final_result = tool_output_entry
+                        logger.info(f"Task {task_id}: Fallback tool execution complete for '{tool_name}'.")
+                        break
+                    except Exception as e:
+                        logger.error(f"Task {task_id}: Error in fallback tool execution for '{tool_name}': {e}", exc_info=True)
+                        final_result = ai_response
+                        break
+                else:
+                    logger.warning(f"Task {task_id}: Fallback: No valid tool call detected in content or tool not found.")
+                    consecutive_tool_calls = 0 # Reset counter on receiving content or stop signal
+                    final_result = ai_response
+                    logger.debug(f"Task {task_id}: AI provided final content or signaled stop.")
+                    log_event(
+                        log_message=LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_completion_signal", f"Task {task_id}: AI provided final content or signaled stop.", subtask_id=task_id)
+                    )
+                    break # Exit the loop
+            else:
+                consecutive_tool_calls = 0 # Reset counter on receiving content or stop signal
+                final_result = ai_response
+                logger.debug(f"Task {task_id}: AI provided final content or signaled stop.")
+                log_event(
+                    log_message=LogMessage(LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_completion_signal", f"Task {task_id}: AI provided final content or signaled stop.", subtask_id=task_id)
+                )
+                break # Exit the loop
 
         else:
             # Unexpected response format (neither tool calls, non-empty content, nor stop signal)

@@ -104,7 +104,11 @@ class TestOpenRouterAPIIntegration:
         prompt = "Integration test prompt"
         model = "test_model"
         params = {"temperature": 0.5}
-        response = api_client.call_chat_completion(prompt, model, params)
+        response = api_client.call_chat_completion(
+            model=model,
+            params=params,
+            prompt_text=prompt
+        )
 
         mock_post.assert_called_once_with(
             API_URL,
@@ -117,10 +121,11 @@ class TestOpenRouterAPIIntegration:
             json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.5},
             timeout=10,
         )
-        assert response == {
-            "role": "assistant",
-            "content": '{\n  "description": "Mock subtask description",\n  "instructions": "Mock subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-subtask-123",\n  "task_id": "mock-task-456"\n}'
-        }
+        # Assert the new OpenRouterAPI return structure
+        assert isinstance(response, dict)
+        assert "message" in response
+        assert response["message"]["role"] == "assistant"
+        assert response["message"]["content"] == '{\n  "description": "Mock subtask description",\n  "instructions": "Mock subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-subtask-123",\n  "task_id": "mock-task-456"\n}'
 
     # The following tests mock the API call and are useful once stream_chat_completion is added
     @patch("requests.post")
@@ -186,7 +191,11 @@ class TestOpenRouterAPIIntegration:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterAuthError, match="Authentication failed"):
-            api_client.call_chat_completion("prompt", "model", {})
+            api_client.call_chat_completion(
+                model="model",
+                params={},
+                prompt_text="prompt"
+            )
 
         with pytest.raises(OpenRouterAuthError, match="Authentication failed"):
             list(api_client.stream_chat_completion("prompt", "model", {}))
@@ -197,7 +206,11 @@ class TestOpenRouterAPIIntegration:
         mock_post.side_effect = requests.exceptions.RequestException("Simulated network unreachable")
 
         with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API"):
-            api_client.call_chat_completion("prompt", "model", {})
+            api_client.call_chat_completion(
+                model="model",
+                params={},
+                prompt_text="prompt"
+            )
 
         with pytest.raises(
             OpenRouterConnectionError,
@@ -212,7 +225,11 @@ class TestOpenRouterAPIIntegration:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterAPIError, match="API request failed"):
-            api_client.call_chat_completion("prompt", "model", {})
+            api_client.call_chat_completion(
+                model="model",
+                params={},
+                prompt_text="prompt"
+            )
 
         with pytest.raises(OpenRouterAPIError, match="API request failed"):
             list(api_client.stream_chat_completion("prompt", "model", {}))

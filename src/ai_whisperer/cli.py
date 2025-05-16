@@ -150,8 +150,19 @@ def cli(args=None) -> list[BaseCommand]:
         logger.debug(f"Parsed arguments: {parsed_args}")
         logger.debug(f"Command: {parsed_args.command}")
 
+
         # Load configuration, passing parsed_args for PathManager initialization
         config = load_config(str(config_file_path), cli_args=vars(parsed_args))
+
+        # --- Ensure PathManager is always initialized with the loaded config ---
+        try:
+            from .path_management import PathManager
+            PathManager.get_instance().initialize(config_values=config, cli_args=vars(parsed_args))
+            if logger:
+                logger.debug(f"PathManager initialized with config: {config.get('output_path', None)}")
+        except Exception as e:
+            if logger:
+                logger.error(f"Failed to initialize PathManager with config: {e}")
 
 
         # --- Instantiate Command Object ---
@@ -219,6 +230,4 @@ def cli(args=None) -> list[BaseCommand]:
     # Remove all other specific exception catches to allow them to propagate
     # The calling code will handle exceptions and return codes.
 
-# Add entry point to invoke main function
-if __name__ == "__main__":
-    cli()
+

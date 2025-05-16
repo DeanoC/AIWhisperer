@@ -184,9 +184,17 @@ class SubtaskGenerator:
                 # Pass the AI response text through the postprocessing pipeline
                 # ai_response_content may be a string (mocked) or a dict (real API)
                 if isinstance(ai_response_content, dict):
-                    content = ai_response_content.get("content")
+                    # Robust extraction: handle both {'content': ...} and {'message': {'content': ...}}
+                    if "content" in ai_response_content:
+                        content = ai_response_content["content"]
+                    elif "message" in ai_response_content and isinstance(ai_response_content["message"], dict):
+                        content = ai_response_content["message"].get("content")
+                    else:
+                        content = None
                 else:
                     content = ai_response_content
+                if content is None:
+                    raise SubtaskGenerationError("AI response did not contain any content to process.")
                 (generated_data, result_data) = pipeline.process(content, result_data)
 
                 # Log the postprocessing results

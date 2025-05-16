@@ -6,6 +6,7 @@ from ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistr
 from ai_whisperer.context_management import ContextManager # Import ContextManager
 from ai_whisperer.ai_loop import run_ai_loop # Import the refactored AI loop
 from pathlib import Path
+import os
 import json
 from src.ai_whisperer import PromptSystem # Import PromptSystem
 from ai_whisperer.prompt_system import PromptNotFoundError
@@ -151,14 +152,26 @@ def _construct_initial_prompt(prompt_system: PromptSystem, task_definition: dict
     try:
         # Use PromptSystem to get the formatted prompt for code generation
         # Assuming the prompt name is 'code_generation' in the 'agents' category
+        output_artifacts = task_definition.get('output_artifacts', [])
+
+        # Add explicit tool call instruction to the top of the instructions
+        explicit_tool_instruction = (
+            "IMPORTANT: When calling tools, do NOT wrap tool calls in print(), return, or any other function. "
+            "Call the tool directly, e.g., write_file(...). Do not output any code outside of tool calls unless explicitly instructed. "
+            "For example, DO NOT do: print(write_file(...)) or return write_file(...). Only use: write_file(...)."
+        )
+        orig_instructions = task_definition.get('instructions', ['No instructions provided.'])
+        instructions = [explicit_tool_instruction] + orig_instructions
+
         initial_prompt = prompt_system.get_formatted_prompt(
             "agents",
             "code_generation",
             include_tools=True, # Include tool instructions
             task_description=task_definition.get('description', 'No description provided.'),
-            instructions="\n".join(task_definition.get('instructions', ['No instructions provided.'])),
+            instructions="\n".join(instructions),
             context=prompt_context if prompt_context else "No input artifacts provided or context gathered.",
             constraints="\n".join(task_definition.get('constraints', ['No constraints provided.'])),
+            output_artifacts="\n".join(output_artifacts) if output_artifacts else "(None specified)",
             raw_task_json=task_definition.get('raw_text', json.dumps(task_definition, indent=2)) # Use raw_text if available, otherwise dump the dict
         )
 
@@ -207,20 +220,54 @@ def _execute_validation(engine, task_definition, task_id, logger) -> tuple[bool,
     validation_details = {"commands_executed": [], "overall_status": "skipped"}
     overall_passed = True
 
-    # Basic validation: check that files listed in 'expected_output_files' exist
-    expected_files = task_definition.get('expected_output_files', [])
+    # Basic validation: check that files listed in 'expected_output_files' or 'output_artifacts' exist
+    expected_files = task_definition.get('expected_output_files')
+    if expected_files is None:
+        expected_files = task_definition.get('output_artifacts', [])
     missing_files = []
     checked_files = []
-    # If no validation_criteria and no expected_output_files, skip validation
+    # If no validation_criteria and no expected_files, skip validation
     if not task_definition.get('validation_criteria') and not expected_files:
         validation_details["overall_status"] = "skipped"
         validation_details["commands_executed"] = []
         return True, validation_details
 
     if isinstance(expected_files, list) and all(isinstance(f, str) for f in expected_files) and expected_files:
+        try:
+            from ai_whisperer.path_management import PathManager
+            path_manager = PathManager.get_instance()
+        except Exception as e:
+            path_manager = None
+            if logger:
+                logger.warning(f"Task {task_id}: Could not import or initialize PathManager: {e}")
         for file_path in expected_files:
+            resolved_path = file_path
+            if path_manager is not None:
+                try:
+                    input_path = Path(file_path)
+                    output_dir = Path(path_manager.output_path)
+                    # If absolute, use as-is
+                    if input_path.is_absolute():
+                        resolved_path = str(input_path.resolve())
+                    else:
+                        # If the first part of the input path matches the output dir name, strip it
+                        input_parts = input_path.parts
+                        output_dir_name = output_dir.name
+                        if input_parts and input_parts[0] == output_dir_name:
+                            input_path = Path(*input_parts[1:])
+                        candidate = (output_dir / input_path).resolve()
+                        resolved_path = str(candidate)
+                except Exception as e:
+                    if logger:
+                        logger.warning(f"Task {task_id}: Failed to normalize/resolve path '{file_path}': {e}")
             checked_files.append(file_path)
-            if not Path(file_path).is_file():
+            abs_resolved_path = str(Path(resolved_path).resolve())
+            if logger:
+                logger.info(f"Task {task_id}: Checking file existence: original='{file_path}', resolved='{resolved_path}', abs='{abs_resolved_path}'")
+                logger.info(f"Task {task_id}: Current working directory: '{os.getcwd()}'")
+            if not Path(resolved_path).is_file():
+                if logger:
+                    logger.warning(f"Task {task_id}: File does not exist: resolved='{resolved_path}' (from '{file_path}'), abs='{abs_resolved_path}'")
                 missing_files.append(file_path)
         validation_details["checked_files"] = checked_files
         validation_details["missing_files"] = missing_files
@@ -234,7 +281,7 @@ def _execute_validation(engine, task_definition, task_id, logger) -> tuple[bool,
             logger.info(f"Task {task_id}: Validation passed. All expected files exist.")
     else:
         if logger:
-            logger.warning(f"Task {task_id}: No 'expected_output_files' found or format is incorrect.")
+            logger.warning(f"Task {task_id}: No 'expected_output_files' or 'output_artifacts' found or format is incorrect.")
         validation_details["overall_status"] = "skipped"
         overall_passed = True
 

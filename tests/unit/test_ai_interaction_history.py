@@ -65,7 +65,6 @@ def test_chat_completion_with_history(mock_post):
             print(f"\nSingle turn response: {response}")
 
             # Assert that requests.post was called with the correct payload
-            expected_messages_payload = messages_history + [{"role": "user", "content": current_prompt}]
             mock_post.assert_called_once_with(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={
@@ -76,8 +75,7 @@ def test_chat_completion_with_history(mock_post):
                 },
                 json={
                     "model": "test-model",
-                    "messages": messages_history
-                    + [{"role": "user", "content": current_prompt}],  # Include current_prompt in messages
+                    "messages": messages_history,  # Only history should be sent as messages
                     "temperature": 0.7,  # Default temperature
                     "max_tokens": 50000,  # Default max_tokens
                 },
@@ -85,7 +83,7 @@ def test_chat_completion_with_history(mock_post):
             )
 
             assert isinstance(response, dict)
-            assert response['content'] == "This is a test response."
+            assert response['message']['content'] == "This is a test response."
 
 
 @patch("ai_whisperer.ai_service_interaction.requests.post")
@@ -134,7 +132,7 @@ def test_chat_completion_with_multi_turn_history(mock_post):
                 params=mock_config["openrouter"]["params"],
             )
             print(f"\nFirst turn response: {response1}")
-            assert response1['content'] == "France"
+            assert response1['message']['content'] == "France"
 
             # Build history for second turn
             messages_history = [
@@ -150,7 +148,7 @@ def test_chat_completion_with_multi_turn_history(mock_post):
                 params=mock_config["openrouter"]["params"],
             )
             print(f"\nSecond turn response: {response2}")
-            assert response2['content'] == "Paris"
+            assert response2['message']['content'] == "Paris"
 
             # Build history for third turn
             messages_history = [
@@ -168,7 +166,7 @@ def test_chat_completion_with_multi_turn_history(mock_post):
                 params=mock_config["openrouter"]["params"],
             )
             print(f"\nThird turn response: {response3}")
-            assert response3['content'] == "Eiffel Tower"
+            assert response3['message']['content'] == "Eiffel Tower"
 
             # Verify the calls were made with the correct history
             assert mock_post.call_count == 3
@@ -179,12 +177,9 @@ def test_chat_completion_with_multi_turn_history(mock_post):
             assert "json" in last_call_kwargs
             assert "messages" in last_call_kwargs["json"]
 
-            # The messages should include the full conversation history
-            assert len(last_call_kwargs["json"]["messages"]) == 5  # Expect 5 messages
+            # The messages should include the full conversation history (prompt_text is ignored when messages_history is provided)
+            assert len(last_call_kwargs["json"]["messages"]) == 4  # Only the provided history is sent
             assert last_call_kwargs["json"]["messages"][0]["content"] == "Name a country in Europe"
             assert last_call_kwargs["json"]["messages"][1]["content"] == "France"
             assert last_call_kwargs["json"]["messages"][2]["content"] == "What is the capital of that country?"
             assert last_call_kwargs["json"]["messages"][3]["content"] == "Paris"
-            assert (
-                last_call_kwargs["json"]["messages"][4]["content"] == "Name a famous landmark in that capital"
-            )  # Add assertion for the third user prompt

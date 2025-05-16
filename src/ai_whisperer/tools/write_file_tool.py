@@ -56,14 +56,27 @@ class WriteFileTool(AITool):
             A dictionary indicating success or failure, including the resolved file path on success.
         """
         if not path:
+            print("[WriteFileTool] ERROR: 'path' argument is missing.")
             return {"status": "error", "message": "'path' argument is missing."}
         if content is None:
-             return {"status": "error", "message": "'content' argument is missing."}
+            print("[WriteFileTool] ERROR: 'content' argument is missing.")
+            return {"status": "error", "message": "'content' argument is missing."}
+
 
         path_manager = PathManager.get_instance()
-        # Resolve path relative to the output directory for writing
-        abs_file_path = (pathlib.Path(path_manager.output_path) / path).resolve()
-
+        # Normalize the path: if absolute, use as-is; if the first part matches output dir name, strip it; else, join to output_path
+        input_path = pathlib.Path(path)
+        output_dir = pathlib.Path(path_manager.output_path)
+        if input_path.is_absolute():
+            abs_file_path = input_path.resolve()
+        else:
+            input_parts = input_path.parts
+            output_dir_name = output_dir.name
+            if input_parts and input_parts[0] == output_dir_name:
+                input_path = pathlib.Path(*input_parts[1:])
+            abs_file_path = (output_dir / input_path).resolve()
+        logger.info(f"[WriteFileTool] Writing file. path arg: '{path}', resolved: '{abs_file_path}', output_dir: '{output_dir}'")
+        print(f"[WriteFileTool] Writing file. path arg: '{path}', resolved: '{abs_file_path}', output_dir: '{output_dir}'")
 
         # Validate if the file path is within the output directory
         if not path_manager.is_path_within_output(abs_file_path):
@@ -103,6 +116,6 @@ class WriteFileTool(AITool):
         Ensure the file path is within the output directory.
         Example usage:
         <tool_code>
-        print(tools.write_to_file(path='my_output.txt', content='Generated report data.', line_count=1))
+        write_to_file(path='my_output.txt', content='Generated report data.', line_count=1)
         </tool_code>
         """

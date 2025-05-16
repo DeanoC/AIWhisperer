@@ -148,7 +148,7 @@ class RunCommand(BaseCommand):
         else:
             self.config_path = None
 
-    def _run_plan_in_thread(self, plan_parser: ParserPlan, state_file_path: str, shutdown_event: Optional[threading.Event] = None):
+    def _run_plan_in_thread(self, plan_parser: ParserPlan, state_file_path: str, shutdown_event: Optional[threading.Event] = None, result_holder=None):
         logger.debug("_run_plan_in_thread started.")
         """Core plan execution logic to be run in a separate thread."""
         # Pass the shutdown_event to the PlanRunner
@@ -169,7 +169,9 @@ class RunCommand(BaseCommand):
             else:
                 log_event(log_message=LogMessage(LogLevel.ERROR, ComponentType.RUNNER, "plan_execution_failed", "Plan execution finished with failures."))
                 logger.debug("Plan execution finished with failures.")
-
+            # Store the result in the result_holder if provided
+            if result_holder is not None:
+                result_holder[0] = plan_successful
         finally:
             logger.debug("_run_plan_in_thread finished.")
             # Removed the call to monitor_instance.stop() from here.
@@ -197,9 +199,11 @@ class RunCommand(BaseCommand):
 
         # Create and start the AI Runner Thread
         logger.debug("Starting AI Runner thread...")
+        # Use a mutable holder to capture the result from the thread
+        thread_result = [None]
         ai_runner_thread = threading.Thread(
             target=self._run_plan_in_thread,
-            args=(plan_parser, self.state_file, self._ai_runner_shutdown_event), # Pass shutdown_event
+            args=(plan_parser, self.state_file, self._ai_runner_shutdown_event, thread_result),
             name="AIRunnerThread"
         )
         ai_runner_thread.start()
@@ -253,27 +257,9 @@ class RunCommand(BaseCommand):
                  logger.debug("Finally block: UI thread joined.")
             logger.debug("Finally block finished.")
 
-        # TODO: Handle the thread result
-        # The return code should reflect the outcome of the plan execution.
-        # We need a way for the thread to communicate its success/failure back.
-        # For now, we'll assume success if the thread finishes without unhandled exceptions.
-        # A more robust solution would involve checking a shared variable or queue.
-        # Based on the original logic, the success/failure was determined by the return of run_plan.
-        # We need to capture that outcome from the thread.
-        # Let's add a simple mechanism for the thread to set a result.
-        # This will require modifying _run_plan_in_thread to return or set a value.
-        # For this diff, I will make a simplifying assumption that the thread completing means success for now,
-        # but note this needs refinement to capture the actual plan_successful boolean.
-        # A better approach would be to pass a mutable object (like a list or dict) or a queue
-        # to the thread to store the result.
-
-        # Placeholder for capturing thread result:
-        # if thread_result_indicates_success:
-        #     return 0
-        # else:
-        #     return 1
-
-        # For now, returning 0 assuming success if join completes.
-        # This is a temporary simplification for this specific subtask.
-        return 0 # Needs refinement to capture actual plan success/failure
+        # Return 0 for success, 1 for failure
+        if thread_result[0] is True:
+            return 0
+        else:
+            return 1
 

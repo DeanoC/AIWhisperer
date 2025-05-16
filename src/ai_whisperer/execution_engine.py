@@ -324,229 +324,210 @@ class ExecutionEngine:
             logger.debug(f"Task {task_id}: Conversation history: {messages_history}")  # Log conversation history
 
             # Call the AI service using the instance initialized in __init__
-            ai_response = self.openrouter_api.call_chat_completion(
+            ai_response_result = self.openrouter_api.call_chat_completion(
                 prompt_text=prompt,
                 model=merged_ai_config.get("model"),  # Use model from merged config
                 params=merged_ai_config.get("params", {}),  # Use params from merged config
                 messages_history=messages_history,
             )
+            if not ai_response_result or not isinstance(ai_response_result, dict) or "message" not in ai_response_result:
+                raise TaskExecutionError("AI response is empty or missing 'message' key.")
+            message = ai_response_result["message"]
 
-            # Process the AI response
-            if ai_response and ai_response.get("choices"):
-                # Assuming the first choice is the relevant one
-                message = ai_response["choices"][0].get("message", {})
-                if message.get("tool_calls"):
-                    logger.info(f"Task {task_id}: Received tool calls. Executing tools...")
-                    log_event(
-                        log_message=LogMessage(
-                            LogLevel.INFO,
-                            ComponentType.EXECUTION_ENGINE,
-                            "ai_task_tool_calls",
-                            f"Task {task_id}: Received tool calls. Executing tools...",
-                            subtask_id=task_id,
-                        )
+            if message.get("tool_calls"):
+                logger.info(f"Task {task_id}: Received tool calls. Executing tools...")
+                log_event(
+                    log_message=LogMessage(
+                        LogLevel.INFO,
+                        ComponentType.EXECUTION_ENGINE,
+                        "ai_task_tool_calls",
+                        f"Task {task_id}: Received tool calls. Executing tools...",
+                        subtask_id=task_id,
                     )
-                    tool_outputs = {}
-                    tool_registry = get_tool_registry() # Get the tool registry
+                )
+                tool_outputs = {}
+                tool_registry = get_tool_registry() # Get the tool registry
+                for tool_call in message["tool_calls"]:
+                    tool_name = tool_call.get("function", {}).get("name")
+                    tool_arguments_str = tool_call.get("function", {}).get("arguments", "{}")
 
-                    for tool_call in message["tool_calls"]:
-                        tool_name = tool_call.get("function", {}).get("name")
-                        tool_arguments_str = tool_call.get("function", {}).get("arguments", "{}")
-
-                        if not tool_name:
-                            logger.warning(f"Task {task_id}: Tool call missing function name: {tool_call}. Skipping.")
-                            log_event(
-                                log_message=LogMessage(
-                                    LogLevel.WARNING,
-                                    ComponentType.EXECUTION_ENGINE,
-                                    "tool_call_missing_name",
-                                    f"Task {task_id}: Tool call missing function name. Skipping.",
-                                    subtask_id=task_id,
-                                    details={"tool_call": tool_call},
-                                )
-                            )
-                            continue
-
-                        try:
-                            tool_arguments = json.loads(tool_arguments_str)
-                        except json.JSONDecodeError as e:
-                            error_message = f"Task {task_id}: Failed to parse tool arguments for tool '{tool_name}': {e}. Arguments: {tool_arguments_str}"
-                            logger.error(error_message)
-                            log_event(
-                                log_message=LogMessage(
-                                    LogLevel.ERROR,
-                                    ComponentType.EXECUTION_ENGINE,
-                                    "tool_call_invalid_arguments",
-                                    error_message,
-                                    subtask_id=task_id,
-                                    details={"tool_name": tool_name, "arguments": tool_arguments_str, "error": str(e)},
-                                )
-                            )
-                            # Decide whether to fail the task or just skip this tool call
-                            # For now, we'll log and skip this specific tool call
-                            continue
-
-                        logger.info(f"Task {task_id}: Executing tool '{tool_name}' with arguments: {tool_arguments}")
+                    if not tool_name:
+                        logger.warning(f"Task {task_id}: Tool call missing function name: {tool_call}. Skipping.")
                         log_event(
                             log_message=LogMessage(
-                                LogLevel.INFO,
+                                LogLevel.WARNING,
                                 ComponentType.EXECUTION_ENGINE,
-                                "executing_tool",
-                                f"Task {task_id}: Executing tool '{tool_name}'.",
+                                "tool_call_missing_name",
+                                f"Task {task_id}: Tool call missing function name. Skipping.",
                                 subtask_id=task_id,
-                                details={"tool_name": tool_name, "arguments": tool_arguments},
+                                details={"tool_call": tool_call},
                             )
                         )
+                        continue
 
-                        try:
-                            tool_instance = tool_registry.get_tool(tool_name)
-                            if tool_instance:
-                                # Validate paths in tool arguments before execution
-                                for arg_name, arg_value in tool_arguments.items():
-                                    if isinstance(arg_value, str) and ('path' in arg_name or 'file' in arg_name):
-                                        # Assuming arguments with 'path' or 'file' in their name are file paths
-                                        arg_path = Path(arg_value).resolve()
-                                        if not (self.path_manager.is_path_within_workspace(arg_path) or self.path_manager.is_path_within_output(arg_path)):
-                                            error_message = f"Access to path outside allowed directories denied for tool '{tool_name}': {arg_value}"
-                                            logger.error(error_message)
-                                            log_event(
-                                                log_message=LogMessage(
-                                                    LogLevel.ERROR,
-                                                    ComponentType.EXECUTION_ENGINE,
-                                                    "tool_path_access_denied",
-                                                    error_message,
-                                                    subtask_id=task_id,
-                                                    details={"tool_name": tool_name, "argument_name": arg_name, "argument_value": arg_value},
-                                                )
+                    try:
+                        tool_arguments = json.loads(tool_arguments_str)
+                    except json.JSONDecodeError as e:
+                        error_message = f"Task {task_id}: Failed to parse tool arguments for tool '{tool_name}': {e}. Arguments: {tool_arguments_str}"
+                        logger.error(error_message)
+                        log_event(
+                            log_message=LogMessage(
+                                LogLevel.ERROR,
+                                ComponentType.EXECUTION_ENGINE,
+                                "tool_call_invalid_arguments",
+                                error_message,
+                                subtask_id=task_id,
+                                details={"tool_name": tool_name, "arguments": tool_arguments_str, "error": str(e)},
+                            )
+                        )
+                        continue
+
+                    logger.info(f"Task {task_id}: Executing tool '{tool_name}' with arguments: {tool_arguments}")
+                    log_event(
+                        log_message=LogMessage(
+                            LogLevel.INFO,
+                            ComponentType.EXECUTION_ENGINE,
+                            "executing_tool",
+                            f"Task {task_id}: Executing tool '{tool_name}'.",
+                            subtask_id=task_id,
+                            details={"tool_name": tool_name, "arguments": tool_arguments},
+                        )
+                    )
+
+                    try:
+                        tool_instance = tool_registry.get_tool(tool_name)
+                        if tool_instance:
+                            for arg_name, arg_value in tool_arguments.items():
+                                if isinstance(arg_value, str) and ('path' in arg_name or 'file' in arg_name):
+                                    arg_path = Path(arg_value).resolve()
+                                    if not (self.path_manager.is_path_within_workspace(arg_path) or self.path_manager.is_path_within_output(arg_path)):
+                                        error_message = f"Access to path outside allowed directories denied for tool '{tool_name}': {arg_value}"
+                                        logger.error(error_message)
+                                        log_event(
+                                            log_message=LogMessage(
+                                                LogLevel.ERROR,
+                                                ComponentType.EXECUTION_ENGINE,
+                                                "tool_path_access_denied",
+                                                error_message,
+                                                subtask_id=task_id,
+                                                details={"tool_name": tool_name, "argument_name": arg_name, "argument_value": arg_value},
                                             )
-                                            raise FileRestrictionError(error_message)
+                                        )
+                                        raise FileRestrictionError(error_message)
 
-                                # Execute the tool and store its output
-                                tool_output = tool_instance.execute(**tool_arguments)
-                                tool_outputs[tool_name] = tool_output # Store output by tool name or call ID
-                                logger.info(f"Task {task_id}: Tool '{tool_name}' executed successfully. Output: {tool_output}")
-                                log_event(
-                                    log_message=LogMessage(
-                                        LogLevel.INFO,
-                                        ComponentType.EXECUTION_ENGINE,
-                                        "tool_executed_successfully",
-                                        f"Task {task_id}: Tool '{tool_name}' executed successfully.",
-                                        subtask_id=task_id,
-                                        details={"tool_name": tool_name, "output": str(tool_output)[:200] + "..."}, # Log truncated output
-                                    )
+                            tool_output = tool_instance.execute(**tool_arguments)
+                            tool_outputs[tool_name] = tool_output
+                            logger.info(f"Task {task_id}: Tool '{tool_name}' executed successfully. Output: {tool_output}")
+                            log_event(
+                                log_message=LogMessage(
+                                    LogLevel.INFO,
+                                    ComponentType.EXECUTION_ENGINE,
+                                    "tool_executed_successfully",
+                                    f"Task {task_id}: Tool '{tool_name}' executed successfully.",
+                                    subtask_id=task_id,
+                                    details={"tool_name": tool_name, "output": str(tool_output)[:200] + "..."},
                                 )
-                            else:
-                                error_message = f"Task {task_id}: Tool '{tool_name}' not found in registry."
-                                logger.error(error_message)
-                                log_event(
-                                    log_message=LogMessage(
-                                        LogLevel.ERROR,
-                                        ComponentType.EXECUTION_ENGINE,
-                                        "tool_not_found",
-                                        error_message,
-                                        subtask_id=task_id,
-                                        details={"tool_name": tool_name},
-                                    )
-                                )
-                                # Decide whether to fail the task or just skip this tool call
-                                # For now, we'll log and skip this specific tool call
-                                continue # Skip to the next tool call
-
-                        except FileRestrictionError as e:
-                            error_message = f"Task {task_id}: File access denied for tool '{tool_name}': {e}"
+                            )
+                        else:
+                            error_message = f"Task {task_id}: Tool '{tool_name}' not found in registry."
                             logger.error(error_message)
                             log_event(
                                 log_message=LogMessage(
                                     LogLevel.ERROR,
                                     ComponentType.EXECUTION_ENGINE,
-                                    "tool_file_restriction_error",
+                                    "tool_not_found",
                                     error_message,
                                     subtask_id=task_id,
-                                    details={"tool_name": tool_name, "error": str(e)},
+                                    details={"tool_name": tool_name},
                                 )
                             )
-                            # Decide whether to fail the task or just skip this tool call
-                            # For now, we'll log and skip this specific tool call
-                            continue # Skip to the next tool call
-                        except Exception as e:
-                            error_message = f"Task {task_id}: Error executing tool '{tool_name}': {e}"
-                            logger.error(error_message, exc_info=True)
-                            log_event(
-                                log_message=LogMessage(
-                                    LogLevel.ERROR,
-                                    ComponentType.EXECUTION_ENGINE,
-                                    "tool_execution_error",
-                                    error_message,
-                                    subtask_id=task_id,
-                                    details={"tool_name": tool_name, "error": str(e), "traceback": traceback.format_exc()},
-                                )
+                            continue
+
+                    except FileRestrictionError as e:
+                        error_message = f"Task {task_id}: File access denied for tool '{tool_name}': {e}"
+                        logger.error(error_message)
+                        log_event(
+                            log_message=LogMessage(
+                                LogLevel.ERROR,
+                                ComponentType.EXECUTION_ENGINE,
+                                "tool_file_restriction_error",
+                                error_message,
+                                subtask_id=task_id,
+                                details={"tool_name": tool_name, "error": str(e)},
                             )
-                            # Decide whether to fail the task or just skip this tool call
-                            # For now, we'll log and skip this specific tool call
-                            continue # Skip to the next tool call
-
-                    # Store the AI response (including tool calls) and the tool outputs
-                    result = {
-                        "ai_response": ai_response,
-                        "tool_outputs": tool_outputs
-                    }
-                    logger.info(f"Task {task_id}: Finished executing tools. Stored AI response and tool outputs.")
-                    log_event(
-                        log_message=LogMessage(
-                            LogLevel.INFO,
-                            ComponentType.EXECUTION_ENGINE,
-                            "ai_task_tool_execution_finished",
-                            f"Task {task_id}: Finished executing tools.",
-                            subtask_id=task_id,
                         )
-                    )
-
-                elif message.get("content") is not None:
-                    # Extract and store the content
-                    result = message["content"]
-                    logger.info(f"Task {task_id}: Received content.")
-                    log_event(
-                        log_message=LogMessage(
-                            LogLevel.INFO,
-                            ComponentType.EXECUTION_ENGINE,
-                            "ai_task_content",
-                            f"Task {task_id}: Received content.",
-                            subtask_id=task_id,
+                        continue
+                    except Exception as e:
+                        error_message = f"Task {task_id}: Error executing tool '{tool_name}': {e}"
+                        logger.error(error_message, exc_info=True)
+                        log_event(
+                            log_message=LogMessage(
+                                LogLevel.ERROR,
+                                ComponentType.EXECUTION_ENGINE,
+                                "tool_execution_error",
+                                error_message,
+                                subtask_id=task_id,
+                                details={"tool_name": tool_name, "error": str(e), "traceback": traceback.format_exc()},
+                            )
                         )
-                    )
-                else:
-                    # Handle unexpected message format
-                    error_message = f"AI interaction task {task_id} received unexpected message format: {message}"
-                    logger.error(error_message)
-                    log_event(
-                        log_message=LogMessage(
-                            LogLevel.ERROR,
-                            ComponentType.EXECUTION_ENGINE,
-                            "ai_task_unexpected_message_format",
-                            error_message,
-                            subtask_id=task_id,
-                            details={"message": message},
-                        )
-                    )
-                    raise TaskExecutionError(error_message)
+                        continue
 
-                # Store the conversation turn in the state manager for history
+                result = {
+                    "ai_response": ai_response_result,
+                    "tool_outputs": tool_outputs
+                }
+                logger.info(f"Task {task_id}: Finished executing tools. Stored AI response and tool outputs.")
+                log_event(
+                    log_message=LogMessage(
+                        LogLevel.INFO,
+                        ComponentType.EXECUTION_ENGINE,
+                        "ai_task_tool_execution_finished",
+                        f"Task {task_id}: Finished executing tools.",
+                        subtask_id=task_id,
+                    )
+                )
+
+            elif message.get("content") is not None:
+                result = message["content"]
+                logger.info(f"Task {task_id}: Received content.")
+                log_event(
+                    log_message=LogMessage(
+                        LogLevel.INFO,
+                        ComponentType.EXECUTION_ENGINE,
+                        "ai_task_content",
+                        f"Task {task_id}: Received content.",
+                        subtask_id=task_id,
+                    )
+                )
+            else:
+                error_message = f"AI interaction task {task_id} received unexpected message format: {message}"
+                logger.error(error_message)
+                log_event(
+                    log_message=LogMessage(
+                        LogLevel.ERROR,
+                        ComponentType.EXECUTION_ENGINE,
+                        "ai_task_unexpected_message_format",
+                        error_message,
+                        subtask_id=task_id,
+                        details={"message": message},
+                    )
+                )
+                raise TaskExecutionError(error_message)
+
+            self.state_manager.store_conversation_turn(
+                task_id, {"role": "user", "content": prompt}
+            )
+            if isinstance(result, str):
                 self.state_manager.store_conversation_turn(
-                    task_id, {"role": "user", "content": prompt}
-                )  # Store user prompt
-                if isinstance(result, str):
-                    self.state_manager.store_conversation_turn(
-                        task_id, {"role": "assistant", "content": result}
-                    )  # Store AI response content
-                elif isinstance(result, dict) and result.get("tool_calls"):
-                    self.state_manager.store_conversation_turn(
-                        task_id, {"role": "assistant", "tool_calls": result["tool_calls"]}
-                    )  # Store AI response with tool calls
+                    task_id, {"role": "assistant", "content": result}
+                )
+            elif isinstance(result, dict) and result.get("tool_calls"):
+                self.state_manager.store_conversation_turn(
+                    task_id, {"role": "assistant", "tool_calls": result["tool_calls"]}
+                )
 
-                # Handle output artifacts
                 output_artifacts_spec = task_definition.get("output_artifacts", [])
                 if output_artifacts_spec:
-                    # Assuming the first output artifact is where the result should be written
                     output_artifact_path_str = output_artifacts_spec[0]
                     output_artifact_path = Path(output_artifact_path_str).resolve()
 

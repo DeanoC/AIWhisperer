@@ -167,7 +167,7 @@ class TestOpenRouterAPIUnit:
         prompt = "Hello AI"
         model = "test_model"
         params = {"temperature": 0.5}
-        response = api_client.call_chat_completion(prompt, model, params, tools=expected_tools)
+        response = api_client.call_chat_completion(model=model, prompt_text=prompt, params=params, tools=expected_tools)
 
         mock_post.assert_called_once_with(
             API_URL,
@@ -180,7 +180,7 @@ class TestOpenRouterAPIUnit:
             json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.5, "tools": expected_tools}, # Include expected tools
             timeout=10,
         )
-        assert response['content'] == "This is a non-streaming response."
+        assert response['message']['content'] == "This is a non-streaming response."
 
     @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
@@ -200,7 +200,7 @@ class TestOpenRouterAPIUnit:
         prompt = "New message"
         model = "test_model"
         params = {"temperature": 0.5}
-        response = api_client.call_chat_completion(prompt, model, params, messages_history=history)
+        response = api_client.call_chat_completion(model=model, prompt_text=prompt, params=params, messages_history=history)
 
         mock_post.assert_called_once_with(
             API_URL,
@@ -212,13 +212,13 @@ class TestOpenRouterAPIUnit:
             },
             json={
                 "model": model,
-                "messages": history + [{"role": "user", "content": prompt}],  # Should use history + current prompt
+                "messages": history,  # Only history should be sent as messages
                 "temperature": 0.5,
                 # tools are NOT included in the payload when messages_history is provided
             },
             timeout=10,
         )
-        assert response['content'] == "This is a non-streaming response."
+        assert response['message']['content'] == "This is a non-streaming response."
 
     @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
@@ -237,10 +237,10 @@ class TestOpenRouterAPIUnit:
         prompt = "What's the weather in London?"
         model = "test_model"
         params = {}
-        response = api_client.call_chat_completion(prompt, model, params, tools=[tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value])
+        response = api_client.call_chat_completion(model=model, prompt_text=prompt, params=params, tools=[tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value])
 
         # The response should be the full message object, not just content
-        assert response == MOCK_NON_STREAMING_TOOL_CALLS_RESPONSE["choices"][0]["message"]
+        assert response["message"] == MOCK_NON_STREAMING_TOOL_CALLS_RESPONSE["choices"][0]["message"]
 
     @patch("requests.post")
     def test_call_chat_completion_auth_error(self, mock_post, api_client):
@@ -249,7 +249,7 @@ class TestOpenRouterAPIUnit:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterAuthError, match="Authentication failed"):
-            api_client.call_chat_completion("prompt", "model", {})
+            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
 
     @patch("requests.post")
     def test_call_chat_completion_rate_limit_error(self, mock_post, api_client):
@@ -258,7 +258,7 @@ class TestOpenRouterAPIUnit:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterRateLimitError, match="Rate limit exceeded"):
-            api_client.call_chat_completion("prompt", "model", {})
+            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
 
     @patch("requests.post")
     def test_call_chat_completion_api_error(self, mock_post, api_client):
@@ -267,7 +267,7 @@ class TestOpenRouterAPIUnit:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterAPIError, match="API request failed"):
-            api_client.call_chat_completion("prompt", "model", {})
+            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
 
     @patch("requests.post")
     def test_call_chat_completion_connection_error(self, mock_post, api_client):
@@ -275,7 +275,7 @@ class TestOpenRouterAPIUnit:
         mock_post.side_effect = requests.exceptions.RequestException("Network unreachable")
 
         with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API"):
-            api_client.call_chat_completion("prompt", "model", {})
+            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
 
     @patch("requests.post")
     def test_call_chat_completion_timeout_error(self, mock_post, api_client):
@@ -283,7 +283,7 @@ class TestOpenRouterAPIUnit:
         mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
 
         with pytest.raises(OpenRouterConnectionError, match="Request to OpenRouter API timed out"):
-            api_client.call_chat_completion("prompt", "model", {})
+            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
 
     @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
@@ -302,7 +302,7 @@ class TestOpenRouterAPIUnit:
         prompt = "Stream this"
         model = "test_model"
         params = {"temperature": 0.9}
-        stream_generator = api_client.stream_chat_completion(prompt, model, params)
+        stream_generator = api_client.stream_chat_completion(model=model, prompt_text=prompt, params=params)
 
         # Collect yielded chunks
         chunks = list(stream_generator)
@@ -352,7 +352,7 @@ class TestOpenRouterAPIUnit:
         prompt = "New message for stream"  # This should be ignored
         model = "test_model"
         params = {}
-        stream_generator = api_client.stream_chat_completion(prompt, model, params, messages_history=history)
+        stream_generator = api_client.stream_chat_completion(model=model, prompt_text=prompt, params=params, messages_history=history)
 
         list(stream_generator)  # Consume the generator
 
@@ -384,7 +384,7 @@ class TestOpenRouterAPIUnit:
 
         with pytest.raises(OpenRouterAuthError, match="Authentication failed"):
             # Need to iterate or call next() to trigger the request
-            list(api_client.stream_chat_completion("prompt", "model", {}))
+            list(api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}))
 
     @patch("requests.post")
     def test_stream_chat_completion_initial_api_error(self, mock_post, api_client):
@@ -393,7 +393,7 @@ class TestOpenRouterAPIUnit:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterAPIError, match="API request failed"):
-            list(api_client.stream_chat_completion("prompt", "model", {}))
+            list(api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}))
 
     @patch("requests.post")
     def test_stream_chat_completion_initial_connection_error(self, mock_post, api_client):
@@ -403,7 +403,7 @@ class TestOpenRouterAPIUnit:
         with pytest.raises(
             OpenRouterConnectionError, match="Network error during OpenRouter API streaming: Network unreachable"
         ):
-            list(api_client.stream_chat_completion("prompt", "model", {}))
+            list(api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}))
 
     @patch("requests.post")
     def test_stream_chat_completion_initial_timeout_error(self, mock_post, api_client):
@@ -411,7 +411,7 @@ class TestOpenRouterAPIUnit:
         mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
 
         with pytest.raises(OpenRouterConnectionError, match="Request to OpenRouter API timed out"):
-            list(api_client.stream_chat_completion("prompt", "model", {}))
+            list(api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}))
 
 
     @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
@@ -435,7 +435,7 @@ class TestOpenRouterAPIUnit:
         mock_response.iter_lines = iter_lines_with_error  # Replace iter_lines with our generator
         mock_post.return_value = mock_response
 
-        stream_generator = api_client.stream_chat_completion("prompt", "model", {})
+        stream_generator = api_client.stream_chat_completion(model="model", prompt_text="prompt", params={})
 
         # The first chunk should be yielded successfully
         first_chunk = next(stream_generator)
@@ -470,7 +470,7 @@ class TestOpenRouterAPIUnit:
         mock_response = MockResponse(200, iter_lines_data=invalid_chunks)
         mock_post.return_value = mock_response
 
-        stream_generator = api_client.stream_chat_completion("prompt", "model", {})
+        stream_generator = api_client.stream_chat_completion(model="model", prompt_text="prompt", params={})
 
         # The first chunk should be yielded successfully
         first_chunk = next(stream_generator)
@@ -508,7 +508,7 @@ class TestOpenRouterAPIUnit:
         mock_response = MockResponse(200, iter_lines_data=chunks_with_comments)
         mock_post.return_value = mock_response
 
-        stream_generator = api_client.stream_chat_completion("prompt", "model", {})
+        stream_generator = api_client.stream_chat_completion(model="model", prompt_text="prompt", params={})
 
         # Only the data line should be processed and yielded
         chunks = list(stream_generator)
@@ -599,11 +599,11 @@ class TestOpenRouterAPIUnit:
         mock_response = MockResponse(200, json_data={"choices": [{"message": {"content": "Cached response"}}]})
         mock_post.return_value = mock_response
 
-        response = api.call_chat_completion("Cached prompt", "test_model", {}, tools=expected_tools)
+        response = api.call_chat_completion(model="test_model", prompt_text="Cached prompt", params={}, tools=expected_tools)
 
         # requests.post should NOT have been called
         mock_post.assert_not_called()
-        assert response['content'] == "Cached response"
+        assert response['message']['content'] == "Cached response"
 
 
     @patch("ai_whisperer.ai_service_interaction.ToolRegistry") # Patch ToolRegistry
@@ -628,7 +628,7 @@ class TestOpenRouterAPIUnit:
         prompt = "Uncached prompt"
         model = "test_model"
         params = {}
-        response = api.call_chat_completion(prompt, model, params, tools=expected_tools)
+        response = api.call_chat_completion(model=model, prompt_text=prompt, params=params, tools=expected_tools)
 
 
         # requests.post should have been called
@@ -643,7 +643,7 @@ class TestOpenRouterAPIUnit:
             json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.7, "tools": expected_tools}, # Include expected tools
             timeout=10,
         )
-        assert response['content'] == "This is a non-streaming response."
+        assert response['message']['content'] == "This is a non-streaming response."
 
         # Verify cache was populated with a key that includes tools
         cache_key = api._generate_cache_key(model, [{"role": "user", "content": prompt}], params, expected_tools)
@@ -669,7 +669,7 @@ class TestOpenRouterAPIUnit:
         prompt = "Stream this"
         model = "test_model"
         params = {}
-        stream_generator = api.stream_chat_completion(prompt, model, params)
+        stream_generator = api.stream_chat_completion(model=model, prompt_text=prompt, params=params)
 
         list(stream_generator)  # Consume the generator
 
@@ -698,7 +698,7 @@ class TestOpenRouterAPIUnit:
         prompt = "Stream this"
         model = "test_model"
         params = {}
-        stream_generator = api.stream_chat_completion(prompt, model, params)
+        stream_generator = api.stream_chat_completion(model=model, prompt_text=prompt, params=params)
 
         list(stream_generator)  # Consume the generator
 
@@ -707,89 +707,3 @@ class TestOpenRouterAPIUnit:
         assert isinstance(api.cache, dict)  # Cache should exist
         assert len(api.cache) == 0  # Cache should be empty
 
-    def test_extract_cost_tokens_present(self, api_client):
-        """Test extraction of cost and tokens when all fields are present."""
-        mock_response_data = {
-            "id": "chatcmpl-cost1",
-            "object": "chat.completion",
-            "created": 1677652288,
-            "model": "test_model",
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response with cost"}}],
-            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
-            "meta": {
-                "cost": 0.001,
-                "input_tokens": 10,
-                "output_tokens": 10
-            }
-        }
-        extracted_data = api_client._extract_cost_tokens(mock_response_data)
-        assert extracted_data == (0.001, 10, 10)
-
-    def test_extract_cost_tokens_meta_missing(self, api_client):
-        """Test extraction when the 'meta' section is missing."""
-        mock_response_data = {
-            "id": "chatcmpl-cost2",
-            "object": "chat.completion",
-            "created": 1677652288,
-            "model": "test_model",
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response without meta"}}],
-            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
-            # 'meta' section is missing
-        }
-        extracted_data = api_client._extract_cost_tokens(mock_response_data)
-        assert extracted_data == (None, None, None)
-
-
-    def test_extract_cost_tokens_fields_missing(self, api_client):
-        """Test extraction when cost/token fields are missing within 'meta'."""
-        mock_response_data = {
-            "id": "chatcmpl-cost3",
-            "object": "chat.completion",
-            "created": 1677652288,
-            "model": "test_model",
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response with empty meta"}}],
-            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
-            "meta": {
-                # cost, input_tokens, output_tokens are missing
-            }
-        }
-        extracted_data = api_client._extract_cost_tokens(mock_response_data)
-        assert extracted_data == (None, None, None)
-
-
-    def test_extract_cost_tokens_partial_fields_missing(self, api_client):
-        """Test extraction when some cost/token fields are missing within 'meta'."""
-        mock_response_data = {
-            "id": "chatcmpl-cost4",
-            "object": "chat.completion",
-            "created": 1677652288,
-            "model": "test_model",
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response with partial meta"}}],
-            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
-            "meta": {
-                "cost": 0.002,
-                "input_tokens": 20,
-                # output_tokens is missing
-            }
-        }
-        extracted_data = api_client._extract_cost_tokens(mock_response_data)
-        assert extracted_data == (0.002, 20, None)
-
-
-    def test_extract_cost_tokens_none_values(self, api_client):
-        """Test extraction when cost/token fields are present but have None values."""
-        mock_response_data = {
-            "id": "chatcmpl-cost5",
-            "object": "chat.completion",
-            "created": 1677652288,
-            "model": "test_model",
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Response with None values"}}],
-            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
-            "meta": {
-                "cost": None,
-                "input_tokens": None,
-                "output_tokens": None
-            }
-        }
-        extracted_data = api_client._extract_cost_tokens(mock_response_data)
-        assert extracted_data == (None, None, None)

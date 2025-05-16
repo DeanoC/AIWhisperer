@@ -254,9 +254,18 @@ class InitialPlanGenerator:
                         add_items_postprocessor,
                     ]
                 )
+
+
+                # Extract the 'content' field from the 'message' object inside the API response
+                message_obj = api_response_content.get("message")
+                content = None
+                if message_obj and isinstance(message_obj, dict):
+                    content = message_obj.get("content")
+                if content is None:
+                    logger.error(f"AI response did not contain a plan in the 'content' field. Got: {api_response_content}")
+                    raise OrchestratorError(f"AI response did not contain a plan in the 'content' field. Got: {api_response_content}")
                 # Pass the JSON data through the postprocessing pipeline
-                # Extract the 'content' field from the message object
-                (processed_data, postprocessing_result) = pipeline.process(api_response_content.get("content"), result_data)
+                (processed_data, postprocessing_result) = pipeline.process(content, result_data)
 
                 # The pipeline should return a dictionary if successful
                 if not isinstance(processed_data, dict):
