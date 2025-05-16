@@ -124,10 +124,13 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         prompt_agent = self.manager.get_prompt("agents", "code_generation")
         expected_path = self.prompts_dir / "agents/code_generation.prompt.md"
         actual_path = prompt_agent.path
-        self.assertEqual(
-            os.path.normcase(os.path.normpath(str(actual_path))),
-            os.path.normcase(os.path.normpath(str(expected_path)))
-        )
+        try:
+            self.assertTrue(os.path.samefile(actual_path, expected_path))
+        except (AttributeError, FileNotFoundError):
+            self.assertEqual(
+                os.path.realpath(str(actual_path)),
+                os.path.realpath(str(expected_path))
+            )
         self.assertEqual(prompt_agent.content, "Agent code generation prompt.")
 
         # Test core directory (should not be hit due to override)
