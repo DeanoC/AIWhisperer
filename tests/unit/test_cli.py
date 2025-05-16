@@ -1,5 +1,21 @@
+
 import pytest
 from unittest.mock import patch, MagicMock
+
+# Minimal valid config for CLI commands to not error
+minimal_config = {
+    "openrouter": {
+        "api_key": "mock_api_key",
+        "model": "mock_model",
+        "params": {"temperature": 0.5},
+        "site_url": "mock_url",
+        "app_name": "mock_app",
+    },
+    "prompts": {
+        "subtask_generator_prompt_content": "dummy"
+    },
+    "output_dir": "./test_output/",
+}
 
 # Import the main function and command classes
 from ai_whisperer.cli import cli
@@ -37,7 +53,7 @@ def reset_path_manager_instance():
 def mock_setup(reset_path_manager_instance):
     with patch('ai_whisperer.logging_custom.setup_logging'), \
          patch('ai_whisperer.cli.load_config') as mock_load_config: # Mock load_config
-        mock_load_config.return_value = {} # Return an empty dict for config
+        mock_load_config.return_value = minimal_config # Return a minimal valid config
         yield mock_load_config # Yield the mock object
 
 # --- Test Cases for Each Command ---
@@ -49,7 +65,7 @@ def test_list_models_command_valid_args(mock_commands):
 
     assert len(commands) == 1
     mock_commands["ListModelsCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         output_csv=None
     )
     assert isinstance(commands[0], MagicMock) # Check if the mocked object is returned
@@ -61,7 +77,7 @@ def test_list_models_command_global_config_before_command(mock_commands):
 
     assert len(commands) == 1
     mock_commands["ListModelsCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         output_csv=None
     )
     assert isinstance(commands[0], MagicMock)
@@ -73,7 +89,7 @@ def test_list_models_command_with_output_csv(mock_commands):
 
     assert len(commands) == 1
     mock_commands["ListModelsCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         output_csv="output.csv"
     )
     assert isinstance(commands[0], MagicMock)
@@ -95,8 +111,8 @@ def test_generate_initial_plan_command_valid_args(mock_commands):
 
     assert len(commands) == 1
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
-        output_dir="output", # Default value
+        config=minimal_config,
+        output_dir="output",
         requirements_path="reqs.md"
     )
     assert isinstance(commands[0], MagicMock)
@@ -108,8 +124,8 @@ def test_generate_initial_plan_command_global_config_before_command(mock_command
 
     assert len(commands) == 1
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
-        output_dir="output", # Default value
+        config=minimal_config,
+        output_dir="output",
         requirements_path="reqs.md"
     )
     assert isinstance(commands[0], MagicMock)
@@ -122,7 +138,7 @@ def test_generate_initial_plan_command_with_output(mock_commands):
 
     assert len(commands) == 1
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         output_dir="plans",
         requirements_path="reqs.md"
     )
@@ -155,8 +171,8 @@ def test_generate_overview_plan_command_valid_args(mock_commands):
 
     assert len(commands) == 1
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
-        output_dir="output", # Default value
+        config=minimal_config,
+        output_dir="output",
         initial_plan_path="initial.json"
     )
     assert isinstance(commands[0], MagicMock)
@@ -168,8 +184,8 @@ def test_generate_overview_plan_command_global_config_before_command(mock_comman
 
     assert len(commands) == 1
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
-        output_dir="output", # Default value
+        config=minimal_config,
+        output_dir="output",
         initial_plan_path="initial.json"
     )
     assert isinstance(commands[0], MagicMock)
@@ -181,7 +197,7 @@ def test_generate_overview_plan_command_with_output(mock_commands):
 
     assert len(commands) == 1
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         output_dir="overview_plans",
         initial_plan_path="initial.json"
     )
@@ -214,12 +230,12 @@ def test_generate_full_plan_command_valid_args(mock_commands):
 
     assert len(commands) == 2
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         output_dir="plans",
         requirements_path="reqs.md"
     )
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         output_dir="plans",
         initial_plan_path="<output_of_generate_initial_plan_command>"
     )
@@ -232,11 +248,11 @@ def test_refine_command_valid_args(mock_commands):
 
     assert len(commands) == 1
     mock_commands["RefineCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         input_file="input.md",
-        iterations=1, # Default value
-        prompt_file=None, # Default value
-        output=None # Default value
+        iterations=1,
+        prompt_file=None,
+        output=None
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -247,7 +263,7 @@ def test_refine_command_with_optional_args(mock_commands):
 
     assert len(commands) == 1
     mock_commands["RefineCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         input_file="input.md",
         iterations=5,
         prompt_file="prompt.txt",
@@ -282,10 +298,10 @@ def test_run_command_valid_args(mock_commands):
 
     assert len(commands) == 1
     mock_commands["RunCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         plan_file="plan.json",
         state_file="state.json",
-        monitor=False # Added expected monitor argument
+        monitor=False
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -326,7 +342,7 @@ def test_run_command_with_monitor(mock_commands):
 
     assert len(commands) == 1
     mock_commands["RunCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         plan_file="plan.json",
         state_file="state.json",
         monitor=True
@@ -340,10 +356,10 @@ def test_run_command_without_monitor(mock_commands):
 
     assert len(commands) == 1
     mock_commands["RunCommand"].assert_called_once_with(
-        config={}, # Pass the loaded config object
+        config=minimal_config,
         plan_file="plan.json",
         state_file="state.json",
-        monitor=False # Default value
+        monitor=False
     )
     assert isinstance(commands[0], MagicMock)
 

@@ -258,8 +258,9 @@ def test_subtask_generator_initialization(tmp_path, initialize_path_manager, res
     # Load the config using the real function
     loaded_config = load_config(str(config_path))
 
-    # Instantiate SubtaskGenerator with the path to the temporary config file
-    generator = SubtaskGenerator(str(config_path))
+
+    # Instantiate SubtaskGenerator with the loaded config dict
+    generator = SubtaskGenerator(loaded_config)
 
     # Assert that the generator's config matches the loaded config
     assert generator.config == loaded_config
@@ -286,9 +287,11 @@ def test_generate_subtask_success(tmp_path, mock_openrouter_client, mock_schema_
     with open(schema_path, "w") as f:
         f.write(SCHEMA_CONTENT)
 
-    # Instantiate SubtaskGenerator with the path to the temporary config file and output directory
+
+    # Load the config using the real function
+    loaded_config = load_config(str(config_path))
     output_dir = tmp_path / MOCK_CONFIG["output_dir"]
-    generator = SubtaskGenerator(str(config_path), output_dir=str(output_dir))
+    generator = SubtaskGenerator(loaded_config, output_dir=str(output_dir))
 
     # Always return a dict with 'content' for the AI response
     mock_openrouter_client.call_chat_completion.return_value = {"content": MOCK_AI_RESPONSE_JSON_VALID}
@@ -382,8 +385,9 @@ def test_generate_subtask_ai_error(tmp_path, mock_openrouter_client, initialize_
     with open(schema_path, "w") as f:
         f.write(SCHEMA_CONTENT)
 
-    # Instantiate SubtaskGenerator with the path to the temporary config file
-    generator = SubtaskGenerator(str(config_path))
+    # Load the config using the real function
+    loaded_config = load_config(str(config_path))
+    generator = SubtaskGenerator(loaded_config)
     mock_openrouter_client.call_chat_completion.side_effect = OpenRouterAPIError("AI failed")
 
     with pytest.raises(SubtaskGenerationError, match="AI interaction failed"):
@@ -410,8 +414,9 @@ def test_generate_subtask_schema_validation_error(tmp_path, mock_openrouter_clie
     with open(schema_path, "w") as f:
         f.write(SCHEMA_CONTENT)
 
-    # Instantiate SubtaskGenerator with the path to the temporary config file
-    generator = SubtaskGenerator(str(config_path))
+    # Load the config using the real function
+    loaded_config = load_config(str(config_path))
+    generator = SubtaskGenerator(loaded_config)
     mock_openrouter_client.call_chat_completion.return_value = {"content": MOCK_AI_RESPONSE_JSON_INVALID_SCHEMA}
     # The expected error message should reflect the new schema validation failure
     mock_schema_validation.side_effect = SchemaValidationError(
@@ -446,8 +451,9 @@ def test_generate_subtask_json_parsing_error(tmp_path, mock_openrouter_client, i
     with open(schema_path, "w") as f:
         f.write(SCHEMA_CONTENT)
 
-    # Instantiate SubtaskGenerator with the path to the temporary config file
-    generator = SubtaskGenerator(str(config_path))
+    # Load the config using the real function
+    loaded_config = load_config(str(config_path))
+    generator = SubtaskGenerator(loaded_config)
     # Return a dict with 'content' as a string that is not valid JSON
     mock_openrouter_client.call_chat_completion.return_value = {"content": "invalid json content"}
 

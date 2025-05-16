@@ -111,12 +111,13 @@ class TestSubtaskGeneratorPostprocessingIntegration:
             with open(config_path, "w") as f:
                 json.dump(raw_test_config, f)
 
+
             # Load the processed config using load_config
             processed_config = load_config(str(config_path))
 
-            # Create subtask generator with the processed config
+            # Create subtask generator with the processed config (now always pass dict)
             subtask_generator = SubtaskGenerator(
-                str(config_path),  # Pass config_path string as SubtaskGenerator expects it
+                processed_config,
                 overall_context="",
                 workspace_context="",
                 output_dir=str(tmp_dir),
