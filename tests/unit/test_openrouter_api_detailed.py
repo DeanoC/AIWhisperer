@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.ai_whisperer.ai_service_interaction import OpenRouterAPI
+from ai_whisperer.ai_service_interaction import OpenRouterAPI
 
 # Mock response data based on the expected structure from the planning summary
 MOCK_API_RESPONSE_SINGLE_MODEL = {
@@ -52,7 +52,7 @@ MOCK_API_RESPONSE_MISSING_FIELDS = {
 }
 
 
-@patch("src.ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_single(mock_get):
     """Tests fetching and parsing detailed data for a single model."""
     mock_response = MagicMock()
@@ -67,7 +67,7 @@ def test_list_models_detailed_single(mock_get):
     assert models == MOCK_API_RESPONSE_SINGLE_MODEL["data"]
 
 
-@patch("src.ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_multiple(mock_get):
     """Tests fetching and parsing detailed data for multiple models."""
     mock_response = MagicMock()
@@ -82,7 +82,7 @@ def test_list_models_detailed_multiple(mock_get):
     assert models == MOCK_API_RESPONSE_MULTIPLE_MODELS["data"]
 
 
-@patch("src.ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_missing_fields(mock_get):
     """Tests handling of models with missing optional fields."""
     mock_response = MagicMock()
@@ -97,7 +97,7 @@ def test_list_models_detailed_missing_fields(mock_get):
     assert models == MOCK_API_RESPONSE_MISSING_FIELDS["data"]
 
 
-@patch("src.ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_empty_data(mock_get):
     """Tests handling of an empty data array in the API response."""
     mock_response = MagicMock()
@@ -111,7 +111,7 @@ def test_list_models_detailed_empty_data(mock_get):
     assert len(models) == 0
 
 
-@patch("src.ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_api_error(mock_get):
     """Tests handling of an API error response."""
     mock_response = MagicMock()

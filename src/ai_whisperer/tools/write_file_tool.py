@@ -2,7 +2,7 @@ import logging
 import pathlib
 from typing import Any, Dict
 
-from src.ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.path_management import PathManager
 from ai_whisperer.exceptions import FileRestrictionError
 

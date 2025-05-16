@@ -2,9 +2,9 @@ import unittest
 from unittest.mock import MagicMock, call, patch
 import uuid
 
-from src.ai_whisperer.execution_engine import ExecutionEngine, TaskExecutionError
-from src.ai_whisperer.plan_parser import ParserPlan  # Import ParserPlan
-from src.ai_whisperer.prompt_system import PromptSystem # Import PromptSystem
+from ai_whisperer.execution_engine import ExecutionEngine, TaskExecutionError
+from ai_whisperer.plan_parser import ParserPlan  # Import ParserPlan
+from ai_whisperer.prompt_system import PromptSystem # Import PromptSystem
 
 
 class TestExecutionEngine(unittest.TestCase):
@@ -45,7 +45,7 @@ class TestExecutionEngine(unittest.TestCase):
         self.assertIsNotNone(self.engine)
         self.assertEqual(self.engine.state_manager, self.mock_state_manager)
 
-    @patch("src.ai_whisperer.execution_engine.ParserPlan")
+    @patch("ai_whisperer.execution_engine.ParserPlan")
     def test_execute_empty_plan(self, MockParserPlan):
         empty_plan_data = {"plan": []}
         mock_parser_instance = MagicMock(spec=ParserPlan)
@@ -55,7 +55,7 @@ class TestExecutionEngine(unittest.TestCase):
         self.mock_state_manager.set_task_state.assert_not_called()
         self.mock_execute_single_task.assert_not_called()
 
-    @patch("src.ai_whisperer.execution_engine.ParserPlan")
+    @patch("ai_whisperer.execution_engine.ParserPlan")
     def test_execute_plan_none(self, MockParserPlan):
         with self.assertRaises(ValueError) as cm:
             self.engine.execute_plan(None)
@@ -64,7 +64,7 @@ class TestExecutionEngine(unittest.TestCase):
         self.mock_execute_single_task.assert_not_called()
         MockParserPlan.assert_not_called()
 
-    @patch("src.ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
+    @patch("ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
     def test_execute_simple_sequential_plan(self, MockParserPlan):
         sample_plan_data = self._get_sample_plan(num_tasks=2)
         task1_def = sample_plan_data["plan"][0]
@@ -121,7 +121,7 @@ class TestExecutionEngine(unittest.TestCase):
         self.mock_state_manager.get_task_result.assert_called_once_with("task_not_done")
         self.assertIsNone(result)
 
-    @patch("src.ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
+    @patch("ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
     def test_execute_plan_with_task_failure(self, MockParserPlan):
         # This test mocks _execute_single_task to simulate a TaskExecutionError
         sample_plan_data = self._get_sample_plan(num_tasks=1, add_failing_task=True)
@@ -169,7 +169,7 @@ class TestExecutionEngine(unittest.TestCase):
                 self.assertEqual(failure_result["error"], "Intentional failure for task_that_fails")
         self.assertTrue(found, "store_task_result was not called for the failing task")
 
-    @patch("src.ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
+    @patch("ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
     def test_execute_plan_with_dependency_met(self, MockParserPlan):
         sample_plan_data = self._get_sample_plan(num_tasks=2, add_dependent_task=True)  # task_2 depends on task_1
         task1_def = sample_plan_data["plan"][0]
@@ -207,7 +207,7 @@ class TestExecutionEngine(unittest.TestCase):
         ]
         self.mock_state_manager.assert_has_calls(expected_state_calls, any_order=False)
 
-    @patch("src.ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
+    @patch("ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
     def test_execute_plan_with_dependency_not_met(self, MockParserPlan):
         sample_plan_data = self._get_sample_plan(num_tasks=2, add_dependent_task=True)  # task_2 depends on task_1
         task1_def = sample_plan_data["plan"][0]

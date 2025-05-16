@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from src.ai_whisperer.execution_engine import ExecutionEngine
-from src.ai_whisperer.exceptions import TaskExecutionError
-from src.ai_whisperer.prompt_system import PromptSystem # Import PromptSystem
+from ai_whisperer.execution_engine import ExecutionEngine
+from ai_whisperer.exceptions import TaskExecutionError
+from ai_whisperer.prompt_system import PromptSystem # Import PromptSystem
 
 # Mock configuration and task data
 MOCK_CONFIG = {

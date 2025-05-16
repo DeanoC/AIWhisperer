@@ -186,6 +186,10 @@ def load_config(config_path: str, cli_args: Optional[Dict[str, Any]] = None) -> 
 
         config["task_model_configs"][task_name] = merged_model_config
 
+    # Ensure 'task_prompts_content' key is always present (empty dict if not loaded here)
+    if "task_prompts_content" not in config:
+        config["task_prompts_content"] = {}
+
     required_openrouter_keys = ["model"]
     missing_openrouter_keys = [key for key in required_openrouter_keys if not openrouter_config.get(key)]
     if missing_openrouter_keys:

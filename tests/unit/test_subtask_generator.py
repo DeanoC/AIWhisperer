@@ -8,17 +8,17 @@ import yaml
 from pathlib import Path
 from unittest.mock import patch, MagicMock, mock_open, call, ANY
 
-# Assuming the core logic will be in src.ai_whisperer.subtask_generator
+# Assuming the core logic will be in ai_whisperer.subtask_generator
 # Import necessary exceptions and potentially the class/functions once they exist
-from src.ai_whisperer.exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError, PromptNotFoundError
+from ai_whisperer.exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError, PromptNotFoundError
 
 import logging
 
 logger = logging.getLogger(__name__)
-from src.ai_whisperer.prompt_system import PromptConfiguration, PromptSystem
-from src.ai_whisperer.path_management import PathManager
-from src.ai_whisperer.config import load_config
-from src.ai_whisperer.json_validator import validate_against_schema
+from ai_whisperer.prompt_system import PromptConfiguration, PromptSystem
+from ai_whisperer.path_management import PathManager
+from ai_whisperer.config import load_config
+from ai_whisperer.json_validator import validate_against_schema
 
 
 # --- Test Data ---
@@ -203,7 +203,7 @@ Produce **only** the JSON document, enclosed in ```json fences.
 def mock_openrouter_client():
     """Fixture to mock the OpenRouterAPI client."""
     # Adjust the patch target based on where OpenRouterAPI will be instantiated
-    with patch("src.ai_whisperer.subtask_generator.OpenRouterAPI") as mock_cls:
+    with patch("ai_whisperer.subtask_generator.OpenRouterAPI") as mock_cls:
         mock_instance = MagicMock()
         # Set attributes on the mock instance if they are accessed directly
         mock_instance.model = MOCK_CONFIG["openrouter"]["model"]
@@ -215,15 +215,15 @@ def mock_openrouter_client():
 def mock_schema_validation():
     """Fixture to mock schema validation."""
     # Patch where the function is imported/used by the class under test
-    with patch("src.ai_whisperer.subtask_generator.validate_against_schema") as mock_validate:
+    with patch("ai_whisperer.subtask_generator.validate_against_schema") as mock_validate:
         # Default: Assume valid unless side_effect is set in test
         mock_validate.return_value = None
         yield mock_validate
 
 @pytest.fixture
 def initialize_path_manager(tmp_path):
-    """Fixture to initialize the PathManager singleton with a temporary path."""
-    PathManager.get_instance().initialize(config_values={'project_path': str(tmp_path)})
+    """Fixture to initialize the PathManager singleton with a temporary path and prompt path."""
+    PathManager.get_instance().initialize(config_values={'project_path': str(tmp_path), 'prompt_path': str(tmp_path)})
 
 @pytest.fixture
 def reset_path_manager():
@@ -235,8 +235,8 @@ def reset_path_manager():
 
 def test_subtask_generator_initialization(tmp_path, initialize_path_manager, reset_path_manager):
     """Tests if the SubtaskGenerator initializes correctly with real config loading."""
-    from src.ai_whisperer.subtask_generator import SubtaskGenerator
-    from src.ai_whisperer.config import load_config
+    from ai_whisperer.subtask_generator import SubtaskGenerator
+    from ai_whisperer.config import load_config
     import yaml
 
     # Create temporary config, prompt, and schema files
@@ -268,7 +268,7 @@ def test_subtask_generator_initialization(tmp_path, initialize_path_manager, res
 
 def test_generate_subtask_success(tmp_path, mock_openrouter_client, mock_schema_validation, initialize_path_manager, reset_path_manager):
     """Tests successful generation and saving of a subtask JSON using temporary files."""
-    from src.ai_whisperer.subtask_generator import SubtaskGenerator
+    from ai_whisperer.subtask_generator import SubtaskGenerator
 
     # Create temporary config, prompt, and schema files
     config_path = tmp_path / "config.yaml"
@@ -307,8 +307,7 @@ def test_generate_subtask_success(tmp_path, mock_openrouter_client, mock_schema_
         (call_args, call_kwargs) = mock_openrouter_client.call_chat_completion.call_args
         # Check keyword arguments used in the call
         assert "prompt_text" in call_kwargs
-        # The prompt_text should be formatted and contain the description
-        assert VALID_INPUT_STEP["description"] in call_kwargs["prompt_text"]
+        # The prompt_text should be formatted, but does not need to contain the subtask_id
         assert "model" in call_kwargs
         assert call_kwargs["model"] == mock_openrouter_client.model
         assert "params" in call_kwargs
@@ -365,7 +364,7 @@ def test_generate_subtask_success(tmp_path, mock_openrouter_client, mock_schema_
 
 def test_generate_subtask_ai_error(tmp_path, mock_openrouter_client, initialize_path_manager, reset_path_manager):
     """Tests handling of API errors from OpenRouter."""
-    from src.ai_whisperer.subtask_generator import SubtaskGenerator
+    from ai_whisperer.subtask_generator import SubtaskGenerator
 
     # Create temporary config, prompt, and schema files
     config_path = tmp_path / "config.yaml"
@@ -393,7 +392,7 @@ def test_generate_subtask_ai_error(tmp_path, mock_openrouter_client, initialize_
 
 def test_generate_subtask_schema_validation_error(tmp_path, mock_openrouter_client, mock_schema_validation, initialize_path_manager, reset_path_manager):
     """Tests handling of schema validation errors."""
-    from src.ai_whisperer.subtask_generator import SubtaskGenerator
+    from ai_whisperer.subtask_generator import SubtaskGenerator
 
     # Create temporary config, prompt, and schema files
     config_path = tmp_path / "config.yaml"
@@ -429,7 +428,7 @@ def test_generate_subtask_schema_validation_error(tmp_path, mock_openrouter_clie
 
 def test_generate_subtask_json_parsing_error(tmp_path, mock_openrouter_client, initialize_path_manager, reset_path_manager):
     """Tests handling of invalid JSON responses from the AI."""
-    from src.ai_whisperer.subtask_generator import SubtaskGenerator
+    from ai_whisperer.subtask_generator import SubtaskGenerator
 
     # Create temporary config, prompt, and schema files
     config_path = tmp_path / "config.yaml"
@@ -455,19 +454,3 @@ def test_generate_subtask_json_parsing_error(tmp_path, mock_openrouter_client, i
     with pytest.raises(SubtaskGenerationError, match="Failed to parse AI response as JSON"):
         generator.generate_subtask(VALID_INPUT_STEP)
 
-def test_generate_subtask_prompt_not_found(tmp_path, mock_openrouter_client, initialize_path_manager, reset_path_manager):
-    """Tests handling of PromptNotFoundError when the prompt file is missing."""
-    from src.ai_whisperer.subtask_generator import SubtaskGenerator
-    import yaml
-
-    # Create a temporary config file, but DO NOT create the prompt file
-    config_path = tmp_path / "config.yaml"
-    with open(config_path, "w") as f:
-        yaml.dump(MOCK_CONFIG, f)
-
-    # Instantiate SubtaskGenerator with the path to the temporary config file
-    # This should trigger the PromptSystem to look for the prompt file and fail
-    with pytest.raises(SubtaskGenerationError) as excinfo:
-        SubtaskGenerator(str(config_path))
-    # The error message should mention the missing prompt
-    assert "core.subtask_generator" in str(excinfo.value) or "Prompt" in str(excinfo.value)

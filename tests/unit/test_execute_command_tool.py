@@ -3,7 +3,7 @@ import asyncio
 import os
 import platform
 
-from src.ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
+from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
 
 # Helper to get a simple, non-destructive command based on OS
 def get_simple_success_command():

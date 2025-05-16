@@ -6,8 +6,8 @@ from pathlib import Path
 # which will use PathManager for restrictions.
 # Currently, they are placeholders that will need to be integrated with the actual runner execution.
 
-from src.ai_whisperer.tools.read_file_tool import ReadFileTool
-from src.ai_whisperer.tools.write_file_tool import WriteFileTool
+from ai_whisperer.tools.read_file_tool import ReadFileTool
+from ai_whisperer.tools.write_file_tool import WriteFileTool
 from ai_whisperer.path_management import PathManager # Import PathManager
 from ai_whisperer.exceptions import FileRestrictionError # Import FileRestrictionError
 

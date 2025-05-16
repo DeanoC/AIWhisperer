@@ -3,8 +3,8 @@ from unittest.mock import patch, MagicMock
 import tempfile
 import os
 
-from src.ai_whisperer.commands import GenerateInitialPlanCommand
-from src.ai_whisperer.initial_plan_generator import InitialPlanGenerator
+from ai_whisperer.commands import GenerateInitialPlanCommand
+from ai_whisperer.initial_plan_generator import InitialPlanGenerator
 
 class TestGenerateInitialPlanCommand:
 
@@ -16,8 +16,8 @@ class TestGenerateInitialPlanCommand:
     def mock_output_dir(self):
         return "fake_output_dir"
 
-    @patch('src.ai_whisperer.commands.load_config')
-    @patch('src.ai_whisperer.commands.InitialPlanGenerator')
+    @patch('ai_whisperer.commands.load_config')
+    @patch('ai_whisperer.commands.InitialPlanGenerator')
     def test_generate_initial_plan_success(self, mock_initial_plan_generator, mock_load_config, mock_config_path, mock_output_dir):
         """Tests successful generation of an initial plan."""
         mock_load_config.return_value = {"mock": "config"} # Return a dummy config
@@ -42,8 +42,8 @@ class TestGenerateInitialPlanCommand:
 
         os.unlink(tmp_req_path) # Clean up the temporary file
 
-    @patch('src.ai_whisperer.commands.load_config')
-    @patch('src.ai_whisperer.commands.InitialPlanGenerator')
+    @patch('ai_whisperer.commands.load_config')
+    @patch('ai_whisperer.commands.InitialPlanGenerator')
     def test_generate_initial_plan_no_requirements_path(self, mock_initial_plan_generator, mock_load_config, mock_config_path, mock_output_dir):
         """Tests generating initial plan without requirements path."""
         mock_load_config.return_value = {"mock": "config"} # Return a dummy config

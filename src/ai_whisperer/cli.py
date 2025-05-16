@@ -153,6 +153,7 @@ def cli(args=None) -> list[BaseCommand]:
         # Load configuration, passing parsed_args for PathManager initialization
         config = load_config(str(config_file_path), cli_args=vars(parsed_args))
 
+
         # --- Instantiate Command Object ---
         commands = [] # Initialize commands list
         if parsed_args.command == "list-models":
@@ -163,13 +164,13 @@ def cli(args=None) -> list[BaseCommand]:
         elif parsed_args.command == "generate":
             if parsed_args.subcommand == "initial-plan":
                 commands.append(GenerateInitialPlanCommand(
-                    config_path=str(config_file_path), # Pass the path to the config file
+                    config=config, # Pass the loaded config object
                     output_dir=parsed_args.output,
                     requirements_path=parsed_args.requirements_path,
                 ))
             elif parsed_args.subcommand == "overview-plan":
                 commands.append(GenerateOverviewPlanCommand(
-                    config_path=str(config_file_path), # Pass the path to the config file
+                    config=config, # Pass the loaded config object
                     output_dir=parsed_args.output,
                     initial_plan_path=parsed_args.initial_plan_path
                 ))

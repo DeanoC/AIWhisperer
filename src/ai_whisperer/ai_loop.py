@@ -5,17 +5,18 @@ import traceback
 from unittest.mock import MagicMock # Assuming MagicMock might be used for testing within the loop itself, though ideally tests mock the loop. Keep for now.
 import asyncio # Import asyncio
 
-from src.ai_whisperer.execution_engine import ExecutionEngine
-from src.ai_whisperer.exceptions import TaskExecutionError
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event # Import log_event
-from src.ai_whisperer.tools.tool_registry import ToolRegistry
-from src.ai_whisperer.context_management import ContextManager
+from ai_whisperer.execution_engine import ExecutionEngine
+from ai_whisperer.exceptions import TaskExecutionError
+from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event # Import log_event
+from ai_whisperer.tools.tool_registry import ToolRegistry
+from ai_whisperer.context_management import ContextManager
 
 import threading # Import threading for shutdown_event type hint
+from project_dev.notes.thread_safe_delegates import DelegateManager # Import DelegateManager
 
 logger = get_logger(__name__)
 
-def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, initial_prompt: str, logger, context_manager: ContextManager) -> dict:
+def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, initial_prompt: str, logger, context_manager: ContextManager, delegate_manager: DelegateManager) -> dict:
     """
     Manages the iterative AI interaction loop for a task, including sending prompts,
     processing AI responses, executing tool calls, and managing conversation history
@@ -48,11 +49,15 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
     consecutive_tool_calls = 0 # Counter for consecutive tool-only responses
     MAX_CONSECUTIVE_TOOL_CALLS = 5 # Threshold to detect potential infinite loops
 
+    _ai_loop_pause_event = threading.Event() # Add AI loop pause event
+    _ai_loop_paused = False # Add AI loop paused state flag
+
     # Add the initial user prompt to the context manager
     user_prompt_entry = {"role": "user", "content": initial_prompt}
     context_manager.add_message(user_prompt_entry)
 
     logger.debug(f"Task {task_id}: Entering AI interaction loop.")
+    delegate_manager.invoke_notification(engine, "ai_loop_started") # Invoke ai_loop_started delegate
 
     # First AI call with prompt_text and history from context manager
     try:
@@ -63,10 +68,12 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                 f"Calling AI for task {task_id} with initial prompt_text", subtask_id=task_id, details={"prompt_text": initial_prompt}
             )
         )
+        delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "initial_ai_call_preparation", "task_id": task_id}) # Add processing step notification
 
         params = {
             'temperature': engine.config.get('ai_temperature', 0.1) # Use temperature from config
         }
+        delegate_manager.invoke_notification(engine, "ai_request_prepared", {"request_payload": {"prompt_text": initial_prompt, "model": engine.config.get('ai_model', 'google/gemini-2.5-flash-preview'), "params": params, "messages_history": context_manager.get_history()}}) # Invoke ai_request_prepared delegate
         ai_response = engine.openrouter_api.call_chat_completion(
             prompt_text=initial_prompt, # Pass initial prompt as prompt_text
             model=engine.config.get('ai_model', 'google/gemini-2.5-flash-preview'), # Corrected model name
@@ -75,6 +82,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
         )
 
         logger.debug(f"Task {task_id}: Initial AI call completed.")
+        delegate_manager.invoke_notification(engine, "ai_response_received", {"response_data": ai_response}) # Invoke ai_response_received delegate
+        delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "initial_ai_response_processing", "task_id": task_id}) # Add processing step notification
 
         # Store the assistant's response in the context manager
         context_manager.add_message(ai_response)
@@ -85,6 +94,7 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
         log_event(
             log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_initial_ai_call_error", error_message, subtask_id=task_id, details={"error": str(e), "traceback": traceback.format_exc()})
         )
+        delegate_manager.invoke_notification(engine, "ai_loop_error_occurred", {"error_type": type(e).__name__, "error_message": error_message}) # Invoke ai_loop_error_occurred delegate
         raise TaskExecutionError(error_message) from e
 
 
@@ -92,9 +102,64 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
     while True:
         logger.debug(f"Task {task_id}: Start of subsequent AI interaction loop iteration.")
 
-        # Process the AI response from the previous turn
-        tool_calls = ai_response.get('tool_calls')
-        content = ai_response.get('content')
+        # Check for pause request
+        if delegate_manager.invoke_control(engine, "ai_loop_request_pause"):
+            # TODO: Implement actual pause logic (e.g., wait on a threading.Event)
+            logger.info(f"AI loop paused for task {task_id}")
+            log_event(
+                log_message=LogMessage(
+                    LogLevel.INFO,
+                    ComponentType.EXECUTION_ENGINE,
+                    "ai_loop_paused",
+                    f"AI loop paused for task {task_id}.",
+                    subtask_id=task_id,
+                )
+            )
+            while _ai_loop_paused and not engine.shutdown_event.is_set():
+                _ai_loop_pause_event.wait(timeout=0.1) # Wait with a timeout to allow checking shutdown_event
+            if engine.shutdown_event.is_set():
+                logger.info("Shutdown requested while AI loop paused. Stopping AI loop.")
+                log_event(
+                    log_message=LogMessage(
+                        LogLevel.INFO,
+                        ComponentType.EXECUTION_ENGINE,
+                        "ai_loop_shutdown_while_paused",
+                        "Shutdown requested while AI loop paused. Stopping AI loop.",
+                        subtask_id=task_id,
+                    )
+                )
+                break # Exit the AI loop for graceful shutdown
+
+       # Check for stop request
+        if delegate_manager.invoke_control(engine, "ai_loop_request_stop"):
+            logger.info(f"AI loop received stop request for task {task_id}. Initiating graceful shutdown.")
+            log_event(
+                log_message=LogMessage(
+                    LogLevel.INFO,
+                    ComponentType.EXECUTION_ENGINE,
+                    "ai_loop_stop_requested",
+                    f"AI loop received stop request for task {task_id}. Initiating graceful shutdown.",
+                    subtask_id=task_id,
+                )
+            )
+            # In a real implementation, this might involve more cleanup
+            break # Exit the loop for graceful shutdown
+
+        # Extract tool_calls and content from OpenAI-style response structure
+        tool_calls = None
+        content = None
+        finish_reason = None
+        if isinstance(ai_response, dict) and "choices" in ai_response and isinstance(ai_response["choices"], list) and len(ai_response["choices"]) > 0:
+            choice = ai_response["choices"][0]
+            message = choice.get("message", {})
+            tool_calls = message.get("tool_calls")
+            content = message.get("content")
+            finish_reason = choice.get("finish_reason")
+        else:
+            # fallback for legacy/flat responses (should not occur in normal operation)
+            tool_calls = ai_response.get("tool_calls")
+            content = ai_response.get("content")
+            finish_reason = ai_response.get("finish_reason")
 
         logger.debug(f"Task {task_id}: Processing AI response in loop. tool_calls type: {type(tool_calls)}, content type: {type(content)}, content: '{content}'")
         log_event(
@@ -115,6 +180,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                     log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_infinite_loop", error_id=task_id, details={"message": error_message})
                 )
                 raise TaskExecutionError(error_message)
+
+            delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "tool_call_execution", "task_id": task_id, "tool_calls_count": len(tool_calls)}) # Add processing step notification
 
             logger.debug(f"Task {task_id}: AI requested tool calls: {tool_calls}")
 
@@ -215,6 +282,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                  tool_output_entry = {"role": "tool", "tool_call_id": output["tool_call_id"], "content": output["output"]}
                  context_manager.add_message(tool_output_entry)
 
+            delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "tool_output_processing", "task_id": task_id, "tool_outputs_count": len(tool_outputs)}) # Add processing step notification
+
             # Call AI again with updated history from context manager
             try:
                 logger.debug(f"Task {task_id}: Calling AI with updated conversation history from ContextManager.")
@@ -224,11 +293,13 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                         f"Calling AI for task {task_id} with updated history", subtask_id=task_id, details={"history_length": len(context_manager.get_history())}
                     )
                 )
+                delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "subsequent_ai_call_preparation", "task_id": task_id}) # Add processing step notification
 
 
                 params = {
                     'temperature': engine.config.get('ai_temperature', 0.1) # Use temperature from config
                 }
+                delegate_manager.invoke_notification(engine, "ai_request_prepared", {"request_payload": {"prompt_text": "", "model": engine.config.get('ai_model', 'google/gemini-2.5-flash-preview'), "params": params, "messages_history": context_manager.get_history()}}) # Invoke ai_request_prepared delegate
                 ai_response = engine.openrouter_api.call_chat_completion(
                     prompt_text ="",
                     messages_history=context_manager.get_history(), # Use history from ContextManager
@@ -249,12 +320,14 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                     raise TaskExecutionError(error_message)
 
                 logger.debug(f"Task {task_id}: AI call with updated history completed.")
+                delegate_manager.invoke_notification(engine, "ai_response_received", {"response_data": ai_response}) # Invoke ai_response_received delegate
                 log_event(
                     log_message=LogMessage(
                         LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_ai_call_completed",
                         f"Task {task_id}: AI call with updated history completed.", subtask_id=task_id, details={"ai_response_preview": str(ai_response)[:100]}
                     )
                 )
+                delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "subsequent_ai_response_processing", "task_id": task_id}) # Add processing step notification
 
 
                 # Store the assistant's response in the context manager
@@ -266,10 +339,11 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                 log_event(
                     log_message=LogMessage(LogLevel.ERROR, ComponentType.EXECUTION_ENGINE, "ai_loop_subsequent_ai_call_error", error_message, subtask_id=task_id, details={"error": str(e), "traceback": traceback.format_exc()})
                     )
+                delegate_manager.invoke_notification(engine, "ai_loop_error_occurred", {"error_type": type(e).__name__, "error_message": error_message}) # Invoke ai_loop_error_occurred delegate
                 raise TaskExecutionError(error_message) from e
 
         # Check if AI provided content or if the finish reason is 'stop'
-        elif (content is not None and (tool_calls is None or len(tool_calls) == 0)) or (ai_response.get('choices', [{}])[0].get('finish_reason') == 'stop'):
+        elif (content is not None and (tool_calls is None or len(tool_calls) == 0)) or (finish_reason == 'stop'):
             # AI provided content or signaled completion
             consecutive_tool_calls = 0 # Reset counter on receiving content or stop signal
             final_result = ai_response
@@ -288,4 +362,5 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
             )
             raise TaskExecutionError(error_message)
 
+    delegate_manager.invoke_notification(engine, "ai_loop_stopped") # Invoke ai_loop_stopped delegate
     return final_result

@@ -3,7 +3,7 @@ import requests
 from unittest.mock import patch, Mock
 
 # Import specific exceptions
-from src.ai_whisperer.exceptions import (
+from ai_whisperer.exceptions import (
     OpenRouterAPIError,
     OpenRouterAuthError,
     OpenRouterRateLimitError,
@@ -12,7 +12,7 @@ from src.ai_whisperer.exceptions import (
 )
 
 # Import the actual class and constants
-from src.ai_whisperer.ai_service_interaction import OpenRouterAPI, MODELS_API_URL, API_URL
+from ai_whisperer.ai_service_interaction import OpenRouterAPI, MODELS_API_URL, API_URL
 
 # Define test config data
 TEST_CONFIG_OPENROUTER_SECTION = {

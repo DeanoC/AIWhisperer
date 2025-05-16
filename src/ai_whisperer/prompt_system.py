@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict
 from .exceptions import PromptNotFoundError
-from src.ai_whisperer.path_management import PathManager
+from ai_whisperer.path_management import PathManager
 import logging
 logger = logging.getLogger(__name__)
 # Placeholder classes for testing purposes
@@ -63,66 +63,80 @@ class PromptResolver:
     def __init__(self, prompt_config: PromptConfiguration):
         self._prompt_config = prompt_config
 
+
     def resolve_prompt_path(self, category: str, name: str) -> Path:
         """
         Resolves the file path for a prompt based on the defined hierarchy.
         1. Project-relative (project_path) for overrides, definitions, custom, agents, core
         2. Fallback to app_path (codebase) for agents/core if not found in project
+        3. Fallback to default.md in the category directory (project then app_path)
         """
 
         prompt_path = PathManager.get_instance().prompt_path
         app_path = PathManager.get_instance().app_path
 
-
         # 1. User-Defined Path (via PromptConfiguration overrides)
         override_path_str = self._prompt_config.get_override_path(category, name)
         if override_path_str:
-            resolved_override = Path(PathManager.get_instance().resolve_path(override_path_str))
-            if resolved_override.exists():
-                return resolved_override
+            override_path = Path(override_path_str)
+            if override_path.is_absolute():
+                candidate = override_path
+            else:
+                # Always resolve relative to prompt_path (no 'prompts' prefix)
+                candidate = PathManager.get_instance().prompt_path / override_path
+            if candidate.exists():
+                return candidate
 
         # 2. User-Defined Path (via PromptConfiguration definitions)
         definition_path_str = self._prompt_config.get_definition_path(category, name)
         if definition_path_str:
             resolved_definition = Path(PathManager.get_instance().resolve_path(definition_path_str))
+            if not resolved_definition.is_absolute():
+                resolved_definition = PathManager.get_instance().prompt_path / resolved_definition
             if resolved_definition.exists():
                 return resolved_definition
 
         # 3. Custom Directory (project)
         custom_base = self._prompt_config.get_base_path("custom") or "prompts/custom"
-
         custom_base_path = Path(PathManager.get_instance().resolve_path(custom_base))
+        if not custom_base_path.is_absolute():
+            custom_base_path = PathManager.get_instance().prompt_path / custom_base_path
         custom_path = custom_base_path / category / f"{name}.prompt.md"
+        import sys
+        print(f"[DEBUG][PromptResolver] Checking custom_path: {custom_path} (exists: {custom_path.exists()})", file=sys.stderr)
         if custom_path.exists():
             return custom_path
 
-        # 4. Agent-Specific Directory (prompt_path)
-        if category == "agents":
-            agent_path = prompt_path / "prompts" / "agents" / f"{name}.prompt.md"
-            if agent_path.exists():
-                return agent_path
+        # 4. Category-Specific Directory (prompt_path)
+        category_path = prompt_path / "prompts" / category / f"{name}.prompt.md"
+        if category_path.exists():
+            return category_path
 
-        # 5. Core Directory (prompt_path)
-        core_path = prompt_path / "prompts" / "core" / f"{name}.prompt.md"
-        if core_path.exists():
-            return core_path
+        # 5. Fallback to default.md in the category directory (prompt_path)
+        default_path = prompt_path / "prompts" / category / "default.md"
+        if default_path.exists():
+            return default_path
 
         # 6. Fallback to app_path (codebase prompts)
-        if category == "agents":
-            agent_path_app = app_path / "prompts" / "agents" / f"{name}.prompt.md"
-            if agent_path_app.exists():
-                return agent_path_app
-        core_path_app = app_path / "prompts" / "core" / f"{name}.prompt.md"
-        if core_path_app.exists():
-            return core_path_app
+        category_path_app = app_path / "prompts" / category / f"{name}.prompt.md"
+        if category_path_app.exists():
+            return category_path_app
 
-        raise PromptNotFoundError(f"Prompt '{category}.{name}' not found in project or codebase prompts.")
+        # 7. Fallback to default.md in the category directory (app_path)
+        default_path_app = app_path / "prompts" / category / "default.md"
+        if default_path_app.exists():
+            return default_path_app
+
+        # final error if no default.md for category
+        raise PromptNotFoundError(
+            f"Prompt '{category}.{name}' not found in project or codebase prompts, and no default.md for category '{category}' found in either project or app_path."
+        )
 
 
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from src.ai_whisperer.tools.tool_registry import ToolRegistry
+    from ai_whisperer.tools.tool_registry import ToolRegistry
 
 class PromptSystem:
     """The central service for accessing and managing prompts."""
@@ -167,7 +181,8 @@ class PromptSystem:
             import re
             for key, value in kwargs.items():
                 pattern = r"{{{" + re.escape(key) + r"}}}"
-                content = re.sub(pattern, str(value), content)
+                # Use a lambda to avoid interpreting backslashes in the replacement string
+                content = re.sub(pattern, lambda m: str(value), content)
         return content
 
     def list_prompts(self, category: Optional[str] = None) -> List[Tuple[str, str]]:

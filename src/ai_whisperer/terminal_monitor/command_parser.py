@@ -1,6 +1,6 @@
 import shlex
 from prompt_toolkit.history import InMemoryHistory
-from src.ai_whisperer.exceptions import AIWhispererError # Import base exception
+from ai_whisperer.exceptions import AIWhispererError # Import base exception
 
 class CommandParser:
     def __init__(self, command_registry):

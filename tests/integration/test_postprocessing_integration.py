@@ -11,9 +11,9 @@ from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
 import time
 
-# from src.ai_whisperer.orchestrator import Orchestrator
-from src.ai_whisperer.subtask_generator import SubtaskGenerator
-from src.ai_whisperer.config import load_config  # Import load_config
+# from ai_whisperer.orchestrator import Orchestrator
+from ai_whisperer.subtask_generator import SubtaskGenerator
+from ai_whisperer.config import load_config  # Import load_config
 from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 from src.postprocessing.pipeline import PostprocessingPipeline
 
@@ -52,8 +52,8 @@ def tmp_path_with_cleanup(request, tmp_path):
 class TestSubtaskGeneratorPostprocessingIntegration:
     """Test the integration of the add_items_postprocessor with the SubtaskGenerator."""
 
-    @patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI")
-    @patch("src.ai_whisperer.subtask_generator.uuid.uuid4")
+    @patch("ai_whisperer.ai_service_interaction.OpenRouterAPI")
+    @patch("ai_whisperer.subtask_generator.uuid.uuid4")
     @patch("src.postprocessing.pipeline.PostprocessingPipeline.process")
     def test_subtask_generator_adds_subtask_id(self, mock_process, mock_uuid4, mock_api, tmp_path_with_cleanup):
         """Test that the subtask generator adds subtask_id via the postprocessor."""
@@ -87,7 +87,7 @@ class TestSubtaskGeneratorPostprocessingIntegration:
         mock_process.return_value = (json_dict, {"success": True, "steps": {}, "logs": []})
 
         # Ensure the mock is used instead of making real API calls
-        with patch("src.ai_whisperer.ai_service_interaction.OpenRouterAPI", return_value=mock_api_instance):
+        with patch("ai_whisperer.ai_service_interaction.OpenRouterAPI", return_value=mock_api_instance):
             # Create a raw test config with the new structure
             raw_test_config = {
                 "openrouter": {"api_key": "test-key", "model": "test-model", "params": {}},
@@ -126,7 +126,7 @@ class TestSubtaskGeneratorPostprocessingIntegration:
             subtask_generator.openrouter_client = mock_api_instance
 
             # Mock the validate_against_schema method to avoid validation
-            with patch("src.ai_whisperer.subtask_generator.validate_against_schema"):
+            with patch("ai_whisperer.subtask_generator.validate_against_schema"):
                 # Create a simple schema for testing
                 subtask_schema = {
                     "type": "object",

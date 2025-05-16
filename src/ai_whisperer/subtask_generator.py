@@ -22,8 +22,8 @@ from .config import load_config
 from .ai_service_interaction import OpenRouterAPI
 from .exceptions import ConfigError, OrchestratorError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
 from src.postprocessing.pipeline import ProcessingError
-import src.ai_whisperer.prompt_system as prompt_system_module # Import PromptSystem
-from src.ai_whisperer.path_management import PathManager
+import ai_whisperer.prompt_system as prompt_system_module # Import PromptSystem
+from ai_whisperer.path_management import PathManager
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +182,12 @@ class SubtaskGenerator:
                 )
 
                 # Pass the AI response text through the postprocessing pipeline
-                (generated_data, result_data) = pipeline.process(ai_response_content.get("content"), result_data)
+                # ai_response_content may be a string (mocked) or a dict (real API)
+                if isinstance(ai_response_content, dict):
+                    content = ai_response_content.get("content")
+                else:
+                    content = ai_response_content
+                (generated_data, result_data) = pipeline.process(content, result_data)
 
                 # Log the postprocessing results
                 logger.info("Postprocessing completed successfully.")
@@ -196,8 +201,13 @@ class SubtaskGenerator:
 
             except (json.JSONDecodeError, ValueError) as e:
                 logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")
+                # ai_response_content may be a string or dict
+                if isinstance(ai_response_content, dict):
+                    response_content = ai_response_content.get('content')
+                else:
+                    response_content = ai_response_content
                 raise SubtaskGenerationError(
-                    f"Failed to parse AI response as JSON: {e}\nResponse:\n{ai_response_content.get('content')}"
+                    f"Failed to parse AI response as JSON: {e}\nResponse:\n{response_content}"
                 ) from e
             except ProcessingError as e:  # Catch errors from within the pipeline steps
                 logger.debug(f"Postprocessing result logs: {result_data.get('logs', [])}")

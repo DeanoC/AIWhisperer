@@ -1,0 +1,45 @@
+{
+  "description": "Implement the thread-safe delegate system within the execution engine.",
+  "instructions": [
+    "Review `project_dev/planning/delegate_integration_plan.md` and `project_dev/notes/thread_safe_delegates.py` to understand the design and implementation details for the thread-safe delegate system.",
+    "Locate the execution engine code, likely within `src/ai_whisperer/execution_engine.py`.",
+    "Modify the execution engine code to integrate the thread-safe delegate system, following the patterns and principles outlined in the design documents.",
+    "Identify key points in the execution flow where delegate hooks should be added. This might include points before and after the execution of individual steps, and before and after interactions with the AI model (e.g., generating prompts or processing responses).",
+    "Implement the mechanism for registering and invoking delegates at these hook points.",
+    "Ensure that the delegate invocation mechanism is thread-safe, using appropriate synchronization primitives (e.g., locks, mutexes) as demonstrated in `project_dev/notes/thread_safe_delegates.py`.",
+    "Implement the logic within the execution engine to handle signals from delegates, specifically for pausing, resuming, and stopping the overall execution process.",
+    "Refactor existing code within the execution engine as necessary to accommodate the new delegate system while maintaining loose coupling between the core execution logic and the delegate handling.",
+    "Utilize any reusable components or patterns from the workspace context that are relevant to implementing thread-safe mechanisms or event handling.",
+    "Run the tests located in `tests/execution_engine/test_delegates.py`.",
+    "Debug and fix any issues until all tests in `tests/execution_engine/test_delegates.py` pass."
+  ],
+  "input_artifacts": [
+    "project_dev/planning/delegate_integration_plan.md",
+    "project_dev/notes/thread_safe_delegates.py",
+    "tests/execution_engine/test_delegates.py",
+    "src/ai_whisperer/execution_engine.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/execution_engine.py"
+  ],
+  "constraints": [
+    "The implementation of the delegate system within the execution engine must be thread-safe.",
+    "The core execution logic should remain loosely coupled from the delegate system.",
+    "All tests in `tests/execution_engine/test_delegates.py` must pass upon completion of this subtask."
+  ],
+  "validation_criteria": [
+    "The file `src/ai_whisperer/execution_engine.py` has been modified.",
+    "The modified code includes the necessary structures and logic for integrating a delegate system.",
+    "Delegate hooks are present at relevant points in the execution flow (e.g., before/after step execution, before/after AI prompt).",
+    "The delegate implementation within the execution engine demonstrates adherence to thread-safe practices.",
+    "The logic for handling pause, resume, and stop signals from delegates is correctly implemented.",
+    "All tests in `tests/execution_engine/test_delegates.py` pass successfully."
+  ],
+  "type": "file_edit",
+  "name": "implement_execution_engine_delegates",
+  "depends_on": [
+    "generate_tests_for_execution_engine_delegates"
+  ],
+  "task_id": "0da84583-0c56-4c9e-b01a-6cfdfc728bcf",
+  "subtask_id": "baef535d-0efe-48b7-a46b-b6498d477fb3"
+}

@@ -9,9 +9,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.ai_whisperer.config import load_config, DEFAULT_SITE_URL, DEFAULT_APP_NAME
-from src.ai_whisperer.exceptions import ConfigError
-from src.ai_whisperer.path_management import PathManager # Import PathManager
+from ai_whisperer.config import load_config, DEFAULT_SITE_URL, DEFAULT_APP_NAME
+from ai_whisperer.exceptions import ConfigError
+from ai_whisperer.path_management import PathManager # Import PathManager
 
 # --- Test Data ---
 VALID_OPENROUTER_CONFIG_NO_KEY = {"model": "test_model", "params": {"temperature": 0.7}}
@@ -85,7 +85,7 @@ def reset_path_manager_instance():
     # Restore or clean up if needed, but for autouse, yield is sufficient
 
 @pytest.fixture
-@patch("src.ai_whisperer.config.load_dotenv")  # Mock load_dotenv for all tests in this module
+@patch("ai_whisperer.config.load_dotenv")  # Mock load_dotenv for all tests in this module
 def mock_load_dotenv(mock_dotenv, monkeypatch, reset_path_manager_instance):
     """Fixture to mock load_dotenv and manage environment variables."""
     # Mock load_dotenv to do nothing

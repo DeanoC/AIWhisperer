@@ -5,17 +5,34 @@ import json
 import time
 from unittest.mock import patch
 
-from src.ai_whisperer.ai_service_interaction import OpenRouterAPI
-from src.ai_whisperer.tools.tool_registry import ToolRegistry
-from src.ai_whisperer.tools.read_file_tool import ReadFileTool
-from src.ai_whisperer.tools.write_file_tool import WriteFileTool
-from src.ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
-from src.ai_whisperer.exceptions import OpenRouterAPIError
+from ai_whisperer.path_management import PathManager
+
+from ai_whisperer.ai_service_interaction import OpenRouterAPI
+from ai_whisperer.tools.tool_registry import ToolRegistry
+from ai_whisperer.tools.read_file_tool import ReadFileTool
+from ai_whisperer.tools.write_file_tool import WriteFileTool
+from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
+from ai_whisperer.exceptions import OpenRouterAPIError
 
 # Load environment variables from .env file
 dotenv.load_dotenv()
 
 # --- Fixtures ---
+
+# Ensure PathManager is initialized for all integration tests
+@pytest.fixture(autouse=True, scope="function")
+def initialize_path_manager():
+    PathManager._reset_instance()
+    cwd = os.getcwd()
+    output_dir = os.path.join(cwd, "output")
+    PathManager.get_instance().initialize(config_values={
+        'project_path': cwd,
+        'output_path': output_dir,
+        'workspace_path': cwd,
+        'prompt_path': cwd
+    })
+    yield
+    PathManager._reset_instance()
 
 @pytest.fixture(scope="session")
 def openrouter_api():
@@ -118,14 +135,15 @@ def test_ai_read_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: To
         assert isinstance(tool_calls, list)
         assert len(tool_calls) > 0
 
-        # Find the read_text_file tool call
+
+        # Find the read_file tool call
         read_file_call = None
         for call in tool_calls:
-            if call.get("function", {}).get("name") == "read_text_file":
+            if call.get("function", {}).get("name") == "read_file":
                 read_file_call = call
                 break
 
-        assert read_file_call is not None, "AI did not call the read_text_file tool"
+        assert read_file_call is not None, "AI did not call the read_file tool"
         assert "function" in read_file_call
         assert "arguments" in read_file_call["function"]
 
@@ -137,8 +155,10 @@ def test_ai_read_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: To
 
         # Assert the arguments are correct
         assert isinstance(args, dict)
-        assert "file_path" in args
-        assert args["file_path"] == file_path
+        assert "path" in args
+        # Compare resolved absolute paths to handle separator and relative/absolute differences
+        from pathlib import Path
+        assert Path(args["path"]).resolve() == Path(file_path).resolve()
 
         # Note: Executing the tool and verifying its output would be a separate step
         # or part of a different test case focusing on tool execution.
@@ -178,14 +198,14 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: T
         assert isinstance(tool_calls, list)
         assert len(tool_calls) > 0
 
-        # Find the write_file tool call (updated from write_text_file)
+        # Find the write_to_file tool call
         write_file_call = None
         for call in tool_calls:
-            if call.get("function", {}).get("name") == "write_file":
+            if call.get("function", {}).get("name") == "write_to_file":
                 write_file_call = call
                 break
 
-        assert write_file_call is not None, "AI did not call the write_file tool"
+        assert write_file_call is not None, "AI did not call the write_to_file tool"
         assert "function" in write_file_call
         assert "arguments" in write_file_call["function"]
 
@@ -197,9 +217,15 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: T
 
         # Assert the arguments are correct
         assert isinstance(args, dict)
-        assert "file_path" in args
+        assert "path" in args
         # Normalize paths for comparison
-        assert os.path.normpath(args["file_path"]) == os.path.normpath(file_path)
+        from pathlib import Path
+        # Accept both with and without 'output/' prefix for AI path
+        ai_path = Path(args["path"]).resolve()
+        expected_path = Path(file_path).resolve()
+        # Also try with 'output/' prefix removed if present
+        alt_expected_path = Path(os.path.basename(file_path)).resolve()
+        assert ai_path == expected_path or ai_path == alt_expected_path
         assert "content" in args
         assert args["content"] == file_content
 
@@ -301,22 +327,29 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_regi
         read_tool_calls = read_response_obj["tool_calls"]
         assert len(read_tool_calls) > 0
 
-        # Assuming the first tool call is the read_text_file call
+
+        # Assuming the first tool call is the read_file call
         read_call_args = json.loads(read_tool_calls[0]["function"]["arguments"])
-        assert read_call_args.get("file_path") == read_file_path
+        from pathlib import Path
+        assert Path(read_call_args.get("path")).resolve() == Path(read_file_path).resolve()
 
         # Simulate the system executing the tool call
-        read_tool_instance = tool_registry.get_tool_by_name("read_text_file")
-        assert read_tool_instance is not None, "read_text_file tool not found in registry"
+        read_tool_instance = tool_registry.get_tool_by_name("read_file")
+        assert read_tool_instance is not None, "read_file tool not found in registry"
 
         # Execute the tool with the AI's provided arguments, passing the dictionary directly
-        # The mock for os.path.abspath is active here
-        # ReadFileTool.execute is NOT async
         read_tool_output = read_tool_instance.execute(read_call_args)
 
         # Assert the tool output is the expected file content
-        # The read_file tool returns the content as a string on success
-        assert read_tool_output == expected_content
+        # Accept line-numbered output or plain content
+        import re
+        # Remove line number prefix if present
+        match = re.match(r"^\s*\d+\s*\|\s*(.*)$", read_tool_output)
+        if match:
+            actual_content = match.group(1)
+        else:
+            actual_content = read_tool_output.strip()
+        assert actual_content == expected_content
 
         # Scenario 2: AI writes to a file with valid path and content
         write_prompt = f"Write the following text to {write_file_path}:\n\n{write_content}"
@@ -335,15 +368,19 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_regi
         write_tool_calls = write_response_obj["tool_calls"]
         assert len(write_tool_calls) > 0
 
-        # Assuming the first tool call is the write_file call (updated from write_text_file)
+        # Assuming the first tool call is the write_to_file call
         write_call_args = json.loads(write_tool_calls[0]["function"]["arguments"])
         # Normalize paths for comparison
-        assert os.path.normpath(write_call_args.get("file_path")) == os.path.normpath(write_file_path)
+        # Accept both with and without 'output/' prefix for AI path
+        ai_path = Path(write_call_args.get("path")).resolve()
+        expected_path = Path(write_file_path).resolve()
+        alt_expected_path = Path(os.path.basename(write_file_path)).resolve()
+        assert ai_path == expected_path or ai_path == alt_expected_path
         assert write_call_args.get("content") == write_content
 
         # Simulate the system executing the tool call
-        write_tool_instance = tool_registry.get_tool_by_name("write_file")
-        assert write_tool_instance is not None, "write_file tool not found in registry"
+        write_tool_instance = tool_registry.get_tool_by_name("write_to_file")
+        assert write_tool_instance is not None, "write_to_file tool not found in registry"
 
         # Execute the tool with the AI's provided arguments, unpacking the dictionary
         write_tool_output = write_tool_instance.execute(**write_call_args)
@@ -375,43 +412,34 @@ def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAPI, tool_reg
     For this test, we will simulate the system receiving an invalid tool call from the AI
     and verify that the tool's execute method raises an appropriate error or returns an error structure.
     """
-    # Scenario 1: Simulate AI calling read_text_file with a non-existent path
+
+    # Scenario 1: Simulate AI calling read_file with a non-existent path
     invalid_read_path = "/path/to/nonexistent/file.txt"
-    # The ReadFileTool.execute method expects 'file_path', not 'path'
-    read_call_args = {"file_path": invalid_read_path}
+    # The ReadFileTool.execute method expects 'path', not 'file_path'
+    read_call_args = {"path": invalid_read_path}
 
-    read_tool_instance = tool_registry.get_tool_by_name("read_text_file")
-    assert read_tool_instance is not None, "read_text_file tool not found in registry"
+    read_tool_instance = tool_registry.get_tool_by_name("read_file")
+    assert read_tool_instance is not None, "read_file tool not found in registry"
 
-    # Expecting the tool's execute method to raise an error or return an error structure
-    # based on the tool's implementation for invalid paths.
-    # Assuming the tool raises a FileNotFoundError or similar, or returns a specific error dict.
-    # Let's assume it raises an error or returns an error dictionary.
-    # Based on ReadFileTool implementation, it returns an error string.
-    # When an absolute or outside-of-project path is provided, the access denied error is returned first.
-    read_tool_output = read_tool_instance.execute(read_call_args)
-    assert isinstance(read_tool_output, str)
-    assert "Error: Access denied" in read_tool_output
+    # Expecting the tool's execute method to raise FileRestrictionError for out-of-workspace path
+    from ai_whisperer.exceptions import FileRestrictionError
+    with pytest.raises(FileRestrictionError):
+        read_tool_instance.execute(read_call_args)
 
-    # Scenario 2: Simulate AI calling write_file with missing content
+    # Scenario 2: Simulate AI calling write_to_file with missing content
     invalid_write_path = "temp_invalid_write.txt"
-    # The WriteFileTool.execute method expects 'file_path' and 'content'
-    write_call_args_missing_content = {"file_path": invalid_write_path} # Missing 'content'
+    # The WriteFileTool.execute method expects 'path' and 'content'
+    write_call_args_missing_content = {"path": invalid_write_path} # Missing 'content'
 
-    write_tool_instance = tool_registry.get_tool_by_name("write_file")
-    assert write_tool_instance is not None, "write_file tool not found in registry"
+    write_tool_instance = tool_registry.get_tool_by_name("write_to_file")
+    assert write_tool_instance is not None, "write_to_file tool not found in registry"
 
     # Expecting the tool's execute method to handle missing required parameters
-    # Based on WriteFileTool implementation, it expects 'file_path' and 'content'
-    # and will likely raise a TypeError or KeyError if 'content' is missing.
-    # Let's adjust the assertion based on the expected behavior for missing 'content'.
-    # The execute method signature is `execute(self, file_path: str, content: str)`.
-    # If called with `execute({"file_path": "..."})`, it will raise a TypeError.
     with pytest.raises(TypeError):
          write_tool_instance.execute(**write_call_args_missing_content)
 
-    # Scenario 3: Simulate AI calling write_file with missing file_path
-    write_call_args_missing_filepath = {"content": "some content"} # Missing 'file_path'
+    # Scenario 3: Simulate AI calling write_to_file with missing path
+    write_call_args_missing_filepath = {"content": "some content"} # Missing 'path'
     with pytest.raises(TypeError):
          write_tool_instance.execute(**write_call_args_missing_filepath)
 

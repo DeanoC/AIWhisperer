@@ -7,9 +7,9 @@ from pathlib import Path
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 from ai_whisperer.execution_engine import ExecutionEngine
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
-from src.ai_whisperer.exceptions import TaskExecutionError, OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError
-from src.ai_whisperer.utils import build_ascii_directory_tree # Ensure this is imported
+from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
+from ai_whisperer.exceptions import TaskExecutionError, OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError
+from ai_whisperer.utils import build_ascii_directory_tree # Ensure this is imported
 from src.ai_whisperer import PromptSystem # Import PromptSystem
 
 # Assuming logger is defined at the module level in the original file

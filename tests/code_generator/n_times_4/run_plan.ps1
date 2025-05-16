@@ -109,7 +109,7 @@ try {
     Write-Verbose "Using Python executable from virtual environment: $VenvPythonPath"
 
     # Locate the main Python script (using module path relative to ProjectRoot)
-    $MainModulePath = "src.ai_whisperer.main" # Path used with python -m
+    $MainModulePath = "ai_whisperer.main" # Path used with python -m
 
     # Try all possible locations for main.py (project root first)
     $TrueProjectRoot = (Resolve-Path -Path (Join-Path -Path $ScriptDir -ChildPath "..\..")).Path

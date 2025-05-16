@@ -15,7 +15,7 @@ from .config import load_config
 from .exceptions import ConfigError, OpenRouterAPIError, HashMismatchError, ProcessingError, OrchestratorError
 from .utils import calculate_sha256, build_ascii_directory_tree
 from .ai_service_interaction import OpenRouterAPI
-from src.ai_whisperer.path_management import PathManager
+from ai_whisperer.path_management import PathManager
 from .prompt_system import PromptSystem, PromptConfiguration
 
 logger = logging.getLogger(__name__)

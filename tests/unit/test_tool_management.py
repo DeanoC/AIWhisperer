@@ -3,8 +3,8 @@ import logging
 from typing import Dict, Any, List, Optional
 
 # Import the actual classes
-from src.ai_whisperer.tools.base_tool import AITool
-from src.ai_whisperer.tools.tool_registry import ToolRegistry, get_tool_registry
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.tools.tool_registry import ToolRegistry, get_tool_registry
 
 # Dummy AITool implementations for testing
 class DummyToolA(AITool):

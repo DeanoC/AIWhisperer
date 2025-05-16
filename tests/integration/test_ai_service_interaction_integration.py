@@ -3,13 +3,13 @@ from unittest.mock import patch, MagicMock
 import json
 from io import BytesIO
 import requests
-from src.ai_whisperer.state_management import StateManager # Import StateManager
-from src.ai_whisperer.agent_handlers.ai_interaction import handle_ai_interaction # Import the handler
-from src.ai_whisperer.execution_engine import ExecutionEngine # Import ExecutionEngine (or mock it)
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType # Import logging components
+from ai_whisperer.state_management import StateManager # Import StateManager
+from ai_whisperer.agent_handlers.ai_interaction import handle_ai_interaction # Import the handler
+from ai_whisperer.execution_engine import ExecutionEngine # Import ExecutionEngine (or mock it)
+from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType # Import logging components
 
-from src.ai_whisperer.ai_service_interaction import OpenRouterAPI, API_URL
-from src.ai_whisperer.exceptions import (
+from ai_whisperer.ai_service_interaction import OpenRouterAPI, API_URL
+from ai_whisperer.exceptions import (
     OpenRouterAPIError,
     OpenRouterAuthError,
     OpenRouterRateLimitError,
@@ -231,8 +231,8 @@ class TestOpenRouterAPIIntegration:
 
 
     @patch("requests.post")
-    @patch("src.ai_whisperer.state_management.StateManager") # Mock StateManagement
-    @patch("src.ai_whisperer.execution_engine.ExecutionEngine") # Mock ExecutionEngine
+    @patch("ai_whisperer.state_management.StateManager") # Mock StateManagement
+    @patch("ai_whisperer.execution_engine.ExecutionEngine") # Mock ExecutionEngine
     def test_integration_cost_token_capture(self, mock_execution_engine_class, mock_state_management_class, mock_post):
         """Test end-to-end capture and storage of cost/token data."""
         # Mock the StateManagement instance
@@ -266,7 +266,6 @@ class TestOpenRouterAPIIntegration:
         mock_engine.openrouter_api.stream_chat_completion.return_value = iter([mock_stream_chunk])
 
         # Create a mock task definition
-
         task_id = "mock-task-cost-token-123"
         mock_task_definition = {
             "type": "ai_interaction",
@@ -276,8 +275,11 @@ class TestOpenRouterAPIIntegration:
             "task_id": task_id,
         }
 
-        # Simulate AI interaction by calling the handler
-        handle_ai_interaction(mock_engine, mock_task_definition)
+        # Create a mock prompt_system
+        mock_prompt_system = MagicMock()
+
+        # Simulate AI interaction by calling the handler with the required prompt_system argument
+        handle_ai_interaction(mock_engine, mock_task_definition, mock_prompt_system)
 
         # Access and verify state management
         # Assert that store_conversation_turn was called for the assistant message with usage_info

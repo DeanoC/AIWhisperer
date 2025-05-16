@@ -1,6 +1,6 @@
 import json
 import os
-from src.ai_whisperer.context_management import ContextManager # Import ContextManager
+from ai_whisperer.context_management import ContextManager # Import ContextManager
 
 
 def save_state(state, file_path):
@@ -101,14 +101,21 @@ def get_global_state(state, key):
     return state.get("global_state", {}).get(key, None)
 
 
+import logging
+
 class StateManagerEncoder(json.JSONEncoder):
-    """Custom JSONEncoder to serialize ContextManager."""
+    """Custom JSONEncoder to serialize ContextManager and skip unserializable objects."""
     def default(self, obj):
         if isinstance(obj, ContextManager):
             # Serialize ContextManager by saving its history
             return {"__type__": "ContextManager", "history": obj.get_history()}
-        # Let the base class default method raise a TypeError for other types
-        return json.JSONEncoder.default(self, obj)
+        try:
+            return json.JSONEncoder.default(self, obj)
+        except TypeError as e:
+            # Log a warning and skip unserializable objects (e.g., MagicMock)
+            logger = logging.getLogger("aiwhisperer.state_management")
+            logger.warning(f"Skipping unserializable object of type {type(obj).__name__} during state save: {e}")
+            return f"<Unserializable: {type(obj).__name__}>"
 
 class StateManagerDecoder(json.JSONDecoder):
     """Custom JSONDecoder to deserialize ContextManager."""

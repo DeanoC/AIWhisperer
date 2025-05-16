@@ -25,17 +25,22 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         (self.prompts_dir / "agents" / "code_generation.prompt.md").write_text("Agent code generation prompt.")
         (self.prompts_dir / "custom" / "my_feature").mkdir(parents=True, exist_ok=True)
         (self.prompts_dir / "custom" / "my_feature" / "special_task.prompt.md").write_text("Custom special task prompt.")
-        (self.prompts_dir / "custom" / "core" / "initial_plan.override.prompt.md").write_text("Custom override initial plan prompt.")
+        # Ensure the override file is created at custom/core/initial_plan.override.prompt.md (relative to prompt_path)
+        override_dir = self.temp_dir / "custom" / "core"
+        override_dir.mkdir(parents=True, exist_ok=True)
+        (override_dir / "initial_plan.override.prompt.md").write_text("Custom override initial plan prompt.")
         (self.temp_dir / "project_prompts" / "my_project_prompt.prompt.md").write_text("Project specific prompt.")
 
         # Create a dummy config file
         self.config_data = {
             "prompt_settings": {
                 "base_paths": {
-                    "custom": "project_prompts"
+                    "custom": "project_prompts",
+                    "core": "prompts/custom"
                 },
+                # Use a relative path for the override, matching the actual file location
                 "overrides": {
-                    "core.initial_plan": "prompts/custom/core/initial_plan.override.prompt.md"
+                    "core.initial_plan": "custom/core/initial_plan.override.prompt.md"
                 },
                 "definitions": {
                     "project.my_prompt": "project_prompts/my_project_prompt.prompt.md"
@@ -45,6 +50,14 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         self.config = PromptConfiguration(self.config_data)
         self.manager = PromptSystem(self.config, self.temp_dir)
 
+        # --- PathManager initialization for integration tests ---
+        from ai_whisperer.path_management import PathManager
+        PathManager._reset_instance()
+        PathManager.get_instance().initialize(config_values={
+            'project_path': str(self.temp_dir),
+            'prompt_path': str(self.temp_dir)
+        })
+
     def tearDown(self):
         # Clean up the temporary directory
         shutil.rmtree(self.temp_dir)
@@ -52,7 +65,11 @@ class TestPromptLoadingIntegration(unittest.TestCase):
     def test_prompt_resolution_hierarchy(self):
         # Test override
         prompt_override = self.manager.get_prompt("core", "initial_plan")
-        self.assertEqual(prompt_override.path, self.prompts_dir / "custom/core/initial_plan.override.prompt.md")
+        print(f"[DEBUG] prompt_override.path: {prompt_override.path}")
+        print(f"[DEBUG] expected: {self.temp_dir / 'custom/core/initial_plan.override.prompt.md'}")
+        print(f"[DEBUG] exists: { (self.temp_dir / 'custom/core/initial_plan.override.prompt.md').exists() }")
+        print(f"[DEBUG] fallback exists: { (self.temp_dir / 'prompts/core/initial_plan.prompt.md').exists() }")
+        self.assertEqual(str(prompt_override.path), str(self.temp_dir / "custom/core/initial_plan.override.prompt.md"))
         self.assertEqual(prompt_override.content, "Custom override initial plan prompt.")
 
         # Test definition
@@ -128,8 +145,8 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         config_with_template = PromptConfiguration(self.config_data)
         manager_with_template = PromptSystem(config_with_template, self.temp_dir)
 
-        # Get content with parameters
-        rendered_content = manager_with_template.get_prompt_content(
+        # Use the correct method for templating (get_formatted_prompt)
+        rendered_content = manager_with_template.get_formatted_prompt(
             "core",
             "templated_prompt",
             user_name="Roo",

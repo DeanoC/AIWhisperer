@@ -1,10 +1,10 @@
 import pytest
 import json
 from pathlib import Path
-from src.ai_whisperer.exceptions import ProcessingError
+from ai_whisperer.exceptions import ProcessingError
 
 # Import the actual functions
-from src.ai_whisperer.processing import read_markdown, save_json, format_prompt, process_response
+from ai_whisperer.processing import read_markdown, save_json, format_prompt, process_response
 
 
 # --- Tests for read_markdown ---

@@ -1,5 +1,5 @@
 from ai_whisperer.execution_engine import ExecutionEngine
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
+from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 
 def handle_no_op(engine: ExecutionEngine, task_definition: dict):
     """

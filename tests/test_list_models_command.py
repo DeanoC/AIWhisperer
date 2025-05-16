@@ -3,12 +3,12 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.ai_whisperer.commands import ListModelsCommand
-from src.ai_whisperer.model_info_provider import ModelInfoProvider
+from ai_whisperer.commands import ListModelsCommand
+from ai_whisperer.model_info_provider import ModelInfoProvider
 
 # Mocked tests for list-models
-@patch('src.ai_whisperer.commands.load_config')
-@patch('src.ai_whisperer.commands.ModelInfoProvider')
+@patch('ai_whisperer.commands.load_config')
+@patch('ai_whisperer.commands.ModelInfoProvider')
 def test_list_models_mocked(mock_model_info_provider, mock_load_config):
     """Tests the list-models command using mocked ModelInfoProvider."""
     mock_load_config.return_value = {"servers": {}} # Return a dummy config
@@ -32,8 +32,8 @@ def test_list_models_mocked(mock_model_info_provider, mock_load_config):
     # mock_logger.debug.assert_any_call("- mock_server_2/model_c")
 
 # Mocked tests for list-models CSV output
-@patch('src.ai_whisperer.commands.load_config')
-@patch('src.ai_whisperer.commands.ModelInfoProvider')
+@patch('ai_whisperer.commands.load_config')
+@patch('ai_whisperer.commands.ModelInfoProvider')
 def test_list_models_csv_mocked(mock_model_info_provider, mock_load_config):
     """Tests the list-models command with CSV output using mocked ModelInfoProvider."""
     mock_load_config.return_value = {"servers": {}} # Return a dummy config
@@ -66,7 +66,7 @@ def test_list_models_actual_servers():
     command = ListModelsCommand(config_path="config.yaml") # Use a real config path
 
     # Capture output by mocking logger.debug
-    with patch('src.ai_whisperer.commands.logger.debug') as mock_print:
+    with patch('ai_whisperer.commands.logger.debug') as mock_print:
         command.execute()
 
     # Basic assertion: command should run without error (exit code is returned by execute)

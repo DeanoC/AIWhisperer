@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch, mock_open
 from pathlib import Path
 
 from src.ai_whisperer import PromptSystem, PromptResolver, PromptLoader, PromptConfiguration, Prompt, PromptNotFoundError
-from src.ai_whisperer.path_management import PathManager
+from ai_whisperer.path_management import PathManager
 
 # Unit Tests
 class TestPromptConfiguration(unittest.TestCase):
@@ -118,18 +118,17 @@ class TestPromptResolver(unittest.TestCase):
         shutil.rmtree(self.temp_dir)
 
     def test_resolve_prompt_path_override(self):
+        # Place override file at <prompt_path>/custom_overrides/core/my_initial_plan.md
         override_path_relative = "custom_overrides/core/my_initial_plan.md"
-        override_path_config = f"{{prompt_path}}/{override_path_relative}"
-        override_path_absolute = PathManager.get_instance().resolve_path(override_path_config)
-        override_path_absolute_obj = Path(override_path_absolute)
-        override_path_absolute_obj.parent.mkdir(parents=True, exist_ok=True)
-        override_path_absolute_obj.write_text("Override content")
+        override_path_absolute = PathManager.get_instance().prompt_path / Path(override_path_relative)
+        override_path_absolute.parent.mkdir(parents=True, exist_ok=True)
+        override_path_absolute.write_text("Override content")
 
-        self.mock_config.get_override_path.return_value = override_path_config
+        self.mock_config.get_override_path.return_value = override_path_relative
         self.mock_config.get_definition_path.return_value = None # Ensure definition is not used
 
         resolved_path = self.resolver.resolve_prompt_path("core", "initial_plan")
-        self.assertEqual(str(resolved_path.resolve()), str(override_path_absolute_obj.resolve()))
+        self.assertEqual(str(resolved_path.resolve()), str(override_path_absolute.resolve()))
         self.mock_config.get_override_path.assert_called_once_with("core", "initial_plan")
         self.mock_config.get_definition_path.assert_not_called() # Definition is not checked if override exists
 
@@ -176,9 +175,10 @@ class TestPromptResolver(unittest.TestCase):
 
 
     def test_resolve_prompt_path_custom_directory_default_base_path(self):
+        # Place custom prompt at <prompt_path>/prompts/custom/my_category/my_prompt.prompt.md
         prompt_path = PathManager.get_instance().prompt_path
-        custom_base_path = PathManager.get_instance().resolve_path("prompts/custom")
-        custom_prompt_path_absolute = Path(custom_base_path) / "my_category" / "my_prompt.prompt.md"
+        custom_base_path = prompt_path / "prompts" / "custom"
+        custom_prompt_path_absolute = custom_base_path / "my_category" / "my_prompt.prompt.md"
         custom_prompt_path_absolute.parent.mkdir(parents=True, exist_ok=True)
         custom_prompt_path_absolute.write_text("Default custom base path content")
 

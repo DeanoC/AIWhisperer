@@ -4,8 +4,8 @@ import json
 from io import BytesIO
 import requests  # Add this import
 
-from src.ai_whisperer.ai_service_interaction import OpenRouterAPI, API_URL, MODELS_API_URL
-from src.ai_whisperer.exceptions import (
+from ai_whisperer.ai_service_interaction import OpenRouterAPI, API_URL, MODELS_API_URL
+from ai_whisperer.exceptions import (
     OpenRouterAPIError,
     OpenRouterAuthError,
     OpenRouterRateLimitError,

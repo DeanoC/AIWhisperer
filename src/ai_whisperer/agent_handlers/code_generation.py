@@ -1,19 +1,19 @@
 # src/ai_whisperer/agent_handlers/code_generation.py
-from src.ai_whisperer.execution_engine import ExecutionEngine
-from src.ai_whisperer.exceptions import TaskExecutionError
-from src.ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event # Import log_event
-from src.ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistry is accessible
-from src.ai_whisperer.context_management import ContextManager # Import ContextManager
-from src.ai_whisperer.ai_loop import run_ai_loop # Import the refactored AI loop
+from ai_whisperer.execution_engine import ExecutionEngine
+from ai_whisperer.exceptions import TaskExecutionError
+from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event # Import log_event
+from ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistry is accessible
+from ai_whisperer.context_management import ContextManager # Import ContextManager
+from ai_whisperer.ai_loop import run_ai_loop # Import the refactored AI loop
 from pathlib import Path
 import json
 from src.ai_whisperer import PromptSystem # Import PromptSystem
-from src.ai_whisperer.prompt_system import PromptNotFoundError
+from ai_whisperer.prompt_system import PromptNotFoundError
 import traceback
 from datetime import datetime, timezone
 
 # Potentially import build_ascii_directory_tree if needed
-from src.ai_whisperer.utils import build_ascii_directory_tree
+from ai_whisperer.utils import build_ascii_directory_tree
 
 logger = get_logger(__name__)  # Get logger for execution engine
 
@@ -46,7 +46,11 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, promp
         if context_manager is None:
             raise TaskExecutionError(f"ContextManager not found for task {task_id} in StateManager.")
 
-        final_ai_result = run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager)
+        # Pass delegate_manager to run_ai_loop (required argument)
+        delegate_manager = getattr(engine, 'delegate_manager', None)
+        if delegate_manager is None:
+            raise TaskExecutionError(f"DelegateManager not found on engine for task {task_id}.")
+        final_ai_result = run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager, delegate_manager)
         logger.info(f"Task {task_id}: AI interaction loop finished.")
 
 

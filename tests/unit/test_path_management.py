@@ -3,7 +3,7 @@ import os
 from unittest.mock import patch
 
 # Import the actual PathManager class
-from src.ai_whisperer.path_management import PathManager
+from ai_whisperer.path_management import PathManager
 
 @pytest.fixture(autouse=True)
 def reset_path_manager_instance():

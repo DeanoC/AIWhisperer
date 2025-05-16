@@ -48,9 +48,11 @@ class PlanRunner:
     def _register_tools(self):
         """Registers the necessary tools with the ToolRegistry."""
         tool_registry = get_tool_registry()
+        # Register main tool instances only (no legacy aliases)
         tool_registry.register_tool(ReadFileTool())
         tool_registry.register_tool(WriteFileTool())
         tool_registry.register_tool(ExecuteCommandTool())
+
         logger.debug("Tools registered with ToolRegistry.")
 
     def run_plan(self, plan_parser: ParserPlan, state_file_path: str) -> bool:

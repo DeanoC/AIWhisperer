@@ -35,7 +35,7 @@ class ExitCommand(BaseCommand):
         self.state_manager.stop()
         logger.debug("ExitCommand.execute: self.state_manager.stop() returned.") # Keep debug log
 
-from src.ai_whisperer.state_management import StateManager # Import StateManager
+from ai_whisperer.state_management import StateManager # Import StateManager
 
 class DebuggerCommand(BaseCommand):
     name = "debugger"

@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import patch, MagicMock, call
 from typing import Dict, Any, List
 
-from src.ai_whisperer.ai_service_interaction import OpenRouterAPI
-from src.ai_whisperer.exceptions import OpenRouterAPIError
+from ai_whisperer.ai_service_interaction import OpenRouterAPI
+from ai_whisperer.exceptions import OpenRouterAPIError
 from deepdiff import DeepDiff
 from pprint import pprint
 
@@ -24,7 +24,7 @@ class TestOpenRouterAdvancedFeatures:
             config["cache"] = cache_enabled
         return OpenRouterAPI(config=config)
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_system_prompt_basic(self, mock_post):
         """Test call_chat_completion with a basic system prompt."""
         mock_response = MagicMock()
@@ -49,7 +49,7 @@ class TestOpenRouterAdvancedFeatures:
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_system_prompt_with_caching_tags(self, mock_post):
         """Test system prompt with cache_control tags (Anthropic/Google specific)."""
         mock_response = MagicMock()
@@ -77,7 +77,7 @@ class TestOpenRouterAdvancedFeatures:
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_tools_basic_flow(self, mock_post):
         """Test basic tool calling flow."""
         api = self._get_api_client()
@@ -163,7 +163,7 @@ class TestOpenRouterAdvancedFeatures:
         # The planning doc implies `call_chat_completion` might handle this, but it's complex.
         # For now, we test the initial request with tools.
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_structured_output_json_schema(self, mock_post):
         """Test requesting structured output using JSON schema."""
         mock_response = MagicMock()
@@ -207,7 +207,7 @@ class TestOpenRouterAdvancedFeatures:
         assert hasattr(api_cache_enabled, "cache")
         # e.g., assert isinstance(api_cache_enabled.cache, dict) or a specific cache type
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_caching_caches_response(self, mock_post):
         """Test that a response is cached if caching is enabled."""
         mock_response_content = {"choices": [{"message": {"content": "Cached response"}}]}
@@ -238,7 +238,7 @@ class TestOpenRouterAdvancedFeatures:
         api.call_chat_completion(prompt_text, DEFAULT_MODEL, {"temperature": 0.9})
         mock_post.assert_called_once()
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_multimodal_image_url(self, mock_post):
         """Test sending an image URL."""
         mock_response = MagicMock()
@@ -274,7 +274,7 @@ class TestOpenRouterAdvancedFeatures:
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_multimodal_image_base64(self, mock_post):
         """Test sending a base64 encoded image."""
         mock_response = MagicMock()
@@ -307,7 +307,7 @@ class TestOpenRouterAdvancedFeatures:
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_multimodal_pdf_base64(self, mock_post):
         """Test sending a base64 encoded PDF."""
         mock_response = MagicMock()
@@ -343,7 +343,7 @@ class TestOpenRouterAdvancedFeatures:
         (called_args, called_kwargs) = mock_post.call_args
         assert called_kwargs["json"] == expected_payload
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_multimodal_pdf_with_annotations_reuse(self, mock_post):
         """Test sending a PDF with file_annotations for reuse."""
         # This test is more conceptual for unit testing as it depends on state (previous annotations)
@@ -433,7 +433,7 @@ class TestOpenRouterAdvancedFeatures:
         # For now, this test is more of a placeholder for that design decision.
         pass  # Placeholder for annotation reuse testing, needs more clarity on implementation.
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_api_error_handling(self, mock_post):
         """Test that OpenRouterAPIError is raised for API errors."""
         mock_response = MagicMock()
@@ -447,7 +447,7 @@ class TestOpenRouterAdvancedFeatures:
         with pytest.raises(OpenRouterAPIError, match=r"OpenRouter API Error: 401 - .*"):
             api.call_chat_completion("test", DEFAULT_MODEL, DEFAULT_PARAMS)
 
-    @patch("src.ai_whisperer.ai_service_interaction.requests.post")
+    @patch("ai_whisperer.ai_service_interaction.requests.post")
     def test_api_error_handling_non_json_response(self, mock_post):
         """Test that OpenRouterAPIError is raised for API errors with non-JSON response."""
         mock_response = MagicMock()

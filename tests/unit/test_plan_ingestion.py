@@ -7,11 +7,11 @@ from pathlib import Path
 from typing import Dict
 
 
-from src.ai_whisperer.json_validator import set_schema_directory, get_schema_directory
-from src.ai_whisperer.path_management import PathManager
+from ai_whisperer.json_validator import set_schema_directory, get_schema_directory
+from ai_whisperer.path_management import PathManager
 
 # Import the new ParserPlan and exceptions
-from src.ai_whisperer.plan_parser import (
+from ai_whisperer.plan_parser import (
     ParserPlan,
     PlanParsingError,
     PlanFileNotFoundError,

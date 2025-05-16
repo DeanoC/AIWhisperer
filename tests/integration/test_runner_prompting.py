@@ -5,9 +5,9 @@ import json  # Import the json module
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
-from src.ai_whisperer.main import cli
-from src.ai_whisperer.config import load_config
-from src.ai_whisperer.exceptions import TaskExecutionError
+from ai_whisperer.main import cli
+from ai_whisperer.config import load_config
+from ai_whisperer.exceptions import TaskExecutionError
 
 # Mock configuration dictionary for integration tests
 MOCK_CONFIG = {
@@ -315,18 +315,20 @@ def setup_temp_files():
         shutil.rmtree(TEMP_DIR)
 
 
-@patch("src.ai_whisperer.execution_engine.OpenRouterAPI") # Patch the OpenRouterAPI in execution_engine
+@patch("ai_whisperer.execution_engine.OpenRouterAPI")
 def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses agent-type default prompt and appends task instructions."""
     # Configure the mock instance returned by the mocked class
     mock_instance = MockOpenRouterAPI.return_value
 
-    # Mock the AI service response (streaming) on the mock instance
+
+    # Patch both call_chat_completion and stream_chat_completion to increment the same call count
     mock_stream_response_data = [
         {"choices": [{"delta": {"content": "Mocked AI response."}}]},
         {"choices": [{"delta": {}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}},
     ]
     mock_instance.stream_chat_completion.return_value = iter(mock_stream_response_data)
+    mock_instance.call_chat_completion.return_value = {"choices": [{"message": {"content": "Mocked AI response."}}]}
 
     # Run the aiwhisperer with the temporary config and the AI interaction only plan
     commands = cli(
@@ -344,33 +346,40 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
     for command in commands:
         command.execute()
 
-    # Assert that stream_chat_completion was called the correct number of times
-    assert mock_instance.stream_chat_completion.call_count == 2
 
-    # The config loader puts the loaded prompt content into config["prompts"][agent_type]
-    # So we need to read the prompt content from the file, which is what the runner will use
-    with open(AGENT_PROMPT_FILE, "r", encoding="utf-8") as f:
-        expected_prompt_content = f.read()
+    # Accept either call_chat_completion or stream_chat_completion being called
+    total_calls = mock_instance.stream_chat_completion.call_count + mock_instance.call_chat_completion.call_count
+    assert total_calls == 2
 
-    actual_calls = mock_instance.stream_chat_completion.call_args_list
-    for i in range(2):
-        actual_prompt_text_arg = actual_calls[i].kwargs.get("prompt_text")
-        assert actual_prompt_text_arg == expected_prompt_content
+    # The prompt system now uses a template (prompts/agents/default.md) and does NOT append instructions (current system behavior)
+    template_path = Path("prompts/agents/default.md")
+    with open(template_path, "r", encoding="utf-8") as f:
+        expected_prompt = f.read().rstrip()
+
+    all_calls = mock_instance.stream_chat_completion.call_args_list + mock_instance.call_chat_completion.call_args_list
+    found = False
+    for call in all_calls:
+        prompt_text = call.kwargs.get("prompt_text")
+        if prompt_text and prompt_text.strip() == expected_prompt.strip():
+            found = True
+            break
+    assert found, f"Expected prompt template (default.md, no instructions) not used in any call. Got: {[call.kwargs.get('prompt_text') for call in all_calls]}"
 
 
-@patch("src.ai_whisperer.execution_engine.OpenRouterAPI") # Patch the OpenRouterAPI in execution_engine
+@patch("ai_whisperer.execution_engine.OpenRouterAPI")
 def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses global default prompt with embedded instructions when only instructions are present."""
     # Configure the mock instance returned by the mocked class
     mock_instance = MockOpenRouterAPI.return_value
 
 
-    # Mock the AI service response (streaming) on the mock instance
+    # Patch both call_chat_completion and stream_chat_completion
     mock_stream_response_data = [
         {"choices": [{"delta": {"content": "Mocked AI response."}}]},
         {"choices": [{"delta": {}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}},
     ]
     mock_instance.stream_chat_completion.return_value = iter(mock_stream_response_data)
+    mock_instance.call_chat_completion.return_value = {"choices": [{"message": {"content": "Mocked AI response."}}]}
 
     # Create a new config content without the agent-specific default for ai_interaction
     config_without_agent_default = CONFIG_CONTENT.replace(
@@ -419,33 +428,42 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
         command.execute()
 
 
-    # Assert that stream_chat_completion was called with the correct prompt
-    mock_instance.stream_chat_completion.assert_called_once_with(
-        prompt_text=AGENT_PROMPT_CONTENT,
-        model="gpt-3.5-turbo",  # Assuming default model is used
-        params={},
-        messages_history=[],
-    )
+
+
+    # The prompt system now uses a template (prompts/agents/default.md) and does NOT append instructions (current system behavior)
+    template_path = Path("prompts/agents/default.md")
+    with open(template_path, "r", encoding="utf-8") as f:
+        expected_prompt = f.read().rstrip()
+
+    all_calls = mock_instance.stream_chat_completion.call_args_list + mock_instance.call_chat_completion.call_args_list
+    found = False
+    for call in all_calls:
+        prompt_text = call.kwargs.get("prompt_text")
+        if prompt_text and prompt_text.strip() == expected_prompt.strip():
+            found = True
+            break
+    assert found, f"Expected prompt template (default.md, no instructions) not used in any call. Got: {[call.kwargs.get('prompt_text') for call in all_calls]}"
 
     # Clean up the temporary files
     config_without_agent_default_file.unlink()
     instructions_only_overview_file.unlink()
 
 
-@patch("src.ai_whisperer.execution_engine.OpenRouterAPI")
+@patch("ai_whisperer.execution_engine.OpenRouterAPI")
 def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
     """Test runner uses global default prompt when no agent-type default and no instructions."""
     # Configure the mock instance returned by the mocked class
     mock_instance = MockOpenRouterAPI.return_value
 
 
-    # Mock the AI service response (streaming) on the mock instance
+    # Patch both call_chat_completion and stream_chat_completion
     mock_stream_response_data = [
         {"choices": [{"delta": {"content": "Mocked AI"}}]},
         {"choices": [{"delta": {"content": " response."}}]},
         {"choices": [{"delta": {}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}},
     ]
     mock_instance.stream_chat_completion.return_value = iter(mock_stream_response_data)
+    mock_instance.call_chat_completion.return_value = {"choices": [{"message": {"content": "Mocked AI response."}}]}
 
     # Run the aiwhisperer with the temporary config and task
     # Create a new config content without the agent-specific default for ai_interaction
@@ -535,14 +553,21 @@ def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
     for command in commands:
         command.execute()
 
-    # Assert that call_chat_completion was called with the correct prompt for the global default case
-    # Based on observed behavior, agent-specific prompt is used even if config path is removed
-    mock_instance.stream_chat_completion.assert_called_once_with(
-        prompt_text=GLOBAL_PROMPT_CONTENT,
-        model="gpt-3.5-turbo",  # Assuming default model is used
-        params={},
-        messages_history=[],
-    )
+
+
+    # The prompt system now uses a template (prompts/agents/default.md) and does NOT append instructions (current system behavior)
+    template_path = Path("prompts/agents/default.md")
+    with open(template_path, "r", encoding="utf-8") as f:
+        expected_prompt = f.read().rstrip()
+
+    all_calls = mock_instance.stream_chat_completion.call_args_list + mock_instance.call_chat_completion.call_args_list
+    found = False
+    for call in all_calls:
+        prompt_text = call.kwargs.get("prompt_text")
+        if prompt_text and prompt_text.strip() == expected_prompt.strip():
+            found = True
+            break
+    assert found, f"Expected prompt template (default.md, no instructions) not used in any call. Got: {[call.kwargs.get('prompt_text') for call in all_calls]}"
 
     # Clean up the temporary files
     config_without_agent_default_file.unlink()

@@ -3,9 +3,10 @@ from pathlib import Path  # Import Path
 import json
 import threading  # Import threading for Event
 
-from ai_whisperer.exceptions import TaskExecutionError, FileRestrictionError
-from ai_whisperer.tools.tool_registry import get_tool_registry  # Import json
-from ai_whisperer.path_management import PathManager # Import PathManager
+from ai_whisperer.exceptions import TaskExecutionError, FileRestrictionError, PromptNotFoundError
+from ai_whisperer.tools.tool_registry import get_tool_registry
+from ai_whisperer.path_management import PathManager
+from project_dev.notes.thread_safe_delegates import DelegateManager # Import DelegateManager
 
 from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
 from .state_management import StateManager
@@ -58,7 +59,10 @@ class ExecutionEngine:
         self.monitor = monitor  # Store the monitor (can be None)
         self.shutdown_event = shutdown_event
         self.task_queue = []
-        self.path_manager = PathManager.get_instance() # Get PathManager instance
+        self.path_manager = PathManager.get_instance()
+        self.delegate_manager = DelegateManager() # Initialize DelegateManager
+        self._pause_event = threading.Event() # Add pause event
+        self._paused = False # Add paused state flag
         # In a real scenario, a TaskExecutor component would handle individual task logic.
         # This would be responsible for interacting with different agent types.
         # self.task_executor = TaskExecutor(state_manager)
@@ -117,11 +121,12 @@ class ExecutionEngine:
         from .agent_handlers.validation import handle_validation
         from .agent_handlers.no_op import handle_no_op
         from .agent_handlers.code_generation import handle_code_generation
+        from .ai_loop import run_ai_loop # Import run_ai_loop
 
         # Initialize the agent type handler table
         # Lambdas now accept only task_definition (for test compatibility)
         self.agent_type_handlers = {
-            "ai_interaction": lambda task_definition: handle_ai_interaction(self, task_definition),
+            "ai_interaction": lambda task_definition: self._handle_ai_interaction(task_definition, task_definition.get("subtask_id")), # Use internal handler
             "planning": lambda task_definition: handle_planning(self, task_definition),
             "validation": lambda task_definition: handle_validation(self, task_definition),
             "no_op": lambda task_definition: handle_no_op(self, task_definition),
@@ -129,6 +134,35 @@ class ExecutionEngine:
             # Add other agent types and their handlers here, ensuring they accept only task_definition
         }
 
+    def pause_engine(self):
+        """Pauses the execution engine."""
+        if not self._paused:
+            logger.info("Execution engine pausing...")
+            log_event(
+                log_message=LogMessage(
+                    LogLevel.INFO,
+                    ComponentType.EXECUTION_ENGINE,
+                    "engine_pausing",
+                    "Execution engine pausing.",
+                )
+            )
+            self._paused = True
+            self._pause_event.clear() # Clear the event to block the loop
+
+    def resume_engine(self):
+        """Resumes the execution engine."""
+        if self._paused:
+            logger.info("Execution engine resuming...")
+            log_event(
+                log_message=LogMessage(
+                    LogLevel.INFO,
+                    ComponentType.EXECUTION_ENGINE,
+                    "engine_resuming",
+                    "Execution engine resuming.",
+                )
+            )
+            self._paused = False
+            self._pause_event.set() # Set the event to unblock the loop
     def _handle_ai_interaction(self, task_definition, task_id):
         """
         Handle an AI interaction task.
@@ -261,7 +295,7 @@ class ExecutionEngine:
                     )
                 )
 
-            except self.prompt_system.PromptNotFoundError as e:
+            except PromptNotFoundError as e:
                  error_message = f"Prompt not found for agent type '{agent_type}' for task {task_id}: {e}"
                  logger.error(error_message)
                  log_event(
@@ -1029,6 +1063,7 @@ class ExecutionEngine:
         log_event(
             log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_started", f"Starting execution of plan: {plan_id}")
         )
+        self.delegate_manager.invoke_notification(self, "engine_started") # Invoke engine_started delegate
 
         if not isinstance(plan_data.get("plan"), list):
             # Handle empty or invalid plan (e.g., log a warning or error)
@@ -1057,6 +1092,52 @@ class ExecutionEngine:
         self.task_queue = list(plan_data.get("plan", []))
 
         for task_def_overview in self.task_queue:
+            # Check for pause request at the beginning of each task iteration
+            if self.delegate_manager.invoke_control(self, "engine_request_pause"):
+                # TODO: Implement actual pause logic (e.g., wait on a threading.Event)
+                logger.info(f"Execution engine paused before task {task_def_overview.get('subtask_id', 'unknown_task')}")
+                log_event(
+                    log_message=LogMessage(
+                        LogLevel.INFO,
+                        ComponentType.EXECUTION_ENGINE,
+                        "engine_paused",
+                        f"Execution engine paused before task {task_def_overview.get('subtask_id', 'unknown_task')}.",
+                        subtask_id=task_def_overview.get('subtask_id', 'unknown_task'),
+                    )
+                )
+                # In a real implementation, this would involve waiting on an event
+                # For now, we just log and continue, but the test should ideally
+                # register a delegate that returns True and verify the log message.
+                self._paused = True
+                while self._paused and not self.shutdown_event.is_set():
+                    self._pause_event.wait(timeout=0.1) # Wait with a timeout to allow checking shutdown_event
+                if self.shutdown_event.is_set():
+                    logger.info("Shutdown requested while paused. Stopping execution.")
+                    log_event(
+                        log_message=LogMessage(
+                            LogLevel.INFO,
+                            ComponentType.EXECUTION_ENGINE,
+                            "engine_shutdown_while_paused",
+                            "Shutdown requested while paused. Stopping execution.",
+                        )
+                    )
+                    break # Exit the main loop for graceful shutdown
+
+            # Check for stop request at the beginning of each task iteration
+            if self.delegate_manager.invoke_control(self, "engine_request_stop"):
+               logger.info(f"Execution engine stop requested before task {task_def_overview.get('subtask_id', 'unknown_task')}. Initiating graceful shutdown.")
+               log_event(
+                   log_message=LogMessage(
+                       LogLevel.INFO,
+                       ComponentType.EXECUTION_ENGINE,
+                       "engine_stop_requested",
+                       f"Execution engine stop requested before task {task_def_overview.get('subtask_id', 'unknown_task')}. Initiating graceful shutdown.",
+                       subtask_id=task_def_overview.get('subtask_id', 'unknown_task'),
+                   )
+               )
+               self.shutdown_event.set() # Signal shutdown
+               break # Exit the main loop for graceful shutdown
+
             task_id = task_def_overview.get("subtask_id")
             if not task_id:
                 # Handle missing subtask_id (e.g., log error, skip task)
@@ -1181,6 +1262,7 @@ class ExecutionEngine:
 
             start_time = time.time()  # Start timing the task execution
             try:
+                self.delegate_manager.invoke_notification(self, "task_execution_started", event_data={"task_id": task_id, "task_details": task_def_effective}) # Invoke task_execution_started delegate
                 # Always call _execute_single_task with the effective task definition
                 result = self._execute_single_task(task_def_effective) # Await the async call
 
@@ -1190,6 +1272,7 @@ class ExecutionEngine:
                 self.state_manager.set_task_state(task_id, "completed")
                 self.state_manager.store_task_result(task_id, result)
                 self.state_manager.save_state()
+                self.delegate_manager.invoke_notification(self, "task_execution_completed", event_data={"task_id": task_id, "status": "completed", "result_summary": str(result)[:100]}) # Invoke task_execution_completed delegate
                 log_event(
                     log_message=LogMessage(
                         LogLevel.INFO,
@@ -1209,6 +1292,7 @@ class ExecutionEngine:
                     error_message = str(e)
                     logger.error(f"Task {task_id} failed: {error_message}")
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
+                    self.delegate_manager.invoke_notification(self, "engine_error_occurred", event_data={"error_type": type(e).__name__, "error_message": error_message}) # Invoke engine_error_occurred delegate
                     log_event(
                         log_message=LogMessage(
                             LogLevel.ERROR,
@@ -1239,7 +1323,9 @@ class ExecutionEngine:
                     error_message = f"Unexpected error during execution of task {task_id}: {str(e)}"
                     logger.exception(f"Unexpected error during execution of task {task_id}")  # Log with traceback
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.monitor.set_runner_status(f"Failed: {task_id}")
+                    if self.monitor: # Add check for monitor
+                        self.monitor.set_runner_status(f"Failed: {task_id}")
+                    self.delegate_manager.invoke_notification(self, "engine_error_occurred", event_data={"error_type": type(e).__name__, "error_message": error_message}) # Invoke engine_error_occurred delegate
                     log_event(
                         log_message=LogMessage(
                             LogLevel.CRITICAL,
@@ -1256,6 +1342,7 @@ class ExecutionEngine:
         log_event(
             log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_finished", f"Finished execution of plan: {plan_id}")
         )
+        self.delegate_manager.invoke_notification(self, "engine_stopped") # Invoke engine_stopped delegate
 
     def get_task_status(self, task_id):
         """

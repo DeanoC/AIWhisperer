@@ -4,8 +4,8 @@ import tempfile
 import os
 from pathlib import Path
 
-from src.ai_whisperer.commands import GenerateOverviewPlanCommand
-from src.ai_whisperer.project_plan_generator import OverviewPlanGenerator
+from ai_whisperer.commands import GenerateOverviewPlanCommand
+from ai_whisperer.project_plan_generator import OverviewPlanGenerator
 
 class TestGenerateOverviewPlanCommand:
 
@@ -26,8 +26,8 @@ class TestGenerateOverviewPlanCommand:
         yield tmp_plan_path
         os.unlink(tmp_plan_path) # Clean up the temporary file
 
-    @patch('src.ai_whisperer.commands.load_config')
-    @patch('src.ai_whisperer.commands.OverviewPlanGenerator')
+    @patch('ai_whisperer.commands.load_config')
+    @patch('ai_whisperer.commands.OverviewPlanGenerator')
     def test_generate_overview_plan_success(self, mock_overview_plan_generator, mock_load_config, mock_config_path, mock_output_dir, mock_initial_plan_path):
         """Tests successful generation of an overview plan."""
         mock_load_config.return_value = {"mock": "config"} # Return a dummy config

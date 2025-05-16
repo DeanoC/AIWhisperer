@@ -7,7 +7,7 @@ import shutil
 from typing import Dict
 
 # Import the real ParserPlan and exceptions
-from src.ai_whisperer.plan_parser import (
+from ai_whisperer.plan_parser import (
     ParserPlan,
     PlanParsingError,
     PlanFileNotFoundError,
@@ -20,9 +20,9 @@ from src.ai_whisperer.plan_parser import (
 )
 
 # Import necessary components for schema directory handling
-from src.ai_whisperer.json_validator import set_schema_directory, get_schema_directory
+from ai_whisperer.json_validator import set_schema_directory, get_schema_directory
 
-from src.ai_whisperer.path_management import PathManager
+from ai_whisperer.path_management import PathManager
 
 # Placeholder for a Runner class (simplified for this test's focus on plan ingestion)
 class Runner:
