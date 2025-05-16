@@ -600,7 +600,7 @@ class ExecutionEngine:
 
             else:
                 # Handle cases where the AI response is empty or unexpected
-                error_message = f"AI interaction task {task_id} received empty or unexpected response: {ai_response}"
+                error_message = f"AI interaction task {task_id} received empty or unexpected response: {ai_response_result}"
                 logger.error(error_message)
                 log_event(
                     log_message=LogMessage(
@@ -609,7 +609,7 @@ class ExecutionEngine:
                         "ai_task_empty_response",
                         error_message,
                         subtask_id=task_id,
-                        details={"response": ai_response},
+                        details={"response": ai_response_result},
                     )
                 )
                 raise TaskExecutionError(error_message)
