@@ -48,7 +48,7 @@ The key advantage of a DSL is increased expressiveness and productivity within i
 
 In the context of AI, DSLs can serve as a precise intermediate representation between potentially ambiguous natural language instructions and the code or actions an AI needs to generate or perform. By defining a structured language specific to the task domain (e.g., UI generation, data transformation, API calls), a higher-level AI could translate natural language into this DSL, which a lower-level AI could then reliably execute. This aligns with the goal of providing more precise, AI-consumable specifications.
 
-**Relevance:** While creating a full DSL is a significant undertaking, the proposed YAML format acts as a *structured configuration* or a *simple textual DSL* for defining the AI workflow. It provides specific keywords (`step_id`, `depends_on`, `agent_spec`, `instructions`, etc.) with defined semantics, offering more structure than free-form text but less complexity than a fully parsed language. It serves as a practical intermediate step towards a more formal, AI-specific representation.
+**Relevance:** While creating a full DSL is a significant undertaking, the proposed YAML format acts as a *structured configuration* or a *simple textual DSL* for defining the AI workflow. It provides specific keywords (`subtask_id`, `depends_on`, `agent_spec`, `instructions`, etc.) with defined semantics, offering more structure than free-form text but less complexity than a fully parsed language. It serves as a practical intermediate step towards a more formal, AI-specific representation.
 
 Source: [https://en.wikipedia.org/wiki/Domain-specific_language](https://en.wikipedia.org/wiki/Domain-specific_language)
 
@@ -162,9 +162,9 @@ overall_context: | # Multi-line string
 
 plan:
   - # --- Step Definition --- #
-    step_id: string # Unique identifier for this step within the task (e.g., "generate_parser_core")
+    subtask_id: string # Unique identifier for this step within the task (e.g., "generate_parser_core")
     description: string # Human-readable description of the step's purpose
-    depends_on: [string] # List of step_ids that must be completed before this step can start
+    depends_on: [string] # List of subtask_ids that must be completed before this step can start
     input-hash: string # provided by the input and written here to detect if any changes have happened to the input used to generate this file
     
     # --- Agent Specification for this Step --- #
@@ -206,7 +206,7 @@ plan:
         max_tokens: int # Optional: e.g., 4096
 
   - # --- Another Step Definition --- #
-    step_id: "run_unit_tests"
+    subtask_id: "run_unit_tests"
     description: "Execute unit tests against the generated code"
     depends_on: ["generate_parser_core"]
     agent_spec:
@@ -226,7 +226,7 @@ plan:
 
 # refinement_state:
 #   current_iteration: int
-#   last_step_failed: string # step_id of the last failure
+#   last_step_failed: string # subtask_id of the last failure
 #   feedback_summary: | # Multi-line string
 #     # Summary of issues from validation/testing steps
 #     # Example: "Step 'generate_parser_core' failed validation: Code did not compile due to SyntaxError on line 42."
@@ -238,7 +238,7 @@ plan:
 
 * **`task_id`, `natural_language_goal`, `overall_context`:** Provide essential grounding and tracking.
 * **`plan` (List of Steps):** Enables decomposition.
-* **`step_id`, `description`, `depends_on`:** Define the workflow structure and dependencies, allowing for parallel execution where possible.
+* **`subtask_id`, `description`, `depends_on`:** Define the workflow structure and dependencies, allowing for parallel execution where possible.
 * **`agent_spec`:** Encapsulates everything needed for a specific agent to execute a step.
   * **`type`:** Facilitates routing to different agent implementations or prompt templates.
   * **`input_artifacts`, `output_artifacts`:** Make data flow explicit.

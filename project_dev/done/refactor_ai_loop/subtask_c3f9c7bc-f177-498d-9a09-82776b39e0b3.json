@@ -1,0 +1,45 @@
+{
+  "description": "Generate unit tests for the new ContextManager class.",
+  "instructions": [
+    "Create a new Python file at the path `tests/unit/test_context_manager.py`.",
+    "Import necessary modules for testing (e.g., `pytest`) and the `ContextManager` class (once implemented).",
+    "Write test functions using `pytest` fixtures or standard test methods to cover the core functionalities of the `ContextManager` as described in `docs/context_manager_design.md`.",
+    "Specifically, include tests for:",
+    "- Initializing the `ContextManager`.",
+    "- Adding messages to the context history.",
+    "- Retrieving the full context history.",
+    "- Handling different roles (e.g., 'system', 'user', 'assistant').",
+    "- Any constraints or specific behaviors outlined in the design document.",
+    "Ensure that the test functions are structured to clearly indicate what functionality they are testing.",
+    "For now, the tests should be written assuming the `ContextManager` class exists with the expected methods and attributes, but the actual implementation is missing or incomplete.",
+    "Run the tests using `pytest` to confirm that the test file is correctly structured, the tests are discovered, and they compile and run without syntax errors.",
+    "Verify that the tests fail as expected because the `ContextManager` class or its methods are not yet fully implemented."
+  ],
+  "input_artifacts": [
+    "docs/context_manager_design.md"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_context_manager.py"
+  ],
+  "constraints": [
+    "The tests must be written in Python.",
+    "Use the `pytest` testing framework.",
+    "The tests should focus solely on the functionality defined in `docs/context_manager_design.md`.",
+    "Do not implement the actual `ContextManager` class in this subtask."
+  ],
+  "validation_criteria": [
+    "A file named `tests/unit/test_context_manager.py` exists in the workspace.",
+    "The file `tests/unit/test_context_manager.py` contains valid Python code.",
+    "The file `tests/unit/test_context_manager.py` contains test functions using `pytest`.",
+    "The tests cover the core functionalities of adding messages and retrieving history as described in the design document.",
+    "Running `pytest tests/unit/test_context_manager.py` executes the tests without syntax or import errors.",
+    "The tests fail, indicating that the `ContextManager` implementation is not yet complete."
+  ],
+  "type": "test_generation",
+  "name": "generate_context_manager_tests",
+  "depends_on": [
+    "design_context_manager"
+  ],
+  "task_id": "1bc14942-c2cc-4e02-aa1a-78cfb861d8e9",
+  "subtask_id": "c3f9c7bc-f177-498d-9a09-82776b39e0b3"
+}

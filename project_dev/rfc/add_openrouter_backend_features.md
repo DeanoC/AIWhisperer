@@ -1,1 +1,0 @@
-Enhance the backend API wrapper for Openrouter to fully support its advanced features, specifically enabling the use of system prompts, tools, structured output, managing cache interactions, and processing image and PDF content.

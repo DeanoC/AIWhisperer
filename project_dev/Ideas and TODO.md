@@ -50,5 +50,13 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 * Need to reinforce tracking docs + and finish task in roocode instead of moving from plan to do
 * Multi AI discussion on suggestions and refinements
 
+### Testing Improvements for _load_prompt_content (src/ai_whisperer/config.py)
+
+* Unit test: Successfully load prompt content from a path specified relative to the configuration file's directory.
+* Unit test: Successfully load prompt content from a default path relative to the project root when no specific path is provided.
+* Unit test: Handle a `FileNotFoundError` when attempting to load a default prompt file (verify warning/handling).
+* Unit test: Handle a generic `Exception` during file reading for a specified prompt path.
+* Unit test: Handle a generic `Exception` during file reading for a default prompt path.
+
 We need to tell the subtask generated to create a failing scaffold of files during the test_generation phase.
 A unit test should NEVER require the function its testing to be modified to pass its test. Tests must always be the same as if real code was using the function

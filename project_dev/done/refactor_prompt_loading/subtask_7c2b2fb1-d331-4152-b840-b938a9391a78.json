@@ -1,0 +1,40 @@
+{
+  "description": "Update relevant documentation to reflect the new prompt loading system.",
+  "instructions": [
+    "Open `docs/configuration.md` for editing.",
+    "Locate the section describing prompt configuration or add a new section if none exists.",
+    "Update the content to explain the new hierarchical prompt loading system (user config -> section default -> app default).",
+    "Clearly describe how users can override individual prompts and entire section defaults using their `config.yaml` file.",
+    "Provide clear examples of the configuration structure in `config.yaml` for overriding prompts and sections, referencing the structure shown in `config.yaml.example`.",
+    "Document the expected location for application-level default prompts (`{app_path}/prompts`) and the naming convention for section defaults (`default.md`) within those directories.",
+    "Ensure the documentation is clear, concise, and easy to understand for users.",
+    "Review the updated `docs/configuration.md` to ensure accuracy and completeness."
+  ],
+  "input_artifacts": [
+    "docs/configuration.md",
+    "docs/prompt_system_design.md",
+    "config.yaml.example"
+  ],
+  "output_artifacts": [
+    "docs/configuration.md"
+  ],
+  "constraints": [
+    "Only modify `docs/configuration.md`.",
+    "The documentation must accurately reflect the implemented prompt loading hierarchy and configuration options."
+  ],
+  "validation_criteria": [
+    "`docs/configuration.md` has been modified.",
+    "The updated `docs/configuration.md` includes a clear explanation of the prompt loading hierarchy (user config -> section default -> app default).",
+    "The documentation describes how to override prompts and section defaults via `config.yaml`.",
+    "Examples of the configuration structure for overrides are present and consistent with `config.yaml.example`.",
+    "The documentation specifies the location (`{app_path}/prompts`) and naming convention (`default.md`) for app and section default prompts."
+  ],
+  "type": "documentation",
+  "name": "update_documentation",
+  "depends_on": [
+    "create_example_config_and_defaults",
+    "update_prompt_usage"
+  ],
+  "task_id": "3b2255a4-04a0-439a-a4da-4f2d8cec22b2",
+  "subtask_id": "7c2b2fb1-d331-4152-b840-b938a9391a78"
+}

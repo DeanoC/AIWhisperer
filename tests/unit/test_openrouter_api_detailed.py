@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.ai_whisperer.openrouter_api import OpenRouterAPI
+from ai_whisperer.ai_service_interaction import OpenRouterAPI
 
 # Mock response data based on the expected structure from the planning summary
 MOCK_API_RESPONSE_SINGLE_MODEL = {
@@ -9,18 +9,11 @@ MOCK_API_RESPONSE_SINGLE_MODEL = {
         {
             "id": "test-model-1",
             "name": "Test Model One",
-            "pricing": {
-                "input": "0.001",
-                "output": "0.002",
-                "unit": "token"
-            },
+            "pricing": {"input": "0.001", "output": "0.002", "unit": "token"},
             "description": "A test model.",
             "features": ["chat", "completion"],
             "context_window": 8192,
-            "top_provider": {
-                "name": "Test Provider",
-                "id": "test-provider"
-            }
+            "top_provider": {"name": "Test Provider", "id": "test-provider"},
         }
     ]
 }
@@ -30,35 +23,21 @@ MOCK_API_RESPONSE_MULTIPLE_MODELS = {
         {
             "id": "test-model-1",
             "name": "Test Model One",
-            "pricing": {
-                "input": "0.001",
-                "output": "0.002",
-                "unit": "token"
-            },
+            "pricing": {"input": "0.001", "output": "0.002", "unit": "token"},
             "description": "A test model.",
             "features": ["chat", "completion"],
             "context_window": 8192,
-            "top_provider": {
-                "name": "Test Provider",
-                "id": "test-provider"
-            }
+            "top_provider": {"name": "Test Provider", "id": "test-provider"},
         },
         {
             "id": "test-model-2",
             "name": "Test Model Two",
-            "pricing": {
-                "input": "0.003",
-                "output": "0.004",
-                "unit": "token"
-            },
+            "pricing": {"input": "0.003", "output": "0.004", "unit": "token"},
             "description": "Another test model.",
             "features": ["image_generation"],
             "context_window": 4096,
-            "top_provider": {
-                "name": "Another Provider",
-                "id": "another-provider"
-            }
-        }
+            "top_provider": {"name": "Another Provider", "id": "another-provider"},
+        },
     ]
 }
 
@@ -73,7 +52,7 @@ MOCK_API_RESPONSE_MISSING_FIELDS = {
 }
 
 
-@patch('src.ai_whisperer.openrouter_api.requests.get')
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_single(mock_get):
     """Tests fetching and parsing detailed data for a single model."""
     mock_response = MagicMock()
@@ -88,7 +67,7 @@ def test_list_models_detailed_single(mock_get):
     assert models == MOCK_API_RESPONSE_SINGLE_MODEL["data"]
 
 
-@patch('src.ai_whisperer.openrouter_api.requests.get')
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_multiple(mock_get):
     """Tests fetching and parsing detailed data for multiple models."""
     mock_response = MagicMock()
@@ -103,7 +82,7 @@ def test_list_models_detailed_multiple(mock_get):
     assert models == MOCK_API_RESPONSE_MULTIPLE_MODELS["data"]
 
 
-@patch('src.ai_whisperer.openrouter_api.requests.get')
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_missing_fields(mock_get):
     """Tests handling of models with missing optional fields."""
     mock_response = MagicMock()
@@ -117,7 +96,8 @@ def test_list_models_detailed_missing_fields(mock_get):
     assert len(models) == 1
     assert models == MOCK_API_RESPONSE_MISSING_FIELDS["data"]
 
-@patch('src.ai_whisperer.openrouter_api.requests.get')
+
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_empty_data(mock_get):
     """Tests handling of an empty data array in the API response."""
     mock_response = MagicMock()
@@ -130,7 +110,8 @@ def test_list_models_detailed_empty_data(mock_get):
 
     assert len(models) == 0
 
-@patch('src.ai_whisperer.openrouter_api.requests.get')
+
+@patch("ai_whisperer.ai_service_interaction.requests.get")
 def test_list_models_detailed_api_error(mock_get):
     """Tests handling of an API error response."""
     mock_response = MagicMock()
@@ -139,5 +120,5 @@ def test_list_models_detailed_api_error(mock_get):
     mock_get.return_value = mock_response
 
     api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
-    with pytest.raises(Exception): # Assuming a generic exception is raised for API errors
+    with pytest.raises(Exception):  # Assuming a generic exception is raised for API errors
         api.list_models()

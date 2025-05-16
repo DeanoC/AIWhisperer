@@ -13,6 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def escape_text_fields(content: Union[str, dict, list], data: dict = None) -> Tuple[Union[str, dict, list], Dict]:
     """
     For string input, checks if it's valid JSON. For dict/list, passes through.
@@ -31,14 +32,14 @@ def escape_text_fields(content: Union[str, dict, list], data: dict = None) -> Tu
         data = {}
     if "logs" not in data:
         data["logs"] = []
-    if "errors" not in data: # Ensure errors list exists
+    if "errors" not in data:  # Ensure errors list exists
         data["errors"] = []
 
     logger.debug(f"escape_text_fields input type: {type(content)}")
 
     if isinstance(content, (dict, list)):
         data["logs"].append(f"Input is a {type(content).__name__}, no escaping performed by this step.")
-        return content, data
+        return (content, data)
 
     if not isinstance(content, str):
         err_msg = f"Unsupported content type: {type(content)}. Expected str, dict, or list."
@@ -46,11 +47,11 @@ def escape_text_fields(content: Union[str, dict, list], data: dict = None) -> Tu
         data["logs"].append(f"ERROR: {err_msg}")
         data["errors"].append(err_msg)
         # Return original content as per current test expectations for unsupported types
-        return content, data
+        return (content, data)
 
     if not content.strip():
         data["logs"].append("Input content is empty or whitespace-only.")
-        return content, data
+        return (content, data)
 
     try:
         # Attempt to parse the string to see if it's valid JSON
@@ -58,14 +59,15 @@ def escape_text_fields(content: Union[str, dict, list], data: dict = None) -> Tu
         data["logs"].append("Input is a valid JSON string. No escaping applied by this step.")
     except json.JSONDecodeError as e:
         err_msg = f"Failed to parse content as JSON in escape_text_fields: {e}"
-        logger.warning(f"{err_msg} - Content: '{content[:100]}...'") # Log part of content for context
-        data["logs"].append(f"WARNING: {err_msg}") # Log as warning, not breaking error
-        data["errors"].append(err_msg) # Also add to errors for testability
+        logger.warning(f"{err_msg} - Content: '{content[:100]}...'")  # Log part of content for context
+        data["logs"].append(f"WARNING: {err_msg}")  # Log as warning, not breaking error
+        data["errors"].append(err_msg)  # Also add to errors for testability
         # Return original content; subsequent validation step should catch this.
-    
-    return content, data
 
-if __name__ == '__main__':
+    return (content, data)
+
+
+if __name__ == "__main__":
     # Example Usage
     test_cases = [
         ('{"key": "value", "text": "This is a string: with a colon."}', "Valid JSON string"),
@@ -83,8 +85,8 @@ if __name__ == '__main__':
     for i, (test_content, desc) in enumerate(test_cases):
         print(f"\n--- Test Case {i+1}: {desc} ---")
         current_data = {"logs": [], "errors": []}
-        output_content, output_data = escape_text_fields(test_content, current_data)
-        
+        (output_content, output_data) = escape_text_fields(test_content, current_data)
+
         print("Output Content:", output_content)
         print("Logs:", json.dumps(output_data.get("logs", []), indent=2))
         if output_data.get("errors"):

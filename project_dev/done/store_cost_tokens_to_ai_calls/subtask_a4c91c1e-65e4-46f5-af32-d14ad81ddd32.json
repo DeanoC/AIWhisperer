@@ -1,0 +1,40 @@
+{
+  "description": "Update state management code to store cost and token information with message history.",
+  "instructions": [
+    "Open the file `src/ai_whisperer/state_management.py`.",
+    "Identify the function(s) or class method(s) responsible for adding or updating message entries in the history, such as `add_message` or similar.",
+    "Modify the internal data structure used to represent a message or an interaction entry within the history. Add new keys/fields for 'cost' (float), 'input_tokens' (int), and 'output_tokens' (int). Consider using a dictionary or a custom class/dataclass.",
+    "Locate where the AI service interaction result is likely processed and passed to the state management functions. This might be in `src/ai_whisperer/ai_service_interaction.py` or the calling code within `src/ai_whisperer/plan_runner.py` or `src/ai_whisperer/agent_handlers/ai_interaction.py`.",
+    "Ensure that when a message or interaction is recorded, the actual 'cost', 'input_tokens', and 'output_tokens' values obtained from the AI service interaction (e.g., from the response object or a cost calculation) are included and stored in the corresponding new fields in the message history data structure.",
+    "Update any internal logic within `state_management.py` that relies on the message history structure if necessary (e.g., functions that retrieve or process full history).",
+    "Save the changes made to `src/ai_whisperer/state_management.py`.",
+    "Run the unit tests specifically targeting state management, including the new cost/token storage tests added in the previous subtask (`tests/unit/test_state_management.py:new_cost_token_storage_tests`).",
+    "Resolve any errors or failures in the tests by correcting the code in `src/ai_whisperer/state_management.py`."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/state_management.py",
+    "tests/unit/test_state_management.py",
+    "src/ai_whisperer/ai_service_interaction.py",
+    "src/ai_whisperer/plan_runner.py",
+    "src/ai_whisperer/agent_handlers/ai_interaction.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/state_management.py"
+  ],
+  "constraints": [
+    "The updated state management code must maintain backward compatibility with existing functions that query or process the message history, even if they do not explicitly use the new cost/token fields.",
+    "The changes should be limited to the necessary modifications for storing the new data; avoid unnecessary refactoring."
+  ],
+  "validation_criteria": [
+    "All unit tests in `tests/unit/test_state_management.py` pass successfully, including those added in the previous step specifically for cost and token storage.",
+    "Review the code in `src/ai_whisperer/state_management.py` to confirm that message history entries now include fields for 'cost', 'input_tokens', and 'output_tokens'.",
+    "Verify that actual cost and token data from AI service interactions are being assigned to these new fields when messages are recorded."
+  ],
+  "type": "file_edit",
+  "depends_on": [
+    "tests/unit/test_state_management.py:new_cost_token_storage_tests",
+    "src/ai_whisperer/ai_service_interaction.py"
+  ],
+  "task_id": "c94f8d36-7e7f-411d-b15b-9e4a42b4590b",
+  "subtask_id": "d0a2748c-bc5b-4925-9cea-5cc6b6d9b3d7"
+}

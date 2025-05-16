@@ -1,0 +1,164 @@
+{
+    "natural_language_goal": "Implement a consistent path management system based on four core directories (app, project, output, workspace) with a global singleton and templated paths.",
+    "plan": [
+        {
+            "subtask_id": "b59acc1d-0f6e-4b12-a443-74a5bd308ca6",
+            "name": "analyze_requirements_and_design_path_singleton",
+            "description": "Analyze the requirements for the path management system and design the structure of the global path singleton, including how it will store and provide access to the four core paths and handle templated path expansion.",
+            "file_path": "project_dev/in_dev/sort_out_paths/subtask_b59acc1d-0f6e-4b12-a443-74a5bd308ca6.json",
+            "type": "planning",
+            "depends_on": [],
+            "input_artifacts": [
+                "project_dev/rfc/sort_out_paths.md"
+            ],
+            "output_artifacts": [
+                "docs/path_management_design.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "4900beb7-81e7-4a66-b57b-85da4e45e709",
+            "name": "create_path_management_tests",
+            "description": "Create unit tests for the path management singleton, covering initialization, default paths, setting paths, and templated path expansion for all four path types.",
+            "file_path": "project_dev/in_dev/sort_out_paths/subtask_4900beb7-81e7-4a66-b57b-85da4e45e709.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_requirements_and_design_path_singleton"
+            ],
+            "input_artifacts": [
+                "docs/path_management_design.md"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_path_management.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "1afc5e4a-e10a-4d2e-98c0-2a68a4e03444",
+            "name": "implement_path_management_singleton",
+            "description": "Implement the global path management singleton based on the design and generated tests.",
+            "file_path": "project_dev/in_dev/sort_out_paths/subtask_1afc5e4a-e10a-4d2e-98c0-2a68a4e03444.json",
+            "type": "code_generation",
+            "depends_on": [
+                "create_path_management_tests"
+            ],
+            "input_artifacts": [
+                "docs/path_management_design.md",
+                "tests/unit/test_path_management.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/path_management.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "6654ad95-fef8-4e94-afad-149cd4c7ad96",
+            "name": "integrate_path_management_into_config_and_cli",
+            "description": "Modify the configuration loading and CLI argument parsing to initialize and override the path management singleton's values.",
+            "file_path": "project_dev/in_dev/sort_out_paths/subtask_6654ad95-fef8-4e94-afad-149cd4c7ad96.json",
+            "type": "file_edit",
+            "depends_on": [
+                "implement_path_management_singleton"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/path_management.py",
+                "src/ai_whisperer/config.py",
+                "src/ai_whisperer/cli.py",
+                "tests/unit/test_path_management.py",
+                "tests/unit/test_config.py",
+                "tests/unit/test_cli.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/config.py",
+                "src/ai_whisperer/cli.py"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "355b9387-5632-4695-901c-eda4e451d98e",
+            "name": "refactor_file_io_and_path_operations",
+            "description": "Refactor existing file I/O and path operations throughout the codebase to use the new path management singleton and templated paths.",
+            "file_path": "project_dev/in_dev/sort_out_paths/subtask_355b9387-5632-4695-901c-eda4e451d98e.json",
+            "type": "file_edit",
+            "depends_on": [
+                "integrate_path_management_into_config_and_cli"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/",
+                "tests/",
+                "docs/path_management_design.md",
+                "src/ai_whisperer/path_management.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/",
+                "tests/"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "de7b67c3-f359-4e20-903c-2ea18377de38",
+            "name": "create_path_explanation_document",
+            "description": "Create a markdown document explaining the four core directories and how paths are managed in the project.",
+            "file_path": "project_dev/in_dev/sort_out_paths/subtask_de7b67c3-f359-4e20-903c-2ea18377de38.json",
+            "type": "documentation",
+            "depends_on": [
+                "refactor_file_io_and_path_operations"
+            ],
+            "input_artifacts": [
+                "project_dev/rfc/sort_out_paths.md",
+                "docs/path_management_design.md"
+            ],
+            "output_artifacts": [
+                "docs/path_explanation.md"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "43489d1e-ffd1-4de0-9895-005326c2a414",
+            "name": "add_integration_tests_for_path_management",
+            "description": "Add integration tests to verify the path management system works correctly in real-world scenarios, including config and CLI overrides.",
+            "file_path": "project_dev/in_dev/sort_out_paths/subtask_43489d1e-ffd1-4de0-9895-005326c2a414.json",
+            "type": "test_generation",
+            "depends_on": [
+                "create_path_explanation_document"
+            ],
+            "input_artifacts": [
+                "docs/path_management_design.md",
+                "docs/path_explanation.md",
+                "src/ai_whisperer/path_management.py",
+                "src/ai_whisperer/config.py",
+                "src/ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [
+                "tests/integration/test_path_management_integration.py"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "b4a42d4d-86b4-4ea7-8091-f6e4143271f3",
+            "name": "implement_integration_tests_for_path_management",
+            "description": "Implement the integration tests for the path management system.",
+            "file_path": "project_dev/in_dev/sort_out_paths/subtask_b4a42d4d-86b4-4ea7-8091-f6e4143271f3.json",
+            "type": "code_generation",
+            "depends_on": [
+                "add_integration_tests_for_path_management"
+            ],
+            "input_artifacts": [
+                "tests/integration/test_path_management_integration.py",
+                "src/ai_whisperer/path_management.py",
+                "src/ai_whisperer/config.py",
+                "src/ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [
+                "tests/integration/test_path_management_integration.py"
+            ],
+            "completed": false
+        }
+    ],
+    "task_id": "da0bff86-233d-4f69-bd5f-b4804aa4b3da",
+    "input_hashes": {
+        "requirements_md": "e593a4342ab33527329dfb579b8a2a4f6d2ede9f2ddb6923ca02e54c519f12ed",
+        "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+        "prompt_file": "hash_not_available"
+    }
+}

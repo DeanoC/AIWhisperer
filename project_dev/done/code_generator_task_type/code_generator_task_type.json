@@ -1,0 +1,342 @@
+{
+  "natural_language_goal": "Implement an execution engine handler for the `code_generation` task type.",
+  "plan": [
+    {
+      "name": "research_code_generation_handler",
+      "description": "Research the requirements and design considerations for an execution engine handler specifically for the `code_generation` task type, including how it should interact with AI agents and handle testing.",
+      "depends_on": [],
+      "type": "planning",
+      "input_artifacts": [
+        "project_dev/rfc/code_generator_task_type.md",
+        "src/ai_whisperer/schemas/subtask_schema.json"
+      ],
+      "output_artifacts": [
+        "docs/code_generation_handler_research.md"
+      ],
+      "instructions": [
+        "Read the provided RFC and subtask schema.",
+        "Analyze the requirements for the `code_generation` task type.",
+        "Investigate how the existing execution engine (src/ai_whisperer/execution_engine.py) processes other task types.",
+        "Determine the necessary inputs and outputs for a `code_generation` handler.",
+        "Outline how the handler should instruct an AI agent for code generation.",
+        "Define how the handler should integrate with test execution and validation.",
+        "Consider the constraints around code reuse and examining existing files (src/ai_whisperer/).",
+        "Document the research findings and proposed approach in docs/code_generation_handler_research.md."
+      ],
+      "constraints": [
+        "Focus exclusively on the `code_generation` task type as defined in the RFC and subtask schema.",
+        "Ensure the proposed handler integrates seamlessly with the existing execution engine structure."
+      ],
+      "validation_criteria": [
+        "docs/code_generation_handler_research.md exists.",
+        "docs/code_generation_handler_research.md provides a clear understanding of the requirements.",
+        "docs/code_generation_handler_research.md outlines a feasible approach for implementing the handler.",
+        "The document discusses how the handler will address code reuse and test integration."
+      ],
+      "subtask_id": "9bf2e43d-9da1-4cfb-9f9c-ee9c63095320"
+    },
+    {
+      "name": "design_code_generation_handler",
+      "description": "Design the structure and logic of the `code_generation` execution engine handler based on the research findings.",
+      "depends_on": [
+        "research_code_generation_handler"
+      ],
+      "type": "planning",
+      "input_artifacts": [
+        "docs/code_generation_handler_research.md",
+        "src/ai_whisperer/execution_engine.py",
+        "src/ai_whisperer/agent_handlers/ai_interaction.py"
+      ],
+      "output_artifacts": [
+        "docs/code_generation_handler_design.md"
+      ],
+      "instructions": [
+        "Based on the research, define the class or function structure for the `code_generation` handler.",
+        "Specify the methods or functions required within the handler.",
+        "Detail the input parameters and expected output for the handler.",
+        "Describe the interaction flow with the AI service (src/ai_whisperer/ai_service_interaction.py) and the AI interaction handler (src/ai_whisperer/agent_handlers/ai_interaction.py).",
+        "Outline the steps for generating the prompt for the AI agent, including incorporating instructions, constraints, and existing file context.",
+        "Design how the handler will process the AI's response, including file creation/modification and validation.",
+        "Plan how the handler will execute and verify tests if specified in the subtask.",
+        "Document the design in docs/code_generation_handler_design.md."
+      ],
+      "constraints": [
+        "The design must be compatible with the existing execution engine architecture.",
+        "The design must explicitly address the requirements for code reuse and test execution."
+      ],
+      "validation_criteria": [
+        "docs/code_generation_handler_design.md exists.",
+        "docs/code_generation_handler_design.md provides a detailed technical design for the handler.",
+        "The design addresses all aspects outlined in the research document.",
+        "The design clearly defines the interfaces and interactions with other system components."
+      ],
+      "subtask_id": "4ba030be-6c65-43c3-a557-df284d4d552e"
+    },
+    {
+      "name": "create_code_generation_handler_tests",
+      "description": "Create unit tests for the planned `code_generation` execution engine handler.",
+      "depends_on": [
+        "design_code_generation_handler"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/code_generation_handler_design.md",
+        "src/ai_whisperer/schemas/subtask_schema.json"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_code_generation_handler.py"
+      ],
+      "instructions": [
+        "Create a new test file tests/unit/test_code_generation_handler.py.",
+        "Write unit tests that mock dependencies (like the AI service interaction and file I/O) to test the core logic of the `code_generation` handler.",
+        "Include tests for:",
+        "- Correctly parsing a `code_generation` subtask.",
+        "- Generating the AI prompt with instructions, constraints, and file context.",
+        "- Handling different scenarios of AI responses (e.g., generating a new file, modifying an existing file).",
+        "- Integration points for test execution and validation (mocking test runner calls).",
+        "- Handling error conditions.",
+        "Ensure tests cover the requirements for examining existing files and code reuse.",
+        "The tests should compile and run but are expected to fail initially as the handler implementation does not exist yet."
+      ],
+      "constraints": [
+        "Tests should be unit tests with mocked dependencies.",
+        "Focus on testing the handler's logic, not the actual AI interaction or file system operations.",
+        "Ensure tests align with the documented design."
+      ],
+      "validation_criteria": [
+        "tests/unit/test_code_generation_handler.py exists.",
+        "The test suite covers the key functionalities outlined in the design.",
+        "Tests use appropriate mocking strategies.",
+        "Tests are correctly structured and syntactically valid Python.",
+        "The tests run without syntax errors and fail as expected before implementation."
+      ],
+      "subtask_id": "1596da6e-2d01-48d6-8d36-9ae273b16dc2"
+    },
+    {
+      "name": "implement_code_generation_handler_scaffold",
+      "description": "Implement the basic structure and methods for the `code_generation` execution engine handler.",
+      "depends_on": [
+        "create_code_generation_handler_tests"
+      ],
+      "type": "code_generation",
+      "input_artifacts": [
+        "docs/code_generation_handler_design.md",
+        "tests/unit/test_code_generation_handler.py",
+        "src/ai_whisperer/execution_engine.py",
+        "src/ai_whisperer/agent_handlers/__init__.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/agent_handlers/code_generation.py"
+      ],
+      "instructions": [
+        "Create a new file `src/ai_whisperer/agent_handlers/code_generation.py`.",
+        "Create a class or functions as designed in `docs/code_generation_handler_design.md` to handle the `code_generation` task type.",
+        "Implement the basic structure and method signatures.",
+        "Add necessary imports.",
+        "Register the new handler in `src/ai_whisperer/agent_handlers/__init__.py` so the execution engine can discover it.",
+        "Implement just enough logic to satisfy the structure and allow the unit tests to be run, but not necessarily pass.",
+        "Examine existing handlers in `src/ai_whisperer/agent_handlers/` for patterns and code reuse opportunities."
+      ],
+      "constraints": [
+        "The implementation must follow the design document.",
+        "Register the handler correctly.",
+        "Focus on the basic structure first."
+      ],
+      "validation_criteria": [
+        "src/ai_whisperer/agent_handlers/code_generation.py exists.",
+        "The file contains the basic class/function structure for the handler.",
+        "The handler is registered in `src/ai_whisperer/agent_handlers/__init__.py`.",
+        "The code is syntactically correct Python.",
+        "The code compiles and allows the tests to run."
+      ],
+      "subtask_id": "59609cec-39ff-48db-b64f-84f70baccdca"
+    },
+    {
+      "name": "implement_code_generation_handler_logic",
+      "description": "Implement the core logic for the `code_generation` execution engine handler.",
+      "depends_on": [
+        "implement_code_generation_handler_scaffold"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "docs/code_generation_handler_design.md",
+        "tests/unit/test_code_generation_handler.py",
+        "src/ai_whisperer/agent_handlers/code_generation.py",
+        "src/ai_whisperer/ai_service_interaction.py",
+        "src/ai_whisperer/agent_handlers/ai_interaction.py",
+        "src/ai_whisperer/tools/"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/agent_handlers/code_generation.py"
+      ],
+      "instructions": [
+        "Implement the logic within the `code_generation` handler to process a subtask.",
+        "Generate the prompt for the AI agent.",
+        "Use the `ai_service_interaction.py` and `ai_interaction.py` components to communicate with the AI.",
+        "Incorporate instructions, constraints, and context from input artifacts and existing files into the prompt.",
+        "Handle the AI's response: identify generated code/file modifications.",
+        "Use the file tools (src/ai_whisperer/tools/) to create new files or modify existing ones as indicated by the AI's response.",
+        "Integrate with the test execution mechanism (mocking calls or interacting with a test runner if available) to run tests specified in the subtask.",
+        "Ensure the handler checks that tests pass before marking the step as complete.",
+        "Refactor and reuse existing code from `src/ai_whisperer/` where appropriate."
+      ],
+      "constraints": [
+        "The implemented logic must pass the unit tests created earlier.",
+        "Adhere strictly to the design document.",
+        "Prioritize code reuse from the existing codebase.",
+        "Ensure proper handling of file paths and content from the AI response.",
+        "The handler must verify test execution results."
+      ],
+      "validation_criteria": [
+        "The unit tests in `tests/unit/test_code_generation_handler.py` pass successfully.",
+        "The implemented logic correctly processes various `code_generation` subtask examples.",
+        "File creation/modification logic functions as expected.",
+        "Prompt generation includes necessary context for the AI.",
+        "The handler correctly interprets test results."
+      ],
+      "subtask_id": "de2532d1-1ea3-454a-81dd-14cfd583879b"
+    },
+    {
+      "name": "integrate_code_generation_handler",
+      "description": "Integrate the new `code_generation` handler into the main execution engine workflow.",
+      "depends_on": [
+        "implement_code_generation_handler_logic"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "src/ai_whisperer/execution_engine.py",
+        "src/ai_whisperer/agent_handlers/__init__.py",
+        "src/ai_whisperer/agent_handlers/code_generation.py"
+      ],
+      "output_artifacts": [
+        "src/ai_whisperer/execution_engine.py"
+      ],
+      "instructions": [
+        "Modify the `execution_engine.py` to correctly identify and dispatch tasks of type `code_generation` to the new handler.",
+        "Ensure proper error handling and state management for the `code_generation` task type within the execution engine.",
+        "Verify that the handler is correctly imported and accessible.",
+        "Make any necessary adjustments to the handler's interface or the engine's dispatch logic for seamless integration."
+      ],
+      "constraints": [
+        "The integration must not break existing functionality for other task types.",
+        "The execution engine must correctly instantiate and call the `code_generation` handler."
+      ],
+      "validation_criteria": [
+        "The execution engine can successfully process a plan containing a `code_generation` task.",
+        "The `code_generation` handler is correctly invoked by the engine.",
+        "No regressions are introduced to the handling of other task types.",
+        "Basic end-to-end flow with a dummy `code_generation` task runs without errors."
+      ],
+      "subtask_id": "b7daf4b4-34bc-4aac-b5fc-59ef7efca931"
+    },
+    {
+      "name": "create_integration_tests",
+      "description": "Create integration tests to verify the `code_generation` handler works correctly within the execution engine.",
+      "depends_on": [
+        "integrate_code_generation_handler"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "src/ai_whisperer/execution_engine.py",
+        "src/ai_whisperer/agent_handlers/code_generation.py",
+        "tests/unit/test_code_generation_handler.py"
+      ],
+      "output_artifacts": [
+        "tests/integration/test_code_generation_handler_integration.py"
+      ],
+      "instructions": [
+        "Create a new integration test file tests/integration/test_code_generation_handler_integration.py.",
+        "Write tests that simulate running a full plan containing `code_generation` tasks.",
+        "Create dummy implementations of tools and a mocked AI service that return predictable code generation responses.",
+        "Test scenarios include:",
+        "- Generating a new file.",
+        "- Modifying an existing file.",
+        "- Executing a `code_generation` task that includes test execution (mocking the test runner result).",
+        "- Handling cases where the AI response is malformed or tests fail.",
+        "Ensure these tests verify the interaction between the execution engine, the `code_generation` handler, and mocked dependencies.",
+        "The tests should compile and run but are expected to fail initially."
+      ],
+      "constraints": [
+        "Tests should be integration tests, verifying the interaction between components.",
+        "Use mocking for external services like the actual AI API.",
+        "Focus on the workflow, not just the handler's internal logic."
+      ],
+      "validation_criteria": [
+        "tests/integration/test_code_generation_handler_integration.py exists.",
+        "The integration test suite covers key scenarios of `code_generation` task execution.",
+        "Tests are correctly structured and syntactically valid Python.",
+        "The tests run without syntax errors and fail as expected."
+      ],
+      "subtask_id": "e372da35-9b96-446a-ada4-bdec5dca5f72"
+    },
+    {
+      "name": "validate_integration",
+      "description": "Run the integration tests to validate the `code_generation` handler integration.",
+      "depends_on": [
+        "create_integration_tests"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "tests/integration/test_code_generation_handler_integration.py",
+        "src/ai_whisperer/execution_engine.py",
+        "src/ai_whisperer/agent_handlers/code_generation.py"
+      ],
+      "output_artifacts": [],
+      "instructions": [
+        "Execute the integration tests in `tests/integration/test_code_generation_handler_integration.py`.",
+        "Verify that all integration tests pass.",
+        "If tests fail, analyze the failures and identify necessary fixes in the handler or execution engine integration."
+      ],
+      "constraints": [
+        "All integration tests must pass for this step to be considered complete."
+      ],
+      "validation_criteria": [
+        "All tests in `tests/integration/test_code_generation_handler_integration.py` pass successfully."
+      ],
+      "subtask_id": "3efe38a3-0b1d-4a0f-a707-aeed49af9223"
+    },
+    {
+      "name": "update_documentation",
+      "description": "Update documentation to reflect the new `code_generation` task type and its handler.",
+      "depends_on": [
+        "validate_integration"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "docs/code_generation_handler_research.md",
+        "docs/code_generation_handler_design.md",
+        "docs/execution_engine.md",
+        "docs/usage.md",
+        "src/ai_whisperer/schemas/subtask_schema.json"
+      ],
+      "output_artifacts": [
+        "docs/execution_engine.md",
+        "docs/usage.md"
+      ],
+      "instructions": [
+        "Update `docs/execution_engine.md` to describe how the `code_generation` task type is handled.",
+        "Update `docs/usage.md` to explain how users can define and use `code_generation` tasks in their plans.",
+        "Reference the `subtask_schema.json` for the structure of `code_generation` tasks.",
+        "Include details on how tests and file modifications are handled.",
+        "Review and incorporate relevant information from `docs/code_generation_handler_research.md` and `docs/code_generation_handler_design.md` into the user-facing documentation."
+      ],
+      "constraints": [
+        "Documentation must be clear, accurate, and user-friendly.",
+        "Changes should reflect the implemented functionality."
+      ],
+      "validation_criteria": [
+        "docs/execution_engine.md clearly describes the `code_generation` handler.",
+        "docs/usage.md provides instructions on how to use `code_generation` tasks in plans.",
+        "The documentation is updated to reflect the current state of the code.",
+        "No broken links or formatting issues in the updated documentation."
+      ],
+      "subtask_id": "a1e7221f-1510-493e-9ad3-ff00da31da61"
+    }
+  ],
+  "task_id": "28b11d1a-aeb6-4c57-8c3d-a85d3dbba0db",
+  "input_hashes": {
+    "requirements_md": "6a7ea493a2edbc1f4eff363813be1e2a05448f461f79ebd81428b870827b6862",
+    "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+    "prompt_file": "hash_not_available"
+  }
+}

@@ -8,6 +8,7 @@ It checks if the input is well-formed JSON and if the root is an object or array
 import json
 from typing import Tuple, Union
 
+
 def validate_syntax(content: Union[str, dict, list], data: dict = None) -> tuple:
     """
     Validates the JSON content.
@@ -37,7 +38,7 @@ def validate_syntax(content: Union[str, dict, list], data: dict = None) -> tuple
 
     if isinstance(content, (dict, list)):
         data["logs"].append(f"Input is a {type(content).__name__}, syntax is considered valid.")
-        return content, data
+        return (content, data)
 
     if not isinstance(content, str):
         err_msg = f"Unsupported content type: {type(content)}. Expected str, dict, or list."
@@ -58,23 +59,24 @@ def validate_syntax(content: Union[str, dict, list], data: dict = None) -> tuple
             data["logs"].append(f"ERROR: {err_msg} (Actual type: {type(parsed_json).__name__})")
             data["errors"].append(err_msg)
             raise ValueError(err_msg)
-        
+
         data["logs"].append("JSON syntax validated successfully.")
         # Return the parsed JSON content as a dictionary or list
-        return parsed_json, data
+        return (parsed_json, data)
 
     except json.JSONDecodeError as e:
         err_msg = f"Invalid JSON syntax: {e}"
         data["logs"].append(f"ERROR: {err_msg}")
         data["errors"].append(err_msg)
         raise ValueError(err_msg) from e
-    except Exception as e: # Catch any other unexpected errors
+    except Exception as e:  # Catch any other unexpected errors
         err_msg = f"An unexpected error occurred during JSON syntax validation: {e}"
         data["logs"].append(f"ERROR: {err_msg}")
         data["errors"].append(err_msg)
         raise ValueError(err_msg) from e
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example Usage (for local testing)
     test_cases = [
         ('{"key": "value"}', "Valid JSON object"),
@@ -84,17 +86,17 @@ if __name__ == '__main__':
         ('{"key": "value"', "Invalid JSON: Missing closing brace"),
         ('{"key1": "value1",}', "Invalid JSON: Trailing comma in object"),
         ('"just a string"', "Invalid JSON root: string literal"),
-        ('123', "Invalid JSON root: number literal"),
-        ('', "Empty string"),
-        ('   ', "Whitespace-only string"),
-        ('{"name": "テスト"}', "Valid JSON with unicode")
+        ("123", "Invalid JSON root: number literal"),
+        ("", "Empty string"),
+        ("   ", "Whitespace-only string"),
+        ('{"name": "テスト"}', "Valid JSON with unicode"),
     ]
 
     for i, (test_content, desc) in enumerate(test_cases):
         print(f"\n--- Test Case {i+1}: {desc} ---")
         current_data = {"logs": [], "errors": []}
         try:
-            output_content, output_data = validate_syntax(test_content, current_data)
+            (output_content, output_data) = validate_syntax(test_content, current_data)
             print("Status: Valid")
             print("Output Content:", output_content)
         except ValueError as ve:

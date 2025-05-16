@@ -1,0 +1,31 @@
+{
+  "description": "Design the approach for extracting the AI loop into a separate reusable component.",
+  "instructions": [
+    "Carefully review the code in `src/ai_whisperer/agent_handlers/code_generation.py` to identify the specific sections of code that constitute the core AI interaction loop (e.g., sending prompts, receiving responses, processing responses, handling retries, etc.).",
+    "Analyze the identified AI loop logic to determine the best way to encapsulate it. Consider options like creating a dedicated function, a class, or a module.",
+    "Based on the `docs/context_manager_design.md`, plan how the refactored AI loop component will receive and utilize the context provided by the `ContextManager`. This includes understanding what information the AI loop needs from the context and how it will access it.",
+    "Outline the specific code modifications required in `src/ai_whisperer/agent_handlers/code_generation.py` to replace the current inline AI loop logic with calls to the new reusable AI loop component and to integrate with the `ContextManager`.",
+    "Document the entire refactoring plan, including the identified AI loop logic, the chosen encapsulation approach, the integration strategy with the `ContextManager`, and the necessary code changes in `docs/ai_loop_refactor_plan.md`. Ensure the document is clear and detailed enough for implementation."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/agent_handlers/code_generation.py",
+    "docs/context_manager_design.md"
+  ],
+  "output_artifacts": [
+    "docs/ai_loop_refactor_plan.md"
+  ],
+  "constraints": [],
+  "validation_criteria": [
+    "The file `docs/ai_loop_refactor_plan.md` must be created.",
+    "The content of `docs/ai_loop_refactor_plan.md` must clearly identify the specific code sections in `src/ai_whisperer/agent_handlers/code_generation.py` that represent the AI loop logic to be extracted.",
+    "The content of `docs/ai_loop_refactor_plan.md` must explicitly describe how the refactored AI loop component will interact with and utilize the `ContextManager` based on the provided design document.",
+    "The content of `docs/ai_loop_refactor_plan.md` must detail the necessary code changes and modifications required within `src/ai_whisperer/agent_handlers/code_generation.py` to integrate the new AI loop component and use the `ContextManager`."
+  ],
+  "type": "planning",
+  "name": "design_ai_loop_refactor",
+  "depends_on": [
+    "design_context_manager"
+  ],
+  "task_id": "1bc14942-c2cc-4e02-aa1a-78cfb861d8e9",
+  "subtask_id": "df78916c-bf49-4174-a33c-0ea9818cb9f6"
+}

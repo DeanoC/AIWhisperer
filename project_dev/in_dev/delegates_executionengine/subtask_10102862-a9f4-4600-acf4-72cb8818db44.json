@@ -1,0 +1,31 @@
+{
+  "description": "Validate the implementation of thread-safe delegates in the execution engine by running the generated tests.",
+  "instructions": [
+    "Navigate to the root directory of the AIWhisperer project.",
+    "Execute the test suite specifically for execution engine delegates using a command like `pytest tests/execution_engine/test_delegates.py`.",
+    "Monitor the output of the test execution.",
+    "Confirm that the test runner reports that all tests within `tests/execution_engine/test_delegates.py` passed successfully.",
+    "If any tests fail, analyze the failure output to identify the issue with the delegate implementation or thread safety and report the findings."
+  ],
+  "input_artifacts": [
+    "tests/execution_engine/test_delegates.py"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "The validation must be performed using the pytest framework.",
+    "The test execution must target only the specified test file.",
+    "No changes should be made to the test file itself during this subtask."
+  ],
+  "validation_criteria": [
+    "The command to run the tests executes without errors.",
+    "The pytest output explicitly states that all tests in `tests/execution_engine/test_delegates.py` passed.",
+    "No test failures are reported for `tests/execution_engine/test_delegates.py`."
+  ],
+  "type": "validation",
+  "name": "validate_execution_engine_delegates",
+  "depends_on": [
+    "implement_execution_engine_delegates"
+  ],
+  "task_id": "0da84583-0c56-4c9e-b01a-6cfdfc728bcf",
+  "subtask_id": "10102862-a9f4-4600-acf4-72cb8818db44"
+}

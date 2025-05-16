@@ -1,0 +1,58 @@
+{
+  "description": "Generate tests to verify the runner's file system access restrictions and path handling.",
+  "instructions": [
+    "Create a new Python test file at `tests/runner_directory_access_tests.py`.",
+    "Import necessary testing frameworks (e.g., `pytest`) and relevant components of the runner that handle file operations.",
+    "Design test cases that simulate the runner attempting various file system operations (read/write) using different paths:",
+    "- A path clearly outside the designated workspace and output directories (e.g., `/tmp/sensitive_file.txt` or `C:\\Windows\\System32\\config.ini`).",
+    "- A path inside the designated workspace directory (e.g., `workspace/input_data.txt`).",
+    "- A path inside the designated output directory (e.g., `output/results.json`).",
+    "- A path inside the output directory when the workspace and output directories are the same.",
+    "- A path inside the workspace directory when the workspace and output directories are the same.",
+    "- Paths that use relative references (`../`, `./`) to attempt to navigate outside the allowed areas.",
+    "- Paths that use symbolic links or other file system features that could potentially bypass simple path checks.",
+    "For each test case, configure the runner with specific workspace and output directory settings.",
+    "Execute the simulated file operation within the test.",
+    "Assert that read operations outside allowed directories raise an appropriate permission error or exception.",
+    "Assert that write operations outside allowed directories raise an appropriate permission error or exception.",
+    "Assert that read operations inside the workspace succeed.",
+    "Assert that write operations inside the output succeed.",
+    "Assert that read operations inside the output succeed (if the runner design allows reading from output).",
+    "Ensure tests cover scenarios where workspace and output directories are explicitly set to the same path.",
+    "Ensure tests cover scenarios where workspace and output directories are different, validating that path shortcuts or aliases are handled correctly and do not allow access outside the designated areas.",
+    "Add comments to the tests explaining the scenario being tested and the expected outcome.",
+    "Ensure the tests are structured to be easily executable by `pytest`."
+  ],
+  "input_artifacts": [
+    "docs/directory_restriction_strategy.md"
+  ],
+  "output_artifacts": [
+    "tests/runner_directory_access_tests.py"
+  ],
+  "constraints": [
+    "Tests must be written in Python.",
+    "Tests must use the `pytest` framework.",
+    "Tests should not rely on specific external file system structures beyond basic directory creation within the test environment.",
+    "Tests must be isolated and not interfere with each other.",
+    "Tests should clearly indicate pass/fail based on expected access control behavior.",
+    "Do not implement the runner's directory restriction logic in this step; focus solely on test generation based on the strategy document.",
+    "The generated tests should be placed in the `tests/` directory."
+  ],
+  "validation_criteria": [
+    "A file named `tests/runner_directory_access_tests.py` is created.",
+    "The file `tests/runner_directory_access_tests.py` contains multiple test functions using `pytest`.",
+    "The test functions cover scenarios attempting to read/write outside workspace/output.",
+    "The test functions cover scenarios reading/writing inside workspace/output.",
+    "The test functions include cases for same and different workspace/output directories.",
+    "The tests include scenarios testing relative paths and potential bypass attempts.",
+    "The tests use assertions to check for expected exceptions or successful operations based on the directory restriction strategy.",
+    "The file compiles and is executable by `pytest` without syntax errors."
+  ],
+  "type": "test_generation",
+  "name": "generate_tests_for_directory_access",
+  "depends_on": [
+    "design_directory_restriction_strategy"
+  ],
+  "task_id": "b8519038-a48f-49db-b426-01c08b9d59a4",
+  "subtask_id": "6bd24eb1-634b-4dc8-90e8-df21214238bd"
+}

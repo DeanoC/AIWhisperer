@@ -25,23 +25,23 @@ Please provide the test in a JSON object similar to the schema above.
 
 Additional Test Example 2: Duplicate Step ID Check
 Objective:
-Detect whether there are duplicate step_id values within the plan array, which could lead to dependency resolution issues.
+Detect whether there are duplicate subtask_id values within the plan array, which could lead to dependency resolution issues.
 Test Description:
-- Validate that each step’s step_id is unique across the entire plan.
+- Validate that each step’s subtask_id is unique across the entire plan.
 - Report any duplicates as a failure.
 Test Case in JSON Schema Format (Pseudo-Code):
 {
   "testName": "DuplicateStepIDCheck",
-  "description": "Ensure all step_id values in the YAML plan are unique.",
-  "assertion": "Collect all step_id values from YAML.plan and assert that the count of unique values equals the total count of step entries."
+  "description": "Ensure all subtask_id values in the YAML plan are unique.",
+  "assertion": "Collect all subtask_id values from YAML.plan and assert that the count of unique values equals the total count of step entries."
 }
 
 
 Prompt to Generate the Test Example:
 Context:
-In our YAML task sheet, the uniqueness of each step_id is critical for dependency management.
+In our YAML task sheet, the uniqueness of each subtask_id is critical for dependency management.
 Instructions:
-Generate a test case that verifies all step_id entries in the plan are unique.
+Generate a test case that verifies all subtask_id entries in the plan are unique.
 Expected Output:
 Provide a JSON test case as demonstrated above.
 
@@ -87,8 +87,8 @@ Here is the combined test suite for validating our YAML task sheet:
     },
     {
       "testName": "StepDependencyValidation",
-      "description": "Every step_id mentioned in depends_on must exist in the plan.",
-      "assertion": "For each step in YAML.plan, for every id in step.depends_on, assert that there exists a matching step.step_id"
+      "description": "Every subtask_id mentioned in depends_on must exist in the plan.",
+      "assertion": "For each step in YAML.plan, for every id in step.depends_on, assert that there exists a matching step.subtask_id"
     },
     {
       "testName": "DataTypeChecks",
@@ -133,12 +133,12 @@ Expected Output Format:
   "testsFailed": [
     {
       "testName": "DuplicateStepIDCheck",
-      "failureReason": "Found duplicate step_id 'validate_input' in the plan.",
-      "suggestion": "Ensure each step_id is unique."
+      "failureReason": "Found duplicate subtask_id 'validate_input' in the plan.",
+      "suggestion": "Ensure each subtask_id is unique."
     }
   ],
   "finalDecision": "RefinementNeeded",
-  "nextSteps": "Remove duplicate step_ids and re-run the validation tests."
+  "nextSteps": "Remove duplicate subtask_ids and re-run the validation tests."
 }
 
 
@@ -148,3 +148,86 @@ Please generate the final decision based on simulated test results.
 Conclusion
 These additional examples provide a broader range of test scenarios, from ensuring nested object integrity to handling duplicates and malformed data. By combining these examples into a comprehensive test suite and using the AI to review and decide on readiness, you solidify your test-driven approach for the YAML task "sheets" before passing the refined specification to downstream AI tasks.
 Would you like more detailed sample YAML files to test these scenarios or further guidance on integrating these prompts into your automation flow?
+
+
+
+
+GitHub Copilot
+The format for the response is structured as follows:
+
+Step-by-Step Explanation: Provide a concise explanation of the changes being made.
+
+Group Changes by File: Each file that needs modification is addressed separately. The file's path is used as the header.
+
+Summary of Changes: A brief description of what is being changed in the file.
+
+Code Block: The code block contains the changes, starting with a comment that includes the file path. Use ...existing code... to represent unchanged parts of the file.
+
+Minimal Hints: The user is expected to understand how to merge the changes, so avoid repeating unnecessary details.
+
+Example Format:
+Step-by-Step Explanation:
+Describe what needs to be changed and why.
+File Path Header:
+### <filepath>
+
+Summary of Changes:
+Briefly explain what is being added, removed, or modified.
+Code Block:
+This format ensures clarity and conciseness while providing all necessary information for the user to integrate the changes.
+
+
+And provide the output.'] Result:
+I have replaced the functions and will run the tests.
+<environment_details>
+
+VSCode Visible Files
+C:\response_1fa86f7c-f3c0-4433-a7b4-fade68dbc57\tools-0,C:\response_1fa86f7c-f3c0-4433-a7b4-fade68dbc57\tools-3,C:\response_3a8fb9e8-a6d3-4ad2-91af-323aef814513\tools-0,src\ai_whisperer\execution_engine.py
+
+VSCode Open Tabs
+src/ai_whisperer/plan_parser.py,tests/integration/test_runner_state.py,src/ai_whisperer/json_validator.py,tests/test_orchestrator.py,src/ai_whisperer/orchestrator.py,tests/unit/test_execution_engine.py,tests/unit/test_main_run_command.py,src/ai_whisperer/main.py,tests/unit/test_plan_ingestion.py,src/ai_whisperer/ai_service_interaction.py,src/ai_whisperer/config.py,tests/integration/test_runner_prompting.py,src/ai_whisperer/execution_engine.py,src/ai_whisperer/state_management.py,tests/unit/test_execution_engine_enhancements.py,.vscode/launch.json
+
+Recently Modified Files
+These files have been modified since you last accessed them (file was just edited so you may need to re-read it before editing):
+src/ai_whisperer/execution_engine.py
+
+Current Time
+5/10/2025, 5:02:50 PM (Europe/Sofia, UTC+3:00)
+
+Current Context Size (Tokens)
+300,000 (28%)
+
+Current Cost
+$1.31
+
+Current Mode
+debug
+🪲 Debug
+google/gemini-2.5-flash-preview
+</environment_details>
+
+I "score" relevance by considering several factors:
+
+Proximity to the Question: Content directly related to your current question or task is highly relevant.
+Explicit Mentions: If you reference specific functions, files, or concepts, those are prioritized.
+Contextual Importance: Code or information that provides necessary background or dependencies for the task is included.
+Frequency of Use: Frequently mentioned or used elements in the conversation or workspace are more relevant.
+Task Dependencies: If a task requires understanding certain parts of the code or workspace, those parts are prioritized.
+This approach ensures I focus on what matters most to your current needs while keeping the conversation concise.
+
+The process of scoring relevance and condensing information is an integral part of how I operate—it happens automatically as part of my design. It isn't a tool I explicitly call but rather a built-in mechanism that activates when the context size grows or when I need to prioritize information for clarity and efficiency.
+
+I decide to condense or prioritize information when:
+
+Context Size Limits: If the conversation or workspace context approaches a limit, I summarize less relevant parts to stay within bounds.
+Focus on Current Task: When you're working on a specific task, I prioritize information directly related to it.
+Avoiding Redundancy: If information has already been discussed or is easily inferred, I condense it to avoid repetition.
+Improving Clarity: To keep the conversation concise and focused, I summarize less critical details.
+This ensures I provide the most relevant and actionable information while maintaining efficiency.
+
+The process of condensing and prioritizing information is automatic and happens outside my explicit thought process. It is triggered by certain conditions, such as:
+
+Context Size: When the conversation or workspace context grows too large, mechanisms are triggered to summarize less relevant parts.
+Task Focus: If you're working on a specific task, the system prioritizes information directly related to it.
+Efficiency Goals: To maintain clarity and avoid redundancy, the system condenses information that is less critical.
+While I don't explicitly "decide" to trigger it, the system's design ensures it happens when needed to optimize the interaction.

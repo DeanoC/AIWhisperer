@@ -1,0 +1,33 @@
+{
+  "description": "Analyze the requirements for the first full runner test to understand the steps involved and identify the need for the new 'execute_command' tool.",
+  "instructions": [
+    "Locate and open the file `project_dev/rfc/add_1st_runner_test.md`.",
+    "Carefully read through the entire document to grasp the overall goal and context of the first full runner test.",
+    "Identify and list the specific steps or actions that the runner is expected to perform according to the requirements.",
+    "Pay close attention to any requirements that involve executing external commands or interacting with the operating system.",
+    "Explicitly note and document the requirement for the `execute_command` tool, explaining why it is necessary based on the test requirements.",
+    "Based on the identified steps, outline a high-level sequence or flow of how the runner should execute the embedded requirement.",
+    "Write the analysis, including the summarized requirements, the identified steps, the justification for the `execute_command` tool, and the high-level execution flow, into a new markdown file named `docs/runner_test_analysis.md`."
+  ],
+  "input_artifacts": [
+    "project_dev/rfc/add_1st_runner_test.md"
+  ],
+  "output_artifacts": [
+    "docs/runner_test_analysis.md"
+  ],
+  "constraints": [
+    "The analysis must be based solely on the content of `project_dev/rfc/add_1st_runner_test.md`.",
+    "The output must be a single markdown file."
+  ],
+  "validation_criteria": [
+    "A file named `docs/runner_test_analysis.md` is created.",
+    "The content of `docs/runner_test_analysis.md` accurately reflects the requirements described in `project_dev/rfc/add_1st_runner_test.md`.",
+    "`docs/runner_test_analysis.md` explicitly states the necessity of the `execute_command` tool.",
+    "`docs/runner_test_analysis.md` contains a clear, high-level outline of the expected runner execution flow for the test."
+  ],
+  "type": "planning",
+  "name": "analyze_runner_test_requirements",
+  "depends_on": [],
+  "task_id": "70127728-bd49-48bc-be8b-afbb5d07757a",
+  "subtask_id": "0433beb9-c34f-410c-8da1-71f7d13d982e"
+}

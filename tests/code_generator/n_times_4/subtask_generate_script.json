@@ -1,0 +1,23 @@
+{
+  "subtask_id": "a3b2c4d5-e5f6-7890-1234-567890abcdef",
+  "task_id": "79127728-bd49-48bc-be8b-afbb5d07757a",
+  "name": "Generate Python Script",
+  "type": "code_generation",
+  "description": "Generates a python 3 script that takes an input and multiplies it by 4.",
+  "instructions": [
+    "Create a Python 3 script.",
+    "The script must define logic to calculate a number multiplies by 4."
+  ],
+  "input_artifacts": [],
+  "output_artifacts": [
+    "output/n_times_4.py"
+  ],
+  "constraints": [
+    "The script must be written in Python 3."
+  ],
+  "validation_criteria": [
+    "The Python script file 'output/n_times_4.py' is successfully created.",
+    "The script file contains Python code that correctly implements the logic for calculating a number multiplied by 4."
+  ],
+  "depends_on": []
+}

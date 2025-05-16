@@ -4,11 +4,12 @@ This document describes the internal processes and components of the AI Whispere
 
 ## Overall Architecture
 
-AI Whisperer follows a multi-stage process to generate structured task plans and detailed subtasks:
+AI Whisperer follows a multi-stage process to generate structured task plans and detailed subtasks, involving key components for AI interaction and state management:
 
-1. **Orchestrator**: Generates the initial task plan YAML from requirements
-2. **Subtask Generator**: Expands each step in the task plan into a detailed subtask
-3. **Postprocessing Pipeline**: Enhances and standardizes the AI-generated content
+1. **Orchestrator**: Generates the initial task plan from requirements.
+2. **Subtask Generator**: Expands each step in the task plan into a detailed subtask definition.
+3. **Execution Engine**: Manages the execution of individual subtasks, including AI interaction via the AI Loop and managing state via the StateManager.
+4. **Postprocessing Pipeline**: Enhances and standardizes the AI-generated content.
 
 ## Orchestrator
 
@@ -71,6 +72,46 @@ result_data = {
 }
 ```
 
+## JSON Plan Ingestion and Parsing
+
+The AI Whisperer runner is capable of ingesting, validating, and parsing JSON-defined execution plans. This process is primarily handled by the `PlanParser` class located in [`src/ai_whisperer/plan_parser.py`](src/ai_whisperer/plan_parser.py:1).
+
+The process involves the following key stages:
+
+1. **Initialization**:
+    - An instance of `PlanParser` is created with the path to the main JSON plan file.
+    - The parser immediately checks if the main plan file exists. If not, a `PlanFileNotFoundError` is raised.
+
+2. **Main Plan Loading and Validation**:
+    - The `_load_and_validate_main_plan` method is called.
+    - It reads the main plan file using `_read_json_file`. If the file contains malformed JSON, a `PlanInvalidJSONError` is raised.
+    - Custom validation logic is then applied to the parsed JSON data:
+        - It checks for required top-level fields such as `task_id`, `natural_language_goal`, `input_hashes`, and `plan`.
+        - It verifies that the `plan` field is a list and `input_hashes` is an object with its own required fields.
+        - Each step within the `plan` array is validated to ensure it's a dictionary and contains required fields like `subtask_id`, `description`, and `agent_spec`.
+        - The `agent_spec` within each step is also validated for its required fields (e.g., `type`, `instructions`).
+    - If any of these custom validations fail, a `PlanValidationError` is raised with a descriptive message.
+
+3. **Subtask Loading and Validation (if applicable)**:
+    - The `_load_and_validate_subtasks` method is called.
+    - It iterates through each step in the main plan. If a step contains a `file_path` key (indicating an external subtask JSON file):
+        - The path to the subtask file is resolved (handling both relative and absolute paths).
+        - The subtask JSON file is read using `_read_json_file`.
+            - If the subtask file is not found, a `SubtaskFileNotFoundError` is raised.
+            - If the subtask file contains malformed JSON, a `SubtaskInvalidJSONError` is raised.
+        - The content of the subtask JSON is then validated against the `subtask_plan_schema.json` using the `validate_subtask` function from [`src/ai_whisperer/json_validator.py`](src/ai_whisperer/json_validator.py:1).
+            - If schema validation fails, a `SubtaskValidationError` is raised.
+        - If successfully loaded and validated, the content of the subtask is embedded directly into the main plan's step data under the key `loaded_subtask_content`.
+
+4. **Accessing Parsed Data**:
+    - Once parsing is complete, the fully parsed and validated plan (with embedded subtasks) can be retrieved using the `get_parsed_plan()` method.
+    - Helper methods like `get_all_steps()` and `get_task_dependencies()` are also available.
+
+**Error Handling**:
+The `PlanParser` defines several custom exception classes (e.g., `PlanFileNotFoundError`, `PlanInvalidJSONError`, `PlanValidationError`, `SubtaskFileNotFoundError`, `SubtaskInvalidJSONError`, `SubtaskValidationError`) to provide specific error information during the ingestion and parsing process. This allows the runner to catch and handle these issues gracefully.
+
+This structured approach ensures that only valid and complete JSON plans are processed by the runner's execution engine.
+
 ## AI Prompt Guidelines
 
 When creating or modifying AI prompts for the system:
@@ -83,7 +124,45 @@ When creating or modifying AI prompts for the system:
 
 4. **Clear Instructions**: Provide clear instructions for the AI to focus on the core task requirements and structure.
 
+## AI Interaction Flow
+
+The core AI interaction within the AI Whisperer is managed by the reusable AI loop component (`src/ai_whisperer/ai_loop.py`) in conjunction with the ContextManager (`src/ai_whisperer/context_management.py`).
+
+1. **Context Initialization**: For each task requiring AI interaction, a dedicated instance of the `ContextManager` is created and managed by the `StateManager`. This instance will hold the conversation history specific to that task.
+2. **AI Loop Execution**: The `Execution Engine` invokes the AI loop (`run_ai_loop`) for tasks of type `code_generation` (and potentially others in the future). The `run_ai_loop` function receives the task details, the execution engine (providing access to AI services and tools), and the task's `ContextManager` instance.
+3. **Iterative Interaction**: Inside the AI loop, the `ContextManager` is used to maintain the conversation history. User prompts, AI responses, and tool outputs are added to the `ContextManager`'s history. This history is then passed to the AI service for subsequent turns.
+4. **Tool Execution**: If the AI requests a tool call, the AI loop uses the `ToolRegistry` (provided via the `Execution Engine`) to find and execute the requested tool. The output of the tool is then added to the `ContextManager`'s history and sent back to the AI.
+5. **Loop Termination**: The AI loop continues until the AI provides a final response (content) or signals completion. The final AI response is returned by the `run_ai_loop` function.
+
+This modular design allows for consistent and efficient management of AI interactions and conversation history across different parts of the AI Whisperer.
+
+## State Management
+
+The State Management feature is integrated into the runner's internal process to provide persistence and resume capabilities. The `StateManager` class (`src/ai_whisperer/state_management.py`) is responsible for handling the saving, loading, and updating of the execution state.
+
+- **Initialization**: When a plan execution starts, the `StateManager` is initialized with a path to the state file. If a state file exists at this path, the state is loaded, allowing the runner to potentially resume a previous execution. If no state file is found, a new, empty state is initialized.
+- **Saving State**: The execution state is periodically saved to the state file during the plan execution. This ensures that the progress is preserved and can be resumed if the process is interrupted. The saving process is designed to be atomic to prevent data corruption.
+- **Updating State**: As the runner progresses through the plan, the state is updated to reflect the current status of tasks, store intermediate results, and manage global context such as generated file paths. This includes marking tasks as pending, in-progress, completed, or failed, and storing any output or relevant information from each step.
+
+- **Updating State**: As the runner progresses through the plan, the state is updated to reflect the current status of tasks, store intermediate results, and manage global context such as generated file paths. This includes marking tasks as pending, in-progress, completed, or failed, and storing any output or relevant information from each step. The `StateManager` now also manages the `ContextManager` instance for each task as part of the state, ensuring conversation history is persisted.
+
+This integration of state management allows the AI Whisperer runner to maintain context across the execution of a plan, enabling more robust and fault-tolerant task automation.
+
 ## Error Handling
+
+## Role of Logging and Monitoring in Internal Processes
+
+Logging and monitoring are integral to understanding and debugging the internal processes of the AIWhisperer system. As the Orchestrator, Subtask Generator, Execution Engine, and other components perform their functions, detailed logs are generated. These logs capture:
+
+- Interactions with AI services.
+- File system operations.
+- Execution of terminal commands.
+- State changes within the system.
+- User interactions with the runner.
+
+This comprehensive audit trail, coupled with the real-time terminal monitoring view, provides developers with the necessary insights to trace execution flows, diagnose issues, and verify that internal processes are operating as expected.
+
+For a complete guide to these features, please consult the [Logging and Monitoring Documentation](./logging_monitoring.md).
 
 The system includes comprehensive error handling for various scenarios:
 
@@ -92,5 +171,6 @@ The system includes comprehensive error handling for various scenarios:
 - YAML parsing and validation errors
 - File I/O errors
 - Postprocessing errors
+- State management errors (e.g., file not found, invalid state file)
 
 Each error type has a specific exception class that provides detailed information about the error.

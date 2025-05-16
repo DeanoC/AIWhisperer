@@ -1,0 +1,14 @@
+{
+  "task_id": "79127728-bd49-48bc-be8b-afbb5d07757a",
+  "natural_language_goal": "Generate a python 3 script that takes an input and multiplies it by 4",
+  "plan": [
+    {
+      "subtask_id": "a3b2c4d5-e5f6-7890-1234-567890abcdef",
+      "name": "Generate Python Script",
+      "file_path": "./subtask_generate_script.json",
+      "depends_on": [],
+      "type": "code_generation",
+      "completed": false
+    }
+  ]
+}

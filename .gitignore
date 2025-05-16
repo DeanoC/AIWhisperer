@@ -130,3 +130,5 @@ project_dev/in_dev/aiwhisperer_dogfood/
 /.output.txt
 test.txt
 models.csv
+temp_output/
+logs/

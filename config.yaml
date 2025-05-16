@@ -1,20 +1,21 @@
-# AI Whisperer Configuration
-# Minimal configuration for testing
+# AI Whisperer Configuration Example
+# This file shows an example structure. Create your own 'config.yaml'
+# or provide the path to your configuration file via the --config argument.
 
-# --- OpenRouter API Settings ---
+# --- OpenRouter API Settings --- Required Section ---
 openrouter:
-  api_key: "test-api-key"  # This will be mocked in tests
-  model: "mistralai/mistral-7b-instruct"
+  # api_key: "sk-or-v1-abc...xyz" # Recommended: Set the OPENROUTER_API_KEY in a .env file (and ensure .env is in .gitignore) instead of putting your key here.
+  model: "openai/gpt-4o" # Required: Specify the model identifier from OpenRouter (e.g., "mistralai/mistral-7b-instruct", "openai/gpt-4o").
+
+  # Optional: Parameters to pass to the OpenRouter API for chat completions.
+  # Refer to the specific model's documentation on OpenRouter for available parameters.
   params:
-    temperature: 0.7
-    max_tokens: 2048
-  site_url: "http://localhost:8000"
-  app_name: "AIWhisperer"
+    temperature: 0.7 # Example: Controls randomness (0.0 to 2.0). Higher values = more creative, lower = more deterministic.
+    max_tokens: 50000 # Example: Maximum number of tokens to generate in the response.
+    # top_p: 1.0
+    # frequency_penalty: 0.0
+    # presence_penalty: 0.0
 
-# --- Prompt Templates ---
-prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
-  subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
-
-# --- Other Application Settings ---
-output_dir: "./output/"
+  # Optional: Used for identifying your app in OpenRouter logs (sent as headers).
+  # Defaults are provided if these are omitted.
+  site_url: "http://AIWhisperer:8000" # Example: Your project's URL (sent as HTTP-Referer).

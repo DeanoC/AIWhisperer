@@ -1,0 +1,51 @@
+{
+  "description": "Implement the core logic for the `code_generation` execution engine handler.",
+  "instructions": [
+    "Open `src/ai_whisperer/agent_handlers/code_generation.py`.",
+    "Locate the `handle_subtask` method within the `CodeGenerationHandler` class.",
+    "Implement the logic to process a `subtask` dictionary input.",
+    "Construct a detailed prompt for the AI agent based on the `subtask` details, including its `description`, `instructions`, `constraints`, and `validation_criteria`.",
+    "Include relevant context from `docs/code_generation_handler_design.md` and other potentially useful files in the prompt.",
+    "Utilize the `ai_service_interaction.py` and `ai_interaction.py` components to send the prompt to the AI and receive its response.",
+    "Parse the AI's response to identify generated code snippets and instructions for file modifications (creation, deletion, or updates).",
+    "Use the file manipulation tools located in `src/ai_whisperer/tools/` (specifically `write_file_tool.py` and potentially others) to apply the changes indicated by the AI's response.",
+    "If the subtask includes instructions for running tests, integrate with a test execution mechanism. This might involve calling a test runner or mocking test execution results based on the AI's output.",
+    "Ensure the handler checks the outcome of test execution (if applicable) and only proceeds if tests pass.",
+    "Refactor and reuse existing code from `src/ai_whisperer/` where appropriate to maintain consistency and avoid duplication.",
+    "Ensure the implementation adheres to the design principles outlined in `docs/code_generation_handler_design.md`."
+  ],
+  "input_artifacts": [
+    "docs/code_generation_handler_design.md",
+    "tests/unit/test_code_generation_handler.py",
+    "src/ai_whisperer/agent_handlers/code_generation.py",
+    "src/ai_whisperer/ai_service_interaction.py",
+    "src/ai_whisperer/agent_handlers/ai_interaction.py",
+    "src/ai_whisperer/tools/"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/agent_handlers/code_generation.py"
+  ],
+  "constraints": [
+    "The implemented logic must pass the unit tests defined in `tests/unit/test_code_generation_handler.py`.",
+    "Adhere strictly to the design document `docs/code_generation_handler_design.md`.",
+    "Prioritize code reuse from the existing codebase in `src/ai_whisperer/`.",
+    "Ensure proper handling of file paths and content extracted from the AI response.",
+    "The handler must correctly interpret and act upon the results of test execution if tests are specified in the subtask.",
+    "The AI prompt generation must be robust and include all necessary context for the AI to perform the code generation task."
+  ],
+  "validation_criteria": [
+    "The unit tests in `tests/unit/test_code_generation_handler.py` pass successfully.",
+    "The implemented logic correctly processes various `code_generation` subtask examples, generating appropriate AI prompts and handling responses.",
+    "File creation/modification logic within the handler functions as expected based on AI output.",
+    "The generated AI prompt includes necessary context, instructions, constraints, and validation criteria from the subtask.",
+    "The handler correctly integrates with and interprets test execution results (if applicable to the subtask).",
+    "The code adheres to coding standards and reuses existing components effectively."
+  ],
+  "type": "file_edit",
+  "name": "implement_code_generation_handler_logic",
+  "depends_on": [
+    "implement_code_generation_handler_scaffold"
+  ],
+  "task_id": "28b11d1a-aeb6-4c57-8c3d-a85d3dbba0db",
+  "subtask_id": "de2532d1-1ea3-454a-81dd-14cfd583879b"
+}

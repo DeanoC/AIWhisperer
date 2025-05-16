@@ -1,0 +1,146 @@
+{
+    "natural_language_goal": "Refactor the existing prompt loading system to be more centralized, structured, and support lazy loading with clear override and fallback mechanisms.",
+    "plan": [
+        {
+            "subtask_id": "5cd3c0b3-ad03-40ed-9f8c-b2bf5c5a3c03",
+            "name": "analyze_current_prompt_loading",
+            "description": "Analyze the current implementation of prompt loading to understand its structure, dependencies, and limitations.",
+            "file_path": "project_dev/in_dev/refactor_prompt_loading/subtask_5cd3c0b3-ad03-40ed-9f8c-b2bf5c5a3c03.json",
+            "type": "analysis",
+            "depends_on": [],
+            "input_artifacts": [
+                "src/ai_whisperer/config.py",
+                "src/ai_whisperer/ai_service_interaction.py",
+                "src/ai_whisperer/subtask_generator.py"
+            ],
+            "output_artifacts": [
+                "docs/prompt_loading_analysis.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "d9f7b8ff-7be6-4b90-afde-9bc1688906a3",
+            "name": "design_new_prompt_system",
+            "description": "Design the architecture for the new centralized, structured, and lazy-loaded prompt system based on the analysis and requirements.",
+            "file_path": "project_dev/in_dev/refactor_prompt_loading/subtask_d9f7b8ff-7be6-4b90-afde-9bc1688906a3.json",
+            "type": "planning",
+            "depends_on": [
+                "analyze_current_prompt_loading"
+            ],
+            "input_artifacts": [
+                "docs/prompt_loading_analysis.md"
+            ],
+            "output_artifacts": [
+                "docs/new_prompt_system_design.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "3dc75a90-c48c-40d2-87f9-3a377f44a8de",
+            "name": "create_prompt_system_tests",
+            "description": "Create unit and integration tests for the new prompt loading system based on the design.",
+            "file_path": "project_dev/in_dev/refactor_prompt_loading/subtask_3dc75a90-c48c-40d2-87f9-3a377f44a8de.json",
+            "type": "test_generation",
+            "depends_on": [
+                "design_new_prompt_system"
+            ],
+            "input_artifacts": [
+                "docs/prompt_system_design.md"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_prompt_system.py",
+                "tests/integration/test_prompt_loading_integration.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "a59f9ba3-0b63-4c96-9863-7257e220d4a2",
+            "name": "implement_prompt_system",
+            "description": "Implement the new centralized, structured, and lazy-loaded prompt system.",
+            "file_path": "project_dev/in_dev/refactor_prompt_loading/subtask_a59f9ba3-0b63-4c96-9863-7257e220d4a2.json",
+            "type": "code_generation",
+            "depends_on": [
+                "create_prompt_system_tests",
+                "design_new_prompt_system"
+            ],
+            "input_artifacts": [
+                "docs/prompt_system_design.md",
+                "docs/new_prompt_system_design.md",
+                "tests/unit/test_prompt_system.py",
+                "tests/integration/test_prompt_loading_integration.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/prompt_system.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "ccaa0450-eae8-49db-b2e2-a6ef07094751",
+            "name": "update_prompt_usage",
+            "description": "Update existing code to use the new prompt system for accessing prompts.",
+            "file_path": "project_dev/in_dev/refactor_prompt_loading/subtask_ccaa0450-eae8-49db-b2e2-a6ef07094751.json",
+            "type": "file_edit",
+            "depends_on": [
+                "implement_prompt_system"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/ai_service_interaction.py",
+                "src/ai_whisperer/subtask_generator.py",
+                "src/ai_whisperer/prompt_system.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/ai_service_interaction.py",
+                "src/ai_whisperer/subtask_generator.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "d01241fc-b522-4042-81f7-2100f72bab12",
+            "name": "create_example_config_and_defaults",
+            "description": "Create example configuration snippets and default prompt files to demonstrate the new system.",
+            "file_path": "project_dev/in_dev/refactor_prompt_loading/subtask_d01241fc-b522-4042-81f7-2100f72bab12.json",
+            "type": "file_io",
+            "depends_on": [
+                "implement_prompt_system"
+            ],
+            "input_artifacts": [
+                "docs/new_prompt_system_design.md",
+                "docs/prompt_system_design.md"
+            ],
+            "output_artifacts": [
+                "config.yaml.example",
+                "prompts/example_section/example_prompt.md",
+                "prompts/example_section/default.md",
+                "prompts/another_section/example_prompt_no_section_default.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "7c2b2fb1-d331-4152-b840-b938a9391a78",
+            "name": "update_documentation",
+            "description": "Update relevant documentation to reflect the new prompt loading system.",
+            "file_path": "project_dev/in_dev/refactor_prompt_loading/subtask_7c2b2fb1-d331-4152-b840-b938a9391a78.json",
+            "type": "documentation",
+            "depends_on": [
+                "create_example_config_and_defaults",
+                "update_prompt_usage"
+            ],
+            "input_artifacts": [
+                "docs/configuration.md",
+                "docs/prompt_system_design.md",
+                "docs/new_prompt_system_design.md",
+                "config.yaml.example"
+            ],
+            "output_artifacts": [
+                "docs/configuration.md"
+            ],
+            "completed": true
+        }
+    ],
+    "task_id": "3b2255a4-04a0-439a-a4da-4f2d8cec22b2",
+    "input_hashes": {
+        "requirements_md": "36e06e99aba1ba0d2629ecd5da5f8620406bb21c3d70cd7ea84cbe4fbd9dd51f",
+        "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b",
+        "prompt_file": "hash_not_available"
+    }
+}

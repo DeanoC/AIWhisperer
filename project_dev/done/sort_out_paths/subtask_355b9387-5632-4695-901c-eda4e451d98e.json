@@ -1,0 +1,43 @@
+{
+  "description": "Refactor existing file I/O and path operations throughout the codebase to use the new path management singleton and templated paths.",
+  "instructions": [
+    "Identify all instances of file path construction, manipulation, and usage within the `src/ai_whisperer/` and `tests/` directories.",
+    "Specifically look for uses of `os.path`, string concatenation for paths, hardcoded absolute or relative paths, and any other methods of path handling.",
+    "For each identified instance, replace the old path handling logic with calls to the `PathManager` singleton's `expand_path` method.",
+    "Use appropriate templated paths (e.g., `{project_path}`, `{workspace_path}`, `{output_path}`, `{temp_path}`) within the `expand_path` calls.",
+    "Ensure that any relative paths provided as input (e.g., from configuration files, command-line arguments, or user input) are correctly interpreted and expanded relative to the appropriate base path (likely `{project_path}` or `{workspace_path}`) using the `PathManager`.",
+    "Update any test cases in the `tests/` directory that rely on specific hardcoded paths or assumptions about file locations to use the `PathManager` singleton and templated paths.",
+    "Run all unit tests (`pytest tests/unit`) to ensure that individual components function correctly with the new path management.",
+    "Run all integration tests (`pytest tests/integration`) to verify that the system as a whole handles paths correctly across different modules and scenarios.",
+    "Address any test failures by debugging the path handling logic and ensuring correct usage of the `PathManager`."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/",
+    "tests/",
+    "docs/path_management_design.md",
+    "src/ai_whisperer/path_management.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/",
+    "tests/"
+  ],
+  "constraints": [
+    "All file I/O and path operations within the `src/ai_whisperer/` and `tests/` directories must now exclusively use the `PathManager` singleton and its `expand_path` method.",
+    "No hardcoded or manually constructed file paths should remain where they are intended to be managed by the `PathManager`.",
+    "All existing unit and integration tests must pass successfully after the refactoring."
+  ],
+  "validation_criteria": [
+    "Static analysis confirms minimal to no direct usage of `os.path` or manual path string manipulation for file I/O within the refactored code.",
+    "The code base extensively uses the `PathManager.get_instance().expand_path()` pattern.",
+    "All existing unit tests pass without errors.",
+    "All existing integration tests pass without errors.",
+    "Manual inspection of key file I/O locations (e.g., config loading, file tool operations, state management) confirms correct usage of the `PathManager`."
+  ],
+  "type": "file_edit",
+  "name": "refactor_file_io_and_path_operations",
+  "depends_on": [
+    "integrate_path_management_into_config_and_cli"
+  ],
+  "task_id": "da0bff86-233d-4f69-bd5f-b4804aa4b3da",
+  "subtask_id": "355b9387-5632-4695-901c-eda4e451d98e"
+}

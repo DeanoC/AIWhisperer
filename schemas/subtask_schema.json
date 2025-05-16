@@ -1,0 +1,93 @@
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "description": "A detailed description of the subtask's purpose and instructions."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the subtask."
+    },
+    "description": {
+      "type": "string",
+      "description": "A detailed description of the subtask's purpose and instructions."
+    },
+    "instructions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Specific instructions for the AI agent executing this subtask."
+    },
+    "input_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Input artifacts for the subtask."
+    },
+    "output_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Output artifacts for the subtask."
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Constraints that must be adhered to while executing the subtask."
+    },
+    "validation_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Criteria for validating the output of the subtask."
+    },
+    "depends_on": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of subtask_ids that must be completed before this step"
+    },
+    "model_preference": {
+      "type": ["object", "null"],
+      "properties": {
+        "provider": { "type": "string" },
+        "model": { "type": "string" },
+        "temperature": { "type": "number" },
+        "max_tokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "subtask_id": {
+      "type": "string",
+      "description": "Unique identifier for the subtask (e.g., UUID)",
+      "format": "uuid"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "ID of the parent task plan this subtask belongs to.",
+      "format": "uuid"
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "description",
+    "instructions",
+    "input_artifacts",
+    "output_artifacts",
+    "constraints",
+    "validation_criteria",
+    "subtask_id",
+    "task_id",
+    "depends_on"
+    ],
+
+  "additionalProperties": false
+}

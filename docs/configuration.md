@@ -16,10 +16,28 @@ openrouter:
   site_url: "http://localhost:8000"        # Optional: Your project's URL
   app_name: "AIWhisperer"                  # Optional: Your application's name
 
-# --- Prompt Templates --- Required Section ---
-prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"       # Optional: Path to orchestrator prompt
-  subtask_generator_prompt_path: "prompts/subtask_generator_default.md"  # Optional: Path to subtask generator prompt
+# --- Prompt System Configuration --- Optional Section ---
+prompt_system:
+  prompt_base_dir: prompts # Define the base directory for prompts.
+  sections: # Define prompt sections.
+    example_section:
+      - name: example_prompt # Define individual prompts within a section.
+        path: example_section/example_prompt.md # Path relative to prompt_base_dir.
+        description: This is an example prompt. # Optional description.
+        is_default: false # Optional: Default prompt for this section.
+      - name: default
+        path: example_section/default.md
+        description: This is the default prompt for the example_section.
+        is_default: true
+    another_section:
+      - name: example_prompt_no_section_default
+        path: another_section/example_prompt_no_section_default.md
+        description: This is an example prompt in another_section without a section default.
+        is_default: false
+  global_defaults: # Define global default prompts.
+    - name: global_runner_fallback_default
+      path: global_runner_fallback_default.md
+      description: This is a global fallback default prompt.
 
 # --- Task-Specific Model Settings --- Optional Section ---
 task_models:
@@ -53,16 +71,32 @@ The `openrouter` section contains settings for the OpenRouter API, which is used
 
 **Note:** The OpenRouter API key MUST be provided via the `OPENROUTER_API_KEY` environment variable. You can set this variable directly in your shell or place it in a `.env` file in the project's root directory (e.g., `OPENROUTER_API_KEY="sk-or-v1-abc...xyz"`).
 
-### Prompt Templates
+### Prompt System Configuration
 
-The `prompts` section contains paths to prompt templates used by the application.
+The `prompt_system` section configures the new prompt loading system. This system provides a structured way to organize, load, and manage prompt templates.
 
 | Setting | Required | Default | Description |
 |---------|----------|---------|-------------|
-| `orchestrator_prompt_path` | No | "prompts/orchestrator_default.md" | Path to the prompt template used for generating the overall task plan |
-| `subtask_generator_prompt_path` | No | "prompts/subtask_generator_default.md" | Path to the prompt template used for refining individual subtasks |
+| `prompt_base_dir` | No | `prompts` | The base directory where prompt files are located. All prompt paths defined in `sections` and `global_defaults` are relative to this directory. |
+| `sections` | No | - | A dictionary defining prompt sections. Each key is a section name, and the value is a list of prompt configurations within that section. |
+| `sections.<section_name>` | No | - | A list of prompt configurations for the specified section. |
+| `sections.<section_name>[].name` | Yes | - | The unique name of the prompt within its section. |
+| `sections.<section_name>[].path` | Yes | - | The path to the prompt file, relative to `prompt_base_dir`. |
+| `sections.<section_name>[].description` | No | - | An optional description of the prompt. |
+| `sections.<section_name>[].is_default` | No | `false` | A boolean indicating if this prompt is the default for its section. Only one prompt per section should have `is_default` set to `true`. |
+| `global_defaults` | No | - | A list of global default prompt configurations. These prompts are used as a fallback if a specific prompt or section default is not found. |
+| `global_defaults[].name` | Yes | - | The unique name of the global default prompt. |
+| `global_defaults[].path` | Yes | - | The path to the global default prompt file, relative to `prompt_base_dir`. |
+| `global_defaults[].description` | No | - | An optional description of the global default prompt. |
 
-Paths can be absolute or relative to the configuration file's location.
+**Prompt Resolution Hierarchy:**
+
+When a prompt is requested, the system resolves the correct prompt file based on the following hierarchy:
+
+1.  **Specific Prompt Request:** If a specific section and prompt name are requested (e.g., `get_prompt("example_section", "example_prompt")`), the system looks for a matching entry in the `sections` configuration.
+2.  **Section Default:** If a section is requested but no specific prompt name is provided, or if the requested prompt name is not found in the section, the system looks for the prompt with `is_default: true` within that section.
+3.  **Global Defaults:** If neither a specific prompt nor a section default is found, the system looks for a matching prompt name in the `global_defaults` list.
+4.  **File System Fallback (Implicit):** If a prompt is not explicitly defined in the configuration, the system may attempt to resolve it based on a predefined directory structure within the `prompt_base_dir` (e.g., `prompt_base_dir/section_name/prompt_name.md`). This behavior is part of the system's internal logic and provides a convention-over-configuration option.
 
 ### Task-Specific Model Settings
 
@@ -105,9 +139,30 @@ openrouter:
     temperature: 0.7
     max_tokens: 2048
 
-prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
-  subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
+prompt_system:
+  prompt_base_dir: prompts
+  sections:
+    core:
+      - name: initial_plan
+        path: core/initial_plan.md
+        description: Prompt for generating the initial project plan.
+        is_default: true
+      - name: subtask_generator
+        path: core/subtask_generator.md
+        description: Prompt for generating individual subtasks.
+    agents:
+      - name: ai_interaction
+        path: agents/ai_interaction.md
+        description: Default prompt for AI interaction agents.
+        is_default: true
+      - name: planning
+        path: agents/planning.md
+        description: Default prompt for planning agents.
+        is_default: true
+  global_defaults:
+    - name: global_runner_fallback_default
+      path: global_runner_fallback_default.md
+      description: Global fallback prompt for the runner.
 
 output_dir: "./output/"
 ```
@@ -125,9 +180,35 @@ openrouter:
   cache: true  # Enable API response caching
   timeout_seconds: 120 # Set a custom timeout
 
-prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
-  subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
+prompt_system:
+  prompt_base_dir: prompts
+  sections:
+    core:
+      - name: initial_plan
+        path: core/initial_plan.md
+        description: Prompt for generating the initial project plan.
+        is_default: true
+      - name: subtask_generator
+        path: core/subtask_generator.md
+        description: Prompt for generating individual subtasks.
+    agents:
+      - name: ai_interaction
+        path: agents/ai_interaction.md
+        description: Default prompt for AI interaction agents.
+        is_default: true
+      - name: planning
+        path: agents/planning.md
+        description: Default prompt for planning agents.
+        is_default: true
+    custom_feature:
+      - name: custom_prompt_for_feature_x
+        path: custom_feature/feature_x_prompt.md
+        description: A custom prompt for a specific feature.
+        is_default: false
+  global_defaults:
+    - name: global_runner_fallback_default
+      path: global_runner_fallback_default.md
+      description: Global fallback prompt for the runner.
 
 task_models:
   "Subtask Generation":

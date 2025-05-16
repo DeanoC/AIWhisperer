@@ -1,0 +1,51 @@
+{
+  "description": "Implement the new centralized, structured, and lazy-loaded prompt system.",
+  "instructions": [
+    "Create a new Python module `src/ai_whisperer/prompt_system.py`.",
+    "Define a class within `prompt_system.py`, likely named `PromptSystem`, responsible for loading, accessing, and managing prompts.",
+    "Modify the existing configuration loading mechanism (likely in `src/ai_whisperer/config.py`) to load the new prompt structure defined in `docs/prompt_system_design.md`.",
+    "Implement the logic within `PromptSystem` to parse the loaded configuration specifically for prompt definitions.",
+    "Implement the lazy loading mechanism for prompt content. This means the actual text of a prompt should only be read from its source file when it is first accessed, not when the configuration is loaded.",
+    "Implement the prompt override and fallback logic within `PromptSystem` according to the specified hierarchy: user configuration override -> section default -> application default -> raise an error if no prompt is found.",
+    "Ensure the override logic correctly handles file path overrides specified in the configuration.",
+    "Modify the application's prompt access points to use the new `PromptSystem` class. This involves changing how prompts are retrieved throughout the codebase.",
+    "Crucially, *do not* modify the code that *uses* the prompt content itself in this subtask. Focus solely on the loading, access, and management mechanism.",
+    "Run the unit tests (`tests/unit/test_prompt_system.py`) and integration tests (`tests/integration/test_prompt_loading_integration.py`) generated in the 'create_prompt_system_tests' subtask to verify the implementation.",
+    "Ensure all tests pass before considering this subtask complete."
+  ],
+  "input_artifacts": [
+    "docs/prompt_system_design.md",
+    "tests/unit/test_prompt_system.py",
+    "tests/integration/test_prompt_loading_integration.py",
+    "src/ai_whisperer/config.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/prompt_system.py",
+    "src/ai_whisperer/config.py"
+  ],
+  "constraints": [
+    "All tests generated in 'create_prompt_system_tests' must pass.",
+    "The implementation must strictly adhere to the design specifications outlined in 'docs/prompt_system_design.md'.",
+    "Prompt content must be lazy-loaded.",
+    "The override and fallback logic must function as specified.",
+    "Existing code that *uses* prompts should not be modified in this subtask; only the loading and access points should be changed."
+  ],
+  "validation_criteria": [
+    "`src/ai_whisperer/prompt_system.py` is created and contains the `PromptSystem` class or similar structure.",
+    "The `PromptSystem` correctly parses the new prompt structure from the configuration.",
+    "Prompts are loaded lazily upon first access.",
+    "The override and fallback logic functions correctly, including file path overrides.",
+    "All unit tests in `tests/unit/test_prompt_system.py` pass.",
+    "All integration tests in `tests/integration/test_prompt_loading_integration.py` pass.",
+    "The application's prompt access points are updated to use the new system without breaking existing functionality (for prompt *usage*).",
+    "The implementation aligns with the details provided in `docs/prompt_system_design.md`."
+  ],
+  "type": "code_generation",
+  "name": "implement_prompt_system",
+  "depends_on": [
+    "create_prompt_system_tests",
+    "design_new_prompt_system"
+  ],
+  "task_id": "3b2255a4-04a0-439a-a4da-4f2d8cec22b2",
+  "subtask_id": "a59f9ba3-0b63-4c96-9863-7257e220d4a2"
+}

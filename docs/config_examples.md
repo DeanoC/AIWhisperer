@@ -19,7 +19,7 @@ openrouter:
 
 # --- Prompt Templates ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
 # --- Other Application Settings ---
@@ -45,7 +45,7 @@ openrouter:
 
 # --- Prompt Templates ---
 prompts:
-  orchestrator_prompt_path: "prompts/orchestrator_default.md"
+  initial_plan_prompt_path: "prompts/initial_plan_default.md"
   subtask_generator_prompt_path: "prompts/subtask_generator_default.md"
 
 # --- Task-Specific Model Settings ---
@@ -94,10 +94,12 @@ task_models:
 ### Required and Optional Fields
 
 Each task model configuration requires:
+
 - `provider`: Currently only "openrouter" is supported, but the system is designed to allow other providers in the future
 - `model`: The model identifier to use for this task
 
 Optional fields include:
+
 - `params`: A dictionary of model parameters (e.g., temperature, max_tokens)
 
 ### Fallback Mechanism

@@ -6,14 +6,14 @@ The Subtask Generator is a component of the AIWhisperer system that refines high
 
 ## How It Works
 
-1. **Input**: A high-level step definition YAML file containing basic information such as `step_id`, `description`, and optional `context` information.
+1. **Input**: A high-level step definition YAML file containing basic information such as `subtask_id`, `description`, and optional `context` information.
 2. **Processing**:
    - Loads configuration settings including the AI model to use
    - Gathers additional context from relevant files if specified in the input step
    - Constructs a prompt using the input step data, context, and template
    - Sends the prompt to the AI model via OpenRouter API
    - Parses and validates the AI-generated YAML response
-3. **Output**: A detailed subtask YAML file saved to the `output` directory with a filename derived from the `step_id`.
+3. **Output**: A detailed subtask YAML file saved to the `output` directory with a filename derived from the `subtask_id`.
 
 ## Usage
 
@@ -53,7 +53,7 @@ output_dir: "./output/"
 The input step YAML file should include at least:
 
 ```yaml
-step_id: unique_step_identifier
+subtask_id: unique_subtask_identifier
 description: "A clear description of what this step should accomplish"
 depends_on: [] # Optional: IDs of steps this step depends on
 
@@ -69,17 +69,17 @@ context:
 The generated subtask YAML includes:
 
 ```yaml
-task_id: unique_step_identifier # Derived from the input step_id
+task_id: unique_subtask_identifier # Derived from the input subtask_id
 natural_language_goal: "Detailed description of the task objective"
 overall_context: "Context information and background"
 input_hashes: # Hashes of input files for verification
   step_yaml: "sha256-hash-of-input-step"
   # Additional files used for context
 plan:
-  - step_id: "implementation-step-1"
+  - subtask_id: "implementation-step-1"
     description: "Detailed step description"
     # Additional execution details
-  - step_id: "implementation-step-2"
+  - subtask_id: "implementation-step-2"
     # ...
 validation_criteria:
   - "Criteria for verifying successful completion"
@@ -94,7 +94,7 @@ The prompt template (`prompts/subtask_generator_default.md`) guides the AI in ge
 
 ## Schema Validation
 
-Generated subtasks are validated against a JSON schema (`src/ai_whisperer/schemas/task_schema.json`) to ensure consistency and correctness.
+Generated subtasks are validated against a JSON schema (`src/ai_whisperer/schemas/initial_plan_schema.json`) to ensure consistency and correctness.
 
 ## Error Handling
 

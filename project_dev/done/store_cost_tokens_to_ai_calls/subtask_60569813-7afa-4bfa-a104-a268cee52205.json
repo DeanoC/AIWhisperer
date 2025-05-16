@@ -1,0 +1,39 @@
+{
+  "description": "Generate unit tests for extracting cost and token data from simulated API responses.",
+  "instructions": [
+    "Navigate to the file `tests/unit/test_ai_service_interaction.py`.",
+    "Locate the existing test class or structure related to testing AI service interaction.",
+    "Add new test methods within this file.",
+    "Each new test method should simulate a different OpenRouter API response containing specific 'cost', 'input_tokens', and 'output_tokens' fields within the 'meta' section of the response.",
+    "Create test cases that simulate responses with valid cost/token data.",
+    "Create test cases that simulate responses where the 'meta' section or cost/token fields are missing.",
+    "Write assertions in the new test methods to verify that the current code attempting to extract this data (which is expected to be missing or incorrect at this stage) returns expected values (likely None or default values, or raises an error depending on current implementation).",
+    "Ensure the test names clearly indicate the scenario being tested (e.g., `test_extract_cost_tokens_present`, `test_extract_cost_tokens_missing`).",
+    "Run the file or the specific new tests using pytest (`pytest tests/unit/test_ai_service_interaction.py`) and confirm that the newly added tests produce failures, as the extraction logic is not yet implemented."
+  ],
+  "input_artifacts": [
+    "docs/cost_token_analysis_summary.md",
+    "tests/unit/test_ai_service_interaction.py",
+    "src/ai_whisperer/ai_service_interaction.py"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_ai_service_interaction.py"
+  ],
+  "constraints": [
+    "Do not modify any existing tests in `tests/unit/test_ai_service_interaction.py` except to potentially add the new tests within an existing test class.",
+    "Focus solely on generating test cases for extracting cost and token data.",
+    "Do not implement the actual logic to extract cost and token data in the source code (`src/ai_whisperer/ai_service_interaction.py`) in this step."
+  ],
+  "validation_criteria": [
+    "The file `tests/unit/test_ai_service_interaction.py` contains new test methods specifically designed to test the extraction of 'cost', 'input_tokens', and 'output_tokens' from simulated API responses.",
+    "The new test methods cover scenarios where cost/token data is present and absent.",
+    "Upon running the test suite, all existing tests in `tests/unit/test_ai_service_interaction.py` still report as passing.",
+    "Upon running the test suite, all newly added test cases for cost/token extraction report as failing, confirming the test setup is correct and the logic is not yet implemented."
+  ],
+  "type": "test_generation",
+  "depends_on": [
+    "docs/cost_token_analysis_summary.md"
+  ],
+  "task_id": "c94f8d36-7e7f-411d-b15b-9e4a42b4590b",
+  "subtask_id": "c1021a59-7b47-4a3b-8819-8c9180821746"
+}

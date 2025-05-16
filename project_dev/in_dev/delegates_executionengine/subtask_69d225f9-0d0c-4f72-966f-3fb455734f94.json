@@ -1,0 +1,41 @@
+{
+  "description": "Implement the thread-safe delegate system within the AI loop.",
+  "instructions": [
+    "Review the provided design document `project_dev/notes/Thread-Safe Delegates Design Document.md` and usage guide `project_dev/notes/Thread-Safe Delegates in Python - Usage Guide.md` to fully understand the thread-safe delegate system's architecture and intended use.",
+    "Analyze the `project_dev/planning/delegate_integration_plan.md` to identify the specific locations within the AI loop (`src/ai_whisperer/ai_loop.py`) where delegate hooks should be added.",
+    "Using the example code in `project_dev/notes/thread_safe_delegates.py` as a reference, integrate the thread-safe delegate system into `src/ai_whisperer/ai_loop.py`.",
+    "Implement the delegate hooks at the identified key points in the AI loop, ensuring they correctly call the delegate system methods.",
+    "Verify that the implementation adheres to the thread-safe principles outlined in the design documents and example code.",
+    "Run the unit tests located in `tests/ai_loop/test_delegates.py` to confirm the correct functionality and thread-safety of the implemented delegate system within the AI loop.",
+    "Address any test failures, debugging the implementation in `src/ai_whisperer/ai_loop.py` until all tests in `tests/ai_loop/test_delegates.py` pass."
+  ],
+  "input_artifacts": [
+    "project_dev/planning/delegate_integration_plan.md",
+    "project_dev/notes/thread_safe_delegates.py",
+    "project_dev/notes/Thread-Safe Delegates Design Document.md",
+    "project_dev/notes/Thread-Safe Delegates in Python - Usage Guide.md",
+    "src/ai_whisperer/ai_loop.py",
+    "tests/ai_loop/test_delegates.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/ai_loop.py"
+  ],
+  "constraints": [
+    "The implementation must be thread-safe.",
+    "The core AI loop logic should remain loosely coupled from the delegate system.",
+    "All tests in tests/ai_loop/test_delegates.py must pass."
+  ],
+  "validation_criteria": [
+    "The AI loop code (`src/ai_whisperer/ai_loop.py`) is modified to include the delegate system.",
+    "Delegate hooks are placed at relevant points in the AI loop as specified in the integration plan.",
+    "The implementation adheres to thread-safe practices as outlined in the design documents.",
+    "All tests in tests/ai_loop/test_delegates.py pass."
+  ],
+  "type": "file_edit",
+  "name": "implement_ai_loop_delegates",
+  "depends_on": [
+    "generate_tests_for_ai_loop_delegates"
+  ],
+  "task_id": "0da84583-0c56-4c9e-b01a-6cfdfc728bcf",
+  "subtask_id": "69d225f9-0d0c-4f72-966f-3fb455734f94"
+}

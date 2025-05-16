@@ -32,7 +32,7 @@ task_models:
     params:
       temperature: 0.5
       max_tokens: 8000
-  "orchestrator":
+  "initial_plan":
     provider: "openrouter"
     model: "google/gemini-2.5-flash-preview"
     params:

@@ -1,0 +1,54 @@
+{
+  "description": "Create unit tests for the planned `code_generation` execution engine handler.",
+  "instructions": [
+    "Create a new Python file at the path `tests/unit/test_code_generation_handler.py`.",
+    "Import necessary testing libraries (e.g., `pytest`, `unittest.mock`).",
+    "Define a test class for the `code_generation` handler tests.",
+    "Inside the test class, create test methods covering the following scenarios, using mocking for external dependencies (like AI service, file system, and potential runner interactions):",
+    "- Test case: Successfully parsing a valid `code_generation` subtask JSON structure.",
+    "- Test case: Verifying the correct construction of the AI prompt, ensuring it includes instructions, constraints, and relevant file context based on the subtask input artifacts.",
+    "- Test case: Simulating an AI response that generates a new file and checking if the handler logic correctly processes this (e.g., prepares for writing).",
+    "- Test case: Simulating an AI response that modifies an existing file and checking if the handler logic correctly processes this (e.g., prepares for updating).",
+    "- Test case: Testing the handler's interaction points with the test execution runner (e.g., mocking calls to a `run_tests` function if applicable).",
+    "- Test case: Testing the handler's interaction points with the validation runner (e.g., mocking calls to a `run_validation` function if applicable).",
+    "- Test case: Handling errors during subtask parsing (e.g., invalid JSON, missing required fields).",
+    "- Test case: Handling errors during AI prompt generation (e.g., issues reading input files).",
+    "- Test case: Handling errors during processing of AI response.",
+    "- Ensure tests specifically cover the logic required to examine existing files and incorporate their content or context into the prompt for code reuse scenarios.",
+    "Use `unittest.mock.patch` or similar techniques to isolate the handler logic from actual AI calls and file system operations.",
+    "Write assertions to verify the expected behavior of the handler under each test scenario.",
+    "Ensure the test file is syntactically correct Python and can be discovered by `pytest`.",
+    "The tests should be designed to pass the syntax check and run without runtime errors, but the assertions related to the handler's functionality are expected to fail until the `code_generation` handler is implemented."
+  ],
+  "input_artifacts": [
+    "docs/code_generation_handler_design.md",
+    "src/ai_whisperer/schemas/subtask_schema.json"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_code_generation_handler.py"
+  ],
+  "constraints": [
+    "Tests must be unit tests.",
+    "External dependencies (AI service, file I/O, runner interactions) must be mocked.",
+    "The tests should strictly adhere to the design specifications outlined in `docs/code_generation_handler_design.md`.",
+    "Do not implement the actual `code_generation` handler logic in this subtask.",
+    "The generated test file must be located at `tests/unit/test_code_generation_handler.py`."
+  ],
+  "validation_criteria": [
+    "The file `tests/unit/test_code_generation_handler.py` exists.",
+    "The file `tests/unit/test_code_generation_handler.py` contains a Python test class.",
+    "The test class includes multiple test methods covering the scenarios listed in the instructions.",
+    "Test methods use mocking libraries (e.g., `unittest.mock`) to isolate dependencies.",
+    "The tests compile and run without syntax errors.",
+    "The tests are structured to verify the handler's logic based on the design document.",
+    "The test suite demonstrates coverage of parsing, prompt generation, AI response handling (new/modify file), runner integration points, error handling, and file examination/reuse logic.",
+    "The tests are expected to fail when run against the current codebase (as the handler is not implemented)."
+  ],
+  "type": "test_generation",
+  "name": "create_code_generation_handler_tests",
+  "depends_on": [
+    "design_code_generation_handler"
+  ],
+  "task_id": "28b11d1a-aeb6-4c57-8c3d-a85d3dbba0db",
+  "subtask_id": "1596da6e-2d01-48d6-8d36-9ae273b16dc2"
+}

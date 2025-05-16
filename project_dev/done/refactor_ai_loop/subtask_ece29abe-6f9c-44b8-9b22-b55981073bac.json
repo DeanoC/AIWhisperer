@@ -1,0 +1,43 @@
+{
+  "description": "Generate unit tests for the refactored AI loop logic.",
+  "instructions": [
+    "Create a new Python file named `tests/unit/test_ai_loop.py`.",
+    "Inside `test_ai_loop.py`, import necessary modules and classes from the `src/ai_whisperer` directory, particularly those related to the AI loop logic and `ContextManager`.",
+    "Based on the refactor plan outlined in `docs/ai_loop_refactor_plan.md`, identify the key functions, methods, and interactions within the AI loop that require unit testing.",
+    "Write individual test functions within `test_ai_loop.py` using a testing framework like `pytest`.",
+    "For tests involving AI service calls, use mocking techniques (e.g., `unittest.mock.patch`) to simulate the responses of the AI service without making actual external API calls.",
+    "Write tests that verify the correct interaction between the AI loop logic and the `ContextManager`, including how context is updated and retrieved.",
+    "Ensure the tests cover different scenarios identified in the refactor plan, including handling of various task types, tool usage, and state updates.",
+    "The initial tests should focus on verifying the structure and basic flow, designed to fail when run against the *current* implementation (before the refactor is complete).",
+    "Run the tests using `pytest` from the project root directory to confirm they are syntactically correct and execute without runtime errors, but fail the actual assertions."
+  ],
+  "input_artifacts": [
+    "docs/ai_loop_refactor_plan.md",
+    "src/ai_whisperer/agent_handlers/code_generation.py",
+    "src/ai_whisperer/state_management.py",
+    "src/ai_whisperer/ai_service_interaction.py"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_ai_loop.py"
+  ],
+  "constraints": [
+    "Tests must be unit tests, focusing on isolated components of the AI loop.",
+    "External dependencies, like actual AI service calls, must be mocked.",
+    "The tests should be written in Python using a standard testing framework (e.g., pytest).",
+    "The tests should initially fail, indicating they are testing against the future refactored implementation."
+  ],
+  "validation_criteria": [
+    "The file `tests/unit/test_ai_loop.py` exists and is not empty.",
+    "The file `tests/unit/test_ai_loop.py` contains multiple test functions (`test_*`) related to the AI loop logic.",
+    "The tests in `tests/unit/test_ai_loop.py` use mocking for external dependencies like AI service calls.",
+    "Running `pytest tests/unit/test_ai_loop.py` from the project root executes the tests without syntax or runtime errors.",
+    "The tests in `tests/unit/test_ai_loop.py` fail, as they are designed to test the refactored logic which is not yet implemented."
+  ],
+  "type": "test_generation",
+  "name": "generate_ai_loop_tests",
+  "depends_on": [
+    "design_ai_loop_refactor"
+  ],
+  "task_id": "1bc14942-c2cc-4e02-aa1a-78cfb861d8e9",
+  "subtask_id": "ece29abe-6f9c-44b8-9b22-b55981073bac"
+}

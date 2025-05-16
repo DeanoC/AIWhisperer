@@ -1,0 +1,46 @@
+{
+  "description": "Implement the base tool interface and the tool management functions.",
+  "instructions": [
+    "Create the directory `src/ai_whisperer/tools` if it doesn't exist.",
+    "Create the file `src/ai_whisperer/tools/__init__.py` and add necessary imports or package initialization.",
+    "Create the file `src/ai_whisperer/tools/base_tool.py`.",
+    "Implement the abstract base class for tools in `src/ai_whisperer/tools/base_tool.py`. This class should define the required methods and properties for any tool, based on the specifications in `docs/tool_interface_design.md`.",
+    "Create the file `src/ai_whisperer/tools/tool_registry.py`.",
+    "Implement the tool management/registry system in `src/ai_whisperer/tools/tool_registry.py`. This system should be responsible for registering, retrieving, and managing tool instances based on the specifications in `docs/tool_management_design.md`.",
+    "Ensure the implemented tool management logic in `src/ai_whisperer/tools/tool_registry.py` correctly handles tool registration and retrieval as defined in the design document.",
+    "Run the unit tests located in `tests/unit/test_tool_management.py` to verify the functionality of the tool management implementation.",
+    "Fix any failing tests in `tests/unit/test_tool_management.py` until all tests pass."
+  ],
+  "input_artifacts": [
+    "docs/tool_interface_design.md",
+    "docs/tool_management_design.md",
+    "tests/unit/test_tool_management.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/tools/__init__.py",
+    "src/ai_whisperer/tools/base_tool.py",
+    "src/ai_whisperer/tools/tool_registry.py"
+  ],
+  "constraints": [
+    "The implementation must adhere strictly to the designed interface defined in `docs/tool_interface_design.md`.",
+    "The implementation must adhere strictly to the designed management logic defined in `docs/tool_management_design.md`.",
+    "No external libraries or dependencies should be introduced unless explicitly allowed by the design documents.",
+    "Code should follow standard Python conventions (e.g., PEP 8)."
+  ],
+  "validation_criteria": [
+    "The file `src/ai_whisperer/tools/base_tool.py` exists.",
+    "The file `src/ai_whisperer/tools/base_tool.py` contains an abstract base class defining the tool interface with the methods and properties specified in `docs/tool_interface_design.md`.",
+    "The file `src/ai_whisperer/tools/tool_registry.py` exists.",
+    "The file `src/ai_whisperer/tools/tool_registry.py` contains the implementation for tool registration and retrieval as specified in `docs/tool_management_design.md`.",
+    "All unit tests in `tests/unit/test_tool_management.py` pass successfully."
+  ],
+  "type": "code_generation",
+  "name": "implement_tool_interface_and_management",
+  "depends_on": [
+    "testgen_file_tools_and_management",
+    "design_tool_interface",
+    "design_tool_management"
+  ],
+  "task_id": "a3fd54c4-30ec-4c58-a5a4-85fa7ad110ed",
+  "subtask_id": "65b702a8-aef3-40bb-b17a-c63d2664178a"
+}

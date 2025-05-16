@@ -1,0 +1,31 @@
+{
+  "description": "Analyze existing AI service interaction code and OpenRouter documentation to identify where cost and token information is available.",
+  "instructions": [
+    "Open `src/ai_whisperer/ai_service_interaction.py` and `project_dev/rfc/store_cost_tokens_to_ai_calls.md` to understand the current architecture and proposed changes.",
+    "Review the code within `src/ai_whisperer/ai_service_interaction.py` to identify the location where AI service calls are made and responses are processed.",
+    "Specifically examine how exceptions and results are handled after an API call.",
+    "Consult the OpenRouter API documentation to determine the structure of the response object that contains cost and token information (e.g., input tokens, output tokens, and cost). Identify the specific JSON keys for these values.",
+    "Map the identified OpenRouter API response fields to the current response processing in `src/ai_whisperer/ai_service_interaction.py` to understand where this data could be extracted.",
+    "Write the findings in `docs/cost_token_analysis_summary.md`, including the identified API response fields and a proposed strategy for capturing and storing this information during the AI call processing."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/ai_service_interaction.py",
+    "project_dev/rfc/store_cost_tokens_to_ai_calls.md"
+  ],
+  "output_artifacts": [
+    "docs/cost_token_analysis_summary.md"
+  ],
+  "constraints": [
+    "Analysis must be based solely on the provided code and OpenRouter documentation.",
+    "The analysis summary must be saved to `docs/cost_token_analysis_summary.md`."
+  ],
+  "validation_criteria": [
+    "`docs/cost_token_analysis_summary.md` exists.",
+    "`docs/cost_token_analysis_summary.md` contains the names of the specific fields (keys) in the OpenRouter API response that hold cost and token data (input tokens, output tokens).",
+    "`docs/cost_token_analysis_summary.md` includes a section outlining a proposed basic strategy for extracting this cost and token data from the API response within the `ai_service_interaction.py` processing."
+  ],
+  "type": "analysis",
+  "depends_on": [],
+  "task_id": "c94f8d36-7e7f-411d-b15b-9e4a42b4590b",
+  "subtask_id": "5161e1ff-d39c-4251-8b5a-931cab01ff2e"
+}

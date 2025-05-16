@@ -1,0 +1,36 @@
+{
+  "description": "Analyze the requirements for the path management system and design the structure of the global path singleton, including how it will store and provide access to the four core paths and handle templated path expansion.",
+  "instructions": [
+    "Read and understand the requirements in the provided RFC document: `project_dev/rfc/sort_out_paths.md`.",
+    "Design the structure of a Python class or module that will serve as the global path singleton.",
+    "Define the attributes or properties within the singleton that will store the four core paths: application path, project path, output path, and workspace path.",
+    "Specify how these core paths will be initialized, considering potential sources like configuration files, environment variables, or default values.",
+    "Design a method within the singleton that accepts a string containing templated paths (e.g., '{project_path}/input.txt'). This method should replace the template placeholders with the actual, absolute paths stored in the singleton.",
+    "Detail the logic for handling default paths and how overrides from configuration files (`config.yaml`) and command-line arguments will be prioritized and applied during path initialization.",
+    "Document the complete design, including the class/module structure, attribute definitions, initialization logic, templated path expansion method, and override handling, in the `docs/path_management_design.md` file."
+  ],
+  "input_artifacts": [
+    "project_dev/rfc/sort_out_paths.md"
+  ],
+  "output_artifacts": [
+    "docs/path_management_design.md"
+  ],
+  "constraints": [
+    "The path singleton must be designed for global accessibility within the application.",
+    "The templated path expansion mechanism must correctly resolve placeholders for all four core path types (app, project, output, workspace).",
+    "The design must clearly define the hierarchy and mechanism for overriding default paths with configuration and CLI inputs."
+  ],
+  "validation_criteria": [
+    "The file `docs/path_management_design.md` exists.",
+    "`docs/path_management_design.md` contains a clear and detailed description of the proposed path singleton's structure.",
+    "The design document explicitly defines the attributes for storing the four core paths.",
+    "The design document describes the method for templated path expansion.",
+    "The design document outlines how default paths, configuration overrides, and CLI overrides are handled and prioritized.",
+    "The design documented in `docs/path_management_design.md` addresses all requirements specified in `project_dev/rfc/sort_out_paths.md`."
+  ],
+  "type": "planning",
+  "name": "analyze_requirements_and_design_path_singleton",
+  "depends_on": [],
+  "task_id": "da0bff86-233d-4f69-bd5f-b4804aa4b3da",
+  "subtask_id": "b59acc1d-0f6e-4b12-a443-74a5bd308ca6"
+}

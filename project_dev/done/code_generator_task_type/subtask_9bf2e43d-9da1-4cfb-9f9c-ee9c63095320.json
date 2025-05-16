@@ -1,0 +1,39 @@
+{
+  "description": "Research the requirements and design considerations for an execution engine handler specifically for the `code_generation` task type, including how it should interact with AI agents and handle testing.",
+  "instructions": [
+    "Read and understand the contents of `project_dev/rfc/code_generator_task_type.md` to grasp the core requirements and vision for the `code_generation` task type.",
+    "Review `src/ai_whisperer/schemas/subtask_schema.json` to understand the structure and fields available for defining subtasks, particularly focusing on how `code_generation` tasks might be represented.",
+    "Examine the existing execution engine code located at `src/ai_whisperer/execution_engine.py` and the existing agent handlers in `src/ai_whisperer/agent_handlers/` to understand the current architecture and how other task types are processed and interact with AI agents.",
+    "Based on the RFC, subtask schema, and existing engine structure, determine the specific inputs (e.g., requirements, context, existing code) and expected outputs (e.g., generated code, test results) for a `code_generation` handler.",
+    "Outline a detailed process for how the `code_generation` handler should formulate instructions and context for an AI agent to perform code generation. Consider how to provide relevant context from the project.",
+    "Define the mechanism by which the `code_generation` handler will trigger and integrate with test execution and validation processes after code is generated. Consider how test results will be interpreted and used.",
+    "Analyze the existing codebase within `src/ai_whisperer/` to identify potential areas for code reuse when implementing the `code_generation` handler and consider how the handler might need to examine existing files as part of the code generation process (e.g., for context or dependencies).",
+    "Document all research findings, design considerations, proposed inputs/outputs, AI interaction strategy, test integration plan, and code reuse/examination considerations in a new Markdown file named `docs/code_generation_handler_research.md`."
+  ],
+  "input_artifacts": [
+    "project_dev/rfc/code_generator_task_type.md",
+    "src/ai_whisperer/schemas/subtask_schema.json",
+    "src/ai_whisperer/execution_engine.py",
+    "src/ai_whisperer/agent_handlers/"
+  ],
+  "output_artifacts": [
+    "docs/code_generation_handler_research.md"
+  ],
+  "constraints": [
+    "The research and proposed design must strictly adhere to the requirements and definition of the `code_generation` task type as outlined in `project_dev/rfc/code_generator_task_type.md` and `src/ai_whisperer/schemas/subtask_schema.json`.",
+    "The proposed handler design must be compatible with and integrate seamlessly into the existing execution engine architecture found in `src/ai_whisperer/execution_engine.py` and the existing agent handler pattern.",
+    "The research should consider how the handler will manage context, potentially including reading existing files within the project directory."
+  ],
+  "validation_criteria": [
+    "The file `docs/code_generation_handler_research.md` must be created.",
+    "The content of `docs/code_generation_handler_research.md` must clearly explain the requirements for the `code_generation` handler based on the provided input artifacts.",
+    "The document must outline a feasible and detailed approach for implementing the `code_generation` handler, covering its interaction with AI agents and the execution engine.",
+    "The research document must specifically address how the handler will handle the integration of test execution and validation.",
+    "The document must discuss considerations for code reuse from the existing codebase and how the handler might examine existing files."
+  ],
+  "type": "planning",
+  "name": "research_code_generation_handler",
+  "depends_on": [],
+  "task_id": "28b11d1a-aeb6-4c57-8c3d-a85d3dbba0db",
+  "subtask_id": "9bf2e43d-9da1-4cfb-9f9c-ee9c63095320"
+}

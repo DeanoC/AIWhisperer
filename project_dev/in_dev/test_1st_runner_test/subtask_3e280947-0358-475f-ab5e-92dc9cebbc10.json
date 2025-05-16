@@ -1,0 +1,34 @@
+{
+  "description": "Analyze the existing integration and command line tests for running the '1st_runner_test' plan to understand their current state and identify any gaps or necessary modifications.",
+  "instructions": [
+    "Navigate to the `tests/integration/` directory and examine the contents of `test_ai_tool_usage.py` to identify any test cases that specifically involve running or interacting with the '1st_runner_test' plan.",
+    "Navigate to the `tests/runner_tests/first_full_test/` directory and examine the contents of the Python test files within (e.g., `test_*.py`) to identify how the 'first_full_test' plan, which is the '1st_runner_test', is executed.",
+    "For each identified test case or file running the '1st_runner_test' plan, document the following:",
+    "- The specific test function or script that initiates the plan execution.",
+    "- The method used to execute the plan (e.g., direct function call, command line execution via `subprocess`).",
+    "- The criteria used to determine the success or failure of the test (e.g., checking output files, verifying console output, asserting return codes).",
+    "- Any observed issues, limitations, or areas where the testing coverage for the '1st_runner_test' plan appears to be lacking.",
+    "Compile all the findings into a markdown document named `docs/runner_test_analysis.md`.",
+    "Ensure the `docs/runner_test_analysis.md` document clearly outlines which tests run the '1st_runner_test', how they run it, what they check, and any identified gaps or issues."
+  ],
+  "input_artifacts": [
+    "tests/integration/test_ai_tool_usage.py",
+    "tests/runner_tests/first_full_test/"
+  ],
+  "output_artifacts": [
+    "docs/runner_test_analysis.md"
+  ],
+  "constraints": [],
+  "validation_criteria": [
+    "The file `docs/runner_test_analysis.md` must be created.",
+    "The content of `docs/runner_test_analysis.md` must provide a comprehensive analysis of the tests found in `tests/integration/test_ai_tool_usage.py` and `tests/runner_tests/first_full_test/` related to the '1st_runner_test' plan.",
+    "The analysis in `docs/runner_test_analysis.md` must explicitly describe how the '1st_runner_test' plan is executed within the identified tests.",
+    "The analysis in `docs/runner_test_analysis.md` must explicitly list the success criteria currently checked by the identified tests.",
+    "The analysis in `docs/runner_test_analysis.md` must highlight any apparent issues, limitations, or missing checks in the existing tests for the '1st_runner_test' plan."
+  ],
+  "type": "analysis",
+  "name": "analyze_existing_tests",
+  "depends_on": [],
+  "task_id": "74e0a334-b61d-4b35-99ee-b79836a0d712",
+  "subtask_id": "3e280947-0358-475f-ab5e-92dc9cebbc10"
+}

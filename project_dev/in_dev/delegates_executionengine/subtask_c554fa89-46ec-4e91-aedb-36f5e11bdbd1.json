@@ -1,0 +1,54 @@
+{
+  "description": "Update documentation to reflect the addition of delegates and observers to the execution engine and AI loop.",
+  "instructions": [
+    "Navigate to the `docs` directory in the workspace.",
+    "Create a new markdown file named `delegate_system.md` if it doesn't exist, or open it for editing.",
+    "Write comprehensive documentation explaining the new delegate and observer system.",
+    "Include sections on:",
+    "- What delegates and observers are in the context of AIWhisperer.",
+    "- How to register observers for the execution engine and AI loop.",
+    "- What types of events can be observed from the execution engine (e.g., task start, subtask complete, command execution).",
+    "- What types of events can be observed from the AI loop (e.g., AI call start, AI response received).",
+    "- How to use delegates to control the execution flow (e.g., pausing, resuming, stopping tasks or subtasks).",
+    "- The benefits of using the delegate/observer system for monitoring, debugging, and custom workflows.",
+    "Provide clear and concise code examples demonstrating:",
+    "- Registering a simple observer for execution engine events.",
+    "- Registering a simple observer for AI loop events.",
+    "- Using a delegate to pause and resume execution based on a condition.",
+    "Ensure the code examples are accurate and runnable within the AIWhisperer environment.",
+    "Open the `README.md` file in the root of the workspace.",
+    "Locate the section discussing features or capabilities.",
+    "Add a new point or update an existing one to mention the new monitoring, debugging, and control capabilities provided by the delegate and observer system.",
+    "Briefly explain how this system allows users or developers to gain deeper insight into and control over the AI execution process.",
+    "Review both `docs/delegate_system.md` and `README.md` to ensure clarity, accuracy, and consistency."
+  ],
+  "input_artifacts": [],
+  "output_artifacts": [
+    "docs/delegate_system.md",
+    "README.md"
+  ],
+  "constraints": [
+    "Documentation must be clear, concise, and easy for both users and developers to understand.",
+    "Code examples must be accurate, runnable, and demonstrate practical use cases.",
+    "The documentation should be formatted using standard Markdown.",
+    "The updates to `README.md` should be brief and highlight the new capabilities without going into excessive detail (referencing `delegate_system.md` for more information is appropriate)."
+  ],
+  "validation_criteria": [
+    "The file `docs/delegate_system.md` exists.",
+    "`docs/delegate_system.md` contains sections explaining delegates, observers, registration, event types for both execution engine and AI loop, and control mechanisms.",
+    "`docs/delegate_system.md` includes at least one code example for observer registration (execution engine or AI loop) and at least one code example for using a delegate for control.",
+    "The code examples in `docs/delegate_system.md` are syntactically correct and appear logically sound.",
+    "The file `README.md` in the root directory has been modified.",
+    "`README.md` includes a reference to the new delegate/observer system and its benefits (monitoring, debugging, control).",
+    "The documentation in `docs/delegate_system.md` accurately reflects the implemented delegate and observer system.",
+    "The overall documentation is well-organized and easy to navigate."
+  ],
+  "type": "documentation",
+  "name": "update_documentation",
+  "depends_on": [
+    "validate_execution_engine_delegates",
+    "validate_ai_loop_delegates"
+  ],
+  "task_id": "0da84583-0c56-4c9e-b01a-6cfdfc728bcf",
+  "subtask_id": "c554fa89-46ec-4e91-aedb-36f5e11bdbd1"
+}

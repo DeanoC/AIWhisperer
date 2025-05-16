@@ -1,0 +1,30 @@
+{
+  "description": "Validate the implementation of thread-safe delegates in the AI loop by running the generated tests.",
+  "instructions": [
+    "Navigate to the root directory of the AIWhisperer project.",
+    "Ensure your Python environment is set up and dependencies are installed (e.g., by activating a virtual environment and running `pip install -r requirements.txt`).",
+    "Execute the test suite specifically for AI loop delegates using a test runner like pytest. The command should target the specified test file: `pytest tests/ai_loop/test_delegates.py`.",
+    "Observe the output of the test run to confirm that all tests within `tests/ai_loop/test_delegates.py` are executed.",
+    "Verify that the test results indicate that all executed tests have passed without errors or failures."
+  ],
+  "input_artifacts": [
+    "tests/ai_loop/test_delegates.py"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "The tests must be run in an environment where the AIWhisperer project dependencies are installed.",
+    "The test runner (pytest) must be available in the environment's PATH or executed via a virtual environment."
+  ],
+  "validation_criteria": [
+    "The command `pytest tests/ai_loop/test_delegates.py` is successfully executed.",
+    "The output of the test run explicitly states that all tests in `tests/ai_loop/test_delegates.py` were collected and run.",
+    "The final summary of the test run shows 0 failures and 0 errors for the executed tests in `tests/ai_loop/test_delegates.py`."
+  ],
+  "type": "validation",
+  "name": "validate_ai_loop_delegates",
+  "depends_on": [
+    "implement_ai_loop_delegates"
+  ],
+  "task_id": "0da84583-0c56-4c9e-b01a-6cfdfc728bcf",
+  "subtask_id": "7e344ba3-536d-476d-aad1-67b5c523511c"
+}

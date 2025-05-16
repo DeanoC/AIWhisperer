@@ -1,0 +1,44 @@
+{
+  "description": "Implement the basic structure and methods for the `code_generation` execution engine handler.",
+  "instructions": [
+    "Create a new Python file at `src/ai_whisperer/agent_handlers/code_generation.py`.",
+    "Define a class or functions within `code_generation.py` that will serve as the handler for tasks with the type `code_generation`.",
+    "Refer to `docs/code_generation_handler_design.md` for the specific class name, method signatures, and overall structure required.",
+    "Implement the basic structure of the handler, including necessary imports from other modules within the project.",
+    "Add the newly created handler class/function to the `__init__.py` file in the `src/ai_whisperer/agent_handlers/` directory to register it with the execution engine.",
+    "Implement just enough placeholder logic within the handler methods to allow the unit tests defined in `tests/unit/test_code_generation_handler.py` to execute without immediate errors (they are not expected to pass at this stage).",
+    "Review existing handler implementations in `src/ai_whisperer/agent_handlers/` (e.g., `ai_interaction.py`, `planning.py`, `validation.py`) to identify common patterns, base classes, or utility functions that can be leveraged or adapted for the `code_generation` handler."
+  ],
+  "input_artifacts": [
+    "docs/code_generation_handler_design.md",
+    "tests/unit/test_code_generation_handler.py",
+    "src/ai_whisperer/execution_engine.py",
+    "src/ai_whisperer/agent_handlers/__init__.py",
+    "src/ai_whisperer/agent_handlers/ai_interaction.py",
+    "src/ai_whisperer/agent_handlers/planning.py",
+    "src/ai_whisperer/agent_handlers/validation.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/agent_handlers/code_generation.py",
+    "src/ai_whisperer/agent_handlers/__init__.py"
+  ],
+  "constraints": [
+    "The handler implementation must strictly adhere to the structure and method signatures specified in `docs/code_generation_handler_design.md`.",
+    "The handler must be correctly registered in `src/ai_whisperer/agent_handlers/__init__.py` using the appropriate mechanism for the execution engine.",
+    "The focus of this subtask is solely on establishing the basic structure and allowing tests to run; full functional implementation is not required yet."
+  ],
+  "validation_criteria": [
+    "The file `src/ai_whisperer/agent_handlers/code_generation.py` must be created.",
+    "The `code_generation.py` file must contain the basic class or function structure designed for the handler.",
+    "The handler must be successfully imported and registered in `src/ai_whisperer/agent_handlers/__init__.py`.",
+    "The code in `code_generation.py` must be valid Python syntax.",
+    "The project should compile without errors, and the unit tests in `tests/unit/test_code_generation_handler.py` should be runnable (even if they fail)."
+  ],
+  "type": "code_generation",
+  "name": "implement_code_generation_handler_scaffold",
+  "depends_on": [
+    "create_code_generation_handler_tests"
+  ],
+  "task_id": "28b11d1a-aeb6-4c57-8c3d-a85d3dbba0db",
+  "subtask_id": "59609cec-39ff-48db-b64f-84f70baccdca"
+}

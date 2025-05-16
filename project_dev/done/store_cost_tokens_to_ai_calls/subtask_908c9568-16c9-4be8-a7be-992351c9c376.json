@@ -1,0 +1,35 @@
+{
+  "description": "Design database or state management changes to store cost and token information alongside message history.",
+  "instructions": [
+    "Carefully review the existing message history storage and state management implementation within `src/ai_whisperer/state_management.py` to understand its structure, data flow, and any existing mechanisms for storing metadata.",
+    "Analyze the `docs/cost_token_analysis_summary.md` to determine the specific cost and token metrics that need to be captured (e.g., input tokens, output tokens, total tokens, interaction cost, timestamp relative to interaction).",
+    "Based on the analysis, design the schema or data structure modifications required within the state management system. This might involve adding new fields to existing message objects or creating entirely new linked data structures.",
+    "Ensure the design clearly outlines how the cost and token data will be associated with the specific AI interaction event within the history.",
+    "Document the proposed design in a new markdown file `docs/cost_token_storage_design.md`. This document should include descriptions of the proposed changes, including any new fields, data types, and the relationship to the existing message history structure.",
+    "The documentation in `docs/cost_token_storage_design.md` should be detailed enough for a developer to understand and implement the changes."
+  ],
+  "input_artifacts": [
+    "docs/cost_token_analysis_summary.md",
+    "src/ai_whisperer/state_management.py"
+  ],
+  "output_artifacts": [
+    "docs/cost_token_storage_design.md"
+  ],
+  "constraints": [
+    "The design must integrate seamlessly with the existing state management implementation in `src/ai_whisperer/state_management.py` without requiring a complete rewrite.",
+    "The proposed storage method should be efficient for querying and reporting cost/token data associated with message history."
+  ],
+  "validation_criteria": [
+    "`docs/cost_token_storage_design.md` exists in the specified location.",
+    "`docs/cost_token_storage_design.md` contains a clear and understandable description of how cost and token data will be stored.",
+    "The design documented in `docs/cost_token_storage_design.md` explicitly defines the fields and data types for storing cost and token information.",
+    "The design documented clearly explains how the cost and token data will be linked to the corresponding AI interactions in the message history.",
+    "The content of `docs/cost_token_storage_design.md` is consistent with the findings from `docs/cost_token_analysis_summary.md`."
+  ],
+  "type": "planning",
+  "depends_on": [
+    "docs/cost_token_analysis_summary.md"
+  ],
+  "task_id": "c94f8d36-7e7f-411d-b15b-9e4a42b4590b",
+  "subtask_id": "b6f1fa1b-0022-41b3-8b24-0a4770fef851"
+}

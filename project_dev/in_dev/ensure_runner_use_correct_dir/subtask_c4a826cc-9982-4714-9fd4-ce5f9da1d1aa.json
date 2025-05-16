@@ -1,0 +1,43 @@
+{
+  "description": "Design a strategy to restrict the runner's file system access to only the workspace and output directories.",
+  "instructions": [
+    "Review the analysis of the path manager usage in `docs/path_manager_analysis.md` to understand how paths are currently handled and identify potential vulnerabilities.",
+    "Based on the analysis, design a mechanism to enforce strict file system access control for the runner process.",
+    "The mechanism must ensure the runner can *only* read from the directory designated as the workspace.",
+    "The mechanism must ensure the runner can *only* read from and write to the directory designated as the output directory.",
+    "The mechanism must prevent the runner from accessing any files or directories outside of the designated workspace and output directories.",
+    "Consider various techniques for achieving this restriction, such as:",
+    "- Using operating system-level sandboxing or containerization (e.g., `chroot`, Docker, namespaces).",
+    "- Implementing language-specific mechanisms or libraries that provide controlled file access.",
+    "- Utilizing virtual file systems or abstracting file operations within the application.",
+    "Document the chosen strategy in `docs/directory_restriction_strategy.md`.",
+    "Clearly outline how the runner will be configured or informed about the specific paths designated as the workspace and output directories.",
+    "Specify how the existing path shortcuts, such as '{workspace}' and '{output}', will be interpreted and handled within the runner's environment under the new restriction strategy, especially in scenarios where the workspace and output directories are distinct."
+  ],
+  "input_artifacts": [
+    "docs/path_manager_analysis.md"
+  ],
+  "output_artifacts": [
+    "docs/directory_restriction_strategy.md"
+  ],
+  "constraints": [
+    "The strategy must be robust and secure, effectively preventing the runner from escaping the defined workspace and output directories.",
+    "The strategy should aim for a balance between security and ease of implementation/maintenance.",
+    "The strategy should ideally be cross-platform compatible, or clearly define platform-specific approaches if necessary."
+  ],
+  "validation_criteria": [
+    "The file `docs/directory_restriction_strategy.md` is created.",
+    "The `docs/directory_restriction_strategy.md` document contains a clear and detailed description of the proposed directory restriction strategy.",
+    "The strategy outlined in `docs/directory_restriction_strategy.md` explicitly addresses how access is restricted to only the workspace (read-only) and output (read/write) directories.",
+    "The strategy in `docs/directory_restriction_strategy.md` includes details on how the runner will be configured with the allowed paths.",
+    "The strategy in `docs/directory_restriction_strategy.md` explains how the '{workspace}' and '{output}' path shortcuts will be handled, particularly when the directories are different.",
+    "The strategy in `docs/directory_restriction_strategy.md` discusses potential methods for preventing directory traversal or 'escape' attempts."
+  ],
+  "type": "planning",
+  "name": "design_directory_restriction_strategy",
+  "depends_on": [
+    "analyze_path_manager_usage"
+  ],
+  "task_id": "b8519038-a48f-49db-b426-01c08b9d59a4",
+  "subtask_id": "c4a826cc-9982-4714-9fd4-ce5f9da1d1aa"
+}

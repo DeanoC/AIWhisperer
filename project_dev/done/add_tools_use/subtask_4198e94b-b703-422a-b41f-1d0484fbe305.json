@@ -1,0 +1,36 @@
+{
+  "description": "Design the functionality for compiling lists of tools (all, filtered, specific).",
+  "instructions": [
+    "Review the existing tool interface design (`docs/tool_interface_design.md`) to understand how individual tools are defined and interact.",
+    "Design the core mechanism for discovering or registering tools within the system. Consider approaches like file-based discovery, configuration-based registration, or dynamic loading.",
+    "Detail the design for retrieving a list of all available tools. Specify the data structure and content of the list.",
+    "Design the filtering mechanism for tools. Define how filtering criteria will be specified and processed. Consider common filtering needs (e.g., by type, capability, tags).",
+    "Design the process for selecting a specific tool by its unique identifier (e.g., name or ID). Include how the system will handle cases where the requested tool does not exist.",
+    "Document the design in `docs/tool_management_design.md`, including diagrams or pseudocode where helpful."
+  ],
+  "input_artifacts": [
+    "docs/tool_interface_design.md"
+  ],
+  "output_artifacts": [
+    "docs/tool_management_design.md"
+  ],
+  "constraints": [
+    "The management system should be efficient for a potentially large number of tools.",
+    "The design should be flexible enough to accommodate future additions or changes to tool types and filtering criteria."
+  ],
+  "validation_criteria": [
+    "docs/tool_management_design.md exists.",
+    "docs/tool_management_design.md clearly describes the mechanism for discovering or registering tools.",
+    "docs/tool_management_design.md details the design for listing all tools.",
+    "docs/tool_management_design.md specifies how tools will be filtered based on criteria.",
+    "docs/tool_management_design.md describes the process for selecting a specific tool by name and how non-existent tools are handled.",
+    "The design documented in `docs/tool_management_design.md` appears efficient for managing a potentially large number of tools."
+  ],
+  "type": "planning",
+  "name": "design_tool_management",
+  "depends_on": [
+    "design_tool_interface"
+  ],
+  "task_id": "a3fd54c4-30ec-4c58-a5a4-85fa7ad110ed",
+  "subtask_id": "4198e94b-b703-422a-b41f-1d0484fbe305"
+}

@@ -1,88 +1,79 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from pathlib import Path
-
 from .exceptions import ConfigError
+from .prompt_system import PromptSystem # Import PromptSystem
 
 logger = logging.getLogger(__name__)
+
 
 def get_model_for_task(config: Dict[str, Any], task_name: str) -> Dict[str, Any]:
     """
     Get the model configuration for a specific task.
-    
+
     Args:
         config: The loaded application configuration.
         task_name: The name of the task.
-        
+
     Returns:
         The model configuration for the task, or the default model configuration if
         no task-specific configuration is found.
-        
+
     Raises:
         ConfigError: If the task model configuration is missing required fields.
     """
-    task_models = config.get('task_models', {})
+    task_models = config.get("task_models", {})
     task_config = task_models.get(task_name)
-    
+
     if task_config:
         # Ensure the task config has the required fields
-        if 'provider' not in task_config or 'model' not in task_config:
+        if "provider" not in task_config or "model" not in task_config:
             raise ConfigError(f"Task model configuration for '{task_name}' is missing required fields.")
-        
+
         # If the provider is 'openrouter', merge with the default openrouter config
-        if task_config.get('provider') == 'openrouter':
-            openrouter_config = config.get('openrouter', {})
+        if task_config.get("provider") == "openrouter":
+            openrouter_config = config.get("openrouter", {})
             merged_config = {
-                'api_key': openrouter_config.get('api_key'),
-                'site_url': openrouter_config.get('site_url', 'http://localhost:8000'),
-                'app_name': openrouter_config.get('app_name', 'AIWhisperer'),
-                'model': task_config.get('model'),
-                'params': task_config.get('params', {})
+                "api_key": openrouter_config.get("api_key"),
+                "site_url": openrouter_config.get("site_url", "http://localhost:8000"),
+                "app_name": openrouter_config.get("app_name", "AIWhisperer"),
+                "model": task_config.get("model"),
+                "params": task_config.get("params", {}),
             }
             return merged_config
-        
+
         # For other providers, return the task config as is
         return task_config
-    
-    # If no task-specific configuration is found, return the default openrouter config
-    return config.get('openrouter', {})
 
-def get_prompt_for_task(config: Dict[str, Any], task_name: str) -> tuple[str, Path]:
+    # If no task-specific configuration is found, return the default openrouter config
+    return config.get("openrouter", {})
+
+
+def get_prompt_for_task(prompt_system: PromptSystem, task_name: str) -> str:
     """
-    Get the prompt for a specific task.
+    Get the prompt content for a specific task using the PromptSystem.
 
     Args:
-        config: The loaded application configuration.
+        prompt_system: An instance of the PromptSystem.
         task_name: The name of the task.
 
     Returns:
-        The prompt string for the task, or the default prompt if no task-specific prompt is found.
+        The prompt content string for the task.
 
     Raises:
-        ConfigError: If the prompt is missing or not a string.
+        ConfigError: If the prompt is not found by the PromptSystem.
     """
     logger.debug(f"get_prompt_for_task called with task_name: {task_name}")
-    logger.debug(f"Config received by get_prompt_for_task: {config}")
-    task_prompts = config.get('task_prompts', {})
-    prompt_path = task_prompts.get(task_name)
 
-    if prompt_path is not None:
-        logger.debug(f"Found prompt_path in config for task '{task_name}': {prompt_path}")
-        if not isinstance(prompt_path, str):
-            raise ConfigError(f"Prompt for task '{task_name}' must be a string.")
-        if Path(prompt_path).exists():
-            logger.debug(f"Prompt file exists at {prompt_path}. Reading content.")
-            return Path(prompt_path).read_text(encoding='utf-8'), prompt_path
-        else:
-            logger.debug(f"Prompt file not found at configured path: {prompt_path}")
-
-    # Try to load default prompt from file
-    default_prompt_path = Path(__file__).parent / 'prompts' / f'{task_name}_default.md'
-    logger.debug(f"Checking for default prompt file at: {default_prompt_path}")
-    if default_prompt_path.exists():
-        logger.debug(f"Default prompt file found at {default_prompt_path}. Reading content.")
-        return default_prompt_path.read_text(encoding='utf-8'), default_prompt_path
-
-    logger.error(f"No prompt found for task '{task_name}' and no default prompt is set.")
-    raise ConfigError(f"No prompt found for task '{task_name}' and no default prompt is set.")
-
+    try:
+        # Assuming task names directly map to prompt names in a 'tasks' category
+        # This might need adjustment based on actual prompt organization
+        prompt_content = prompt_system.get_prompt_content("tasks", task_name)
+        logger.debug(f"Successfully retrieved prompt for task '{task_name}' from PromptSystem.")
+        return prompt_content
+    except PromptSystem.PromptNotFoundError as e:
+        logger.error(f"Prompt not found for task '{task_name}': {e}")
+        raise ConfigError(f"Prompt not found for task '{task_name}': {e}") from e
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while getting prompt for task '{task_name}': {e}")
+        raise ConfigError(f"Error getting prompt for task '{task_name}': {e}") from e
