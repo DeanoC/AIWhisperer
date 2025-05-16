@@ -255,10 +255,14 @@ class TestPromptResolver(unittest.TestCase):
         self.assertEqual(prompt.name, "test")
         expected_path = self.prompts_dir / "core" / "test.prompt.md"
         actual_path = prompt.path
-        self.assertEqual(
-            os.path.normcase(os.path.normpath(str(actual_path))),
-            os.path.normcase(os.path.normpath(str(expected_path)))
-        )
+        # Use os.path.samefile if possible, else fallback to realpath comparison
+        try:
+            self.assertTrue(os.path.samefile(actual_path, expected_path))
+        except (AttributeError, FileNotFoundError):
+            self.assertEqual(
+                os.path.realpath(str(actual_path)),
+                os.path.realpath(str(expected_path))
+            )
         self.assertIsNotNone(prompt._loader) # Check if loader was injected
 
     def test_get_prompt_not_found(self):

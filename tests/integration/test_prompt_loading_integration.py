@@ -72,10 +72,15 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         # Normalize paths for robust comparison on Windows
         expected_path = self.temp_dir / "custom/core/initial_plan.override.prompt.md"
         actual_path = prompt_override.path
-        self.assertEqual(
-            os.path.normcase(os.path.normpath(str(actual_path))),
-            os.path.normcase(os.path.normpath(str(expected_path)))
-        )
+        # Use os.path.samefile if possible, else fallback to realpath comparison
+        try:
+            self.assertTrue(os.path.samefile(actual_path, expected_path))
+        except (AttributeError, FileNotFoundError):
+            # Fallback for platforms/filesystems where samefile is not available or file doesn't exist
+            self.assertEqual(
+                os.path.realpath(str(actual_path)),
+                os.path.realpath(str(expected_path))
+            )
         self.assertEqual(prompt_override.content, "Custom override initial plan prompt.")
 
         # Test definition

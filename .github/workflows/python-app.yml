@@ -32,6 +32,12 @@ jobs:
       run: |
         echo "PYTHONPATH=$env:PYTHONPATH;$(pwd)\src" | Out-File -FilePath $env:GITHUB_ENV -Append
       shell: pwsh
+    - name: Create venv for powershell test
+      run: |
+        python -m venv .venv
+        .venv\Scripts\pip install -r requirements.txt
+      working-directory: tests/code_generator/n_times_4
+      shell: pwsh 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
