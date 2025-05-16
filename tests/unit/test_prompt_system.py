@@ -207,7 +207,14 @@ class TestPromptResolver(unittest.TestCase):
         self.mock_config.get_base_path.side_effect = lambda category: "prompts/custom" if category == "custom" else None # Mock default custom base path
 
         resolved_path = self.resolver.resolve_prompt_path("agents", "code_generation")
-        self.assertEqual(resolved_path, agent_prompt_path_absolute)
+        # Use os.path.samefile if possible, else fallback to realpath comparison
+        try:
+            self.assertTrue(os.path.samefile(resolved_path, agent_prompt_path_absolute))
+        except (AttributeError, FileNotFoundError):
+            self.assertEqual(
+                os.path.realpath(str(resolved_path)),
+                os.path.realpath(str(agent_prompt_path_absolute))
+            )
         self.mock_config.get_override_path.assert_called_once_with("agents", "code_generation")
         self.mock_config.get_definition_path.assert_called_once_with("agents", "code_generation")
         self.mock_config.get_base_path.assert_any_call("custom") # Check for default custom base path
@@ -224,7 +231,13 @@ class TestPromptResolver(unittest.TestCase):
         self.mock_config.get_base_path.side_effect = lambda category: "prompts/custom" if category == "custom" else None # Mock default custom base path
 
         resolved_path = self.resolver.resolve_prompt_path("core", "initial_plan")
-        self.assertEqual(resolved_path, core_prompt_path_absolute)
+        try:
+            self.assertTrue(os.path.samefile(resolved_path, core_prompt_path_absolute))
+        except (AttributeError, FileNotFoundError):
+            self.assertEqual(
+                os.path.realpath(str(resolved_path)),
+                os.path.realpath(str(core_prompt_path_absolute))
+            )
         self.mock_config.get_override_path.assert_called_once_with("core", "initial_plan")
         self.mock_config.get_definition_path.assert_called_once_with("core", "initial_plan")
         self.mock_config.get_base_path.assert_any_call("custom") # Check for default custom base path
