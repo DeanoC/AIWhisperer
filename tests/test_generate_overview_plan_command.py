@@ -26,11 +26,9 @@ class TestGenerateOverviewPlanCommand:
         yield tmp_plan_path
         os.unlink(tmp_plan_path) # Clean up the temporary file
 
-    @patch('ai_whisperer.commands.load_config')
     @patch('ai_whisperer.commands.OverviewPlanGenerator')
-    def test_generate_overview_plan_success(self, mock_overview_plan_generator, mock_load_config, mock_config_path, mock_output_dir, mock_initial_plan_path):
+    def test_generate_overview_plan_success(self, mock_overview_plan_generator, mock_config_path, mock_output_dir, mock_initial_plan_path):
         """Tests successful generation of an overview plan."""
-        mock_load_config.return_value = {"mock": "config"} # Return a dummy config
         mock_overview_plan_instance = mock_overview_plan_generator.return_value
         mock_overview_plan_instance.generate_full_plan.return_value = {
             "task_plan": "fake_task_plan.json",
@@ -38,14 +36,14 @@ class TestGenerateOverviewPlanCommand:
             "subtasks": ["fake_subtask_1.json", "fake_subtask_2.json"]
         }
 
+        config = {"mock": "config", "config_path": mock_config_path}
         command = GenerateOverviewPlanCommand(
-            config_path=mock_config_path,
+            config=config,
             output_dir=mock_output_dir,
             initial_plan_path=mock_initial_plan_path
         )
         exit_code = command.execute()
 
-        mock_load_config.assert_called_once_with(mock_config_path)
         mock_overview_plan_generator.assert_called_once_with(command.config, mock_output_dir)
         mock_overview_plan_instance.generate_full_plan.assert_called_once_with(mock_initial_plan_path, mock_config_path)
         # TODO: Uncomment the following lines when console_print is available
@@ -64,6 +62,8 @@ class TestGenerateOverviewPlanCommand:
         # This test requires a valid configuration with actual servers defined in config.yaml.
         # It will attempt to interact with configured servers.
         # If no servers are configured or accessible, this test might fail.
+
+        from ai_whisperer.config import load_config
 
         # Create a temporary initial plan file
         initial_plan_content = """
@@ -99,9 +99,11 @@ class TestGenerateOverviewPlanCommand:
 
         # Use a real config file path
         config_path = "config.yaml"
+        config = load_config(config_path)
+        config["config_path"] = config_path
 
         command = GenerateOverviewPlanCommand(
-            config_path=config_path,
+            config=config,
             output_dir=str(output_dir),
             initial_plan_path=initial_plan_file
         )
@@ -114,8 +116,6 @@ class TestGenerateOverviewPlanCommand:
             pytest.fail(f"Command execution failed with exception: {e}")
 
         # Assert that output files were created in the output directory
-        # The exact names of the output files might depend on the OverviewPlanGenerator implementation,
-        # but we can check if files with expected patterns were created.
         output_files = list(output_dir.iterdir())
         assert any("overview" in f.name and f.suffix == ".json" for f in output_files), "Overview plan file not created."
         assert any("subtask" in f.name and f.suffix == ".json" for f in output_files), "Subtask file(s) not created."

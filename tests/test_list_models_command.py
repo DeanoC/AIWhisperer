@@ -7,19 +7,18 @@ from ai_whisperer.commands import ListModelsCommand
 from ai_whisperer.model_info_provider import ModelInfoProvider
 
 # Mocked tests for list-models
-@patch('ai_whisperer.commands.load_config')
 @patch('ai_whisperer.commands.ModelInfoProvider')
-def test_list_models_mocked(mock_model_info_provider, mock_load_config):
+def test_list_models_mocked(mock_model_info_provider):
     """Tests the list-models command using mocked ModelInfoProvider."""
-    mock_load_config.return_value = {"servers": {}} # Return a dummy config
     mock_instance = mock_model_info_provider.return_value
-    mock_instance.list_models.return_value = [ # Corrected return value to match list_models
+    mock_instance.list_models.return_value = [
         {"id": "mock_server_1/model_a", "name": "model_a"},
         {"id": "mock_server_1/model_b", "name": "model_b"},
         {"id": "mock_server_2/model_c", "name": "model_c"}
     ]
 
-    command = ListModelsCommand(config_path="dummy_config.yaml")
+    config = {"servers": {}, "config_path": "dummy_config.yaml"}
+    command = ListModelsCommand(config=config)
     command.execute()
 
     mock_instance.list_models.assert_called_once()
@@ -32,15 +31,14 @@ def test_list_models_mocked(mock_model_info_provider, mock_load_config):
     # mock_logger.debug.assert_any_call("- mock_server_2/model_c")
 
 # Mocked tests for list-models CSV output
-@patch('ai_whisperer.commands.load_config')
 @patch('ai_whisperer.commands.ModelInfoProvider')
-def test_list_models_csv_mocked(mock_model_info_provider, mock_load_config):
+def test_list_models_csv_mocked(mock_model_info_provider):
     """Tests the list-models command with CSV output using mocked ModelInfoProvider."""
-    mock_load_config.return_value = {"servers": {}} # Return a dummy config
     mock_instance = mock_model_info_provider.return_value
 
     output_csv_path = "dummy_output.csv"
-    command = ListModelsCommand(config_path="dummy_config.yaml", output_csv=output_csv_path)
+    config = {"servers": {}, "config_path": "dummy_config.yaml"}
+    command = ListModelsCommand(config=config, output_csv=output_csv_path)
     command.execute()
 
     mock_instance.list_models_to_csv.assert_called_once_with(output_csv_path)
@@ -58,12 +56,11 @@ def test_list_models_csv_mocked(mock_model_info_provider, mock_load_config):
 @pytest.mark.slow
 def test_list_models_actual_servers():
     """Tests the list-models command with actual server interaction."""
-    # This test requires a valid configuration with actual servers defined.
-    # It will attempt to connect to configured servers.
-    # If no servers are configured or accessible, this test might fail or show empty output.
-    # Use a real config file path if available and appropriate for integration tests
-    # For this example, we'll use a placeholder and assume a config exists for the test environment
-    command = ListModelsCommand(config_path="config.yaml") # Use a real config path
+    from ai_whisperer.config import load_config
+    config_path = "config.yaml"
+    config = load_config(config_path)
+    config["config_path"] = config_path
+    command = ListModelsCommand(config=config)
 
     # Capture output by mocking logger.debug
     with patch('ai_whisperer.commands.logger.debug') as mock_print:
@@ -86,10 +83,12 @@ def test_list_models_actual_servers():
 @pytest.mark.slow
 def test_list_models_csv_actual_servers(tmp_path):
     """Tests the list-models command with CSV output and actual server interaction."""
-    # This test requires a valid configuration with actual servers defined.
-    # It will attempt to connect to configured servers and write to a temporary CSV file.
+    from ai_whisperer.config import load_config
+    config_path = "config.yaml"
+    config = load_config(config_path)
+    config["config_path"] = config_path
     output_csv_path = tmp_path / "actual_models.csv"
-    command = ListModelsCommand(config_path="config.yaml", output_csv=str(output_csv_path))
+    command = ListModelsCommand(config=config, output_csv=str(output_csv_path))
 
     command.execute()
 

@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 
 class BaseCommand(ABC):
     """Base class for all CLI commands."""
-    def __init__(self, config_path: str):
-        self.config_path = config_path
-        self.config = load_config(config_path)
+    def __init__(self, config: dict):
+        self.config = config
+        self.config_path = config.get('config_path') if isinstance(config, dict) else None
 
     @abstractmethod
     def execute(self):
@@ -32,8 +32,8 @@ class BaseCommand(ABC):
 
 class ListModelsCommand(BaseCommand):
     """Command to list available OpenRouter models."""
-    def __init__(self, config_path: str, output_csv: str = None):
-        super().__init__(config_path)
+    def __init__(self, config: dict, output_csv: str = None):
+        super().__init__(config)
         self.output_csv = output_csv
 
     def execute(self):
@@ -58,8 +58,8 @@ class ListModelsCommand(BaseCommand):
 
 class GenerateInitialPlanCommand(BaseCommand):
     """Command to generate initial task YAML or a detailed subtask."""
-    def __init__(self, config_path: str, output_dir: str, requirements_path: str = None):
-        super().__init__(config_path)
+    def __init__(self, config: dict, output_dir: str, requirements_path: str = None):
+        super().__init__(config)
         self.output_dir = output_dir
         self.requirements_path = requirements_path
 
@@ -80,8 +80,8 @@ class GenerateInitialPlanCommand(BaseCommand):
 
 class GenerateOverviewPlanCommand(BaseCommand):
     """Command to generate the overview plan and subtasks from an initial plan."""
-    def __init__(self, config_path: str, output_dir: str, initial_plan_path: str):
-        super().__init__(config_path)
+    def __init__(self, config: dict, output_dir: str, initial_plan_path: str):
+        super().__init__(config)
         self.output_dir = output_dir
         self.initial_plan_path = initial_plan_path
 
@@ -105,8 +105,8 @@ class GenerateOverviewPlanCommand(BaseCommand):
 
 class RefineCommand(BaseCommand):
     """Command to refine a requirements document."""
-    def __init__(self, config_path: str, input_file: str, iterations: int = 1, prompt_file: str = None, output: str = None):
-        super().__init__(config_path)
+    def __init__(self, config: dict, input_file: str, iterations: int = 1, prompt_file: str = None, output: str = None):
+        super().__init__(config)
         self.input_file = input_file
         self.iterations = iterations
         self.prompt_file = prompt_file
