@@ -108,10 +108,13 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         prompt_default_custom = manager_default_custom.get_prompt("another_category", "test_custom")
         expected_path = self.prompts_dir / "custom/another_category/test_custom.prompt.md"
         actual_path = prompt_default_custom.path
-        self.assertEqual(
-            os.path.normcase(os.path.normpath(str(actual_path))),
-            os.path.normcase(os.path.normpath(str(expected_path)))
-        )
+        try:
+            self.assertTrue(os.path.samefile(actual_path, expected_path))
+        except (AttributeError, FileNotFoundError):
+            self.assertEqual(
+                os.path.realpath(str(actual_path)),
+                os.path.realpath(str(expected_path))
+            )
         self.assertEqual(prompt_default_custom.content, "Another custom prompt.")
         # Restore the config data
         self.config_data["prompt_settings"]["base_paths"]["custom"] = original_custom_base
