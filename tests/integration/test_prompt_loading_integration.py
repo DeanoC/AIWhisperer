@@ -140,10 +140,13 @@ class TestPromptLoadingIntegration(unittest.TestCase):
         prompt_core = self.manager.get_prompt("core", "subtask_generator")
         expected_path = self.prompts_dir / "core/subtask_generator.prompt.md"
         actual_path = prompt_core.path
-        self.assertEqual(
-            os.path.normcase(os.path.normpath(str(actual_path))),
-            os.path.normcase(os.path.normpath(str(expected_path)))
-        )
+        try:
+            self.assertTrue(os.path.samefile(actual_path, expected_path))
+        except (AttributeError, FileNotFoundError):
+            self.assertEqual(
+                os.path.realpath(str(actual_path)),
+                os.path.realpath(str(expected_path))
+            )
         self.assertEqual(prompt_core.content, "Core subtask generator prompt.")
 
 
