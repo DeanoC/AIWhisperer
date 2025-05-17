@@ -66,9 +66,9 @@ def tool_registry():
     mock_delegate_manager = Mock()
 
     # Manually register the file tools for testing, passing the mock delegate manager
-    registry.register_tool(ReadFileTool(delegate_manager=mock_delegate_manager))
-    registry.register_tool(WriteFileTool(delegate_manager=mock_delegate_manager))
-    registry.register_tool(ExecuteCommandTool(delegate_manager=mock_delegate_manager))
+    registry.register_tool(ReadFileTool())
+    registry.register_tool(WriteFileTool())
+    registry.register_tool(ExecuteCommandTool())
     return registry
 
 @pytest.fixture

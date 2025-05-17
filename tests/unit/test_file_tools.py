@@ -222,18 +222,18 @@ def test_read_file_tool_execute_unsupported_file_type(temp_project_dir):
 # Tests for WriteFileTool
 def test_write_file_tool_name():
     """Tests the name property of WriteFileTool."""
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     assert tool.name == 'write_to_file'
 
 def test_write_file_tool_description():
     """Tests the description property of WriteFileTool."""
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     assert isinstance(tool.description, str)
     assert len(tool.description) > 0
 
 def test_write_file_tool_parameters_schema():
     """Tests the parameters_schema property of WriteFileTool."""
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     schema = tool.parameters_schema
 
     assert isinstance(schema, dict)
@@ -249,7 +249,7 @@ def test_write_file_tool_parameters_schema():
 
 def test_write_file_tool_openrouter_api_definition():
     """Tests the Openrouter API definition for WriteFileTool."""
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     definition = tool.get_openrouter_tool_definition()
 
     assert isinstance(definition, dict)
@@ -260,7 +260,7 @@ def test_write_file_tool_openrouter_api_definition():
 
 def test_write_file_tool_ai_prompt_instructions():
     """Tests the AI prompt instructions for WriteFileTool."""
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     instructions = tool.get_ai_prompt_instructions()
 
     assert isinstance(instructions, str)
@@ -269,14 +269,12 @@ def test_write_file_tool_ai_prompt_instructions():
     assert 'path' in instructions
     assert 'content' in instructions
 
-def test_write_file_tool_run_success(temp_project_dir, mock_delegate_manager):
+def test_write_file_tool_run_success(temp_project_dir):
     """Tests successful file writing using WriteFileTool."""
-    print(f"DEBUG: Type of mock_delegate_manager: {type(mock_delegate_manager)}") # Debug print
-    print(f"DEBUG: Value of mock_delegate_manager: {mock_delegate_manager}") # Debug print
     file_name = "new_test_file.txt"
     file_path_relative = file_name
     content_to_write = "This is the content to write."
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     result = tool.execute(file_path_relative, content_to_write)
     assert result['status'] == 'success'
     assert file_path_relative in result['message']
@@ -285,13 +283,11 @@ def test_write_file_tool_run_success(temp_project_dir, mock_delegate_manager):
         read_content = f.read()
     assert read_content == content_to_write
 
-def test_write_file_tool_run_overwrite(temp_project_file, mock_delegate_manager):
+def test_write_file_tool_run_overwrite(temp_project_file):
     """Tests that WriteFileTool overwrites an existing file."""
-    print(f"DEBUG: Type of mock_delegate_manager: {type(mock_delegate_manager)}") # Debug print
-    print(f"DEBUG: Value of mock_delegate_manager: {mock_delegate_manager}") # Debug print
     file_path_relative, original_content, temp_dir, file_path_abs = temp_project_file
     new_content = "This content overwrites the original."
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     result = tool.execute(file_path_relative, new_content)
     assert result['status'] == 'success'
     assert file_path_relative in result['message']
@@ -300,30 +296,26 @@ def test_write_file_tool_run_overwrite(temp_project_file, mock_delegate_manager)
     assert read_content == new_content
     assert read_content != original_content
 
-def test_write_file_tool_run_permission_denied(temp_project_file, mock_delegate_manager):
+def test_write_file_tool_run_permission_denied(temp_project_file):
     """Tests WriteFileTool handling of PermissionError."""
-    print(f"DEBUG: Type of mock_delegate_manager: {type(mock_delegate_manager)}") # Debug print
-    print(f"DEBUG: Value of mock_delegate_manager: {mock_delegate_manager}") # Debug print
     file_path_relative, _, temp_dir, file_path_abs = temp_project_file
     content_to_write = "Attempting to write."
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     with patch('builtins.open', side_effect=IOError("Permission denied")):
         result = tool.execute(file_path_relative, content_to_write)
     assert result['status'] == 'error'
     assert "Error writing to file" in result['message'] or "Permission denied" in result['message']
     assert file_path_relative in result['message']
 
-def test_write_file_tool_run_directory_created(temp_project_dir, mock_delegate_manager):
+def test_write_file_tool_run_directory_created(temp_project_dir):
     """Tests WriteFileTool creates parent directories if they do not exist."""
-    print(f"DEBUG: Type of mock_delegate_manager: {type(mock_delegate_manager)}") # Debug print
-    print(f"DEBUG: Value of mock_delegate_manager: {mock_delegate_manager}") # Debug print
     non_existent_dir_relative = "non_existent_dir"
     file_path_relative = os.path.join(non_existent_dir_relative, "test_file.txt")
     content_to_write = "Content for non-existent directory."
     non_existent_dir_abs = os.path.join(temp_project_dir, non_existent_dir_relative)
     if os.path.exists(non_existent_dir_abs):
         shutil.rmtree(non_existent_dir_abs)
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
     result = tool.execute(file_path_relative, content_to_write)
     assert result['status'] == 'success'
     assert file_path_relative in result['message']
@@ -337,11 +329,9 @@ def test_write_file_tool_run_directory_created(temp_project_dir, mock_delegate_m
     assert read_content == content_to_write
     shutil.rmtree(non_existent_dir_abs)
 
-def test_write_file_tool_run_missing_arguments(mock_delegate_manager):
+def test_write_file_tool_run_missing_arguments():
     """Tests WriteFileTool handling of missing arguments."""
-    print(f"DEBUG: Type of mock_delegate_manager: {type(mock_delegate_manager)}") # Debug print
-    print(f"DEBUG: Value of mock_delegate_manager: {mock_delegate_manager}") # Debug print
-    tool = WriteFileTool(delegate_manager=mock_delegate_manager)
+    tool = WriteFileTool()
 
     # Missing content
     with pytest.raises(TypeError):

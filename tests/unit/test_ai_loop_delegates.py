@@ -1,3 +1,4 @@
+from typing import Any
 import pytest
 import threading
 from unittest.mock import MagicMock, call
@@ -48,7 +49,7 @@ def test_ai_loop_started_delegate_invoked(mock_engine, task_definition, initial_
 
     run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
-    mock_delegate.assert_called_once_with(mock_engine, "ai_loop_started", None)
+    mock_delegate.assert_called_once_with(mock_engine, {"task_id": "test_ai_task"})
 
 def test_ai_loop_stopped_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
     mock_delegate = MagicMock()
@@ -59,7 +60,7 @@ def test_ai_loop_stopped_delegate_invoked(mock_engine, task_definition, initial_
 
     run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
-    mock_delegate.assert_called_once_with(mock_engine, "ai_loop_stopped", None)
+    mock_delegate.assert_called_once_with(mock_engine, {"task_id": "test_ai_task"})
 
 def test_ai_request_prepared_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
     mock_delegate = MagicMock()
@@ -88,7 +89,6 @@ def test_ai_request_prepared_delegate_invoked(mock_engine, task_definition, init
     # Check the arguments for the only call (prompt_text is '', params includes tool_choice)
     mock_delegate.assert_any_call(
         mock_engine,
-        "ai_request_prepared",
         {"request_payload": {"prompt_text": "", "model": "fake_model", "params": {"temperature": 0.1, "tool_choice": "auto"}, "messages_history": []}}
     )
 
@@ -115,8 +115,8 @@ def test_ai_response_received_delegate_invoked(mock_engine, task_definition, ini
     # Expecting two calls: one for the initial response, one for the subsequent response (even if it exits)
     assert mock_delegate.call_count == 2
     # Check the arguments for both calls
-    mock_delegate.assert_any_call(mock_engine, "ai_response_received", {"response_data": ai_response1})
-    mock_delegate.assert_any_call(mock_engine, "ai_response_received", {"response_data": ai_response2})
+    mock_delegate.assert_any_call(mock_engine, {"response_data": ai_response1})
+    mock_delegate.assert_any_call(mock_engine, {"response_data": ai_response2})
 
 
 def test_ai_processing_step_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
@@ -140,10 +140,10 @@ def test_ai_processing_step_delegate_invoked(mock_engine, task_definition, initi
         run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
     # Expecting calls for initial preparation and response processing, and subsequent ones
-    mock_delegate.assert_any_call(mock_engine, "ai_processing_step", {"step_name": "initial_ai_call_preparation", "task_id": task_definition["subtask_id"]})
-    mock_delegate.assert_any_call(mock_engine, "ai_processing_step", {"step_name": "initial_ai_response_processing", "task_id": task_definition["subtask_id"]})
-    mock_delegate.assert_any_call(mock_engine, "ai_processing_step", {"step_name": "subsequent_ai_call_preparation", "task_id": task_definition["subtask_id"]})
-    mock_delegate.assert_any_call(mock_engine, "ai_processing_step", {"step_name": "subsequent_ai_response_processing", "task_id": task_definition["subtask_id"]})
+    mock_delegate.assert_any_call(mock_engine, {"step_name": "initial_ai_call_preparation", "task_id": task_definition["subtask_id"]})
+    mock_delegate.assert_any_call(mock_engine, {"step_name": "initial_ai_response_processing", "task_id": task_definition["subtask_id"]})
+    mock_delegate.assert_any_call(mock_engine, {"step_name": "subsequent_ai_call_preparation", "task_id": task_definition["subtask_id"]})
+    mock_delegate.assert_any_call(mock_engine, {"step_name": "subsequent_ai_response_processing", "task_id": task_definition["subtask_id"]})
 
 
 def test_ai_loop_error_occurred_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
@@ -160,9 +160,8 @@ def test_ai_loop_error_occurred_delegate_invoked(mock_engine, task_definition, i
     mock_delegate.assert_called_once()
     args, kwargs = mock_delegate.call_args
     assert args[0] == mock_engine
-    assert args[1] == "ai_loop_error_occurred"
-    assert args[2]["error_type"] == "Exception"
-    assert "Fake AI error" in args[2]["error_message"]
+    assert args[1]["error_type"] == "Exception"
+    assert "Fake AI error" in args[1]["error_message"]
 
 
 def test_ai_loop_request_pause_delegate_invoked_and_pauses(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
@@ -192,7 +191,7 @@ def test_ai_loop_request_pause_delegate_invoked_and_pauses(mock_engine, task_def
         time.sleep(0.1)
 
         # Check if the pause delegate was called (may be called more than once)
-        mock_pause_delegate.assert_any_call(mock_engine, "ai_loop_request_pause")
+        mock_pause_delegate.assert_any_call(mock_engine)
 
         # The rest of the test (pause/resume logic) is not strictly necessary for verifying the delegate call,
         # and can be omitted for this assertion fix. If more robust pause/resume testing is needed, it can be re-added.
@@ -225,7 +224,7 @@ def test_ai_loop_request_stop_delegate_invoked_and_stops(mock_engine, task_defin
         time.sleep(0.1)
 
         # Check if the stop delegate was called
-        mock_stop_delegate.assert_called_once_with(mock_engine, "ai_loop_request_stop")
+        mock_stop_delegate.assert_called_once_with(mock_engine)
 
         # Wait for the AI loop thread to finish
         ai_loop_thread.join(timeout=5)

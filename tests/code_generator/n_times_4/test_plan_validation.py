@@ -24,7 +24,7 @@ def clean_output():
 def test_plan_passes_if_output_file_present():
     # Create the output file
     OUTPUT_FILE.parent.mkdir(exist_ok=True)
-    OUTPUT_FILE.write_text("def n_times_4(x):\n    return x * 4\n")
+    OUTPUT_FILE.write_text("def multiply_by_4(n):\n    return n * 4\n")
     # Run the plan using the PowerShell script
     result = subprocess.run([
         "powershell.exe", "-NoProfile", "-Command", str(RUN_SCRIPT), str(PLAN_JSON)
@@ -66,6 +66,13 @@ def test_cli_run_command_programmatic(clean_output):
     # We need to mock the actual AI service interaction.
     # Create a mock DelegateManager
     mock_delegate_manager = MagicMock()
+
+    def control_side_effect(sender, control_type, *args, **kwargs):
+        if control_type == "engine_request_pause":
+            return False
+        return False  # or handle other controls as needed
+
+    mock_delegate_manager.invoke_control.side_effect = control_side_effect
 
     with patch('ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion') as mock_call_chat_completion:
         # Use side_effect to simulate a tool call on the first call, and a final content message on the second call

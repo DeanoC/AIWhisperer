@@ -1,6 +1,7 @@
 import threading
 import logging
 from typing import Callable, Dict, Set, Any
+import traceback
 
 # Set up a module-level logger
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ class DelegateManager:
     def invoke_notification(self, sender: Any, event_type: str, event_data: Any = None) -> None:
         """
         Invoke all notification delegates registered for the given event type.
+        Delegates are called with (sender, event_data)
         """
         delegates_to_invoke = set()
         with self._lock:
@@ -80,6 +82,7 @@ class DelegateManager:
             try:
                 delegate(sender, event_data)
             except Exception as e:
+                logger.error(traceback.format_exc())
                 logger.error(f"Error invoking notification delegate: {e}")
     
     def invoke_control(self, sender: Any, control_type: str) -> bool:
@@ -95,7 +98,7 @@ class DelegateManager:
             return False
         for delegate in delegates_to_invoke:
             try:
-                if delegate(sender, control_type):
+                if delegate(sender):
                     return True
             except Exception as e:
                 logger.error(f"Error invoking control delegate: {e}")

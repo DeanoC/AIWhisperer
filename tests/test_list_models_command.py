@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 from ai_whisperer.commands import ListModelsCommand
 from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.model_info_provider import ModelInfoProvider
-from basic_output_test import ANSIConsoleUserMessageHandler
+from basic_output_display_message import ANSIConsoleUserMessageHandler
 
 # Mocked tests for list-models
 @patch('ai_whisperer.commands.ModelInfoProvider')
@@ -83,9 +83,17 @@ def test_list_models_actual_servers():
     # Further assertions would depend on the expected output from actual servers.
     # We can check if any model names were printed, indicating interaction with servers.
     # This is a basic check for integration test.
-    # Check if any call to print starts with "- " which indicates a model being listed
+    # Check if any call to print looks like a model id (contains a server/model pattern)
+    import re
     printed_lines = [call_args[0][0] for call_args in mock_print.call_args_list]
-    assert any(line.startswith("- ") for line in printed_lines)
+    # Regex: at least one word, slash, at least one word (loosely matches server/model)
+    model_line_regex = re.compile(r"[\w.-]+/[\w.-]+")
+    model_lines = [line for line in printed_lines if model_line_regex.search(line)]
+    if not model_lines:
+        print("DEBUG: logger.debug calls:")
+        for line in printed_lines:
+            print(repr(line))
+    assert model_lines, "No model lines found in logger.debug output. See debug above."
 
 # Tests interacting with actual servers for CSV output (marked as integration/slow)
 @pytest.mark.integration
@@ -96,8 +104,10 @@ def test_list_models_csv_actual_servers(tmp_path):
     config_path = "config.yaml"
     config = load_config(config_path)
     config["config_path"] = config_path
+
     output_csv_path = tmp_path / "actual_models.csv"
-    command = ListModelsCommand(config=config, output_csv=str(output_csv_path))
+    delegate_manager = DelegateManager()
+    command = ListModelsCommand(config=config, output_csv=str(output_csv_path), delegate_manager=delegate_manager)
 
     command.execute()
 

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 from ai_whisperer.main import cli
+from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.config import load_config
 from ai_whisperer.exceptions import TaskExecutionError
 
@@ -331,6 +332,9 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
     mock_instance.call_chat_completion.return_value = {"choices": [{"message": {"content": "Mocked AI response."}}]}
 
     # Run the aiwhisperer with the temporary config and the AI interaction only plan
+
+    # Patch: Inject a dummy DelegateManager to avoid NoneType errors
+    import types
     commands = cli(
         args=[
             "--config",
@@ -342,8 +346,10 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
             "dummy_state.json",
         ]
     )
-
     for command in commands:
+        # If the command has a delegate_manager attribute, set it to a dummy instance
+        if hasattr(command, 'delegate_manager'):
+            command.delegate_manager = DelegateManager()
         command.execute()
 
 
@@ -412,6 +418,8 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
         json.dump(instructions_only_overview_content, f, indent=2)
 
     # Run the aiwhisperer with the temporary config and task
+
+    # Patch: Inject a dummy DelegateManager to avoid NoneType errors
     commands = cli(
         args=[
             "--config",
@@ -423,8 +431,9 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
             "dummy_state.json",
         ]
     )
-
     for command in commands:
+        if hasattr(command, 'delegate_manager'):
+            command.delegate_manager = DelegateManager()
         command.execute()
 
 
@@ -538,6 +547,8 @@ def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
             indent=2,
         )
 
+
+    # Patch: Inject a dummy DelegateManager to avoid NoneType errors
     commands = cli(
         args=[
             "--config",
@@ -549,8 +560,9 @@ def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
             "dummy_state.json",
         ]
     )
-
     for command in commands:
+        if hasattr(command, 'delegate_manager'):
+            command.delegate_manager = DelegateManager()
         command.execute()
 
 

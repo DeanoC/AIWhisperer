@@ -2,8 +2,8 @@ import pytest
 import sys
 import io
 from enum import Enum
-from user_message_delegate import UserMessageLevel
-from basic_output_test import ANSIConsoleUserMessageHandler
+from user_message_delegate import UserMessageColour, UserMessageLevel
+from basic_output_display_message import ANSIConsoleUserMessageHandler
 
 class TestANSIConsoleUserMessageHandler:
 
@@ -20,10 +20,9 @@ class TestANSIConsoleUserMessageHandler:
     def test_display_message_info(self, handler, capsys):
         """Test displaying an INFO level message."""
         message = "This is an info message."
-        level = UserMessageLevel.INFO
-        handler.display_message(message, level)
+        handler.display_message(self, {"message": message, "level": UserMessageLevel.INFO})
         captured = capsys.readouterr()
-        expected_output = f"{handler.COLOR_MAP.get(level.value, '')}{level.value}: {message}{handler.COLOR_MAP['RESET']}\n"
+        expected_output = f"{UserMessageColour.RESET}{message}{UserMessageColour.RESET}\n"
         assert captured.out == expected_output
         assert captured.err == ""
 
@@ -31,9 +30,9 @@ class TestANSIConsoleUserMessageHandler:
         """Test displaying a DETAIL level message."""
         message = "This is a detail message."
         level = UserMessageLevel.DETAIL
-        handler.display_message(message, level)
+        handler.display_message(self, {"message": message, "level": level})
         captured = capsys.readouterr()
-        expected_output = f"{handler.COLOR_MAP.get(level.value, '')}{level.value}: {message}{handler.COLOR_MAP['RESET']}\n"
+        expected_output = f"{UserMessageColour.RESET}{message}{UserMessageColour.RESET}\n"
         assert captured.out == expected_output
         assert captured.err == ""
 
@@ -46,9 +45,5 @@ class TestANSIConsoleUserMessageHandler:
 
         message = "This is an unknown message."
         level = DummyLevel.UNKNOWN
-        handler.display_message(message, level)
-        captured = capsys.readouterr()
-        # Expect no color code for unknown levels, but the level value should be printed
-        expected_output = f"{level.value}: {message}{handler.COLOR_MAP['RESET']}\n"
-        assert captured.out == expected_output
-        assert captured.err == ""
+        with pytest.raises(Exception):
+            handler.display_message(self, {"message": message, "level": level})

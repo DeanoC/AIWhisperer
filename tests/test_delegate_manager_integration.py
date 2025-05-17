@@ -30,7 +30,7 @@ class DummyNotificationDelegate:
         self.called = False
         self.received_data = None
 
-    def handle(self, sender: Any, event_type: TestNotificationType, event_data: TestEventPayload):
+    def handle(self, sender: Any, event_data: TestEventPayload):
         self.called = True
         self.received_data = event_data
 
@@ -39,7 +39,7 @@ class DummyControlDelegate:
         self.called = False
         self._return_value = return_value
 
-    def handle(self, sender: Any, control_type: TestControlType) -> bool:
+    def handle(self, sender: Any) -> bool:
         self.called = True
         return self._return_value
 

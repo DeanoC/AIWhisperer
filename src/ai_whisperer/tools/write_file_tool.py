@@ -11,11 +11,6 @@ from ai_whisperer.exceptions import FileRestrictionError
 logger = logging.getLogger(__name__)
 
 class WriteFileTool(AITool):
-    def __init__(self, config: Dict[str, Any] = None, delegate_manager: DelegateManager = None):
-        # Configuration can be added here if needed in the future
-        self.delegate_manager = delegate_manager # Store the delegate manager instance
-        pass
-
     @property
     def name(self) -> str:
         return "write_to_file"
@@ -60,20 +55,9 @@ class WriteFileTool(AITool):
         """
 
         if not path:
-            self.delegate_manager.invoke_notification(
-                sender=self,
-                event_type="user_message_display",
-                event_data={"message": "[WriteFileTool] ERROR: 'path' argument is missing.", "level": UserMessageLevel.INFO}
-            )
             return {"status": "error", "message": "'path' argument is missing."}
         if content is None:
-            self.delegate_manager.invoke_notification(
-                sender=self,
-                event_type="user_message_display",
-                event_data={"message": "[WriteFileTool] ERROR: 'content' argument is missing.", "level": UserMessageLevel.INFO}
-            )
             return {"status": "error", "message": "'content' argument is missing."}
-
 
         path_manager = PathManager.get_instance()
         # Normalize the path: if absolute, use as-is; if the first part matches output dir name, strip it; else, join to output_path
@@ -88,16 +72,10 @@ class WriteFileTool(AITool):
                 input_path = pathlib.Path(*input_parts[1:])
             abs_file_path = (output_dir / input_path).resolve()
         logger.info(f"[WriteFileTool] Writing file. path arg: '{path}', resolved: '{abs_file_path}', output_dir: '{output_dir}'")
-        self.delegate_manager.invoke_notification(
-            sender=self,
-            event_type="user_message_display",
-            event_data={"message": f"[WriteFileTool] Writing file. path arg: '{path}', resolved: '{abs_file_path}', output_dir: '{output_dir}'", "level": UserMessageLevel.DETAIL}
-        )
 
         # Validate if the file path is within the output directory
         if not path_manager.is_path_within_output(abs_file_path):
             raise FileRestrictionError(f"Access denied. File path '{path}' is outside the allowed output directory.")
-
         try:
             # Ensure the parent directory exists
             parent_dir = abs_file_path.parent

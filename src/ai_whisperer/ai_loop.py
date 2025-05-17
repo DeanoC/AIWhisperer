@@ -79,8 +79,7 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
     ]
 
     logger.debug(f"Task {task_id}: Entering AI interaction loop.")
-    if delegate_manager: # Add check for delegate_manager
-        delegate_manager.invoke_notification(engine, "ai_loop_started") # Invoke ai_loop_started delegate
+    delegate_manager.invoke_notification(engine, "ai_loop_started", {"task_id": task_id})
 
     # First AI call: send system and user messages as the messages_history array
     try:
@@ -90,7 +89,7 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                 LogLevel.DEBUG, ComponentType.EXECUTION_ENGINE, "ai_loop_calling_ai_initial",
                 f"Calling AI for task {task_id} with system and user messages in messages_history", subtask_id=task_id, details={"prompt_text": initial_prompt}
             )
-        )
+            )
         delegate_manager.invoke_notification(engine, "ai_processing_step", {"step_name": "initial_ai_call_preparation", "task_id": task_id}) # Add processing step notification
 
         params = {
@@ -355,8 +354,8 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
                     or engine.config.get('model')
                     or 'google/gemini-2.5-flash-preview'
                 )
-                if delegate_manager: # Add check for delegate_manager
-                    delegate_manager.invoke_notification(engine, "ai_request_prepared", {"request_payload": {"prompt_text": "", "model": model, "params": params, "messages_history": context_manager.get_history()}}) # Invoke ai_request_prepared delegate
+                delegate_manager.invoke_notification(engine, "ai_request_prepared", {"request_payload": {"prompt_text": "", "model": model, "params": params, "messages_history": context_manager.get_history()}})
+
                 ai_response = engine.openrouter_api.call_chat_completion(
                     prompt_text ="",
                     messages_history=context_manager.get_history(), # Use history from ContextManager
@@ -465,6 +464,5 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
             )
             raise TaskExecutionError(error_message)
 
-    if delegate_manager: # Add check for delegate_manager
-        delegate_manager.invoke_notification(engine, "ai_loop_stopped") # Invoke ai_loop_stopped delegate
+    delegate_manager.invoke_notification(engine, "ai_loop_stopped", {"task_id": task_id})
     return final_result

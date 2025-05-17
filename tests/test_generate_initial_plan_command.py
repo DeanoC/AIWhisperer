@@ -5,6 +5,7 @@ import os
 
 from ai_whisperer.commands import GenerateInitialPlanCommand
 from ai_whisperer.initial_plan_generator import InitialPlanGenerator
+from ai_whisperer.delegate_manager import DelegateManager
 
 class TestGenerateInitialPlanCommand:
 
@@ -31,11 +32,13 @@ class TestGenerateInitialPlanCommand:
         command = GenerateInitialPlanCommand(
             config=config,
             output_dir=mock_output_dir,
-            requirements_path=tmp_req_path
+            requirements_path=tmp_req_path,
+            delegate_manager=DelegateManager()
         )
         exit_code = command.execute()
 
-        mock_initial_plan_generator.assert_called_once_with(command.config, mock_output_dir)
+        # The real InitialPlanGenerator is called with (config, delegate_manager, output_dir)
+        mock_initial_plan_generator.assert_called_once_with(command.config, command.delegate_manager, mock_output_dir)
         mock_initial_plan_instance.generate_plan.assert_called_once_with(tmp_req_path, mock_config_path)
         assert exit_code == 0
 
@@ -48,7 +51,8 @@ class TestGenerateInitialPlanCommand:
         command = GenerateInitialPlanCommand(
             config=config,
             output_dir=mock_output_dir,
-            requirements_path=None # Explicitly set to None
+            requirements_path=None, # Explicitly set to None
+            delegate_manager=DelegateManager()
         )
         with pytest.raises(ValueError, match="Requirements path is required for initial plan generation."):
             command.execute()
@@ -81,7 +85,8 @@ class TestGenerateInitialPlanCommand:
         command = GenerateInitialPlanCommand(
             config=config,
             output_dir=str(output_dir),
-            requirements_path=str(requirements_file)
+            requirements_path=str(requirements_file),
+            delegate_manager=DelegateManager()
         )
 
         # Execute the command and assert that it runs without raising an exception
