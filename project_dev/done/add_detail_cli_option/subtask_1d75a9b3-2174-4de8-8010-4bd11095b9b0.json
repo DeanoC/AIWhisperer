@@ -1,0 +1,37 @@
+{
+  "description": "Add documentation for the new detail level CLI option.",
+  "instructions": [
+    "Open the README.md file.",
+    "Locate the section describing CLI options or usage.",
+    "Add a new entry or modify the existing usage description to include the '--detail-level' option.",
+    "Clearly explain the purpose of the '--detail-level' option.",
+    "List the available detail levels (e.g., 'low', 'medium', 'high') and briefly describe what each level entails in terms of output verbosity or content.",
+    "Provide an example of how to use the '--detail-level' option in a command.",
+    "Ensure the new documentation integrates smoothly with the existing content."
+  ],
+  "input_artifacts": [
+    "README.md",
+    "ai_whisperer/cli.py"
+  ],
+  "output_artifacts": [
+    "README.md"
+  ],
+  "constraints": [
+    "The documentation must be added to the README.md file.",
+    "The documentation should be clear, concise, and easy to understand.",
+    "The documentation must accurately reflect the functionality implemented in ai_whisperer/cli.py."
+  ],
+  "validation_criteria": [
+    "README.md is updated with documentation for the '--detail-level' option.",
+    "The documentation for '--detail-level' includes its purpose, usage, and available levels.",
+    "The documentation is accurate and consistent with the CLI implementation.",
+    "The updated README.md is well-formatted and easy to read."
+  ],
+  "type": "documentation",
+  "name": "add_documentation",
+  "depends_on": [
+    "connect_cli_to_handler"
+  ],
+  "task_id": "9d132fd3-4632-40c3-8331-dae207ba694b",
+  "subtask_id": "1d75a9b3-2174-4de8-8010-4bd11095b9b0"
+}

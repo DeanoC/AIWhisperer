@@ -1,0 +1,39 @@
+{
+  "description": "Connect the CLI parsed detail level value to the ANSIConsoleUserMessageHandler.",
+  "instructions": [
+    "Open the file `ai_whisperer/main.py`.",
+    "Locate the section where the CLI arguments are parsed using `argparse`.",
+    "Identify the variable that stores the value of the `--detail-level` argument.",
+    "Find where the `ANSIConsoleUserMessageHandler` is instantiated.",
+    "Before the main processing loop or where the handler is first used for output, call the `set_detail_level` method on the `ANSIConsoleUserMessageHandler` instance, passing the parsed detail level value from the CLI.",
+    "Ensure that the parsed detail level value is an integer.",
+    "Verify that the import for `ANSIConsoleUserMessageHandler` is present in `ai_whisperer/main.py`."
+  ],
+  "input_artifacts": [
+    "ai_whisperer/main.py",
+    "ai_whisperer/cli.py",
+    "ai_whisperer/ansi_console_user_message_handler.py"
+  ],
+  "output_artifacts": [
+    "ai_whisperer/main.py"
+  ],
+  "constraints": [
+    "Only modify `ai_whisperer/main.py`.",
+    "Do not change the parsing logic in `ai_whisperer/cli.py`.",
+    "Do not change the `ANSIConsoleUserMessageHandler` class definition in `ai_whisperer/ansi_console_user_message_handler.py` beyond ensuring the `set_detail_level` method exists (which was done in a previous step)."
+  ],
+  "validation_criteria": [
+    "The `ai_whisperer/main.py` file is modified.",
+    "The parsed detail level from the CLI is used to call the `set_detail_level` method on the `ANSIConsoleUserMessageHandler` instance.",
+    "The code compiles and runs without errors related to the detail level setting.",
+    "Running the application with `--detail-level <value>` should result in the handler's detail level being set to `<value>`."
+  ],
+  "type": "file_edit",
+  "name": "connect_cli_to_handler",
+  "depends_on": [
+    "implement_cli_option",
+    "implement_handler_detail_level"
+  ],
+  "task_id": "9d132fd3-4632-40c3-8331-dae207ba694b",
+  "subtask_id": "dde9788e-87e2-415e-bb49-db94922ecd1c"
+}

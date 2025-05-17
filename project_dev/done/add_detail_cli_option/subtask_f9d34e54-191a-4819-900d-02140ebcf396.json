@@ -1,0 +1,44 @@
+{
+  "description": "Generate tests for ANSIConsoleUserMessageHandler to cover setting and getting the detail level and conditional message display.",
+  "instructions": [
+    "Open the file `tests/unit/test_ansi_console_message_handler.py`.",
+    "Add new test methods to the `TestANSIConsoleUserMessageHandler` class (or create the class if it doesn't exist) to cover the following scenarios:",
+    "- Test that the `ANSIConsoleUserMessageHandler` can be initialized and its `detail_level` attribute can be set and retrieved.",
+    "- Test that the `display_message` method outputs a message when the message's detail level is less than the handler's detail level.",
+    "- Test that the `display_message` method outputs a message when the message's detail level is equal to the handler's detail level.",
+    "- Test that the `display_message` method does NOT output a message when the message's detail level is greater than the handler's detail level.",
+    "- Test that the default `detail_level` for a new `ANSIConsoleUserMessageHandler` instance is 'INFO'.",
+    "Use appropriate mocking or dependency injection if necessary to isolate the `ANSIConsoleUserMessageHandler` and capture output.",
+    "Ensure the tests are written using the `pytest` framework.",
+    "Save the changes to `tests/unit/test_ansi_console_message_handler.py`."
+  ],
+  "input_artifacts": [
+    "docs/detail_option_implementation_plan.md",
+    "ai_whisperer/ansi_console_user_message_handler.py",
+    "tests/unit/test_ansi_console_message_handler.py"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_ansi_console_message_handler.py"
+  ],
+  "constraints": [
+    "Only modify the specified test file.",
+    "Do not implement the actual detail level or conditional display logic in the `ANSIConsoleUserMessageHandler` itself in this step.",
+    "The tests should specifically target the detail level and conditional display logic.",
+    "Tests must be written using pytest."
+  ],
+  "validation_criteria": [
+    "New test methods related to detail level and conditional message display are present in `tests/unit/test_ansi_console_message_handler.py`.",
+    "The added tests cover setting/getting detail level, displaying messages at equal/lower levels, not displaying messages at higher levels, and the default level.",
+    "The file `tests/unit/test_ansi_console_message_handler.py` is syntactically correct Python and imports necessary modules.",
+    "Running `pytest tests/unit/test_ansi_console_message_handler.py` executes the new tests.",
+    "The new tests related to the unimplemented detail level functionality fail as expected."
+  ],
+  "type": "test_generation",
+  "name": "generate_handler_tests",
+  "depends_on": [
+    "implement_cli_option",
+    "analyze_existing_code"
+  ],
+  "task_id": "9d132fd3-4632-40c3-8331-dae207ba694b",
+  "subtask_id": "f9d34e54-191a-4819-900d-02140ebcf396"
+}

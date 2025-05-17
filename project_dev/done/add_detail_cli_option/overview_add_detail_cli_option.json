@@ -1,0 +1,137 @@
+{
+    "natural_language_goal": "Add a detail level option to ANSIConsoleUserMessageHandler",
+    "plan": [
+        {
+            "subtask_id": "a76ac696-9e66-495a-8131-1f3bc5e9894c",
+            "name": "analyze_existing_code",
+            "description": "Analyze the existing ANSIConsoleUserMessageHandler and CLI parser code to understand the current structure and identify modification points.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_a76ac696-9e66-495a-8131-1f3bc5e9894c.json",
+            "type": "analysis",
+            "depends_on": [],
+            "input_artifacts": [
+                "ai_whisperer/ansi_console_user_message_handler.py",
+                "ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [
+                "docs/detail_option_implementation_plan.md"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "b3020cc7-7785-498b-a103-c77c73ed4be3",
+            "name": "generate_cli_tests",
+            "description": "Generate tests for the CLI parser to ensure the new detail level option is handled correctly.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_b3020cc7-7785-498b-a103-c77c73ed4be3.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_existing_code"
+            ],
+            "input_artifacts": [
+                "docs/detail_option_implementation_plan.md",
+                "ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_cli.py"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "95be7496-1ee3-4ccb-98e5-251589377174",
+            "name": "implement_cli_option",
+            "description": "Add the '--detail-level' option to the CLI parser.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_95be7496-1ee3-4ccb-98e5-251589377174.json",
+            "type": "file_edit",
+            "depends_on": [
+                "generate_cli_tests"
+            ],
+            "input_artifacts": [
+                "ai_whisperer/cli.py",
+                "tests/unit/test_cli.py"
+            ],
+            "output_artifacts": [
+                "ai_whisperer/cli.py"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "f9d34e54-191a-4819-900d-02140ebcf396",
+            "name": "generate_handler_tests",
+            "description": "Generate tests for ANSIConsoleUserMessageHandler to cover setting and getting the detail level and conditional message display.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_f9d34e54-191a-4819-900d-02140ebcf396.json",
+            "type": "test_generation",
+            "depends_on": [
+                "implement_cli_option",
+                "analyze_existing_code"
+            ],
+            "input_artifacts": [
+                "docs/detail_option_implementation_plan.md",
+                "ai_whisperer/ansi_console_user_message_handler.py"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_ansi_console_message_handler.py"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "e2bc9adb-76e6-438d-ae82-b5a4b9c69aa0",
+            "name": "implement_handler_detail_level",
+            "description": "Implement the detail level storage, setter, getter, and conditional display logic in ANSIConsoleUserMessageHandler.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_e2bc9adb-76e6-438d-ae82-b5a4b9c69aa0.json",
+            "type": "file_edit",
+            "depends_on": [
+                "generate_handler_tests"
+            ],
+            "input_artifacts": [
+                "ai_whisperer/ansi_console_user_message_handler.py",
+                "tests/unit/test_ansi_console_message_handler.py"
+            ],
+            "output_artifacts": [
+                "ai_whisperer/ansi_console_user_message_handler.py"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "dde9788e-87e2-415e-bb49-db94922ecd1c",
+            "name": "connect_cli_to_handler",
+            "description": "Connect the CLI parsed detail level value to the ANSIConsoleUserMessageHandler.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_dde9788e-87e2-415e-bb49-db94922ecd1c.json",
+            "type": "file_edit",
+            "depends_on": [
+                "implement_cli_option",
+                "implement_handler_detail_level"
+            ],
+            "input_artifacts": [
+                "ai_whisperer/main.py",
+                "ai_whisperer/cli.py",
+                "ai_whisperer/ansi_console_user_message_handler.py"
+            ],
+            "output_artifacts": [
+                "ai_whisperer/main.py"
+            ],
+            "completed": false
+        },
+        {
+            "subtask_id": "1d75a9b3-2174-4de8-8010-4bd11095b9b0",
+            "name": "add_documentation",
+            "description": "Add documentation for the new detail level CLI option.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_1d75a9b3-2174-4de8-8010-4bd11095b9b0.json",
+            "type": "documentation",
+            "depends_on": [
+                "connect_cli_to_handler"
+            ],
+            "input_artifacts": [
+                "README.md",
+                "ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [
+                "README.md"
+            ],
+            "completed": false
+        }
+    ],
+    "task_id": "9d132fd3-4632-40c3-8331-dae207ba694b",
+    "input_hashes": {
+        "requirements_md": "beaae97c95f85fdbfb778100fb9a27402a81965719788d376dec9ebe2f971967",
+        "config_yaml": "c3ec11483dd16c723c26a905ada85e72c74730bf0cea1239f347f03201ecaa5f"
+    }
+}
