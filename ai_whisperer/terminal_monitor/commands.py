@@ -3,7 +3,7 @@ import sys
 import debugpy
 from abc import ABC, abstractmethod
 from ai_whisperer.delegate_manager import DelegateManager
-from user_message_delegate import UserMessageLevel
+from monitor.user_message_delegate import UserMessageLevel
 
 logger = logging.getLogger(__name__)
 

@@ -2,8 +2,8 @@ import pytest
 import sys
 import io
 from enum import Enum
-from user_message_delegate import UserMessageColour, UserMessageLevel
-from basic_output_display_message import ANSIConsoleUserMessageHandler
+from monitor.user_message_delegate import UserMessageColour, UserMessageLevel
+from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
 
 class TestANSIConsoleUserMessageHandler:
 

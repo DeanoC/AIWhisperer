@@ -16,7 +16,7 @@ from ai_whisperer.utils import calculate_sha256, build_ascii_directory_tree
 from ai_whisperer.ai_service_interaction import OpenRouterAPI
 from ai_whisperer.path_management import PathManager
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
-from user_message_delegate import UserMessageLevel
+from monitor.user_message_delegate import UserMessageLevel
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.delegate_manager import DelegateManager
-from user_message_delegate import UserMessageLevel
+from monitor.user_message_delegate import UserMessageLevel
 from ai_whisperer.path_management import PathManager
 from ai_whisperer.exceptions import FileRestrictionError
 

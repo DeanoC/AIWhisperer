@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from user_message_delegate import UserMessageLevel # Import UserMessageLevel
+from monitor.user_message_delegate import UserMessageLevel # Import UserMessageLevel
 
 # Minimal valid config for CLI commands to not error
 minimal_config = {
@@ -125,7 +125,7 @@ def test_list_models_command_with_detail_level(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    from user_message_delegate import UserMessageLevel # Import UserMessageLevel
+    from monitor.user_message_delegate import UserMessageLevel # Import UserMessageLevel
 
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,

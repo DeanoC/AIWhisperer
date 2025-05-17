@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import patch # Import patch
 from ai_whisperer.cli import cli, execute_commands_and_capture_output
 from ai_whisperer.delegate_manager import DelegateManager
-from user_message_delegate import UserMessageLevel
-from basic_output_display_message import ANSIConsoleUserMessageHandler # Import the handler
+from monitor.user_message_delegate import UserMessageLevel
+from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler # Import the handler
 
 @patch('builtins.print') # Patch builtins.print
 def test_detail_level_cli_option_filters_output(mock_print):

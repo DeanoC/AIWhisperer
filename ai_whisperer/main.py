@@ -1,10 +1,10 @@
 import sys
 import logging
 
-from basic_output_display_message import ANSIConsoleUserMessageHandler # Import logging
+from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler # Import logging
 from .cli import cli
 from ai_whisperer.delegate_manager import DelegateManager
-from user_message_delegate import UserMessageAttribs, UserMessageColour, UserMessageLevel
+from monitor.user_message_delegate import UserMessageAttribs, UserMessageColour, UserMessageLevel
 
 logger = logging.getLogger(__name__) # Get logger instance
 

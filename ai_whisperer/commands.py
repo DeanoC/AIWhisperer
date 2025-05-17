@@ -9,8 +9,8 @@ import threading # Import threading
 from typing import Optional
 
 from ai_whisperer.delegate_manager import DelegateManager
-from user_message_delegate import UserMessageLevel # Import Optional
-from basic_output_display_message import ANSIConsoleUserMessageHandler
+from monitor.user_message_delegate import UserMessageLevel # Import Optional
+from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
 from .state_management import StateManager # Import StateManager
 
 from .config import load_config

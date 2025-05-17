@@ -6,8 +6,8 @@ from unittest.mock import patch, MagicMock
 from ai_whisperer.commands import ListModelsCommand
 from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.model_info_provider import ModelInfoProvider
-from basic_output_display_message import ANSIConsoleUserMessageHandler
-from user_message_delegate import UserMessageLevel # Import UserMessageLevel
+from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
+from monitor.user_message_delegate import UserMessageLevel # Import UserMessageLevel
 
 # Mocked tests for list-models
 @patch('ai_whisperer.commands.ModelInfoProvider')

@@ -389,6 +389,14 @@
                 "error": "An unexpected error occurred during AI interaction task 21baa9b5-1284-4153-8c8e-14686fabea48 execution: AI response is empty or missing 'message' key.",
                 "error_details": null
             }
+        },
+        "234a5977-af46-4226-8197-76aa3347845f": {
+            "status": "failed",
+            "result": {
+                "status": "failed",
+                "error": "An unexpected error occurred during AI interaction task 234a5977-af46-4226-8197-76aa3347845f execution: AI response is empty or missing 'message' key.",
+                "error_details": null
+            }
         }
     },
     "global_state": {},

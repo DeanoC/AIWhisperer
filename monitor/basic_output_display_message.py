@@ -1,7 +1,7 @@
 import sys
 import logging # Import logging
 from typing import Any
-from user_message_delegate import UserMessageColour, UserMessageDelegate, UserMessageLevel
+from monitor.user_message_delegate import UserMessageColour, UserMessageDelegate, UserMessageLevel
 import traceback
 
 logger = logging.getLogger(__name__) # Get logger instance

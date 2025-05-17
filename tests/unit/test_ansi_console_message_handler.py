@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from basic_output_display_message import ANSIConsoleUserMessageHandler
-from user_message_delegate import UserMessageLevel # Corrected import
+from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
+from monitor.user_message_delegate import UserMessageLevel # Corrected import
 
 class TestANSIConsoleUserMessageHandler:
 

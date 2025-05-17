@@ -7,7 +7,7 @@ from pathlib import Path
 import os
 import csv
 
-from user_message_delegate import UserMessageLevel
+from monitor.user_message_delegate import UserMessageLevel
 
 # Import necessary components from the application
 from .config import load_config
