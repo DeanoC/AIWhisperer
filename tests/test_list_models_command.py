@@ -7,6 +7,7 @@ from ai_whisperer.commands import ListModelsCommand
 from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.model_info_provider import ModelInfoProvider
 from basic_output_display_message import ANSIConsoleUserMessageHandler
+from user_message_delegate import UserMessageLevel # Import UserMessageLevel
 
 # Mocked tests for list-models
 @patch('ai_whisperer.commands.ModelInfoProvider')
@@ -19,19 +20,41 @@ def test_list_models_mocked(mock_model_info_provider):
         {"id": "mock_server_2/model_c", "name": "model_c"}
     ]
 
-    delegate_manager = MagicMock()
+    mock_delegate_manager = MagicMock()
     config = {"servers": {}, "config_path": "dummy_config.yaml"}
-    command = ListModelsCommand(config=config, output_csv=None, delegate_manager=delegate_manager)
+    detail_level = UserMessageLevel.INFO # Set detail level for this test
+
+    command = ListModelsCommand(config=config, output_csv=None, delegate_manager=mock_delegate_manager, detail_level=detail_level)
     command.execute()
 
     mock_instance.list_models.assert_called_once()
-    # Assertions on console output
-    # TODO: Uncomment the following lines when console_print is available
-    # mock_logger.debug.assert_any_call("Loading configuration from: dummy_config.yaml")
-    # mock_logger.debug.assert_any_call("[bold green]Available OpenRouter Models:[/bold green]")
-    # mock_logger.debug.assert_any_call("- mock_server_1/model_a")
-    # mock_logger.debug.assert_any_call("- mock_server_1/model_b")
-    # mock_logger.debug.assert_any_call("- mock_server_2/model_c")
+
+    # Assertions on delegate_manager.invoke_notification calls
+    mock_delegate_manager.invoke_notification.assert_any_call(
+        sender=command,
+        event_type="user_message_display",
+        event_data={"message": "Available OpenRouter Models (3):", "level": UserMessageLevel.INFO}
+    )
+    mock_delegate_manager.invoke_notification.assert_any_call(
+        sender=command,
+        event_type="user_message_display",
+        event_data={"message": "- mock_server_1/model_a", "level": UserMessageLevel.INFO}
+    )
+    mock_delegate_manager.invoke_notification.assert_any_call(
+        sender=command,
+        event_type="user_message_display",
+        event_data={"message": "- mock_server_1/model_b", "level": UserMessageLevel.INFO}
+    )
+    mock_delegate_manager.invoke_notification.assert_any_call(
+        sender=command,
+        event_type="user_message_display",
+        event_data={"message": "- mock_server_2/model_c", "level": UserMessageLevel.INFO}
+    )
+    # Ensure no DETAIL level messages were sent at INFO detail level
+    for call_args, call_kwargs in mock_delegate_manager.invoke_notification.call_args_list:
+        event_data = call_kwargs.get('event_data')
+        if event_data and event_data.get('level') == UserMessageLevel.DETAIL:
+            assert False, "DETAIL level message was sent when detail_level was INFO"
 
 # Mocked tests for list-models CSV output
 @patch('ai_whisperer.commands.ModelInfoProvider')
@@ -39,17 +62,24 @@ def test_list_models_csv_mocked(mock_model_info_provider):
     """Tests the list-models command with CSV output using mocked ModelInfoProvider."""
     mock_instance = mock_model_info_provider.return_value
 
-    delegate_manager = MagicMock()
+    mock_delegate_manager = MagicMock()
     output_csv_path = "dummy_output.csv"
     config = {"servers": {}, "config_path": "dummy_config.yaml"}
-    command = ListModelsCommand(config=config, output_csv=output_csv_path, delegate_manager=delegate_manager)
+    detail_level = UserMessageLevel.INFO # Detail level should not affect CSV output
+
+    command = ListModelsCommand(config=config, output_csv=output_csv_path, delegate_manager=mock_delegate_manager, detail_level=detail_level)
     command.execute()
 
     mock_instance.list_models_to_csv.assert_called_once_with(output_csv_path)
-    # Assertions on console output for CSV case
-    # TODO: Uncomment the following lines when console_print is available
-    # mock_logger.debug.assert_any_call("Loading configuration from: dummy_config.yaml")
-    # mock_logger.debug.assert_any_call(f"[green]Successfully wrote model list to CSV: {output_csv_path}[/green]")
+
+    # Assertions on delegate_manager.invoke_notification calls for CSV case
+    mock_delegate_manager.invoke_notification.assert_any_call(
+        sender=command,
+        event_type="user_message_display",
+        event_data={"message": f"Successfully wrote model list to CSV: {output_csv_path}", "level": UserMessageLevel.INFO}
+    )
+    # Ensure no other messages were sent
+    assert mock_delegate_manager.invoke_notification.call_count == 1
 
 
 
@@ -69,8 +99,9 @@ def test_list_models_actual_servers():
     delegate_manager.register_notification(
         event_type="user_message_display",
         delegate=ansi_handler.display_message
-    )    
-    command = ListModelsCommand(config=config, output_csv=None, delegate_manager=delegate_manager)
+    )
+    # Add detail_level to the command instantiation
+    command = ListModelsCommand(config=config, output_csv=None, delegate_manager=delegate_manager, detail_level=UserMessageLevel.INFO)
 
     # Capture output by mocking logger.debug
     with patch('ai_whisperer.commands.logger.debug') as mock_print:
@@ -107,7 +138,8 @@ def test_list_models_csv_actual_servers(tmp_path):
 
     output_csv_path = tmp_path / "actual_models.csv"
     delegate_manager = DelegateManager()
-    command = ListModelsCommand(config=config, output_csv=str(output_csv_path), delegate_manager=delegate_manager)
+    # Add detail_level to the command instantiation
+    command = ListModelsCommand(config=config, output_csv=str(output_csv_path), delegate_manager=delegate_manager, detail_level=UserMessageLevel.INFO)
 
     command.execute()
 

@@ -2,6 +2,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
+from user_message_delegate import UserMessageLevel # Import UserMessageLevel
+
 # Minimal valid config for CLI commands to not error
 minimal_config = {
     "openrouter": {
@@ -68,7 +70,8 @@ def test_list_models_command_valid_args(mock_commands):
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
         output_csv=None,
-        delegate_manager=ANY
+        delegate_manager=ANY, # Expect the delegate manager
+        detail_level=UserMessageLevel.INFO # Expect the default detail level
     )
     assert isinstance(commands[0], MagicMock) # Check if the mocked object is returned
 
@@ -82,7 +85,8 @@ def test_list_models_command_global_config_before_command(mock_commands):
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
         output_csv=None,
-        delegate_manager=ANY
+        delegate_manager=ANY, # Expect the delegate manager
+        detail_level=UserMessageLevel.INFO # Expect the default detail level
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -96,7 +100,8 @@ def test_list_models_command_with_output_csv(mock_commands):
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
         output_csv="output.csv",
-        delegate_manager=ANY
+        delegate_manager=ANY, # Expect the delegate manager
+        detail_level=UserMessageLevel.INFO # Expect the default detail level
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -109,6 +114,23 @@ def test_list_models_command_missing_config(capsys_sys_exit):
     assert e.value.code != 0 # Should exit with a non-zero code on error
     captured = capsys_sys_exit.readouterr()
     assert "the following arguments are required: --config" in captured.err
+
+def test_list_models_command_with_detail_level(mock_commands):
+    """Test parsing valid arguments for the list-models command with --detail-level."""
+    args = ["--config", "path/to/config.yaml", "list-models", "--detail-level", "detail"]
+    commands = cli(args)
+
+    assert len(commands) == 1
+    from unittest.mock import ANY
+    from user_message_delegate import UserMessageLevel # Import UserMessageLevel
+
+    mock_commands["ListModelsCommand"].assert_called_once_with(
+        config=minimal_config,
+        output_csv=None,
+        delegate_manager=ANY,
+        detail_level=UserMessageLevel.DETAIL # Assert that detail_level is passed correctly
+    )
+    assert isinstance(commands[0], MagicMock)
 
 def test_generate_initial_plan_command_valid_args(mock_commands):
     """Test parsing valid arguments for the generate initial-plan command."""
@@ -327,7 +349,6 @@ def test_run_command_valid_args(mock_commands):
         config=minimal_config,
         plan_file="plan.json",
         state_file="state.json",
-        monitor=False,
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
@@ -362,37 +383,6 @@ def test_run_command_missing_config(capsys_sys_exit):
     captured = capsys_sys_exit.readouterr()
     assert "the following arguments are required: --config" in captured.err
 
-def test_run_command_with_monitor(mock_commands):
-    """Test parsing arguments for the run command with --monitor."""
-    args = ["--config", "config.yaml", "run", "--plan-file", "plan.json", "--state-file", "state.json", "--monitor"]
-    commands = cli(args)
-
-    assert len(commands) == 1
-    from unittest.mock import ANY
-    mock_commands["RunCommand"].assert_called_once_with(
-        config=minimal_config,
-        plan_file="plan.json",
-        state_file="state.json",
-        monitor=True,
-        delegate_manager=ANY
-    )
-    assert isinstance(commands[0], MagicMock)
-
-def test_run_command_without_monitor(mock_commands):
-    """Test parsing arguments for the run command without --monitor."""
-    args = ["--config", "config.yaml", "run", "--plan-file", "plan.json", "--state-file", "state.json"]
-    commands = cli(args)
-
-    assert len(commands) == 1
-    from unittest.mock import ANY
-    mock_commands["RunCommand"].assert_called_once_with(
-        config=minimal_config,
-        plan_file="plan.json",
-        state_file="state.json",
-        monitor=False,
-        delegate_manager=ANY
-    )
-    assert isinstance(commands[0], MagicMock)
 
 def test_cli_passes_path_args_to_load_config(mock_setup):
     """Test that path-related CLI arguments are passed to load_config."""

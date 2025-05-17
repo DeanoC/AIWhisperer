@@ -225,6 +225,12 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
 
   * **`--monitor`**, **`-m`**: Enables the terminal monitor during the task execution, providing real-time updates on the plan's progress.
 
+* **`--detail-level`**: Controls the verbosity of the output messages.
+  * **`low`**: Displays only essential information.
+  * **`medium`**: Includes key details and progress updates.
+  * **`high`**: Shows all available information, including detailed logs and intermediate steps.
+  * Defaults to `medium`.
+
 The project_dev folder shows how I currently use aiwhisperer to implement features in it self.
 A starting feature request can be generated with any AI chat with a prompt similar to
 the following with context from something like

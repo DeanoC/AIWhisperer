@@ -28,7 +28,11 @@ if __name__ == "__main__":
     )
     try:
         # Pass the delegate_manager instance to cli()
-        commands = cli(delegate_manager=delegate_manager)
+        commands, config = cli(delegate_manager=delegate_manager)
+
+        if config["detail_level"] == UserMessageLevel.DETAIL:
+            ansi_handler.set_detail_level(UserMessageLevel.DETAIL)
+            
         logger.debug("Executing commands...")
         exit_code = 0
         for command in commands:
@@ -45,11 +49,19 @@ if __name__ == "__main__":
         logger.debug("Exiting application.")
         sys.exit(exit_code)
     except SystemExit as e:
+        if e.code == 1:
+            delegate_manager.invoke_notification(
+                sender=None,
+                event_type="user_message_display",
+                event_data={"message": "Exiting with errors.", "level": UserMessageLevel.INFO}
+            )
         raise e
     except Exception as e:
         delegate_manager.invoke_notification(
             sender=None, # Or a more appropriate sender if available in this context
             event_type="user_message_display",
-            event_data={"message": f"Error: {e}", "level": UserMessageLevel.INFO}
+            event_data={"message": 
+                        f"{UserMessageColour.BG_BRIGHT_RED}{UserMessageColour.BRIGHT_WHITE}Error{UserMessageColour.RESET}: {e}",
+                        "level": UserMessageLevel.INFO}
         )
         sys.exit(1)

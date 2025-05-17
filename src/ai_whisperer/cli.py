@@ -20,6 +20,15 @@ from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManag
 logger = None # Will be initialized in main after logging is configured
 delegate_manager = None # Will be initialized in main after logging is configured
 
+def user_message_level_type(value: str) -> UserMessageLevel:
+    """Custom argparse type function for UserMessageLevel."""
+    try:
+        return UserMessageLevel[value.upper()]
+    except KeyError:
+        raise argparse.ArgumentTypeError(
+            f"Invalid detail level: {value}. Choose from {list(UserMessageLevel.__members__.keys())}"
+        )
+
 def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand]:
     """Main entry point for the AI Whisperer CLI application.
     
@@ -43,6 +52,13 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
     )
     parser.add_argument(
         "--debug", action="store_true", help="Wait for a debugger to attach before running."
+    )
+    parser.add_argument(
+        "--detail-level",
+        type=user_message_level_type, # Use the custom type function
+        choices=list(UserMessageLevel),
+        default=UserMessageLevel.INFO, # Change default to INFO
+        help="Set the detail level for output messages (INFO, DETAIL). Defaults to INFO."
     )
 
     # Add path-related global arguments
@@ -96,6 +112,13 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
     list_models_parser.add_argument(
         "--output-csv", type=str, required=False, help="Path to output CSV file for --list-models command."
     )
+    list_models_parser.add_argument( # Add detail-level argument to list-models subparser
+        "--detail-level",
+        type=user_message_level_type,
+        choices=list(UserMessageLevel),
+        default=UserMessageLevel.INFO,
+        help="Set the detail level for output messages (INFO, DETAIL). Defaults to INFO."
+    )
 
     # --- Refine Command ---
     refine_parser = subparsers.add_parser("refine", help="Refine a requirements document using an AI model")
@@ -118,11 +141,8 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
         required=True,
         help="Path to the state file. Used for loading previous state and saving current state.",
     )
-    run_parser.add_argument(
-        "--monitor", action="store_true", help="Enable terminal monitoring during plan execution."
-    )
 
-     # Use parse_args (let argparse handle errors and exit codes)
+    # Use parse_args (let argparse handle errors and exit codes)
     try:
         if args is not None:
             parsed_args = parser.parse_args(args)
@@ -169,13 +189,13 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
         logger.debug(f"Parsed arguments: {parsed_args}")
         logger.debug(f"Command: {parsed_args.command}")
 
-
-
         # Load configuration, passing parsed_args for PathManager initialization
         config = load_config(str(config_file_path), cli_args=vars(parsed_args))
         if config is None or not isinstance(config, dict) or not config:
             logger.error(f"Configuration failed to load or is empty. Config path: {config_file_path}")
             raise ConfigError(f"Configuration failed to load or is empty. Config path: {config_file_path}")
+
+        config["detail_level"] = parsed_args.detail_level;
 
         # --- Ensure PathManager is always initialized with the loaded config ---
         try:
@@ -197,7 +217,8 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
             commands.append(ListModelsCommand(
                 config=config, # Pass the loaded config object
                 output_csv=parsed_args.output_csv,
-                delegate_manager=delegate_manager # Pass the delegate manager
+                delegate_manager=delegate_manager, # Pass the delegate manager
+                detail_level=parsed_args.detail_level # Pass the detail level
             ))
         elif parsed_args.command == "generate":
             if parsed_args.subcommand == "initial-plan":
@@ -259,7 +280,6 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
                 config=config, # Pass the loaded config object
                 plan_file=parsed_args.plan_file,
                 state_file=parsed_args.state_file,
-                monitor=parsed_args.monitor,
                 delegate_manager=delegate_manager # Pass the delegate manager
             ))
         else:
@@ -267,7 +287,7 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
             # This should not be reached due to required=True in subparsers, but as a fallback
             raise ValueError(f"Unknown command: {parsed_args.command}")
 
-        return commands
+        return commands, config
 
     except SystemExit as e:
         # Allow SystemExit from argparse to propagate
@@ -275,4 +295,32 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
     # Remove all other specific exception catches to allow them to propagate
     # The calling code will handle exceptions and return codes.
 
+import io # Import io for capturing stdout
 
+def execute_commands_and_capture_output(commands: list[BaseCommand], delegate_manager: DelegateManager) -> str:
+    """
+    Executes a list of command objects and captures their standard output.
+
+    Args:
+        commands: A list of BaseCommand objects to execute.
+        delegate_manager: The DelegateManager instance to use.
+
+    Returns:
+        A string containing the captured standard output.
+    """
+    old_stdout = sys.stdout
+    redirected_output = io.StringIO()
+    sys.stdout = redirected_output
+
+    try:
+        for command in commands:
+            command.execute()
+    except Exception as e:
+        # Print errors to stderr, which is not captured by StringIO
+        print(f"Error during command execution: {e}", file=sys.stderr)
+        raise e # Re-raise the exception
+
+    finally:
+        sys.stdout = old_stdout
+
+    return redirected_output.getvalue()

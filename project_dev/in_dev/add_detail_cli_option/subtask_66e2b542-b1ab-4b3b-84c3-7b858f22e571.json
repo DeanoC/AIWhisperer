@@ -1,0 +1,48 @@
+{
+  "description": "Add the detail level option to the CLI parser.",
+  "instructions": [
+    "Open `src/ai_whisperer/cli.py`.",
+    "Locate the argument parser definition.",
+    "Add a new argument `--detail-level` to the parser.",
+    "Configure the `--detail-level` argument to accept a limited set of string values corresponding to logging levels (e.g., 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'). Consider using `choices` in `argparse` for this.",
+    "Add a clear help message for the new option.",
+    "In the main execution logic, retrieve the value of the `--detail-level` argument after parsing.",
+    "Find where the `ANSIConsoleUserMessageHandler` is instantiated.",
+    "Pass the retrieved detail level value to the constructor or a setter method of the `ANSIConsoleUserMessageHandler` instance.",
+    "Refer to `docs/detail_option_implementation_plan.md` for any specific design decisions or details regarding the implementation.",
+    "Ensure that the changes integrate correctly with the existing CLI structure.",
+    "Run the relevant unit tests in `tests/unit/test_cli.py` and `tests/unit/test_ansi_console_message_handler.py` to verify the new option is parsed correctly and the value is passed to the handler as expected."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/cli.py",
+    "docs/detail_option_implementation_plan.md",
+    "tests/unit/test_cli.py",
+    "tests/unit/test_ansi_console_message_handler.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/cli.py"
+  ],
+  "constraints": [
+    "The CLI option name must be `--detail-level`.",
+    "The accepted values for `--detail-level` must correspond to standard Python logging levels.",
+    "The help message for the option must be informative.",
+    "Invalid input for `--detail-level` should result in a clear error message from the argument parser.",
+    "The implementation must not break existing CLI functionality."
+  ],
+  "validation_criteria": [
+    "The file `src/ai_whisperer/cli.py` is modified.",
+    "Running the script with `--help` shows the `--detail-level` option with a help message.",
+    "Running the script with `--detail-level INFO` parses 'INFO' correctly.",
+    "Running the script with `--detail-level INVALID_LEVEL` results in an argument parsing error.",
+    "The parsed detail level value is correctly passed to the `ANSIConsoleUserMessageHandler` instance.",
+    "All relevant tests in `tests/unit/test_cli.py` pass.",
+    "Relevant tests in `tests/unit/test_ansi_console_message_handler.py` that depend on CLI input pass."
+  ],
+  "type": "file_edit",
+  "name": "implement_detail_option_in_cli",
+  "depends_on": [
+    "implement_detail_option_in_handler"
+  ],
+  "task_id": "908ce43e-3d7a-4ffb-a35d-70dbc64b152c",
+  "subtask_id": "66e2b542-b1ab-4b3b-84c3-7b858f22e571"
+}

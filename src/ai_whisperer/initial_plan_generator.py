@@ -180,12 +180,18 @@ class InitialPlanGenerator:
 
         logger.info(f"Starting initial JSON generation for: {requirements_md_path}")
         logger.info(f"Using configuration file: {config_path}")
-
+        self.delegate_manager.invoke_notification(
+            sender=self,
+            event_type="user_message_display",
+            event_data={
+                "message": f"Making Initial Plan for {requirements_md_path_str}",
+                "level": UserMessageLevel.INFO
+            }
+        )
         # Ensure requirements file exists before proceeding
         if not requirements_md_path.is_file():
             logger.error(f"Requirements file not found: {requirements_md_path}")
             raise FileNotFoundError(f"Requirements file not found: {requirements_md_path}")
-
         try:
             # 1. Calculate Input Hashes (prompt hash is from config loading)
             input_hashes = self._calculate_input_hashes(requirements_md_path, config_path)
@@ -329,6 +335,15 @@ class InitialPlanGenerator:
             output_filename = f"{requirements_md_path.stem}.json"  # change extension
 
             logger.info(f"Saving validated JSON to: {self.output_dir}")
+            self.delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={
+                    "message": f"Saving initial plan JSON to {output_filename}",
+                    "level": UserMessageLevel.INFO
+                }
+            )
+            
             try:
                 output_path = self.save_json(json_data, output_filename)
                 return Path(output_path) # Return Path object

@@ -1,0 +1,135 @@
+{
+    "natural_language_goal": "Add a detail level option to ANSIConsoleUserMessageHandler and the CLI.",
+    "plan": [
+        {
+            "subtask_id": "cf707c56-67c3-469e-8760-d0dde876b95b",
+            "name": "plan_detail_option_implementation",
+            "description": "Analyze requirements and design the implementation for the detail level option in ANSIConsoleUserMessageHandler and the CLI.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_cf707c56-67c3-469e-8260-d0dde876b95b.json",
+            "type": "planning",
+            "depends_on": [],
+            "input_artifacts": [
+                "User Requirements"
+            ],
+            "output_artifacts": [
+                "docs/detail_option_implementation_plan.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "29165190-1b21-42fd-a78d-c2dea7f70364",
+            "name": "generate_tests_for_detail_option",
+            "description": "Generate unit tests for the detail level option in ANSIConsoleUserMessageHandler and the CLI.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_29165190-1b21-42fd-a78d-c2dea7f70364.json",
+            "type": "test_generation",
+            "depends_on": [
+                "plan_detail_option_implementation"
+            ],
+            "input_artifacts": [
+                "docs/detail_option_implementation_plan.md"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_ansi_console_message_handler.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "e6240dd9-ecbf-4eed-8252-70bfe74cca3a",
+            "name": "implement_detail_option_in_handler",
+            "description": "Implement the detail level member variable, set/get methods, and display_message logic in ANSIConsoleUserMessageHandler.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_e6240dd9-ecbf-4eed-8252-70bfe74cca3a.json",
+            "type": "file_edit",
+            "depends_on": [
+                "generate_tests_for_detail_option"
+            ],
+            "input_artifacts": [
+                "src/basic_output_display_message.py",
+                "docs/detail_option_implementation_plan.md",
+                "tests/unit/test_ansi_console_message_handler.py"
+            ],
+            "output_artifacts": [
+                "src/basic_output_display_message.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "66e2b542-b1ab-4b3b-84c3-7b858f22e571",
+            "name": "implement_detail_option_in_cli",
+            "description": "Add the detail level option to the CLI parser.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_66e2b542-b1ab-4b3b-84c3-7b858f22e571.json",
+            "type": "file_edit",
+            "depends_on": [
+                "implement_detail_option_in_handler"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/cli.py",
+                "docs/detail_option_implementation_plan.md",
+                "tests/unit/test_ansi_console_message_handler.py"
+            ],
+            "output_artifacts": [
+                "src/ai_whisperer/cli.py"
+            ],
+            "completed": true
+        },
+         {
+            "subtask_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+            "name": "generate_cli_tests_for_detail_option",
+            "description": "Generate integration tests for the detail level CLI option.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_a1b2c3d4-e5f6-7890-1234-567890abcdef.json",
+            "type": "test_generation",
+            "depends_on": [
+                "implement_detail_option_in_cli"
+            ],
+            "input_artifacts": [
+                "src/ai_whisperer/cli.py",
+                "docs/detail_option_implementation_plan.md"
+            ],
+            "output_artifacts": [
+                "tests/integration/test_cli_detail_option.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "82f7e8ee-7e89-4f8f-b4df-744e2c98c663",
+            "name": "validate_detail_option_functionality",
+            "description": "Run unit tests and execute CLI commands to validate the implemented detail level option by capturing and asserting output.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_82f7e8ee-7e89-4f8f-b4df-744e2c98c663.json",
+            "type": "validation",
+            "depends_on": [
+                "generate_cli_tests_for_detail_option"
+            ],
+            "input_artifacts": [
+                "tests/unit/test_ansi_console_message_handler.py",
+                "tests/integration/test_cli_detail_option.py",
+                "src/basic_output_display_message.py",
+                "src/ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [],
+            "completed": true
+        },
+        {
+            "subtask_id": "d8a653f2-40b6-4866-a1fc-ae2750abe685",
+            "name": "update_documentation_for_detail_option",
+            "description": "Update documentation to describe the new detail level CLI option.",
+            "file_path": "project_dev/in_dev/add_detail_cli_option/subtask_d8a653f2-40b6-4866-a1fc-ae2750abe685.json",
+            "type": "documentation",
+            "depends_on": [
+                "validate_detail_option_functionality"
+            ],
+            "input_artifacts": [
+                "README.md",
+                "docs/index.md"
+            ],
+            "output_artifacts": [
+                "README.md",
+                "docs/index.md"
+            ],
+            "completed": true
+        }
+    ],
+    "task_id": "908ce43e-3d7a-4ffb-a35d-70dbc64b152c",
+    "input_hashes": {
+        "requirements_md": "beaae97c95f85fdbfb778100fb9a27402a81965719788d376dec9ebe2f971967",
+        "config_yaml": "c3ec11483dd16c723c26a905ada85e72c74730bf0cea1239f347f03201ecaa5f"
+    }
+}

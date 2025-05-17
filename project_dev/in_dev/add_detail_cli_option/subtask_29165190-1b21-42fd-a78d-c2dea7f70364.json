@@ -1,0 +1,45 @@
+{
+  "description": "Generate unit tests for the detail level option in ANSIConsoleUserMessageHandler and the CLI.",
+  "instructions": [
+    "Locate and open the file `docs/detail_option_implementation_plan.md` to understand the planned implementation details for the detail level option.",
+    "Locate the unit test file for the ANSI console message handler, which is expected to be at `tests/unit/test_ansi_console_message_handler.py`. If it doesn't exist, create a new file at this location.",
+    "Inside `tests/unit/test_ansi_console_message_handler.py`, add new test cases to verify the functionality related to the detail level option.",
+    "Specifically, add tests that cover the following scenarios:",
+    "- Verify that the `ANSIConsoleUserMessageHandler` class can correctly set and retrieve the new detail level member variable.",
+    "- Verify that the `display_message` method within `ANSIConsoleUserMessageHandler` correctly filters and displays messages based on different detail levels (e.g., 'low', 'medium', 'high'). Include tests for cases where messages at different levels are provided and ensure only those at or below the set detail level are displayed.",
+    "Locate the unit test file for the CLI, which is likely `tests/unit/test_cli.py`. Add new test cases to verify the CLI's handling of the detail level option.",
+    "Inside the CLI test file, add tests to ensure that the CLI argument parser correctly accepts and processes the new detail level option, and that this option is correctly passed to the relevant components (like the message handler).",
+    "Structure the newly added tests such that they clearly define the expected behavior based on the implementation plan.",
+    "Ensure the tests are designed to fail when run against the current codebase, as the implementation of the detail level option has not yet been completed. This confirms the tests are correctly targeting the new functionality."
+  ],
+  "input_artifacts": [
+    "docs/detail_option_implementation_plan.md",
+    "tests/unit/test_ansi_console_message_handler.py",
+    "tests/unit/test_cli.py"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_ansi_console_message_handler.py",
+    "tests/unit/test_cli.py"
+  ],
+  "constraints": [
+    "Tests must be unit tests, focusing on individual components.",
+    "Tests for `ANSIConsoleUserMessageHandler` must cover setting/getting the detail level and filtering messages based on different detail level values.",
+    "Tests for the CLI must verify the correct parsing and handling of the detail level command-line option.",
+    "Tests should be written to fail in the current state before the code implementation."
+  ],
+  "validation_criteria": [
+    "The file `tests/unit/test_ansi_console_message_handler.py` exists or has been modified.",
+    "The file `tests/unit/test_cli.py` has been modified.",
+    "New test cases are present in `tests/unit/test_ansi_console_message_handler.py` specifically for the detail level member variable (set/get).",
+    "New test cases are present in `tests/unit/test_ansi_console_message_handler.py` specifically for the `display_message` method's filtering logic based on detail level.",
+    "New test cases are present in `tests/unit/test_cli.py` specifically for the parsing and handling of the detail level command-line option.",
+    "Running the newly added tests (e.g., using `pytest tests/unit/test_ansi_console_message_handler.py` and `pytest tests/unit/test_cli.py`) results in failures, indicating that the tests are correctly written for the future implementation."
+  ],
+  "type": "test_generation",
+  "name": "generate_tests_for_detail_option",
+  "depends_on": [
+    "plan_detail_option_implementation"
+  ],
+  "task_id": "908ce43e-3d7a-4ffb-a35d-70dbc64b152c",
+  "subtask_id": "29165190-1b21-42fd-a78d-c2dea7f70364"
+}

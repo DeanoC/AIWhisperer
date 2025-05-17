@@ -10,6 +10,7 @@ from typing import Optional
 
 from ai_whisperer.delegate_manager import DelegateManager
 from user_message_delegate import UserMessageLevel # Import Optional
+from basic_output_display_message import ANSIConsoleUserMessageHandler
 from .state_management import StateManager # Import StateManager
 
 from .config import load_config
@@ -35,10 +36,11 @@ class BaseCommand(ABC):
 
 class ListModelsCommand(BaseCommand):
     """Command to list available OpenRouter models."""
-    def __init__(self, config: dict, output_csv: str, delegate_manager: DelegateManager): # Add delegate_manager parameter
+    def __init__(self, config: dict, output_csv: str, delegate_manager: DelegateManager, detail_level: UserMessageLevel):
         super().__init__(config)
         self.output_csv = output_csv
         self.delegate_manager = delegate_manager # Store delegate_manager
+        self.detail_level = detail_level # Store detail_level
 
     def execute(self):
         """Lists available OpenRouter models."""
@@ -47,6 +49,10 @@ class ListModelsCommand(BaseCommand):
 
         model_provider = ModelInfoProvider(self.config)
 
+        # Always get the model list for possible console output
+        detailed_models = model_provider.list_models()
+
+        # If output_csv is set, write to CSV and notify
         if self.output_csv:
             model_provider.list_models_to_csv(self.output_csv)
             self.delegate_manager.invoke_notification(
@@ -54,21 +60,47 @@ class ListModelsCommand(BaseCommand):
                 event_type="user_message_display",
                 event_data={"message": f"Successfully wrote model list to CSV: {self.output_csv}", "level": UserMessageLevel.INFO}
             )
-        else:
-            detailed_models = model_provider.list_models()
-            avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
-            logger.debug(avail_text)
 
-            self.delegate_manager.invoke_notification(
-                sender=self,
-                event_type="user_message_display",
-                event_data={"message": avail_text, "level": UserMessageLevel.INFO}
-            )
+        
+        avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
+        logger.debug(avail_text)
+        self.delegate_manager.invoke_notification(
+            sender=self,
+            event_type="user_message_display",
+            event_data={"message": avail_text, "level": UserMessageLevel.INFO}
+        )
+        # Only print details in DETAIL mode
+        if self.detail_level == UserMessageLevel.DETAIL:
             for model in detailed_models:
-                if isinstance(model, str):
-                    model_text = f"- {model}"
-                else:
-                    model_text = f"- {model.get('id', 'N/A')}"
+                model_id = model.get('id', 'N/A')
+                model_text = f"| {model_id}"
+
+                details = [model_text]
+                if 'context_length' in model:
+                    details.append(f"Context Length: {model['context_length']}")
+                if 'supported_parameters' in model:
+                    details.append(f"Supported Parameters: {model['supported_parameters']}")
+                if 'pricing' in model and isinstance(model['pricing'], dict):
+                    pricing_info = model['pricing']
+                    if 'prompt' in pricing_info:
+                        details.append(f"Prompt Pricing: {pricing_info['prompt']}")
+                    if 'completion' in pricing_info:
+                        details.append(f"Completion Pricing: {pricing_info['completion']}")
+                #if 'description' in model:
+                #    details.append(f"Description: {model['description']}")
+
+                detail_text = f"{' | '.join(details)}"
+                logger.debug(detail_text)
+                # Always send details to delegate_manager in DETAIL mode
+                self.delegate_manager.invoke_notification(
+                    sender=self,
+                    event_type="user_message_display",
+                    event_data={"message": detail_text, "level": UserMessageLevel.DETAIL}
+                )
+        else:
+            for model in detailed_models:
+                model_id = model.get('id', 'N/A')
+                model_text = f"- {model_id}"
                 logger.debug(model_text)
                 self.delegate_manager.invoke_notification(
                     sender=self,
@@ -294,4 +326,3 @@ class RunCommand(BaseCommand):
             return 0
         else:
             return 1
-

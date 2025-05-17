@@ -20,4 +20,16 @@ For details on how user-facing messages are handled and displayed, see the [User
 
 The AI Service Interaction Module handles communication with external AI services, including sending prompts and processing streaming responses from providers like OpenRouter. It also includes capabilities for tracking the cost and token usage associated with these API calls.
 
+## Command Line Interface (CLI) Options
+
+AI Whisperer provides several command-line options to control its behavior.
+
+* **`--config`**: Specifies the path to the configuration file.
+* **`--output`**: Specifies the path for output files.
+* **`--prompt-file`**: Overrides the default prompt file for a command.
+* **`--detail-level`**: Controls the verbosity of the output messages.
+  * **`INFO`**: Displays essential information and progress updates.
+  * **`DETAIL`**: Shows all available information, including detailed logs and intermediate steps.
+  * Defaults to `INFO`.
+
 For detailed information, please see the [AI Service Interaction Module Documentation](ai_service_interaction.md).
