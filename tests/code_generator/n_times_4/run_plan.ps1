@@ -223,14 +223,7 @@ try {
     Write-Verbose "Executing Python script from Project Root: $ProjectRoot"
     Write-Verbose "Command: $VenvPythonPath $($pythonArgs -join ' ')"
     
-    # Ensure current directory contains 'src' for correct Python module resolution
-    if (-not (Test-Path -Path (Join-Path (Get-Location) "src") -PathType Container)) {
-        Set-Location -Path $ProjectRoot
-        Write-Verbose "Changed location to Project Root: $ProjectRoot"
-    } else {
-        Write-Verbose "Current directory already contains 'src'."
-    }
-    $env:PYTHONPATH = "./src"
+    $env:PYTHONPATH = "."
 
     # Execute the command
     & $VenvPythonPath $pythonArgs
