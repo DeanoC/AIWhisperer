@@ -3,7 +3,7 @@ Unit tests for the scripted postprocessing identity transform.
 """
 
 import pytest
-from src.postprocessing.scripted_steps.identity_transform import identity_transform
+from postprocessing.scripted_steps.identity_transform import identity_transform
 
 
 def test_identity_transform():

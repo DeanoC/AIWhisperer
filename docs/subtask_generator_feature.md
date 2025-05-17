@@ -21,10 +21,10 @@ The Subtask Generator is a component of the AIWhisperer system that refines high
 
 ```bash
 # Basic usage
-python -m src.ai_whisperer.main --generate-subtask --config config.yaml --step step_definition.yaml
+python -m ai_whisperer.main --generate-subtask --config config.yaml --step step_definition.yaml
 
 # Example with actual file paths
-python -m src.ai_whisperer.main --generate-subtask --config ./config.yaml --step ./steps/step_1.yaml
+python -m ai_whisperer.main --generate-subtask --config ./config.yaml --step ./steps/step_1.yaml
 ```
 
 ### Configuration

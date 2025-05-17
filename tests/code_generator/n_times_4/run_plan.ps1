@@ -59,9 +59,9 @@ Write-Verbose "DebugPython switch set: $DebugPython"
 $ScriptDir = $PSScriptRoot
 Write-Verbose "Script directory: $ScriptDir"
 
-# Determine Project Root (assuming script is in 'project_dev')
+# Determine Project Root (assuming script is in 'tests/code_generator/n_times_4')
 try {
-    $ProjectRoot = (Resolve-Path -Path (Join-Path -Path $ScriptDir -ChildPath "..")).Path
+    $ProjectRoot = (Resolve-Path -Path (Join-Path -Path $ScriptDir -ChildPath "..\..")).Path
     Write-Verbose "Resolved Project Root: $ProjectRoot"
 } catch {
     Write-Error "Failed to resolve project root directory based on script location '$ScriptDir'. Error: $_"
@@ -114,11 +114,11 @@ try {
     # Try all possible locations for main.py (project root first)
     $TrueProjectRoot = (Resolve-Path -Path (Join-Path -Path $ScriptDir -ChildPath "..\..")).Path
     $MainPyCheckPaths = @(
-        (Join-Path -Path $TrueProjectRoot -ChildPath "src\ai_whisperer\main.py"),
-        (Join-Path -Path (Split-Path $TrueProjectRoot -Parent) -ChildPath "src\ai_whisperer\main.py"),
-        (Join-Path -Path $ProjectRoot    -ChildPath "src\ai_whisperer\main.py"),
-        (Join-Path -Path (Join-Path $ProjectRoot "..") -ChildPath "src\ai_whisperer\main.py"),
-        (Join-Path -Path $ScriptDir      -ChildPath "src\ai_whisperer\main.py")
+        (Join-Path -Path $TrueProjectRoot -ChildPath "ai_whisperer\main.py"),
+        (Join-Path -Path (Split-Path $TrueProjectRoot -Parent) -ChildPath "ai_whisperer\main.py"),
+        (Join-Path -Path $ProjectRoot    -ChildPath "ai_whisperer\main.py"),
+        (Join-Path -Path (Join-Path $ProjectRoot "..") -ChildPath "ai_whisperer\main.py"),
+        (Join-Path -Path $ScriptDir      -ChildPath "ai_whisperer\main.py")
     )
     $MainPyCheckPath = $null
     foreach ($candidatePath in $MainPyCheckPaths) {

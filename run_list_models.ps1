@@ -27,7 +27,7 @@ $configPath = "d:\Projects\AIWhisperer\config.yaml"
 
 
 # Build the base command as an array for robust argument handling
-$argsList = @("-m", "src.ai_whisperer.main", "--config", $configPath, "list-models")
+$argsList = @("-m", "ai_whisperer.main", "--config", $configPath, "list-models")
 if ($DetailLevel) {
     $argsList += @("--detail-level", $DetailLevel)
 }

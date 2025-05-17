@@ -1,6 +1,6 @@
 import pytest
 import json
-from src.postprocessing.scripted_steps.escape_text_fields import escape_text_fields
+from postprocessing.scripted_steps.escape_text_fields import escape_text_fields
 
 
 @pytest.mark.parametrize(

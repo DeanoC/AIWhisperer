@@ -8,7 +8,7 @@ from ai_whisperer.ai_loop import run_ai_loop # Import the refactored AI loop
 from pathlib import Path
 import os
 import json
-from src.ai_whisperer import PromptSystem # Import PromptSystem
+from ai_whisperer import PromptSystem # Import PromptSystem
 from ai_whisperer.prompt_system import PromptNotFoundError
 import traceback
 from datetime import datetime, timezone

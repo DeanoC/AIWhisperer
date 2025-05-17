@@ -26,9 +26,16 @@ def test_plan_passes_if_output_file_present():
     OUTPUT_FILE.parent.mkdir(exist_ok=True)
     OUTPUT_FILE.write_text("def multiply_by_4(n):\n    return n * 4\n")
     # Run the plan using the PowerShell script
-    result = subprocess.run([
-        "powershell.exe", "-NoProfile", "-Command", str(RUN_SCRIPT), str(PLAN_JSON)
-    ], capture_output=True, text=True)
+    # Construct the command to run the PowerShell script
+    command = [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass", # Add Bypass execution policy for the script
+        "-Command",
+        str(RUN_SCRIPT),
+        str(PLAN_JSON)
+    ]
+    result = subprocess.run(command, capture_output=True, text=True)
     # The process should exit with zero code if validation passes
     assert result.returncode == 0, f"Expected success, got exit code {result.returncode}. Output: {result.stdout}\n{result.stderr}"
     assert "passed" in result.stdout.lower() or "success" in result.stdout.lower(), f"Expected success message. Output: {result.stdout}\n{result.stderr}"
@@ -139,7 +146,7 @@ def test_cli_run_command_programmatic(clean_output):
                     "--state-file", str(state_path)
                 ]
 
-                commands = cli(args, delegate_manager=mock_delegate_manager)
+                commands, parsed_args = cli(args, delegate_manager=mock_delegate_manager)
 
                 # The cli function should return a list containing one RunCommand instance
                 assert len(commands) == 1

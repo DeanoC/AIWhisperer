@@ -13,17 +13,17 @@ from typing import Dict, Any, Optional
 from ai_whisperer.delegate_manager import DelegateManager
 
 from .json_validator import validate_against_schema
-from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
-from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
-from src.postprocessing.scripted_steps.escape_text_fields import escape_text_fields
-from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
-from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
-from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
+from postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
+from postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
+from postprocessing.scripted_steps.escape_text_fields import escape_text_fields
+from postprocessing.scripted_steps.validate_syntax import validate_syntax
+from postprocessing.scripted_steps.handle_required_fields import handle_required_fields
+from postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 
 from .config import load_config
 from .ai_service_interaction import OpenRouterAPI
 from .exceptions import ConfigError, OrchestratorError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
-from src.postprocessing.pipeline import ProcessingError
+from postprocessing.pipeline import ProcessingError
 import ai_whisperer.prompt_system as prompt_system_module # Import PromptSystem
 from ai_whisperer.path_management import PathManager
 
@@ -91,8 +91,9 @@ class SubtaskGenerator:
                 logger.debug(f"SubtaskGenerator initialized with delegate_manager: {self.delegate_manager}") # Log delegate_manager
             # Load the validation schema
             try:
-                schema_to_load = PathManager.get_instance().resolve_path( "{app_path}/schemas/subtask_schema.json")
-  
+                # Use PathManager to resolve the schema path relative to the app root
+                schema_to_load = PathManager.get_instance().app_path / "schemas" / "subtask_schema.json"
+
                 logger.info(f"Loading validation schema from: {schema_to_load}")
                 with open(schema_to_load, "r", encoding="utf-8") as f:
                     self.task_schema = json.load(f)
@@ -234,7 +235,7 @@ class SubtaskGenerator:
             try:
                 # Use PathManager to resolve {app_path} for schema location
                 app_path = PathManager.get_instance().project_path
-                schema_path = Path(str(app_path) + "/src/ai_whisperer/schemas/subtask_plan_schema.json")
+                schema_path = Path(str(app_path) + "/ai_whisperer/schemas/subtask_plan_schema.json")
                 validate_against_schema(generated_data, schema_path)
             except SchemaValidationError as e:
                 # Re-raise schema validation errors specifically

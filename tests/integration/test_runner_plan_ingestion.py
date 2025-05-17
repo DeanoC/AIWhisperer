@@ -69,7 +69,7 @@ class Runner:
 VALID_OVERVIEW_PLAN_FOR_RUNNER = {
     "task_id": "11111111-1111-1111-1111-111111111111",
     "natural_language_goal": "Test runner plan ingestion with overview.",
-    "overall_context": "Integration testing context for overview plan.",
+    # "overall_context": "Integration testing context for overview plan.",
     "input_hashes": {"requirements_md": "r_hash", "config_yaml": "c_hash", "prompt_file": "p_hash"},
     "plan": [
         {
@@ -77,6 +77,7 @@ VALID_OVERVIEW_PLAN_FOR_RUNNER = {
             "description": "Runner step 1 (initialization)",
             "file_path": "subtasks/dummy_subtask_1.json",
             "depends_on": [],
+            "type": "initialization",
             "agent_spec": {"type": "initialization"},
         },
         {
@@ -84,6 +85,7 @@ VALID_OVERVIEW_PLAN_FOR_RUNNER = {
             "description": "Runner step 2 (execute subtask)",
             "file_path": "subtasks/subtask_for_runner.json",
             "depends_on": ["22222222-2222-2222-2222-222222222222"],
+            "type": "execute_subtask",
             "agent_spec": {"type": "execute_subtask"},
         },
     ],
@@ -125,21 +127,10 @@ MALFORMED_JSON_PLAN_STR = '{"task_id": "malformed-01", "plan": [error}'
 
 @pytest.fixture
 def create_overview_plan_with_subtasks_for_runner(tmp_path: Path, request):
-    """Fixture to create a temporary overview plan and its subtasks for runner tests, and set schema directory."""
-    original_schema_dir = get_schema_directory()
-    schema_temp_dir = tmp_path / "schemas"
-    schema_temp_dir.mkdir()
+    """Fixture to create a temporary overview plan and its subtasks for runner tests."""
 
     # Initialize PathManager
     PathManager.get_instance().initialize()
-
-    # Set the schema directory for the validator
-    set_schema_directory(str(schema_temp_dir))
-
-    # Copy actual schema files to the temporary directory (fixed path)
-    source_schema_dir = Path(__file__).parent.parent.parent / "schemas"
-    shutil.copy(source_schema_dir / "subtask_schema.json", schema_temp_dir)
-    shutil.copy(source_schema_dir / "initial_plan_schema.json", schema_temp_dir)
 
     def _creator(overview_filename: str, overview_content: dict, subtask_dir: str, subtasks: Dict[str, dict]):
         overview_file_path = tmp_path / overview_filename
@@ -164,9 +155,6 @@ def create_overview_plan_with_subtasks_for_runner(tmp_path: Path, request):
             subtask_file_path.write_text(json.dumps(subtask_content))
 
         return str(overview_file_path)
-
-    # Add a finalizer to reset the schema directory after the test
-    request.addfinalizer(lambda: (set_schema_directory(original_schema_dir), PathManager._reset_instance()))
 
     return _creator
 
@@ -230,10 +218,10 @@ def test_runner_handles_plan_with_missing_top_level_field(create_overview_plan_w
 def test_runner_handles_plan_file_not_found():
     """Test that the Runner handles a non-existent main plan file."""
     runner = Runner("non_existent_plan_for_runner.json")
-    # Updated regex to match the actual error message format from the Runner
+    # Updated regex to match the actual error message format for missing overview plan file
     with pytest.raises(
         PlanValidationError,
-        match=r"Plan loading or validation failed: Overview plan file not found: .*non_existent_plan_for_runner.json",
+        match=r"Plan loading or validation failed: Overview plan file not found: .*non_existent_plan_for_runner\.json",
     ):
         runner.load_and_parse_plan()
 
@@ -309,7 +297,7 @@ def test_runner_integration_with_empty_plan_array(create_overview_plan_with_subt
     empty_plan_content = {
         "task_id": "runner-empty-002",
         "natural_language_goal": "Test runner with empty plan array.",
-        "overall_context": "Integration context for empty plan.",
+        # "overall_context": "Integration context for empty plan.",
         "input_hashes": {"requirements_md": "rh", "config_yaml": "ch", "prompt_file": "ph"},
         "plan": [],
     }

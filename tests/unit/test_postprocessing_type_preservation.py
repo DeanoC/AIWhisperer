@@ -2,11 +2,11 @@ import pytest
 import json  # Import json
 from typing import Dict, Any, Tuple
 
-from src.postprocessing.scripted_steps.identity_transform import identity_transform
-from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
-from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
-from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
-from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
+from postprocessing.scripted_steps.identity_transform import identity_transform
+from postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
+from postprocessing.scripted_steps.handle_required_fields import handle_required_fields
+from postprocessing.scripted_steps.validate_syntax import validate_syntax
+from postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 
 
 class TestTypePreservation:

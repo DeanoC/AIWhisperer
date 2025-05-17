@@ -3,7 +3,7 @@ import json
 from typing import Dict, Any, Tuple, List, Optional
 
 # Import the function we'll be testing
-from src.postprocessing.scripted_steps.add_items_postprocessor import (
+from postprocessing.scripted_steps.add_items_postprocessor import (
   add_items_postprocessor,
 )
 

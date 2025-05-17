@@ -2,246 +2,281 @@
   "natural_language_goal": "Add a detail level option to ANSIConsoleUserMessageHandler and the CLI.",
   "plan": [
     {
-      "name": "plan_cli_and_message_handler_changes",
-      "description": "Analyze and plan the necessary changes to the CLI argument parsing and the ANSIConsoleUserMessageHandler.",
+      "name": "plan_detail_option",
+      "description": "Analyze requirements and plan the implementation steps for the detail level option.",
       "depends_on": [],
       "type": "planning",
       "input_artifacts": [
-        "src/ai_whisperer/cli.py",
-        "src/basic_output_display_message.py"
-      ],
-      "output_artifacts": [
         "docs/detail_option_implementation_plan.md"
       ],
+      "output_artifacts": [
+        "docs/detail_option_implementation_plan_updated.md"
+      ],
       "instructions": [
-        "Analyze src/ai_whisperer/cli.py to identify how new arguments are added and parsed.",
-        "Analyze src/basic_output_display_message.py to understand the structure of ANSIConsoleUserMessageHandler and its display_message method.",
-        "Determine the best way to add a new '--detail-level' option to the CLI.",
-        "Plan the addition of a new member variable in ANSIConsoleUserMessageHandler to store the detail level.",
-        "Plan the addition of a set_detail_level and get_detail_level method to ANSIConsoleUserMessageHandler.",
-        "Outline how the detail level will influence the output in the display_message method.",
-        "Document the plan in docs/detail_option_implementation_plan.md, including specific code locations and required changes."
+        "Review the requirement document.",
+        "Outline the specific code changes needed in cli.py to add the argument parser option.",
+        "Outline the specific code changes needed in ANSIConsoleUserMessageHandler.__init__ to add the new member variable.",
+        "Outline the specific code changes needed in ANSIConsoleUserMessageHandler to add set/get methods for the detail level.",
+        "Outline the specific code changes needed in ANSIConsoleUserMessageHandler::display_message to use the detail level.",
+        "Document the interaction between cli.py and ANSIConsoleUserMessageHandler to pass the detail level.",
+        "Describe the test cases required to verify the functionality."
       ],
-      "constraints": [
-        "The default detail level should be INFO.",
-        "The detail level should be changeable at runtime.",
-        "Implementation should be primarily within ANSIConsoleUserMessageHandler::display_message."
-      ],
+      "constraints": [],
       "validation_criteria": [
-        "docs/detail_option_implementation_plan.md exists.",
-        "docs/detail_option_implementation_plan.md clearly outlines the CLI argument changes.",
-        "docs/detail_option_implementation_plan.md clearly outlines the required changes to ANSIConsoleUserMessageHandler.",
-        "The plan includes adding a member variable and set/get methods to ANSIConsoleUserMessageHandler."
+        "docs/detail_option_implementation_plan_updated.md exists.",
+        "docs/detail_option_implementation_plan_updated.md clearly describes the required code changes in cli.py and ANSIConsoleUserMessageHandler.",
+        "docs/detail_option_implementation_plan_updated.md includes a plan for linking the CLI option to the message handler.",
+        "docs/detail_option_implementation_plan_updated.md lists the necessary test cases."
       ],
-      "subtask_id": "c64295e3-d73a-45f8-a04f-ee6a40778887"
+      "subtask_id": "8b4f286f-d73d-4420-ab36-92ea5e7d13c4"
     },
     {
-      "name": "generate_cli_and_handler_tests",
-      "description": "Generate tests for the new CLI option and the detail level handling in ANSIConsoleUserMessageHandler.",
+      "name": "generate_cli_tests",
+      "description": "Generate tests for the new CLI detail option.",
       "depends_on": [
-        "plan_cli_and_message_handler_changes"
+        "plan_detail_option"
       ],
       "type": "test_generation",
       "input_artifacts": [
-        "docs/detail_option_implementation_plan.md",
-        "src/ai_whisperer/cli.py",
-        "src/basic_output_display_message.py"
-      ],
-      "output_artifacts": [
-        "tests/unit/test_cli.py",
-        "tests/unit/test_ansi_console_message_handler.py"
-      ],
-      "instructions": [
-        "Based on docs/detail_option_implementation_plan.md, generate test cases for src/ai_whisperer/cli.py to verify:",
-        "- The new '--detail-level' option is correctly parsed.",
-        "- Default detail level is INFO when the option is not provided.",
-        "- Various valid detail levels (e.g., DEBUG, WARNING) are accepted.",
-        "- Invalid detail levels result in appropriate errors.",
-        "Generate test cases for src/basic_output_display_message.py to verify:",
-        "- The new member variable for detail level is added.",
-        "- The set_detail_level and get_detail_level methods function correctly.",
-        "- The display_message method correctly filters messages based on the set detail level (test with different levels and message types).",
-        "Ensure tests are added to appropriate unit test files (tests/unit/test_cli.py, tests/unit/test_ansi_console_message_handler.py).",
-        "Run the generated tests to ensure they compile and run, but fail on the (as yet) unimplemented functionality."
-      ],
-      "constraints": [
-        "Tests should cover parsing the new CLI option.",
-        "Tests should verify the behavior of the new member variable and methods in ANSIConsoleUserMessageHandler.",
-        "Tests should verify message filtering in display_message based on detail level."
-      ],
-      "validation_criteria": [
-        "tests/unit/test_cli.py contains new tests for --detail-level.",
-        "tests/unit/test_ansi_console_message_handler.py contains new tests for detail level handling.",
-        "New tests cover CLI parsing, member variable, set/get methods, and message filtering.",
-        "Tests compile and run without syntax errors.",
-        "Tests fail due to unimplemented functionality."
-      ],
-      "subtask_id": "128c9132-cc1c-4738-8814-3a97bcf93d3a"
-    },
-    {
-      "name": "implement_cli_detail_option",
-      "description": "Implement the new '--detail-level' CLI option.",
-      "depends_on": [
-        "generate_cli_and_handler_tests"
-      ],
-      "type": "file_edit",
-      "input_artifacts": [
-        "docs/detail_option_implementation_plan.md",
-        "src/ai_whisperer/cli.py",
+        "docs/detail_option_implementation_plan_updated.md",
+        "ai_whisperer/cli.py",
         "tests/unit/test_cli.py"
       ],
       "output_artifacts": [
-        "src/ai_whisperer/cli.py"
+        "tests/unit/test_cli.py"
       ],
       "instructions": [
-        "Edit src/ai_whisperer/cli.py to add the '--detail-level' option according to the plan in docs/detail_option_implementation_plan.md.",
-        "Ensure the option accepts appropriate values (e.g., INFO, DEBUG, WARNING).",
-        "Ensure the default value is INFO.",
-        "Integrate the parsing logic to make the detail level available to the rest of the application.",
-        "Run the tests in tests/unit/test_cli.py to verify the implementation."
-      ],
-      "constraints": [
-        "Must adhere to the plan in docs/detail_option_implementation_plan.md.",
-        "CLI parsing must be robust and handle invalid inputs gracefully.",
-        "Tests in tests/unit/test_cli.py must pass after implementation."
-      ],
-      "validation_criteria": [
-        "src/ai_whisperer/cli.py updated to include --detail-level argument.",
-        "CLI parsing correctly identifies the provided detail level.",
-        "Tests in tests/unit/test_cli.py related to CLI parsing pass."
-      ],
-      "subtask_id": "36835b66-bbeb-42ec-ab2a-bbbd35e7fc8c"
-    },
-    {
-      "name": "implement_message_handler_detail_level",
-      "description": "Implement the detail level variable, methods, and filtering in ANSIConsoleUserMessageHandler.",
-      "depends_on": [
-        "generate_cli_and_handler_tests",
-        "implement_cli_detail_option"
-      ],
-      "type": "file_edit",
-      "input_artifacts": [
-        "docs/detail_option_implementation_plan.md",
-        "src/basic_output_display_message.py",
-        "tests/unit/test_ansi_console_message_handler.py"
-      ],
-      "output_artifacts": [
-        "src/basic_output_display_message.py"
-      ],
-      "instructions": [
-        "Edit src/basic_output_display_message.py to add a new member variable to ANSIConsoleUserMessageHandler to store the detail level.",
-        "Add set_detail_level and get_detail_level methods to ANSIConsoleUserMessageHandler as planned.",
-        "Modify the display_message method to filter messages based on the stored detail level.",
-        "Ensure messages with a level equal to or higher than the set detail level are displayed.",
-        "Run the tests in tests/unit/test_ansi_console_message_handler.py to verify the implementation."
-      ],
-      "constraints": [
-        "Must adhere to the plan in docs/detail_option_implementation_plan.md.",
-        "Detail level variable must be correctly initialized and updated.",
-        "Message filtering logic in display_message must be correct.",
-        "Tests in tests/unit/test_ansi_console_message_handler.py must pass after implementation."
-      ],
-      "validation_criteria": [
-        "src/basic_output_display_message.py updated with new member variable and methods in ANSIConsoleUserMessageHandler.",
-        "display_message method correctly filters messages based on detail level.",
-        "Tests in tests/unit/test_ansi_console_message_handler.py related to detail level handling pass."
-      ],
-      "subtask_id": "86ac5926-3e04-4cd0-b229-bfd9dffa6e6f"
-    },
-    {
-      "name": "integrate_cli_and_message_handler",
-      "description": "Connect the CLI parsed detail level to the ANSIConsoleUserMessageHandler instance.",
-      "depends_on": [
-        "implement_cli_detail_option",
-        "implement_message_handler_detail_level"
-      ],
-      "type": "file_edit",
-      "input_artifacts": [
-        "docs/detail_option_implementation_plan.md",
-        "src/ai_whisperer/cli.py",
-        "src/ai_whisperer/main.py"
-      ],
-      "output_artifacts": [
-        "src/ai_whisperer/main.py"
-      ],
-      "instructions": [
-        "Edit src/ai_whisperer/main.py (or the relevant file where the CLI args are processed and the message handler is instantiated) to pass the parsed detail level from the CLI to the ANSIConsoleUserMessageHandler instance using the new set_detail_level method.",
-        "Ensure this connection happens after CLI parsing and before any messages are displayed.",
-        "Run relevant integration tests (if available) or manually test the end-to-end flow by running the application with different detail levels."
-      ],
-      "constraints": [
-        "The parsed CLI detail level must be correctly passed to the message handler."
-      ],
-      "validation_criteria": [
-        "Code added/modified to pass CLI detail level to ANSIConsoleUserMessageHandler.",
-        "Running the application with --detail-level successfully changes the message output verbosity."
-      ],
-      "subtask_id": "bc875158-db67-4bec-bef1-eaf37df89f6d"
-    },
-    {
-      "name": "update_documentation",
-      "description": "Update documentation to reflect the new CLI option.",
-      "depends_on": [
-        "integrate_cli_and_message_handler"
-      ],
-      "type": "documentation",
-      "input_artifacts": [
-        "README.md",
-        "docs/index.md",
-        "docs/cli_analysis_monitor_option.md"
-      ],
-      "output_artifacts": [
-        "README.md",
-        "docs/index.md",
-        "docs/cli_analysis_monitor_option.md"
-      ],
-      "instructions": [
-        "Update README.md to include documentation for the new '--detail-level' CLI option.",
-        "Update docs/index.md or other relevant documentation files to describe the new option and its usage.",
-        "Update CLI help messages (if applicable) to include the new option.",
-        "Ensure the documentation clearly explains the different detail levels and their effect on output."
+        "Add new test cases to tests/unit/test_cli.py to verify:",
+        "- The CLI parser correctly accepts the new detail option.",
+        "- The parsed arguments contain the specified detail level.",
+        "- The default detail level is set correctly if the option is not provided.",
+        "Ensure the tests compile and fail without the implementation."
       ],
       "constraints": [],
       "validation_criteria": [
-        "README.md updated with --detail-level option.",
-        "Relevant documentation files updated.",
-        "CLI help message includes the new option.",
-        "Documentation accurately describes the option and detail levels."
+        "tests/unit/test_cli.py has new test cases for the detail option.",
+        "The new tests cover specifying the option and the default case.",
+        "The test suite compiles but the new tests related to the detail option fail before implementation."
       ],
-      "subtask_id": "52483a8c-b7c7-449d-9901-e03cd4584902"
+      "subtask_id": "88409e19-3748-4879-9bce-37422cccd9b2"
     },
     {
-      "name": "final_validation",
-      "description": "Perform final validation of the implemented feature.",
+      "name": "implement_cli_option",
+      "description": "Add the detail level option to the CLI parser.",
       "depends_on": [
-        "update_documentation"
+        "generate_cli_tests"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "ai_whisperer/cli.py",
+        "tests/unit/test_cli.py"
+      ],
+      "output_artifacts": [
+        "ai_whisperer/cli.py"
+      ],
+      "instructions": [
+        "Modify ai_whisperer/cli.py to add a new command-line argument for detail level using `argparse`.",
+        "Allow the user to specify the detail level (e.g., using choices or a custom type if needed).",
+        "Set the default value for the detail level.",
+        "Ensure the code passes the tests generated in the 'generate_cli_tests' step."
+      ],
+      "constraints": [
+        "Use `argparse`."
+      ],
+      "validation_criteria": [
+        "ai_whisperer/cli.py is modified.",
+        "The CLI parser now includes a --detail option.",
+        "The default detail level is correctly set.",
+        "All tests in tests/unit/test_cli.py pass."
+      ],
+      "subtask_id": "9c7bc6b3-d988-4977-ac7c-0624f2956677"
+    },
+    {
+      "name": "validate_cli_option",
+      "description": "Validate that the CLI option is correctly implemented and parsed.",
+      "depends_on": [
+        "implement_cli_option"
       ],
       "type": "validation",
       "input_artifacts": [
-        "src/ai_whisperer/cli.py",
-        "src/basic_output_display_message.py",
-        "src/ai_whisperer/main.py",
-        "README.md"
+        "ai_whisperer/cli.py",
+        "tests/unit/test_cli.py"
       ],
       "output_artifacts": [],
       "instructions": [
-        "Run all relevant unit and integration tests to ensure no regressions were introduced.",
-        "Manually test the application with different detail levels (e.g., DEBUG, INFO, WARNING, ERROR) using the CLI option.",
-        "Verify that messages are filtered correctly based on the set level.",
-        "Verify that the default level is INFO when the option is not provided.",
-        "Check that the documentation accurately reflects the implemented feature."
+        "Run the unit tests in tests/unit/test_cli.py to confirm the CLI option is parsed correctly."
       ],
       "constraints": [],
       "validation_criteria": [
-        "All relevant tests pass.",
-        "Manual testing confirms correct message filtering via the CLI option.",
-        "Default detail level is INFO.",
-        "Documentation is accurate and complete."
+        "All tests in tests/unit/test_cli.py pass."
       ],
-      "subtask_id": "832d1545-f2ca-4f82-9fb2-b5832226d26d"
+      "subtask_id": "f5b33715-a647-4cd3-bc08-4f651099aaeb"
+    },
+    {
+      "name": "generate_message_handler_tests",
+      "description": "Generate tests for ANSIConsoleUserMessageHandler detail level functionality.",
+      "depends_on": [
+        "implement_cli_option"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/detail_option_implementation_plan_updated.md",
+        "ai_whisperer/logging_custom.py",
+        "tests/unit/test_ansi_console_message_handler.py"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_ansi_console_message_handler.py"
+      ],
+      "instructions": [
+        "Add new test cases to tests/unit/test_ansi_console_message_handler.py to verify:",
+        "- ANSIConsoleUserMessageHandler has a member variable for detail level.",
+        "- The set_detail_level method correctly updates the member variable.",
+        "- The get_detail_level method correctly returns the member variable value.",
+        "- display_message filters messages based on the current detail level.",
+        "Ensure the tests compile and fail without the implementation."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "tests/unit/test_ansi_console_message_handler.py has new test cases for detail level management and message filtering.",
+        "The new tests cover setting/getting the level and filtering messages.",
+        "The test suite compiles but the new tests related to detail level fail before implementation."
+      ],
+      "subtask_id": "6ecd2ba5-c13d-4b23-9834-9db5698d1a88"
+    },
+    {
+      "name": "implement_message_handler_detail",
+      "description": "Implement detail level functionality in ANSIConsoleUserMessageHandler.",
+      "depends_on": [
+        "generate_message_handler_tests",
+        "implement_cli_option"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "ai_whisperer/logging_custom.py",
+        "tests/unit/test_ansi_console_message_handler.py"
+      ],
+      "output_artifacts": [
+        "ai_whisperer/logging_custom.py"
+      ],
+      "instructions": [
+        "Modify the ANSIConsoleUserMessageHandler class in ai_whisperer/logging_custom.py.",
+        "Add a new member variable to store the detail level.",
+        "Add set_detail_level and get_detail_level methods.",
+        "Modify the display_message method to filter messages based on the stored detail level.",
+        "Ensure the code passes the tests generated in the 'generate_message_handler_tests' step."
+      ],
+      "constraints": [
+        "Implement filtering logic within display_message.",
+        "Do not add detail level logic outside of ANSIConsoleUserMessageHandler except for setting it initially."
+      ],
+      "validation_criteria": [
+        "ai_whisperer/logging_custom.py is modified.",
+        "ANSIConsoleUserMessageHandler has a detail level member and set/get methods.",
+        "display_message filters messages based on the detail level.",
+        "All tests in tests/unit/test_ansi_console_message_handler.py pass."
+      ],
+      "subtask_id": "f0b6035a-1804-4180-b1fa-19f23e835ff8"
+    },
+    {
+      "name": "validate_message_handler_detail",
+      "description": "Validate that ANSIConsoleUserMessageHandler detail level functionality works correctly.",
+      "depends_on": [
+        "implement_message_handler_detail"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "ai_whisperer/logging_custom.py",
+        "tests/unit/test_ansi_console_message_handler.py"
+      ],
+      "output_artifacts": [],
+      "instructions": [
+        "Run the unit tests in tests/unit/test_ansi_console_message_handler.py to confirm filtering and level management."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "All tests in tests/unit/test_ansi_console_message_handler.py pass."
+      ],
+      "subtask_id": "7a210da7-372a-4068-a14b-9c209c8fc805"
+    },
+    {
+      "name": "integrate_cli_and_handler",
+      "description": "Connect the CLI detail option value to the ANSIConsoleUserMessageHandler instance.",
+      "depends_on": [
+        "validate_cli_option",
+        "validate_message_handler_detail"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "ai_whisperer/main.py",
+        "ai_whisperer/cli.py",
+        "ai_whisperer/logging_custom.py"
+      ],
+      "output_artifacts": [
+        "ai_whisperer/main.py"
+      ],
+      "instructions": [
+        "Modify the main entry point (likely ai_whisperer/main.py) to retrieve the detail level from the parsed CLI arguments.",
+        "Pass this detail level to the ANSIConsoleUserMessageHandler instance, likely by calling the new set_detail_level method after the handler is created."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "ai_whisperer/main.py is modified.",
+        "The parsed detail level from CLI is used to configure the ANSIConsoleUserMessageHandler.",
+        "Manual testing confirms the detail level affects message output."
+      ],
+      "subtask_id": "ce5a2b12-638b-4ac5-946c-ccae4917ea5e"
+    },
+    {
+      "name": "validate_end_to_end",
+      "description": "Perform end-to-end validation by running the application with different detail levels.",
+      "depends_on": [
+        "integrate_cli_and_handler"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "ai_whisperer/main.py"
+      ],
+      "output_artifacts": [],
+      "instructions": [
+        "Run the main application script with the default detail level.",
+        "Run the main application script with a higher detail level.",
+        "Observe the console output to confirm that messages are filtered correctly based on the specified detail level."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "Running with default level shows only default messages.",
+        "Running with higher level shows more detailed messages.",
+        "The detail level specified via CLI directly impacts the message output."
+      ],
+      "subtask_id": "54ba9b91-610b-4413-aab5-66ed0c353203"
+    },
+    {
+      "name": "update_documentation",
+      "description": "Update documentation to reflect the new detail CLI option.",
+      "depends_on": [
+        "validate_end_to_end"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "README.md"
+      ],
+      "output_artifacts": [
+        "README.md"
+      ],
+      "instructions": [
+        "Update the README.md file to document the new --detail CLI option.",
+        "Explain its purpose, available values, and default behavior."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "README.md is updated.",
+        "The --detail option is clearly documented.",
+        "The documentation explains how the detail level affects output."
+      ],
+      "subtask_id": "7153569f-f99e-458c-84f1-671ef40bf7d9"
     }
   ],
-  "task_id": "3de1821e-5770-4fdb-ab65-240dd08faacd",
+  "task_id": "017f595f-6d06-4a24-b733-3c02792dafe0",
   "input_hashes": {
     "requirements_md": "beaae97c95f85fdbfb778100fb9a27402a81965719788d376dec9ebe2f971967",
     "config_yaml": "c3ec11483dd16c723c26a905ada85e72c74730bf0cea1239f347f03201ecaa5f"

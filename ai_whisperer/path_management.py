@@ -80,7 +80,7 @@ class PathManager:
         self._workspace_path = Path(self._workspace_path).resolve()
         self._prompt_path = Path(self._prompt_path).resolve()
         # Set _app_path to the project root (where README.md is located)
-        self._app_path = Path(__file__).parent.parent.parent.resolve()  # Go up three levels from src/ai_whisperer
+        self._app_path = Path(__file__).parent.parent.resolve()
 
         self._initialized = True
     @property

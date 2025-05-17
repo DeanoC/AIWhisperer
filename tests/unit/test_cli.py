@@ -63,9 +63,9 @@ def mock_setup(reset_path_manager_instance):
 def test_list_models_command_valid_args(mock_commands):
     """Test parsing valid arguments for the list-models command."""
     args = ["--config", "path/to/config.yaml", "list-models"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
@@ -74,13 +74,14 @@ def test_list_models_command_valid_args(mock_commands):
         detail_level=UserMessageLevel.INFO # Expect the default detail level
     )
     assert isinstance(commands[0], MagicMock) # Check if the mocked object is returned
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_list_models_command_global_config_before_command(mock_commands):
     """Test parsing valid arguments for the list-models command with --config before the command."""
     args = ["--config", "path/to/config.yaml", "list-models"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
@@ -89,13 +90,14 @@ def test_list_models_command_global_config_before_command(mock_commands):
         detail_level=UserMessageLevel.INFO # Expect the default detail level
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_list_models_command_with_output_csv(mock_commands):
     """Test parsing valid arguments for the list-models command with --output-csv."""
     args = ["--config", "path/to/config.yaml", "list-models", "--output-csv", "output.csv"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
@@ -104,6 +106,7 @@ def test_list_models_command_with_output_csv(mock_commands):
         detail_level=UserMessageLevel.INFO # Expect the default detail level
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_list_models_command_missing_config(capsys_sys_exit):
     """Test list-models command with missing --config argument."""
@@ -118,9 +121,9 @@ def test_list_models_command_missing_config(capsys_sys_exit):
 def test_list_models_command_with_detail_level(mock_commands):
     """Test parsing valid arguments for the list-models command with --detail-level."""
     args = ["--config", "path/to/config.yaml", "list-models", "--detail-level", "detail"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     from user_message_delegate import UserMessageLevel # Import UserMessageLevel
 
@@ -131,13 +134,14 @@ def test_list_models_command_with_detail_level(mock_commands):
         detail_level=UserMessageLevel.DETAIL # Assert that detail_level is passed correctly
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_generate_initial_plan_command_valid_args(mock_commands):
     """Test parsing valid arguments for the generate initial-plan command."""
     args = ["--config", "config.yaml", "generate", "initial-plan", "reqs.md"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
         config=minimal_config,
@@ -146,13 +150,14 @@ def test_generate_initial_plan_command_valid_args(mock_commands):
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_generate_initial_plan_command_global_config_before_command(mock_commands):
     """Test parsing valid arguments for the generate initial-plan command with --config before the command."""
     args = ["--config", "config.yaml", "generate", "initial-plan", "reqs.md"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
         config=minimal_config,
@@ -161,14 +166,15 @@ def test_generate_initial_plan_command_global_config_before_command(mock_command
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 
 def test_generate_initial_plan_command_with_output(mock_commands):
     """Test parsing valid arguments for the generate-initial-plan command with --output."""
     args = ["--config", "config.yaml", "generate", "initial-plan", "reqs.md", "--output", "plans"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
         config=minimal_config,
@@ -177,6 +183,7 @@ def test_generate_initial_plan_command_with_output(mock_commands):
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_generate_initial_plan_command_missing_requirements(capsys_sys_exit):
     """Test generate-initial-plan command with missing requirements argument."""
@@ -201,9 +208,9 @@ def test_generate_initial_plan_command_missing_config(capsys_sys_exit):
 def test_generate_overview_plan_command_valid_args(mock_commands):
     """Test parsing valid arguments for the generate overview-plan command."""
     args = ["--config", "config.yaml", "generate", "overview-plan", "initial.json"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
         config=minimal_config,
@@ -212,13 +219,14 @@ def test_generate_overview_plan_command_valid_args(mock_commands):
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_generate_overview_plan_command_global_config_before_command(mock_commands):
     """Test parsing valid arguments for the generate overview-plan command with --config before the command."""
     args = ["--config", "config.yaml", "generate", "overview-plan", "initial.json"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
         config=minimal_config,
@@ -227,13 +235,14 @@ def test_generate_overview_plan_command_global_config_before_command(mock_comman
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_generate_overview_plan_command_with_output(mock_commands):
     """Test parsing valid arguments for the generate overview-plan command with --output."""
     args = ["--config", "config.yaml", "generate", "overview-plan", "initial.json", "--output", "overview_plans"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
         config=minimal_config,
@@ -242,6 +251,7 @@ def test_generate_overview_plan_command_with_output(mock_commands):
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_generate_overview_plan_command_missing_initial_plan(capsys_sys_exit):
     """Test generate overview-plan command with missing initial-plan argument."""
@@ -266,9 +276,9 @@ def test_generate_overview_plan_command_missing_config(capsys_sys_exit):
 def test_generate_full_plan_command_valid_args(mock_commands):
     """Test parsing valid arguments for the generate full-plan command."""
     args = ["--config", "config.yaml", "generate", "full-plan", "reqs.md", "--output", "plans"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 2
+    assert len(commands) == 2 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
         config=minimal_config,
@@ -282,14 +292,15 @@ def test_generate_full_plan_command_valid_args(mock_commands):
         initial_plan_path="<output_of_generate_initial_plan_command>",
         delegate_manager=ANY
     )
-    assert all(isinstance(command, MagicMock) for command in commands)
+    assert all(isinstance(command, MagicMock) for command in commands) # Assert that all elements in the command list are MagicMock
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_refine_command_valid_args(mock_commands):
     """Test parsing valid arguments for the refine command."""
     args = ["--config", "config.yaml", "refine", "input.md"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["RefineCommand"].assert_called_once_with(
         config=minimal_config,
@@ -300,13 +311,14 @@ def test_refine_command_valid_args(mock_commands):
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_refine_command_with_optional_args(mock_commands):
     """Test parsing valid arguments for the refine command with optional args."""
     args = ["--config", "config.yaml", "refine", "input.md", "--iterations", "5", "--prompt-file", "prompt.txt", "--output", "refined.md"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["RefineCommand"].assert_called_once_with(
         config=minimal_config,
@@ -317,6 +329,7 @@ def test_refine_command_with_optional_args(mock_commands):
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_refine_command_missing_input_file(capsys_sys_exit):
     """Test refine command with missing input_file argument."""
@@ -341,9 +354,9 @@ def test_refine_command_missing_config(capsys_sys_exit):
 def test_run_command_valid_args(mock_commands):
     """Test parsing valid arguments for the run command."""
     args = ["--config", "config.yaml", "run", "--plan-file", "plan.json", "--state-file", "state.json"]
-    commands = cli(args)
+    commands, parsed_args = cli(args) # Unpack the tuple
 
-    assert len(commands) == 1
+    assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
     mock_commands["RunCommand"].assert_called_once_with(
         config=minimal_config,
@@ -352,6 +365,7 @@ def test_run_command_valid_args(mock_commands):
         delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
+    assert isinstance(parsed_args, dict) # Assert that the second element is the parsed arguments dictionary
 
 def test_run_command_missing_plan_file(capsys_sys_exit):
     """Test run command with missing --plan-file argument."""

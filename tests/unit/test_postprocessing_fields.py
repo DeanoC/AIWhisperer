@@ -1,6 +1,6 @@
 import pytest
 import json
-from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
+from postprocessing.scripted_steps.handle_required_fields import handle_required_fields
 
 # Mock schema for testing
 SCHEMA = {

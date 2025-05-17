@@ -27,7 +27,7 @@ The `UserMessageDelegate` protocol defines the contract for any class that can h
 
 ```python
 from typing import Protocol
-from src.user_message_delegate import UserMessageLevel
+from user_message_delegate import UserMessageLevel
 
 class UserMessageDelegate(Protocol):
     def display_message(self, message: str, level: UserMessageLevel) -> None:
@@ -49,8 +49,8 @@ User messages are displayed by leveraging the `DelegateManager`. The designated 
 To display a user message, you need to invoke a notification on the `DelegateManager` with this event type and provide the message content and level in the `event_data`.
 
 ```python
-from src.ai_whisperer.delegate_manager import DelegateManager
-from src.user_message_delegate import UserMessageLevel
+from ai_whisperer.delegate_manager import DelegateManager
+from user_message_delegate import UserMessageLevel
 
 # Assuming you have an instance of DelegateManager available
 delegate_manager = DelegateManager() # Or obtain the existing instance

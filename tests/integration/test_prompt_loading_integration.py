@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 from unittest.mock import patch
 
-from src.ai_whisperer import PromptSystem, PromptConfiguration, Prompt, PromptNotFoundError
+from ai_whisperer import PromptSystem, PromptConfiguration, Prompt, PromptNotFoundError
 
 
 class TestPromptLoadingIntegration(unittest.TestCase):

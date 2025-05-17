@@ -6,9 +6,9 @@ ensuring that the scripted and AI improvement phases work together correctly.
 """
 
 import pytest
-from src.postprocessing.pipeline import PostprocessingPipeline
-from src.postprocessing.scripted_steps.identity_transform import identity_transform
-from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
+from postprocessing.pipeline import PostprocessingPipeline
+from postprocessing.scripted_steps.identity_transform import identity_transform
+from postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 
 
 def test_pipeline_with_identity_step():

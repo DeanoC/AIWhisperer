@@ -64,7 +64,6 @@ class ParserPlan:
         self._plan_data: Optional[Dict[str, Any]] = None
         self._is_loaded: bool = False
         self._plan_file_path: Optional[str] = None
-        self._project_root = os.getcwd()
 
     def _ensure_loaded(self):
         """Checks if a plan has been loaded and raises an error if not."""

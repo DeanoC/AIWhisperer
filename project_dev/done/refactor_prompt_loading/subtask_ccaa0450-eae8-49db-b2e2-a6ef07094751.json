@@ -1,7 +1,7 @@
 {
   "description": "Update existing code to use the new prompt system for accessing prompts.",
   "instructions": [
-    "Import the `PromptSystem` class from `src.ai_whisperer.prompt_system` into `src/ai_whisperer/ai_service_interaction.py` and `src/ai_whisperer/subtask_generator.py`.",
+    "Import the `PromptSystem` class from `ai_whisperer.prompt_system` into `src/ai_whisperer/ai_service_interaction.py` and `src/ai_whisperer/subtask_generator.py`.",
     "Identify all instances in `src/ai_whisperer/ai_service_interaction.py` where prompts are loaded or accessed directly (e.g., reading from the `prompts` directory).",
     "Replace these direct accesses with calls to a `PromptSystem` instance, using the appropriate section and prompt keys.",
     "Identify all instances in `src/ai_whisperer/subtask_generator.py` where prompts are loaded or accessed directly.",

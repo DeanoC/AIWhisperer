@@ -81,8 +81,8 @@ try {
     Write-Verbose "Using Python executable from virtual environment: $VenvPythonPath"
 
     # Locate the main Python script (using module path relative to ProjectRoot)
-    $MainModulePath = "src.ai_whisperer.main" # Path used with python -m
-    $MainPyCheckPath = Join-Path -Path $ProjectRoot -ChildPath "src\ai_whisperer\main.py" # Path for existence check
+    $MainModulePath = "ai_whisperer.main" # Path used with python -m
+    $MainPyCheckPath = Join-Path -Path $ProjectRoot -ChildPath "ai_whisperer\main.py" # Path for existence check
     if (-not (Test-Path $MainPyCheckPath -PathType Leaf)) {
         Write-Error "The main Python script was not found at '$MainPyCheckPath'. Please verify the project structure."
         exit 1

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch, mock_open
 from pathlib import Path
 import os
 
-from src.ai_whisperer import PromptSystem, PromptResolver, PromptLoader, PromptConfiguration, Prompt, PromptNotFoundError
+from ai_whisperer import PromptSystem, PromptResolver, PromptLoader, PromptConfiguration, Prompt, PromptNotFoundError
 from ai_whisperer.path_management import PathManager
 
 # Unit Tests

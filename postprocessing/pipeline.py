@@ -19,11 +19,11 @@ class ProcessingError(Exception):
 
 
 # Import the identity transform for use in the dummy AI phase
-from src.postprocessing.scripted_steps.identity_transform import identity_transform
-from src.postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
-from src.postprocessing.scripted_steps.handle_required_fields import handle_required_fields
-from src.postprocessing.scripted_steps.validate_syntax import validate_syntax
-from src.postprocessing.scripted_steps.escape_text_fields import escape_text_fields
+from postprocessing.scripted_steps.identity_transform import identity_transform
+from postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
+from postprocessing.scripted_steps.handle_required_fields import handle_required_fields
+from postprocessing.scripted_steps.validate_syntax import validate_syntax
+from postprocessing.scripted_steps.escape_text_fields import escape_text_fields
 
 logger = logging.getLogger(__name__)
 

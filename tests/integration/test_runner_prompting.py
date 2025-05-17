@@ -335,7 +335,7 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
 
     # Patch: Inject a dummy DelegateManager to avoid NoneType errors
     import types
-    commands = cli(
+    commands, parsed_args = cli(
         args=[
             "--config",
             str(CONFIG_FILE),
@@ -420,7 +420,7 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
     # Run the aiwhisperer with the temporary config and task
 
     # Patch: Inject a dummy DelegateManager to avoid NoneType errors
-    commands = cli(
+    commands, parsed_args = cli(
         args=[
             "--config",
             str(config_without_agent_default_file),
@@ -549,7 +549,7 @@ def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
 
 
     # Patch: Inject a dummy DelegateManager to avoid NoneType errors
-    commands = cli(
+    commands, parsed_args = cli(
         args=[
             "--config",
             str(config_without_agent_default_file),

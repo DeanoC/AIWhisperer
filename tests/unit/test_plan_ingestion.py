@@ -5,9 +5,6 @@ import shutil
 import pytest
 from pathlib import Path
 from typing import Dict
-
-
-from ai_whisperer.json_validator import set_schema_directory, get_schema_directory
 from ai_whisperer.path_management import PathManager
 
 # Import the new ParserPlan and exceptions
@@ -109,10 +106,11 @@ VALID_SUBTASK_CONTENT_2 = {
 
 
 @pytest.fixture
-def create_plan_file(tmp_path: Path):
+def create_plan_file(tmp_path: Path, request):
     """Fixture to create a temporary plan file."""
 
     def _creator(filename: str, content: dict):
+
         file_path = tmp_path / filename
         file_path.write_text(json.dumps(content))
         return str(file_path)
@@ -122,23 +120,9 @@ def create_plan_file(tmp_path: Path):
 
 @pytest.fixture
 def create_overview_plan_with_subtasks(tmp_path: Path, request):
-    """Fixture to create a temporary overview plan and its subtasks, and set schema directory."""
-    original_schema_dir = get_schema_directory()
-    schema_temp_dir = tmp_path / "schemas"
-    schema_temp_dir.mkdir()
-
-    # Copy correct schema files to the temporary directory
-    source_schema_dir = Path(__file__).parent.parent.parent / "schemas"
-    
+    """Fixture to create a temporary overview plan and its subtasks, and set schema directory."""    
     # Initialize PathManager
     PathManager.get_instance().initialize()
-
-    # Set the schema directory for the validator
-    set_schema_directory(str(schema_temp_dir))
-
-    # Copy correct schema files to the temporary directory
-    shutil.copy(source_schema_dir / "overview_plan_schema.json", schema_temp_dir)
-    shutil.copy(source_schema_dir / "subtask_schema.json", schema_temp_dir)
 
     def _creator(overview_filename: str, overview_content: dict, subtask_dir: str, subtasks: Dict[str, dict]):
         overview_file_path = tmp_path / overview_filename
@@ -164,9 +148,6 @@ def create_overview_plan_with_subtasks(tmp_path: Path, request):
 
         return str(overview_file_path)
 
-    # Add a finalizer to reset the schema directory after the test
-    request.addfinalizer(lambda: set_schema_directory(original_schema_dir))
-
     return _creator
 
 
@@ -188,7 +169,7 @@ def test_parser_plan_not_loaded_init():
 # --- Tests for load_single_file_plan ---
 
 
-def test_load_single_file_plan_success(create_plan_file):
+def test_load_single_file_plan_success(create_plan_file, request):
     """Test successful loading of a valid single-file plan."""
     plan_path = create_plan_file("single_plan.json", VALID_SINGLE_FILE_PLAN_CONTENT)
     parser = ParserPlan()
@@ -206,7 +187,7 @@ def test_load_single_file_plan_file_not_found():
         parser.load_single_file_plan("non_existent_plan.json")
 
 
-def test_load_single_file_plan_malformed_json(tmp_path):
+def test_load_single_file_plan_malformed_json(tmp_path, create_plan_file, request):
     """Test loading a single-file plan with malformed JSON."""
     malformed_content = '{"task_id": "task-malformed", "plan": ['
     malformed_plan_path = tmp_path / "malformed_plan.json"
@@ -216,7 +197,7 @@ def test_load_single_file_plan_malformed_json(tmp_path):
         parser.load_single_file_plan(str(malformed_plan_path))
 
 
-def test_load_single_file_plan_missing_top_level_field(create_plan_file):
+def test_load_single_file_plan_missing_top_level_field(create_plan_file, request):
     """Test single-file plan with missing required top-level field."""
     invalid_content = VALID_SINGLE_FILE_PLAN_CONTENT.copy()
     del invalid_content["task_id"]
@@ -226,7 +207,7 @@ def test_load_single_file_plan_missing_top_level_field(create_plan_file):
         parser.load_single_file_plan(plan_path)
 
 
-def test_load_single_file_plan_missing_required_input_hashes_field(create_plan_file):
+def test_load_single_file_plan_missing_required_input_hashes_field(create_plan_file, request):
     """Test single-file plan with missing required input_hashes field."""
     invalid_content = json.loads(json.dumps(VALID_SINGLE_FILE_PLAN_CONTENT))
     del invalid_content["input_hashes"]["requirements_md"]
@@ -236,7 +217,7 @@ def test_load_single_file_plan_missing_required_input_hashes_field(create_plan_f
         parser.load_single_file_plan(plan_path)
 
 
-def test_load_single_file_plan_plan_not_a_list(create_plan_file):
+def test_load_single_file_plan_plan_not_a_list(create_plan_file, request):
     """Test single-file plan where 'plan' is not a list."""
     invalid_content = VALID_SINGLE_FILE_PLAN_CONTENT.copy()
     invalid_content["plan"] = {"not_a": "list"}
@@ -247,7 +228,7 @@ def test_load_single_file_plan_plan_not_a_list(create_plan_file):
 
 
 # Test for missing required subtask fields in single-file plan
-def test_load_single_file_plan_missing_required_subtask_field(create_plan_file):
+def test_load_single_file_plan_missing_required_subtask_field(create_plan_file, request):
     """Test single-file plan with a step missing a required subtask field."""
     invalid_content = json.loads(json.dumps(VALID_SINGLE_FILE_PLAN_CONTENT))
     # Remove a required field from the first subtask
@@ -261,7 +242,7 @@ def test_load_single_file_plan_missing_required_subtask_field(create_plan_file):
 
 
 # Test for extra properties in single-file plan steps due to additionalProperties: false
-def test_load_single_file_plan_extra_property_in_subtask(create_plan_file):
+def test_load_single_file_plan_extra_property_in_subtask(create_plan_file, request):
     """Test single-file plan with an extra property in a step."""
     invalid_content = json.loads(json.dumps(VALID_SINGLE_FILE_PLAN_CONTENT))
     # Add an extra property to the first subtask
@@ -317,7 +298,7 @@ def test_load_overview_plan_malformed_json(tmp_path):
         parser.load_overview_plan(str(malformed_plan_path))
 
 
-def test_load_overview_plan_missing_top_level_field(create_plan_file):
+def test_load_overview_plan_missing_top_level_field(create_plan_file, request):
     """Test overview plan with missing required top-level field."""
     invalid_content = VALID_OVERVIEW_PLAN_CONTENT.copy()
     del invalid_content["task_id"]
@@ -327,7 +308,7 @@ def test_load_overview_plan_missing_top_level_field(create_plan_file):
         parser.load_overview_plan(plan_path)
 
 
-def test_load_overview_plan_plan_not_a_list(create_plan_file):
+def test_load_overview_plan_plan_not_a_list(create_plan_file, request):
     """Test overview plan where 'plan' is not a list."""
     invalid_content = VALID_OVERVIEW_PLAN_CONTENT.copy()
     invalid_content["plan"] = {"not_a": "list"}
@@ -337,7 +318,7 @@ def test_load_overview_plan_plan_not_a_list(create_plan_file):
         parser.load_overview_plan(plan_path)
 
 
-def test_load_overview_plan_missing_required_step_field(create_plan_file):
+def test_load_overview_plan_missing_required_step_field(create_plan_file, request):
     """Test overview plan with missing required step field."""
     invalid_content = json.loads(json.dumps(VALID_OVERVIEW_PLAN_CONTENT))
     del invalid_content["plan"][0]["subtask_id"]
@@ -411,7 +392,7 @@ def test_load_overview_plan_subtask_validation_error(create_overview_plan_with_s
 # --- Tests for data access after loading ---
 
 
-def test_data_access_after_single_file_load(create_plan_file):
+def test_data_access_after_single_file_load(create_plan_file, request):
     """Test accessing data after successful single-file load."""
     plan_path = create_plan_file("single_plan.json", VALID_SINGLE_FILE_PLAN_CONTENT)
     parser = ParserPlan()
@@ -447,7 +428,7 @@ def test_data_access_after_overview_load(create_overview_plan_with_subtasks):
 # Removed test_empty_plan_array_single_file as get_task_dependencies is removed
 
 
-def test_plan_with_optional_fields_missing_single_file(create_plan_file):
+def test_plan_with_optional_fields_missing_single_file(create_plan_file, request):
     """Test single-file plan with optional fields missing."""
     plan_content = {
         "task_id": "task-optional",

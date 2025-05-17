@@ -14,8 +14,8 @@ import time
 # from ai_whisperer.orchestrator import Orchestrator
 from ai_whisperer.subtask_generator import SubtaskGenerator
 from ai_whisperer.config import load_config  # Import load_config
-from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
-from src.postprocessing.pipeline import PostprocessingPipeline
+from postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
+from postprocessing.pipeline import PostprocessingPipeline
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ class TestSubtaskGeneratorPostprocessingIntegration:
 
     @patch("ai_whisperer.ai_service_interaction.OpenRouterAPI")
     @patch("ai_whisperer.subtask_generator.uuid.uuid4")
-    @patch("src.postprocessing.pipeline.PostprocessingPipeline.process")
+    @patch("postprocessing.pipeline.PostprocessingPipeline.process")
     def test_subtask_generator_adds_subtask_id(self, mock_process, mock_uuid4, mock_api, tmp_path_with_cleanup):
         """Test that the subtask generator adds subtask_id via the postprocessor."""
         # Setup
@@ -141,7 +141,6 @@ class TestSubtaskGeneratorPostprocessingIntegration:
                 }
 
                 # Mock the open function to avoid writing to a file, but provide schema content when reading the schema file
-                mock_file = mock_open()
                 # Configure the mock to return schema content when the schema file is opened
                 schema_content = """
 {
@@ -174,15 +173,26 @@ class TestSubtaskGeneratorPostprocessingIntegration:
   "additionalProperties": false
 }
 """
-                mock_file.return_value.__enter__.return_value.read.side_effect = lambda: schema_content
+                def mock_open_side_effect(file, mode='r', *args, **kwargs):
+                    # Check if the file being opened is the schema file
+                    if Path(file).name == "subtask_schema.json":
+                        mock_file = MagicMock()
+                        mock_file.__enter__.return_value.read.return_value = schema_content
+                        return mock_file
+                    # For other files, call the original open
+                    return original_open(file, mode, *args, **kwargs)
 
-                with patch("builtins.open", mock_file):
+                # Store the original open function
+                import builtins
+                original_open = builtins.open
+
+                with patch("builtins.open", side_effect=mock_open_side_effect):
                     # Create input step
                     input_step = {
                         "task_id": "test-id",
                         "subtask_id": "test-subtask-id",
                         "description": "Test step",
-                        "type": "no-op", 
+                        "type": "no-op",
                         "instructions": ["Test instructions"],
                     }
                     # Create result_data with items to add and the schema

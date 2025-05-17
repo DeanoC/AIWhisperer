@@ -3,7 +3,7 @@
   "instructions": [
     "Navigate to the `tests/integration` directory.",
     "Create a new Python file named `test_code_generation_handler_integration.py`.",
-    "Import necessary modules from `pytest`, the execution engine (`src.ai_whisperer.execution_engine`), the code generation handler (`src.ai_whisperer.agent_handlers.code_generation`), and any required mocking libraries (e.g., `unittest.mock`).",
+    "Import necessary modules from `pytest`, the execution engine (`ai_whisperer.execution_engine`), the code generation handler (`ai_whisperer.agent_handlers.code_generation`), and any required mocking libraries (e.g., `unittest.mock`).",
     "Define a test class, for example, `TestCodeGenerationHandlerIntegration`.",
     "Within the test class, define test methods using `pytest` fixtures and mocking.",
     "Create dummy implementations or mock objects for external dependencies, specifically the AI service, to return predictable responses for code generation requests.",

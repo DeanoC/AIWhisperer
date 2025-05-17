@@ -3,7 +3,7 @@
   "instructions": [
     "Navigate to the 'tests/integration/' directory.",
     "Create a new Python file named 'test_path_management_integration.py'.",
-    "Import necessary modules, including 'pytest', 'os', 'tempfile', and relevant classes from 'src.ai_whisperer.path_management', 'src.ai_whisperer.config', and 'src.ai_whisperer.cli'.",
+    "Import necessary modules, including 'pytest', 'os', 'tempfile', and relevant classes from 'ai_whisperer.path_management', 'ai_whisperer.config', and 'ai_whisperer.cli'.",
     "Define test functions within 'test_path_management_integration.py' using the 'pytest' framework.",
     "Implement a test function to verify the path management system when no specific configuration or CLI arguments are provided. This test should simulate file operations (e.g., creating temporary files or directories) using the path singleton and assert that they are created in the expected default locations.",
     "Implement a test function to verify path overrides via a configuration file. Create a temporary configuration file with specific path settings, load this configuration using the config module, initialize the path singleton with this config, and simulate file operations to assert that they use the paths specified in the config file.",

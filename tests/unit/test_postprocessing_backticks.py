@@ -1,6 +1,6 @@
 import pytest
 import os
-from src.postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
+from postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
 
 
 @pytest.mark.parametrize(

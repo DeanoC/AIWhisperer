@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 from unittest.mock import patch, MagicMock
 import tempfile
@@ -6,6 +7,20 @@ import os
 from ai_whisperer.commands import GenerateInitialPlanCommand
 from ai_whisperer.initial_plan_generator import InitialPlanGenerator
 from ai_whisperer.delegate_manager import DelegateManager
+from ai_whisperer.config import load_config
+
+@pytest.fixture
+def initialize_path_manager(tmp_path):
+    """Fixture to initialize the PathManager singleton with a temporary path and prompt path."""
+    from ai_whisperer.path_management import PathManager # Import PathManager
+    PathManager.get_instance().initialize(config_values={'project_path': str(tmp_path), 'prompt_path': str(tmp_path)})
+
+@pytest.fixture
+def reset_path_manager():
+    """Fixture to reset the PathManager singleton after each test."""
+    from ai_whisperer.path_management import PathManager # Import PathManager
+    yield
+    PathManager._reset_instance()
 
 class TestGenerateInitialPlanCommand:
 
@@ -60,13 +75,12 @@ class TestGenerateInitialPlanCommand:
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_generate_initial_plan_actual_server(self, tmp_path):
+    def test_generate_initial_plan_actual_server(self, tmp_path, initialize_path_manager, reset_path_manager):
         """Tests generating initial plan with an actual server and requirements file."""
         # This test requires a valid configuration with actual servers defined in config.yaml.
         # It will attempt to interact with configured servers.
         # If no servers are configured or accessible, this test might fail.
 
-        from ai_whisperer.config import load_config
 
         # Create a temporary requirements file
         requirements_content = "Generate a simple 'Hello World' Python script."

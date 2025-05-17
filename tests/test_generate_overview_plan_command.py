@@ -4,8 +4,24 @@ import tempfile
 import os
 from pathlib import Path
 
+from requests import request
+
 from ai_whisperer.commands import GenerateOverviewPlanCommand
 from ai_whisperer.project_plan_generator import OverviewPlanGenerator
+from ai_whisperer.config import load_config
+
+@pytest.fixture
+def initialize_path_manager(tmp_path):
+    """Fixture to initialize the PathManager singleton with a temporary path and prompt path."""
+    from ai_whisperer.path_management import PathManager # Import PathManager
+    PathManager.get_instance().initialize(config_values={'project_path': str(tmp_path), 'prompt_path': str(tmp_path)})
+
+@pytest.fixture
+def reset_path_manager():
+    """Fixture to reset the PathManager singleton after each test."""
+    from ai_whisperer.path_management import PathManager # Import PathManager
+    yield
+    PathManager._reset_instance()
 
 class TestGenerateOverviewPlanCommand:
 
@@ -57,13 +73,11 @@ class TestGenerateOverviewPlanCommand:
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_generate_overview_plan_actual_server(self, tmp_path):
+    def test_generate_overview_plan_actual_server(self, tmp_path, initialize_path_manager, reset_path_manager):
         """Tests generating overview plan with an actual server and initial plan file."""
         # This test requires a valid configuration with actual servers defined in config.yaml.
         # It will attempt to interact with configured servers.
         # If no servers are configured or accessible, this test might fail.
-
-        from ai_whisperer.config import load_config
 
         # Create a temporary initial plan file
         initial_plan_content = """

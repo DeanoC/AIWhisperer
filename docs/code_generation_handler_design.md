@@ -13,17 +13,17 @@ The handler is responsible for managing the interaction with an AI agent to gene
 
     ```python
     # src/ai_whisperer/agent_handlers/code_generation.py
-    from src.ai_whisperer.execution_engine import ExecutionEngine
-    from src.ai_whisperer.exceptions import TaskExecutionError
-    from src.ai_whisperer.logging_custom_custom import LogMessage, LogLevel, ComponentType
-    from src.ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistry is accessible
+    from ai_whisperer.execution_engine import ExecutionEngine
+    from ai_whisperer.exceptions import TaskExecutionError
+    from ai_whisperer.logging_custom_custom import LogMessage, LogLevel, ComponentType
+    from ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistry is accessible
     from pathlib import Path
     import json
     import traceback
     from datetime import datetime, timezone
 
     # Potentially import build_ascii_directory_tree if needed
-    from src.ai_whisperer.utils import build_ascii_directory_tree
+    from ai_whisperer.utils import build_ascii_directory_tree
 
     def handle_code_generation(engine: ExecutionEngine, task_definition: dict, task_id: str):
         """

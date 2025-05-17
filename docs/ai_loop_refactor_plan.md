@@ -36,8 +36,8 @@ The following modifications will be made to `src/ai_whisperer/agent_handlers/cod
 1. **Import the new AI loop component:**
 
     ```python
-    from src.ai_whisperer.ai_loop import run_ai_loop
-    from src.ai_whisperer.context_management import ContextManager # Import ContextManager
+    from ai_whisperer.ai_loop import run_ai_loop
+    from ai_whisperer.context_management import ContextManager # Import ContextManager
     ```
 
 2. **Instantiate `ContextManager`:**

@@ -4,7 +4,7 @@ Unit tests for the format_json postprocessing step.
 
 import unittest
 import json
-from src.postprocessing.scripted_steps.format_json import format_json
+from postprocessing.scripted_steps.format_json import format_json
 
 
 class TestFormatJson(unittest.TestCase):

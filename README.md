@@ -189,8 +189,8 @@ See [Configuration Examples](docs/config_examples.md) for more detailed examples
 Run the tool from the project's root directory:
 
 ```bash
-python -m src.ai_whisperer.main generate --requirements <path/to/your/requirements.md> --config config.yaml --output <path/to/output/tasks.yaml>
-python -m src.ai_whisperer.main list-models --config .\project_dev\aiwhisperer_config.yaml --output-csv models.csv
+python -m ai_whisperer.main generate --requirements <path/to/your/requirements.md> --config config.yaml --output <path/to/output/tasks.yaml>
+python -m ai_whisperer.main list-models --config .\project_dev\aiwhisperer_config.yaml --output-csv models.csv
 
 ```
 
@@ -198,7 +198,7 @@ python -m src.ai_whisperer.main list-models --config .\project_dev\aiwhisperer_c
 
 ```bash
 # Assuming you have requirements.md in the root
-python -m src.ai_whisperer.main --config config.yaml generate initial-plan requirements.md
+python -m ai_whisperer.main --config config.yaml generate initial-plan requirements.md
 ```
 
 This will read `requirements.md`, use the settings in `config.yaml`, call the OpenRouter API, and save the resulting task list to `generated_tasks.yaml`.
@@ -206,13 +206,13 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
 * **`list-models`**: Displays a list of available models from the OpenRouter API. Requires the `--config` argument to be specified as well.
 
     ```bash
-    python -m src.ai_whisperer.main --list-models --config config.yaml
+    python -m ai_whisperer.main --list-models --config config.yaml
     ```
 
 * **`refine`**: Refines an existing requirement document using an AI model.
 
     ```bash
-    python -m src.ai_whisperer.main refine <path/to/requirements.md> --config config.yaml [--prompt-file <path/to/prompt.txt>] [--iterations <number>]
+    python -m ai_whisperer.main refine <path/to/requirements.md> --config config.yaml [--prompt-file <path/to/prompt.txt>] [--iterations <number>]
     ```
 
     This command will take the specified requirements file, process it with an AI model (optionally using a custom prompt and multiple iterations), rename the original file with a `.original` suffix, and save the refined content back to the original filename.
@@ -220,7 +220,7 @@ This will read `requirements.md`, use the settings in `config.yaml`, call the Op
 * **`run`**: Executes a project plan from an overview JSON file and manages the state file. See the [Usage Documentation](docs/usage.md) for detailed information.
 
     ```bash
-    python -m src.ai_whisperer.main run --plan-file <path/to/plan.json> --state-file <path/to/state.json> --config <path/to/config.yaml> [--monitor | -m]
+    python -m ai_whisperer.main run --plan-file <path/to/plan.json> --state-file <path/to/state.json> --config <path/to/config.yaml> [--monitor | -m]
     ```
 
   * **`--monitor`**, **`-m`**: Enables the terminal monitor during the task execution, providing real-time updates on the plan's progress.
