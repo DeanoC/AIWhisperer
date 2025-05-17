@@ -83,7 +83,7 @@ class GenerateInitialPlanCommand(BaseCommand):
         super().__init__(config)
         self.output_dir = output_dir
         self.requirements_path = requirements_path
-        self.delegate_manager = delegate_manager # Store delegate_manager
+        self.delegate_manager = delegate_manager
 
     def execute(self):
         """Generates initial task YAML or a detailed subtask."""
@@ -92,7 +92,7 @@ class GenerateInitialPlanCommand(BaseCommand):
         if not self.requirements_path:
             raise ValueError("Requirements path is required for initial plan generation.")
 
-        plan_generator = InitialPlanGenerator(self.config, self.output_dir)
+        plan_generator = InitialPlanGenerator(self.config, self.delegate_manager, self.output_dir)
         logger.debug(f"Generating initial task plan from: {self.requirements_path}")
 
         result_path = plan_generator.generate_plan(self.requirements_path, self.config.get('config_path', ''))

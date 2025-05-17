@@ -199,19 +199,21 @@ def _build_tree_recursive(current_dir_path, prefix_str, inherited_ignore_rules, 
     # was local to this call. The caller will use its own set of rules.
 
 
-def build_ascii_directory_tree(start_path="."):
+def build_ascii_directory_tree(start_path=".", ignore=None):
     """
     Builds an ASCII directory tree starting from the given directory,
-    recursing through subdirectories and respecting .gitignore files.
+    recursing through subdirectories and respecting .gitignore files and an explicit ignore list.
 
     Args:
         start_path (str): The path to the directory to start from. Defaults to current directory.
+        ignore (list[str] | None): List of file or directory names or relative paths to ignore.
 
     Returns:
         str: A string containing the ASCII representation of the directory tree.
              Returns an error message if start_path is not a valid directory.
     """
     abs_start_path = os.path.abspath(os.path.expanduser(start_path))
+    ignore_patterns = set(ignore) if ignore else set()
 
     if not os.path.isdir(abs_start_path):
         return f"Error: Path '{start_path}' is not a valid directory."
@@ -221,6 +223,52 @@ def build_ascii_directory_tree(start_path="."):
     # Initial ignore rules are empty; they will be loaded as we traverse
     initial_ignore_rules = []
 
-    _build_tree_recursive(abs_start_path, "", initial_ignore_rules, output_lines)
+    def _should_ignore(entry_path, entry_name):
+        """
+        Checks if the entry should be ignored based on ignore_patterns.
+        Supports both basenames and relative paths with slashes.
+        """
+        rel_path = os.path.relpath(entry_path, abs_start_path).replace(os.sep, "/")
+        # Check for direct match with pattern (e.g., 'foo/bar'), or basename match (e.g., 'foo')
+        return (
+            entry_name in ignore_patterns or
+            rel_path in ignore_patterns or
+            any(fnmatch.fnmatch(rel_path, pat) for pat in ignore_patterns)
+        )
+
+    def _build_tree_recursive_with_explicit_ignore(current_dir_path, prefix_str, inherited_ignore_rules, output_lines_list):
+        current_level_active_rules = list(inherited_ignore_rules)
+        gitignore_file_in_current_dir = os.path.join(current_dir_path, ".gitignore")
+        current_level_active_rules.extend(_parse_gitignore(gitignore_file_in_current_dir))
+
+        try:
+            raw_entries = list(os.scandir(current_dir_path))
+            sorted_entries = sorted(raw_entries, key=lambda e: (not e.is_dir(), e.name.lower()))
+        except OSError as e:
+            output_lines_list.append(
+                f"{prefix_str}└── [Error reading: {os.path.basename(current_dir_path)} - {e.strerror}]"
+            )
+            return
+
+        valid_entries_to_display = []
+        for entry in sorted_entries:
+            if _should_ignore(entry.path, entry.name):
+                continue
+            if not _is_item_ignored(entry.path, entry.is_dir(), entry.name, current_level_active_rules):
+                valid_entries_to_display.append(entry)
+
+        for i, entry in enumerate(valid_entries_to_display):
+            is_last_entry = i == len(valid_entries_to_display) - 1
+            connector = "└── " if is_last_entry else "├── "
+
+            output_lines_list.append(f"{prefix_str}{connector}{entry.name}")
+
+            if entry.is_dir():
+                new_prefix_segment = "    " if is_last_entry else "│   "
+                _build_tree_recursive_with_explicit_ignore(
+                    entry.path, prefix_str + new_prefix_segment, current_level_active_rules, output_lines_list
+                )
+
+    _build_tree_recursive_with_explicit_ignore(abs_start_path, "", initial_ignore_rules, output_lines)
 
     return "\n".join(output_lines)

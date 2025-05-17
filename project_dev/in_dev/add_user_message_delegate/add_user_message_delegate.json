@@ -1,237 +1,185 @@
 {
-  "natural_language_goal": "Add a user message delegate system for ANSI colored output.",
+  "natural_language_goal": "Add a user message delegate for ANSI coloured output.",
   "plan": [
     {
-      "name": "design_user_message_delegate",
-      "description": "Analyze requirements and design the user message delegate interface and basic output implementation.",
+      "name": "analyze_user_message_delegate_requirements",
+      "description": "Analyze the requirements for the user message delegate, including the inputs (message, level), output (ANSI coloured console), and the role as a fallback.",
       "depends_on": [],
       "type": "planning",
-      "input_artifacts": [],
+      "input_artifacts": [
+        "project_dev/rfc/add_user_message_delegate.md"
+      ],
       "output_artifacts": [
-        "docs/user_message_delegate_design.md"
+        "docs/user_message_system.md"
       ],
       "instructions": [
-        "Analyze the user requirements for the user message delegate.",
-        "Design the interface for the user message delegate, including input parameters (message, level) and potential methods.",
-        "Outline the structure for the basic ANSI colored console output class.",
-        "Document the design in docs/user_message_delegate_design.md."
+        "Read and understand the requirements outlined in project_dev/rfc/add_user_message_delegate.md.",
+        "Detail the required interface for the user message delegate.",
+        "Describe the expected behavior for different importance levels.",
+        "Explain how the basic output test class will function as the fallback.",
+        "Document the analysis in docs/user_message_system.md."
       ],
-      "constraints": [
-        "The design must support future extensions like GUI output classes.",
-        "Logs should be redirected to file only, not console, once this is implemented."
-      ],
+      "constraints": [],
       "validation_criteria": [
-        "docs/user_message_delegate_design.md exists.",
-        "docs/user_message_delegate_design.md clearly defines the delegate interface.",
-        "docs/user_message_delegate_design.md outlines the basic console output implementation.",
-        "The design addresses the requirement for ANSI colored output."
+        "docs/user_message_system.md exists.",
+        "docs/user_message_system.md accurately reflects the requirements.",
+        "docs/user_message_system.md clearly defines the delegate interface and behavior."
       ],
-      "subtask_id": "9efa574c-a515-41b6-aaa1-1fa378feb27e"
+      "subtask_id": "1243c68c-c887-4f1d-870d-35df1389da66"
     },
     {
-      "name": "generate_tests_for_delegate_and_basic_output",
-      "description": "Generate tests for the user message delegate interface and the basic ANSI colored console output class.",
+      "name": "generate_user_message_delegate_tests",
+      "description": "Generate unit tests for the user message delegate and the basic output test class.",
       "depends_on": [
-        "design_user_message_delegate"
+        "analyze_user_message_delegate_requirements"
       ],
       "type": "test_generation",
       "input_artifacts": [
-        "docs/user_message_delegate_design.md"
+        "docs/user_message_system.md"
       ],
       "output_artifacts": [
-        "tests/test_user_message_delegate.py"
+        "tests/unit/test_user_message_delegate.py",
+        "tests/basic_output_test.py"
       ],
       "instructions": [
-        "Create tests for the user message delegate interface and the basic ANSI colored console output class.",
-        "Tests should verify:",
-        "- The delegate can be hooked and called.",
-        "- The basic output class prints messages with appropriate ANSI colors based on the level.",
-        "- Different message levels result in different colors.",
-        "- Messages are printed correctly to the console."
+        "Create tests for the user message delegate that verify:",
+        "- The delegate can be registered and called.",
+        "- The basic output test class receives the correct message and level.",
+        "- The basic output test class produces ANSI coloured output based on the level (simulate output if direct console color checking is difficult).",
+        "Create tests for the basic output test class that verify:",
+        "- It correctly formats output with ANSI colors for different levels.",
+        "Ensure tests cover edge cases for message content and levels.",
+        "Leverage the existing test structure and practices found in tests/unit/ and tests/.",
+        "Before completing, run the newly created tests to confirm they compile and run but fail on the missing implementation."
       ],
-      "constraints": [
-        "Tests should not rely on actual log file output at this stage.",
-        "Tests must pass currently (before implementation) and after implementation."
-      ],
+      "constraints": [],
       "validation_criteria": [
-        "tests/test_user_message_delegate.py exists.",
-        "Tests cover different message levels and expected ANSI color output.",
-        "Tests compile and run but fail before implementation.",
-        "Tests pass after implementation."
+        "tests/unit/test_user_message_delegate.py exists and contains tests for the delegate.",
+        "tests/basic_output_test.py exists and contains tests for the basic output class.",
+        "Tests cover different importance levels and message variations.",
+        "Tests fail before implementation is complete, indicating they correctly target the missing functionality."
       ],
-      "subtask_id": "9c8cea57-1ff0-44bc-94f5-3c61aa77c584"
+      "subtask_id": "a4893459-e7f8-4a9c-86ce-8a665e940718"
     },
     {
-      "name": "implement_user_message_delegate_and_basic_output",
-      "description": "Implement the user message delegate interface and the basic ANSI colored console output class.",
+      "name": "implement_user_message_delegate",
+      "description": "Implement the user message delegate interface and the basic output test class.",
       "depends_on": [
-        "generate_tests_for_delegate_and_basic_output"
+        "generate_user_message_delegate_tests"
       ],
       "type": "code_generation",
       "input_artifacts": [
-        "docs/user_message_delegate_design.md",
-        "tests/test_user_message_delegate.py"
+        "docs/user_message_system.md",
+        "tests/unit/test_user_message_delegate.py",
+        "tests/basic_output_test.py"
       ],
       "output_artifacts": [
-        "src/user_message_delegate.py",
-        "src/basic_console_output.py"
+        "src/ai_whisperer/user_message_delegate.py",
+        "src/basic_output_test.py"
       ],
       "instructions": [
-        "Implement the user message delegate interface based on the design document.",
-        "Implement the basic ANSI colored console output class that hooks into the delegate.",
-        "Ensure the implementation handles different message levels and applies the correct ANSI colors.",
-        "Ensure the implementation passes the tests in tests/test_user_message_delegate.py.",
-        "Examine the existing codebase for delegate patterns to reuse."
-      ],
-      "constraints": [
-        "The implementation must adhere to the designed interface.",
-        "The implementation must use ANSI escape codes for coloring."
-      ],
-      "validation_criteria": [
-        "src/user_message_delegate.py exists and contains the delegate interface.",
-        "src/basic_console_output.py exists and contains the console output logic.",
-        "All tests in tests/test_user_message_delegate.py pass.",
-        "The implementation correctly applies ANSI colors based on message level."
-      ],
-      "subtask_id": "66077df9-096e-4828-b9bc-af51e7144854"
-    },
-    {
-      "name": "validate_delegate_and_basic_output",
-      "description": "Validate the implemented user message delegate and basic ANSI colored console output by running tests.",
-      "depends_on": [
-        "implement_user_message_delegate_and_basic_output"
-      ],
-      "type": "validation",
-      "input_artifacts": [
-        "src/user_message_delegate.py",
-        "src/basic_console_output.py",
-        "tests/test_user_message_delegate.py"
-      ],
-      "output_artifacts": [],
-      "instructions": [
-        "Run the tests located in tests/test_user_message_delegate.py.",
-        "Verify that all tests pass, confirming the correct implementation of the delegate and basic output."
+        "Implement the user message delegate interface in src/ai_whisperer/user_message_delegate.py.",
+        "Implement the basic output test class in src/basic_output_test.py.",
+        "Ensure the basic output test class uses ANSI escape codes for coloring based on the message level.",
+        "Integrate the new delegate with the existing delegate management system in src/ai_whisperer/delegate_manager.py (file_edit step follows this step).",
+        "Use the tests generated in the previous step to guide the implementation.",
+        "Ensure all relevant tests pass before marking this step as complete."
       ],
       "constraints": [],
       "validation_criteria": [
-        "All tests in tests/test_user_message_delegate.py execute successfully.",
-        "All tests report a 'pass' status."
+        "src/ai_whisperer/user_message_delegate.py exists and contains the delegate implementation.",
+        "src/basic_output_test.py exists and contains the basic output class implementation.",
+        "The implementation correctly handles message levels and applies ANSI coloring.",
+        "All tests generated in the previous step pass successfully."
       ],
-      "subtask_id": "f8deafba-46dc-44b4-828b-513c91654296"
+      "subtask_id": "2bd8c3dd-f83f-4a58-bfca-c314cbde51da"
     },
     {
-      "name": "update_logging_configuration",
-      "description": "Update the logging configuration to redirect console output to file only.",
+      "name": "integrate_user_message_delegate",
+      "description": "Register the new user message delegate in the delegate manager.",
       "depends_on": [
-        "validate_delegate_and_basic_output"
-      ],
-      "type": "file_edit",
-      "input_artifacts": [],
-      "output_artifacts": [
-        "config/logging.conf"
-      ],
-      "instructions": [
-        "Locate the logging configuration file (e.g., config/logging.conf).",
-        "Modify the configuration to ensure log messages are written to a file.",
-        "Remove or disable any handlers that output log messages to the console.",
-        "Ensure only user messages go to the console via the new delegate."
-      ],
-      "constraints": [
-        "Ensure logs are still written to the specified file.",
-        "Avoid removing necessary file logging configurations."
-      ],
-      "validation_criteria": [
-        "config/logging.conf is modified.",
-        "Running the application no longer shows standard log messages on the console (only user messages).",
-        "Log messages are correctly written to the log file."
-      ],
-      "subtask_id": "7d0ddb88-4593-449a-9886-d9f9b1093d01"
-    },
-    {
-      "name": "integrate_delegate_into_application",
-      "description": "Integrate the user message delegate into the application's code, replacing direct console output for user messages.",
-      "depends_on": [
-        "update_logging_configuration"
+        "implement_user_message_delegate"
       ],
       "type": "file_edit",
       "input_artifacts": [
-        "src/user_message_delegate.py"
+        "src/ai_whisperer/delegate_manager.py",
+        "src/ai_whisperer/user_message_delegate.py"
       ],
       "output_artifacts": [
-        "src/cli/commands/*.py",
-        "src/core/*.py"
+        "src/ai_whisperer/delegate_manager.py"
       ],
       "instructions": [
-        "Identify sections in the existing code (especially CLI commands and core logic) where user-facing messages are printed directly to the console (e.g., using `print()`).",
-        "Replace these direct print statements with calls to the new user message delegate, providing the message and an appropriate level.",
-        "Ensure the delegate is properly initialized and the basic console output is registered."
-      ],
-      "constraints": [
-        "Avoid changing the content or intent of the user messages.",
-        "Ensure all user-facing console output is routed through the delegate."
-      ],
-      "validation_criteria": [
-        "Code files are modified to use the user message delegate.",
-        "Running CLI commands produces user messages via the delegate with correct formatting and colors.",
-        "Direct console print statements for user messages are removed or replaced."
-      ],
-      "subtask_id": "897a97bb-c0fe-4049-b986-65fb35d12989"
-    },
-    {
-      "name": "validate_application_integration",
-      "description": "Validate that the user message delegate is correctly integrated into the application.",
-      "depends_on": [
-        "integrate_delegate_into_application"
-      ],
-      "type": "validation",
-      "input_artifacts": [
-        "src/cli/commands/*.py",
-        "src/core/*.py"
-      ],
-      "output_artifacts": [],
-      "instructions": [
-        "Run various CLI commands and application flows that previously printed user messages to the console.",
-        "Observe the console output to confirm that messages are now routed through the delegate, displayed with ANSI colors, and log messages are absent from the console."
+        "Modify src/ai_whisperer/delegate_manager.py to register the new user message delegate and its fallback (the basic output test class).",
+        "Ensure the delegate can be accessed and invoked through the manager.",
+        "Verify the integration by running relevant tests."
       ],
       "constraints": [],
       "validation_criteria": [
-        "User messages are displayed on the console with ANSI colors.",
-        "The colors correspond to the severity level assigned to the message.",
-        "Standard log messages do not appear on the console during application execution.",
-        "The application functions as expected without errors related to message output."
+        "src/ai_whisperer/delegate_manager.py is updated to register the new delegate.",
+        "Existing delegate manager tests pass.",
+        "New tests specifically targeting the user message delegate registration pass."
       ],
-      "subtask_id": "2b564241-b393-4404-8093-b4db5b10c81a"
+      "subtask_id": "b6cefdf5-22fa-442a-b063-9b9bb8e4af82"
+    },
+    {
+      "name": "validate_user_message_delegate_functionality",
+      "description": "Run all relevant tests to validate the user message delegate and basic output class implementation and integration.",
+      "depends_on": [
+        "integrate_user_message_delegate"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "tests/unit/test_user_message_delegate.py",
+        "tests/basic_output_test.py",
+        "tests/test_delegate_manager_integration.py"
+      ],
+      "output_artifacts": [],
+      "instructions": [
+        "Run all tests related to the user message delegate, basic output class, and delegate manager integration.",
+        "Ensure all tests pass, including those generated earlier in the plan.",
+        "Confirm that the basic output test class correctly prints ANSI coloured output when invoked through the delegate (manual observation may be required for color verification if automated checks are difficult)."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "All targeted tests pass.",
+        "The user message delegate functions as expected, routing messages to the basic output class.",
+        "The basic output class produces ANSI coloured output according to the message level."
+      ],
+      "subtask_id": "ab3d3162-d0d3-44dc-9df6-0d3a73dff1d3"
     },
     {
       "name": "update_documentation",
-      "description": "Update documentation to reflect the new user message delegate system.",
+      "description": "Update documentation to reflect the new user message delegate.",
       "depends_on": [
-        "validate_application_integration"
+        "validate_user_message_delegate_functionality"
       ],
       "type": "documentation",
-      "input_artifacts": [],
+      "input_artifacts": [
+        "docs/user_message_system.md",
+        "README.md"
+      ],
       "output_artifacts": [
-        "docs/user_message_delegate.md",
+        "docs/user_message_system.md",
         "README.md"
       ],
       "instructions": [
-        "Create a new documentation file (e.g., docs/user_message_delegate.md) describing the user message delegate system.",
-        "Explain its purpose, how to use it for developers, and how new output classes can be added.",
-        "Update the main README.md or relevant developer documentation to mention the new system and where to find more details."
+        "Update the user message system documentation in docs/user_message_system.md to accurately reflect the implemented delegate and basic output class.",
+        "Add a section or mention in the README.md about the new user message delegate system and its purpose.",
+        "Explain how future output classes can be added.",
+        "Ensure documentation is clear, concise, and up-to-date."
       ],
       "constraints": [],
       "validation_criteria": [
-        "docs/user_message_delegate.md exists and is correctly formatted.",
-        "The documentation explains the delegate's purpose, usage, and extensibility.",
-        "README.md or other relevant docs are updated to reference the new system.",
-        "Documentation is clear and easy to understand."
+        "docs/user_message_system.md is updated.",
+        "README.md is updated.",
+        "Documentation accurately describes the user message delegate and its functionality."
       ],
-      "subtask_id": "8fef9709-49b7-4e1d-80b5-d190bf38e81c"
+      "subtask_id": "7b193b3f-fd0a-4205-9684-95a128765a82"
     }
   ],
-  "task_id": "2e7c4729-4442-404e-a56f-efa1fddb482c",
+  "task_id": "7cb105e4-e04d-447c-9a3c-a7c21ea7c025",
   "input_hashes": {
     "requirements_md": "d33ecde197b7eab01e32a588a75615b7eff2aa0d1172e3bf2e12a02d2508e416",
-    "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b"
+    "config_yaml": "c3ec11483dd16c723c26a905ada85e72c74730bf0cea1239f347f03201ecaa5f"
   }
 }
