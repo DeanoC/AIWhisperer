@@ -3,7 +3,6 @@ import logging
 
 from basic_output_test import ANSIConsoleUserMessageHandler # Import logging
 from .cli import cli
-from ai_whisperer.ai_service_interaction import OpenRouterAPI
 from ai_whisperer.delegate_manager import DelegateManager
 from user_message_delegate import UserMessageAttribs, UserMessageColour, UserMessageLevel
 

@@ -38,3 +38,11 @@ task_models:
     params:
       temperature: 0.8
       max_tokens: 16000
+
+workspace_ignore_patterns:
+- ".git"
+- ".venv"
+- "__pycache__"
+- .idea
+- .vscode
+- project_dev/done

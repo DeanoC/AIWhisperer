@@ -11,6 +11,8 @@ import os
 import uuid
 from typing import Dict, Any, Optional
 
+from user_message_delegate import UserMessageAttribs, UserMessageColour, UserMessageLevel
+
 from .delegate_manager import DelegateManager # Import DelegateManager
 from .config import load_config
 from .exceptions import ConfigError, OpenRouterAPIError, HashMismatchError, ProcessingError, OrchestratorError
@@ -25,7 +27,7 @@ class InitialPlanGenerator:
     """
     Generates the initial task plan JSON file based on input requirements markdown.
     """
-    def __init__(self, config: Dict[str, Any], output_dir="output", delegate_manager: Optional[DelegateManager] = None): # Add delegate_manager parameter
+    def __init__(self, config: Dict[str, Any], delegate_manager: DelegateManager, output_dir="output", ):
         """
         Initializes the InitialPlanGenerator with application configuration and PromptSystem.
         Args:
@@ -53,8 +55,18 @@ class InitialPlanGenerator:
             logger.error("Model configuration for initial plan generation task is missing in the loaded config.")
             raise ConfigError("Model configuration for initial plan generation task is missing in the loaded config.")
 
-        logger.info(f"InitialPlanGenerator Model: {model_config.get('model')}, Params: {model_config.get('params')}")
 
+        text = f"InitialPlanGenerator Model: {model_config.get('model')}, Params: {model_config.get('params')}"
+        logger.info(text)
+
+        self.delegate_manager.invoke_notification(
+            sender=self,
+            event_type="user_message_display",
+            event_data={
+                "message": text,
+                "level": UserMessageLevel.DETAIL
+            }
+        )
         # Initialize the OpenRouterAPI client with the task-specific model configuration
         self.openrouter_client = OpenRouterAPI(config=model_config)
 
@@ -178,7 +190,8 @@ class InitialPlanGenerator:
             # 1. Calculate Input Hashes (prompt hash is from config loading)
             input_hashes = self._calculate_input_hashes(requirements_md_path, config_path)
 
-            workspace_context = build_ascii_directory_tree(".")
+            workspace_ignore_patterns = self.config.get("workspace_ignore_patterns", [])
+            workspace_context = build_ascii_directory_tree(".", ignore=workspace_ignore_patterns)
 
             # 2. Read Requirements Content
             logger.info(f"Reading requirements file: {requirements_md_path}")
@@ -196,10 +209,20 @@ class InitialPlanGenerator:
             # 3. Construct Final Prompt
             final_prompt = self.prompt_system.get_formatted_prompt(
                 category='core',
-                name="initial_plan",  # <-- add the missing argument
+                name="initial_plan",
                 requirements=requirements_content,
-                input_hashes=input_hashes # Pass input hashes for potential use in prompt
+                workspace_context=workspace_context,
+                input_hashes=input_hashes
             )
+            self.delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={
+                    "message": f"Initial Plan Prompt: {final_prompt}",
+                    "level": UserMessageLevel.DETAIL
+                }
+            )
+
             # logger.debug(
             #     f"Constructed final prompt:\n{final_prompt}..."
             # )
