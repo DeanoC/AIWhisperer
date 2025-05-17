@@ -1,0 +1,40 @@
+{
+  "description": "Update relevant documentation to reflect the changes in how DelegateManager is initialized and used across the system.",
+  "instructions": [
+    "Open the `docs/developer_guide.md` file for editing.",
+    "Locate the section(s) related to message handling, system output, or any place where user-facing messages are generated or processed.",
+    "Update these sections to explain the role of the `DelegateManager` in handling user-facing messages.",
+    "Clearly describe how modules and commands should obtain and use an instance of the `DelegateManager` to send messages.",
+    "Add a new section or update an existing one to explain the `pause` and `end` functionality provided by the `DelegateManager`.",
+    "Detail how modules and commands can integrate with this pause/end functionality, including how to check the state and respond accordingly.",
+    "Ensure the documentation is clear, concise, and provides practical examples where necessary.",
+    "Review the updated documentation for accuracy and clarity, ensuring it aligns with the implemented `DelegateManager` logic."
+  ],
+  "input_artifacts": [
+    "docs/delegate_manager_refactoring_plan.md",
+    "docs/developer_guide.md",
+    "src/ai_whisperer/delegate_manager.py"
+  ],
+  "output_artifacts": [
+    "docs/developer_guide.md"
+  ],
+  "constraints": [
+    "Updates must be made only to the specified documentation file (`docs/developer_guide.md`).",
+    "The documentation must accurately reflect the current implementation of the `DelegateManager`."
+  ],
+  "validation_criteria": [
+    "The `docs/developer_guide.md` file has been modified.",
+    "The documentation explains how to initialize and obtain an instance of `DelegateManager`.",
+    "The documentation describes the purpose and usage of `DelegateManager` for user-facing messages.",
+    "The documentation explains the `pause` and `end` functionality of the `DelegateManager`.",
+    "The documentation provides instructions on how modules/commands should integrate with the `pause`/`end` functionality.",
+    "The updated documentation is easy to understand and navigate."
+  ],
+  "type": "documentation",
+  "name": "update_documentation",
+  "depends_on": [
+    "validate_delegate_manager_integration"
+  ],
+  "task_id": "7f74850b-93b4-472f-b4e2-c0c2eaaaf2f3",
+  "subtask_id": "0488330f-14ad-46af-9054-bae53b238d56"
+}

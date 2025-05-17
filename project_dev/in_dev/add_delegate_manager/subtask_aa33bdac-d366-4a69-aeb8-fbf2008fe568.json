@@ -1,0 +1,38 @@
+{
+  "description": "Analyze the current usage of DelegateManager in execution_engine.py and ai_loop.py to understand its structure and identify necessary changes for broader integration.",
+  "instructions": [
+    "Open `src/aiwhisperer/execution_engine.py` and `src/aiwhisperer/ai_loop.py`.",
+    "Locate all instances where `DelegateManager` is imported, initialized, and used.",
+    "Identify the methods of `DelegateManager` that are currently being called.",
+    "Note how `DelegateManager` is instantiated and what arguments it takes.",
+    "Understand the purpose and context of `DelegateManager` usage within these two files.",
+    "Document your findings in `docs/delegate_manager_analysis.md`, including:",
+    "- A summary of where and how `DelegateManager` is used.",
+    "- A list of the key `DelegateManager` methods called.",
+    "- Observations on the current structure and dependencies related to `DelegateManager`.",
+    "- Initial thoughts on how `DelegateManager` would need to be modified or accessed to be used by other modules and CLI commands.",
+    "Consider potential challenges such as state management, thread safety (if applicable), and dependency injection for wider integration."
+  ],
+  "input_artifacts": [
+    "src/aiwhisperer/execution_engine.py",
+    "src/aiwhisperer/ai_loop.py"
+  ],
+  "output_artifacts": [
+    "docs/delegate_manager_analysis.md"
+  ],
+  "constraints": [
+    "Analysis must be based solely on the provided input files (`src/aiwhisperer/execution_engine.py`, `src/aiwhisperer/ai_loop.py`).",
+    "The output must be a Markdown file named `docs/delegate_manager_analysis.md`."
+  ],
+  "validation_criteria": [
+    "The file `docs/delegate_manager_analysis.md` exists.",
+    "The file `docs/delegate_manager_analysis.md` contains a description of how `DelegateManager` is used in `execution_engine.py` and `ai_loop.py`.",
+    "The file `docs/delegate_manager_analysis.md` lists the key methods of `DelegateManager` used in the analyzed files.",
+    "The file `docs/delegate_manager_analysis.md` includes a section discussing potential challenges and design considerations for broader integration of `DelegateManager`."
+  ],
+  "type": "analysis",
+  "name": "analyze_delegate_manager_usage",
+  "depends_on": [],
+  "task_id": "7f74850b-93b4-472f-b4e2-c0c2eaaaf2f3",
+  "subtask_id": "aa33bdac-d366-4a69-aeb8-fbf2008fe568"
+}

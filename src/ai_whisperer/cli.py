@@ -13,8 +13,10 @@ from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, Subta
 from .commands import ListModelsCommand, GenerateInitialPlanCommand, GenerateOverviewPlanCommand, RefineCommand, RunCommand, BaseCommand # Import command classes
 from . import logging_custom # Import module directly
 from ai_whisperer.path_management import PathManager
+from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManager
 
 logger = None # Will be initialized in main after logging is configured
+delegate_manager = None # Will be initialized in main after logging is configured
 
 def cli(args=None) -> list[BaseCommand]:
     """Main entry point for the AI Whisperer CLI application.
@@ -170,56 +172,84 @@ def cli(args=None) -> list[BaseCommand]:
 
 
         # --- Instantiate Command Object ---
+        # Instantiate the centralized DelegateManager
+        global delegate_manager
+        delegate_manager = DelegateManager()
+        if logger:
+            logger.debug("DelegateManager instantiated.")
+            logger.debug(f"DelegateManager instance: {delegate_manager}")
+
         commands = [] # Initialize commands list
         if parsed_args.command == "list-models":
+            if logger:
+                logger.debug("Creating ListModelsCommand and passing DelegateManager.")
             commands.append(ListModelsCommand(
                 config=config, # Pass the loaded config object
-                output_csv=parsed_args.output_csv
+                output_csv=parsed_args.output_csv,
+                delegate_manager=delegate_manager # Pass the delegate manager
             ))
         elif parsed_args.command == "generate":
             if parsed_args.subcommand == "initial-plan":
+                if logger:
+                    logger.debug("Creating GenerateInitialPlanCommand and passing DelegateManager.")
                 commands.append(GenerateInitialPlanCommand(
                     config=config, # Pass the loaded config object
                     output_dir=parsed_args.output,
                     requirements_path=parsed_args.requirements_path,
+                    delegate_manager=delegate_manager # Pass the delegate manager
                 ))
             elif parsed_args.subcommand == "overview-plan":
+                if logger:
+                    logger.debug("Creating GenerateOverviewPlanCommand and passing DelegateManager.")
                 commands.append(GenerateOverviewPlanCommand(
                     config=config, # Pass the loaded config object
                     output_dir=parsed_args.output,
-                    initial_plan_path=parsed_args.initial_plan_path
+                    initial_plan_path=parsed_args.initial_plan_path,
+                    delegate_manager=delegate_manager # Pass the delegate manager
                 ))
             elif parsed_args.subcommand == "full-plan":
+                if logger:
+                    logger.debug("Creating GenerateInitialPlanCommand (for full-plan) and passing DelegateManager.")
                 commands.append(
                     GenerateInitialPlanCommand(
                         config=config, # Pass the loaded config object
                         output_dir=parsed_args.output,
-                        requirements_path=parsed_args.requirements_path
+                        requirements_path=parsed_args.requirements_path,
+                        delegate_manager=delegate_manager # Pass the delegate manager
                     )
                 )
+                if logger:
+                    logger.debug("Creating GenerateOverviewPlanCommand (for full-plan) and passing DelegateManager.")
                 commands.append(
                     GenerateOverviewPlanCommand(
                         config=config, # Pass the loaded config object
                         output_dir=parsed_args.output,
-                        initial_plan_path="<output_of_generate_initial_plan_command>"
+                        initial_plan_path="<output_of_generate_initial_plan_command>",
+                        delegate_manager=delegate_manager # Pass the delegate manager
                     )
                 )
             else:
                 raise ValueError(f"Unknown subcommand for generate: {parsed_args.subcommand}")
         elif parsed_args.command == "refine":
+            if logger:
+                logger.debug("Creating RefineCommand and passing DelegateManager.")
             commands.append(RefineCommand(
                 config=config, # Pass the loaded config object
                 input_file=parsed_args.input_file,
                 iterations=parsed_args.iterations,
                 prompt_file=parsed_args.prompt_file,
-                output=parsed_args.output
+                output=parsed_args.output,
+                delegate_manager=delegate_manager # Pass the delegate manager
             ))
         elif parsed_args.command == "run":
+            if logger:
+                logger.debug("Creating RunCommand and passing DelegateManager.")
             commands.append(RunCommand(
                 config=config, # Pass the loaded config object
                 plan_file=parsed_args.plan_file,
                 state_file=parsed_args.state_file,
                 monitor=parsed_args.monitor,
+                delegate_manager=delegate_manager # Pass the delegate manager
             ))
         else:
             parser.print_help()

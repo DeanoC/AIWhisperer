@@ -52,9 +52,9 @@ def mock_plan_parser():
 
 @pytest.fixture
 def execution_engine(mock_state_manager, mock_config, mock_prompt_system, mock_shutdown_event):
-    engine = ExecutionEngine(mock_state_manager, mock_config, mock_prompt_system, shutdown_event=mock_shutdown_event)
-    # Ensure the delegate_manager is a real instance for testing delegate interactions
-    engine.delegate_manager = DelegateManager()
+    # Pass a real DelegateManager instance to the constructor for testing delegate interactions
+    delegate_manager = DelegateManager()
+    engine = ExecutionEngine(mock_state_manager, mock_config, mock_prompt_system, delegate_manager=delegate_manager, shutdown_event=mock_shutdown_event)
     return engine
 
 def test_engine_started_delegate_invoked(execution_engine, mock_plan_parser):

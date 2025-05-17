@@ -1,0 +1,47 @@
+{
+  "description": "Plan the refactoring of DelegateManager initialization and usage to facilitate its integration into multiple modules and CLI commands.",
+  "instructions": [
+    "Review the analysis in `docs/delegate_manager_analysis.md` to understand current DelegateManager usage and dependencies.",
+    "Propose a clear strategy for initializing the DelegateManager instance, considering options like creating it at the CLI entry point (`src/aiwhisperer/cli.py`) or within a common utility class.",
+    "Detail how the initialized DelegateManager instance will be passed to the relevant parts of the application, specifically outlining changes needed in:",
+    "- `src/aiwhisperer/cli.py` (for command handling)",
+    "- `src/aiwhisperer/plan_runner.py` (for plan execution)",
+    "- `src/aiwhisperer/initial_plan_generator.py` (if it requires delegation)",
+    "- `src/aiwhisperer/overview_plan_generator.py` (if it requires delegation)",
+    "- `src/aiwhisperer/list_models.py` (if it requires delegation)",
+    "Describe the mechanism for how the DelegateManager will signal the automatic ending or pausing of command execution.",
+    "Specify the single, central location within the application's startup or command execution flow where the DelegateManager will be instantiated and configured.",
+    "Document the entire refactoring plan in `docs/delegate_manager_refactoring_plan.md`."
+  ],
+  "input_artifacts": [
+    "docs/delegate_manager_analysis.md",
+    "src/aiwhisperer/cli.py",
+    "src/aiwhisperer/plan_runner.py",
+    "src/aiwhisperer/initial_plan_generator.py",
+    "src/aiwhisperer/overview_plan_generator.py",
+    "src/aiwhisperer/list_models.py"
+  ],
+  "output_artifacts": [
+    "docs/delegate_manager_refactoring_plan.md"
+  ],
+  "constraints": [
+    "The plan must ensure a single point of DelegateManager setup.",
+    "The plan must support automatic ending or pausing of commands.",
+    "The plan must be documented in `docs/delegate_manager_refactoring_plan.md`."
+  ],
+  "validation_criteria": [
+    "`docs/delegate_manager_refactoring_plan.md` exists.",
+    "`docs/delegate_manager_refactoring_plan.md` provides a clear and detailed refactoring strategy.",
+    "`docs/delegate_manager_refactoring_plan.md` explicitly addresses the initialization and passing of DelegateManager.",
+    "`docs/delegate_manager_refactoring_plan.md` outlines specific changes for `src/aiwhisperer/cli.py`, `src/aiwhisperer/plan_runner.py`, `src/aiwhisperer/initial_plan_generator.py`, `src/aiwhisperer/overview_plan_generator.py`, and `src/aiwhisperer/list_models.py` if they require DelegateManager.",
+    "`docs/delegate_manager_refactoring_plan.md` details the mechanism for automatic ending or pausing of commands via DelegateManager.",
+    "`docs/delegate_manager_refactoring_plan.md` clearly identifies the single location for DelegateManager setup."
+  ],
+  "type": "planning",
+  "name": "plan_delegate_manager_refactoring",
+  "depends_on": [
+    "analyze_delegate_manager_usage"
+  ],
+  "task_id": "7f74850b-93b4-472f-b4e2-c0c2eaaaf2f3",
+  "subtask_id": "9b090838-5b41-4c81-bf4e-5742f76b545e"
+}

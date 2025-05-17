@@ -64,9 +64,11 @@ def test_list_models_command_valid_args(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
-        output_csv=None
+        output_csv=None,
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock) # Check if the mocked object is returned
 
@@ -76,9 +78,11 @@ def test_list_models_command_global_config_before_command(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
-        output_csv=None
+        output_csv=None,
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -88,9 +92,11 @@ def test_list_models_command_with_output_csv(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["ListModelsCommand"].assert_called_once_with(
         config=minimal_config,
-        output_csv="output.csv"
+        output_csv="output.csv",
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -110,10 +116,12 @@ def test_generate_initial_plan_command_valid_args(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="output",
-        requirements_path="reqs.md"
+        requirements_path="reqs.md",
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -123,10 +131,12 @@ def test_generate_initial_plan_command_global_config_before_command(mock_command
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="output",
-        requirements_path="reqs.md"
+        requirements_path="reqs.md",
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -137,10 +147,12 @@ def test_generate_initial_plan_command_with_output(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="plans",
-        requirements_path="reqs.md"
+        requirements_path="reqs.md",
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -170,10 +182,12 @@ def test_generate_overview_plan_command_valid_args(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="output",
-        initial_plan_path="initial.json"
+        initial_plan_path="initial.json",
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -183,10 +197,12 @@ def test_generate_overview_plan_command_global_config_before_command(mock_comman
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="output",
-        initial_plan_path="initial.json"
+        initial_plan_path="initial.json",
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -196,10 +212,12 @@ def test_generate_overview_plan_command_with_output(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="overview_plans",
-        initial_plan_path="initial.json"
+        initial_plan_path="initial.json",
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -229,15 +247,18 @@ def test_generate_full_plan_command_valid_args(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 2
+    from unittest.mock import ANY
     mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="plans",
-        requirements_path="reqs.md"
+        requirements_path="reqs.md",
+        delegate_manager=ANY
     )
     mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="plans",
-        initial_plan_path="<output_of_generate_initial_plan_command>"
+        initial_plan_path="<output_of_generate_initial_plan_command>",
+        delegate_manager=ANY
     )
     assert all(isinstance(command, MagicMock) for command in commands)
 
@@ -247,12 +268,14 @@ def test_refine_command_valid_args(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["RefineCommand"].assert_called_once_with(
         config=minimal_config,
         input_file="input.md",
         iterations=1,
         prompt_file=None,
-        output=None
+        output=None,
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -262,12 +285,14 @@ def test_refine_command_with_optional_args(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["RefineCommand"].assert_called_once_with(
         config=minimal_config,
         input_file="input.md",
         iterations=5,
         prompt_file="prompt.txt",
-        output="refined.md"
+        output="refined.md",
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -297,11 +322,13 @@ def test_run_command_valid_args(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["RunCommand"].assert_called_once_with(
         config=minimal_config,
         plan_file="plan.json",
         state_file="state.json",
-        monitor=False
+        monitor=False,
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -341,11 +368,13 @@ def test_run_command_with_monitor(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["RunCommand"].assert_called_once_with(
         config=minimal_config,
         plan_file="plan.json",
         state_file="state.json",
-        monitor=True
+        monitor=True,
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 
@@ -355,11 +384,13 @@ def test_run_command_without_monitor(mock_commands):
     commands = cli(args)
 
     assert len(commands) == 1
+    from unittest.mock import ANY
     mock_commands["RunCommand"].assert_called_once_with(
         config=minimal_config,
         plan_file="plan.json",
         state_file="state.json",
-        monitor=False
+        monitor=False,
+        delegate_manager=ANY
     )
     assert isinstance(commands[0], MagicMock)
 

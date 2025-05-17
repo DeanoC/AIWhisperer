@@ -89,6 +89,12 @@ class MockResponse:
 
 
 class TestOpenRouterAPIIntegration:
+    @pytest.fixture(autouse=True)
+    def clear_tool_registry(self):
+        # Ensure ToolRegistry is cleared before each test to avoid cross-test contamination
+        from ai_whisperer.tools.tool_registry import ToolRegistry
+        ToolRegistry().reload_tools()
+
 
     @pytest.fixture
     def api_client(self):

@@ -38,8 +38,10 @@ def mock_execution_engine():
     """Fixture to create a mock ExecutionEngine instance with a real config dict."""
     mock_state_manager = MagicMock()
     mock_prompt_system = MagicMock(spec=PromptSystem) # Create a mock PromptSystem
+    from ai_whisperer.delegate_manager import DelegateManager
+    mock_delegate_manager = DelegateManager()  # Use a real DelegateManager instance
     # Use the real MOCK_CONFIG dict for config
-    engine = ExecutionEngine(mock_state_manager, MOCK_CONFIG, mock_prompt_system) # Add mock_prompt_system
+    engine = ExecutionEngine(mock_state_manager, MOCK_CONFIG, mock_prompt_system, mock_delegate_manager)
     # We need to mock the internal method that calls the AI service to prevent actual calls
     engine._call_ai_service = MagicMock()
     return engine
@@ -50,23 +52,27 @@ def test_prompt_selection_agent_type_and_instructions(mock_execution_engine):
     task_definition = MOCK_TASK_DEFINITION_WITH_INSTRUCTIONS.copy()
     agent_spec = task_definition["agent_spec"]
 
-    # Simulate the relevant part of _handle_ai_interaction
+    # Simulate the relevant part of _handle_ai_interaction (updated logic)
     agent_type = agent_spec.get("type")
     task_instructions = task_definition.get("instructions")
 
     selected_prompt = ""
     agent_type_prompt = mock_execution_engine.config["runner_agent_type_prompts_content"].get(agent_type)
 
-    if agent_type_prompt:
+    # Updated Prompt Selection Logic Simulation
+    # Priority: Agent Prompt + Instructions > Agent Prompt Only > Instructions Only (embedded) > Global Default Only
+    if agent_type_prompt and task_instructions:
+        selected_prompt = agent_type_prompt + "\n\n" + task_instructions
+    elif agent_type_prompt:
         selected_prompt = agent_type_prompt
-        if task_instructions:
-            selected_prompt += "\n\n" + task_instructions
-    elif task_instructions:
-        selected_prompt = task_instructions
+    elif task_instructions and mock_execution_engine.config.get("global_runner_default_prompt_content"):
+        global_default_prompt = mock_execution_engine.config["global_runner_default_prompt_content"]
+        selected_prompt = global_default_prompt.format(instructions=task_instructions)
     elif mock_execution_engine.config.get("global_runner_default_prompt_content"):
         selected_prompt = mock_execution_engine.config["global_runner_default_prompt_content"]
 
-    assert selected_prompt == "Agent-specific AI prompt content.\n\nTask-specific instructions."
+    expected_prompt = "Agent-specific AI prompt content.\n\nTask-specific instructions."
+    assert selected_prompt == expected_prompt
 
 
 def test_prompt_selection_agent_type_only(mock_execution_engine):

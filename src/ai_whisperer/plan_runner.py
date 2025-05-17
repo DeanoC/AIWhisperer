@@ -7,6 +7,7 @@ import traceback
 import threading # Import threading
 from typing import Dict, Any, Optional # Import Optional
 
+from .delegate_manager import DelegateManager # Import DelegateManager
 from .config import load_config
 from .tools.tool_registry import get_tool_registry
 from .tools.read_file_tool import ReadFileTool
@@ -32,7 +33,7 @@ class PlanRunner:
     """
     Executes a project plan from a parsed plan object.
     """
-    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False):
+    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False, delegate_manager: Optional[DelegateManager] = None): # Add delegate_manager parameter
         """
         Initializes the PlanRunner with application configuration.
 
@@ -42,6 +43,7 @@ class PlanRunner:
         self.config = config
         self.shutdown_event = shutdown_event # Store the shutdown event
         self.monitor_enabled = monitor # Store the monitor flag
+        self.delegate_manager = delegate_manager # Store delegate_manager
         self._register_tools()
         logger.info("PlanRunner initialized.")
 
@@ -73,7 +75,7 @@ class PlanRunner:
         """
         logger.info("Starting plan execution...")
         log_event(LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_start", "Starting plan execution."))
-
+        logger.debug(f"PlanRunner initialized with delegate_manager: {self.delegate_manager}") # Log delegate_manager
         try:
             plan_data = plan_parser.get_parsed_plan()
             if plan_data is None:
@@ -84,6 +86,7 @@ class PlanRunner:
             raise  # Re-raise the original exception
 
         # Initialize or load state
+        logger.debug(f"Loading state from: {state_file_path}") # Log state file path
         state_manager = StateManager(state_file_path)
         try:
             state_manager.load_state()
@@ -141,6 +144,7 @@ class PlanRunner:
             ) from e
 
         # Initialize Execution Engine
+        logger.debug("Initializing Execution Engine...") # Log before initializing Execution Engine
         # Use the provided monitor instance if available, otherwise create a new one
         config_path = self.config.get('config_path') if isinstance(self.config, dict) and 'config_path' in self.config else None
         # Pass the shutdown event to the ExecutionEngine
@@ -149,7 +153,7 @@ class PlanRunner:
         prompt_system = PromptSystem(PromptConfiguration(self.config))
         monitor = getattr(self, 'monitor_enabled', None)
 
-        execution_engine = ExecutionEngine(state_manager, self.config, prompt_system, shutdown_event=self.shutdown_event)
+        execution_engine = ExecutionEngine(state_manager, self.config, prompt_system, shutdown_event=self.shutdown_event, delegate_manager=self.delegate_manager) # Pass delegate_manager
         logger.info("Execution Engine initialized.")
         log_event(
             LogMessage(
@@ -160,7 +164,9 @@ class PlanRunner:
         # Execute the plan
         plan_successful = True  # Flag to track overall plan success
         try:
+            logger.debug("Calling execution_engine.execute_plan...") # Log before calling execute_plan
             execution_engine.execute_plan(plan_parser)
+            logger.debug("execution_engine.execute_plan finished.") # Log after calling execute_plan
             logger.info("Execution Engine finished plan execution.")
             log_event(
                 LogMessage(
@@ -185,8 +191,10 @@ class PlanRunner:
             # Do not re-raise here, allow state to be saved and status checked
 
         # Save final state
+        logger.debug(f"Saving final state to: {state_file_path}") # Log before saving state
         try:
             state_manager.save_state()
+            logger.debug("Final state saved.") # Log after saving state
             logger.info(f"Saved final state to {state_file_path}")
             log_event(
                 LogMessage(
@@ -220,6 +228,7 @@ class PlanRunner:
             # Do not re-raise here
 
         # Check if any tasks failed in the state manager
+        logger.debug("Checking for failed tasks in state manager...") # Log before checking failed tasks
         failed_tasks = [
             task_id
             for task_id, task_state in state_manager.state.get("tasks", {}).items()
@@ -241,6 +250,7 @@ class PlanRunner:
             plan_successful = False  # Set flag to False if any task failed
 
         if plan_successful:
+            logger.debug("Plan execution successful.") # Log success
             logger.info(
                 f"Plan execution finished successfully for plan: {state_manager.state.get('plan_id', 'unknown')}"
             )
@@ -254,6 +264,7 @@ class PlanRunner:
             )
             return True  # Indicate overall success
         else:
+            logger.debug("Plan execution failed.") # Log failure
             logger.error(
                 f"Plan execution finished with overall failure for plan: {state_manager.state.get('plan_id', 'unknown')}"
             )

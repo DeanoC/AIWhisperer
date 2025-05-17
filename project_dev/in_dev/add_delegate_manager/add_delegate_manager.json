@@ -1,0 +1,201 @@
+{
+  "natural_language_goal": "Integrate delegate manager into all AI-using CLI commands (initial_plan, overview_plan, list_models) and relevant modules (plan_runner, initial_plan_generator, overview_plan_generator, list_models) to provide a consistent user-facing message interface.",
+  "plan": [
+    {
+      "name": "analyze_delegate_manager_usage",
+      "description": "Analyze the current usage of DelegateManager in execution_engine.py and ai_loop.py to understand its structure and identify necessary changes for broader integration.",
+      "depends_on": [],
+      "type": "analysis",
+      "input_artifacts": [
+        "src/aiwhisperer/execution_engine.py",
+        "src/aiwhisperer/ai_loop.py"
+      ],
+      "output_artifacts": [
+        "docs/delegate_manager_analysis.md"
+      ],
+      "instructions": [
+        "Examine src/aiwhisperer/execution_engine.py and src/aiwhisperer/ai_loop.py to understand how DelegateManager is currently initialized and used.",
+        "Document the key methods and patterns of DelegateManager usage.",
+        "Identify potential challenges and design considerations for making DelegateManager accessible and consistently used across multiple modules and CLI commands."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "docs/delegate_manager_analysis.md exists.",
+        "docs/delegate_manager_analysis.md accurately describes current usage.",
+        "docs/delegate_manager_analysis.md outlines key considerations for integration."
+      ],
+      "subtask_id": "aa33bdac-d366-4a69-aeb8-fbf2008fe568"
+    },
+    {
+      "name": "plan_delegate_manager_refactoring",
+      "description": "Plan the refactoring of DelegateManager initialization and usage to facilitate its integration into multiple modules and CLI commands.",
+      "depends_on": [
+        "analyze_delegate_manager_usage"
+      ],
+      "type": "planning",
+      "input_artifacts": [
+        "docs/delegate_manager_analysis.md"
+      ],
+      "output_artifacts": [
+        "docs/delegate_manager_refactoring_plan.md"
+      ],
+      "instructions": [
+        "Based on the analysis, propose a strategy for initializing and passing the DelegateManager instance to the required modules and CLI command handlers.",
+        "Consider whether the DelegateManager instance should be created at the CLI entry point or within a common utility class.",
+        "Outline the specific changes required in src/aiwhisperer/cli.py, src/aiwhisperer/plan_runner.py, src/aiwhisperer/initial_plan_generator.py, src/aiwhisperer/overview_plan_generator.py, and src/aiwhisperer/list_models.py.",
+        "Detail how the automatic ending or pausing of command execution via the DelegateManager will be implemented.",
+        "Specify where the DelegateManager setup will occur once for all command execution parts."
+      ],
+      "constraints": [
+        "The plan must ensure a single point of DelegateManager setup.",
+        "The plan must support automatic ending or pausing of commands."
+      ],
+      "validation_criteria": [
+        "docs/delegate_manager_refactoring_plan.md exists.",
+        "docs/delegate_manager_refactoring_plan.md provides a clear refactoring strategy.",
+        "docs/delegate_manager_refactoring_plan.md addresses all required modules and commands.",
+        "docs/delegate_manager_refactoring_plan.md details the ending/pausing mechanism.",
+        "docs/delegate_manager_refactoring_plan.md identifies the single setup location."
+      ],
+      "subtask_id": "9b090838-5b41-4c81-bf4e-5742f76b545e"
+    },
+    {
+      "name": "test_delegate_manager_integration",
+      "description": "Create tests to verify the correct integration and usage of DelegateManager in the target modules and CLI commands.",
+      "depends_on": [
+        "plan_delegate_manager_refactoring"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/delegate_manager_refactoring_plan.md"
+      ],
+      "output_artifacts": [
+        "tests/test_delegate_manager_integration.py"
+      ],
+      "instructions": [
+        "Create tests (potentially using mocks) to verify that:",
+        "- DelegateManager instances are correctly initialized and passed to plan_runner, initial_plan_generator, overview_plan_generator, and list_models.",
+        "- User-facing messages in these modules are being sent via the DelegateManager.",
+        "- The mechanism for pausing/ending command execution via DelegateManager is functional.",
+        "Ensure tests cover each of the target modules/commands."
+      ],
+      "constraints": [
+        "Tests should focus on the integration and message routing, not the internal logic of the modules themselves.",
+        "Use mocking appropriately to isolate the DelegateManager integration."
+      ],
+      "validation_criteria": [
+        "tests/test_delegate_manager_integration.py exists.",
+        "tests/test_delegate_manager_integration.py contains tests for each target module/command.",
+        "Tests cover message routing and pause/end functionality.",
+        "Tests compile and run without syntax errors."
+      ],
+      "subtask_id": "0adfc0a9-b5d8-4e70-a1e2-2ca5a3ceca2a"
+    },
+    {
+      "name": "implement_delegate_manager_refactoring",
+      "description": "Implement the planned refactoring to integrate DelegateManager into the target modules and CLI commands.",
+      "depends_on": [
+        "test_delegate_manager_integration"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "docs/delegate_manager_refactoring_plan.md",
+        "tests/test_delegate_manager_integration.py",
+        "src/aiwhisperer/cli.py",
+        "src/aiwhisperer/plan_runner.py",
+        "src/aiwhisperer/initial_plan_generator.py",
+        "src/aiwhisperer/overview_plan_generator.py",
+        "src/aiwhisperer/list_models.py",
+        "src/aiwhisperer/execution_engine.py",
+        "src/aiwhisperer/ai_loop.py"
+      ],
+      "output_artifacts": [
+        "src/aiwhisperer/cli.py",
+        "src/aiwhisperer/plan_runner.py",
+        "src/aiwhisperer/initial_plan_generator.py",
+        "src/aiwhisperer/overview_plan_generator.py",
+        "src/aiwhisperer/list_models.py",
+        "src/aiwhisperer/execution_engine.py",
+        "src/aiwhisperer/ai_loop.py"
+      ],
+      "instructions": [
+        "Refactor the DelegateManager initialization as per the plan, ensuring a single setup location.",
+        "Modify src/aiwhisperer/cli.py to create and pass the DelegateManager instance to the appropriate command handlers.",
+        "Update src/aiwhisperer/plan_runner.py, src/aiwhisperer/initial_plan_generator.py, src/aiwhisperer/overview_plan_generator.py, and src/aiwhisperer/list_models.py to accept and use the DelegateManager instance for user-facing messages.",
+        "Replace direct print statements or logging calls used for user-facing messages with DelegateManager calls in the target modules.",
+        "Implement the mechanism for automatic ending or pausing of command execution using the DelegateManager.",
+        "Adjust src/aiwhisperer/execution_engine.py and src/aiwhisperer/ai_loop.py if necessary to align with the new DelegateManager setup/passing scheme."
+      ],
+      "constraints": [
+        "All user-facing non-logging messages from the target modules/commands must go through the DelegateManager.",
+        "Maintain backward compatibility for parts of the system not explicitly listed in the requirements (if any).",
+        "Adhere strictly to the refactoring plan."
+      ],
+      "validation_criteria": [
+        "The code changes are implemented as per the plan.",
+        "User-facing messages are routed through DelegateManager.",
+        "The single setup location for DelegateManager is implemented.",
+        "The pause/end mechanism is implemented.",
+        "All tests in tests/test_delegate_manager_integration.py pass."
+      ],
+      "subtask_id": "c41d723c-7671-4cba-b68b-50a397d7f13b"
+    },
+    {
+      "name": "validate_delegate_manager_integration",
+      "description": "Run the integration tests and manually verify the correct behavior of DelegateManager integration in the CLI.",
+      "depends_on": [
+        "implement_delegate_manager_refactoring"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "tests/test_delegate_manager_integration.py",
+        "src/aiwhisperer/cli.py"
+      ],
+      "output_artifacts": [],
+      "instructions": [
+        "Run the integration tests in tests/test_delegate_manager_integration.py to automatically verify the integration.",
+        "Manually run the `initial_plan`, `overview_plan`, and `list_models` CLI commands to observe the user-facing output.",
+        "Verify that the output looks consistent and is being handled by the DelegateManager.",
+        "Test the pause/end functionality manually if applicable."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "All tests in tests/test_delegate_manager_integration.py pass.",
+        "Running `initial_plan`, `overview_plan`, and `list_models` commands produces consistent, DelegateManager-handled output.",
+        "The pause/end functionality works as expected during manual testing."
+      ],
+      "subtask_id": "83178fbf-45a7-4d31-96b2-0dd0d973cbc0"
+    },
+    {
+      "name": "update_documentation",
+      "description": "Update relevant documentation to reflect the changes in how DelegateManager is initialized and used across the system.",
+      "depends_on": [
+        "validate_delegate_manager_integration"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "docs/delegate_manager_refactoring_plan.md"
+      ],
+      "output_artifacts": [
+        "docs/developer_guide.md"
+      ],
+      "instructions": [
+        "Update the developer documentation (e.g., docs/developer_guide.md) to explain how the DelegateManager is now initialized and how modules/commands should obtain and use an instance.",
+        "Document the purpose and usage of the DelegateManager for user-facing messages.",
+        "Explain the pause/end functionality and how to integrate with it."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "Documentation is updated to reflect the new DelegateManager architecture.",
+        "Documentation clearly explains how to use DelegateManager in new modules/commands.",
+        "Documentation explains the pause/end functionality."
+      ],
+      "subtask_id": "0488330f-14ad-46af-9054-bae53b238d56"
+    }
+  ],
+  "task_id": "7f74850b-93b4-472f-b4e2-c0c2eaaaf2f3",
+  "input_hashes": {
+    "requirements_md": "8e6742731467a9f038c6c324e46882f5fdb0f0fd61072ab03e8a8685749af194",
+    "config_yaml": "ef050ce016c2e06b9bdadda4f22ae52229b7d014f3e61fb616fec45e76803e4b"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "description": "Run the integration tests and manually verify the correct behavior of DelegateManager integration in the CLI.",
+  "instructions": [
+    "Open your terminal and navigate to the root directory of the AIWhisperer project.",
+    "Run the integration tests specifically designed for the DelegateManager integration using pytest. The command should target the test file: `pytest tests/integration/test_delegate_manager_integration.py`.",
+    "Ensure all tests within `tests/integration/test_delegate_manager_integration.py` pass without errors.",
+    "Manually execute the following CLI commands in your terminal:",
+    "- `python src/aiwhisperer/cli.py initial_plan`",
+    "- `python src/aiwhisperer/cli.py overview_plan`",
+    "- `python src/aiwhisperer/cli.py list_models`",
+    "Observe the output of each command. Verify that the output is consistent with expected behavior and that the underlying logic appears to be handled by the DelegateManager (e.g., observing delegate-specific logging or behavior if implemented).",
+    "If the DelegateManager implementation includes pause/end functionality for tasks, manually test these features by starting a task that utilizes the DelegateManager and attempting to pause and then end it via the CLI or any implemented interface."
+  ],
+  "input_artifacts": [
+    "tests/integration/test_delegate_manager_integration.py",
+    "src/aiwhisperer/cli.py",
+    "src/aiwhisperer/delegate_manager.py"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "The integration tests must be run in the project's root directory.",
+    "Manual testing should focus on observing the CLI output and the behavior of the DelegateManager."
+  ],
+  "validation_criteria": [
+    "All integration tests in `tests/integration/test_delegate_manager_integration.py` pass.",
+    "The output of the `initial_plan`, `overview_plan`, and `list_models` CLI commands is consistent and demonstrates correct DelegateManager handling.",
+    "Any implemented pause/end functionality for tasks managed by the DelegateManager works correctly during manual testing."
+  ],
+  "type": "validation",
+  "name": "validate_delegate_manager_integration",
+  "depends_on": [
+    "implement_delegate_manager_refactoring"
+  ],
+  "task_id": "7f74850b-93b4-472f-b4e2-c0c2eaaaf2f3",
+  "subtask_id": "83178fbf-45a7-4d31-96b2-0dd0d973cbc0"
+}

@@ -29,7 +29,6 @@ One thought—if you haven’t already—weaving in additional meta-feedback loo
 ----
 
 * Improved CLI with a modern verb noun structure (partially started)
-* Aider support for processing the subtasks themselves
 * Feedback loops for orchestrator and subtask generator
 * Support system prompts
 * Provide use of prompt engineering guides to aid prompts

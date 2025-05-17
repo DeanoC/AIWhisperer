@@ -8,7 +8,9 @@ import json
 import os
 import uuid
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+
+from ai_whisperer.delegate_manager import DelegateManager
 
 from .json_validator import validate_against_schema
 from src.postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
@@ -39,7 +41,8 @@ class SubtaskGenerator:
         overall_context: str = "",
         workspace_context: str = "",
         output_dir: str = "output",
-        openrouter_client=None
+        openrouter_client=None,
+        delegate_manager: Optional[DelegateManager] = None # Add delegate_manager parameter
     ):
         """
         Initializes the SubtaskGenerator.
@@ -81,10 +84,12 @@ class SubtaskGenerator:
                 self.openrouter_client = openrouter_client
             else:
                 self.openrouter_client = OpenRouterAPI(config=model_config)
-            self.output_dir = output_dir  # Store the output directory
-            self.overall_context = overall_context
-            self.workspace_context = workspace_context  # Store context
-        # Load the validation schema
+                self.output_dir = output_dir  # Store the output directory
+                self.overall_context = overall_context
+                self.workspace_context = workspace_context  # Store context
+                self.delegate_manager = delegate_manager # Store delegate_manager
+                logger.debug(f"SubtaskGenerator initialized with delegate_manager: {self.delegate_manager}") # Log delegate_manager
+            # Load the validation schema
             try:
                 schema_to_load = PathManager.get_instance().resolve_path( "{app_path}/schemas/subtask_schema.json")
   
@@ -142,12 +147,14 @@ class SubtaskGenerator:
 
             # 2. Call AI Model using the initialized openrouter_client
             # Extract the 'content' field from the message object
+            logger.debug(f"Calling AI model for subtask {input_step.get('subtask_id', 'unknown')}") # Log before AI call
             ai_response_content = self.openrouter_client.call_chat_completion(
                 prompt_text=prompt_content,
                 model=self.openrouter_client.model,  # Get model from client
                 params=self.openrouter_client.params,  # Get params from client
             )
 
+            logger.debug(f"Received AI response for subtask {input_step.get('subtask_id', 'unknown')}") # Log after AI call
             if not ai_response_content:
                 raise SubtaskGenerationError("Received empty response from AI.")
 

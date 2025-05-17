@@ -14,9 +14,17 @@ class TestExecutionEngine(unittest.TestCase):
         patcher = patch.object(ExecutionEngine, "_execute_single_task", autospec=True)
         self.mock_execute_single_task = patcher.start()
         self.addCleanup(patcher.stop)
+        import threading # Import threading
+        self.mock_config = {"openrouter": {"api_key": "dummy", "model": "test-model", "params": {}}}
+        import threading # Import threading
         self.mock_config = {"openrouter": {"api_key": "dummy", "model": "test-model", "params": {}}}
         self.mock_prompt_system = MagicMock(spec=PromptSystem) # Create a mock PromptSystem
-        self.engine = ExecutionEngine(self.mock_state_manager, config=self.mock_config, prompt_system=self.mock_prompt_system) # Add mock_prompt_system
+        self.mock_delegate_manager = MagicMock() # Create a mock DelegateManager
+        # Ensure pause/stop controls are not triggered in these unit tests
+        self.mock_delegate_manager.invoke_control.return_value = False
+        self.mock_shutdown_event = MagicMock(spec=threading.Event) # Create a mock shutdown event
+        self.mock_shutdown_event.is_set.return_value = False # Default to not set
+        self.engine = ExecutionEngine(self.mock_state_manager, config=self.mock_config, prompt_system=self.mock_prompt_system, delegate_manager=self.mock_delegate_manager, shutdown_event=self.mock_shutdown_event) # Add mock_prompt_system, mock_delegate_manager, and mock_shutdown_event
 
     def _get_sample_plan(self, num_tasks=2, add_failing_task=False, add_dependent_task=False):
         plan = {"task_id": str(uuid.uuid4()), "natural_language_goal": "Test plan", "input_hashes": {}, "plan": []}

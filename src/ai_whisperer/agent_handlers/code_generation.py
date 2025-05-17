@@ -50,7 +50,8 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, promp
         # Pass delegate_manager to run_ai_loop (required argument)
         delegate_manager = getattr(engine, 'delegate_manager', None)
         if delegate_manager is None:
-            raise TaskExecutionError(f"DelegateManager not found on engine for task {task_id}.")
+            logger.warning(f"Task {task_id}: DelegateManager not found on engine. Proceeding without delegate notifications.") # Change error to warning
+            # We can still proceed with run_ai_loop, but delegate notifications within the loop will be skipped
         final_ai_result = run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager, delegate_manager)
         logger.info(f"Task {task_id}: AI interaction loop finished.")
 

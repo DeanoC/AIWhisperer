@@ -31,7 +31,7 @@ class ExecutionEngine:
     Integrates logging and a general delegation system for visibility and control of the execution process.
     """
 
-    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, shutdown_event: threading.Event = None):
+    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, delegate_manager: DelegateManager, shutdown_event: threading.Event = None):
         """
         Initializes the ExecutionEngine.
 
@@ -55,7 +55,7 @@ class ExecutionEngine:
         self.shutdown_event = shutdown_event
         self.task_queue = []
         self.path_manager = PathManager.get_instance()
-        self.delegate_manager = DelegateManager() # Initialize DelegateManager
+        self.delegate_manager = delegate_manager # Store the injected DelegateManager
         self._pause_event = threading.Event() # Add pause event
         self._paused = False # Add paused state flag
         # In a real scenario, a TaskExecutor component would handle individual task logic.
@@ -994,6 +994,7 @@ class ExecutionEngine:
             raise TaskExecutionError(error_message)
 
         # Use the agent type handler table to execute the task
+        logger.debug(f"Task {task_id}: DelegateManager state before calling handler: {self.delegate_manager}") # Add debug log
         if agent_type in self.agent_type_handlers:
             return self.agent_type_handlers[agent_type](task_definition)
         else:
@@ -1037,7 +1038,8 @@ class ExecutionEngine:
         log_event(
             log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_started", f"Starting execution of plan: {plan_id}")
         )
-        self.delegate_manager.invoke_notification(self, "engine_started") # Invoke engine_started delegate
+        if self.delegate_manager: # Check if delegate_manager is provided
+            self.delegate_manager.invoke_notification(self, "engine_started") # Invoke engine_started delegate
 
         if not isinstance(plan_data.get("plan"), list):
             # Handle empty or invalid plan (e.g., log a warning or error)
@@ -1067,7 +1069,7 @@ class ExecutionEngine:
 
         for task_def_overview in self.task_queue:
             # Check for pause request at the beginning of each task iteration
-            if self.delegate_manager.invoke_control(self, "engine_request_pause"):
+            if self.delegate_manager and self.delegate_manager.invoke_control(self, "engine_request_pause"): # Check if delegate_manager is provided
                 # TODO: Implement actual pause logic (e.g., wait on a threading.Event)
                 logger.info(f"Execution engine paused before task {task_def_overview.get('subtask_id', 'unknown_task')}")
                 log_event(
@@ -1098,7 +1100,7 @@ class ExecutionEngine:
                     break # Exit the main loop for graceful shutdown
 
             # Check for stop request at the beginning of each task iteration
-            if self.delegate_manager.invoke_control(self, "engine_request_stop"):
+            if self.delegate_manager and self.delegate_manager.invoke_control(self, "engine_request_stop"): # Check if delegate_manager is provided
                logger.info(f"Execution engine stop requested before task {task_def_overview.get('subtask_id', 'unknown_task')}. Initiating graceful shutdown.")
                log_event(
                    log_message=LogMessage(
@@ -1236,7 +1238,8 @@ class ExecutionEngine:
 
             start_time = time.time()  # Start timing the task execution
             try:
-                self.delegate_manager.invoke_notification(self, "task_execution_started", event_data={"task_id": task_id, "task_details": task_def_effective}) # Invoke task_execution_started delegate
+                if self.delegate_manager: # Check if delegate_manager is provided
+                    self.delegate_manager.invoke_notification(self, "task_execution_started", event_data={"task_id": task_id, "task_details": task_def_effective}) # Invoke task_execution_started delegate
                 # Always call _execute_single_task with the effective task definition
                 result = self._execute_single_task(task_def_effective) # Await the async call
 
@@ -1246,7 +1249,8 @@ class ExecutionEngine:
                 self.state_manager.set_task_state(task_id, "completed")
                 self.state_manager.store_task_result(task_id, result)
                 self.state_manager.save_state()
-                self.delegate_manager.invoke_notification(self, "task_execution_completed", event_data={"task_id": task_id, "status": "completed", "result_summary": str(result)[:100]}) # Invoke task_execution_completed delegate
+                if self.delegate_manager: # Check if delegate_manager is provided
+                    self.delegate_manager.invoke_notification(self, "task_execution_completed", event_data={"task_id": task_id, "status": "completed", "result_summary": str(result)[:100]}) # Invoke task_execution_completed delegate
                 log_event(
                     log_message=LogMessage(
                         LogLevel.INFO,
@@ -1266,9 +1270,10 @@ class ExecutionEngine:
                     error_message = str(e)
                     logger.error(f"Task {task_id} failed: {error_message}")
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
-                    self.delegate_manager.invoke_notification(self, "engine_error_occurred", event_data={"error_type": type(e).__name__, "error_message": error_message}) # Invoke engine_error_occurred delegate
+                    if self.delegate_manager: # Check if delegate_manager is provided
+                        self.delegate_manager.invoke_notification(self, "engine_error_occurred", event_data={"error_type": type(e).__name__, "error_message": error_message}) # Invoke engine_error_occurred delegate
                     log_event(
-                        log_message=LogMessage(
+                         log_message=LogMessage(
                             LogLevel.ERROR,
                             ComponentType.EXECUTION_ENGINE,
                             "task_failed",
@@ -1299,9 +1304,10 @@ class ExecutionEngine:
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
                     if self.monitor: # Add check for monitor
                         self.monitor.set_runner_status(f"Failed: {task_id}")
-                    self.delegate_manager.invoke_notification(self, "engine_error_occurred", event_data={"error_type": type(e).__name__, "error_message": error_message}) # Invoke engine_error_occurred delegate
+                    if self.delegate_manager: # Check if delegate_manager is provided
+                        self.delegate_manager.invoke_notification(self, "engine_error_occurred", event_data={"error_type": type(e).__name__, "error_message": error_message}) # Invoke engine_error_occurred delegate
                     log_event(
-                        log_message=LogMessage(
+                         log_message=LogMessage(
                             LogLevel.CRITICAL,
                             ComponentType.EXECUTION_ENGINE,
                             "task_failed_unexpected",
@@ -1316,7 +1322,8 @@ class ExecutionEngine:
         log_event(
             log_message=LogMessage(LogLevel.INFO, ComponentType.RUNNER, "plan_execution_finished", f"Finished execution of plan: {plan_id}")
         )
-        self.delegate_manager.invoke_notification(self, "engine_stopped") # Invoke engine_stopped delegate
+        if self.delegate_manager: # Check if delegate_manager is provided
+            self.delegate_manager.invoke_notification(self, "engine_stopped") # Invoke engine_stopped delegate
 
     def get_task_status(self, task_id):
         """

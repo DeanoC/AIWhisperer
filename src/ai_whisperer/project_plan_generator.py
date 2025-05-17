@@ -7,9 +7,10 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import copy
 
+from .delegate_manager import DelegateManager # Import DelegateManager
 from .config import load_config
 from .exceptions import OrchestratorError, ProcessingError
 from .subtask_generator import SubtaskGenerator # Will likely still need SubtaskGenerator
@@ -21,7 +22,7 @@ class OverviewPlanGenerator:
     """
     Generates a complete project plan including an overview file and detailed subtask files.
     """
-    def __init__(self, config: Dict[str, Any], output_dir="output"):
+    def __init__(self, config: Dict[str, Any], output_dir="output", delegate_manager: Optional[DelegateManager] = None): # Add delegate_manager parameter
         """
         Initializes the ProjectPlanGenerator with application configuration.
 
@@ -31,6 +32,7 @@ class OverviewPlanGenerator:
         """
         self.config = config
         self.output_dir = output_dir
+        self.delegate_manager = delegate_manager # Store delegate_manager
         logger.info(f"ProjectPlanGenerator initialized. Output directory: {self.output_dir}")
 
     def generate_full_plan(self, initial_plan_path: Path, config_path_str: str = "") -> Dict[str, Any]:
@@ -54,7 +56,7 @@ class OverviewPlanGenerator:
             initial_plan_path = Path(initial_plan_path)
 
         logger.info(f"Starting full project plan generation from initial plan: {initial_plan_path}")
-
+        logger.debug(f"DelegateManager in OverviewPlanGenerator: {self.delegate_manager}") # Add logging for delegate_manager
         if not initial_plan_path.is_file():
             logger.error(f"Initial plan file not found: {initial_plan_path}")
             raise FileNotFoundError(f"Initial plan file not found: {initial_plan_path}")
@@ -78,9 +80,10 @@ class OverviewPlanGenerator:
                 overall_context=overall_context,
                 workspace_context=workspace_context,
                 output_dir=self.output_dir,
+                delegate_manager=self.delegate_manager # Pass delegate_manager
             )
+            logger.debug(f"SubtaskGenerator initialized with delegate_manager: {subtask_generator.delegate_manager}") # Add logging for delegate_manager in SubtaskGenerator
             logger.info("Initialized subtask generator with overall context.")
-
             # Generate subtask for each step
             subtask_paths = []
             step_info = []
@@ -93,15 +96,16 @@ class OverviewPlanGenerator:
                     try:
                         subtask_id = step.get("subtask_id", f"step_{i}")
                         logger.info(f"Generating subtask {i}/{steps_count}: {subtask_id}")
-
+                        logger.debug(f"Step data for subtask {subtask_id}: {step}") # Log step data
                         # some preprocessing of the step data
                         step_data_for_subtask = {k: v for k, v in step.items()}
                         step_data_for_subtask["task_id"] = task_data["task_id"]
 
+                        logger.debug(f"Calling subtask_generator.generate_subtask for {subtask_id}") # Log before calling generate_subtask
                         (subtask_path, subtask) = subtask_generator.generate_subtask(step_data_for_subtask)
                         subtask_paths.append(subtask_path)
                         logger.info(f"Generated subtask: {subtask_path}")
-
+                        logger.debug(f"Generated subtask content for {subtask_id}: {subtask}") # Log generated subtask content
                         # Create step info JSON object for the overview plan
                         # some fields are not needed in the overview plan
                         # and are omitted to keep it clean

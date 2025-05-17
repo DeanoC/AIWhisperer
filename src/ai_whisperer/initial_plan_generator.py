@@ -11,6 +11,7 @@ import os
 import uuid
 from typing import Dict, Any, Optional
 
+from .delegate_manager import DelegateManager # Import DelegateManager
 from .config import load_config
 from .exceptions import ConfigError, OpenRouterAPIError, HashMismatchError, ProcessingError, OrchestratorError
 from .utils import calculate_sha256, build_ascii_directory_tree
@@ -24,7 +25,7 @@ class InitialPlanGenerator:
     """
     Generates the initial task plan JSON file based on input requirements markdown.
     """
-    def __init__(self, config: Dict[str, Any], output_dir="output"):
+    def __init__(self, config: Dict[str, Any], output_dir="output", delegate_manager: Optional[DelegateManager] = None): # Add delegate_manager parameter
         """
         Initializes the InitialPlanGenerator with application configuration and PromptSystem.
         Args:
@@ -39,6 +40,7 @@ class InitialPlanGenerator:
         self.prompt_system = PromptSystem(PromptConfiguration(config))
         self.config = config
         self.output_dir = output_dir
+        self.delegate_manager = delegate_manager # Store delegate_manager
 
         # Check if openrouter configuration is present
         if "openrouter" not in config:

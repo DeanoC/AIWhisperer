@@ -81,8 +81,7 @@ class TestCodeGenerationHandlerIntegration:
         mock_prompt_system = MagicMock(spec=PromptSystem) # Create a mock PromptSystem
         mock_delegate_manager = MagicMock(name="MockDelegateManager")
         import threading
-        engine = ExecutionEngine(mock_state_manager, mock_config, mock_prompt_system) # Add mock_prompt_system
-        engine.delegate_manager = mock_delegate_manager
+        engine = ExecutionEngine(mock_state_manager, mock_config, mock_prompt_system, mock_delegate_manager) # Add mock_prompt_system and mock_delegate_manager
         engine.shutdown_event = threading.Event()
         # Prevent pause loop: ensure invoke_control returns False
         engine.delegate_manager.invoke_control.return_value = False

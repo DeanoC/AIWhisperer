@@ -32,9 +32,10 @@ class BaseCommand(ABC):
 
 class ListModelsCommand(BaseCommand):
     """Command to list available OpenRouter models."""
-    def __init__(self, config: dict, output_csv: str = None):
+    def __init__(self, config: dict, output_csv: str = None, delegate_manager=None): # Add delegate_manager parameter
         super().__init__(config)
         self.output_csv = output_csv
+        self.delegate_manager = delegate_manager # Store delegate_manager
 
     def execute(self):
         """Lists available OpenRouter models."""
@@ -58,10 +59,11 @@ class ListModelsCommand(BaseCommand):
 
 class GenerateInitialPlanCommand(BaseCommand):
     """Command to generate initial task YAML or a detailed subtask."""
-    def __init__(self, config: dict, output_dir: str, requirements_path: str = None):
+    def __init__(self, config: dict, output_dir: str, requirements_path: str = None, delegate_manager=None): # Add delegate_manager parameter
         super().__init__(config)
         self.output_dir = output_dir
         self.requirements_path = requirements_path
+        self.delegate_manager = delegate_manager # Store delegate_manager
 
     def execute(self):
         """Generates initial task YAML or a detailed subtask."""
@@ -80,10 +82,11 @@ class GenerateInitialPlanCommand(BaseCommand):
 
 class GenerateOverviewPlanCommand(BaseCommand):
     """Command to generate the overview plan and subtasks from an initial plan."""
-    def __init__(self, config: dict, output_dir: str, initial_plan_path: str):
+    def __init__(self, config: dict, output_dir: str, initial_plan_path: str, delegate_manager=None): # Add delegate_manager parameter
         super().__init__(config)
         self.output_dir = output_dir
         self.initial_plan_path = initial_plan_path
+        self.delegate_manager = delegate_manager # Store delegate_manager
 
     def execute(self):
         """Generates the overview plan and subtasks."""
@@ -105,12 +108,13 @@ class GenerateOverviewPlanCommand(BaseCommand):
 
 class RefineCommand(BaseCommand):
     """Command to refine a requirements document."""
-    def __init__(self, config: dict, input_file: str, iterations: int = 1, prompt_file: str = None, output: str = None):
+    def __init__(self, config: dict, input_file: str, iterations: int = 1, prompt_file: str = None, output: str = None, delegate_manager=None): # Add delegate_manager parameter
         super().__init__(config)
         self.input_file = input_file
         self.iterations = iterations
         self.prompt_file = prompt_file
         self.output = output # This might need adjustment based on how refine handles output
+        self.delegate_manager = delegate_manager # Store delegate_manager
 
     def execute(self):
         """Refines a requirements document."""
@@ -133,12 +137,13 @@ class RefineCommand(BaseCommand):
 
 class RunCommand(BaseCommand):
     """Command to execute a project plan."""
-    def __init__(self, config: dict, plan_file: str, state_file: str, monitor: bool = False):
+    def __init__(self, config: dict, plan_file: str, state_file: str, monitor: bool = False, delegate_manager=None): # Add delegate_manager parameter
         # Accept config dict directly for consistency with other commands
         self.config = config
         self.plan_file = plan_file
         self.state_file = state_file
         self.monitor = monitor
+        self.delegate_manager = delegate_manager # Store delegate_manager
         self._ai_runner_shutdown_event = threading.Event() # Event to signal AI Runner thread shutdown
         # Store config_path for logging/debugging compatibility
         if isinstance(self.config, dict):
@@ -152,7 +157,7 @@ class RunCommand(BaseCommand):
         logger.debug("_run_plan_in_thread started.")
         """Core plan execution logic to be run in a separate thread."""
         # Pass the shutdown_event to the PlanRunner
-        plan_runner = PlanRunner(self.config, shutdown_event=shutdown_event, monitor=self.monitor)
+        plan_runner = PlanRunner(self.config, shutdown_event=shutdown_event, monitor=self.monitor, delegate_manager=self.delegate_manager)
 
         logger.debug("Calling plan_runner.run_plan...")
         plan_successful = False # Initialize to False
@@ -183,6 +188,7 @@ class RunCommand(BaseCommand):
     def execute(self):
         """Executes a project plan."""
         logger.info("Starting AI Whisperer run process...")
+        logger.debug(f"RunCommand initialized with plan_file: {self.plan_file}, state_file: {self.state_file}, monitor: {self.monitor}, delegate_manager: {self.delegate_manager}") # Add logging for RunCommand initialization details
         logger.debug("Loading configuration from config dict (no config_path, config passed as dict).")
         logger.debug("Configuration loaded successfully.")
 
@@ -208,6 +214,7 @@ class RunCommand(BaseCommand):
         )
         ai_runner_thread.start()
         logger.debug("AI Runner thread started.")
+        logger.debug(f"AI Runner thread is alive: {ai_runner_thread.is_alive()}") # Log thread status
 
         # Flag to track if shutdown has been initiated by the main thread
         shutdown_initiated_by_main = False
@@ -217,8 +224,10 @@ class RunCommand(BaseCommand):
             # The AI Runner thread will stop if the shutdown event is set (by the monitor or KeyboardInterrupt).
             logger.debug("Main thread waiting for AI Runner thread to join...")
             logger.debug(f"Main thread: _ai_runner_shutdown_event state before join: {self._ai_runner_shutdown_event.is_set()}") # Log event state
+            logger.debug(f"Main thread: AI Runner thread is alive before join: {ai_runner_thread.is_alive()}") # Log thread status before join
             ai_runner_thread.join()
             logger.debug("AI Runner thread joined.")
+            logger.debug(f"Main thread: AI Runner thread is alive after join: {ai_runner_thread.is_alive()}") # Log thread status after join
             logger.debug(f"Main thread: _ai_runner_shutdown_event state after join: {self._ai_runner_shutdown_event.is_set()}") # Log event state
 
             # If the AI runner finishes before the monitor is stopped (e.g., plan completed),
@@ -248,9 +257,11 @@ class RunCommand(BaseCommand):
             # or after the AI thread finished.
             logger.debug("Ensuring threads are joined in finally block...")
             if ai_runner_thread.is_alive():
+                logger.debug("Finally block: AI Runner thread is alive, waiting to join...") # Log thread status
                 logger.debug("Finally block: Waiting for AI Runner thread to join...")
                 ai_runner_thread.join()
                 logger.debug("Finally block: AI Runner thread joined.")
+                logger.debug(f"Finally block: AI Runner thread is alive after join: {ai_runner_thread.is_alive()}") # Log thread status
             if self.monitor and ui_thread and ui_thread.is_alive():
                  logger.debug("Finally block: Waiting for UI thread to join...")
                  ui_thread.join()
@@ -258,6 +269,7 @@ class RunCommand(BaseCommand):
             logger.debug("Finally block finished.")
 
         # Return 0 for success, 1 for failure
+        logger.debug(f"RunCommand execute finished. Thread result: {thread_result[0]}") # Log final result
         if thread_result[0] is True:
             return 0
         else:
