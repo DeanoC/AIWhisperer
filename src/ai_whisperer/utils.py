@@ -11,7 +11,6 @@ from pathlib import Path
 def setup_logging(level=logging.INFO):
     """Sets up basic logging configuration to output to stderr."""
     # Add debug logging to confirm setup_logging is invoked
-    print("DEBUG: setup_logging invoked")
     logging.basicConfig(level=level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", stream=sys.stderr)
 
 

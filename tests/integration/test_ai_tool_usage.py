@@ -52,13 +52,23 @@ def tool_registry():
     Fixture to provide a ToolRegistry instance with manually registered tools
     for integration tests.
     """
+    # Explicitly re-import ReadFileTool within the fixture
+    from ai_whisperer.tools.read_file_tool import ReadFileTool
+    from ai_whisperer.tools.write_file_tool import WriteFileTool
+    from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
+
     registry = ToolRegistry()
     # Clear the registry to ensure test isolation (important for singleton)
     registry._registered_tools.clear()
-    # Manually register the file tools for testing
-    registry.register_tool(ReadFileTool())
-    registry.register_tool(WriteFileTool())
-    registry.register_tool(ExecuteCommandTool())
+
+    # Create a mock DelegateManager
+    from unittest.mock import Mock
+    mock_delegate_manager = Mock()
+
+    # Manually register the file tools for testing, passing the mock delegate manager
+    registry.register_tool(ReadFileTool(delegate_manager=mock_delegate_manager))
+    registry.register_tool(WriteFileTool(delegate_manager=mock_delegate_manager))
+    registry.register_tool(ExecuteCommandTool(delegate_manager=mock_delegate_manager))
     return registry
 
 @pytest.fixture

@@ -64,6 +64,9 @@ def test_cli_run_command_programmatic(clean_output):
     # Mock the OpenRouterAPI call within the ExecutionEngine
     # This is necessary because we are not mocking the RunCommand or ExecutionEngine
     # We need to mock the actual AI service interaction.
+    # Create a mock DelegateManager
+    mock_delegate_manager = MagicMock()
+
     with patch('ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion') as mock_call_chat_completion:
         # Use side_effect to simulate a tool call on the first call, and a final content message on the second call
         tool_call_response = {
@@ -129,9 +132,7 @@ def test_cli_run_command_programmatic(clean_output):
                     "--state-file", str(state_path)
                 ]
 
-                # Call the cli function directly
-                # The cli function returns a list of command objects
-                commands = cli(args)
+                commands = cli(args, delegate_manager=mock_delegate_manager)
 
                 # The cli function should return a list containing one RunCommand instance
                 assert len(commands) == 1

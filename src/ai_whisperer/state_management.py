@@ -301,7 +301,7 @@ class StateManager:
             # Handle case where ContextManager is not found for the task
             # This might indicate an issue in task initialization
             # For now, we'll log a warning or raise an error
-            print(f"WARNING: ContextManager not found for task {task_id}. Conversation turn not stored.") # Replace with proper logging
+            logging.warning(f"ContextManager not found for task {task_id}. Conversation turn not stored.")
             # Optionally, raise an error:
             # raise ValueError(f"ContextManager not found for task {task_id}")
 

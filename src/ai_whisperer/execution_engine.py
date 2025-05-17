@@ -1084,7 +1084,6 @@ class ExecutionEngine:
                 # In a real implementation, this would involve waiting on an event
                 # For now, we just log and continue, but the test should ideally
                 # register a delegate that returns True and verify the log message.
-                self._paused = True
                 while self._paused and not self.shutdown_event.is_set():
                     self._pause_event.wait(timeout=0.1) # Wait with a timeout to allow checking shutdown_event
                 if self.shutdown_event.is_set():
@@ -1266,7 +1265,6 @@ class ExecutionEngine:
                 duration_ms = (end_time - start_time) * 1000  # Duration in milliseconds
                 if type(e).__name__ == 'TaskExecutionError':
                      # Handle TaskExecutionError specifically based on class name
-                    print(f"DEBUG: Task {task_id}: Caught TaskExecutionError in execute_plan: {e}") # Debug print
                     error_message = str(e)
                     logger.error(f"Task {task_id} failed: {error_message}")
                     self.state_manager.set_task_state(task_id, "failed", {"error": error_message})
@@ -1289,7 +1287,6 @@ class ExecutionEngine:
                         "error": error_message,
                         "error_details": e.details if isinstance(e, TaskExecutionError) and e.details else None
                     }
-                    print(f"DEBUG: Task {task_id}: About to call store_task_result with result: {task_result_details}") # Debug print
                     self.state_manager.save_state()
                     # Store the task result with error details
                     self.state_manager.store_task_result(task_id, {

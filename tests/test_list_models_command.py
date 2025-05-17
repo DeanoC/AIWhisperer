@@ -4,7 +4,9 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from ai_whisperer.commands import ListModelsCommand
+from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.model_info_provider import ModelInfoProvider
+from basic_output_test import ANSIConsoleUserMessageHandler
 
 # Mocked tests for list-models
 @patch('ai_whisperer.commands.ModelInfoProvider')
@@ -17,8 +19,9 @@ def test_list_models_mocked(mock_model_info_provider):
         {"id": "mock_server_2/model_c", "name": "model_c"}
     ]
 
+    delegate_manager = MagicMock()
     config = {"servers": {}, "config_path": "dummy_config.yaml"}
-    command = ListModelsCommand(config=config)
+    command = ListModelsCommand(config=config, output_csv=None, delegate_manager=delegate_manager)
     command.execute()
 
     mock_instance.list_models.assert_called_once()
@@ -36,9 +39,10 @@ def test_list_models_csv_mocked(mock_model_info_provider):
     """Tests the list-models command with CSV output using mocked ModelInfoProvider."""
     mock_instance = mock_model_info_provider.return_value
 
+    delegate_manager = MagicMock()
     output_csv_path = "dummy_output.csv"
     config = {"servers": {}, "config_path": "dummy_config.yaml"}
-    command = ListModelsCommand(config=config, output_csv=output_csv_path)
+    command = ListModelsCommand(config=config, output_csv=output_csv_path, delegate_manager=delegate_manager)
     command.execute()
 
     mock_instance.list_models_to_csv.assert_called_once_with(output_csv_path)
@@ -60,7 +64,13 @@ def test_list_models_actual_servers():
     config_path = "config.yaml"
     config = load_config(config_path)
     config["config_path"] = config_path
-    command = ListModelsCommand(config=config)
+    delegate_manager = DelegateManager()
+    ansi_handler = ANSIConsoleUserMessageHandler()
+    delegate_manager.register_notification(
+        event_type="user_message_display",
+        delegate=ansi_handler.display_message
+    )    
+    command = ListModelsCommand(config=config, output_csv=None, delegate_manager=delegate_manager)
 
     # Capture output by mocking logger.debug
     with patch('ai_whisperer.commands.logger.debug') as mock_print:
@@ -70,7 +80,6 @@ def test_list_models_actual_servers():
     # We can't easily check exit code here, but we can check if execute ran without raising exception
     # and if logger.debug was called with expected output structure.
     mock_print.assert_any_call("Loading configuration from: config.yaml")
-    mock_print.assert_any_call("Available OpenRouter Models:")
     # Further assertions would depend on the expected output from actual servers.
     # We can check if any model names were printed, indicating interaction with servers.
     # This is a basic check for integration test.

@@ -1,0 +1,44 @@
+{
+  "description": "Update documentation to reflect the new user message delegate system.",
+  "instructions": [
+    "Locate the primary documentation file for user message handling or overall system architecture. Based on the workspace context, `docs/user_message_analysis.md` seems like a relevant starting point, but also consider `docs/index.md` or other relevant files.",
+    "Update the identified documentation file(s) to include a new section or integrate information about the `user_message_delegate.py`.",
+    "Clearly explain the purpose of the user message delegate and how it is used within the system.",
+    "Detail the different message levels supported by the delegate (e.g., info, warning, error) and when each should be used.",
+    "Provide guidance on how a developer could potentially add new output classes or extend the delegate's functionality in the future.",
+    "Review the `src/user_message_delegate.py` and `src/basic_output_test.py` files to ensure that all functions, classes, and methods have clear and accurate docstrings.",
+    "Add or update docstrings as necessary in the relevant code files.",
+    "Ensure the documentation is consistent with the implementation in `src/user_message_delegate.py`."
+  ],
+  "input_artifacts": [
+    "docs/user_message_analysis.md",
+    "src/user_message_delegate.py",
+    "src/basic_output_test.py",
+    "docs/index.md"
+  ],
+  "output_artifacts": [
+    "docs/user_message_analysis.md",
+    "docs/index.md",
+    "src/user_message_delegate.py",
+    "src/basic_output_test.py"
+  ],
+  "constraints": [
+    "Documentation updates must be clear and easy to understand.",
+    "Docstrings must follow the project's established style guide (if any, otherwise use standard Python docstring conventions).",
+    "Changes should only affect documentation and docstrings, not the core logic of the delegate itself."
+  ],
+  "validation_criteria": [
+    "The documentation file(s) (`docs/user_message_analysis.md`, `docs/index.md`, or others identified) contain information about the user message delegate.",
+    "The documentation explains how to use the delegate and its message levels.",
+    "The documentation includes guidance on extending the delegate.",
+    "Docstrings in `src/user_message_delegate.py` and `src/basic_output_test.py` are present and accurately describe the code.",
+    "The documentation is consistent with the implemented code."
+  ],
+  "type": "documentation",
+  "name": "update_documentation",
+  "depends_on": [
+    "integrate_user_message_delegate"
+  ],
+  "task_id": "6eae9bfb-2bd0-4ad1-926f-4a2ca71d1d16",
+  "subtask_id": "003a9c38-a8b8-48d1-85a5-abffc5a9b78e"
+}

@@ -83,10 +83,10 @@ def setup_logging(config_path: Optional[str] = None):
             logging.error(f"Error loading logging configuration from {config_path}: {e}")
             # Fallback to basic configuration on error
             setup_basic_logging()
-    else:
-        if config_path:
-            logging.warning(f"Logging configuration file not found at {config_path}. Using basic console logging.")
-        setup_basic_logging()
+        else:
+            if config_path:
+                logging.warning(f"Logging configuration file not found at {config_path}. Using basic console logging.")
+            setup_basic_logging()
 
 
 def setup_basic_logging():
@@ -118,8 +118,8 @@ def setup_basic_logging():
         file_handler.setFormatter(file_formatter)
 
         logging.basicConfig(
-            level=logging.DEBUG, handlers=[console_handler, file_handler]
-        )  # Set root logger level to DEBUG and add both handlers
+            level=logging.DEBUG, handlers=[file_handler]
+        )  # Set root logger level to DEBUG and add the file handler
 
         # Add a log message to confirm logging setup and file path
         logging.info(f"Logging configured. Debug log file is at: {os.path.abspath(log_file_path)}")
@@ -167,47 +167,3 @@ def log_event(log_message: LogMessage, logger_name: str = "aiwhisperer"):
 
     # Use logger.log() to pass the level dynamically
     logger.log(level_int, log_message.event_summary, extra=extra_data)  # Use the new field name
-
-# Global variable to hold the active monitor handler
-active_monitor_handler: Optional[logging.Handler] = None
-
-# Global variable to store original levels of suppressed handlers
-_suppressed_handlers_state = []
-
-def set_active_monitor_handler(handler: Optional[logging.Handler]):
-    """
-    Sets or unsets the active monitor handler.
-    When set, adds the handler to the root logger and suppresses other console handlers.
-    When unset, removes the active handler and restores other console handlers.
-    """
-    global active_monitor_handler, _suppressed_handlers_state
-
-# Always remove all existing handlers from the root logger
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-    if active_monitor_handler:
-        # Remove the previous active monitor handler
-        logging.root.removeHandler(active_monitor_handler)
-        # Restore suppressed handlers
-        for hdlr, original_level in _suppressed_handlers_state:
-            hdlr.setLevel(original_level)
-        _suppressed_handlers_state = [] # Clear the stored state
-
-    active_monitor_handler = handler
-
-    if active_monitor_handler:
-        # Temporarily disable suppression of other handlers for debugging
-        # _suppressed_handlers_state = [] # Ensure it's empty before suppressing
-        # for hdlr in logging.root.handlers[:]: # Iterate over a copy of the list
-        #     # Check if it's a StreamHandler and not the monitor handler itself
-        #     if isinstance(hdlr, logging.StreamHandler) and hdlr is not active_monitor_handler:
-        #         _suppressed_handlers_state.append((hdlr, hdlr.level)) # Store handler and original level
-        #         hdlr.setLevel(logging.CRITICAL) # Suppress output
-
-        # Add the new active monitor handler
-        # Ensure the handler is not already added to avoid duplicates
-        if active_monitor_handler not in logging.root.handlers:
-             logging.root.addHandler(active_monitor_handler)
-             logging.getLogger(__name__).debug("Added active monitor handler to root logger.")
-        else:
-             logging.getLogger(__name__).debug("Active monitor handler already present in root logger.")

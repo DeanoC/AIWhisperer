@@ -1,0 +1,40 @@
+{
+  "description": "Perform a final validation to ensure the user message delegate works as expected and all requirements are met.",
+  "instructions": [
+    "Navigate to the project root directory if not already there.",
+    "Ensure the test environment is set up and dependencies are installed (e.g., run `pip install -r requirements.txt`).",
+    "Execute the test suite using pytest: `pytest`",
+    "Specifically verify that tests related to the user message delegate (`tests/test_user_message_delegate.py`) pass.",
+    "Run the application manually using the command line, ensuring the user message delegate is active.",
+    "Execute different commands or scenarios within the application that trigger user messages.",
+    "Visually inspect the console output to confirm that user messages are displayed with the expected ANSI coloring.",
+    "Verify that no internal log messages (e.g., debug, info) are printed to the console during manual testing.",
+    "Review the documentation files, particularly those related to user messages or delegates, to ensure they accurately reflect the implemented functionality and usage.",
+    "Confirm that the documentation is complete and easy to understand."
+  ],
+  "input_artifacts": [
+    "tests/test_user_message_delegate.py",
+    "src/ai_whisperer/**/*.py",
+    "docs/**/*.md"
+  ],
+  "output_artifacts": [],
+  "constraints": [
+    "All automated tests must pass.",
+    "User messages must be clearly distinguishable and correctly colored using ANSI escape codes.",
+    "No internal logging output should be visible on the standard console output.",
+    "Documentation must be up-to-date and cover the user message delegate functionality."
+  ],
+  "validation_criteria": [
+    "The command `pytest` exits with a zero status code, indicating all tests passed.",
+    "Manual inspection of the console output shows user messages with the intended ANSI colors (e.g., green for success, red for error).",
+    "Manual inspection of the console output confirms the absence of internal log messages.",
+    "Review of the documentation confirms accuracy and completeness regarding the user message delegate."
+  ],
+  "type": "validation",
+  "name": "final_validation",
+  "depends_on": [
+    "update_documentation"
+  ],
+  "task_id": "6eae9bfb-2bd0-4ad1-926f-4a2ca71d1d16",
+  "subtask_id": "e457c511-5425-44db-bc0a-a5aa53d02a72"
+}

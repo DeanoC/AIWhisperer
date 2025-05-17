@@ -61,7 +61,6 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, promp
         validation_passed, validation_details = _execute_validation(engine, task_definition, task_id, logger)
         logger.info(f"Task {task_id}: Validation executed. Passed: {validation_passed}")
 
-        print(f"DEBUG: Task {task_id}: Validation passed: {validation_passed}") # Debug print
         # 5. Final Result Processing & State Update
         if validation_passed:
             final_task_result = {
@@ -80,7 +79,6 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, promp
             # StateManager update happens in the main engine loop upon successful return
             return final_task_result # Return structured result
         else:
-            print(f"DEBUG: Task {task_id}: Validation failed. Raising TaskExecutionError.") # Debug print
             error_message = f"Code generation task {task_id} failed validation."
             logger.error(f"{error_message} Details: {validation_details}")
             log_event(

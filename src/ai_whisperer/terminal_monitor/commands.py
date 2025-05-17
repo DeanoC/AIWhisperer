@@ -2,6 +2,8 @@ import logging
 import sys
 import debugpy
 from abc import ABC, abstractmethod
+from ai_whisperer.delegate_manager import DelegateManager
+from src.user_message_delegate import UserMessageLevel
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +49,20 @@ class DebuggerCommand(BaseCommand):
         self.state_manager = state_manager
 
     def execute(self, args: list[str]):
-        print("Debugger active. Waiting for connection...")
+        delegate_manager = DelegateManager.get_instance()
+        delegate_manager.invoke_notification(
+            sender=self,
+            event_type="user_message_display",
+            event_data={"message": "Debugger active. Waiting for connection...", "level": UserMessageLevel.INFO}
+        )
         # This will pause execution until a debugger attaches
         debugpy.listen(("127.0.0.1", 5678)) # Example port, should be configurable
         debugpy.wait_for_client()
-        print("Debugger attached.")
+        delegate_manager.invoke_notification(
+            sender=self,
+            event_type="user_message_display",
+            event_data={"message": "Debugger attached.", "level": UserMessageLevel.INFO}
+        )
 
 class AskCommand(BaseCommand):
     name = "ask"
@@ -64,39 +75,60 @@ class AskCommand(BaseCommand):
         self.state_manager = state_manager
 
     def execute(self, args: list[str]):
+        delegate_manager = DelegateManager.get_instance()
         if not args:
-            print("Error: 'ask' command requires a query string.")
+            delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": "Error: 'ask' command requires a query string.", "level": UserMessageLevel.INFO}
+            )
             return
 
         query_string = " ".join(args)
-        print(f"Sending query to AI: {query_string}")
+        # Removed debug prints for sending query and mocked response
+        # print(f"Sending query to AI: {query_string}")
+        # print("AI response (mocked): This is a mocked AI response.")
         # In a real scenario, this would call the AI interaction service, potentially using self.state_manager
-        # For this subtask, we just print the query
-        print("AI response (mocked): This is a mocked AI response.")
-
+        # For this subtask, we just removed the prints.
 class HelpCommand(BaseCommand):
     name = "help"
     aliases = []
     help_text = "Displays help information about available commands."
 
     def execute(self, args: list[str]):
+        delegate_manager = DelegateManager.get_instance()
         if not args:
-            print("Available commands:")
+            delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": "Available commands:", "level": UserMessageLevel.INFO}
+            )
             # Use a set to keep track of seen command instances to avoid duplicates due to aliases
             seen_commands = set()
             for command in command_registry.values():
                 if command not in seen_commands:
-                    print(f"  {command.name}: {command.help_text.splitlines()[0]}")
+                    delegate_manager.invoke_notification(
+                        sender=self,
+                        event_type="user_message_display",
+                        event_data={"message": f"  {command.name}: {command.help_text.splitlines()[0]}", "level": UserMessageLevel.DETAIL}
+                    )
                     seen_commands.add(command)
             return
         
         command_name = args[0]
         command = command_registry.get(command_name)
         if command:
-            print(command.help_text)
+            delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": command.help_text, "level": UserMessageLevel.INFO}
+            )
         else:
-            print(f"Error: Unknown command '{command_name}'. Type 'help' for a list of commands.")
-
+            delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": f"Error: Unknown command '{command_name}'. Type 'help' for a list of commands.", "level": UserMessageLevel.INFO}
+            )
 
 # Conceptual command registry (actual implementation might be elsewhere)
 command_registry = {}

@@ -1,14 +1,35 @@
 import sys
-import logging # Import logging
+import logging
+
+from basic_output_test import ANSIConsoleUserMessageHandler # Import logging
 from .cli import cli
 from ai_whisperer.ai_service_interaction import OpenRouterAPI
+from ai_whisperer.delegate_manager import DelegateManager
+from user_message_delegate import UserMessageAttribs, UserMessageColour, UserMessageLevel
 
 logger = logging.getLogger(__name__) # Get logger instance
 
 # Entry point for the application
 if __name__ == "__main__":
+    # Instantiate the DelegateManager here
+    delegate_manager = DelegateManager()
+    ansi_handler = ANSIConsoleUserMessageHandler()
+
+    delegate_manager.register_notification(
+        event_type="user_message_display",
+        delegate=ansi_handler.display_message
+    )
+    delegate_manager.invoke_notification(
+        sender=None,  # Or a more appropriate sender if available in this context
+        event_type="user_message_display",
+        event_data={
+            "message": f"{UserMessageColour.GREEN}Starting{UserMessageColour.BRIGHT_WHITE}{UserMessageAttribs.ITALIC} AIWhisperer",
+            "level": UserMessageLevel.INFO
+        }
+    )
     try:
-        commands = cli()
+        # Pass the delegate_manager instance to cli()
+        commands = cli(delegate_manager=delegate_manager)
         logger.debug("Executing commands...")
         exit_code = 0
         for command in commands:
@@ -27,5 +48,9 @@ if __name__ == "__main__":
     except SystemExit as e:
         raise e
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        delegate_manager.invoke_notification(
+            sender=None, # Or a more appropriate sender if available in this context
+            event_type="user_message_display",
+            event_data={"message": f"Error: {e}", "level": UserMessageLevel.INFO}
+        )
         sys.exit(1)

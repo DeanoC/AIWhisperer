@@ -179,7 +179,6 @@ def handle_ai_interaction(
 
 
         try: # Try block for processing the stream
-            print(f'DEBUG: stream_generator type: {type(stream_generator)}, is_mock: {isinstance(stream_generator, MagicMock)}')
             for chunk in stream_generator:
                 # Check for shutdown signal during streaming
                 if self.shutdown_event.is_set():

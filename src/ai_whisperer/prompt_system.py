@@ -103,7 +103,6 @@ class PromptResolver:
             custom_base_path = PathManager.get_instance().prompt_path / custom_base_path
         custom_path = custom_base_path / category / f"{name}.prompt.md"
         import sys
-        print(f"[DEBUG][PromptResolver] Checking custom_path: {custom_path} (exists: {custom_path.exists()})", file=sys.stderr)
         if custom_path.exists():
             return custom_path
 

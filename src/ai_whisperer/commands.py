@@ -6,7 +6,10 @@ import yaml
 import json
 from pathlib import Path
 import threading # Import threading
-from typing import Optional # Import Optional
+from typing import Optional
+
+from ai_whisperer.delegate_manager import DelegateManager
+from user_message_delegate import UserMessageLevel # Import Optional
 from .state_management import StateManager # Import StateManager
 
 from .config import load_config
@@ -32,7 +35,7 @@ class BaseCommand(ABC):
 
 class ListModelsCommand(BaseCommand):
     """Command to list available OpenRouter models."""
-    def __init__(self, config: dict, output_csv: str = None, delegate_manager=None): # Add delegate_manager parameter
+    def __init__(self, config: dict, output_csv: str, delegate_manager: DelegateManager): # Add delegate_manager parameter
         super().__init__(config)
         self.output_csv = output_csv
         self.delegate_manager = delegate_manager # Store delegate_manager
@@ -46,15 +49,32 @@ class ListModelsCommand(BaseCommand):
 
         if self.output_csv:
             model_provider.list_models_to_csv(self.output_csv)
-            logger.debug(f"Successfully wrote model list to CSV: {self.output_csv}")
+            self.delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": f"Successfully wrote model list to CSV: {self.output_csv}", "level": UserMessageLevel.INFO}
+            )
         else:
             detailed_models = model_provider.list_models()
-            logger.debug("Available OpenRouter Models:")
+            avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
+            logger.debug(avail_text)
+
+            self.delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": avail_text, "level": UserMessageLevel.INFO}
+            )
             for model in detailed_models:
-                 if isinstance(model, str):
-                    logger.debug(f"- {model}")
-                 else:
-                    logger.debug(f"- {model.get('id', 'N/A')}")
+                if isinstance(model, str):
+                    model_text = f"- {model}"
+                else:
+                    model_text = f"- {model.get('id', 'N/A')}"
+                logger.debug(model_text)
+                self.delegate_manager.invoke_notification(
+                    sender=self,
+                    event_type="user_message_display",
+                    event_data={"message": model_text, "level": UserMessageLevel.INFO}
+                )
         return 0
 
 class GenerateInitialPlanCommand(BaseCommand):

@@ -297,7 +297,6 @@ def run_ai_loop(engine: ExecutionEngine, task_definition: dict, task_id: str, in
 
 
                 except json.JSONDecodeError as e:
-                    print(f"DEBUG: Task {task_id}: Caught JSONDecodeError for tool {tool_name}. Arguments: {tool_arguments_str}") # Debug print
                     error_message = f"Task {task_id}: Failed to parse tool arguments JSON for tool '{tool_name}': {e}. Arguments: {tool_arguments_str}"
                     logger.error(error_message)
                     log_event(

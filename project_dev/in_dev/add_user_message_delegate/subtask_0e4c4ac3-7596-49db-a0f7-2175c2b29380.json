@@ -1,0 +1,42 @@
+{
+  "description": "Implement the user message delegate interface and the basic output test class.",
+  "instructions": [
+    "Create a new Python file at `src/ai_whisperer/user_message_delegate.py`.",
+    "In `src/ai_whisperer/user_message_delegate.py`, define an abstract base class or interface for the user message delegate.",
+    "This interface should include methods for handling different message levels (e.g., info, warning, error, debug).",
+    "Create a new Python file at `src/ai_whisperer/basic_output_test.py`.",
+    "In `src/ai_whisperer/basic_output_test.py`, implement a class that inherits from the user message delegate interface.",
+    "Implement the message handling methods in `basic_output_test.py` to print the messages to the console.",
+    "Use ANSI escape codes to color the output based on the message level (e.g., green for info, yellow for warning, red for error).",
+    "Refer to existing delegate implementations within the `src/ai_whisperer` directory (if any exist) for structural inspiration.",
+    "Ensure the implementation in `src/basic_output_test.py` adheres to the interface defined in `src/user_message_delegate.py`.",
+    "Run the tests located in `tests/test_user_message_delegate.py` to verify the implementation."
+  ],
+  "input_artifacts": [
+    "docs/user_message_analysis.md",
+    "tests/test_user_message_delegate.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/user_message_delegate.py",
+    "src/ai_whisperer/basic_output_test.py"
+  ],
+  "constraints": [
+    "The basic output class must use ANSI escape codes for coloring.",
+    "The implementation must pass all generated tests in `tests/test_user_message_delegate.py`.",
+    "The delegate interface/abstract class should be defined in `src/ai_whisperer/user_message_delegate.py`.",
+    "The basic output test class should be defined in `src/ai_whisperer/basic_output_test.py`."
+  ],
+  "validation_criteria": [
+    "`src/ai_whisperer/user_message_delegate.py` exists and defines the delegate structure (abstract class or interface).",
+    "`src/ai_whisperer/basic_output_test.py` exists and implements the delegate interface.",
+    "Running the tests in `tests/test_user_message_delegate.py` passes successfully.",
+    "The basic output class prints messages to the console with appropriate ANSI color coding based on message level."
+  ],
+  "type": "code_generation",
+  "name": "implement_user_message_delegate",
+  "depends_on": [
+    "create_user_message_delegate_tests"
+  ],
+  "task_id": "6eae9bfb-2bd0-4ad1-926f-4a2ca71d1d16",
+  "subtask_id": "0e4c4ac3-7596-49db-a0f7-2175c2b29380"
+}

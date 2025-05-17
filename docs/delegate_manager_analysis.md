@@ -62,7 +62,7 @@ The `DelegateManager` provides a solid foundation for event-driven interactions 
 * **Decoupling:** Effectively separates event producers (like `ExecutionEngine`, `AILoop`) from potential event consumers (e.g., UI components, logging extensions, external controllers).
 * **Simplicity:** The API for registration and invocation is straightforward.
 * **Thread Safety:** Built-in `RLock` ensures it can be safely used in multi-threaded environments.
-* **Clear Distinction:** The separation between "notification" and "control" delegates clarifies the intent and expected behavior of callbacks.
+* **Clear Distinction:** The separation between "notification" and "control" delegates clarifies the intent and expected behavior of callbacks. A key example of a notification event is `"user_message_display"`, used by the User Message System to output formatted messages to the user. For more details, see the [User Message System documentation](../user_message_system.md).
 
 ### 4.2. Potential Areas for Enhancement
 

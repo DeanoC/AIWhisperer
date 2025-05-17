@@ -1,0 +1,36 @@
+{
+  "description": "Integrate the user message delegate into the main application flow.",
+  "instructions": [
+    "Locate all instances of direct user-facing output (e.g., `print()`, logging to console) within the `src/ai_whisperer` directory.",
+    "Replace these direct output calls with calls to the user message delegate, ensuring appropriate delegate methods are used for different message types (e.g., info, warning, error).",
+    "Configure the logging system to ensure that log messages are written to a file but are explicitly prevented from appearing on the console.",
+    "In the main application entry point or initialization code, instantiate the `BasicOutputTest` class and register it with the delegate manager as the default user message delegate implementation."
+  ],
+  "input_artifacts": [
+    "src/ai_whisperer/",
+    "src/user_message_delegate.py",
+    "src/basic_output_test.py"
+  ],
+  "output_artifacts": [
+    "src/ai_whisperer/"
+  ],
+  "constraints": [
+    "All user-facing messages must now be routed through the user message delegate.",
+    "Console output for user messages should utilize ANSI coloring for differentiation.",
+    "Logging output must be directed solely to a file and must not be visible on the console.",
+    "The `BasicOutputTest` delegate must be the default implementation used."
+  ],
+  "validation_criteria": [
+    "Execute the application and observe the console output. Verify that user messages are displayed with ANSI coloring.",
+    "Execute the application and observe the console output. Verify that no log messages are displayed on the console.",
+    "Examine the modified code files within `src/ai_whisperer` to confirm that direct output calls have been replaced by calls to the user message delegate.",
+    "Confirm that the `BasicOutputTest` delegate is correctly instantiated and registered as the default delegate."
+  ],
+  "type": "file_edit",
+  "name": "integrate_user_message_delegate",
+  "depends_on": [
+    "implement_user_message_delegate"
+  ],
+  "task_id": "6eae9bfb-2bd0-4ad1-926f-4a2ca71d1d16",
+  "subtask_id": "a9ec2322-6de8-4d62-92a6-ef6f669910d8"
+}

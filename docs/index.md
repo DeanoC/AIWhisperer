@@ -12,6 +12,10 @@ AIWhisperer incorporates a comprehensive logging system and a real-time terminal
 
 For an in-depth understanding, please see the [Logging and Monitoring Documentation](logging_monitoring.md).
 
+## User Message System
+
+For details on how user-facing messages are handled and displayed, see the [User Message System Documentation](user_message_system.md).
+
 ## AI Service Interaction Module
 
 The AI Service Interaction Module handles communication with external AI services, including sending prompts and processing streaming responses from providers like OpenRouter. It also includes capabilities for tracking the cost and token usage associated with these API calls.

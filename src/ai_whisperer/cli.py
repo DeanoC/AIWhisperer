@@ -7,6 +7,8 @@ from pathlib import Path
 import os
 import csv
 
+from user_message_delegate import UserMessageLevel
+
 # Import necessary components from the application
 from .config import load_config
 from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
@@ -18,13 +20,16 @@ from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManag
 logger = None # Will be initialized in main after logging is configured
 delegate_manager = None # Will be initialized in main after logging is configured
 
-def cli(args=None) -> list[BaseCommand]:
+def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand]:
     """Main entry point for the AI Whisperer CLI application.
-
+    
     Parses command-line arguments and instantiates the appropriate command object.
     Accepts an optional 'args' parameter for testability (list of CLI args, or None to use sys.argv).
+    Accepts an optional 'delegate_manager' instance.
     Returns the instantiated command object.
     """
+    # Remove the global delegate_manager declaration
+    # global delegate_manager # Removed
     # Logging will be set up after argument parsing to use the config path.
     # --- Argument Parsing ---
     parser = argparse.ArgumentParser(
@@ -128,12 +133,24 @@ def cli(args=None) -> list[BaseCommand]:
         if getattr(parsed_args, "debug", False):
             try:
                 import debugpy
-                print("Waiting for debugger attach on port 5678...")
+                delegate_manager.invoke_notification(
+                    sender=None, # Or a more appropriate sender
+                    event_type="user_message_display",
+                    event_data={"message": "Waiting for debugger attach on port 5678...", "level": UserMessageLevel.INFO}
+                )
                 debugpy.listen(("0.0.0.0", 5678))
                 debugpy.wait_for_client()
-                print("Debugger attached.")
+                delegate_manager.invoke_notification(
+                    sender=None, # Or a more appropriate sender
+                    event_type="user_message_display",
+                    event_data={"message": "Debugger attached.", "level": UserMessageLevel.INFO}
+                )
             except ImportError:
-                print("debugpy is not installed. Please install it to use --debug.", file=sys.stderr)
+                delegate_manager.invoke_notification(
+                    sender=None, # Or a more appropriate sender
+                    event_type="user_message_display",
+                    event_data={"message": "debugpy is not installed. Please install it to use --debug.", "level": UserMessageLevel.INFO}
+                )
                 sys.exit(1)
 
         # --- Setup Custom Logging ---
@@ -173,12 +190,6 @@ def cli(args=None) -> list[BaseCommand]:
 
         # --- Instantiate Command Object ---
         # Instantiate the centralized DelegateManager
-        global delegate_manager
-        delegate_manager = DelegateManager()
-        if logger:
-            logger.debug("DelegateManager instantiated.")
-            logger.debug(f"DelegateManager instance: {delegate_manager}")
-
         commands = [] # Initialize commands list
         if parsed_args.command == "list-models":
             if logger:

@@ -3,14 +3,17 @@ import pathlib
 from typing import Any, Dict
 
 from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.delegate_manager import DelegateManager
+from src.user_message_delegate import UserMessageLevel
 from ai_whisperer.path_management import PathManager
 from ai_whisperer.exceptions import FileRestrictionError
 
 logger = logging.getLogger(__name__)
 
 class WriteFileTool(AITool):
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Dict[str, Any] = None, delegate_manager: DelegateManager = None):
         # Configuration can be added here if needed in the future
+        self.delegate_manager = delegate_manager # Store the delegate manager instance
         pass
 
     @property
@@ -55,11 +58,20 @@ class WriteFileTool(AITool):
         Returns:
             A dictionary indicating success or failure, including the resolved file path on success.
         """
+
         if not path:
-            print("[WriteFileTool] ERROR: 'path' argument is missing.")
+            self.delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": "[WriteFileTool] ERROR: 'path' argument is missing.", "level": UserMessageLevel.INFO}
+            )
             return {"status": "error", "message": "'path' argument is missing."}
         if content is None:
-            print("[WriteFileTool] ERROR: 'content' argument is missing.")
+            self.delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": "[WriteFileTool] ERROR: 'content' argument is missing.", "level": UserMessageLevel.INFO}
+            )
             return {"status": "error", "message": "'content' argument is missing."}
 
 
@@ -76,7 +88,11 @@ class WriteFileTool(AITool):
                 input_path = pathlib.Path(*input_parts[1:])
             abs_file_path = (output_dir / input_path).resolve()
         logger.info(f"[WriteFileTool] Writing file. path arg: '{path}', resolved: '{abs_file_path}', output_dir: '{output_dir}'")
-        print(f"[WriteFileTool] Writing file. path arg: '{path}', resolved: '{abs_file_path}', output_dir: '{output_dir}'")
+        self.delegate_manager.invoke_notification(
+            sender=self,
+            event_type="user_message_display",
+            event_data={"message": f"[WriteFileTool] Writing file. path arg: '{path}', resolved: '{abs_file_path}', output_dir: '{output_dir}'", "level": UserMessageLevel.DETAIL}
+        )
 
         # Validate if the file path is within the output directory
         if not path_manager.is_path_within_output(abs_file_path):

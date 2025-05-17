@@ -7,6 +7,10 @@ from ai_whisperer.path_management import PathManager
 from ai_whisperer.exceptions import FileRestrictionError
 
 class ReadFileTool(AITool):
+    def __init__(self, delegate_manager=None):
+        self.delegate_manager = delegate_manager # Store the delegate manager instance
+        pass
+
     @property
     def name(self) -> str:
         return 'read_file'

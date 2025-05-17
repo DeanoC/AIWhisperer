@@ -195,8 +195,6 @@ class ParserPlan:
                 ) from e
 
             loaded_subtasks[subtask_id_for_error] = step
-            print(f"Loaded subtask with ID {subtask_id_for_error}: {step}")
-            print(f"Loaded subtask with ID {subtask_id_for_error}: {step}")
 
             loaded_steps.append(step)  # Add the loaded step to the list
 

@@ -10,7 +10,6 @@ class CommandParser:
         """
         Parses a command string into a command name and a list of arguments.
         """
-        print(f"Parsing command string: {command_string}")
         if not command_string or command_string.strip() == "":
             raise ValueError("Command string cannot be empty or contain only spaces.")
 
@@ -27,7 +26,6 @@ class CommandParser:
 
         command_name = parts[0]
         args = parts[1:]
-        print(f"Parsed command name: {command_name}, args: {args}")
         command_instance = self.command_registry.get(command_name)
         # Check if the command exists in the registry and requires special argument parsing
         command_instance = self.command_registry.get(command_name)
@@ -50,7 +48,6 @@ class CommandParser:
             args = parts[1:]
 
         parsed_command = ParsedCommand(command_name, args)
-        print(f"Returning parsed command: {parsed_command.name}, {parsed_command.args}")
         return parsed_command   
 
 class CommandParsingError(AIWhispererError):

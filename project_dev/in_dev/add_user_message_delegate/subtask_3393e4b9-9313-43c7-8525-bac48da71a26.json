@@ -1,0 +1,35 @@
+{
+  "description": "Analyze the requirements for the user message delegate, identifying the necessary components and interactions.",
+  "instructions": [
+    "Locate and read the User Requirements document. If a specific document for user message requirements exists, prioritize that; otherwise, refer to the main project requirements documentation.",
+    "Carefully read the relevant sections of the requirements document to understand the purpose and expected behavior of the user message delegate.",
+    "Identify the essential functions and capabilities the user message delegate must provide.",
+    "Determine the specific data inputs the delegate will receive (e.g., the message content, the severity level of the message).",
+    "Identify the expected output format and destination for the user messages. Based on the input, this is expected to be ANSI colored console output.",
+    "Based on the identified requirements, outline a high-level structure for the user message delegate class.",
+    "Outline the basic structure for a test class specifically designed to verify the output of the user message delegate, ensuring it handles different message levels and produces the correct ANSI colored output.",
+    "Document the analysis findings, including the identified core functionality, input/output specifications, and the proposed basic structures for the delegate and test classes, in a new Markdown file located at `docs/user_message_analysis.md`."
+  ],
+  "input_artifacts": [
+    "User Requirements document (or main project requirements documentation)"
+  ],
+  "output_artifacts": [
+    "docs/user_message_analysis.md"
+  ],
+  "constraints": [
+    "The analysis must strictly adhere to the documented user requirements.",
+    "The output format is specifically ANSI colored console output.",
+    "The documentation must be in Markdown format."
+  ],
+  "validation_criteria": [
+    "A file named `docs/user_message_analysis.md` must be created.",
+    "The content of `docs/user_message_analysis.md` must accurately reflect the user message delegate requirements based on the input documentation.",
+    "`docs/user_message_analysis.md` must clearly outline the basic structure for the user message delegate.",
+    "`docs/user_message_analysis.md` must clearly outline the basic structure for a test class for the user message delegate output."
+  ],
+  "type": "planning",
+  "name": "analyze_user_message_requirements",
+  "depends_on": [],
+  "task_id": "6eae9bfb-2bd0-4ad1-926f-4a2ca71d1d16",
+  "subtask_id": "3393e4b9-9313-43c7-8525-bac48da71a26"
+}
