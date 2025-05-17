@@ -33,7 +33,7 @@
       "depends_on": [
         "analyze_user_message_delegate_requirements"
       ],
-      "type": "test_generation",
+      "type": "planning",
       "input_artifacts": [
         "docs/user_message_system.md"
       ],
@@ -67,7 +67,7 @@
       "depends_on": [
         "generate_user_message_delegate_tests"
       ],
-      "type": "code_generation",
+      "type": "test_generation",
       "input_artifacts": [
         "docs/user_message_system.md",
         "tests/unit/test_user_message_delegate.py",
@@ -100,7 +100,7 @@
       "depends_on": [
         "implement_user_message_delegate"
       ],
-      "type": "file_edit",
+      "type": "test_generation",
       "input_artifacts": [
         "src/ai_whisperer/delegate_manager.py",
         "src/ai_whisperer/user_message_delegate.py"
@@ -180,6 +180,7 @@
   "task_id": "7cb105e4-e04d-447c-9a3c-a7c21ea7c025",
   "input_hashes": {
     "requirements_md": "d33ecde197b7eab01e32a588a75615b7eff2aa0d1172e3bf2e12a02d2508e416",
+    "config_yaml": "c3ec11483dd16c723c26a905ada85e72c74730bf0cea1239f347f03201ecaa5f"
     "config_yaml": "c3ec11483dd16c723c26a905ada85e72c74730bf0cea1239f347f03201ecaa5f"
   }
 }
