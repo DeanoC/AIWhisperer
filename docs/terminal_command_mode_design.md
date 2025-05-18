@@ -61,12 +61,12 @@ graph TD
     * Tokenizes the input into a command name and its arguments. Initially, a simple space-based separation will be used. For commands with more complex argument structures, `argparse` or a similar library could be integrated on a per-command basis.
   * **Command Registry:**
     * A central mapping (e.g., a dictionary) of command names and their aliases to corresponding command handler objects or functions.
-    * Commands will ideally be defined as classes inheriting from a `BaseCommand` abstract class, or via a decorator pattern.
+    * Commands will ideally be defined as classes inheriting from a `BaseCliCommand` abstract class, or via a decorator pattern.
     * Example Structure:
 
             ```python
             # Conceptual example
-            class BaseCommand:
+            class BaseCliCommand:
                 name: str = ""  # Canonical command name
                 aliases: list[str] = []
                 help_text: str = "No help available for this command."
@@ -165,12 +165,12 @@ The following commands will be available initially:
 
 The design prioritizes making it easy to add new commands:
 
-1. **Create a Command Class:** Define a new Python class that inherits from `BaseCommand` (or conforms to a similar defined interface).
+1. **Create a Command Class:** Define a new Python class that inherits from `BaseCliCommand` (or conforms to a similar defined interface).
 
     ```python
     # Example for a new 'status' command
     # @register_command # If using a decorator
-    class StatusCommand(BaseCommand):
+    class StatusCommand(BaseCliCommand):
         name = "status"
         aliases = ["st"]
         help_text = "Displays the current status of AIWhisperer.\n\nUsage: status"

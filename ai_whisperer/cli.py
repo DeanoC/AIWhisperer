@@ -12,7 +12,7 @@ from monitor.user_message_delegate import UserMessageLevel
 # Import necessary components from the application
 from .config import load_config
 from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
-from .commands import ListModelsCommand, GenerateInitialPlanCommand, GenerateOverviewPlanCommand, RefineCommand, RunCommand, BaseCommand # Import command classes
+from .cli_commands import ListModelsCliCommand, GenerateInitialPlanCliCommand, GenerateOverviewPlanCliCommand, RefineCliCommand, RunCliCommand, BaseCliCommand # Import command classes
 from . import logging_custom # Import module directly
 from ai_whisperer.path_management import PathManager
 from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManager
@@ -29,7 +29,7 @@ def user_message_level_type(value: str) -> UserMessageLevel:
             f"Invalid detail level: {value}. Choose from {list(UserMessageLevel.__members__.keys())}"
         )
 
-def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand]:
+def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCliCommand]:
     """Main entry point for the AI Whisperer CLI application.
     
     Parses command-line arguments and instantiates the appropriate command object.
@@ -217,8 +217,8 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
         commands = [] # Initialize commands list
         if parsed_args.command == "list-models":
             if logger:
-                logger.debug("Creating ListModelsCommand and passing DelegateManager.")
-            commands.append(ListModelsCommand(
+                logger.debug("Creating ListModelsCliCommand and passing DelegateManager.")
+            commands.append(ListModelsCliCommand(
                 config=config, # Pass the loaded config object
                 output_csv=parsed_args.output_csv,
                 delegate_manager=delegate_manager, # Pass the delegate manager
@@ -227,8 +227,8 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
         elif parsed_args.command == "generate":
             if parsed_args.subcommand == "initial-plan":
                 if logger:
-                    logger.debug("Creating GenerateInitialPlanCommand and passing DelegateManager.")
-                commands.append(GenerateInitialPlanCommand(
+                    logger.debug("Creating GenerateInitialPlanCliCommand and passing DelegateManager.")
+                commands.append(GenerateInitialPlanCliCommand(
                     config=config, # Pass the loaded config object
                     output_dir=parsed_args.output,
                     requirements_path=parsed_args.requirements_path,
@@ -236,8 +236,8 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
                 ))
             elif parsed_args.subcommand == "overview-plan":
                 if logger:
-                    logger.debug("Creating GenerateOverviewPlanCommand and passing DelegateManager.")
-                commands.append(GenerateOverviewPlanCommand(
+                    logger.debug("Creating GenerateOverviewPlanCliCommand and passing DelegateManager.")
+                commands.append(GenerateOverviewPlanCliCommand(
                     config=config, # Pass the loaded config object
                     output_dir=parsed_args.output,
                     initial_plan_path=parsed_args.initial_plan_path,
@@ -245,9 +245,9 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
                 ))
             elif parsed_args.subcommand == "full-plan":
                 if logger:
-                    logger.debug("Creating GenerateInitialPlanCommand (for full-plan) and passing DelegateManager.")
+                    logger.debug("Creating GenerateInitialPlanCliCommand (for full-plan) and passing DelegateManager.")
                 commands.append(
-                    GenerateInitialPlanCommand(
+                    GenerateInitialPlanCliCommand(
                         config=config, # Pass the loaded config object
                         output_dir=parsed_args.output,
                         requirements_path=parsed_args.requirements_path,
@@ -255,9 +255,9 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
                     )
                 )
                 if logger:
-                    logger.debug("Creating GenerateOverviewPlanCommand (for full-plan) and passing DelegateManager.")
+                    logger.debug("Creating GenerateOverviewPlanCliCommand (for full-plan) and passing DelegateManager.")
                 commands.append(
-                    GenerateOverviewPlanCommand(
+                    GenerateOverviewPlanCliCommand(
                         config=config, # Pass the loaded config object
                         output_dir=parsed_args.output,
                         initial_plan_path="<output_of_generate_initial_plan_command>",
@@ -268,8 +268,8 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
                 raise ValueError(f"Unknown subcommand for generate: {parsed_args.subcommand}")
         elif parsed_args.command == "refine":
             if logger:
-                logger.debug("Creating RefineCommand and passing DelegateManager.")
-            commands.append(RefineCommand(
+                logger.debug("Creating RefineCliCommand and passing DelegateManager.")
+            commands.append(RefineCliCommand(
                 config=config, # Pass the loaded config object
                 input_file=parsed_args.input_file,
                 iterations=parsed_args.iterations,
@@ -279,8 +279,8 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
             ))
         elif parsed_args.command == "run":
             if logger:
-                logger.debug("Creating RunCommand and passing DelegateManager.")
-            commands.append(RunCommand(
+                logger.debug("Creating RunCliCommand and passing DelegateManager.")
+            commands.append(RunCliCommand(
                 config=config, # Pass the loaded config object
                 plan_file=parsed_args.plan_file,
                 state_file=parsed_args.state_file,
@@ -301,11 +301,6 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
                 event_type="user_message_display",
                 event_data={"message": "Interactive mode activated.", "level": UserMessageLevel.INFO}
             )
-            # In interactive mode, we might not return commands immediately,
-            # or the command execution flow will be different.
-            # For this task, we are only adding the CLI option and activation flag.
-            # The actual interactive loop will be implemented later.
-            return [], config # Return empty commands list for now in interactive mode
 
         return commands, config
 
@@ -317,12 +312,12 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
 
 import io # Import io for capturing stdout
 
-def execute_commands_and_capture_output(commands: list[BaseCommand], delegate_manager: DelegateManager) -> str:
+def execute_commands_and_capture_output(commands: list[BaseCliCommand], delegate_manager: DelegateManager) -> str:
     """
     Executes a list of command objects and captures their standard output.
 
     Args:
-        commands: A list of BaseCommand objects to execute.
+        commands: A list of BaseCliCommand objects to execute.
         delegate_manager: The DelegateManager instance to use.
 
     Returns:

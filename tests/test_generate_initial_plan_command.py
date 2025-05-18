@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 import tempfile
 import os
 
-from ai_whisperer.commands import GenerateInitialPlanCommand
+from ai_whisperer.cli_commands import GenerateInitialPlanCliCommand
 from ai_whisperer.initial_plan_generator import InitialPlanGenerator
 from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.config import load_config
@@ -22,7 +22,7 @@ def reset_path_manager():
     yield
     PathManager._reset_instance()
 
-class TestGenerateInitialPlanCommand:
+class TestGenerateInitialPlanCliCommand:
 
     @pytest.fixture
     def mock_config_path(self):
@@ -32,7 +32,7 @@ class TestGenerateInitialPlanCommand:
     def mock_output_dir(self):
         return "fake_output_dir"
 
-    @patch('ai_whisperer.commands.InitialPlanGenerator')
+    @patch('ai_whisperer.cli_commands.InitialPlanGenerator')
     def test_generate_initial_plan_success(self, mock_initial_plan_generator, mock_config_path, mock_output_dir):
         """Tests successful generation of an initial plan."""
         mock_initial_plan_instance = mock_initial_plan_generator.return_value
@@ -44,7 +44,7 @@ class TestGenerateInitialPlanCommand:
 
         # Simulate config dict as would be passed by CLI
         config = {"mock": "config", "config_path": mock_config_path}
-        command = GenerateInitialPlanCommand(
+        command = GenerateInitialPlanCliCommand(
             config=config,
             output_dir=mock_output_dir,
             requirements_path=tmp_req_path,
@@ -59,11 +59,11 @@ class TestGenerateInitialPlanCommand:
 
         os.unlink(tmp_req_path) # Clean up the temporary file
 
-    @patch('ai_whisperer.commands.InitialPlanGenerator')
+    @patch('ai_whisperer.cli_commands.InitialPlanGenerator')
     def test_generate_initial_plan_no_requirements_path(self, mock_initial_plan_generator, mock_config_path, mock_output_dir):
         """Tests generating initial plan without requirements path."""
         config = {"mock": "config", "config_path": mock_config_path}
-        command = GenerateInitialPlanCommand(
+        command = GenerateInitialPlanCliCommand(
             config=config,
             output_dir=mock_output_dir,
             requirements_path=None, # Explicitly set to None
@@ -96,7 +96,7 @@ class TestGenerateInitialPlanCommand:
         config = load_config(config_path)
         config["config_path"] = config_path
 
-        command = GenerateInitialPlanCommand(
+        command = GenerateInitialPlanCliCommand(
             config=config,
             output_dir=str(output_dir),
             requirements_path=str(requirements_file),

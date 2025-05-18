@@ -3,14 +3,14 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from ai_whisperer.commands import ListModelsCommand
+from ai_whisperer.cli_commands import ListModelsCliCommand
 from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.model_info_provider import ModelInfoProvider
 from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
 from monitor.user_message_delegate import UserMessageLevel # Import UserMessageLevel
 
 # Mocked tests for list-models
-@patch('ai_whisperer.commands.ModelInfoProvider')
+@patch('ai_whisperer.cli_commands.ModelInfoProvider')
 def test_list_models_mocked(mock_model_info_provider):
     """Tests the list-models command using mocked ModelInfoProvider."""
     mock_instance = mock_model_info_provider.return_value
@@ -24,7 +24,7 @@ def test_list_models_mocked(mock_model_info_provider):
     config = {"servers": {}, "config_path": "dummy_config.yaml"}
     detail_level = UserMessageLevel.INFO # Set detail level for this test
 
-    command = ListModelsCommand(config=config, output_csv=None, delegate_manager=mock_delegate_manager, detail_level=detail_level)
+    command = ListModelsCliCommand(config=config, output_csv=None, delegate_manager=mock_delegate_manager, detail_level=detail_level)
     command.execute()
 
     mock_instance.list_models.assert_called_once()
@@ -57,7 +57,7 @@ def test_list_models_mocked(mock_model_info_provider):
             assert False, "DETAIL level message was sent when detail_level was INFO"
 
 # Mocked tests for list-models CSV output
-@patch('ai_whisperer.commands.ModelInfoProvider')
+@patch('ai_whisperer.cli_commands.ModelInfoProvider')
 def test_list_models_csv_mocked(mock_model_info_provider):
     """Tests the list-models command with CSV output using mocked ModelInfoProvider."""
     mock_instance = mock_model_info_provider.return_value
@@ -67,7 +67,7 @@ def test_list_models_csv_mocked(mock_model_info_provider):
     config = {"servers": {}, "config_path": "dummy_config.yaml"}
     detail_level = UserMessageLevel.INFO # Detail level should not affect CSV output
 
-    command = ListModelsCommand(config=config, output_csv=output_csv_path, delegate_manager=mock_delegate_manager, detail_level=detail_level)
+    command = ListModelsCliCommand(config=config, output_csv=output_csv_path, delegate_manager=mock_delegate_manager, detail_level=detail_level)
     command.execute()
 
     mock_instance.list_models_to_csv.assert_called_once_with(output_csv_path)
@@ -108,10 +108,10 @@ def test_list_models_actual_servers():
         delegate=ansi_handler.display_message
     )
     # Add detail_level to the command instantiation
-    command = ListModelsCommand(config=config, output_csv=None, delegate_manager=delegate_manager, detail_level=UserMessageLevel.INFO)
+    command = ListModelsCliCommand(config=config, output_csv=None, delegate_manager=delegate_manager, detail_level=UserMessageLevel.INFO)
 
     # Capture output by mocking logger.debug
-    with patch('ai_whisperer.commands.logger.debug') as mock_print:
+    with patch('ai_whisperer.cli_commands.logger.debug') as mock_print:
         command.execute()
 
     # Basic assertion: command should run without error (exit code is returned by execute)
@@ -146,7 +146,7 @@ def test_list_models_csv_actual_servers(tmp_path):
     output_csv_path = tmp_path / "actual_models.csv"
     delegate_manager = DelegateManager()
     # Add detail_level to the command instantiation
-    command = ListModelsCommand(config=config, output_csv=str(output_csv_path), delegate_manager=delegate_manager, detail_level=UserMessageLevel.INFO)
+    command = ListModelsCliCommand(config=config, output_csv=str(output_csv_path), delegate_manager=delegate_manager, detail_level=UserMessageLevel.INFO)
 
     command.execute()
 

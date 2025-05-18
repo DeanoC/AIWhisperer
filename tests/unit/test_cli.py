@@ -32,17 +32,17 @@ def capsys_sys_exit(capsys):
 # Mock the command classes to prevent actual execution
 @pytest.fixture(autouse=True)
 def mock_commands():
-    with patch('ai_whisperer.cli.ListModelsCommand') as MockListModelsCommand, \
-         patch('ai_whisperer.cli.GenerateInitialPlanCommand') as MockGenerateInitialPlanCommand, \
-         patch('ai_whisperer.cli.GenerateOverviewPlanCommand') as MockGenerateOverviewPlanCommand, \
-         patch('ai_whisperer.cli.RefineCommand') as MockRefineCommand, \
-         patch('ai_whisperer.cli.RunCommand') as MockRunCommand:
+    with patch('ai_whisperer.cli.ListModelsCliCommand') as MockListModelsCliCommand, \
+         patch('ai_whisperer.cli.GenerateInitialPlanCliCommand') as MockGenerateInitialPlanCliCommand, \
+         patch('ai_whisperer.cli.GenerateOverviewPlanCliCommand') as MockGenerateOverviewPlanCliCommand, \
+         patch('ai_whisperer.cli.RefineCliCommand') as MockRefineCliCommand, \
+         patch('ai_whisperer.cli.RunCliCommand') as MockRunCliCommand:
         yield {
-            "ListModelsCommand": MockListModelsCommand,
-            "GenerateInitialPlanCommand": MockGenerateInitialPlanCommand,
-            "GenerateOverviewPlanCommand": MockGenerateOverviewPlanCommand,
-            "RefineCommand": MockRefineCommand,
-            "RunCommand": MockRunCommand,
+            "ListModelsCliCommand": MockListModelsCliCommand,
+            "GenerateInitialPlanCliCommand": MockGenerateInitialPlanCliCommand,
+            "GenerateOverviewPlanCliCommand": MockGenerateOverviewPlanCliCommand,
+            "RefineCliCommand": MockRefineCliCommand,
+            "RunCliCommand": MockRunCliCommand,
         }
 
 # Mock setup_logging and load_config to prevent side effects during tests
@@ -67,7 +67,7 @@ def test_list_models_command_valid_args(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["ListModelsCommand"].assert_called_once_with(
+    mock_commands["ListModelsCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_csv=None,
         delegate_manager=ANY, # Expect the delegate manager
@@ -83,7 +83,7 @@ def test_list_models_command_global_config_before_command(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["ListModelsCommand"].assert_called_once_with(
+    mock_commands["ListModelsCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_csv=None,
         delegate_manager=ANY, # Expect the delegate manager
@@ -99,7 +99,7 @@ def test_list_models_command_with_output_csv(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["ListModelsCommand"].assert_called_once_with(
+    mock_commands["ListModelsCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_csv="output.csv",
         delegate_manager=ANY, # Expect the delegate manager
@@ -127,7 +127,7 @@ def test_list_models_command_with_detail_level(mock_commands):
     from unittest.mock import ANY
     from monitor.user_message_delegate import UserMessageLevel # Import UserMessageLevel
 
-    mock_commands["ListModelsCommand"].assert_called_once_with(
+    mock_commands["ListModelsCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_csv=None,
         delegate_manager=ANY,
@@ -143,7 +143,7 @@ def test_generate_initial_plan_command_valid_args(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
+    mock_commands["GenerateInitialPlanCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="output",
         requirements_path="reqs.md",
@@ -159,7 +159,7 @@ def test_generate_initial_plan_command_global_config_before_command(mock_command
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
+    mock_commands["GenerateInitialPlanCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="output",
         requirements_path="reqs.md",
@@ -176,7 +176,7 @@ def test_generate_initial_plan_command_with_output(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
+    mock_commands["GenerateInitialPlanCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="plans",
         requirements_path="reqs.md",
@@ -212,7 +212,7 @@ def test_generate_overview_plan_command_valid_args(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
+    mock_commands["GenerateOverviewPlanCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="output",
         initial_plan_path="initial.json",
@@ -228,7 +228,7 @@ def test_generate_overview_plan_command_global_config_before_command(mock_comman
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
+    mock_commands["GenerateOverviewPlanCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="output",
         initial_plan_path="initial.json",
@@ -244,7 +244,7 @@ def test_generate_overview_plan_command_with_output(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
+    mock_commands["GenerateOverviewPlanCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="overview_plans",
         initial_plan_path="initial.json",
@@ -280,13 +280,13 @@ def test_generate_full_plan_command_valid_args(mock_commands):
 
     assert len(commands) == 2 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["GenerateInitialPlanCommand"].assert_called_once_with(
+    mock_commands["GenerateInitialPlanCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="plans",
         requirements_path="reqs.md",
         delegate_manager=ANY
     )
-    mock_commands["GenerateOverviewPlanCommand"].assert_called_once_with(
+    mock_commands["GenerateOverviewPlanCliCommand"].assert_called_once_with(
         config=minimal_config,
         output_dir="plans",
         initial_plan_path="<output_of_generate_initial_plan_command>",
@@ -302,7 +302,7 @@ def test_refine_command_valid_args(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["RefineCommand"].assert_called_once_with(
+    mock_commands["RefineCliCommand"].assert_called_once_with(
         config=minimal_config,
         input_file="input.md",
         iterations=1,
@@ -320,7 +320,7 @@ def test_refine_command_with_optional_args(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["RefineCommand"].assert_called_once_with(
+    mock_commands["RefineCliCommand"].assert_called_once_with(
         config=minimal_config,
         input_file="input.md",
         iterations=5,
@@ -358,7 +358,7 @@ def test_run_command_valid_args(mock_commands):
 
     assert len(commands) == 1 # Assert the length of the command list
     from unittest.mock import ANY
-    mock_commands["RunCommand"].assert_called_once_with(
+    mock_commands["RunCliCommand"].assert_called_once_with(
         config=minimal_config,
         plan_file="plan.json",
         state_file="state.json",

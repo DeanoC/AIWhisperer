@@ -48,7 +48,7 @@ from unittest.mock import patch, MagicMock
 
 # Import the main cli function and necessary components
 from ai_whisperer.cli import cli
-from ai_whisperer.commands import RunCommand
+from ai_whisperer.cli_commands import RunCliCommand
 from ai_whisperer.path_management import PathManager
 
 # New test case to simulate running the CLI with a plan file programmatically
@@ -69,7 +69,7 @@ def test_cli_run_command_programmatic(clean_output):
     assert plan_path.exists()
 
     # Mock the OpenRouterAPI call within the ExecutionEngine
-    # This is necessary because we are not mocking the RunCommand or ExecutionEngine
+    # This is necessary because we are not mocking the RunCliCommand or ExecutionEngine
     # We need to mock the actual AI service interaction.
     # Create a mock DelegateManager
     mock_delegate_manager = MagicMock()
@@ -148,10 +148,10 @@ def test_cli_run_command_programmatic(clean_output):
 
                 commands, parsed_args = cli(args, delegate_manager=mock_delegate_manager)
 
-                # The cli function should return a list containing one RunCommand instance
+                # The cli function should return a list containing one RunCliCommand instance
                 assert len(commands) == 1
                 run_command = commands[0]
-                assert isinstance(run_command, RunCommand) # Check if it's a real RunCommand instance
+                assert isinstance(run_command, RunCliCommand) # Check if it's a real RunCliCommand instance
 
                 # Explicitly execute the command
                 run_command.execute()
@@ -179,7 +179,7 @@ def test_cli_run_command_programmatic(clean_output):
 
 # Ensure necessary imports are present
 from ai_whisperer.cli import cli
-from ai_whisperer.commands import RunCommand
+from ai_whisperer.cli_commands import RunCliCommand
 from ai_whisperer.path_management import PathManager
 from unittest.mock import patch, MagicMock
 import tempfile

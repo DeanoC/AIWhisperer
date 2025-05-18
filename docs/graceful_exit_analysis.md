@@ -34,7 +34,7 @@ Before the application exits gracefully, the following cleanup steps must be per
 
 ## Recommendations for Implementation:
 
-- Implement the Ctrl-C handling logic within the `InteractiveDelegate` class using Textual's key binding or event handling mechanisms.
+- Implement the Ctrl-C handling logic within the `InteractiveUIBase` class using Textual's key binding or event handling mechanisms.
 - Utilize a timer to differentiate between a single and double Ctrl-C press.
-- Add a method to the `InteractiveDelegate` to perform the necessary cleanup steps, including calling a method in `delegate_manager` to restore the original delegate and signaling the `ai_loop` to stop.
+- Add a method to the `InteractiveUIBase` to perform the necessary cleanup steps, including calling a method in `delegate_manager` to restore the original delegate and signaling the `ai_loop` to stop.
 - Ensure that the main application loop in `ai_whisperer/main.py` waits for the Textual application to exit gracefully before terminating.

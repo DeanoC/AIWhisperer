@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
+from ai_whisperer.cli_commands import ListModelsCliCommand
 from ai_whisperer.cli import cli # Import the actual cli function
 
 # Assuming the main CLI entry point is in a module named 'cli'
@@ -82,8 +83,9 @@ def test_interactive_flag_activates_interactive_mode():
                     cli_args=vars(mock_args)
                 )
 
-            # Assert that the cli function returned an empty list of commands
-            assert commands == []
+            # Assert that the cli function returned a list with the first command being a ListModelsCliCommand
+            assert len(commands) > 0
+            assert isinstance(commands[0], ListModelsCliCommand)
             # Optionally, assert something about the config if needed
             assert isinstance(config, dict)
 
@@ -127,7 +129,7 @@ def test_delegate_swapped_in_interactive_mode_main(monkeypatch):
          patch('ai_whisperer.prompt_system.PromptSystem', return_value=mock_prompt_system), \
          patch('ai_whisperer.execution_engine.ExecutionEngine', return_value=mock_engine), \
          patch('ai_whisperer.context_management.ContextManager', return_value=mock_context_manager), \
-         patch('ai_whisperer.main.InteractiveDelegate', return_value=mock_interactive_delegate), \
+         patch('ai_whisperer.main.InteractiveUIBase', return_value=mock_interactive_delegate), \
          patch('ai_whisperer.main.cli') as mock_cli:
 
         # Set up cli to return interactive config

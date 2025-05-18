@@ -40,12 +40,12 @@ The value of the `--monitor` option will be propagated as follows:
     - `argparse` will parse the `--monitor` flag. If present, `parsed_args.monitor` will be `True`; otherwise, it will be `False` (due to `action="store_true"`).
 
 2. **Command Instantiation (`src/ai_whisperer/cli.py`):**
-    - When instantiating `RunCommand`, the value of `parsed_args.monitor` will be passed to its constructor.
+    - When instantiating `RunCliCommand`, the value of `parsed_args.monitor` will be passed to its constructor.
 
     ```python
     # Around line 182 in src/ai_whisperer/cli.py
     elif parsed_args.command == "run":
-        commands = [RunCommand(
+        commands = [RunCliCommand(
             config_path=parsed_args.config,
             plan_file=parsed_args.plan_file,
             state_file=parsed_args.state_file,
@@ -53,12 +53,12 @@ The value of the `--monitor` option will be propagated as follows:
         )]
     ```
 
-3. **`RunCommand` Class (`src/ai_whisperer/commands.py`):**
-    - The `__init__` method of `RunCommand` will be updated to accept and store the `monitor` boolean value.
+3. **`RunCliCommand` Class (`src/ai_whisperer/commands.py`):**
+    - The `__init__` method of `RunCliCommand` will be updated to accept and store the `monitor` boolean value.
 
     ```python
     # Around line 139 in src/ai_whisperer/commands.py
-    class RunCommand(BaseCommand):
+    class RunCliCommand(BaseCliCommand):
         def __init__(self, config_path: str, plan_file: str, state_file: str, monitor: bool = False): # Added monitor parameter
             super().__init__(config_path)
             self.plan_file = plan_file
@@ -67,7 +67,7 @@ The value of the `--monitor` option will be propagated as follows:
     ```
 
 4. **Passing to `PlanRunner` (`src/ai_whisperer/commands.py`):**
-    - In the `execute` method of `RunCommand`, the `self.monitor` value will be passed to the `PlanRunner`. This could be during `PlanRunner` instantiation or when calling a method like `run_plan`. Assuming it's passed during instantiation for now:
+    - In the `execute` method of `RunCliCommand`, the `self.monitor` value will be passed to the `PlanRunner`. This could be during `PlanRunner` instantiation or when calling a method like `run_plan`. Assuming it's passed during instantiation for now:
 
     ```python
     # Around line 156 in src/ai_whisperer/commands.py
@@ -83,7 +83,7 @@ The value of the `--monitor` option will be propagated as follows:
     plan_successful = plan_runner.run_plan(plan_parser=plan_parser, state_file_path=self.state_file, monitor=self.monitor) # New
     ```
 
-    The exact method of passing to `PlanRunner` will depend on its design, but the `RunCommand` will hold the `monitor` flag and be responsible for passing it.
+    The exact method of passing to `PlanRunner` will depend on its design, but the `RunCliCommand` will hold the `monitor` flag and be responsible for passing it.
 
 5. **`PlanRunner` and Execution Engine/AI Loop:**
     - The `PlanRunner` will then receive this `monitor` flag. It will be responsible for using this flag to enable/disable the terminal monitoring functionality, likely by passing it further to the `ExecutionEngine` or `AILoop` where the actual monitoring display logic is implemented or controlled.

@@ -5,9 +5,9 @@ from textual.app import App, ComposeResult
 from textual.widgets import ListView, ListItem, Label
 
 # Import the actual components
-from ai_whisperer.commands import ListModelsCommand
+from ai_whisperer.cli_commands import ListModelsCliCommand
 from ai_whisperer.delegate_manager import DelegateManager
-from monitor.interactive_delegate import InteractiveDelegate
+from monitor.interactive_ui_base import InteractiveUIBase
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.model_info_provider import ModelInfoProvider # Import the actual ModelInfoProvider
@@ -15,6 +15,7 @@ from ai_whisperer.ai_loop import run_ai_loop # Import the actual run_ai_loop
 from ai_whisperer.config import load_config # Import load_config
 from ai_whisperer.state_management import StateManager # Import StateManager
 from ai_whisperer.prompt_system import PromptSystem
+from monitor.interactive_list_models_ui import InteractiveListModelsUI
 from monitor.user_message_delegate import UserMessageLevel # Import PromptSystem
 
 
@@ -67,7 +68,7 @@ async def test_interactive_list_models_and_ask_ai_integration(requests_mock): # 
 
     requests_mock.post("https://openrouter.ai/api/v1/chat/completions", json=chat_completion_callback)
 
-    # Setup DelegateManager and InteractiveDelegate
+    # Setup DelegateManager and InteractiveUIBase
     delegate_manager = DelegateManager()
     # Create mock instances for StateManager and PromptSystem
     mock_state_manager = MagicMock(spec=StateManager)
@@ -77,8 +78,8 @@ async def test_interactive_list_models_and_ask_ai_integration(requests_mock): # 
     engine = ExecutionEngine(mock_state_manager, config, mock_prompt_system, delegate_manager)
     context_manager = ContextManager()
 
-    # Instantiate the actual InteractiveDelegate with config
-    app = InteractiveDelegate(
+    # Instantiate the actual InteractiveListModelsUI with config
+    app = InteractiveListModelsUI(
         delegate_manager=delegate_manager,
         engine=engine,
         context_manager=context_manager,
@@ -86,8 +87,8 @@ async def test_interactive_list_models_and_ask_ai_integration(requests_mock): # 
     )
 
     async with app.run_test() as harness:
-        # Simulate the ListModelsCommand sending data to the delegate
-        list_models_command = ListModelsCommand(config=config, output_csv=None, delegate_manager=delegate_manager, detail_level=config['detail_level'])
+        # Simulate the ListModelsCliCommand sending data to the delegate
+        list_models_command = ListModelsCliCommand(config=config, output_csv=None, delegate_manager=delegate_manager, detail_level=config['detail_level'])
         # Manually call the part of execute that sends data to the delegate
         # In a real scenario, the CLI would call execute, which would then call display_model_list
         app.display_model_list(mock_model_list_data)

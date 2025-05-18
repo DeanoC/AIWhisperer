@@ -8,9 +8,12 @@ from pathlib import Path
 import threading # Import threading
 from typing import Optional
 
+from ai_whisperer.context_management import ContextManager
 from ai_whisperer.delegate_manager import DelegateManager
+from ai_whisperer.execution_engine import ExecutionEngine
+from monitor.interactive_list_models_ui import InteractiveListModelsUI
 from monitor.user_message_delegate import UserMessageLevel # Import Optional
-from monitor.interactive_delegate import InteractiveDelegate # Import InteractiveDelegate
+from monitor.interactive_ui_base import InteractiveUIBase # Import InteractiveUIBase
 from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
 from .state_management import StateManager # Import StateManager
 
@@ -24,18 +27,23 @@ from .plan_parser import ParserPlan
 
 logger = logging.getLogger(__name__)
 
-class BaseCommand(ABC):
+class BaseCliCommand(ABC):
     """Base class for all CLI commands."""
     def __init__(self, config: dict):
         self.config = config
         self.config_path = config.get('config_path') if isinstance(config, dict) else None
 
     @abstractmethod
-    def execute(self):
+    def execute(self) -> int:
         """Executes the command logic."""
         pass
 
-class ListModelsCommand(BaseCommand):
+    @abstractmethod
+    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+        """Sets up the UI for the command if applicable."""
+        pass
+
+class ListModelsCliCommand(BaseCliCommand):
     """Command to list available OpenRouter models."""
     def __init__(self, config: dict, output_csv: str, delegate_manager: DelegateManager, detail_level: UserMessageLevel):
         super().__init__(config)
@@ -62,63 +70,64 @@ class ListModelsCommand(BaseCommand):
                 event_data={"message": f"Successfully wrote model list to CSV: {self.output_csv}", "level": UserMessageLevel.INFO}
             )
 
-        
-        # Check if interactive delegate is available
-        interactive_delegate = self.delegate_manager.get_active_delegate("interactive")
-        if isinstance(interactive_delegate, InteractiveDelegate):
-            logger.debug("Interactive delegate found. Sending model list for interactive display.")
-            # Send the detailed_models list to the interactive delegate
-            interactive_delegate.display_model_list(detailed_models)
+    
+        avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
+        logger.debug(avail_text)
+        self.delegate_manager.invoke_notification(
+            sender=self,
+            event_type="user_message_display",
+            event_data={"message": avail_text, "level": UserMessageLevel.INFO}
+        )
+        # Only print details in DETAIL mode
+        if self.detail_level == UserMessageLevel.DETAIL:
+            for model in detailed_models:
+                model_id = model.get('id', 'N/A')
+                model_text = f"| {model_id}"
+
+                details = [model_text]
+                if 'context_length' in model:
+                    details.append(f"Context Length: {model['context_length']}")
+                if 'supported_parameters' in model:
+                    details.append(f"Supported Parameters: {model['supported_parameters']}")
+                if 'pricing' in model and isinstance(model['pricing'], dict):
+                    pricing_info = model['pricing']
+                    if 'prompt' in pricing_info:
+                        details.append(f"Prompt Pricing: {pricing_info['prompt']}")
+                    if 'completion' in pricing_info:
+                        details.append(f"Completion Pricing: {pricing_info['completion']}")
+                #if 'description' in model:
+                #    details.append(f"Description: {model['description']}")
+
+                detail_text = f"{' | '.join(details)}"
+                logger.debug(detail_text)
+                # Always send details to delegate_manager in DETAIL mode
+                self.delegate_manager.invoke_notification(
+                    sender=self,
+                    event_type="user_message_display",
+                    event_data={"message": detail_text, "level": UserMessageLevel.DETAIL}
+                )
         else:
-            logger.debug("Interactive delegate not found. Displaying model list in console.")
-            avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
-            logger.debug(avail_text)
-            self.delegate_manager.invoke_notification(
-                sender=self,
-                event_type="user_message_display",
-                event_data={"message": avail_text, "level": UserMessageLevel.INFO}
-            )
-            # Only print details in DETAIL mode
-            if self.detail_level == UserMessageLevel.DETAIL:
-                for model in detailed_models:
-                    model_id = model.get('id', 'N/A')
-                    model_text = f"| {model_id}"
-
-                    details = [model_text]
-                    if 'context_length' in model:
-                        details.append(f"Context Length: {model['context_length']}")
-                    if 'supported_parameters' in model:
-                        details.append(f"Supported Parameters: {model['supported_parameters']}")
-                    if 'pricing' in model and isinstance(model['pricing'], dict):
-                        pricing_info = model['pricing']
-                        if 'prompt' in pricing_info:
-                            details.append(f"Prompt Pricing: {pricing_info['prompt']}")
-                        if 'completion' in pricing_info:
-                            details.append(f"Completion Pricing: {pricing_info['completion']}")
-                    #if 'description' in model:
-                    #    details.append(f"Description: {model['description']}")
-
-                    detail_text = f"{' | '.join(details)}"
-                    logger.debug(detail_text)
-                    # Always send details to delegate_manager in DETAIL mode
-                    self.delegate_manager.invoke_notification(
-                        sender=self,
-                        event_type="user_message_display",
-                        event_data={"message": detail_text, "level": UserMessageLevel.DETAIL}
-                    )
-            else:
-                for model in detailed_models:
-                    model_id = model.get('id', 'N/A')
-                    model_text = f"- {model_id}"
-                    logger.debug(model_text)
-                    self.delegate_manager.invoke_notification(
-                        sender=self,
-                        event_type="user_message_display",
-                        event_data={"message": model_text, "level": UserMessageLevel.INFO}
-                    )
+            for model in detailed_models:
+                model_id = model.get('id', 'N/A')
+                model_text = f"- {model_id}"
+                logger.debug(model_text)
+                self.delegate_manager.invoke_notification(
+                    sender=self,
+                    event_type="user_message_display",
+                    event_data={"message": model_text, "level": UserMessageLevel.INFO}
+                )
         return 0
+    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+        logger.debug(f"Type of delegate_manager: {type(delegate_manager)}")
+        return InteractiveListModelsUI(
+            delegate_manager=delegate_manager,
+            engine=engine,
+            context_manager=context_manager,
+            config=config
+        )
 
-class GenerateInitialPlanCommand(BaseCommand):
+
+class GenerateInitialPlanCliCommand(BaseCliCommand):
     """Command to generate initial task YAML or a detailed subtask."""
     def __init__(self, config: dict, output_dir: str, requirements_path: str = None, delegate_manager=None): # Add delegate_manager parameter
         super().__init__(config)
@@ -140,8 +149,15 @@ class GenerateInitialPlanCommand(BaseCommand):
 
         logger.debug(f"[green]Successfully generated task JSON: {result_path}[/green]")
         return 0
+    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+        return InteractiveUIBase(
+            delegate_manager=delegate_manager,
+            engine=engine,
+            context_manager=context_manager,
+            config=config
+        )
 
-class GenerateOverviewPlanCommand(BaseCommand):
+class GenerateOverviewPlanCliCommand(BaseCliCommand):
     """Command to generate the overview plan and subtasks from an initial plan."""
     def __init__(self, config: dict, output_dir: str, initial_plan_path: str, delegate_manager=None): # Add delegate_manager parameter
         super().__init__(config)
@@ -166,8 +182,15 @@ class GenerateOverviewPlanCommand(BaseCommand):
             logger.debug(f"  {i}. {subtask_path}")
 
         return 0
+    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+        return InteractiveUIBase(
+            delegate_manager=delegate_manager,
+            engine=engine,
+            context_manager=context_manager,
+            config=config
+        )
 
-class RefineCommand(BaseCommand):
+class RefineCliCommand(BaseCliCommand):
     """Command to refine a requirements document."""
     def __init__(self, config: dict, input_file: str, iterations: int = 1, prompt_file: str = None, output: str = None, delegate_manager=None): # Add delegate_manager parameter
         super().__init__(config)
@@ -195,8 +218,15 @@ class RefineCommand(BaseCommand):
         #     current_input_file = result
         # logger.debug(f"[green]Successfully refined requirements: {result}[/green]")
         return 0 # Or appropriate exit code
+    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+        return InteractiveUIBase(
+            delegate_manager=delegate_manager,
+            engine=engine,
+            context_manager=context_manager,
+            config=config
+        )
 
-class RunCommand(BaseCommand):
+class RunCliCommand(BaseCliCommand):
     """Command to execute a project plan."""
     def __init__(self, config: dict, plan_file: str, state_file: str, monitor: bool = False, delegate_manager=None): # Add delegate_manager parameter
         # Accept config dict directly for consistency with other commands
@@ -252,7 +282,7 @@ class RunCommand(BaseCommand):
     def execute(self):
         """Executes a project plan."""
         logger.info("Starting AI Whisperer run process...")
-        logger.debug(f"RunCommand initialized with plan_file: {self.plan_file}, state_file: {self.state_file}, monitor: {self.monitor}, delegate_manager: {self.delegate_manager}") # Add logging for RunCommand initialization details
+        logger.debug(f"RunCliCommand initialized with plan_file: {self.plan_file}, state_file: {self.state_file}, monitor: {self.monitor}, delegate_manager: {self.delegate_manager}") # Add logging for RunCliCommand initialization details
         logger.debug("Loading configuration from config dict (no config_path, config passed as dict).")
         logger.debug("Configuration loaded successfully.")
 
@@ -333,8 +363,15 @@ class RunCommand(BaseCommand):
             logger.debug("Finally block finished.")
 
         # Return 0 for success, 1 for failure
-        logger.debug(f"RunCommand execute finished. Thread result: {thread_result[0]}") # Log final result
+        logger.debug(f"RunCliCommand execute finished. Thread result: {thread_result[0]}") # Log final result
         if thread_result[0] is True:
             return 0
         else:
             return 1
+    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+        return InteractiveUIBase(
+            delegate_manager=delegate_manager,
+            engine=engine,
+            context_manager=context_manager,
+            config=config
+        )

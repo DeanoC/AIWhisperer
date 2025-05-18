@@ -8,7 +8,7 @@ This document outlines the analysis for enhancing the `list-models` command with
 
 Currently, when `ai-whisperer list-models` is executed:
 
-* The [`ListModelsCommand`](ai_whisperer/commands.py:37) is invoked.
+* The [`ListModelsCliCommand`](ai_whisperer/commands.py:37) is invoked.
 * It utilizes `ModelInfoProvider` to fetch a list of available models from the configured source (e.g., OpenRouter).
 * The model list is then typically displayed on the console. The level of detail is controlled by the `--detail-level` argument.
 * Output can also be directed to a CSV file using `--output-csv`.
@@ -21,15 +21,15 @@ When the `--interactive` flag is used with `list-models`, the following enhancem
 
 **3.1. Interactive Model Selection:**
 
-* The `ListModelsCommand` will fetch model data as usual.
-* Instead of printing to the console, it will send the model data (e.g., via a new `DelegateManager` event like `display_interactive_model_list`) to the [`InteractiveDelegate`](monitor/interactive_delegate.py) (Textual application).
-* The `InteractiveDelegate` will render this list in a user-friendly, interactive Textual widget (e.g., `DataTable`, `ListView`). This widget should allow users to easily browse, sort (if applicable), and select a model.
-* Upon selection, the `InteractiveDelegate` will capture the chosen model's identifier and potentially other details.
+* The `ListModelsCliCommand` will fetch model data as usual.
+* Instead of printing to the console, it will send the model data (e.g., via a new `DelegateManager` event like `display_interactive_model_list`) to the [`InteractiveUIBase`](monitor/interactive_delegate.py) (Textual application).
+* The `InteractiveUIBase` will render this list in a user-friendly, interactive Textual widget (e.g., `DataTable`, `ListView`). This widget should allow users to easily browse, sort (if applicable), and select a model.
+* Upon selection, the `InteractiveUIBase` will capture the chosen model's identifier and potentially other details.
 
 **3.2. "Ask AI about Model" Feature:**
 
 * After a model is selected in the interactive list, the Textual UI will present a new option to the user, such as a button or a keybinding (e.g., "Get AI Insights" or "Ask AI about this model").
-* If the user chooses this option, the `InteractiveDelegate` will initiate a new interaction sequence:
+* If the user chooses this option, the `InteractiveUIBase` will initiate a new interaction sequence:
   * It will gather the necessary details of the selected model (ID, name, description, etc.).
   * It will formulate an initial prompt (e.g., "Tell me more about the AI model '{model_name}'. What are its typical use cases, strengths, and limitations?").
   * It will then invoke an `ai_loop` session, providing the selected model's details and the initial prompt as context.
@@ -39,10 +39,10 @@ When the `--interactive` flag is used with `list-models`, the following enhancem
 
 * **[`ai_whisperer/cli.py`](ai_whisperer/cli.py):**
   * Parses the `--interactive` flag and the `list-models` command.
-  * Responsible for initializing and launching the Textual-based `InteractiveDelegate` when interactive mode is active.
+  * Responsible for initializing and launching the Textual-based `InteractiveUIBase` when interactive mode is active.
 * **[`ai_whisperer/commands.py`](ai_whisperer/commands.py):**
   * Continues to be responsible for fetching the list of models using `ModelInfoProvider`.
-  * In interactive mode, it will trigger an event via `DelegateManager` to pass the model list to the `InteractiveDelegate`, rather than printing directly.
+  * In interactive mode, it will trigger an event via `DelegateManager` to pass the model list to the `InteractiveUIBase`, rather than printing directly.
 * **[`monitor/interactive_delegate.py`](monitor/interactive_delegate.py) (Textual App):**
   * The central component for the interactive experience.
   * **Model List Handling:** Receives model data, displays it in an interactive widget, and handles user selection.
@@ -50,27 +50,27 @@ When the `--interactive` flag is used with `list-models`, the following enhancem
   * **`ai_loop` Orchestration:** Initiates and manages the `ai_loop` session. This includes sending the initial prompt and model context.
   * **AI Conversation Interface:** Provides Textual widgets (e.g., `TextLog` for conversation history, `Input` for user queries) to display the AI interaction.
 * **[`ai_whisperer/delegate_manager.py`](ai_whisperer/delegate_manager.py):**
-  * Serves as the event bus for `ListModelsCommand` to notify `InteractiveDelegate` about the availability of the model list for interactive display.
+  * Serves as the event bus for `ListModelsCliCommand` to notify `InteractiveUIBase` about the availability of the model list for interactive display.
 * **`ai_whisperer.ai_loop` (Assumed Component/Module):**
   * This is the core logic responsible for communicating with an AI model (e.g., an LLM).
-  * It needs to be invokable by `InteractiveDelegate`.
+  * It needs to be invokable by `InteractiveUIBase`.
   * It will take the context (selected model's information, initial prompt, ongoing conversation) as input.
   * It will handle the actual API calls to the AI and return/stream the AI's responses.
 
 **5. Detailed Interaction Flow for "Ask AI"**
 
 1. User executes `ai-whisperer --config <path> --interactive list-models`.
-2. [`cli.py`](ai_whisperer/cli.py) launches `InteractiveDelegate`.
-3. `ListModelsCommand` fetches models and sends data to `InteractiveDelegate` via `DelegateManager`.
-4. `InteractiveDelegate` displays models in a Textual widget.
+2. [`cli.py`](ai_whisperer/cli.py) launches `InteractiveUIBase`.
+3. `ListModelsCliCommand` fetches models and sends data to `InteractiveUIBase` via `DelegateManager`.
+4. `InteractiveUIBase` displays models in a Textual widget.
 5. User selects a model from the list.
 6. The UI presents an "Ask AI about this model" option for the selected model.
 7. User activates the "Ask AI" option.
-8. `InteractiveDelegate` retrieves details of the selected model.
-9. `InteractiveDelegate` formulates an initial query (e.g., "Provide details about model X").
-10. `InteractiveDelegate` invokes the `ai_loop` mechanism, passing the model details and the initial query.
+8. `InteractiveUIBase` retrieves details of the selected model.
+9. `InteractiveUIBase` formulates an initial query (e.g., "Provide details about model X").
+10. `InteractiveUIBase` invokes the `ai_loop` mechanism, passing the model details and the initial query.
 11. The `ai_loop` processes the query and returns the AI's response.
-12. `InteractiveDelegate` displays the AI's response in a dedicated chat interface within the Textual app.
+12. `InteractiveUIBase` displays the AI's response in a dedicated chat interface within the Textual app.
 13. User can ask follow-up questions about the model, which are relayed through `ai_loop`, and responses are displayed.
 14. User can close the "Ask AI" view and return to the model list or other interactive functionalities.
 
@@ -86,23 +86,23 @@ When the `--interactive` flag is used with `list-models`, the following enhancem
 
 **7. Impact on Existing Code and New Logic Required**
 
-* **`InteractiveDelegate`:** This component will see the most significant changes.
+* **`InteractiveUIBase`:** This component will see the most significant changes.
   * New Textual widgets for model selection.
   * New UI elements for the "Ask AI" action.
   * Logic to interface with the `ai_loop` (initiation, sending data, receiving responses).
   * Textual widgets for displaying the AI conversation.
   * Event handling for user interactions within the "Ask AI" feature.
 * **`ai_loop` Mechanism:** If not already existing, this module needs to be developed or integrated. It must be callable from the Textual environment.
-* **[`ListModelsCommand`](ai_whisperer/commands.py):** Minor changes to dispatch an event with model data in interactive mode instead of direct printing.
-* **[`cli.py`](ai_whisperer/cli.py):** Ensure proper setup and teardown of the `InteractiveDelegate` in interactive mode.
+* **[`ListModelsCliCommand`](ai_whisperer/commands.py):** Minor changes to dispatch an event with model data in interactive mode instead of direct printing.
+* **[`cli.py`](ai_whisperer/cli.py):** Ensure proper setup and teardown of the `InteractiveUIBase` in interactive mode.
 
 **8. Key Considerations and Assumptions**
 
 * **`ai_loop` Integration and Architecture:**
   * **Assumption:** A reusable `ai_loop` module/class exists or will be created, capable of general-purpose AI interaction.
-  * **Invocation:** How `InteractiveDelegate` calls `ai_loop` (e.g., direct function/method call, asynchronous task).
+  * **Invocation:** How `InteractiveUIBase` calls `ai_loop` (e.g., direct function/method call, asynchronous task).
   * **Context Management:** How `ai_loop` receives and uses context about the selected model.
-  * **Response Handling:** How AI responses (potentially streaming) are passed back to `InteractiveDelegate` for display in the Textual UI. This is crucial for a responsive UI.
+  * **Response Handling:** How AI responses (potentially streaming) are passed back to `InteractiveUIBase` for display in the Textual UI. This is crucial for a responsive UI.
   * **Configuration:** The `ai_loop` will likely need its own configuration (e.g., which AI model to use for providing insights, API keys).
 * **User Experience (UX) in Textual:**
   * The "Ask AI" option must be clearly presented post-selection.
@@ -110,7 +110,7 @@ When the `--interactive` flag is used with `list-models`, the following enhancem
   * Consideration for handling long AI responses (e.g., scrollable views).
   * Non-blocking UI: `ai_loop` operations (API calls) should not freeze the Textual UI. Asynchronous programming is essential.
 * **State Management:**
-  * Managing the state of the AI conversation within the `InteractiveDelegate`.
+  * Managing the state of the AI conversation within the `InteractiveUIBase`.
   * Clearing/resetting the conversation when querying about a new model or closing the "Ask AI" view.
 * **Error Handling:**
   * Robust error handling for failures in `ai_loop` (e.g., API errors, network issues).
@@ -120,4 +120,4 @@ When the `--interactive` flag is used with `list-models`, the following enhancem
 
 **9. Conclusion**
 
-Adding an "Ask AI about Model" feature to the interactive `list-models` command significantly enhances its utility by providing users with immediate, contextual information. The primary development effort lies in extending the `InteractiveDelegate` to manage this new interaction flow and in ensuring seamless integration with an `ai_loop` mechanism. Careful consideration of asynchronous operations and user experience within the Textual framework will be key to a successful implementation. This feature aligns well with the goal of making AI Whisperer a more interactive and informative tool.
+Adding an "Ask AI about Model" feature to the interactive `list-models` command significantly enhances its utility by providing users with immediate, contextual information. The primary development effort lies in extending the `InteractiveUIBase` to manage this new interaction flow and in ensuring seamless integration with an `ai_loop` mechanism. Careful consideration of asynchronous operations and user experience within the Textual framework will be key to a successful implementation. This feature aligns well with the goal of making AI Whisperer a more interactive and informative tool.

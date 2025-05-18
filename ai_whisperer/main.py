@@ -1,5 +1,7 @@
 import logging
 
+from monitor.interactive_list_models_ui import InteractiveListModelsUI
+
 # Allow test patching of config by making it a module attribute
 config = None
 import sys
@@ -8,7 +10,7 @@ from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
 from .cli import cli
 from ai_whisperer.delegate_manager import DelegateManager
 from monitor.user_message_delegate import UserMessageAttribs, UserMessageColour, UserMessageLevel
-from monitor.interactive_delegate import InteractiveDelegate
+from monitor.interactive_ui_base import InteractiveUIBase
 from ai_whisperer.execution_engine import ExecutionEngine # Import ExecutionEngine
 from ai_whisperer.context_management import ContextManager # Import ContextManager
 from ai_whisperer.config import load_config # Import load_config
@@ -52,15 +54,24 @@ if __name__ == "__main__":
             prompt_system = PromptSystem(prompt_config=prompt_config)
             engine = ExecutionEngine(state_manager, config, prompt_system, delegate_manager)
             context_manager = ContextManager() # Create a ContextManager instance
-
-            interactive_app = InteractiveDelegate(
-                delegate_manager=delegate_manager,
-                engine=engine,
-                context_manager=context_manager,
-                config=config
-            ) # Instantiate the InteractiveDelegate and pass dependencies
-            # Store the original delegate before setting the interactive one
             delegate_manager.set_shared_state("original_delegate_user_message_display", ansi_handler.display_message)
+
+            # only do the first command setup_ui, as it is expected to be the main interactive app
+            logger.debug("Setting up interactive commands...") 
+
+            if commands is None or len(commands) == 0:
+                raise ValueError("No commands provided for interactive mode.")
+
+            logger.debug(f"First command class: {commands[0].__class__.__name__}")
+            # Only process the first command for interactive mode
+            interactive_app = commands[0].setup_ui(
+                config=config,
+                engine=engine,
+                delegate_manager=delegate_manager,
+                context_manager=context_manager
+            )
+
+            # Store the original delegate before setting the interactive one
             delegate_manager.set_active_delegate("user_message_display", interactive_app.handle_message) # Set the interactive delegate as the active one for the duration of the interactive session
             interactive_app.run() # Run the Textual app. This call is blocking.
 

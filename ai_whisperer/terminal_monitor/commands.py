@@ -7,7 +7,7 @@ from monitor.user_message_delegate import UserMessageLevel
 
 logger = logging.getLogger(__name__)
 
-class BaseCommand(ABC):
+class BaseCliCommand(ABC):
     name: str = ""
     aliases: list[str] = []
     help_text: str = "No help available for this command."
@@ -20,7 +20,7 @@ class BaseCommand(ABC):
     def execute(self, args: list[str]):
         pass
 
-class ExitCommand(BaseCommand):
+class ExitCommand(BaseCliCommand):
     name = "exit"
     aliases = ["quit", "q"]
     help_text = "Exits the AIWhisperer monitor application."
@@ -39,7 +39,7 @@ class ExitCommand(BaseCommand):
 
 from ai_whisperer.state_management import StateManager # Import StateManager
 
-class DebuggerCommand(BaseCommand):
+class DebuggerCommand(BaseCliCommand):
     name = "debugger"
     aliases = ["dbg"]
     help_text = "Activates debug mode, allowing an external debugger to attach."
@@ -64,7 +64,7 @@ class DebuggerCommand(BaseCommand):
             event_data={"message": "Debugger attached.", "level": UserMessageLevel.INFO}
         )
 
-class AskCommand(BaseCommand):
+class AskCommand(BaseCliCommand):
     name = "ask"
     aliases = []
     help_text = "Sends the provided query string to the configured AI model."
@@ -90,7 +90,7 @@ class AskCommand(BaseCommand):
         # print("AI response (mocked): This is a mocked AI response.")
         # In a real scenario, this would call the AI interaction service, potentially using self.state_manager
         # For this subtask, we just removed the prints.
-class HelpCommand(BaseCommand):
+class HelpCommand(BaseCliCommand):
     name = "help"
     aliases = []
     help_text = "Displays help information about available commands."
@@ -134,7 +134,7 @@ class HelpCommand(BaseCommand):
 command_registry = {}
 
 def register_command(command_class):
-    # Only instantiate commands that inherit directly from BaseCommand and don't require extra args
+    # Only instantiate commands that inherit directly from BaseCliCommand and don't require extra args
     # Commands requiring extra args (like monitor_instance) will be instantiated elsewhere (e.g., in TerminalMonitor)
     if command_class == ExitCommand: # Skip instantiation for ExitCommand here
         command_registry[command_class.name] = command_class # Register the class itself

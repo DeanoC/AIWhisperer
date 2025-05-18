@@ -6,7 +6,7 @@ from pathlib import Path
 
 from requests import request
 
-from ai_whisperer.commands import GenerateOverviewPlanCommand
+from ai_whisperer.cli_commands import GenerateOverviewPlanCliCommand
 from ai_whisperer.project_plan_generator import OverviewPlanGenerator
 from ai_whisperer.config import load_config
 
@@ -23,7 +23,7 @@ def reset_path_manager():
     yield
     PathManager._reset_instance()
 
-class TestGenerateOverviewPlanCommand:
+class TestGenerateOverviewPlanCliCommand:
 
     @pytest.fixture
     def mock_config_path(self):
@@ -42,7 +42,7 @@ class TestGenerateOverviewPlanCommand:
         yield tmp_plan_path
         os.unlink(tmp_plan_path) # Clean up the temporary file
 
-    @patch('ai_whisperer.commands.OverviewPlanGenerator')
+    @patch('ai_whisperer.cli_commands.OverviewPlanGenerator')
     def test_generate_overview_plan_success(self, mock_overview_plan_generator, mock_config_path, mock_output_dir, mock_initial_plan_path):
         """Tests successful generation of an overview plan."""
         mock_overview_plan_instance = mock_overview_plan_generator.return_value
@@ -53,7 +53,7 @@ class TestGenerateOverviewPlanCommand:
         }
 
         config = {"mock": "config", "config_path": mock_config_path}
-        command = GenerateOverviewPlanCommand(
+        command = GenerateOverviewPlanCliCommand(
             config=config,
             output_dir=mock_output_dir,
             initial_plan_path=mock_initial_plan_path
@@ -116,7 +116,7 @@ class TestGenerateOverviewPlanCommand:
         config = load_config(config_path)
         config["config_path"] = config_path
 
-        command = GenerateOverviewPlanCommand(
+        command = GenerateOverviewPlanCliCommand(
             config=config,
             output_dir=str(output_dir),
             initial_plan_path=initial_plan_file
