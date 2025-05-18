@@ -1,0 +1,311 @@
+{
+    "natural_language_goal": "Implement basic interactive scaffolding using Textual for real-time AI interaction.",
+    "plan": [
+        {
+            "subtask_id": "95ba9d64-05c6-4fa5-abf3-d432f224c217",
+            "name": "analyze_cli_requirements",
+            "description": "Analyze the requirements for adding a new CLI option to enable interactive mode.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_95ba9d64-05c6-4fa5-abf3-d432f224c217.json",
+            "type": "planning",
+            "depends_on": [],
+            "input_artifacts": [],
+            "output_artifacts": [
+                "docs/interactive_cli_analysis.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "3a264d6d-2907-41f2-9b6d-7f5e7ffd51c4",
+            "name": "test_cli_interactive_option_generation",
+            "description": "Generate tests for the new CLI interactive option.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_3a264d6d-2907-41f2-9b6d-7f5e7ffd51c4.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_cli_requirements"
+            ],
+            "input_artifacts": [
+                "docs/interactive_cli_analysis.md"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_cli_interactive.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "79281490-f90f-4230-b9e3-19c93e18e8e5",
+            "name": "implement_cli_interactive_option",
+            "description": "Implement the new CLI interactive option.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_79281490-f90f-4230-b9e3-19c93e18e8e5.json",
+            "type": "file_edit",
+            "depends_on": [
+                "test_cli_interactive_option_generation"
+            ],
+            "input_artifacts": [
+                "docs/interactive_cli_analysis.md",
+                "tests/unit/test_cli_interactive.py",
+                "ai_whisperer/cli.py"
+            ],
+            "output_artifacts": [
+                "ai_whisperer/cli.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "edc93437-f4db-4865-922f-47f74f45bd67",
+            "name": "analyze_session_duration_requirements",
+            "description": "Analyze how to extend the interactive session duration beyond the AI compute session.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_edc93437-f4db-4865-922f-47f74f45bd67.json",
+            "type": "planning",
+            "depends_on": [
+                "implement_cli_interactive_option"
+            ],
+            "input_artifacts": [],
+            "output_artifacts": [
+                "docs/interactive_session_duration_analysis.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "ec61333b-a375-4618-824d-5179a2aaef60",
+            "name": "test_session_duration_generation",
+            "description": "Generate tests for extending the interactive session duration.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_ec61333b-a375-4618-824d-5179a2aaef60.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_session_duration_requirements"
+            ],
+            "input_artifacts": [
+                "docs/interactive_session_duration_analysis.md"
+            ],
+            "output_artifacts": [
+                "tests/integration/test_interactive_session.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "03eec2b8-e218-479b-95e8-12df6fc5052a",
+            "name": "implement_session_duration_logic",
+            "description": "Implement the logic to extend the interactive session duration.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_03eec2b8-e218-479b-95e8-12df6fc5052a.json",
+            "type": "file_edit",
+            "depends_on": [
+                "test_session_duration_generation"
+            ],
+            "input_artifacts": [
+                "docs/interactive_session_duration_analysis.md",
+                "tests/integration/test_interactive_session.py",
+                "ai_whisperer/main.py",
+                "ai_whisperer/ai_loop.py"
+            ],
+            "output_artifacts": [
+                "ai_whisperer/main.py",
+                "ai_whisperer/ai_loop.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "3c589858-8918-4501-9133-1797afaeed7d",
+            "name": "analyze_textual_framework",
+            "description": "Analyze the requirements for setting up the Textual UI framework.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_3c589858-8918-4501-9133-1797afaeed7d.json",
+            "type": "planning",
+            "depends_on": [
+                "implement_session_duration_logic"
+            ],
+            "input_artifacts": [
+                "project_dev/notes/Final Recommendation_TextualFrameworkforAIConversation.md"
+            ],
+            "output_artifacts": [
+                "docs/textual_setup_analysis.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "f940d243-6748-4eba-b09f-289294341e46",
+            "name": "test_textual_setup_generation",
+            "description": "Generate tests for setting up the Textual UI framework.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_f940d243-6748-4eba-b09f-289294341e46.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_textual_framework"
+            ],
+            "input_artifacts": [
+                "docs/textual_setup_analysis.md"
+            ],
+            "output_artifacts": [
+                "tests/unit/test_textual_setup.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "75ddd0d9-c55e-4fb7-b3fc-08c65dae0036",
+            "name": "implement_textual_setup",
+            "description": "Set up the basic Textual UI framework and replace the delegate.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_75ddd0d9-c55e-4fb7-b3fc-08c65dae0036.json",
+            "type": "file_edit",
+            "depends_on": [
+                "test_textual_setup_generation"
+            ],
+            "input_artifacts": [
+                "docs/textual_setup_analysis.md",
+                "tests/unit/test_textual_setup.py",
+                "ai_whisperer/main.py",
+                "ai_whisperer/delegate_manager.py"
+            ],
+            "output_artifacts": [
+                "ai_whisperer/main.py",
+                "ai_whisperer/delegate_manager.py",
+                "monitor/interactive_delegate.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "dc806608-ea93-49be-a1cb-ba3d0a16fe43",
+            "name": "analyze_list_models_interaction",
+            "description": "Analyze how to add an interactive prompt to the list-models feature.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_dc806608-ea93-49be-a1cb-ba3d0a16fe43.json",
+            "type": "planning",
+            "depends_on": [
+                "implement_textual_setup"
+            ],
+            "input_artifacts": [],
+            "output_artifacts": [
+                "docs/list_models_interaction_analysis.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "c13382fe-40db-456b-83a7-6a6f8f55548e",
+            "name": "test_list_models_interaction_generation",
+            "description": "Generate tests for the interactive list-models prompt.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_c13382fe-40db-456b-83a7-6a6f8f55548e.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_list_models_interaction"
+            ],
+            "input_artifacts": [
+                "docs/list_models_interaction_analysis.md"
+            ],
+            "output_artifacts": [
+                "tests/integration/test_list_models_interactive.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "07c21e53-6139-4144-b444-fd68ec320682",
+            "name": "implement_list_models_interaction",
+            "description": "Implement the interactive prompt for the list-models feature.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_07c21e53-6139-4144-b444-fd68ec320682.json",
+            "type": "file_edit",
+            "depends_on": [
+                "test_list_models_interaction_generation"
+            ],
+            "input_artifacts": [
+                "docs/list_models_interaction_analysis.md",
+                "tests/integration/test_list_models_interactive.py",
+                "ai_whisperer/commands.py",
+                "monitor/interactive_delegate.py",
+                "ai_whisperer/ai_service_interaction.py"
+            ],
+            "output_artifacts": [
+                "ai_whisperer/commands.py",
+                "monitor/interactive_delegate.py",
+                "ai_whisperer/ai_service_interaction.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "5b3d316a-acd7-4512-9435-3e2dbc4c9d80",
+            "name": "analyze_graceful_exit_requirements",
+            "description": "Analyze the requirements for implementing graceful exit for the interactive session.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_5b3d316a-acd7-4512-9435-3e2dbc4c9d80.json",
+            "type": "planning",
+            "depends_on": [
+                "implement_list_models_interaction"
+            ],
+            "input_artifacts": [],
+            "output_artifacts": [
+                "docs/graceful_exit_analysis.md"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "71e0131c-30dc-4f7b-a50e-6e1dcef3321a",
+            "name": "test_graceful_exit_generation",
+            "description": "Generate tests for graceful exit.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_71e0131c-30dc-4f7b-a50e-6e1dcef3321a.json",
+            "type": "test_generation",
+            "depends_on": [
+                "analyze_graceful_exit_requirements"
+            ],
+            "input_artifacts": [
+                "docs/graceful_exit_analysis.md"
+            ],
+            "output_artifacts": [
+                "tests/integration/test_graceful_exit.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "569d3a65-f3ab-4864-bf57-0709ddd46526",
+            "name": "implement_graceful_exit",
+            "description": "Implement graceful exit for the interactive session.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_569d3a65-f3ab-4864-bf57-0709ddd46526.json",
+            "type": "file_edit",
+            "depends_on": [
+                "test_graceful_exit_generation"
+            ],
+            "input_artifacts": [
+                "docs/graceful_exit_analysis.md",
+                "tests/integration/test_graceful_exit.py",
+                "monitor/interactive_delegate.py",
+                "ai_whisperer/main.py"
+            ],
+            "output_artifacts": [
+                "monitor/interactive_delegate.py",
+                "ai_whisperer/main.py"
+            ],
+            "completed": true
+        },
+        {
+            "subtask_id": "89d79afe-ffe7-48a8-a5ef-a3b94f6de4fa",
+            "name": "run_all_tests",
+            "description": "Run all project tests to ensure no regressions were introduced.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_89d79afe-ffe7-48a8-a5ef-a3b94f6de4fa.json",
+            "type": "validation",
+            "depends_on": [
+                "implement_graceful_exit"
+            ],
+            "input_artifacts": [],
+            "output_artifacts": [],
+            "completed": false
+        },
+        {
+            "subtask_id": "742fabbf-17ce-40d3-9d94-3a22b4f9c9c8",
+            "name": "update_documentation",
+            "description": "Update documentation to reflect the new interactive mode and its features.",
+            "file_path": "project_dev/in_dev/add_interactive_scaffolding/subtask_742fabbf-17ce-40d3-9d94-3a22b4f9c9c8.json",
+            "type": "documentation",
+            "depends_on": [
+                "run_all_tests"
+            ],
+            "input_artifacts": [
+                "docs/interactive_cli_analysis.md",
+                "docs/interactive_session_duration_analysis.md",
+                "docs/textual_setup_analysis.md",
+                "docs/list_models_interaction_analysis.md",
+                "docs/graceful_exit_analysis.md"
+            ],
+            "output_artifacts": [
+                "README.md",
+                "docs/index.md"
+            ],
+            "completed": false
+        }
+    ],
+    "task_id": "32fb08e9-d83b-4027-bdc5-ed57c1604243",
+    "input_hashes": {
+        "requirements_md": "79a228c44fcf91e89b2b8e0122a17daddeabe70ac79a232150828d8c3740f4d7",
+        "config_yaml": "c3ec11483dd16c723c26a905ada85e72c74730bf0cea1239f347f03201ecaa5f"
+    }
+}

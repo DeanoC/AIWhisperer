@@ -241,43 +241,51 @@ def _execute_validation(engine, task_definition, task_id, logger) -> tuple[bool,
                 logger.warning(f"Task {task_id}: Could not import or initialize PathManager: {e}")
         for file_path in expected_files:
             resolved_path = file_path
+            input_path_obj = None
+            output_dir_obj = None
             if path_manager is not None:
                 try:
-                    input_path = Path(file_path)
-                    output_dir = Path(path_manager.output_path)
+                    input_path_obj = Path(file_path)
+                    output_dir_obj = Path(path_manager.output_path)
                     # If absolute, use as-is
-                    if input_path.is_absolute():
-                        resolved_path = str(input_path.resolve())
+                    if input_path_obj.is_absolute():
+                        resolved_path = str(input_path_obj.resolve())
                     else:
                         # If the first part of the input path matches the output dir name, strip it
-                        input_parts = input_path.parts
-                        output_dir_name = output_dir.name
+                        input_parts = input_path_obj.parts
+                        output_dir_name = output_dir_obj.name
                         if input_parts and input_parts[0] == output_dir_name:
-                            input_path = Path(*input_parts[1:])
-                        candidate = (output_dir / input_path).resolve()
+                            input_path_obj = Path(*input_parts[1:])
+                        candidate = (output_dir_obj / input_path_obj).resolve()
                         resolved_path = str(candidate)
                 except Exception as e:
                     if logger:
                         logger.warning(f"Task {task_id}: Failed to normalize/resolve path '{file_path}': {e}")
             checked_files.append(file_path)
-            abs_resolved_path = str(Path(resolved_path).resolve())
+            # Only create Path object once for resolved_path
+            resolved_path_obj = Path(resolved_path)
+            abs_resolved_path = str(resolved_path_obj.resolve())
             if logger:
                 logger.info(f"Task {task_id}: Checking file existence: original='{file_path}', resolved='{resolved_path}', abs='{abs_resolved_path}'")
                 logger.info(f"Task {task_id}: Current working directory: '{os.getcwd()}'")
-            if not Path(resolved_path).is_file():
+            # Only append to missing_files if the file is actually missing
+            if not resolved_path_obj.is_file():
                 if logger:
                     logger.warning(f"Task {task_id}: File does not exist: resolved='{resolved_path}' (from '{file_path}'), abs='{abs_resolved_path}'")
                 missing_files.append(file_path)
+        # Only include missing_files that are actually missing
         validation_details["checked_files"] = checked_files
         validation_details["missing_files"] = missing_files
         if missing_files:
             validation_details["overall_status"] = "failed"
             overall_passed = False
-            logger.warning(f"Task {task_id}: Validation failed. Missing files: {missing_files}")
+            if logger:
+                logger.warning(f"Task {task_id}: Validation failed. Missing files: {missing_files}")
         else:
             validation_details["overall_status"] = "passed"
             overall_passed = True
-            logger.info(f"Task {task_id}: Validation passed. All expected files exist.")
+            if logger:
+                logger.info(f"Task {task_id}: Validation passed. All expected files exist.")
     else:
         if logger:
             logger.warning(f"Task {task_id}: No 'expected_output_files' or 'output_artifacts' found or format is incorrect.")

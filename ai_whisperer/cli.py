@@ -61,6 +61,10 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
         help="Set the detail level for output messages (INFO, DETAIL). Defaults to INFO."
     )
 
+    parser.add_argument(
+        "--interactive", action="store_true", help="Enable interactive mode."
+    )
+
     # Add path-related global arguments
     # app_path is determined by the application's location and should not be configurable via CLI
     # parser.add_argument( # Removed --app-path CLI argument
@@ -284,8 +288,24 @@ def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCommand
             ))
         else:
             parser.print_help()
-            # This should not be reached due to required=True in subparsers, but as a fallback
             raise ValueError(f"Unknown command: {parsed_args.command}")
+
+        # --- Activate Interactive Mode if requested ---
+        if getattr(parsed_args, "interactive", False):
+            if logger:
+                logger.debug("Interactive mode requested. Activating...")
+            # Set interactive flag in config so main logic can branch correctly
+            config["interactive"] = True
+            delegate_manager.invoke_notification(
+                sender=None,
+                event_type="user_message_display",
+                event_data={"message": "Interactive mode activated.", "level": UserMessageLevel.INFO}
+            )
+            # In interactive mode, we might not return commands immediately,
+            # or the command execution flow will be different.
+            # For this task, we are only adding the CLI option and activation flag.
+            # The actual interactive loop will be implemented later.
+            return [], config # Return empty commands list for now in interactive mode
 
         return commands, config
 
@@ -323,4 +343,3 @@ def execute_commands_and_capture_output(commands: list[BaseCommand], delegate_ma
     finally:
         sys.stdout = old_stdout
 
-    return redirected_output.getvalue()

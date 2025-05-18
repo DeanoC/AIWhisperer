@@ -10,6 +10,7 @@ from typing import Optional
 
 from ai_whisperer.delegate_manager import DelegateManager
 from monitor.user_message_delegate import UserMessageLevel # Import Optional
+from monitor.interactive_delegate import InteractiveDelegate # Import InteractiveDelegate
 from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
 from .state_management import StateManager # Import StateManager
 
@@ -62,51 +63,59 @@ class ListModelsCommand(BaseCommand):
             )
 
         
-        avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
-        logger.debug(avail_text)
-        self.delegate_manager.invoke_notification(
-            sender=self,
-            event_type="user_message_display",
-            event_data={"message": avail_text, "level": UserMessageLevel.INFO}
-        )
-        # Only print details in DETAIL mode
-        if self.detail_level == UserMessageLevel.DETAIL:
-            for model in detailed_models:
-                model_id = model.get('id', 'N/A')
-                model_text = f"| {model_id}"
-
-                details = [model_text]
-                if 'context_length' in model:
-                    details.append(f"Context Length: {model['context_length']}")
-                if 'supported_parameters' in model:
-                    details.append(f"Supported Parameters: {model['supported_parameters']}")
-                if 'pricing' in model and isinstance(model['pricing'], dict):
-                    pricing_info = model['pricing']
-                    if 'prompt' in pricing_info:
-                        details.append(f"Prompt Pricing: {pricing_info['prompt']}")
-                    if 'completion' in pricing_info:
-                        details.append(f"Completion Pricing: {pricing_info['completion']}")
-                #if 'description' in model:
-                #    details.append(f"Description: {model['description']}")
-
-                detail_text = f"{' | '.join(details)}"
-                logger.debug(detail_text)
-                # Always send details to delegate_manager in DETAIL mode
-                self.delegate_manager.invoke_notification(
-                    sender=self,
-                    event_type="user_message_display",
-                    event_data={"message": detail_text, "level": UserMessageLevel.DETAIL}
-                )
+        # Check if interactive delegate is available
+        interactive_delegate = self.delegate_manager.get_active_delegate("interactive")
+        if isinstance(interactive_delegate, InteractiveDelegate):
+            logger.debug("Interactive delegate found. Sending model list for interactive display.")
+            # Send the detailed_models list to the interactive delegate
+            interactive_delegate.display_model_list(detailed_models)
         else:
-            for model in detailed_models:
-                model_id = model.get('id', 'N/A')
-                model_text = f"- {model_id}"
-                logger.debug(model_text)
-                self.delegate_manager.invoke_notification(
-                    sender=self,
-                    event_type="user_message_display",
-                    event_data={"message": model_text, "level": UserMessageLevel.INFO}
-                )
+            logger.debug("Interactive delegate not found. Displaying model list in console.")
+            avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
+            logger.debug(avail_text)
+            self.delegate_manager.invoke_notification(
+                sender=self,
+                event_type="user_message_display",
+                event_data={"message": avail_text, "level": UserMessageLevel.INFO}
+            )
+            # Only print details in DETAIL mode
+            if self.detail_level == UserMessageLevel.DETAIL:
+                for model in detailed_models:
+                    model_id = model.get('id', 'N/A')
+                    model_text = f"| {model_id}"
+
+                    details = [model_text]
+                    if 'context_length' in model:
+                        details.append(f"Context Length: {model['context_length']}")
+                    if 'supported_parameters' in model:
+                        details.append(f"Supported Parameters: {model['supported_parameters']}")
+                    if 'pricing' in model and isinstance(model['pricing'], dict):
+                        pricing_info = model['pricing']
+                        if 'prompt' in pricing_info:
+                            details.append(f"Prompt Pricing: {pricing_info['prompt']}")
+                        if 'completion' in pricing_info:
+                            details.append(f"Completion Pricing: {pricing_info['completion']}")
+                    #if 'description' in model:
+                    #    details.append(f"Description: {model['description']}")
+
+                    detail_text = f"{' | '.join(details)}"
+                    logger.debug(detail_text)
+                    # Always send details to delegate_manager in DETAIL mode
+                    self.delegate_manager.invoke_notification(
+                        sender=self,
+                        event_type="user_message_display",
+                        event_data={"message": detail_text, "level": UserMessageLevel.DETAIL}
+                    )
+            else:
+                for model in detailed_models:
+                    model_id = model.get('id', 'N/A')
+                    model_text = f"- {model_id}"
+                    logger.debug(model_text)
+                    self.delegate_manager.invoke_notification(
+                        sender=self,
+                        event_type="user_message_display",
+                        event_data={"message": model_text, "level": UserMessageLevel.INFO}
+                    )
         return 0
 
 class GenerateInitialPlanCommand(BaseCommand):
@@ -197,6 +206,9 @@ class RunCommand(BaseCommand):
         self.monitor = monitor
         self.delegate_manager = delegate_manager # Store delegate_manager
         self._ai_runner_shutdown_event = threading.Event() # Event to signal AI Runner thread shutdown
+        # Store the shutdown event in the delegate manager's shared state
+        if self.delegate_manager:
+            self.delegate_manager.set_shared_state("ai_runner_shutdown_event", self._ai_runner_shutdown_event)
         # Store config_path for logging/debugging compatibility
         if isinstance(self.config, dict):
             self.config_path = self.config.get('config_path', None)

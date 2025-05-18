@@ -1,0 +1,49 @@
+{
+  "description": "Set up the basic Textual UI framework and replace the delegate.",
+  "instructions": [
+    "Add 'textual' to the dependencies in `requirements.txt`.",
+    "Create a new Python file `monitor/interactive_delegate.py`.",
+    "In `monitor/interactive_delegate.py`, define a class `InteractiveDelegate` that inherits from the base delegate class (likely found in `ai_whisperer/delegate_manager.py` or a related file). For now, this class can be minimal, perhaps just overriding a method to indicate it's the interactive delegate.",
+    "Modify the `ai_whisperer/main.py` script. Identify the entry point where the application logic for interactive mode will reside. Import necessary Textual components (e.g., `App`). Create a minimal Textual `App` class (e.g., `AIWhispererApp`) and instantiate it when in interactive mode.",
+    "Modify the `ai_whisperer/delegate_manager.py` file. Identify where the default ANSI delegate is initialized. Add logic to check if the application is running in interactive mode (this might involve checking a command-line argument or a configuration setting). If in interactive mode, instantiate the `InteractiveDelegate` and set it as the active delegate.",
+    "In `ai_whisperer/delegate_manager.py`, implement logic to store the original delegate before replacing it with the interactive delegate. Add a method or mechanism to restore the original delegate when the interactive mode is exited (this might require handling signals or application shutdown events).",
+    "Run the unit tests located in `tests/unit/test_textual_setup.py` using `pytest`. Address any failures until all tests pass.",
+    "Review the implementation of `monitor/user_message_delegate.py` and the delegate handling logic in `ai_whisperer/delegate_manager.py` to understand existing patterns and potentially reuse code for delegate management and message handling within the new `InteractiveDelegate`."
+  ],
+  "input_artifacts": [
+    "requirements.txt",
+    "docs/textual_setup_analysis.md",
+    "tests/unit/test_textual_setup.py",
+    "ai_whisperer/main.py",
+    "ai_whisperer/delegate_manager.py",
+    "monitor/user_message_delegate.py"
+  ],
+  "output_artifacts": [
+    "requirements.txt",
+    "ai_whisperer/main.py",
+    "ai_whisperer/delegate_manager.py",
+    "monitor/interactive_delegate.py"
+  ],
+  "constraints": [
+    "The Textual app implementation should be a minimal scaffolding, primarily focused on initialization and running the event loop.",
+    "The default ANSI delegate must be successfully saved before replacement and restored upon exiting interactive mode.",
+    "All tests in tests/unit/test_textual_setup.py must pass after the changes are implemented.",
+    "The `InteractiveDelegate` class must inherit from the appropriate base delegate class."
+  ],
+  "validation_criteria": [
+    "The `textual` library is listed as a dependency in `requirements.txt`.",
+    "A new file `monitor/interactive_delegate.py` is created.",
+    "The `monitor/interactive_delegate.py` file contains a class `InteractiveDelegate` inheriting from a base delegate.",
+    "Running the application in interactive mode (e.g., using a specific CLI flag) successfully initializes and starts a minimal Textual application instance.",
+    "The `ai_whisperer/delegate_manager.py` correctly identifies interactive mode and replaces the default delegate with an instance of `InteractiveDelegate`.",
+    "Upon exiting the interactive mode, the original delegate is successfully restored.",
+    "Executing `pytest tests/unit/test_textual_setup.py` results in all tests passing."
+  ],
+  "type": "file_edit",
+  "name": "implement_textual_setup",
+  "depends_on": [
+    "test_textual_setup_generation"
+  ],
+  "task_id": "32fb08e9-d83b-4027-bdc5-ed57c1604243",
+  "subtask_id": "75ddd0d9-c55e-4fb7-b3fc-08c65dae0036"
+}

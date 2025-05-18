@@ -1,0 +1,42 @@
+{
+  "description": "Implement the new CLI interactive option.",
+  "instructions": [
+    "Open the file `ai_whisperer/cli.py` for editing.",
+    "Locate the argument parsing section, likely using `argparse`.",
+    "Add a new command-line option, for example, `--interactive` or `-i`, that triggers interactive mode.",
+    "Ensure the new option is a boolean flag (store_true) that defaults to False.",
+    "Modify the code to check if this new interactive flag is set after parsing arguments.",
+    "Based on the state of the interactive flag, adjust the program's flow to enter an interactive loop if the flag is True.",
+    "Review the existing CLI logic to understand how arguments are processed and how to integrate the new option without disrupting current behavior.",
+    "Consult the `docs/interactive_cli_analysis.md` document for design details or requirements related to the interactive mode.",
+    "Run the unit tests located in `tests/unit/test_cli_interactive.py` to verify the implementation.",
+    "Debug and fix any test failures until all tests in `tests/unit/test_cli_interactive.py` pass."
+  ],
+  "input_artifacts": [
+    "docs/interactive_cli_analysis.md",
+    "tests/unit/test_cli_interactive.py",
+    "ai_whisperer/cli.py"
+  ],
+  "output_artifacts": [
+    "ai_whisperer/cli.py"
+  ],
+  "constraints": [
+    "The existing non-interactive CLI functionality must remain intact.",
+    "The new interactive option must be implemented using `argparse`.",
+    "The interactive mode must be triggered solely by the presence of the new CLI option.",
+    "All tests in `tests/unit/test_cli_interactive.py` must pass."
+  ],
+  "validation_criteria": [
+    "Running the CLI with the new interactive option starts an interactive session.",
+    "Running the CLI without the new interactive option executes the standard non-interactive flow.",
+    "The internal flag or state variable indicating interactive mode is correctly set when the option is used.",
+    "All tests defined in `tests/unit/test_cli_interactive.py` pass successfully."
+  ],
+  "type": "file_edit",
+  "name": "implement_cli_interactive_option",
+  "depends_on": [
+    "test_cli_interactive_option_generation"
+  ],
+  "task_id": "32fb08e9-d83b-4027-bdc5-ed57c1604243",
+  "subtask_id": "79281490-f90f-4230-b9e3-19c93e18e8e5"
+}

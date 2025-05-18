@@ -1,0 +1,44 @@
+{
+  "description": "Generate tests for the new CLI interactive option.",
+  "instructions": [
+    "Create a new Python file `tests/unit/test_cli_interactive.py`.",
+    "Import necessary modules for testing the CLI, likely from `ai_whisperer.cli` and `pytest`.",
+    "Define test functions within `tests/unit/test_cli_interactive.py`.",
+    "Write a test function to verify that the new interactive CLI option (`--interactive` or similar) is correctly parsed by the CLI argument parser.",
+    "Write a test function to assert that a specific flag or attribute (e.g., `args.interactive`) is set to `True` when the interactive option is provided.",
+    "Write a test function to assert that the interactive flag/attribute is `False` or `None` when the interactive option is not provided.",
+    "Write test functions to ensure that existing CLI options (e.g., `--plan`, `--detail`, `--config`) are still parsed and function as expected when the interactive option is also present.",
+    "Write test functions to ensure that existing CLI options function correctly when the interactive option is absent.",
+    "Ensure that the tests are written to compile and run without errors, but are expected to fail because the actual interactive functionality is not yet implemented. This might involve mocking parts of the CLI execution flow if necessary to isolate the argument parsing logic.",
+    "Add necessary imports and setup/teardown logic (if any) for the test file."
+  ],
+  "input_artifacts": [
+    "docs/interactive_cli_analysis.md",
+    "ai_whisperer/cli.py"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_cli_interactive.py"
+  ],
+  "constraints": [
+    "Tests must cover positive and negative cases for the new option.",
+    "Tests must not rely on external dependencies.",
+    "Tests should focus *only* on the CLI argument parsing and flag setting, not the interactive execution logic itself.",
+    "Tests must be placed in the `tests/unit/` directory.",
+    "Tests must be written in Python using the `pytest` framework."
+  ],
+  "validation_criteria": [
+    "The file `tests/unit/test_cli_interactive.py` exists.",
+    "The file `tests/unit/test_cli_interactive.py` contains test functions (e.g., functions starting with `test_`).",
+    "The tests specifically cover the parsing and setting of the interactive CLI option.",
+    "The tests include checks for the interaction between the new interactive option and existing CLI options.",
+    "Running `pytest tests/unit/test_cli_interactive.py` executes the tests.",
+    "The tests related to the interactive option are expected to fail because the functionality is not implemented, indicating the tests are correctly structured to verify the *future* implementation."
+  ],
+  "type": "test_generation",
+  "name": "test_cli_interactive_option_generation",
+  "depends_on": [
+    "analyze_cli_requirements"
+  ],
+  "task_id": "32fb08e9-d83b-4027-bdc5-ed57c1604243",
+  "subtask_id": "3a264d6d-2907-41f2-9b6d-7f5e7ffd51c4"
+}

@@ -13,21 +13,24 @@ param(
     [Parameter(ValueFromPipelineByPropertyName=$true, Position=0)]
     [string]$OutputCsvPath = $null,
     [Parameter(ValueFromPipelineByPropertyName=$true, Position=1)]
-    [string]$DetailLevel = $null
+    [string]$DetailLevel = $null,
+    [Parameter(ValueFromPipelineByPropertyName=$true, Position=2)]
+    [switch]$Interactive
 )
 
 # Define the path to the configuration file
 $configPath = "d:\Projects\AIWhisperer\config.yaml"
 
-
-
-
-
-
-
+# Build the base command as an array for robust argument handling
 
 # Build the base command as an array for robust argument handling
-$argsList = @("-m", "ai_whisperer.main", "--config", $configPath, "list-models")
+$argsList = @("-m", "ai_whisperer.main", "--config", $configPath)
+if ($Interactive) {
+    $argsList += @("--interactive")
+}
+$argsList += @("list-models")
+
+# If --interactive is set, add it before the command/module
 if ($DetailLevel) {
     $argsList += @("--detail-level", $DetailLevel)
 }

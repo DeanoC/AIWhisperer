@@ -1,0 +1,48 @@
+{
+  "description": "Update documentation to reflect the new interactive mode and its features.",
+  "instructions": [
+    "Open the README.md file.",
+    "Locate the section describing the CLI options.",
+    "Add a clear description of the new `--interactive` or `-i` CLI option, explaining its purpose (entering an interactive session).",
+    "Save the changes to README.md.",
+    "Open the docs/index.md file.",
+    "Create a new top-level section or a sub-section specifically for 'Interactive Mode'.",
+    "Within the 'Interactive Mode' section, provide detailed instructions on how to start an interactive session using the CLI option.",
+    "Explain the basic interaction flow within the interactive mode, specifically mentioning how to use the 'list-models' command.",
+    "Add a sub-section or clear instruction block explaining how users can gracefully exit the interactive session (e.g., using 'exit', 'quit', or Ctrl+C if applicable).",
+    "Ensure the language is clear, concise, and user-friendly.",
+    "Review the updated documentation for accuracy and completeness regarding the interactive mode features implemented."
+  ],
+  "input_artifacts": [
+    "docs/interactive_cli_analysis.md",
+    "docs/interactive_session_duration_analysis.md",
+    "docs/textual_setup_analysis.md",
+    "docs/list_models_interaction_analysis.md",
+    "docs/graceful_exit_analysis.md",
+    "README.md",
+    "docs/index.md"
+  ],
+  "output_artifacts": [
+    "README.md",
+    "docs/index.md"
+  ],
+  "constraints": [
+    "Documentation should be clear and user-friendly.",
+    "All new features implemented in this plan should be documented.",
+    "Updates should be integrated logically into the existing documentation structure."
+  ],
+  "validation_criteria": [
+    "README.md includes information about the interactive mode CLI option.",
+    "docs/index.md contains a dedicated section for 'Interactive Mode'.",
+    "The 'Interactive Mode' section in docs/index.md clearly explains how to start an interactive session.",
+    "The 'Interactive Mode' section in docs/index.md explains how to use the 'list-models' command within the interactive session.",
+    "The documentation clearly explains how to exit the interactive session gracefully."
+  ],
+  "type": "documentation",
+  "name": "update_documentation",
+  "depends_on": [
+    "run_all_tests"
+  ],
+  "task_id": "32fb08e9-d83b-4027-bdc5-ed57c1604243",
+  "subtask_id": "742fabbf-17ce-40d3-9d94-3a22b4f9c9c8"
+}

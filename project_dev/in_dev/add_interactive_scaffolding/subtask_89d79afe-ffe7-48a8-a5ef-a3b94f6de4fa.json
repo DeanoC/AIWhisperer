@@ -1,0 +1,24 @@
+{
+  "description": "Run all project tests to ensure no regressions were introduced.",
+  "instructions": [
+    "Execute the command `pytest` in the terminal from the project root directory.",
+    "Monitor the output of the command to ensure all tests pass."
+  ],
+  "input_artifacts": [],
+  "output_artifacts": [],
+  "constraints": [
+    "All tests must pass.",
+    "The test execution must complete without errors."
+  ],
+  "validation_criteria": [
+    "The output of the `pytest` command indicates '== X passed in Y.ZZs ==' where X is the total number of tests and Y.ZZ is the execution time.",
+    "No test failures or errors are reported in the output."
+  ],
+  "type": "validation",
+  "name": "run_all_tests",
+  "depends_on": [
+    "implement_graceful_exit"
+  ],
+  "task_id": "32fb08e9-d83b-4027-bdc5-ed57c1604243",
+  "subtask_id": "89d79afe-ffe7-48a8-a5ef-a3b94f6de4fa"
+}
