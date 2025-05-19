@@ -58,7 +58,7 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, promp
 
         ## start_session means the ai loop is now running
         ai_loop.start_session(system_prompt="TODO:")
-        ai_loop.send_user_message(user_message=initial_prompt)
+        ai_loop.send_user_message(message=initial_prompt)
         ai_loop.wait_for_idle()
 
         final_ai_result = context_manager.get_history()[-1]

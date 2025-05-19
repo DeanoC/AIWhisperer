@@ -1,23 +1,14 @@
-
-
-# PowerShell script to run the AI Whisperer application with the --list-models command
-#
-# Usage:
-#   .\run_list_models.ps1 [-OutputCsvPath <path>] [-DetailLevel <level>]
-#
-# Example:
-#   .\run_list_models.ps1 -OutputCsvPath models.csv -DetailLevel full
-
-
+# Description: This script runs the AI Whisperer application to list available models.
 param(
     [Parameter(ValueFromPipelineByPropertyName=$true, Position=0)]
     [string]$OutputCsvPath = $null,
     [Parameter(ValueFromPipelineByPropertyName=$true, Position=1)]
     [string]$DetailLevel = $null,
     [Parameter(ValueFromPipelineByPropertyName=$true, Position=2)]
-    [switch]$Interactive
+    [switch]$Interactive,
+    [Parameter(ValueFromPipelineByPropertyName=$true, Position=3)]
+    [switch]$WaitForDebugger
 )
-
 # Define the path to the configuration file
 $configPath = "d:\Projects\AIWhisperer\config.yaml"
 
@@ -27,6 +18,9 @@ $configPath = "d:\Projects\AIWhisperer\config.yaml"
 $argsList = @("-m", "ai_whisperer.main", "--config", $configPath)
 if ($Interactive) {
     $argsList += @("--interactive")
+}
+if ($WaitForDebugger) {
+    $argsList += @("--debug")
 }
 $argsList += @("list-models")
 

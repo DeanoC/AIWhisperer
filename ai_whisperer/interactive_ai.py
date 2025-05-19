@@ -31,14 +31,6 @@ async def ask_ai_about_model_interactive(
     """
     logger.debug(f"Initiating interactive AI conversation about model: {model.get('id')} using new AILoop")
 
-    # Create a dummy task definition and task ID for the AILoop
-    task_id = str(uuid.uuid4())
-    task_definition = {
-        "task_id": task_id,
-        "task_description": f"Ask AI about model: {model.get('id')}",
-        "steps": [] # No specific steps for this interactive task
-    }
-
     # Create AIConfig from the main config
     # Map relevant config values to AIConfig arguments
     ai_loop_config = AIConfig(
@@ -62,25 +54,12 @@ async def ask_ai_about_model_interactive(
         config=ai_loop_config,
         ai_service=ai_service,
         context_manager=context_manager,
-        delegate_manager=delegate_manager,
-        logger=logger # Pass the logger
+        delegate_manager=delegate_manager
     )
 
-    try:
-        # Run the new AILoop
-        # The AILoop.run method likely takes task_definition, task_id, and initial_prompt
-        # Need to confirm the exact signature of AILoop.run
-        # Based on ai_loopy.py, AILoop.run takes task_definition, task_id, initial_prompt
-        final_ai_result = await asyncio.to_thread( # Run in a separate thread
-            ai_loop.run,
-            task_definition=task_definition,
-            task_id=task_id,
-            initial_prompt=prompt,
-        )
-        logger.debug(f"New AILoop finished with result: {final_ai_result}")
+    await ai_loop.start_session("You are an AI assistant that provides information about AI models and OpenRouter services.")
+    await ai_loop.send_user_message(f"Tell me about this model {model.get('id')}")
 
-    finally:
-        # Clear the context manager history after the interactive session
-        context_manager.clear_history()
+    await ai_loop.wait_for_idle()
 
     logger.debug(f"Interactive AI conversation about model {model.get('id')} finished.")

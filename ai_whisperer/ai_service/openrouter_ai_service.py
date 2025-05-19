@@ -153,12 +153,7 @@ class OpenRouterAIService(AIService):
                         status_code=response.status_code,
                         response=response,
                     )
-
-                # Add logging to inspect elements in data["data"]
-                for i, item in enumerate(data["data"]):
-                    logger.debug(f"Element {i} in data['data'] type: {type(item)}")
-                    # logger.debug(f"Element {i} in data['data'] content: {str(item)[:200]}... <truncated>")
-
+                logger.debug(f"OpenRouter API list_models response data length: {len(data['data'])} models found.")
                 return data["data"]
 
             except ValueError as e:

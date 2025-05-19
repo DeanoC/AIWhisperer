@@ -50,7 +50,7 @@ class AILoop:
 
         self.context_manager.clear_history()
         self.context_manager.add_message({"role": "system", "content": system_prompt})
-        await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.session_started")
+        self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.session_started")
 
         self._session_task = asyncio.create_task(self._run_session())
         logger.debug(f"start_session: _session_task created: {self._session_task}")
@@ -108,7 +108,7 @@ class AILoop:
                     try:
                         user_message = self._user_message_queue.get_nowait()
                         self.context_manager.add_message({"role": "user", "content": user_message})
-                        await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
+                        self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
                         processed_queue_item = True
                     except asyncio.QueueEmpty:
                         pass
@@ -120,7 +120,7 @@ class AILoop:
                                 processed_queue_item = True
                             else:
                                 self.context_manager.add_message({"role": "tool", "content": tool_result})
-                                await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
+                                self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
                                 processed_queue_item = True
                         except asyncio.QueueEmpty:
                             pass
@@ -138,14 +138,14 @@ class AILoop:
                         if result_task is user_task:
                             user_message = user_task.result()
                             self.context_manager.add_message({"role": "user", "content": user_message})
-                            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
+                            self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
                         else:
                             tool_result = tool_task.result()
                             if tool_result is None:
                                 pass
                             else:
                                 self.context_manager.add_message({"role": "tool", "content": tool_result})
-                                await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
+                                self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
                     # After processing input, move to AI stream state if not shutting down
                     if not self.shutdown_event.is_set():
                         self._state = SessionState.ASSEMBLE_AI_STREAM
@@ -157,7 +157,7 @@ class AILoop:
                     messages = self.context_manager.get_history()
                     tools_for_model = get_tool_registry().get_all_tool_definitions()
 
-                    ai_response_stream = await self.ai_service.stream_chat_completion(
+                    ai_response_stream = self.ai_service.stream_chat_completion(
                         messages=messages,
                         tools=tools_for_model,
                         **self.config.__dict__
@@ -177,7 +177,7 @@ class AILoop:
                         self._state = SessionState.SHUTDOWN
                     else:
                         self.context_manager.add_message({"role": "tool", "content": tool_result})
-                        await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
+                        self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
                         self._state = SessionState.ASSEMBLE_AI_STREAM
 
                 elif self._state == SessionState.SHUTDOWN:
@@ -191,7 +191,7 @@ class AILoop:
             raise  # Re-raise so cancellation propagates
         except Exception as e:
             logger.exception("AILoop encountered an error:")
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
+            self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
             finish_reason = "error"
         finally:
             logger.debug(f"_run_session: Loop finished. Checking shutdown_event.")
@@ -204,7 +204,7 @@ class AILoop:
                  final_finish_reason = "unknown"
 
             logger.debug(f"AILoop session ended with reason: {final_finish_reason}")
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.session_ended", event_data=final_finish_reason)
+            self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.session_ended", event_data=final_finish_reason)
             self._session_task = None
 
     async def _assemble_ai_stream(self, ai_response_stream):
@@ -222,7 +222,7 @@ class AILoop:
                 logger.debug(f"_run_session: Received chunk: {chunk}")
                 if chunk.delta_content:
                     full_response_content += chunk.delta_content
-                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.ai_chunk_received", event_data=chunk.delta_content)
+                    self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.ai_chunk_received", event_data=chunk.delta_content)
 
                 if chunk.delta_tool_call_part:
                     accumulated_tool_calls_part += chunk.delta_tool_call_part
@@ -262,7 +262,7 @@ class AILoop:
                     pass
 
                 if tool_calls:
-                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.identified", event_data=tool_calls)
+                    self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.identified", event_data=tool_calls)
                     # The loop will continue to the next iteration and wait for the tool result via _tool_result_queue.get()
                 else:
                     logger.debug("_run_session: Finish reason is 'tool_calls' but no tool calls were parsed.")
@@ -306,7 +306,7 @@ class AILoop:
         if self.pause_event.is_set():
             logger.debug("Pausing AILoop session...")
             self.pause_event.clear()
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.status.paused")
+            self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.status.paused")
         else:
             logger.debug("AILoop session is already paused.")
 
@@ -314,7 +314,7 @@ class AILoop:
         if not self.pause_event.is_set():
             logger.debug("Resuming AILoop session...")
             self.pause_event.set()
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.status.resumed")
+            self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.status.resumed")
         else:
             logger.debug("AILoop session is already running.")
 
@@ -356,7 +356,7 @@ class AILoop:
         try:
             user_message = self._user_message_queue.get_nowait()
             self.context_manager.add_message({"role": "user", "content": user_message})
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
+            self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
             processed_queue_item = True
             logger.debug("_run_session: Processed user message from queue.")
         except asyncio.QueueEmpty:
@@ -371,7 +371,7 @@ class AILoop:
                     logger.debug("_run_session: Received None from tool result queue, likely shutting down.")
                 else:
                     self.context_manager.add_message({"role": "tool", "content": tool_result})
-                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
+                    self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
                     processed_queue_item = True
                     logger.debug("_run_session: Processed tool result from queue.")
             except asyncio.QueueEmpty:
@@ -392,7 +392,7 @@ class AILoop:
             if result_task is user_task:
                 user_message = user_task.result()
                 self.context_manager.add_message({"role": "user", "content": user_message})
-                await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
+                self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
                 logger.debug("_run_session: Processed user message from awaited queue.")
             else:
                 tool_result = tool_task.result()
@@ -400,5 +400,5 @@ class AILoop:
                     logger.debug("_run_session: Received None from awaited tool result queue, likely shutting down.")
                 else:
                     self.context_manager.add_message({"role": "tool", "content": tool_result})
-                    await self.delegate_manager.invoke_notification(sender=self,event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
+                    self.delegate_manager.invoke_notification(sender=self,event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
                     logger.debug("_run_session: Processed tool result from awaited queue.")
