@@ -68,18 +68,12 @@ class InteractiveUIBase(App):
 
 
     BINDINGS = [
-        ("d", "toggle_dark", "Toggle dark mode"),
     ]
 
     def compose(self) -> ComposeResult:
         """Compose our UI."""
         yield Header()
         yield Footer()
-
-
-    def action_toggle_dark(self) -> None:
-        """An action to toggle dark mode."""
-        self.dark = not self.dark
 
     def handle_message(self, sender, event_data) -> None:
         """Handle incoming messages as a delegate (sender, event_data)."""

@@ -1,5 +1,17 @@
+from textual.events import MouseMove
+from textual.message import Message  # <-- Ensure Message is imported before use
+# Floating tooltip message
+class ShowTooltipMessage(Message):
+    def __init__(self, tooltip_text: str, x: int, y: int) -> None:
+        super().__init__()
+        self.tooltip_text = tooltip_text
+        self.x = x
+        self.y = y
+
+class HideTooltipMessage(Message):
+    pass
 from typing import Any, Optional
-from textual.widgets import ListView, ListItem, Label, Static, Header, Footer # Added Header, Footer
+from textual.widgets import ListView, ListItem, Label, Static, Header, Footer, Tooltip # Added Header, Footer, Tooltip
 from textual.containers import Container # Import Container
 from textual.message import Message # Import Message
 from textual.reactive import var # Import var
@@ -17,13 +29,40 @@ class ModelListItem(ListItem):
     def __init__(self, model_data):
         super().__init__()
         self.model_data = model_data
-        # Create tooltip content with detailed model information
-        tooltip_text = f"""
-[bold]{model_data.get('name', model_data.get('id', 'N/A'))}[/bold] ([dim]{model_data.get('id', 'N/A')}[/dim])\n[yellow]Description:[/yellow] {model_data.get('description', 'No description').replace('&', '&').replace('<', '<').replace('>', '>').replace('[', '&#91;').replace(']', '&#93;')}\n[yellow]Context Length:[/yellow] {model_data.get('context_length', 'N/A')} tokens\n[yellow]Pricing:[/yellow] {model_data.get('pricing', 'N/A')}
+        # Store tooltip text for use in compose (pricing and context length on same line, only prompt/completion price)
+        pricing = model_data.get('pricing', {})
+        def format_per_million(val):
+            try:
+                # If already a string, try to convert to float
+                if isinstance(val, str):
+                    val = float(val)
+                return f"${val * 1_000_000:,.2f}/M"
+            except Exception:
+                return str(val)
+
+        if isinstance(pricing, dict):
+            prompt_price = pricing.get('prompt', 'N/A')
+            completion_price = pricing.get('completion', 'N/A')
+            prompt_str = format_per_million(prompt_price) if prompt_price != 'N/A' else 'N/A'
+            completion_str = format_per_million(completion_price) if completion_price != 'N/A' else 'N/A'
+            pricing_str = f"Prompt: {prompt_str}, Completion: {completion_str}"
+        else:
+            pricing_str = str(pricing)
+        self._tooltip_text = f"""
+[bold]{model_data.get('name', model_data.get('id', 'N/A'))}[/bold] ([dim]{model_data.get('id', 'N/A')}[/dim])\n[yellow]Context:[/yellow] {model_data.get('context_length', 'N/A')} tokens  [yellow]Pricing:[/yellow] {pricing_str}
         """
-        self.tooltip = tooltip_text
+
     def compose(self):
-        yield Label(self.model_data.get('id', 'N/A'))
+        label = Label(self.model_data.get('id', 'N/A'))
+        yield label
+
+    def on_mouse_move(self, event: MouseMove) -> None:
+        # Send a message to parent to show tooltip at mouse position
+        self.post_message(ShowTooltipMessage(self._tooltip_text, event.screen_x, event.screen_y))
+
+    def on_leave(self, event) -> None:
+        # Send a message to parent to hide tooltip
+        self.post_message(HideTooltipMessage())
 from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.delegate_manager import DelegateManager
@@ -37,6 +76,8 @@ logger = logging.getLogger(__name__)
 
 class InteractiveListModelsUI(InteractiveUIBase):
     CSS_PATH = "interactive_list_models_ui.tcss"
+    THEME_LIGHT = "textual-light"
+    THEME_DARK = "textual-dark"
     """A Textual app for listing models and interacting with them, inheriting from InteractiveUIBase."""
 
     BINDINGS = [
@@ -56,9 +97,23 @@ class InteractiveListModelsUI(InteractiveUIBase):
         self.models = []
         self.selected_model = None
         self._current_ai_message_widget = None # Initialize here as well
+        self.dark = False
+        self.theme = self.THEME_LIGHT
+    def on_mount(self) -> None:
+        super().on_mount()
+        self.set_theme(self.theme)
+        tooltip = self.query_one("#floating_tooltip", Static)
+        tooltip.visible = False
+        tooltip.display = "none"
+        model_provider = ModelInfoProvider(self._config)
+        models = model_provider.list_models()
+        self.display_model_list(models)
 
     def on_mount(self) -> None:
         super().on_mount()
+        tooltip = self.query_one("#floating_tooltip", Static)
+        tooltip.visible = False
+        tooltip.display = "none"
         model_provider = ModelInfoProvider(self._config)
         models = model_provider.list_models()
         self.display_model_list(models)
@@ -68,7 +123,48 @@ class InteractiveListModelsUI(InteractiveUIBase):
         with Container(id="main_content"): # Container for model list and chat window
             yield ListView(id="model_list")
             yield Static(id="chat_window") # Chat window to the right
+        # Floating tooltip (initially hidden)
+        yield Static("", id="floating_tooltip", classes="floating-tooltip")
         yield Footer()  # Yield Footer last
+
+    @on(ShowTooltipMessage)
+    def show_floating_tooltip(self, message: ShowTooltipMessage) -> None:
+        tooltip = self.query_one("#floating_tooltip", Static)
+        tooltip.update(message.tooltip_text)
+        # Get screen size if possible (fallback to 800x600)
+        try:
+            screen_width = self.size.width
+            screen_height = self.size.height
+        except Exception:
+            screen_width = 800
+            screen_height = 600
+        # Tooltip size estimate (max width 50 chars, height 8 lines)
+        tooltip_width = 50 * 8  # 8px per char
+        tooltip_height = 8 * 20 # 20px per line
+        # Default offset
+        left = message.x + 32
+        # If mouse is in lower half, show above; else below
+        if message.y > screen_height // 2:
+            top = max(0, message.y - tooltip_height - 32)
+        else:
+            top = message.y + 32
+        # Flip left if near right edge
+        if left + tooltip_width > screen_width:
+            left = max(0, message.x - tooltip_width - 32)
+        tooltip.styles.left = left
+        tooltip.styles.top = top
+        tooltip.styles.max_width = 400
+        tooltip.styles.max_height = 200
+        tooltip.styles.overflow_y = "auto"
+        tooltip.styles.word_break = "break-word"
+        tooltip.display = "block"
+        tooltip.visible = True
+
+    @on(HideTooltipMessage)
+    def hide_floating_tooltip(self, message: HideTooltipMessage) -> None:
+        tooltip = self.query_one("#floating_tooltip", Static)
+        tooltip.visible = False
+        tooltip.display = "none"
 
     def display_model_list(self, models: list) -> None:
         # Only update the list if the models have actually changed
@@ -83,10 +179,12 @@ class InteractiveListModelsUI(InteractiveUIBase):
     def _write_user_message(self, log_widget, message: str):
         # Add a user message as a Static widget with user-message class
         log_widget.mount(Static(message, classes="user-message"))
+        log_widget.scroll_end(animate=False)
 
     def _write_ai_message(self, log_widget, message: str):
         # Add an AI message as a Static widget with ai-message class
         log_widget.mount(Static(message, classes="ai-message"))
+        log_widget.scroll_end(animate=False)
 
     async def on_list_view_selected(self, event: ListView.Selected) -> None:
         logger.debug(f"on_list_view_selected called. event.list_view.id: {event.list_view.id}")
@@ -135,7 +233,19 @@ class InteractiveListModelsUI(InteractiveUIBase):
 
     async def ask_ai_about_model(self) -> None:
         log_container = self.query_one("#chat_window", Static) # Renamed for clarity
-        # User prompt
+
+        # Show the model's full description before asking the AI
+        if self.selected_model:
+            model_id = self.selected_model.get('id', 'N/A')
+            model_name = self.selected_model.get('name', model_id)
+            model_desc = self.selected_model.get('description', None)
+            if model_desc:
+                desc_message = f"[b]{model_name}[/b] ([dim]{model_id}[/dim])\n{model_desc}"
+            else:
+                desc_message = f"[b]{model_name}[/b] ([dim]{model_id}[/dim])\n(No description available)"
+            self._write_user_message(log_container, desc_message)
+
+        # User prompt for AI
         self._write_user_message(log_container, f"Asking AI about {self.selected_model.get('id')}...")
 
         self._current_ai_message_widget = None # Reset before new AI response stream
@@ -163,7 +273,7 @@ class InteractiveListModelsUI(InteractiveUIBase):
             if not line_part: # Skip empty strings that might result from splitlines
                 continue
 
-            has_newline = '\\n' in line_part
+            has_newline = '\n' in line_part
 
             if self.current_ai_message_widget is None:
                 self.current_ai_message_widget = Static(line_part, classes="ai-message")
@@ -172,6 +282,9 @@ class InteractiveListModelsUI(InteractiveUIBase):
                 # Append to existing Static widget
                 # Static.renderable can be Text or str. Text + str works.
                 self.current_ai_message_widget.update(self.current_ai_message_widget.renderable + line_part)
+
+            # Auto-scroll to bottom after each update
+            log_container.scroll_end(animate=False)
 
             if has_newline:
                 self.current_ai_message_widget = None # This line is complete, next part/chunk starts new Static

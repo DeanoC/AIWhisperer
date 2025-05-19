@@ -1,3 +1,8 @@
+/* Remove all borders from the floating tooltip (Textual CSS) */
+#floating_tooltip.floating-tooltip {
+    border: none;
+    outline: none;
+}
 
 App {
     layout: grid;
