@@ -8,9 +8,11 @@ import csv
 from pathlib import Path
 from typing import Dict, Any
 
+from ai_whisperer.ai_loop.ai_config import AIConfig
+
 from .config import load_config
-from .exceptions import ConfigError, OpenRouterAPIError, ProcessingError
-from .ai_service_interaction import OpenRouterAPI
+from .exceptions import ConfigError, OpenRouterAIServiceError, ProcessingError
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +36,18 @@ class ModelInfoProvider:
         if "openrouter" not in config:
             logger.error("'openrouter' configuration section is missing.")
             raise ConfigError("'openrouter' configuration section is missing.")
+        
+        ai_config = AIConfig(
+            api_key=config["openrouter"].get("api_key", ""),
+            model_id=config["openrouter"].get("model", ""),
+            temperature=config["openrouter"].get("params", {}).get("temperature", 0.7),
+            max_tokens=config["openrouter"].get("params", {}).get("max_tokens", None),
+            site_url=config["openrouter"].get("site_url", "http://AIWhisperer:8000"),
+            app_name=config["openrouter"].get("app_name", "AI Whisperer"),
+        )
 
-        # Initialize the OpenRouterAPI client
-        self.openrouter_client = OpenRouterAPI(config["openrouter"])
+        # Initialize the OpenRouterAIService client
+        self.openrouter_client = OpenRouterAIService(ai_config)
         logger.info("ModelInfoProvider initialized.")
 
     def list_models(self) -> list:
@@ -48,14 +59,14 @@ class ModelInfoProvider:
                   with detailed information.
 
         Raises:
-            OpenRouterAPIError: If the API call fails.
+            OpenRouterAIServiceError: If the API call fails.
         """
         logger.info("Fetching available OpenRouter models...")
         try:
             detailed_models = self.openrouter_client.list_models()
             logger.info(f"Fetched {len(detailed_models)} models from OpenRouter.")
             return detailed_models
-        except OpenRouterAPIError as e:
+        except OpenRouterAIServiceError as e:
             logger.error(f"Error fetching models from OpenRouter API: {e}")
             raise
 
@@ -67,7 +78,7 @@ class ModelInfoProvider:
             output_csv_path: Path to the output CSV file.
 
         Raises:
-            OpenRouterAPIError: If fetching models fails.
+            OpenRouterAIServiceError: If fetching models fails.
             IOError: If there is an error writing the CSV file.
         """
         detailed_models = self.list_models() # Use the internal method to fetch models

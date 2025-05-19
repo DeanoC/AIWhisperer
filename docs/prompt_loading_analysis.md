@@ -44,7 +44,7 @@
 - `_load_prompt_content`: Base loading function with path resolution
 - `_load_default_prompt_content`: Handles default task prompts
 - `TaskPromptsContentOnDemand`: Dictionary-like lazy loader
-- `OpenRouterAPI`: Executes loaded prompts
+- `OpenRouterAIService`: Executes loaded prompts
 
 ### Dependencies
 

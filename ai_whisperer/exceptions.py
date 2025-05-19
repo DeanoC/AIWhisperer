@@ -19,7 +19,7 @@ class ConfigError(AIWhispererError):
 # --- OpenRouter API Errors ---
 
 
-class OpenRouterAPIError(AIWhispererError):
+class OpenRouterAIServiceError(AIWhispererError):
     """Base class for errors during interaction with the OpenRouter API.
 
     Attributes:
@@ -33,13 +33,13 @@ class OpenRouterAPIError(AIWhispererError):
         self.response = response  # Store the response for potential debugging
 
 
-class OpenRouterAuthError(OpenRouterAPIError):
+class OpenRouterAuthError(OpenRouterAIServiceError):
     """Raised for authentication errors (HTTP 401) with the OpenRouter API."""
 
     pass
 
 
-class OpenRouterRateLimitError(OpenRouterAPIError):
+class OpenRouterRateLimitError(OpenRouterAIServiceError):
     """Raised for rate limit errors (HTTP 429) with the OpenRouter API."""
 
     pass

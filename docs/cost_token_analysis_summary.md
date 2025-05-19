@@ -32,22 +32,22 @@ These fields provide the "native" token counts used for billing, which is crucia
 
 The location of the `usage` object depends on whether the API call is streaming or non-streaming:
 
-*   **Non-Streaming Calls** (e.g., via `OpenRouterAPI.call_chat_completion`):
+*   **Non-Streaming Calls** (e.g., via `OpenRouterAIService.call_chat_completion`):
     The `usage` object is located at the root level of the JSON response.
     Example: `response_json.get("usage")`
 
-*   **Streaming Calls** (e.g., via `OpenRouterAPI.stream_chat_completion`):
+*   **Streaming Calls** (e.g., via `OpenRouterAIService.stream_chat_completion`):
     The `usage` object is included in the final data chunk of the Server-Sent Event (SSE) stream. The last event will be distinct from message content chunks and will primarily contain this `usage` data.
 
 ## 4. Proposed Strategy for Capturing and Storing Information in `ai_service_interaction.py`
 
-The following strategy is proposed to integrate the capturing of cost and token information within the `OpenRouterAPI` class in [`src/ai_whisperer/ai_service_interaction.py`](src/ai_whisperer/ai_service_interaction.py:1):
+The following strategy is proposed to integrate the capturing of cost and token information within the `OpenRouterAIService` class in [`src/ai_whisperer/ai_service_interaction.py`](src/ai_whisperer/ai_service_interaction.py:1):
 
 ### 4.1. Modify Request Payloads
 
 *   The `params` dictionary, which is used to construct the API request payload in both `call_chat_completion` and `stream_chat_completion` methods, must be updated to include `{"usage": {"include": True}}`.
 *   This could be achieved by:
-    *   Adding it to the default `self.params` during `OpenRouterAPI` initialization if this data is always required.
+    *   Adding it to the default `self.params` during `OpenRouterAIService` initialization if this data is always required.
     *   Ensuring the calling code passes it within the `params` argument for specific calls.
     *   Modifying the payload construction directly within the methods to always include it.
 
@@ -83,8 +83,8 @@ The following strategy is proposed to integrate the capturing of cost and token 
 
 ### 4.4. Returning and Storing Information
 
-*   The modified `OpenRouterAPI` methods (`call_chat_completion` and the consuming logic for `stream_chat_completion`) will provide the `usage_data` to their callers.
-*   The component responsible for managing the conversation history (e.g., a handler class that uses `OpenRouterAPI`) will then take this `usage_data` and store it alongside the corresponding request and response messages. This aligns with the RFC's requirement to "store it along with the message history."
+*   The modified `OpenRouterAIService` methods (`call_chat_completion` and the consuming logic for `stream_chat_completion`) will provide the `usage_data` to their callers.
+*   The component responsible for managing the conversation history (e.g., a handler class that uses `OpenRouterAIService`) will then take this `usage_data` and store it alongside the corresponding request and response messages. This aligns with the RFC's requirement to "store it along with the message history."
 
 ### 4.5. Error Handling
 

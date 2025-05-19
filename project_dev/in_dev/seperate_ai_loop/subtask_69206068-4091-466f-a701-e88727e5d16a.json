@@ -1,0 +1,36 @@
+{
+  "description": "Validate the integration of the refactored AI loop by running integration tests and manually testing the interactive list-models feature.",
+  "instructions": [
+    "Navigate to the root directory of the project.",
+    "Run the integration tests specifically targeting the refactored AI loop integration. Use a command like `pytest tests/integration/test_refactored_ai_loop_integration.py`.",
+    "Verify that all tests in `tests/integration/test_refactored_ai_loop_integration.py` pass without errors.",
+    "Execute the AIWhisperer CLI command for listing models in interactive mode. The command should be similar to `python ai_whisperer/main.py list-models --interactive`.",
+    "Observe the output of the interactive list-models command. Ensure that it displays the available models correctly.",
+    "Check if any progress indicators or messages are displayed during the model listing process.",
+    "Inspect the logs or debug output if available to confirm that the calls are routed through the newly refactored AI loop (`ai_whisperer/ai_loop.py`).",
+    "Confirm that the execution of the list-models command in interactive mode does not require or utilize the deprecated `ExecutionEngine` or `StateManager` components."
+  ],
+  "input_artifacts": [
+    "ai_whisperer/refactored_ai_loop.py",
+    "ai_whisperer/cli_commands.py",
+    "monitor/interactive_list_models_ui.py",
+    "tests/integration/test_refactored_ai_loop_integration.py"
+  ],
+  "output_artifacts": [],
+  "constraints": [],
+  "validation_criteria": [
+    "All integration tests located in `tests/integration/test_refactored_ai_loop_integration.py` must pass successfully.",
+    "Executing the `list-models --interactive` command via the CLI should correctly display the list of available models.",
+    "The interactive list-models command should execute without errors or unexpected behavior.",
+    "Evidence (e.g., logs, code inspection) must confirm that the refactored AI loop (`ai_whisperer/ai_loop.py`) is handling the logic for the interactive list-models command.",
+    "The interactive list-models command must not show any dependency on or usage of the `ExecutionEngine` or `StateManager` classes."
+  ],
+  "type": "validation",
+  "name": "validate_ai_loop_integration",
+  "depends_on": [
+    "generate_ai_loop_integration_tests",
+    "integrate_ai_loop_with_interactive_list_models"
+  ],
+  "task_id": "fc2d07f3-4317-4ca5-ab37-a9c1e6c766c5",
+  "subtask_id": "69206068-4091-466f-a701-e88727e5d16a"
+}

@@ -2,7 +2,7 @@
 
 The AI Service Interaction Module is a core component of AIWhisperer responsible for facilitating communication with external AI services. Currently, it is primarily designed to interact with the OpenRouter API, enabling AIWhisperer to send prompts and receive responses, including handling streaming outputs.
 
-The main class for this module is the [`OpenRouterAPI`](src/ai_whisperer/ai_service_interaction.py:20) class, located in [`src/ai_whisperer/ai_service_interaction.py`](src/ai_whisperer/ai_service_interaction.py).
+The main class for this module is the [`OpenRouterAIService`](src/ai_whisperer/ai_service_interaction.py:20) class, located in [`src/ai_whisperer/ai_service_interaction.py`](src/ai_whisperer/ai_service_interaction.py).
 
 ## Configuration
 
@@ -43,13 +43,13 @@ openrouter:
 
 ## Programmatic Usage
 
-The `OpenRouterAPI` class provides methods for interacting with the OpenRouter API programmatically.
+The `OpenRouterAIService` class provides methods for interacting with the OpenRouter API programmatically.
 
-To use the `OpenRouterAPI`, you first need to instantiate it, typically after loading your application configuration:
+To use the `OpenRouterAIService`, you first need to instantiate it, typically after loading your application configuration:
 
 ```python
 from ai_whisperer.config import load_config
-from ai_whisperer.ai_service_interaction import OpenRouterAPI
+from ai_whisperer.ai_service_interaction import OpenRouterAIService
 import os
 
 # Ensure OPENROUTER_API_KEY is set in your environment or .env file
@@ -59,9 +59,9 @@ try:
     # Load configuration
     config = load_config("path/to/your/config.yaml")
 
-    # Instantiate the OpenRouterAPI client
+    # Instantiate the OpenRouterAIService client
     # Pass the 'openrouter' section of the config
-    openrouter_client = OpenRouterAPI(config=config.get('openrouter', {}))
+    openrouter_client = OpenRouterAIService(config=config.get('openrouter', {}))
 
     # Now you can use the client methods
 
@@ -301,17 +301,17 @@ The AI Service Interaction Module is designed to raise specific exceptions to in
 
 Common exceptions raised by the module include:
 
-* [`ConfigError`](src/ai_whisperer/exceptions.py:10): Raised when there are issues with the configuration provided to the `OpenRouterAPI` client (e.g., missing required keys).
+* [`ConfigError`](src/ai_whisperer/exceptions.py:10): Raised when there are issues with the configuration provided to the `OpenRouterAIService` client (e.g., missing required keys).
 * [`OpenRouterConnectionError`](src/ai_whisperer/exceptions.py:11): Raised for network-related issues when connecting to the OpenRouter API (e.g., timeouts, connection refused).
 * [`OpenRouterAuthError`](src/ai_whisperer/exceptions.py:9): Raised specifically for authentication failures (HTTP 401 errors) when the API key is invalid.
 * [`OpenRouterRateLimitError`](src/ai_whisperer/exceptions.py:10): Raised when your requests exceed the rate limits imposed by the OpenRouter API (HTTP 429 errors).
-* [`OpenRouterAPIError`](src/ai_whisperer/exceptions.py:8): A general exception for other API-related errors returned by OpenRouter (e.g., invalid parameters, model not found, internal server errors). This can also be raised for errors occurring mid-stream during streaming calls.
+* [`OpenRouterAIServiceError`](src/ai_whisperer/exceptions.py:8): A general exception for other API-related errors returned by OpenRouter (e.g., invalid parameters, model not found, internal server errors). This can also be raised for errors occurring mid-stream during streaming calls.
 
 It is recommended to wrap your API calls in `try...except` blocks to catch these exceptions and handle them appropriately based on your application's needs.
 
 ## Cost and Token Tracking
 
-The `OpenRouterAPI` client now automatically tracks estimated cost and token usage for interactions with OpenRouter models. This provides insights into API consumption.
+The `OpenRouterAIService` client now automatically tracks estimated cost and token usage for interactions with OpenRouter models. This provides insights into API consumption.
 
 ### What is Tracked?
 
@@ -326,12 +326,12 @@ This information is typically extracted from the response headers or body provid
 
 ### How is it Handled?
 
-After each successful API call, the cost and token information for that specific call is stored as attributes within the `OpenRouterAPI` instance. Developers using the library programmatically can access these values directly from the client object after a call completes.
+After each successful API call, the cost and token information for that specific call is stored as attributes within the `OpenRouterAIService` instance. Developers using the library programmatically can access these values directly from the client object after a call completes.
 
 For example:
 
 ```python
-# Assuming openrouter_client is an instantiated OpenRouterAPI object
+# Assuming openrouter_client is an instantiated OpenRouterAIService object
 # and a call has just been made:
 # response = openrouter_client.call_chat_completion(...)
 

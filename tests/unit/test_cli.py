@@ -21,7 +21,6 @@ minimal_config = {
 
 # Import the main function and command classes
 from ai_whisperer.cli import cli
-from ai_whisperer.config import load_config
 from ai_whisperer.path_management import PathManager # Import load_config to mock it
 # Define a fixture to capture stdout/stderr for testing SystemExit messages
 @pytest.fixture

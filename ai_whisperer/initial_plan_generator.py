@@ -10,10 +10,12 @@ import os
 import uuid
 from typing import Dict, Any
 
+from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.delegate_manager import DelegateManager
-from ai_whisperer.exceptions import ConfigError, OpenRouterAPIError, HashMismatchError, ProcessingError, OrchestratorError
+from ai_whisperer.exceptions import ConfigError, OpenRouterAIServiceError, HashMismatchError, ProcessingError, OrchestratorError
 from ai_whisperer.utils import calculate_sha256, build_ascii_directory_tree
-from ai_whisperer.ai_service_interaction import OpenRouterAPI
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.path_management import PathManager
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
 from monitor.user_message_delegate import UserMessageLevel
@@ -64,8 +66,14 @@ class InitialPlanGenerator:
                 "level": UserMessageLevel.DETAIL
             }
         )
-        # Initialize the OpenRouterAPI client with the task-specific model configuration
-        self.openrouter_client = OpenRouterAPI(config=model_config)
+        # Map relevant config values to AIConfig arguments
+        ai_config = AIConfig(
+            api_key=self.config.get('openrouter', {}).get('api_key', ''),
+            model_id=self.config.get('openrouter', {}).get('model', ''),
+            temperature=self.config.get('openrouter', {}).get('params', {}).get('temperature', 0.7), # Assuming temperature is here
+            max_tokens=self.config.get('openrouter', {}).get('params', {}).get('max_tokens', None), # Assuming max_tokens is here
+        )        
+        self.openrouter_client = OpenRouterAIService(ai_config)
 
         logger.info(f"InitialPlanGenerator initialized. Output directory: {self.output_dir}")
 
@@ -165,7 +173,7 @@ class InitialPlanGenerator:
             FileNotFoundError: If the requirements markdown file is not found.
             IOError: If there's an error reading the requirements file or writing the output JSON.
             ConfigError: If configuration is invalid or prompt content is missing.
-            OpenRouterAPIError: If the API call fails.
+            OpenRouterAIServiceError: If the API call fails.
             HashMismatchError: If response hashes don't match calculated hashes.
             jsonschema.ValidationError: If the response JSON fails schema validation.
             OrchestratorError: For other orchestrator-specific issues.
@@ -242,7 +250,7 @@ class InitialPlanGenerator:
                 )
                 logger.info("Received response from OpenRouter API.")
                 # logger.debug(f"API Response content:\n{api_response_content}")
-            except OpenRouterAPIError as e:
+            except OpenRouterAIServiceError as e:
                 logger.error(f"OpenRouter API call failed: {e}")
                 raise
 
@@ -354,7 +362,7 @@ class InitialPlanGenerator:
         except (
             FileNotFoundError,
             ConfigError,
-            OpenRouterAPIError,
+            OpenRouterAIServiceError,
             HashMismatchError,
             ProcessingError,
             OrchestratorError,

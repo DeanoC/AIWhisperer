@@ -10,6 +10,7 @@ import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.delegate_manager import DelegateManager
 
 from .json_validator import validate_against_schema
@@ -21,8 +22,8 @@ from postprocessing.scripted_steps.handle_required_fields import handle_required
 from postprocessing.scripted_steps.add_items_postprocessor import add_items_postprocessor
 
 from .config import load_config
-from .ai_service_interaction import OpenRouterAPI
-from .exceptions import ConfigError, OrchestratorError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
+from .exceptions import ConfigError, OrchestratorError, SubtaskGenerationError, SchemaValidationError, OpenRouterAIServiceError
 from postprocessing.pipeline import ProcessingError
 import ai_whisperer.prompt_system as prompt_system_module # Import PromptSystem
 from ai_whisperer.path_management import PathManager
@@ -52,7 +53,7 @@ class SubtaskGenerator:
             overall_context: The overall context string from the main task plan.
             workspace_context: A string representing relevant workspace context (optional).
             output_dir: Directory where output files will be saved.
-            openrouter_client: (Optional) An existing OpenRouterAPI client instance.
+            openrouter_client: (Optional) An existing OpenRouterAIService client instance.
 
         Raises:
             ConfigError: If configuration loading fails.
@@ -79,11 +80,19 @@ class SubtaskGenerator:
 
             logger.info(f"subtaskgenerator Model: {model_config.get('model')}, Params: {model_config.get('params')}")
 
-            # Use provided OpenRouterAPI client or create a new one
+            # Map relevant config values to AIConfig arguments
+            ai_config = AIConfig(
+                api_key=self.config.get('openrouter', {}).get('api_key', ''),  # Use the OpenRouter API key
+                model_id=self.config.get('openrouter', {}).get('model', ''), # Use the selected model's ID
+                temperature=self.config.get('openrouter', {}).get('params', {}).get('temperature', 0.7), # Assuming temperature is here
+                max_tokens=self.config.get('openrouter', {}).get('params', {}).get('max_tokens', None), # Assuming max_tokens is here
+            )
+            
+            # Use provided OpenRouterAIService client or create a new one
             if openrouter_client is not None:
                 self.openrouter_client = openrouter_client
             else:
-                self.openrouter_client = OpenRouterAPI(config=model_config)
+                self.openrouter_client = OpenRouterAIService(ai_config)
                 self.output_dir = output_dir  # Store the output directory
                 self.overall_context = overall_context
                 self.workspace_context = workspace_context  # Store context
@@ -267,7 +276,7 @@ class SubtaskGenerator:
             logger.info(f"Generated subtask JSON at: {output_path}")
             return (output_path.resolve(), generated_data)
 
-        except OpenRouterAPIError as e:
+        except OpenRouterAIServiceError as e:
             raise SubtaskGenerationError(f"AI interaction failed: {e}") from e
         except ConfigError as e:
             # Config errors during generation (e.g., missing keys accessed later)

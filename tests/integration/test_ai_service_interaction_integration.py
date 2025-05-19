@@ -3,14 +3,16 @@ from unittest.mock import patch, MagicMock
 import json
 from io import BytesIO
 import requests
+from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.ai_service.ai_service import AIStreamChunk
 from ai_whisperer.state_management import StateManager # Import StateManager
 from ai_whisperer.agent_handlers.ai_interaction import handle_ai_interaction # Import the handler
 from ai_whisperer.execution_engine import ExecutionEngine # Import ExecutionEngine (or mock it)
 from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType # Import logging components
 
-from ai_whisperer.ai_service_interaction import OpenRouterAPI, API_URL
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
 from ai_whisperer.exceptions import (
-    OpenRouterAPIError,
+    OpenRouterAIServiceError,
     OpenRouterAuthError,
     OpenRouterRateLimitError,
     OpenRouterConnectionError,
@@ -18,15 +20,15 @@ from ai_whisperer.exceptions import (
 )
 
 # Mock configuration for testing
-MOCK_CONFIG = {
-    "api_key": "test_api_key",
-    "model": "test_model",
-    "params": {"temperature": 0.7},
-    "site_url": "test_site_url",
-    "app_name": "test_app_name",
-    "cache": False,
-    "timeout_seconds": 10,
-}
+MOCK_CONFIG = AIConfig(
+    api_key="test_api_key",
+    model_id="test_model",
+    params={"temperature": 0.7},
+    site_url="test_site_url",
+    app_name="test_app_name",
+    cache=False,
+    timeout_seconds=10,
+)
 
 # Mock response data for streaming
 MOCK_STREAMING_CHUNKS = [
@@ -88,18 +90,18 @@ class MockResponse:
             yield from []  # Yield nothing if no data
 
 
-class TestOpenRouterAPIIntegration:
+class TestOpenRouterAIServiceIntegration:
     @pytest.fixture(autouse=True)
     def clear_tool_registry(self):
         # Ensure ToolRegistry is cleared before each test to avoid cross-test contamination
         from ai_whisperer.tools.tool_registry import ToolRegistry
-        ToolRegistry().reload_tools()
+        ToolRegistry().reset_tools()
 
 
     @pytest.fixture
     def api_client(self):
-        """Fixture to create an OpenRouterAPI instance with mock config."""
-        return OpenRouterAPI(MOCK_CONFIG)
+        """Fixture to create an OpenRouterAIService instance with mock config."""
+        return OpenRouterAIService(MOCK_CONFIG)
 
     @patch("requests.post")
     def test_integration_non_streaming_success(self, mock_post, api_client):
@@ -109,10 +111,8 @@ class TestOpenRouterAPIIntegration:
 
         prompt = "Integration test prompt"
         model = "test_model"
-        params = {"temperature": 0.5}
         response = api_client.call_chat_completion(
             model=model,
-            params=params,
             prompt_text=prompt
         )
 
@@ -124,10 +124,17 @@ class TestOpenRouterAPIIntegration:
                 "HTTP-Referer": "test_site_url",
                 "X-Title": "test_app_name",
             },
-            json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.5},
-            timeout=10,
+            json={
+                "model": model, 
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.7,
+                "max_tokens": None,
+            },
+            timeout=60,
         )
-        # Assert the new OpenRouterAPI return structure
+        # Assert the new OpenRouterAIService return structure
         assert isinstance(response, dict)
         assert "message" in response
         assert response["message"]["role"] == "assistant"
@@ -135,32 +142,32 @@ class TestOpenRouterAPIIntegration:
 
     # The following tests mock the API call and are useful once stream_chat_completion is added
     @patch("requests.post")
-    def test_integration_streaming_success_mocked(self, mock_post, api_client):
+    @pytest.mark.asyncio
+    async def test_integration_streaming_success_mocked(self, mock_post, api_client):
         """Test end-to-end mocked streaming call (will pass once implemented)."""
         mock_response = MockResponse(200, iter_lines_data=MOCK_STREAMING_CHUNKS)
         mock_post.return_value = mock_response
 
         prompt = "Integration streaming test prompt"
-        model = "test_model"
-        params = {"temperature": 0.9}
+        messages = [{"role": "user", "content": prompt}]
 
-        stream_generator = api_client.stream_chat_completion(prompt, model, params)
-        chunks = list(stream_generator)
+        stream_generator = api_client.stream_chat_completion(
+            messages=messages,
+            tools=[]
+        )
+        # Collect yielded chunks
+        chunks = [chunk async for chunk in stream_generator]
+
+        # Debug: print actual chunk contents for inspection
+        print("Actual chunks:", chunks)
+
         expected_chunks = [
-            {
-                "id": "chatcmpl-abc",
-                "choices": [
-                    {
-                        "index": 0,
-                        "delta": {
-                            "role": "assistant",
-                            "content": '{\n  "description": "Mock streaming subtask description",\n  "instructions": "Mock streaming subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-streaming-subtask-789",\n  "task_id": "',
-                        },
-                    }
-                ],
-            },
-            {"id": "chatcmpl-abc", "choices": [{"index": 0, "delta": {"content": 'mock-streaming-task-012"\n}'}}]},
-            {"id": "chatcmpl-abc", "choices": [{"index": 0, "delta": {}}]},
+            AIStreamChunk(
+                delta_content='{\n  "description": "Mock streaming subtask description",\n  "instructions": "Mock streaming subtask instructions",\n  "input_artifacts": [],\n  "output_artifacts": [],\n  "constraints": [],\n  "validation_criteria": [],\n  "subtask_id": "mock-streaming-subtask-789",\n  "task_id": "'
+            ),
+            AIStreamChunk(
+                delta_content='mock-streaming-task-012"\n}'
+            )
         ]
         assert chunks == expected_chunks
 
@@ -181,13 +188,15 @@ class TestOpenRouterAPIIntegration:
                 "X-Title": "test_app_name",
             },
             json={
-                "model": model,
+                "model": "test_model",
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.9,
-                "stream": True,  # Crucial for streaming
+                "temperature": 0.7,
+                "max_tokens": None,  # Assuming no max tokens for streaming
+                "stream": True,
+                "tools": [],
             },
             stream=True,  # Crucial for streaming
-            timeout=10,
+            timeout=60,
         )
 
     @patch("requests.post")
@@ -203,11 +212,23 @@ class TestOpenRouterAPIIntegration:
                 prompt_text="prompt"
             )
 
+    @patch("requests.post")
+    @pytest.mark.asyncio
+    async def test_integration_auth_error_stream(self, mock_post, api_client):
+        """Test integration with mocked authentication error (401) for streaming."""
+        mock_response = MockResponse(401, text="Invalid API Key")
+        mock_post.return_value = mock_response
+
         with pytest.raises(OpenRouterAuthError, match="Authentication failed"):
-            list(api_client.stream_chat_completion("prompt", "model", {}))
+            async for _ in api_client.stream_chat_completion(
+                messages=[{"role": "user", "content": "prompt"}],
+                tools=[]
+            ):
+                pass
 
     @patch("requests.post")
-    def test_integration_network_error(self, mock_post, api_client):
+    @pytest.mark.asyncio
+    async def test_integration_network_error(self, mock_post, api_client):
         """Test integration with mocked network connection error."""
         mock_post.side_effect = requests.exceptions.RequestException("Simulated network unreachable")
 
@@ -222,33 +243,42 @@ class TestOpenRouterAPIIntegration:
             OpenRouterConnectionError,
             match="Network error during OpenRouter API streaming: Simulated network unreachable",
         ):
-            list(api_client.stream_chat_completion("prompt", "model", {}))
+            async for _ in api_client.stream_chat_completion(
+                messages=[{"role": "user", "content": "prompt"}],
+                tools=[]
+            ):
+                pass
 
     @patch("requests.post")
-    def test_integration_service_side_error(self, mock_post, api_client):
+    @pytest.mark.asyncio
+    async def test_integration_service_side_error(self, mock_post, api_client):
         """Test integration with mocked service-side error (500)."""
         mock_response = MockResponse(500, text="Simulated Internal Server Error")
         mock_post.return_value = mock_response
 
-        with pytest.raises(OpenRouterAPIError, match="API request failed"):
+        with pytest.raises(OpenRouterAIServiceError, match="API request failed"):
             api_client.call_chat_completion(
                 model="model",
                 params={},
                 prompt_text="prompt"
             )
 
-        with pytest.raises(OpenRouterAPIError, match="API request failed"):
-            list(api_client.stream_chat_completion("prompt", "model", {}))
+        with pytest.raises(OpenRouterAIServiceError, match="API request failed"):
+            async for _ in api_client.stream_chat_completion(
+                messages=[{"role": "user", "content": "prompt"}],
+                tools=[]
+            ):
+                pass
 
     def test_integration_initialization_with_config(self):
         """Test integration of module initialization with a mock config."""
         # This test doesn't need to mock requests.post, just verifies
-        # that the OpenRouterAPI can be instantiated with a config dict.
+        # that the OpenRouterAIService can be instantiated with a config dict.
         try:
-            api = OpenRouterAPI(MOCK_CONFIG)
-            assert isinstance(api, OpenRouterAPI)
-            assert api.api_key == MOCK_CONFIG["api_key"]
-            assert api.model == MOCK_CONFIG["model"]
+            api = OpenRouterAIService(MOCK_CONFIG)
+            assert isinstance(api, OpenRouterAIService)
+            assert api.api_key == MOCK_CONFIG.api_key
+            assert api.model == MOCK_CONFIG.model_id
         except Exception as e:
             pytest.fail(f"Initialization with mock config failed: {e}")
 
@@ -265,12 +295,12 @@ class TestOpenRouterAPIIntegration:
         # Mock the ExecutionEngine instance and its attributes
         mock_engine = mock_execution_engine_class.return_value
         mock_engine.state_manager = mock_state_management
-        mock_engine.config = MOCK_CONFIG.copy() # Use a copy of the existing mock config
+        mock_engine.config = {}
         mock_engine.config['logger'] = MagicMock() # Add a mock logger to the config
         mock_engine.config['global_runner_default_prompt_content'] = "This is a mock default prompt." # Add a mock default prompt
         mock_engine.monitor = MagicMock() # Mock the monitor
 
-        mock_engine.openrouter_api = MagicMock() # Mock the OpenRouterAPI instance
+        mock_engine.openrouter_api = MagicMock() # Mock the OpenRouterAIService instance
         # Ensure shutdown_event.is_set() returns False
         mock_engine.shutdown_event = MagicMock(is_set=MagicMock(return_value=False))
 
@@ -324,4 +354,5 @@ class TestOpenRouterAPIIntegration:
         assert "usage_info" in assistant_turn_call
         assert assistant_turn_call["usage_info"]["prompt_tokens"] == 50
         assert assistant_turn_call["usage_info"]["completion_tokens"] == 75
+        assert assistant_turn_call["usage_info"]["total_tokens"] == 125
         assert assistant_turn_call["usage_info"]["total_tokens"] == 125

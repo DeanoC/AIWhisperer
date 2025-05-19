@@ -11,11 +11,12 @@ from monitor.user_message_delegate import UserMessageLevel
 
 # Import necessary components from the application
 from .config import load_config
-from .exceptions import AIWhispererError, ConfigError, OpenRouterAPIError, SubtaskGenerationError, SchemaValidationError
-from .cli_commands import ListModelsCliCommand, GenerateInitialPlanCliCommand, GenerateOverviewPlanCliCommand, RefineCliCommand, RunCliCommand, BaseCliCommand # Import command classes
-from . import logging_custom # Import module directly
+from .exceptions import AIWhispererError, ConfigError, OpenRouterAIServiceError, SubtaskGenerationError, SchemaValidationError
+from .cli_commands import ListModelsCliCommand, GenerateInitialPlanCliCommand, GenerateOverviewPlanCliCommand, RefineCliCommand, RunCliCommand, BaseCliCommand
+from . import logging_custom
 from ai_whisperer.path_management import PathManager
-from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManager
+from ai_whisperer.delegate_manager import DelegateManager
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 
 logger = None # Will be initialized in main after logging is configured
 delegate_manager = None # Will be initialized in main after logging is configured

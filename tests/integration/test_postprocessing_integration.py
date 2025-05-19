@@ -52,7 +52,7 @@ def tmp_path_with_cleanup(request, tmp_path):
 class TestSubtaskGeneratorPostprocessingIntegration:
     """Test the integration of the add_items_postprocessor with the SubtaskGenerator."""
 
-    @patch("ai_whisperer.ai_service_interaction.OpenRouterAPI")
+    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService")
     @patch("ai_whisperer.subtask_generator.uuid.uuid4")
     @patch("postprocessing.pipeline.PostprocessingPipeline.process")
     def test_subtask_generator_adds_subtask_id(self, mock_process, mock_uuid4, mock_api, tmp_path_with_cleanup):
@@ -87,7 +87,7 @@ class TestSubtaskGeneratorPostprocessingIntegration:
         mock_process.return_value = (json_dict, {"success": True, "steps": {}, "logs": []})
 
         # Ensure the mock is used instead of making real API calls
-        with patch("ai_whisperer.ai_service_interaction.OpenRouterAPI", return_value=mock_api_instance):
+        with patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", return_value=mock_api_instance):
             # Create a raw test config with the new structure
             raw_test_config = {
                 "openrouter": {"api_key": "test-key", "model": "test-model", "params": {}},

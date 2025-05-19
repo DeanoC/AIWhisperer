@@ -95,7 +95,7 @@ By embedding the `usage_info` object and the `timestamp` directly within the AI 
 
 *   **`StateManager` Class:** The core logic of the `StateManager` class, particularly the [`save_state()`](src/ai_whisperer/state_management.py:5) and [`load_state()`](src/ai_whisperer/state_management.py:28) methods, will not require modification. These methods handle generic dictionary serialization and deserialization.
 *   **[`store_conversation_turn()`](src/ai_whisperer/state_management.py:234) Method:** The signature of this method will remain unchanged. It expects a dictionary representing the message turn. The calling code will now be responsible for constructing this dictionary with the new `usage_info` (for AI turns) and `timestamp` (for all turns) fields before passing it to [`store_conversation_turn()`](src/ai_whisperer/state_management.py:234).
-*   **Data Construction Responsibility:** The component responsible for interacting with the AI service (e.g., a class wrapping `OpenRouterAPI` or an agent handler like `AIInteractionHandler`) will be responsible for:
+*   **Data Construction Responsibility:** The component responsible for interacting with the AI service (e.g., a class wrapping `OpenRouterAIService` or an agent handler like `AIInteractionHandler`) will be responsible for:
     1.  Obtaining the `usage` object from the API response.
     2.  Generating the `timestamp`.
     3.  Constructing the complete message turn dictionary, including the `role`, `content`, `timestamp`, and, for AI responses, the `usage_info` object.

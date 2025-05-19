@@ -312,7 +312,7 @@ sequenceDiagram
                 * Store the assistant message (with `content`) via `engine.state_manager.store_conversation_turn`.
                 * Append the assistant message to the local `conversation_history`.
                 * Break the loop. Return the final content string and the complete `conversation_history`.
-            * **Handle API Errors:** Catch exceptions from `call_chat_completion` (`OpenRouterAPIError`, etc.) and raise `TaskExecutionError`.
+            * **Handle API Errors:** Catch exceptions from `call_chat_completion` (`OpenRouterAIServiceError`, etc.) and raise `TaskExecutionError`.
             * **Handle Tool Errors:** Catch exceptions during tool execution, log them, potentially format an error message to send back to the AI in the next turn, or raise `TaskExecutionError` immediately depending on severity.
 5. **Test Execution / Validation (`_execute_validation`):**
     * Check `task_definition['validation_criteria']`.
@@ -373,7 +373,7 @@ The handler must gracefully handle potential errors:
 
 * **Configuration Errors:** Handled during `ExecutionEngine` initialization.
 * **Artifact Reading Errors:** Logged as warnings by `_gather_context`, allowing the process to continue if possible.
-* **AI Service Errors:** `OpenRouterAPIError`, `OpenRouterAuthError`, `OpenRouterRateLimitError`, `OpenRouterConnectionError` caught during `call_chat_completion` in the loop; raise `TaskExecutionError`.
+* **AI Service Errors:** `OpenRouterAIServiceError`, `OpenRouterAuthError`, `OpenRouterRateLimitError`, `OpenRouterConnectionError` caught during `call_chat_completion` in the loop; raise `TaskExecutionError`.
 * **Tool Execution Errors:** Errors during `tool_instance.execute()` (including `execute_command` for tests) should be caught. Log the error. Depending on the tool and error, either raise `TaskExecutionError` immediately or potentially format an error message to feed back to the AI. Test command failures specifically result in a `failed` validation status and `TaskExecutionError`.
 * **JSON Parsing Errors:** Handle errors when parsing tool arguments or potentially structured AI responses. Raise `TaskExecutionError`.
 * **Unexpected Errors:** A general `except Exception` block should catch unforeseen issues, log them critically, and raise `TaskExecutionError`.

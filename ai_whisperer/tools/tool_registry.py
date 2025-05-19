@@ -39,6 +39,11 @@ class ToolRegistry:
         self._registered_tools[tool.name] = tool
         logger.info(f"Tool '{tool.name}' registered successfully.")
 
+    def reset_tools(self):
+        """Clears all registered tools."""
+        self._registered_tools.clear()
+        logger.info("All registered tools have been cleared.")
+
     def get_tool_by_name(self, name: str) -> Optional[AITool]:
         """Retrieves a specific tool by its unique name."""
         return self._registered_tools.get(name)
@@ -95,12 +100,6 @@ class ToolRegistry:
             if match:
                 filtered_list.append(tool)
         return filtered_list
-
-    def reload_tools(self):
-        """Clears existing tools and re-runs the discovery and registration process."""
-        self._registered_tools.clear()
-        # Tool discovery/loading will be implemented later
-        # self._load_tools()
 
 # Provide a convenient way to access the singleton instance
 def get_tool_registry() -> ToolRegistry:

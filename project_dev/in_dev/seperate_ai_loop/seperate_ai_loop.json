@@ -1,0 +1,251 @@
+{
+  "natural_language_goal": "Refactor the AI loop to be a standalone component, decouple it from ExecutionEngine and StateManager, support interactive sessions with streaming, and make it general purpose.",
+  "plan": [
+    {
+      "name": "analyze_current_ai_loop",
+      "description": "Analyze the current ai_loop.py to understand its dependencies on ExecutionEngine and StateManager and identify areas for refactoring.",
+      "depends_on": [],
+      "type": "analysis",
+      "input_artifacts": [
+        "ai_whisperer/ai_loop.py",
+        "ai_whisperer/execution_engine.py",
+        "ai_whisperer/state_management.py"
+      ],
+      "output_artifacts": [
+        "docs/ai_loop_refactor_analysis.md"
+      ],
+      "instructions": [
+        "Read and understand the code in ai_loop.py.",
+        "Identify all points where ai_loop.py directly interacts with or depends on ExecutionEngine and StateManager.",
+        "Document these dependencies and propose initial ideas for decoupling in docs/ai_loop_refactor_analysis.md."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "docs/ai_loop_refactor_analysis.md exists.",
+        "docs/ai_loop_refactor_analysis.md accurately lists dependencies.",
+        "docs/ai_loop_refactor_analysis.md suggests potential decoupling strategies."
+      ],
+      "subtask_id": "a332a074-2c23-4fc0-84a3-612c37be800f"
+    },
+    {
+      "name": "design_refactored_ai_loop",
+      "description": "Design the structure and interface for the refactored standalone AI loop component, considering the requirements for interactivity, streaming, and generality.",
+      "depends_on": [
+        "analyze_current_ai_loop"
+      ],
+      "type": "planning",
+      "input_artifacts": [
+        "docs/ai_loop_refactor_analysis.md"
+      ],
+      "output_artifacts": [
+        "docs/refactored_ai_loop_design.md"
+      ],
+      "instructions": [
+        "Based on the analysis, design a new class or module structure for the AI loop.",
+        "Define clear interfaces for interaction, minimizing dependencies on external components like ExecutionEngine and StateManager.",
+        "Include provisions for handling interactive sessions and streaming AI responses.",
+        "Consider how the loop can be made general purpose, potentially using a pluggable architecture for handling different types of AI tasks.",
+        "Document the design in docs/refactored_ai_loop_design.md."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "docs/refactored_ai_loop_design.md exists.",
+        "The design addresses decoupling from ExecutionEngine and StateManager.",
+        "The design includes mechanisms for interactive sessions and streaming.",
+        "The design outlines how the loop can be general purpose.",
+        "The interfaces are clearly defined."
+      ],
+      "subtask_id": "f1c611e5-34dd-4390-9e12-d9779a58bb11"
+    },
+    {
+      "name": "generate_ai_loop_unit_tests",
+      "description": "Generate unit tests for the refactored AI loop component based on the design document.",
+      "depends_on": [
+        "design_refactored_ai_loop"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "docs/refactored_ai_loop_design.md"
+      ],
+      "output_artifacts": [
+        "tests/unit/test_refactored_ai_loop.py"
+      ],
+      "instructions": [
+        "Create a new test file tests/unit/test_refactored_ai_loop.py.",
+        "Write unit tests that verify the core functionality of the refactored AI loop as defined in the design.",
+        "Focus on testing the new interfaces, handling of inputs/outputs, and the logic flow.",
+        "Include tests for interactive session handling and mocked streaming scenarios.",
+        "Ensure tests cover the decoupling from ExecutionEngine and StateManager by using mocks or stubs.",
+        "Run the tests; they should fail initially."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "tests/unit/test_refactored_ai_loop.py exists.",
+        "The test file contains multiple test cases.",
+        "Tests cover the main functionalities and interfaces described in the design.",
+        "Tests use mocks or stubs for dependencies.",
+        "Tests fail initially before implementation."
+      ],
+      "subtask_id": "409408b9-66f1-43fb-829f-3fcc3e930eb3"
+    },
+    {
+      "name": "implement_refactored_ai_loop",
+      "description": "Implement the refactored AI loop component based on the design and passing the generated unit tests.",
+      "depends_on": [
+        "generate_ai_loop_unit_tests"
+      ],
+      "type": "code_generation",
+      "input_artifacts": [
+        "docs/refactored_ai_loop_design.md",
+        "tests/unit/test_refactored_ai_loop.py"
+      ],
+      "output_artifacts": [
+        "ai_whisperer/refactored_ai_loop.py"
+      ],
+      "instructions": [
+        "Create a new file ai_whisperer/refactored_ai_loop.py or modify ai_whisperer/ai_loop.py based on the design.",
+        "Implement the core logic of the AI loop.",
+        "Ensure it adheres to the defined interfaces and minimizes dependencies on ExecutionEngine and StateManager.",
+        "Implement support for interactive sessions and streaming API calls, potentially using delegate calls for progress updates.",
+        "Write code iteratively, running the unit tests (from test_refactored_ai_loop.py) frequently to ensure they pass.",
+        "Do NOT copy code from existing ExecutionEngine or StateManager if it violates the decoupling principle; reimplement necessary logic or use dependency injection."
+      ],
+      "constraints": [
+        "The implementation must pass all tests in tests/unit/test_refactored_ai_loop.py.",
+        "The component must be usable without direct instantiation of ExecutionEngine or StateManager."
+      ],
+      "validation_criteria": [
+        "ai_whisperer/refactored_ai_loop.py exists and contains the implemented logic.",
+        "All unit tests in tests/unit/test_refactored_ai_loop.py pass successfully."
+      ],
+      "subtask_id": "6ebe020f-e66f-4dc2-88a3-eae52439dcde"
+    },
+    {
+      "name": "integrate_ai_loop_with_interactive_list_models",
+      "description": "Integrate the refactored AI loop into the interactive list-models functionality.",
+      "depends_on": [
+        "implement_refactored_ai_loop"
+      ],
+      "type": "file_edit",
+      "input_artifacts": [
+        "ai_whisperer/refactored_ai_loop.py",
+        "ai_whisperer/cli_commands.py",
+        "monitor/interactive_list_models_ui.py"
+      ],
+      "output_artifacts": [
+        "ai_whisperer/cli_commands.py",
+        "monitor/interactive_list_models_ui.py"
+      ],
+      "instructions": [
+        "Modify ai_whisperer/cli_commands.py to use the new refactored AI loop for the list-models command.",
+        "Adapt monitor/interactive_list_models_ui.py (or relevant interactive UI components) to work with the refactored loop's interactive and streaming capabilities.",
+        "Ensure delegate calls are used to provide updates to the user during the interactive list-models process.",
+        "Verify that the list-models command now functions correctly using the refactored loop."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "The list-models command runs successfully.",
+        "The interactive UI receives updates via delegate calls.",
+        "The list-models command uses the refactored AI loop component."
+      ],
+      "subtask_id": "7c44e6fe-cf37-46bb-8ab1-f6ef63a382db"
+    },
+    {
+      "name": "generate_ai_loop_integration_tests",
+      "description": "Generate integration tests to verify the refactored AI loop's interaction with other components, especially in interactive and streaming scenarios.",
+      "depends_on": [
+        "integrate_ai_loop_with_interactive_list_models"
+      ],
+      "type": "test_generation",
+      "input_artifacts": [
+        "ai_whisperer/refactored_ai_loop.py",
+        "ai_whisperer/cli_commands.py",
+        "monitor/interactive_list_models_ui.py"
+      ],
+      "output_artifacts": [
+        "tests/integration/test_refactored_ai_loop_integration.py"
+      ],
+      "instructions": [
+        "Create a new integration test file tests/integration/test_refactored_ai_loop_integration.py.",
+        "Write tests that simulate interactive sessions using the refactored AI loop.",
+        "Verify that streaming responses are handled correctly.",
+        "Test the integration with the list-models command and the interactive UI.",
+        "Ensure tests confirm the loop operates without requiring ExecutionEngine or StateManager.",
+        "Run the tests; they should fail initially."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "tests/integration/test_refactored_ai_loop_integration.py exists.",
+        "The test file contains integration test cases.",
+        "Tests cover interactive sessions and streaming.",
+        "Tests verify integration with the list-models command.",
+        "Tests fail initially before validation implementation."
+      ],
+      "subtask_id": "62c9c4f2-b40d-4680-8e48-747829cbb558"
+    },
+    {
+      "name": "validate_ai_loop_integration",
+      "description": "Validate the integration of the refactored AI loop by running integration tests and manually testing the interactive list-models feature.",
+      "depends_on": [
+        "generate_ai_loop_integration_tests",
+        "integrate_ai_loop_with_interactive_list_models"
+      ],
+      "type": "validation",
+      "input_artifacts": [
+        "ai_whisperer/refactored_ai_loop.py",
+        "ai_whisperer/cli_commands.py",
+        "monitor/interactive_list_models_ui.py",
+        "tests/integration/test_refactored_ai_loop_integration.py"
+      ],
+      "output_artifacts": [],
+      "instructions": [
+        "Run the integration tests in tests/integration/test_refactored_ai_loop_integration.py.",
+        "Manually test the interactive list-models command from the CLI.",
+        "Verify that the command executes successfully, displays models, and shows progress if applicable.",
+        "Confirm that the refactored AI loop is being used and the deprecated dependencies are not required."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "All integration tests in tests/integration/test_refactored_ai_loop_integration.py pass.",
+        "The interactive list-models command functions correctly via the CLI.",
+        "The refactored AI loop is confirmed to be used for the list-models command.",
+        "The refactored loop does not depend on ExecutionEngine or StateManager for this use case."
+      ],
+      "subtask_id": "69206068-4091-466f-a701-e88727e5d16a"
+    },
+    {
+      "name": "update_documentation",
+      "description": "Update documentation to reflect the refactored AI loop, its new interface, and how to use it.",
+      "depends_on": [
+        "validate_ai_loop_integration"
+      ],
+      "type": "documentation",
+      "input_artifacts": [
+        "docs/refactored_ai_loop_design.md",
+        "ai_whisperer/refactored_ai_loop.py"
+      ],
+      "output_artifacts": [
+        "docs/ai_loop.md"
+      ],
+      "instructions": [
+        "Update or create a new documentation file (e.g., docs/ai_loop.md) describing the refactored AI loop.",
+        "Explain its purpose, how it has been decoupled, and its new public interface.",
+        "Provide examples of how to use the standalone loop for different purposes.",
+        "Mention the support for interactive sessions and streaming."
+      ],
+      "constraints": [],
+      "validation_criteria": [
+        "docs/ai_loop.md exists and is updated.",
+        "The documentation accurately reflects the refactored architecture.",
+        "Usage examples are provided.",
+        "The documentation covers interactive and streaming features."
+      ],
+      "subtask_id": "ae260833-cba3-4b2b-8283-1acc49ddef31"
+    }
+  ],
+  "task_id": "fc2d07f3-4317-4ca5-ab37-a9c1e6c766c5",
+  "input_hashes": {
+    "requirements_md": "6cd9b8f2ac1f5ef67366dfa1e982bc6326ef7d7fbc8e43d8f27d4f320e89570c",
+    "config_yaml": "c3ec11483dd16c723c26a905ada85e72c74730bf0cea1239f347f03201ecaa5f"
+  }
+}

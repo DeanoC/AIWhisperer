@@ -1,34 +1,37 @@
 import logging
-import uuid # Import uuid for task_id
-import asyncio # Import asyncio
+import uuid
+import asyncio
+import threading
 
-from ai_whisperer.ai_loop import run_ai_loop
+from ai_whisperer.ai_loop.ai_loopy import AILoop
+from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService # Import OpenRouterAIService
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.delegate_manager import DelegateManager
-from ai_whisperer.context_management import ContextManager # Import ContextManager
+from ai_whisperer.context_management import ContextManager
 
 logger = logging.getLogger(__name__)
 
-async def ask_ai_about_model_interactive( # Make the function async
+async def ask_ai_about_model_interactive(
     model: dict,
     prompt: str,
     engine: ExecutionEngine,
     delegate_manager: DelegateManager,
-    context_manager: ContextManager # Add context_manager parameter
+    context_manager: ContextManager
 ):
     """
-    Initiates an interactive AI conversation about a specific model.
+    Initiates an interactive AI conversation about a specific model using the new AILoop.
 
     Args:
         model: The dictionary containing the selected model's information.
         prompt: The initial prompt for the AI.
-        engine: The ExecutionEngine instance.
+        engine: The ExecutionEngine instance (contains the main config).
         delegate_manager: The DelegateManager instance.
         context_manager: The ContextManager instance for managing conversation history.
     """
-    logger.debug(f"Initiating interactive AI conversation about model: {model.get('id')}")
+    logger.debug(f"Initiating interactive AI conversation about model: {model.get('id')} using new AILoop")
 
-    # Create a dummy task definition and task ID for the ai_loop
+    # Create a dummy task definition and task ID for the AILoop
     task_id = str(uuid.uuid4())
     task_definition = {
         "task_id": task_id,
@@ -36,40 +39,47 @@ async def ask_ai_about_model_interactive( # Make the function async
         "steps": [] # No specific steps for this interactive task
     }
 
-    # Set the model in the engine's config for this interaction
-    original_model = engine.config.get('model')
-    original_openrouter_model = engine.config.get('openrouter', {}).get('model')
+    # Create AIConfig from the main config
+    # Map relevant config values to AIConfig arguments
+    ai_loop_config = AIConfig(
+        api_key=engine.config.get('openrouter', {}).get('api_key', ''), # Assuming API key is here
+        model_id=model.get('id'), # Use the selected model's ID
+        temperature=engine.config.get('openrouter', {}).get('params', {}).get('temperature', 0.7), # Assuming temperature is here
+        max_tokens=engine.config.get('openrouter', {}).get('params', {}).get('max_tokens', None), # Assuming max_tokens is here
+        # Pass other relevant config as kwargs if needed by AIConfig
+        **engine.config.get('ai_loop_params', {}) # Assuming other AI loop params might be here
+    )
 
-    # Temporarily override the model in the engine's config
-    if 'openrouter' not in engine.config:
-        engine.config['openrouter'] = {}
-    engine.config['openrouter']['model'] = model.get('id')
-    engine.config['model'] = model.get('id') # Also set the general 'model' key for compatibility
+    # Create a dummy shutdown event for now, as it's not readily available here
+    # In a real application, this should be managed properly.
+    shutdown_event = threading.Event()
+
+    # Create OpenRouterAIService instance
+    ai_service = OpenRouterAIService(config=ai_loop_config, shutdown_event=shutdown_event)
+
+    # Instantiate the new AILoop
+    ai_loop = AILoop(
+        config=ai_loop_config,
+        ai_service=ai_service,
+        context_manager=context_manager,
+        delegate_manager=delegate_manager,
+        logger=logger # Pass the logger
+    )
 
     try:
-        # Run the AI loop with the specific model and prompt
-        await asyncio.to_thread( # Run in a separate thread
-            run_ai_loop,
-            engine=engine,
+        # Run the new AILoop
+        # The AILoop.run method likely takes task_definition, task_id, and initial_prompt
+        # Need to confirm the exact signature of AILoop.run
+        # Based on ai_loopy.py, AILoop.run takes task_definition, task_id, initial_prompt
+        final_ai_result = await asyncio.to_thread( # Run in a separate thread
+            ai_loop.run,
             task_definition=task_definition,
             task_id=task_id,
             initial_prompt=prompt,
-            logger=logger,
-            context_manager=context_manager, # Pass the context_manager
-            delegate_manager=delegate_manager
         )
+        logger.debug(f"New AILoop finished with result: {final_ai_result}")
+
     finally:
-        # Restore the original model in the engine's config
-        if original_openrouter_model is not None:
-            engine.config['openrouter']['model'] = original_openrouter_model
-        elif 'openrouter' in engine.config:
-             del engine.config['openrouter']['model']
-
-        if original_model is not None:
-             engine.config['model'] = original_model
-        elif 'model' in engine.config:
-             del engine.config['model']
-
         # Clear the context manager history after the interactive session
         context_manager.clear_history()
 

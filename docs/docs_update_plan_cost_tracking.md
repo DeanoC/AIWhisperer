@@ -15,13 +15,13 @@
 **1. Update [`docs/ai_service_interaction.md`](docs/ai_service_interaction.md:1)**
 
 * **Location:** A new subsection titled "Cost and Token Tracking" will be added after the "Error Handling" section.
-* **Content Rationale:** This file is the primary source of truth for the `OpenRouterAPI` client, so it needs the most detailed explanation.
+* **Content Rationale:** This file is the primary source of truth for the `OpenRouterAIService` client, so it needs the most detailed explanation.
 * **Proposed Text:**
 
     ```markdown
     ## Cost and Token Tracking
 
-    The `OpenRouterAPI` client now automatically tracks estimated cost and token usage for interactions with OpenRouter models. This provides insights into API consumption.
+    The `OpenRouterAIService` client now automatically tracks estimated cost and token usage for interactions with OpenRouter models. This provides insights into API consumption.
 
     ### What is Tracked?
 
@@ -36,12 +36,12 @@
 
     ### How is it Handled?
 
-    After each successful API call, the cost and token information for that specific call is stored as attributes within the `OpenRouterAPI` instance. Developers using the library programmatically can access these values directly from the client object after a call completes.
+    After each successful API call, the cost and token information for that specific call is stored as attributes within the `OpenRouterAIService` instance. Developers using the library programmatically can access these values directly from the client object after a call completes.
 
     For example:
 
     ```python
-    # Assuming openrouter_client is an instantiated OpenRouterAPI object
+    # Assuming openrouter_client is an instantiated OpenRouterAIService object
     # and a call has just been made:
     # response = openrouter_client.call_chat_completion(...)
 
@@ -71,7 +71,7 @@
     ```markdown
     ### 6. Cost and Token Tracking
 
-    When using the `OpenRouterAPI` client programmatically, AIWhisperer now tracks the estimated cost and token usage (prompt and completion) for each interaction with OpenRouter models. This information is stored within the `OpenRouterAPI` object after each call.
+    When using the `OpenRouterAIService` client programmatically, AIWhisperer now tracks the estimated cost and token usage (prompt and completion) for each interaction with OpenRouter models. This information is stored within the `OpenRouterAIService` object after each call.
 
     This is useful for developers who want to monitor their API consumption. For detailed information on what is tracked, how it's handled, and how to access this data programmatically, please refer to the "Cost and Token Tracking" section in the [AI Service Interaction Module Documentation](ai_service_interaction.md).
     ```

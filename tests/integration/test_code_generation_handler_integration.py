@@ -24,7 +24,7 @@ class TestCodeGenerationHandlerIntegration:
     @staticmethod
     def _wrap_openai_response(resp):
         """
-        Helper to wrap an OpenAI-style response dict as the new OpenRouterAPI return format.
+        Helper to wrap an OpenAI-style response dict as the new OpenRouterAIService return format.
         Returns {'response': resp, 'message': resp['choices'][0]['message']}.
         """
         if resp is None:
@@ -102,7 +102,7 @@ class TestCodeGenerationHandlerIntegration:
         """
         engine, mock_state_manager = setup_engine
 
-        # Mock the OpenRouterAPI instance on the engine object
+        # Mock the OpenRouterAIService instance on the engine object
         mock_openrouter_api_instance = MagicMock()
         engine.openrouter_api = mock_openrouter_api_instance
 
@@ -218,7 +218,7 @@ class TestCodeGenerationHandlerIntegration:
     @staticmethod
     def _wrap_openai_response(openai_response):
         """
-        Helper to wrap an OpenAI-style response in the new OpenRouterAPI format for mocks.
+        Helper to wrap an OpenAI-style response in the new OpenRouterAIService format for mocks.
         """
         return {"response": openai_response, "message": openai_response["choices"][0]["message"]}
 
@@ -278,7 +278,7 @@ class TestCodeGenerationHandlerIntegration:
             plan_parser.load_overview_plan(overview_plan_path)
             parsed_plan = plan_parser.get_parsed_plan()
 
-            # Mock the OpenRouterAPI instance on the engine object
+            # Mock the OpenRouterAIService instance on the engine object
             mock_openrouter_api_instance = MagicMock()
             engine.openrouter_api = mock_openrouter_api_instance
 
@@ -423,7 +423,7 @@ class TestCodeGenerationHandlerIntegration:
             parsed_plan = plan_parser.get_parsed_plan()
 
             # Mock the AI service to return a response with tool calls for file writing
-            # Mock the OpenRouterAPI instance on the engine object
+            # Mock the OpenRouterAIService instance on the engine object
             mock_openrouter_api_instance = MagicMock()
             engine.openrouter_api = mock_openrouter_api_instance
 
@@ -557,7 +557,7 @@ class TestCodeGenerationHandlerIntegration:
             parsed_plan = plan_parser.get_parsed_plan()
 
             # Configure mocked AI to return a malformed response (e.g., invalid JSON in tool arguments)
-            # Mock the OpenRouterAPI instance on the engine object
+            # Mock the OpenRouterAIService instance on the engine object
             mock_openrouter_api_instance = MagicMock()
             engine.openrouter_api = mock_openrouter_api_instance
 
@@ -705,7 +705,7 @@ class TestCodeGenerationHandlerIntegration:
             parsed_plan = plan_parser.get_parsed_plan()
 
             # Mock the AI service to return a response with tool calls for file writing
-            # Mock the OpenRouterAPI instance on the engine object
+            # Mock the OpenRouterAIService instance on the engine object
             mock_openrouter_api_instance = MagicMock()
             engine.openrouter_api = mock_openrouter_api_instance
 
@@ -872,7 +872,7 @@ class TestCodeGenerationHandlerIntegration:
             parsed_plan = plan_parser.get_parsed_plan()
 
             # Configure mocked AI to return a response with only content
-            # Mock the OpenRouterAPI instance on the engine object
+            # Mock the OpenRouterAIService instance on the engine object
             mock_openrouter_api_instance = MagicMock()
             engine.openrouter_api = mock_openrouter_api_instance
 
@@ -976,7 +976,7 @@ class TestCodeGenerationHandlerIntegration:
             parsed_plan = plan_parser.get_parsed_plan()
 
             # Mock the AI service to return a response with multiple tool calls
-            # Mock the OpenRouterAPI instance on the engine object
+            # Mock the OpenRouterAIService instance on the engine object
             mock_openrouter_api_instance = MagicMock()
             engine.openrouter_api = mock_openrouter_api_instance
 

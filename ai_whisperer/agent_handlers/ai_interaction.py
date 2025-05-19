@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
-from ai_whisperer.exceptions import TaskExecutionError, OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError
+from ai_whisperer.exceptions import TaskExecutionError, OpenRouterAIServiceError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError
 from ai_whisperer.utils import build_ascii_directory_tree # Ensure this is imported
 from ai_whisperer import PromptSystem # Import PromptSystem
 
@@ -32,7 +32,7 @@ def handle_ai_interaction(
     self = engine
     task_id = task_definition.get("task_id")
 
-    if self.openrouter_api is None:
+    if self.aiservice is None:
         error_message = (
             f"AI interaction task {task_id} cannot be executed because OpenRouter API failed to initialize."
         )
@@ -166,7 +166,7 @@ def handle_ai_interaction(
         logger.debug(f"Task {task_id}: Conversation history: {messages_history}")
 
         # Use streaming API call to allow for interruption
-        stream_generator = self.openrouter_api.stream_chat_completion(
+        stream_generator = self.aiservice.stream_chat_completion(
             prompt_text=prompt,
             model=merged_ai_config.get("model"),
             params=merged_ai_config.get("params", {}),
@@ -336,7 +336,7 @@ def handle_ai_interaction(
                     raise TaskExecutionError(error_message) from e
             return result_dict # Always return a dict
 
-        except (OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError) as e:
+        except (OpenRouterAIServiceError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError) as e:
             error_message = f"AI interaction task {task_id} failed due to AI service error: {e}"
             # Use the module-level logger
             logger.error(error_message, exc_info=True)

@@ -1,10 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-# Assuming the refactored AI loop will be in src/ai_whisperer/ai_loop.py
-# and ContextManager is in src/ai_whisperer/context_management.py
-# from ai_whisperer.ai_loop import run_ai_loop 
-from ai_whisperer.ai_loop import run_ai_loop
 from ai_whisperer.context_management import ContextManager
 
 @pytest.fixture
@@ -37,7 +33,7 @@ def mock_logger():
 import threading
 import asyncio
 
-@patch('ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
+@patch('ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService.call_chat_completion')
 def test_ai_loop_handles_content_response(mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop correctly handles an AI response with content."""
     # Ensure every call to call_chat_completion returns the correct structure
@@ -62,7 +58,7 @@ def test_ai_loop_handles_content_response(mock_call_chat_completion, mock_engine
     assert final_result is not None
     mock_context_manager.add_message.assert_called() # Verify message was added to context
 
-@patch('ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
+@patch('ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService.call_chat_completion')
 @patch('ai_whisperer.tools.tool_registry.ToolRegistry.get_tool_by_name')
 def test_ai_loop_handles_tool_calls(mock_get_tool_by_name, mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop correctly handles AI responses with tool calls."""
@@ -111,7 +107,7 @@ def test_ai_loop_handles_tool_calls(mock_get_tool_by_name, mock_call_chat_comple
     # - Tool instance execute was called
     # - ContextManager.add_message was called for assistant response and tool output
 
-@patch('ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion')
+@patch('ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService.call_chat_completion')
 def test_ai_loop_adds_messages_to_context(mock_call_chat_completion, mock_engine, mock_context_manager, mock_logger):
     """Tests that the AI loop adds user, assistant, and tool messages to the ContextManager."""
     # Always return the correct structure for every call

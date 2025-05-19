@@ -11,7 +11,6 @@ from monitor.interactive_ui_base import InteractiveUIBase
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.model_info_provider import ModelInfoProvider # Import the actual ModelInfoProvider
-from ai_whisperer.ai_loop import run_ai_loop # Import the actual run_ai_loop
 from ai_whisperer.config import load_config # Import load_config
 from ai_whisperer.state_management import StateManager # Import StateManager
 from ai_whisperer.prompt_system import PromptSystem
@@ -44,7 +43,7 @@ async def test_interactive_list_models_and_ask_ai_integration(requests_mock): # 
         {"id": "model-a", "name": "Model Alpha", "description": "Alpha model desc"},
         {"id": "model-b", "name": "Model Beta", "description": "Beta model desc"},
     ]
-    # The OpenRouterAPI expects a dict with a 'data' key
+    # The OpenRouterAIService expects a dict with a 'data' key
     requests_mock.get("https://openrouter.ai/api/v1/models", json={"data": mock_model_list_data})
 
     # Mock chat completion endpoint

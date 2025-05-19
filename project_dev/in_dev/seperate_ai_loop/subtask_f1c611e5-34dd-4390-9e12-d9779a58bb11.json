@@ -1,0 +1,41 @@
+{
+  "description": "Design the structure and interface for the refactored standalone AI loop component, considering the requirements for interactivity, streaming, and generality.",
+  "instructions": [
+    "Review the analysis document `docs/ai_loop_refactor_analysis.md` to understand the current AI loop's limitations and requirements.",
+    "Propose a new class or module structure for the refactored AI loop. Consider creating a dedicated module (e.g., `ai_whisperer/ai_loop_refactored.py`) to house this component.",
+    "Define clear Python class interfaces and method signatures for the new AI loop. Focus on minimizing direct dependencies on `ai_whisperer/execution_engine.py` and `ai_whisperer/state_management.py`. Consider using dependency injection or abstract interfaces.",
+    "Outline how the design will support interactive sessions, allowing for multi-turn conversations and user input during the AI process.",
+    "Describe the mechanism for handling streaming AI responses, enabling incremental output to the user or other components.",
+    "Detail how the AI loop can be made general purpose, potentially by defining abstract base classes or interfaces for tasks, agents, or tools that can be plugged into the loop.",
+    "Document the proposed design, including class diagrams (if helpful), interface definitions, and explanations of how interactivity, streaming, and generality are achieved, in the file `docs/refactored_ai_loop_design.md`."
+  ],
+  "input_artifacts": [
+    "docs/ai_loop_refactor_analysis.md"
+  ],
+  "output_artifacts": [
+    "docs/refactored_ai_loop_design.md"
+  ],
+  "constraints": [
+    "The design must be documented in Markdown format.",
+    "The design should prioritize decoupling the AI loop from the current `ExecutionEngine` and `StateManager` implementations.",
+    "The design must explicitly address the requirements for interactive sessions and streaming AI output.",
+    "The design should consider extensibility for different AI tasks or workflows."
+  ],
+  "validation_criteria": [
+    "The file `docs/refactored_ai_loop_design.md` exists and contains the design documentation.",
+    "The design document clearly describes the proposed class/module structure for the refactored AI loop.",
+    "The design document defines clear interfaces for the AI loop component.",
+    "The design document explains how the proposed structure decouples the AI loop from `ExecutionEngine` and `StateManager`.",
+    "The design document includes provisions for handling interactive sessions.",
+    "The design document includes provisions for handling streaming AI responses.",
+    "The design document outlines how the AI loop can be made general purpose and potentially pluggable.",
+    "The interfaces defined in the document are clear and understandable."
+  ],
+  "type": "planning",
+  "name": "design_refactored_ai_loop",
+  "depends_on": [
+    "analyze_current_ai_loop"
+  ],
+  "task_id": "fc2d07f3-4317-4ca5-ab37-a9c1e6c766c5",
+  "subtask_id": "f1c611e5-34dd-4390-9e12-d9779a58bb11"
+}

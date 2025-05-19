@@ -216,21 +216,6 @@ def test_get_filtered_tools(registry: ToolRegistry):
     filtered_non_existent_tag = registry.get_filtered_tools({"tags": ["non_existent_tag"]})
     assert len(filtered_non_existent_tag) == 0
 
-def test_reload_tools(registry: ToolRegistry):
-    """Tests the reload_tools method."""
-    tool_a = DummyToolA()
-    registry.register_tool(tool_a)
-    assert len(registry.get_all_tools()) == 1
-
-    registry.reload_tools()
-    assert len(registry.get_all_tools()) == 0 # Registry should be empty after reload
-
-    # After reload, registering should work again
-    tool_b = DummyToolB()
-    registry.register_tool(tool_b)
-    assert len(registry.get_all_tools()) == 1
-    assert registry.get_all_tools()[0].name == "tool_b"
-
 # Add a test for registering a non-AITool object
 def test_register_non_aitool(registry: ToolRegistry, caplog):
     """Tests attempting to register an object that is not an AITool."""

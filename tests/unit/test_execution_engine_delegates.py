@@ -1,7 +1,9 @@
 import pytest
 import threading
 from unittest.mock import MagicMock, call
-
+# Need to import unittest for patching
+import unittest
+import pytest
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.state_management import StateManager
 from ai_whisperer.plan_parser import ParserPlan
@@ -254,6 +256,3 @@ def test_ai_processing_step_delegate_invoked_for_ai_task(execution_engine, mock_
     #     # Add checks for other expected processing steps
     # ], any_order=True)
 
-# Need to import unittest for patching
-import unittest
-import pytest

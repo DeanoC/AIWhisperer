@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from ai_whisperer.ai_service_interaction import OpenRouterAPI
+from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
 
 # Mock response data based on the expected structure from the planning summary
 MOCK_API_RESPONSE_SINGLE_MODEL = {
@@ -52,7 +53,7 @@ MOCK_API_RESPONSE_MISSING_FIELDS = {
 }
 
 
-@patch("ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.get")
 def test_list_models_detailed_single(mock_get):
     """Tests fetching and parsing detailed data for a single model."""
     mock_response = MagicMock()
@@ -60,14 +61,19 @@ def test_list_models_detailed_single(mock_get):
     mock_response.json.return_value = MOCK_API_RESPONSE_SINGLE_MODEL
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
+    ai_config = AIConfig(
+        api_key="fake_key",
+        model_id="default/test-model",
+    )
+
+    api = OpenRouterAIService(ai_config)
     models = api.list_models()
 
     assert len(models) == 1
     assert models == MOCK_API_RESPONSE_SINGLE_MODEL["data"]
 
 
-@patch("ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.get")
 def test_list_models_detailed_multiple(mock_get):
     """Tests fetching and parsing detailed data for multiple models."""
     mock_response = MagicMock()
@@ -75,14 +81,19 @@ def test_list_models_detailed_multiple(mock_get):
     mock_response.json.return_value = MOCK_API_RESPONSE_MULTIPLE_MODELS
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
+    ai_config = AIConfig(
+        api_key="fake_key",
+        model_id="default/test-model",
+    )
+
+    api = OpenRouterAIService(ai_config)
     models = api.list_models()
 
     assert len(models) == 2
     assert models == MOCK_API_RESPONSE_MULTIPLE_MODELS["data"]
 
 
-@patch("ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.get")
 def test_list_models_detailed_missing_fields(mock_get):
     """Tests handling of models with missing optional fields."""
     mock_response = MagicMock()
@@ -90,14 +101,19 @@ def test_list_models_detailed_missing_fields(mock_get):
     mock_response.json.return_value = MOCK_API_RESPONSE_MISSING_FIELDS
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
+    ai_config = AIConfig(
+        api_key="fake_key",
+        model_id="default/test-model",
+    )
+
+    api = OpenRouterAIService(ai_config)
     models = api.list_models()
 
     assert len(models) == 1
     assert models == MOCK_API_RESPONSE_MISSING_FIELDS["data"]
 
 
-@patch("ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.get")
 def test_list_models_detailed_empty_data(mock_get):
     """Tests handling of an empty data array in the API response."""
     mock_response = MagicMock()
@@ -105,13 +121,18 @@ def test_list_models_detailed_empty_data(mock_get):
     mock_response.json.return_value = {"data": []}
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
+    ai_config = AIConfig(
+        api_key="fake_key",
+        model_id="default/test-model",
+    )
+
+    api = OpenRouterAIService(ai_config)
     models = api.list_models()
 
     assert len(models) == 0
 
 
-@patch("ai_whisperer.ai_service_interaction.requests.get")
+@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.get")
 def test_list_models_detailed_api_error(mock_get):
     """Tests handling of an API error response."""
     mock_response = MagicMock()
@@ -119,6 +140,11 @@ def test_list_models_detailed_api_error(mock_get):
     mock_response.text = "Internal Server Error"
     mock_get.return_value = mock_response
 
-    api = OpenRouterAPI({"api_key": "fake_key", "model": "default/test-model"})
+    ai_config = AIConfig(
+        api_key="fake_key",
+        model_id="default/test-model",
+    )
+
+    api = OpenRouterAIService(ai_config)
     with pytest.raises(Exception):  # Assuming a generic exception is raised for API errors
         api.list_models()

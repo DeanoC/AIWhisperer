@@ -1,0 +1,47 @@
+{
+  "description": "Generate unit tests for the refactored AI loop component based on the design document.",
+  "instructions": [
+    "Navigate to the `tests/unit` directory.",
+    "Create a new Python file named `test_refactored_ai_loop.py`.",
+    "Import necessary modules for testing (e.g., `pytest`, `unittest.mock`).",
+    "Read and understand the design document `docs/refactored_ai_loop_design.md` to identify key functionalities and interfaces of the refactored AI loop.",
+    "Write unit test functions within `test_refactored_ai_loop.py`.",
+    "For each test function, use `unittest.mock` or similar techniques to mock or stub dependencies like `ExecutionEngine` and `StateManager` to isolate the AI loop logic.",
+    "Write tests that specifically verify:",
+    "- The handling of different input types and formats.",
+    "- The correct flow of logic based on the design.",
+    "- The interaction with mocked dependencies (e.g., ensuring methods on mocks are called with expected arguments).",
+    "- Tests for interactive session handling, including how the AI loop processes and responds to user inputs in an interactive context.",
+    "- Tests for mocked streaming scenarios, simulating the AI loop's behavior when receiving streamed responses from an AI service.",
+    "- Edge cases and error handling as described in the design.",
+    "Ensure the tests cover the new interfaces introduced in the refactoring.",
+    "Run the tests using `pytest` or a similar test runner.",
+    "Verify that the tests fail, as the implementation of the refactored AI loop is not yet complete."
+  ],
+  "input_artifacts": [
+    "docs/refactored_ai_loop_design.md"
+  ],
+  "output_artifacts": [
+    "tests/unit/test_refactored_ai_loop.py"
+  ],
+  "constraints": [
+    "Tests must be unit tests, focusing on the AI loop component in isolation.",
+    "Dependencies (`ExecutionEngine`, `StateManager`, etc.) must be mocked or stubbed.",
+    "Tests should be written in Python using `pytest` and `unittest.mock`.",
+    "The test file must be located at `tests/unit/test_refactored_ai_loop.py`."
+  ],
+  "validation_criteria": [
+    "The file `tests/unit/test_refactored_ai_loop.py` exists.",
+    "The file `tests/unit/test_refactored_ai_loop.py` contains multiple test functions (e.g., functions prefixed with `test_`).",
+    "The test cases demonstrate coverage of the core functionalities, interfaces, interactive session handling, and mocked streaming scenarios described in `docs/refactored_ai_loop_design.md`.",
+    "The tests utilize mocking or stubbing for external dependencies.",
+    "Running the tests using `pytest` results in test failures, indicating that the tests are correctly written but the corresponding code is not yet implemented."
+  ],
+  "type": "test_generation",
+  "name": "generate_ai_loop_unit_tests",
+  "depends_on": [
+    "design_refactored_ai_loop"
+  ],
+  "task_id": "fc2d07f3-4317-4ca5-ab37-a9c1e6c766c5",
+  "subtask_id": "409408b9-66f1-43fb-829f-3fcc3e930eb3"
+}

@@ -1,10 +1,8 @@
 # src/ai_whisperer/agent_handlers/code_generation.py
+from ai_whisperer.ai_loop.ai_loopy import AILoop
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.exceptions import TaskExecutionError
 from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event # Import log_event
-from ai_whisperer.tools.tool_registry import ToolRegistry # Assuming ToolRegistry is accessible
-from ai_whisperer.context_management import ContextManager # Import ContextManager
-from ai_whisperer.ai_loop import run_ai_loop # Import the refactored AI loop
 from pathlib import Path
 import os
 import json
@@ -33,6 +31,17 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, promp
         )
     )
 
+    # Pass delegate_manager to ai_loop (required argument)
+    delegate_manager = getattr(engine, 'delegate_manager', None)
+
+    ai_config = engine.ai_config
+
+    ai_loop = AILoop(config=ai_config, 
+                     ai_service=engine.aiservice,
+                     context_manager=engine.state_manager.get_context_manager(task_id),
+                     delegate_manager=delegate_manager                     
+                     )
+
     # --- Main Handler Logic (detailed in sections below) ---
     try:
         # 1. Context Gathering
@@ -47,14 +56,14 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, promp
         if context_manager is None:
             raise TaskExecutionError(f"ContextManager not found for task {task_id} in StateManager.")
 
-        # Pass delegate_manager to run_ai_loop (required argument)
-        delegate_manager = getattr(engine, 'delegate_manager', None)
-        if delegate_manager is None:
-            logger.warning(f"Task {task_id}: DelegateManager not found on engine. Proceeding without delegate notifications.") # Change error to warning
-            # We can still proceed with run_ai_loop, but delegate notifications within the loop will be skipped
-        final_ai_result = run_ai_loop(engine, task_definition, task_id, initial_prompt, logger, context_manager, delegate_manager)
-        logger.info(f"Task {task_id}: AI interaction loop finished.")
+        ## start_session means the ai loop is now running
+        ai_loop.start_session(system_prompt="TODO:")
+        ai_loop.send_user_message(user_message=initial_prompt)
+        ai_loop.wait_for_idle()
 
+        final_ai_result = context_manager.get_history()[-1]
+
+        logger.info(f"Task {task_id}: AI interaction loop finished.")
 
         # 4. Test Execution / Validation
         # NOTE: Validation is currently faked as per user instruction.

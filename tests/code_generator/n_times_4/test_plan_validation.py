@@ -68,7 +68,7 @@ def test_cli_run_command_programmatic(clean_output):
     assert config_path.exists()
     assert plan_path.exists()
 
-    # Mock the OpenRouterAPI call within the ExecutionEngine
+    # Mock the OpenRouterAIService call within the ExecutionEngine
     # This is necessary because we are not mocking the RunCliCommand or ExecutionEngine
     # We need to mock the actual AI service interaction.
     # Create a mock DelegateManager
@@ -81,7 +81,7 @@ def test_cli_run_command_programmatic(clean_output):
 
     mock_delegate_manager.invoke_control.side_effect = control_side_effect
 
-    with patch('ai_whisperer.ai_service_interaction.OpenRouterAPI.call_chat_completion') as mock_call_chat_completion:
+    with patch('ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService.call_chat_completion') as mock_call_chat_completion:
         # Use side_effect to simulate a tool call on the first call, and a final content message on the second call
         tool_call_response = {
             "message": {

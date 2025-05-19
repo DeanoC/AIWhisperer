@@ -3,24 +3,24 @@ from pathlib import Path  # Import Path
 import json
 import threading  # Import threading for Event
 
+from ai_whisperer.ai_loop.ai_config import AIConfig, AIConfig
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.exceptions import TaskExecutionError, FileRestrictionError, PromptNotFoundError
 from ai_whisperer.tools.tool_registry import get_tool_registry
 from ai_whisperer.path_management import PathManager
-from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManager
-
-from .logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
-from .state_management import StateManager
-from .plan_parser import ParserPlan  # Import ParserPlan
-from .ai_service_interaction import (
-    OpenRouterAPI,
+from ai_whisperer.delegate_manager import DelegateManager
+from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
+from ai_whisperer.state_management import StateManager
+from ai_whisperer.plan_parser import ParserPlan
+from ai_whisperer.prompt_system import PromptSystem
+from ai_whisperer.exceptions import (
     ConfigError,
-    OpenRouterAPIError,
+    OpenRouterAIServiceError,
     OpenRouterAuthError,
     OpenRouterRateLimitError,
     OpenRouterConnectionError,
 )  # Import AI interaction components
 import traceback  # Import traceback for detailed error logging
-from .prompt_system import PromptSystem # Import PromptSystem
 
 logger = get_logger(__name__)  # Get logger for execution engine
 logger.propagate = False
@@ -58,13 +58,16 @@ class ExecutionEngine:
         self.delegate_manager = delegate_manager # Store the injected DelegateManager
         self._pause_event = threading.Event() # Add pause event
         self._paused = False # Add paused state flag
-        # In a real scenario, a TaskExecutor component would handle individual task logic.
-        # This would be responsible for interacting with different agent types.
-
         # Initialize AI Service Interaction once
         try:
-            ai_config = self.config.get("openrouter", {})
-            if not ai_config:
+            # Map relevant config values to AIConfig arguments
+            self.ai_config = AIConfig(
+                api_key=self.config.get('openrouter', {}).get,
+                model_id=self.config.get('id'),
+                temperature=self.config.get('openrouter', {}).get('params', {}).get('temperature', 0.7), # Assuming temperature is here
+                max_tokens=self.config.get('openrouter', {}).get('params', {}).get('max_tokens', None), # Assuming max_tokens is here
+            )
+            if not self.ai_config:
                 logger.warning("OpenRouter configuration not found in config. AI interaction tasks may fail.")
                 log_event(
                     log_message=LogMessage(
@@ -74,9 +77,9 @@ class ExecutionEngine:
                         "OpenRouter configuration not found in config. AI interaction tasks may fail.",
                     )
                 )
-                self.openrouter_api = None  # Set to None if config is missing
+                self.aiservice = None  # Set to None if config is missing
             else:
-                self.openrouter_api = OpenRouterAPI(ai_config, shutdown_event=self.shutdown_event) # Pass shutdown_event
+                self.aiservice = OpenRouterAIService(self.ai_config, shutdown_event=self.shutdown_event)
         except ConfigError as e:
             error_message = f"Failed to initialize OpenRouter API due to configuration error: {e}"
             logger.error(error_message, exc_info=True)
@@ -89,7 +92,7 @@ class ExecutionEngine:
                     details={"error": str(e)},
                 )
             )
-            self.openrouter_api = None  # Set to None on config error
+            self.aiservice = None  # Set to None on config error
             # Decide whether to raise an exception here or allow execution to continue
             # For now, we'll allow execution to continue but AI tasks will fail
         except Exception as e:
@@ -104,7 +107,7 @@ class ExecutionEngine:
                     details={"error": str(e), "traceback": traceback.format_exc()},
                 )
             )
-            self.openrouter_api = None  # Set to None on unexpected error
+            self.aiservice = None  # Set to None on unexpected error
             # Decide whether to raise an exception here or allow execution to continue
             # For now, we'll allow execution to continue but AI tasks will fail
 
@@ -114,7 +117,6 @@ class ExecutionEngine:
         from .agent_handlers.validation import handle_validation
         from .agent_handlers.no_op import handle_no_op
         from .agent_handlers.code_generation import handle_code_generation
-        from .ai_loop import run_ai_loop # Import run_ai_loop
 
         # Initialize the agent type handler table
         # Lambdas now accept only task_definition (for test compatibility)
@@ -170,7 +172,7 @@ class ExecutionEngine:
         Raises:
             TaskExecutionError: If the task execution fails.
         """
-        if self.openrouter_api is None:
+        if self.aiservice is None:
             error_message = (
                 f"AI interaction task {task_id} cannot be executed because OpenRouter API failed to initialize."
             )
@@ -324,7 +326,7 @@ class ExecutionEngine:
             logger.debug(f"Task {task_id}: Conversation history: {messages_history}")  # Log conversation history
 
             # Call the AI service using the instance initialized in __init__
-            ai_response_result = self.openrouter_api.call_chat_completion(
+            ai_response_result = self.aiservice.call_chat_completion(
                 prompt_text=prompt,
                 model=merged_ai_config.get("model"),  # Use model from merged config
                 params=merged_ai_config.get("params", {}),  # Use params from merged config
@@ -614,7 +616,7 @@ class ExecutionEngine:
                 )
                 raise TaskExecutionError(error_message)
 
-        except (OpenRouterAPIError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError) as e:
+        except (OpenRouterAIServiceError, OpenRouterAuthError, OpenRouterRateLimitError, OpenRouterConnectionError) as e:
             error_message = f"AI interaction task {task_id} failed due to AI service error: {e}"
             logger.error(error_message, exc_info=True)
             log_event(

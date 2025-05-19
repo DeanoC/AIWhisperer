@@ -92,9 +92,6 @@ def setup_logging(config_path: Optional[str] = None):
 def setup_basic_logging():
     """Sets up a basic console logger."""
     try:
-        if logging.root.handlers:
-            # Root logger already has handlers, assume it's configured
-            return
         # Remove any existing handlers from the root logger to avoid duplicates
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)

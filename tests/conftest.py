@@ -7,10 +7,8 @@ sys.path.insert(0, str(project_root))
 import pytest
 import json
 
+# Ensure logging is set up before any tests run
+from ai_whisperer.logging_custom import setup_basic_logging
 
-@pytest.fixture
-def simple_country_plan():
-    """Loads the simple country test plan."""
-    plan_path = "./tests/simple_run_test_country/overview_simple_run_test_country_aiwhisperer_config.json"
-    with open(plan_path, "r") as f:
-        return json.load(f)
+def pytest_configure(config):
+    setup_basic_logging()

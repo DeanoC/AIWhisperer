@@ -107,6 +107,7 @@ def test_list_models_actual_servers():
         event_type="user_message_display",
         delegate=ansi_handler.display_message
     )
+    
     # Add detail_level to the command instantiation
     command = ListModelsCliCommand(config=config, output_csv=None, delegate_manager=delegate_manager, detail_level=UserMessageLevel.INFO)
 

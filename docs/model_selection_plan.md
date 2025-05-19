@@ -123,8 +123,8 @@ def __init__(self, config_path: str, overall_context: str = "", workspace_contex
         from .task_selector import get_model_for_task
         model_config = get_model_for_task(self.config, "Subtask Generation")
         
-        # Pass the task-specific model configuration to the OpenRouterAPI client
-        self.openrouter_client = OpenRouterAPI(config=model_config)
+        # Pass the task-specific model configuration to the OpenRouterAIService client
+        self.openrouter_client = OpenRouterAIService(config=model_config)
         
         self.subtask_prompt_template = self.config['prompts']['subtask_generator_prompt_content']
         self.output_dir = Path(self.config['output_dir'])
@@ -154,9 +154,9 @@ def __init__(self, config: Dict[str, Any]):
     from .task_selector import get_model_for_task
     model_config = get_model_for_task(config, "Orchestrator")
     
-    # Initialize OpenRouterAPI client with the task-specific model configuration
-    from .openrouter_api import OpenRouterAPI
-    self.openrouter_client = OpenRouterAPI(config=model_config)
+    # Initialize OpenRouterAIService client with the task-specific model configuration
+    from .openrouter_api import OpenRouterAIService
+    self.openrouter_client = OpenRouterAIService(config=model_config)
     
     logger.info(f"Orchestrator initialized. Output directory: {self.output_dir}")
     

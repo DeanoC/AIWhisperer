@@ -316,11 +316,11 @@ def setup_temp_files():
         shutil.rmtree(TEMP_DIR)
 
 
-@patch("ai_whisperer.execution_engine.OpenRouterAPI")
-def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_temp_files):
+@patch("ai_whisperer.execution_engine.OpenRouterAIService")
+def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAIService, setup_temp_files):
     """Test runner uses agent-type default prompt and appends task instructions."""
     # Configure the mock instance returned by the mocked class
-    mock_instance = MockOpenRouterAPI.return_value
+    mock_instance = MockOpenRouterAIService.return_value
 
 
     # Patch both call_chat_completion and stream_chat_completion to increment the same call count
@@ -372,11 +372,11 @@ def test_runner_uses_agent_prompt_with_instructions(MockOpenRouterAPI, setup_tem
     assert found, f"Expected prompt template (default.md, no instructions) not used in any call. Got: {[call.kwargs.get('prompt_text') for call in all_calls]}"
 
 
-@patch("ai_whisperer.execution_engine.OpenRouterAPI")
-def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, setup_temp_files):
+@patch("ai_whisperer.execution_engine.OpenRouterAIService")
+def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAIService, setup_temp_files):
     """Test runner uses global default prompt with embedded instructions when only instructions are present."""
     # Configure the mock instance returned by the mocked class
-    mock_instance = MockOpenRouterAPI.return_value
+    mock_instance = MockOpenRouterAIService.return_value
 
 
     # Patch both call_chat_completion and stream_chat_completion
@@ -458,11 +458,11 @@ def test_runner_uses_instructions_only_with_global_default(MockOpenRouterAPI, se
     instructions_only_overview_file.unlink()
 
 
-@patch("ai_whisperer.execution_engine.OpenRouterAPI")
-def test_runner_uses_global_default_only(MockOpenRouterAPI, setup_temp_files):
+@patch("ai_whisperer.execution_engine.OpenRouterAIService")
+def test_runner_uses_global_default_only(MockOpenRouterAIService, setup_temp_files):
     """Test runner uses global default prompt when no agent-type default and no instructions."""
     # Configure the mock instance returned by the mocked class
-    mock_instance = MockOpenRouterAPI.return_value
+    mock_instance = MockOpenRouterAIService.return_value
 
 
     # Patch both call_chat_completion and stream_chat_completion

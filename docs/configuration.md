@@ -66,7 +66,7 @@ The `openrouter` section contains settings for the OpenRouter API, which is used
 | `params.max_tokens` | No | - | Maximum number of tokens to generate in the response |
 | `site_url` | No | "<http://localhost:8000>" | Your project's URL (sent as HTTP-Referer) |
 | `app_name` | No | "AIWhisperer" | Your application's name (sent as X-Title) |
-| `cache` | No | `false` | Boolean (`true` or `false`). Enables or disables in-memory caching for OpenRouter API responses. When `true`, responses to identical requests (model, messages, params, tools, response_format) are cached for the lifetime of the `OpenRouterAPI` object. |
+| `cache` | No | `false` | Boolean (`true` or `false`). Enables or disables in-memory caching for OpenRouter API responses. When `true`, responses to identical requests (model, messages, params, tools, response_format) are cached for the lifetime of the `OpenRouterAIService` object. |
 | `timeout_seconds` | No | `60` | Integer. Timeout in seconds for API requests to OpenRouter. |
 
 **Note:** The OpenRouter API key MUST be provided via the `OPENROUTER_API_KEY` environment variable. You can set this variable directly in your shell or place it in a `.env` file in the project's root directory (e.g., `OPENROUTER_API_KEY="sk-or-v1-abc...xyz"`).

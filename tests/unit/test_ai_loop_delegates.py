@@ -3,8 +3,8 @@ import pytest
 import threading
 from unittest.mock import MagicMock, call
 import asyncio
+import unittest
 
-from ai_whisperer.ai_loop import run_ai_loop
 from ai_whisperer.exceptions import TaskExecutionError
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.state_management import StateManager
@@ -66,22 +66,18 @@ def test_ai_request_prepared_delegate_invoked(mock_engine, task_definition, init
     mock_delegate = MagicMock()
     mock_delegate_manager.register_notification("ai_request_prepared", mock_delegate)
 
-
     # First call returns non-empty tool_calls (so loop continues), second call returns content (so loop exits)
     mock_engine.openrouter_api.call_chat_completion.side_effect = [
         {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}},
         {"message": {"content": "response"}}  # Second turn, exits loop
     ]
 
-
     # Patch both ToolRegistry and get_tool_registry to return a mock tool with an execute method
     mock_tool_registry = MagicMock()
     mock_tool_instance = MagicMock()
     mock_tool_instance.execute.return_value = "fake tool output"
     mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
-    import unittest
-    with unittest.mock.patch('ai_whisperer.ai_loop.ToolRegistry', return_value=mock_tool_registry), \
-         unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
+    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
         run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
     # Only the initial call triggers ai_request_prepared in the current implementation
@@ -109,7 +105,7 @@ def test_ai_response_received_delegate_invoked(mock_engine, task_definition, ini
     mock_tool_instance.execute.return_value = "fake tool output"
     mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
     import unittest
-    with unittest.mock.patch('ai_whisperer.ai_loop.ToolRegistry', return_value=mock_tool_registry):
+    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
         run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
     # Expecting two calls: one for the initial response, one for the subsequent response (even if it exits)
@@ -136,7 +132,7 @@ def test_ai_processing_step_delegate_invoked(mock_engine, task_definition, initi
     mock_tool_instance.execute.return_value = "fake tool output"
     mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
     import unittest
-    with unittest.mock.patch('ai_whisperer.ai_loop.ToolRegistry', return_value=mock_tool_registry):
+    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
         run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
 
     # Expecting calls for initial preparation and response processing, and subsequent ones
@@ -181,7 +177,7 @@ def test_ai_loop_request_pause_delegate_invoked_and_pauses(mock_engine, task_def
     mock_tool_instance.execute.return_value = "fake tool output"
     mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
     # Patch the ToolRegistry instance used within run_ai_loop
-    with unittest.mock.patch('ai_whisperer.ai_loop.ToolRegistry', return_value=mock_tool_registry):
+    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
         # Use a separate thread to run the AI loop so we can check its state
         ai_loop_thread = threading.Thread(target=run_ai_loop, args=(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager))
         ai_loop_thread.start()
@@ -214,7 +210,7 @@ def test_ai_loop_request_stop_delegate_invoked_and_stops(mock_engine, task_defin
     mock_tool_instance.execute.return_value = "fake tool output"
     mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
     # Patch the ToolRegistry instance used within run_ai_loop
-    with unittest.mock.patch('ai_whisperer.ai_loop.ToolRegistry', return_value=mock_tool_registry):
+    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
         # Use a separate thread to run the AI loop
         ai_loop_thread = threading.Thread(target=run_ai_loop, args=(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager))
         ai_loop_thread.start()

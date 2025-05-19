@@ -5,14 +5,15 @@ import json
 import time
 from unittest.mock import patch
 
+from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.path_management import PathManager
 
-from ai_whisperer.ai_service_interaction import OpenRouterAPI
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
 from ai_whisperer.tools.tool_registry import ToolRegistry
 from ai_whisperer.tools.read_file_tool import ReadFileTool
 from ai_whisperer.tools.write_file_tool import WriteFileTool
 from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
-from ai_whisperer.exceptions import OpenRouterAPIError
+from ai_whisperer.exceptions import OpenRouterAIServiceError
 
 # Load environment variables from .env file
 dotenv.load_dotenv()
@@ -36,15 +37,19 @@ def initialize_path_manager():
 
 @pytest.fixture(scope="session")
 def openrouter_api():
-    """Fixture to provide an OpenRouterAPI instance."""
+    """Fixture to provide an OpenRouterAIService instance."""
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
         pytest.skip("OPENROUTER_API_KEY not set")
 
-    # Create a minimal config dictionary for OpenRouterAPI
+    # Create a minimal config dictionary for OpenRouterAIService
     # Using a commonly available model for integration tests
     openrouter_config_data = {"api_key": api_key, "model": "openai/gpt-3.5-turbo"}
-    return OpenRouterAPI(openrouter_config_data)
+    ai_config = AIConfig(
+        api_key=openrouter_config_data["api_key"],
+        model_id=openrouter_config_data["model"],
+    )
+    return OpenRouterAIService(ai_config)
 
 @pytest.fixture
 def tool_registry():
@@ -113,7 +118,7 @@ def temp_write_file_path():
 # --- Test Cases ---
 
 @pytest.mark.integration
-def test_ai_read_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: ToolRegistry, temp_test_file: tuple):
+def test_ai_read_file_tool_call(openrouter_api: OpenRouterAIService, tool_registry: ToolRegistry, temp_test_file: tuple):
     """
     Test that the AI correctly identifies the need to use the read_file tool
     and formulates the correct tool call when prompted to read a file.
@@ -177,14 +182,14 @@ def test_ai_read_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: To
         # or part of a different test case focusing on tool execution.
         # This test specifically verifies the AI's ability to *call* the tool.
 
-    except OpenRouterAPIError as e:
+    except OpenRouterAIServiceError as e:
         pytest.fail(f"OpenRouter API error during test_ai_read_file_tool_call: {e}")
     except Exception as e:
         pytest.fail(f"An unexpected error occurred during test_ai_read_file_tool_call: {e}")
 
 
 @pytest.mark.integration
-def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: ToolRegistry, temp_write_file_path: str):
+def test_ai_write_file_tool_call(openrouter_api: OpenRouterAIService, tool_registry: ToolRegistry, temp_write_file_path: str):
     """
     Test that the AI correctly identifies the need to use the write_to_file tool
     and formulates the correct tool call when prompted to write to a file.
@@ -243,7 +248,7 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: T
         assert "content" in args
         assert args["content"] == file_content
 
-    except OpenRouterAPIError as e:
+    except OpenRouterAIServiceError as e:
         pytest.fail(f"OpenRouter API error during test_ai_write_file_tool_call: {e}")
     except Exception as e:
         pytest.fail(f"An unexpected error occurred during test_ai_write_file_tool_call: {e}")
@@ -254,7 +259,7 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAPI, tool_registry: T
 
 
 @pytest.mark.integration
-def test_ai_execute_command_tool_call(openrouter_api: OpenRouterAPI, tool_registry: ToolRegistry):
+def test_ai_execute_command_tool_call(openrouter_api: OpenRouterAIService, tool_registry: ToolRegistry):
     """
     Test that the AI correctly identifies the need to use the execute_command tool
     and formulates the correct tool call when prompted to execute a command.
@@ -304,14 +309,14 @@ def test_ai_execute_command_tool_call(openrouter_api: OpenRouterAPI, tool_regist
         assert args["command"] == command_to_execute
         # The execute_command tool has an optional 'cwd' parameter, no need to assert its presence
 
-    except OpenRouterAPIError as e:
+    except OpenRouterAIServiceError as e:
         pytest.fail(f"OpenRouter API error during test_ai_execute_command_tool_call: {e}")
     except Exception as e:
         pytest.fail(f"An unexpected error occurred during test_ai_execute_command_tool_call: {e}")
 
 
 @pytest.mark.integration
-def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_registry: ToolRegistry, temp_test_file: tuple, temp_write_file_path: str):
+def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAIService, tool_registry: ToolRegistry, temp_test_file: tuple, temp_write_file_path: str):
     """
     Test the end-to-end execution of file tools when the AI provides valid parameters.
     This test simulates the full cycle: AI call -> System invokes tool -> Tool executes.
@@ -407,7 +412,7 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_regi
             actual_written_content = f.read()
         assert actual_written_content == write_content
 
-    except OpenRouterAPIError as e:
+    except OpenRouterAIServiceError as e:
         pytest.fail(f"OpenRouter API error during test_ai_tool_valid_params_execution: {e}")
     except Exception as e:
         pytest.fail(f"An unexpected error occurred during test_ai_tool_valid_params_execution: {e}")
@@ -418,7 +423,7 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAPI, tool_regi
 
 
 @pytest.mark.integration
-def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAPI, tool_registry: ToolRegistry):
+def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAIService, tool_registry: ToolRegistry):
     """
     Test that the AI or the system correctly handles attempts to use file tools
     with invalid parameters (e.g., non-existent file path for read, missing content for write).

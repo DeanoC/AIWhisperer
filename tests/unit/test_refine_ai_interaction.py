@@ -2,13 +2,13 @@ import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import os
 
-# Assuming the refine logic is in src/ai_whisperer/main.py and uses OpenRouterAPI
+# Assuming the refine logic is in src/ai_whisperer/main.py and uses OpenRouterAIService
 # We will need to mock the relevant parts of main.py and openrouter_api.py
 # Since the refine command is not yet fully implemented, we will mock the expected interactions.
 
 
-# Mock the OpenRouterAPI and its call_chat_completion method
-class MockOpenRouterAPI:
+# Mock the OpenRouterAIService and its call_chat_completion method
+class MockOpenRouterAIService:
     def __init__(self, config):
         pass
 
@@ -22,7 +22,7 @@ class MockOpenRouterAPI:
 def mock_refine_command_logic(input_file: str, output_dir: str = ".", iterations: int = 1, custom_prompt: str = None):
     """
     Mock function to simulate the core logic of the refine command for testing.
-    In a real scenario, this would call OpenRouterAPI and handle file saving.
+    In a real scenario, this would call OpenRouterAIService and handle file saving.
     """
     # Simulate reading the input file
     try:
@@ -37,7 +37,7 @@ def mock_refine_command_logic(input_file: str, output_dir: str = ".", iterations
 
     # Simulate AI interaction
     # In the actual test, this call will be mocked
-    ai_response_content = MockOpenRouterAPI({}).call_chat_completion(prompt_to_send, "mock-model", {})
+    ai_response_content = MockOpenRouterAIService({}).call_chat_completion(prompt_to_send, "mock-model", {})
 
     # Simulate file saving with iteration numbering
     (base_name, ext) = os.path.splitext(os.path.basename(input_file))
@@ -55,9 +55,9 @@ def mock_refine_command_logic(input_file: str, output_dir: str = ".", iterations
 
 
 class TestRefineAIInteraction(unittest.TestCase):
-    @patch("ai_whisperer.ai_service_interaction.OpenRouterAPI", new=MockOpenRouterAPI)
+    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
-    @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAPI.call_chat_completion")
+    @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")
     def test_prompt_construction_default(self, mock_call_chat_completion, mock_file_open):
         """
         Test that the default prompt is constructed correctly.
@@ -86,9 +86,9 @@ class TestRefineAIInteraction(unittest.TestCase):
             mock_call_chat_completion.assert_called_once_with(expected_prompt, "mock-model", {})
             mock_file_open_inner.assert_any_call(os.path.join(".", "test_requirements_v1.md"), "w")
 
-    @patch("ai_whisperer.ai_service_interaction.OpenRouterAPI", new=MockOpenRouterAPI)
+    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
-    @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAPI.call_chat_completion")
+    @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")
     def test_prompt_construction_custom(self, mock_call_chat_completion, mock_file_open):
         """
         Test that a custom prompt is used when provided.
@@ -115,9 +115,9 @@ class TestRefineAIInteraction(unittest.TestCase):
             mock_call_chat_completion.assert_called_once_with(custom_prompt_content, "mock-model", {})
             mock_file_open_inner.assert_any_call(os.path.join(".", "test_requirements_v1.md"), "w")
 
-    @patch("ai_whisperer.ai_service_interaction.OpenRouterAPI", new=MockOpenRouterAPI)
+    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
-    @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAPI.call_chat_completion")
+    @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")
     def test_handle_mocked_ai_response_and_save(self, mock_call_chat_completion, mock_file_open):
         """
         Test that the mocked AI response is handled and saved correctly.
@@ -157,9 +157,9 @@ class TestRefineAIInteraction(unittest.TestCase):
             self.assertIsNotNone(inner_write_handle_mock, "Write mock handle not found")
             inner_write_handle_mock.write.assert_called_once_with(f"Refined content iteration 1:\n{mock_ai_response}")
 
-    @patch("ai_whisperer.ai_service_interaction.OpenRouterAPI", new=MockOpenRouterAPI)
+    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
-    @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAPI.call_chat_completion")
+    @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")
     def test_file_saving_with_iterations(self, mock_call_chat_completion, mock_file_open):
         """
         Test that files are saved with correct iteration numbering.

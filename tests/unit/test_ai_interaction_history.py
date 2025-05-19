@@ -3,11 +3,12 @@ import os
 from unittest.mock import MagicMock, patch
 from dotenv import load_dotenv
 
-from ai_whisperer.ai_service_interaction import OpenRouterAPI, ConfigError
+from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
 
 
 # Mock the requests.post call to prevent actual API calls during testing
-@patch("ai_whisperer.ai_service_interaction.requests.post")
+@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
 def test_chat_completion_with_history(mock_post):
     # Configure the mock to return a successful response with dummy data
     mock_response = MagicMock()
@@ -40,14 +41,23 @@ def test_chat_completion_with_history(mock_post):
                 "api_key": os.environ.get("OPENROUTER_API_KEY", "fake-key-from-env"),  # Load from mocked env
                 "model": "test-model",
                 "params": {"temperature": 0.7, "max_tokens": 50000},
-                "site_url": "http://AIWhisperer:8000",
-                "app_name": "AIWhisperer",
+                "site_url": "http://test:8080",
+                "app_name": "test",
             }
         }
 
         with patch("ai_whisperer.config.load_config", return_value=mock_config):
-            # Now OpenRouterAPI should be initialized with the mocked config
-            api = OpenRouterAPI(mock_config["openrouter"])
+            # Now OpenRouterAIService should be initialized with the mocked config
+            # Map relevant config values to AIConfig arguments
+            ai_config = AIConfig(
+                api_key=mock_config.get('openrouter', {}).get('api_key', ''),  # Use the OpenRouter API key
+                model_id=mock_config.get('id'), # Use the selected model's ID
+                temperature=mock_config.get('openrouter', {}).get('params', {}).get('temperature', 0.7), # Assuming temperature is here
+                max_tokens=mock_config.get('openrouter', {}).get('params', {}).get('max_tokens', None), # Assuming max_tokens is here
+                site_url=mock_config.get('openrouter', {}).get('site_url', 'http://AIWhisperer:8000'),  # Default site_url
+                app_name= mock_config.get('openrouter', {}).get('app_name', 'AIWhisperer'),  # Default app_name
+            )
+            api = OpenRouterAIService(ai_config)
 
             # Define a sample conversation history
             messages_history = [{"role": "user", "content": "Hello"}, {"role": "assistant", "content": "Hi there!"}]
@@ -69,9 +79,9 @@ def test_chat_completion_with_history(mock_post):
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={
                     "Authorization": "Bearer fake-key-from-env",
-                    "Content-Type": "application/json",  # Add Content-Type header
-                    "HTTP-Referer": "http://AIWhisperer:8000",  # Default site_url
-                    "X-Title": "AIWhisperer",  # Default app_name
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "http://test:8080",
+                    "X-Title": "test",
                 },
                 json={
                     "model": "test-model",
@@ -86,7 +96,7 @@ def test_chat_completion_with_history(mock_post):
             assert response['message']['content'] == "This is a test response."
 
 
-@patch("ai_whisperer.ai_service_interaction.requests.post")
+@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
 def test_chat_completion_with_multi_turn_history(mock_post):
     """Test that chat completion works correctly with a longer conversation history (3 turns)."""
     # Configure the mock to return successful responses with dummy data
@@ -120,9 +130,18 @@ def test_chat_completion_with_multi_turn_history(mock_post):
             }
         }
 
+        ai_config = AIConfig(
+            api_key=mock_config["openrouter"]["api_key"],
+            model_id=mock_config["openrouter"]["model"],
+            temperature=mock_config["openrouter"]["params"]["temperature"],
+            max_tokens=mock_config["openrouter"]["params"]["max_tokens"],
+            site_url=mock_config["openrouter"]["site_url"],
+            app_name=mock_config["openrouter"]["app_name"],
+        )
+
         with patch("ai_whisperer.config.load_config", return_value=mock_config):
             # Initialize the API
-            api = OpenRouterAPI(mock_config["openrouter"])
+            api = OpenRouterAIService(ai_config)
 
             # First turn: Ask for a country
             response1 = api.call_chat_completion(

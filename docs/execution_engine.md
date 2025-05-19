@@ -20,7 +20,7 @@ Based on the design and implementation, the key components and concepts are:
 * **Configuration**: The global configuration dictionary, providing settings like AI service details.
 * **Task Queue**: Internally, the `ExecutionEngine` processes tasks from a list which can be thought of as a queue, executing them in the order provided by the plan.
 * **Agent Type Handlers**: A dispatch table (`self.agent_type_handlers`) used to route tasks to specialized handler methods based on the task's `agent_spec.type`.
-* **AI Service Interaction (`OpenRouterAPI`)**: For tasks requiring AI communication, the engine utilizes an instance of the `OpenRouterAPI` class (from `src/ai_whisperer/ai_service_interaction.py`). This component handles direct communication with the OpenRouter service.
+* **AI Service Interaction (`OpenRouterAIService`)**: For tasks requiring AI communication, the engine utilizes an instance of the `OpenRouterAIService` class (from `src/ai_whisperer/ai_service_interaction.py`). This component handles direct communication with the OpenRouter service.
 * **Error Handling**: Mechanisms within the `execute_plan` method and individual task handlers to catch exceptions during task execution and update the task state accordingly.
 
 ## Processing a Plan (Workflow)
@@ -65,7 +65,7 @@ The `ExecutionEngine` uses a dispatch mechanism to handle different types of tas
 This method is invoked for tasks with `agent_spec.type` set to `"ai_interaction"`. It orchestrates the communication with an AI service.
 
 * **Configuration**: AI configurations are determined by merging global settings (from `self.config['openrouter']`) with any task-specific `ai_config` provided in the task's `agent_spec`.
-* **AI Service Initialization**: An instance of `OpenRouterAPI` is created using the merged configuration. `ConfigError` is handled if essential AI configurations (like the API key) are missing.
+* **AI Service Initialization**: An instance of `OpenRouterAIService` is created using the merged configuration. `ConfigError` is handled if essential AI configurations (like the API key) are missing.
 
 * **Input Processing & Prompt Construction**:
   * Extracts `instructions` and `input_artifacts` from the task definition and agent specification.
@@ -82,9 +82,9 @@ This method is invoked for tasks with `agent_spec.type` set to `"ai_interaction"
     * `ask_landmark_in_capital`: Uses `landmark_selection.md` and `capital_validation_result.md`, proceeding only if capital validation passed.
   * If prerequisite validation steps fail, the AI call for dependent tasks is skipped, and this is noted in the output artifact.
 * **Conversation History Management**: A `messages_history` list is built by retrieving the prompt and response from previously completed `"ai_interaction"` tasks stored in the `StateManager`. This history is included in the AI request to maintain conversation context.
-* **AI Service Call**: The `OpenRouterAPI` instance is used to call either `stream_chat_completion` (for streaming responses) or `chat_completion` (for non-streaming), passing the constructed prompt, conversation history, and AI parameters.
+* **AI Service Call**: The `OpenRouterAIService` instance is used to call either `stream_chat_completion` (for streaming responses) or `chat_completion` (for non-streaming), passing the constructed prompt, conversation history, and AI parameters.
 * **Response Handling & Storage**: The AI's textual response is processed. The result, typically a dictionary containing the original `prompt` and the AI `response`, is stored using the `StateManager`. The AI's response is also written to an output artifact file if specified in `agent_spec.output_artifacts`.
-* **Error Handling**: Catches specific exceptions from `OpenRouterAPI` (e.g., `OpenRouterAPIError`, `OpenRouterAuthError`, `OpenRouterRateLimitError`, `OpenRouterConnectionError`). These errors are logged, and a `TaskExecutionError` is raised to mark the task as failed.
+* **Error Handling**: Catches specific exceptions from `OpenRouterAIService` (e.g., `OpenRouterAIServiceError`, `OpenRouterAuthError`, `OpenRouterRateLimitError`, `OpenRouterConnectionError`). These errors are logged, and a `TaskExecutionError` is raised to mark the task as failed.
 
 ### Handling Planning Tasks (`_handle_planning`)
 

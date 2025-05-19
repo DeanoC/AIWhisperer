@@ -10,7 +10,7 @@ from unittest.mock import patch, MagicMock, mock_open, call, ANY
 
 # Assuming the core logic will be in ai_whisperer.subtask_generator
 # Import necessary exceptions and potentially the class/functions once they exist
-from ai_whisperer.exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAPIError, PromptNotFoundError
+from ai_whisperer.exceptions import ConfigError, SubtaskGenerationError, SchemaValidationError, OpenRouterAIServiceError, PromptNotFoundError
 
 import logging
 
@@ -201,9 +201,9 @@ Produce **only** the JSON document, enclosed in ```json fences.
 
 @pytest.fixture
 def mock_openrouter_client():
-    """Fixture to mock the OpenRouterAPI client."""
-    # Adjust the patch target based on where OpenRouterAPI will be instantiated
-    with patch("ai_whisperer.subtask_generator.OpenRouterAPI") as mock_cls:
+    """Fixture to mock the OpenRouterAIService client."""
+    # Adjust the patch target based on where OpenRouterAIService will be instantiated
+    with patch("ai_whisperer.subtask_generator.OpenRouterAIService") as mock_cls:
         mock_instance = MagicMock()
         # Set attributes on the mock instance if they are accessed directly
         mock_instance.model = MOCK_CONFIG["openrouter"]["model"]
@@ -404,7 +404,7 @@ def test_generate_subtask_ai_error(tmp_path, mock_openrouter_client, initialize_
         mock_resolve_path.side_effect = lambda path_pattern: str(schema_path) if path_pattern == "{app_path}/schemas/subtask_schema.json" else path_pattern
 
         generator = SubtaskGenerator(loaded_config)
-        mock_openrouter_client.call_chat_completion.side_effect = OpenRouterAPIError("AI failed")
+        mock_openrouter_client.call_chat_completion.side_effect = OpenRouterAIServiceError("AI failed")
 
         with pytest.raises(SubtaskGenerationError, match="AI interaction failed"):
             generator.generate_subtask(VALID_INPUT_STEP)
