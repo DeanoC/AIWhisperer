@@ -1,4 +1,48 @@
 
+App {
+    layout: grid;
+    grid-rows: auto 1fr auto; /* Header, main content (fills space), Footer */
+    grid-columns: 1fr;       /* Single column for the App's main structure */
+    height: 100vh;           /* Make App fill the full viewport height */
+    width: 100vw;            /* Make App fill the full viewport width */
+}
+
+Container#main_content {
+    layout: grid;
+    grid-size: 2 1;          /* Explicitly 2 columns, 1 row */
+    grid-columns: 1fr 4fr;   /* Define the widths of these 2 columns */
+    /* height and width will be determined by its cell in the App grid */
+}
+
+ListView#model_list {
+    /* width: 10%; Removed to allow grid to control width */
+    height: 100%;
+    min-height: 5;
+    max-height: 100%;
+    border: solid green;
+    overflow: auto;
+}
+
+Static#chat_window {
+    /* width: 90%; Removed to allow grid to control width */
+    height: 100%;
+    min-height: 5;
+    max-height: 100%;
+    overflow: auto;
+    border: solid red;
+    position: relative; /* Needed for absolute positioning of children */
+}
+
+ListItem {
+    padding: 0 1;
+    height: auto;
+    min-height: 1;
+}
+
+ListItem:hover {
+    background: $accent-darken-2;
+}
+
 Static.user-message {
     background: rgb(33, 126, 212) !important;
     color: black !important;
@@ -19,13 +63,4 @@ Static.ai-message {
     margin-right: 1;
     border: solid rgb(18, 149, 18);
     padding: 0 1;
-}
-Static.user-message {
-    background: rgb(33, 126, 212) !important;
-    color: black !important;
-}
-
-Static.ai-message {
-    background: rgb(18, 149, 18) !important;
-    color: black !important;
 }
