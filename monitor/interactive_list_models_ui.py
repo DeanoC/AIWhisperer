@@ -1,5 +1,13 @@
-from textual.events import MouseMove
+from textual.events import MouseMove, Key
 from textual.message import Message  # <-- Ensure Message is imported before use
+from textual.widgets import Input
+from typing import Any, Optional
+from textual.widgets import ListView, ListItem, Label, Static, Header, Footer, Tooltip # Added Header, Footer, Tooltip
+from textual.containers import Container # Import Container
+from textual.message import Message # Import Message
+from textual.reactive import var # Import var
+from textual import on # Import on
+
 # Floating tooltip message
 class ShowTooltipMessage(Message):
     def __init__(self, tooltip_text: str, x: int, y: int) -> None:
@@ -7,15 +15,8 @@ class ShowTooltipMessage(Message):
         self.tooltip_text = tooltip_text
         self.x = x
         self.y = y
-
 class HideTooltipMessage(Message):
     pass
-from typing import Any, Optional
-from textual.widgets import ListView, ListItem, Label, Static, Header, Footer, Tooltip # Added Header, Footer, Tooltip
-from textual.containers import Container # Import Container
-from textual.message import Message # Import Message
-from textual.reactive import var # Import var
-from textual import on # Import on
 
 # Define a custom message for AI chunks
 class AIChunkMessage(Message):
@@ -67,10 +68,11 @@ from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.model_info_provider import ModelInfoProvider
-from ai_whisperer.interactive_ai import ask_ai_about_model_interactive
+from ai_whisperer.interactive_ai import InteractiveAI
 import logging
 from .interactive_ui_base import InteractiveUIBase
 from rich.text import Text  # <-- Add this import
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +88,7 @@ class InteractiveListModelsUI(InteractiveUIBase):
     models: list = []
     selected_model: dict | None = None
     _current_ai_message_widget: Optional[Static] = None  # Added for streaming AI messages
-    
+
     def __init__(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
         super().__init__(config=config,
                           ai_config=ai_config,
@@ -99,6 +101,28 @@ class InteractiveListModelsUI(InteractiveUIBase):
         self._current_ai_message_widget = None # Initialize here as well
         self.dark = False
         self.theme = self.THEME_LIGHT
+
+        # Register the receiver within the worker
+        self._delegate_manager.register_notification(
+            "ai_loop.message.ai_chunk_received", self.ai_chunk_receiver
+        )
+        # Ensure the event loop is running
+        loop = asyncio.get_event_loop()
+        self.interactive_ai_task = loop.create_task(self.initialize())  # Start async initialization
+
+    async def initialize(self):
+        """Asynchronous initialization logic."""
+        self.interactive_ai = InteractiveAI(
+            model=self.selected_model,
+            ai_config=self._ai_config,
+            delegate_manager=self._delegate_manager,
+            context_manager=self._context_manager
+        )
+        await self.interactive_ai.start_interactive_ai_session(
+            "You are an AI assistant that provides information about AI models that OpenRouter supports."
+        )
+        logger.info("Interactive AI session started")
+
     def on_mount(self) -> None:
         super().on_mount()
         self.set_theme(self.theme)
@@ -117,12 +141,22 @@ class InteractiveListModelsUI(InteractiveUIBase):
         model_provider = ModelInfoProvider(self._config)
         models = model_provider.list_models()
         self.display_model_list(models)
-
+        # Ensure the Input widget captures key events
+        command_input = self.query_one("#command_input", Input)
+        command_input.capture_key_events = True
+        command_input.on_key = self.on_key  # Bind the key event handler
+        command_input.focus()  # Focus the command input area on mount
+        
     def compose(self):
         yield Header()  # Yield Header first
-        with Container(id="main_content"): # Container for model list and chat window
+        with Container(id="main_content"):
             yield ListView(id="model_list")
-            yield Static(id="chat_window") # Chat window to the right
+            # Chat area with chat window and command editor stacked vertically
+            with Container(id="chat_area", classes="chat-area"):
+                yield Static(id="chat_window")  # Chat window (messages)
+                # Command editor at the bottom (single line)
+                yield Static("Commands", id="command_label", classes="command-label")
+                yield Input(id="command_input", classes="command-input")
         # Floating tooltip (initially hidden)
         yield Static("", id="floating_tooltip", classes="floating-tooltip")
         yield Footer()  # Yield Footer last
@@ -194,44 +228,24 @@ class InteractiveListModelsUI(InteractiveUIBase):
             if self.selected_model:
                 self.call_later(self.ask_ai_about_model)
 
+    def ai_chunk_receiver(self, sender: Any, event_data: dict) -> None:
+        content_chunk = event_data.get("delta_content") if isinstance(event_data, dict) and "delta_content" in event_data else str(event_data)
+
+        if not content_chunk: # Skip empty or None chunks
+            return
+
+        # Determine lines in chunk, keeping terminators for accurate newline detection
+        lines_in_chunk = content_chunk.splitlines(keepends=True)
+        if not lines_in_chunk and content_chunk: # Handles case where content_chunk is not empty but has no newlines
+            lines_in_chunk = [content_chunk]
+
+        # Post a message to the main thread
+        self.post_message(AIChunkMessage(lines_in_chunk))
+
     async def _run_ask_ai_worker(self) -> None:
-        """Runs the ask_ai_about_model_interactive in a worker thread."""
-        # log_container = self.query_one("#chat_window", Static) # No longer needed in worker
+        """Runs the ask_ai_about_model_interactive"""
+        await self.interactive_ai.wait_for_idle()  # Ensure AI loop is idle before starting
 
-        def ai_chunk_receiver(sender: Any, event_data: dict) -> None:
-            content_chunk = event_data.get("delta_content") if isinstance(event_data, dict) and "delta_content" in event_data else str(event_data)
-            
-            if not content_chunk: # Skip empty or None chunks
-                return
-
-            # Determine lines in chunk, keeping terminators for accurate newline detection
-            lines_in_chunk = content_chunk.splitlines(keepends=True)
-            if not lines_in_chunk and content_chunk: # Handles case where content_chunk is not empty but has no newlines
-                lines_in_chunk = [content_chunk]
-
-            # Post a message to the main thread
-            self.post_message(AIChunkMessage(lines_in_chunk))
-
-        # Register the receiver within the worker
-        self._delegate_manager.register_notification(
-            "ai_loop.message.ai_chunk_received", ai_chunk_receiver
-        )
-
-        try:
-            await ask_ai_about_model_interactive(
-                model=self.selected_model,
-                prompt=f"Tell me about the model: {self.selected_model.get('id')}",
-                ai_config=self._ai_config,
-                delegate_manager=self._delegate_manager,
-                context_manager=self._context_manager
-            )
-        finally:
-            # Unregister the receiver when the worker finishes
-            self._delegate_manager.unregister_notification(
-                "ai_loop.message.ai_chunk_received", ai_chunk_receiver
-            )
-
-    async def ask_ai_about_model(self) -> None:
         log_container = self.query_one("#chat_window", Static) # Renamed for clarity
 
         # Show the model's full description before asking the AI
@@ -250,6 +264,11 @@ class InteractiveListModelsUI(InteractiveUIBase):
 
         self._current_ai_message_widget = None # Reset before new AI response stream
 
+        await self.interactive_ai.send_message(
+            message=f"Tell me about the model: {self.selected_model.get('id')}"
+        )
+
+    async def ask_ai_about_model(self) -> None:
         # Run the AI interaction in a worker thread
         self.run_worker(self._run_ask_ai_worker)
 
@@ -288,3 +307,13 @@ class InteractiveListModelsUI(InteractiveUIBase):
 
             if has_newline:
                 self.current_ai_message_widget = None # This line is complete, next part/chunk starts new Static
+
+    def on_key(self, event: Key) -> None:
+        """Handle key press events in the command input."""
+        command_input = self.query_one("#command_input", Input)
+        if event.key == "enter":
+            user_input = command_input.value.strip()
+            if user_input:
+                self._write_user_message(self.query_one("#chat_window", Static), user_input)
+                command_input.value = ""  # Clear the input field
+                asyncio.create_task(self.interactive_ai.send_message(message=user_input))

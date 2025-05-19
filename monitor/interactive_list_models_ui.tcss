@@ -1,3 +1,5 @@
+
+
 /* Remove all borders from the floating tooltip (Textual CSS) */
 #floating_tooltip.floating-tooltip {
     border: none;
@@ -15,7 +17,7 @@ App {
 Container#main_content {
     layout: grid;
     grid-size: 2 1;          /* Explicitly 2 columns, 1 row */
-    grid-columns: 1fr 4fr;   /* Define the widths of these 2 columns */
+    grid-columns: 2fr 5fr;   /* Define the widths of these 2 columns */
     /* height and width will be determined by its cell in the App grid */
 }
 
@@ -28,14 +30,44 @@ ListView#model_list {
     overflow: auto;
 }
 
-Static#chat_window {
-    /* width: 90%; Removed to allow grid to control width */
+Static.command-label {
+    height: 1;
+    color: $text;
+    background: $background;
+    padding-left: 1;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+/* Chat area layout: stack chat window and command input vertically */
+Container#chat_area.chat-area {
+    layout: vertical;
     height: 100%;
+    min-height: 10;
+}
+
+Static#chat_window {
+    min-height: 5;
+    max-height: 100%;
+    overflow: auto;
+    border: solid red;
+}
+
+Static#chat_window {
+    height: 85%;
     min-height: 5;
     max-height: 100%;
     overflow: auto;
     border: solid red;
     position: relative; /* Needed for absolute positioning of children */
+}
+#command_input.command-input {
+    height: 5;
+    min-height: 3;
+    max-height: 5;
+    border: solid #888;
+    background: $background;
+    color: $text;
+    padding: 0 1;
 }
 
 ListItem {

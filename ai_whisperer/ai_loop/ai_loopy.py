@@ -30,7 +30,6 @@ class AILoop:
         self.pause_event.set() # Start in unpaused state
         self._user_message_queue = asyncio.Queue()
         self._tool_result_queue = asyncio.Queue()
-        self._user_input_event = asyncio.Event() # Event to signal new user input or tool result
         self._session_task = None
         self._tool_registry = None # To be set during start_session if provided
         self._state = SessionState.NOT_STARTED
@@ -287,7 +286,6 @@ class AILoop:
         if self._session_task:
             try:
                 logger.debug(f"stop_session: waiting for _session_task: {self._session_task}")
-                self._user_input_event.set()
                 await asyncio.wait_for(self._session_task, timeout=5.0)
                 logger.debug("AILoop session task finished.")
             except asyncio.TimeoutError:
@@ -321,7 +319,6 @@ class AILoop:
     async def send_user_message(self, message: str):
         logger.debug(f"Received user message: {message}")
         await self._user_message_queue.put(message)
-        self._user_input_event.set() # Signal that new user input is available
 
     async def _handle_start_session(self, **kwargs):
         tool_registry = kwargs.get("tool_registry")
@@ -340,14 +337,12 @@ class AILoop:
         message = kwargs.get("message")
         if message:
             await self.send_user_message(message)
-            self._user_input_event.set()
 
     async def _handle_provide_tool_result(self, **kwargs):
         result = kwargs.get("result")
         if result is not None:
             logger.debug(f"Received tool result via delegate: {result}")
             await self._tool_result_queue.put(result)
-            self._user_input_event.set()
 
         # Try processing user message queue first
         processed_queue_item = False
