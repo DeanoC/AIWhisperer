@@ -1,21 +1,16 @@
 import logging
-
-from monitor.interactive_list_models_ui import InteractiveListModelsUI
-
-# Allow test patching of config by making it a module attribute
-config = None
 import sys
-
+from ai_whisperer.ai_loop.ai_config import AIConfig
 from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
-from .cli import cli
+from ai_whisperer.cli import cli
 from ai_whisperer.delegate_manager import DelegateManager
 from monitor.user_message_delegate import UserMessageAttribs, UserMessageColour, UserMessageLevel
-from monitor.interactive_ui_base import InteractiveUIBase
-from ai_whisperer.execution_engine import ExecutionEngine # Import ExecutionEngine
-from ai_whisperer.context_management import ContextManager # Import ContextManager
-from ai_whisperer.config import load_config # Import load_config
+from ai_whisperer.context_management import ContextManager
+from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
 
 logger = logging.getLogger(__name__)
+# Allow test patching of config by making it a module attribute
+config = None
 
 # Entry point for the application
 if __name__ == "__main__":
@@ -46,13 +41,16 @@ if __name__ == "__main__":
             logger.debug("Interactive mode enabled. Running Textual app.")
             logger.info("Interactive mode enabled. Running Textual app.")
 
+            ai_config = AIConfig(
+                api_key= config.get("openrouter", {}).get("api_key", ""),
+                model_id= config.get("openrouter", {}).get("model_id", "gpt-4"),
+                temperature=config.get("openrouter", {}).get("params", {}).get("temperature", 0.7),
+                max_tokens=config.get("openrouter", {}).get("params", {}).get("max_tokens", None),
+            )
+
             # Properly instantiate ExecutionEngine with all required arguments
-            from ai_whisperer.state_management import StateManager
-            from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
-            state_manager = StateManager("dummy_state.json")
             prompt_config = PromptConfiguration(config)
             prompt_system = PromptSystem(prompt_config=prompt_config)
-            engine = ExecutionEngine(state_manager, config, prompt_system, delegate_manager)
             context_manager = ContextManager() # Create a ContextManager instance
             delegate_manager.set_shared_state("original_delegate_user_message_display", ansi_handler.display_message)
 
@@ -66,7 +64,7 @@ if __name__ == "__main__":
             # Only process the first command for interactive mode
             interactive_app = commands[0].setup_ui(
                 config=config,
-                engine=engine,
+                ai_config=ai_config,
                 delegate_manager=delegate_manager,
                 context_manager=context_manager
             )

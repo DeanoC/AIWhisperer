@@ -1,30 +1,34 @@
-from typing import Optional
-from textual.widgets import ListView, ListItem, Label, Log
+from typing import Any, Optional
+from textual.widgets import ListView, ListItem, Label, Static
+from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.delegate_manager import DelegateManager
-from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.model_info_provider import ModelInfoProvider
 from ai_whisperer.interactive_ai import ask_ai_about_model_interactive
 import logging
 from .interactive_ui_base import InteractiveUIBase
+from rich.text import Text  # <-- Add this import
 
 logger = logging.getLogger(__name__)
 
 class InteractiveListModelsUI(InteractiveUIBase):
+    CSS_PATH = "interactive_list_models_ui.tcss"
     """A Textual app for listing models and interacting with them, inheriting from InteractiveUIBase."""
 
     models: list = []
     selected_model: dict | None = None
+    _current_ai_message_widget: Optional[Static] = None  # Added for streaming AI messages
     
-    def __init__(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs):
+    def __init__(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
         super().__init__(config=config,
-                          engine=engine,
+                          ai_config=ai_config,
                           delegate_manager=delegate_manager,
                           context_manager=context_manager,
                           **kwargs)
         logger.info("InteractiveListModelsUI initialized")
         self.models = []
         self.selected_model = None
+        self._current_ai_message_widget = None # Initialize here as well
 
     def on_mount(self) -> None:
         super().on_mount()
@@ -36,7 +40,7 @@ class InteractiveListModelsUI(InteractiveUIBase):
         yield from super().compose()
         yield ListView(id="model_list")
         yield ListView(id="model_options", classes="hidden")
-        yield Log()
+        yield Static(id="message_log")  # Ensure the message log is composed
 
     def display_model_list(self, models: list) -> None:
         self.models = models
@@ -45,6 +49,14 @@ class InteractiveListModelsUI(InteractiveUIBase):
         for model in models:
             model_id = model.get('id', 'N/A')
             model_list_view.append(ListItem(Label(model_id)))
+
+    def _write_user_message(self, log_widget, message: str):
+        # Add a user message as a Static widget with user-message class
+        log_widget.mount(Static(message, classes="user-message"))
+
+    def _write_ai_message(self, log_widget, message: str):
+        # Add an AI message as a Static widget with ai-message class
+        log_widget.mount(Static(message, classes="ai-message"))
 
     async def on_list_view_selected(self, event: ListView.Selected) -> None:
         logger.debug(f"on_list_view_selected called. event.list_view.id: {event.list_view.id}")
@@ -64,7 +76,7 @@ class InteractiveListModelsUI(InteractiveUIBase):
     def show_model_options(self) -> None:
         model_list_view = self.query_one("#model_list", ListView)
         model_options_view = self.query_one("#model_options", ListView)
-        text_log = self.query_one(Log)
+        text_log = self.query_one("#message_log", Static)
         model_list_view.add_class("hidden")
         model_options_view.remove_class("hidden")
         text_log.add_class("hidden")
@@ -73,16 +85,60 @@ class InteractiveListModelsUI(InteractiveUIBase):
         model_options_view.append(ListItem(Label("Back to model list")))
 
     async def ask_ai_about_model(self) -> None:
-        self.query_one(Log).write(f"Asking AI about {self.selected_model.get('id')}...")
+        log_container = self.query_one("#message_log", Static) # Renamed for clarity
+        # User prompt
+        self._write_user_message(log_container, f"Asking AI about {self.selected_model.get('id')}...")
+
+        self._current_ai_message_widget = None # Reset before new AI response stream
+
+        # Define the receiver function
+        def ai_chunk_receiver(sender: Any, event_data: dict) -> None:
+            content_chunk = event_data.get("delta_content") if isinstance(event_data, dict) and "delta_content" in event_data else str(event_data)
+            
+            if not content_chunk: # Skip empty or None chunks
+                return
+
+            # Determine lines in chunk, keeping terminators for accurate newline detection
+            # If content_chunk itself has no newlines, treat it as a single line part
+            lines_in_chunk = content_chunk.splitlines(keepends=True)
+            if not lines_in_chunk and content_chunk: # Handles case where content_chunk is not empty but has no newlines
+                lines_in_chunk = [content_chunk]
+
+
+            for line_part in lines_in_chunk:
+                if not line_part: # Skip empty strings that might result from splitlines
+                    continue
+
+                has_newline = '\\n' in line_part
+
+                if self._current_ai_message_widget is None:
+                    self._current_ai_message_widget = Static(line_part, classes="ai-message")
+                    log_container.mount(self._current_ai_message_widget)
+                else:
+                    # Append to existing Static widget
+                    # Static.renderable can be Text or str. Text + str works.
+                    self._current_ai_message_widget.update(self._current_ai_message_widget.renderable + line_part)
+
+                if has_newline:
+                    self._current_ai_message_widget = None # This line is complete, next part/chunk starts new Static
+        
+        # Register the receiver
+        self._delegate_manager.register_notification(
+            "ai_loop.message.ai_chunk_received", ai_chunk_receiver
+        )
+
         try:
             await ask_ai_about_model_interactive(
                 model=self.selected_model,
                 prompt=f"Tell me about the model: {self.selected_model.get('id')}",
-                engine=self._engine,
+                ai_config=self._ai_config,
                 delegate_manager=self._delegate_manager,
                 context_manager=self._context_manager
             )
         finally:
+            self._delegate_manager.unregister_notification(
+                "ai_loop.message.ai_chunk_received", ai_chunk_receiver
+            )
             await self.back_to_model_list()
 
     async def back_to_model_list(self) -> None:
@@ -97,7 +153,7 @@ class InteractiveListModelsUI(InteractiveUIBase):
         except Exception:
             pass
         try:
-            text_log = self.query_one(Log)
+            text_log = self.query_one("#message_log", Static)
             text_log.remove_class("hidden")
         except Exception:
             pass

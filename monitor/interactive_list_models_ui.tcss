@@ -1,0 +1,31 @@
+
+Static.user-message {
+    background: rgb(33, 126, 212) !important;
+    color: black !important;
+    align-horizontal: left !important;
+    text-align: left !important;
+    margin-left: 1;
+    margin-right: 10;
+    border: solid rgb(33, 126, 212);
+    padding: 0 1;
+}
+
+Static.ai-message {
+    background: rgb(18, 149, 18) !important;
+    color: black !important;
+    align-horizontal: right !important;
+    text-align: right !important;
+    margin-left: 10;
+    margin-right: 1;
+    border: solid rgb(18, 149, 18);
+    padding: 0 1;
+}
+Static.user-message {
+    background: rgb(33, 126, 212) !important;
+    color: black !important;
+}
+
+Static.ai-message {
+    background: rgb(18, 149, 18) !important;
+    color: black !important;
+}

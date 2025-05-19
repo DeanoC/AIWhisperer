@@ -3,10 +3,9 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Log
 from textual.widgets import ListView, ListItem, Label
 
+from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.delegate_manager import DelegateManager # Import DelegateManager
-from ai_whisperer.execution_engine import ExecutionEngine # Import ExecutionEngine
 from ai_whisperer.context_management import ContextManager # Import ContextManager
-from ai_whisperer.model_info_provider import ModelInfoProvider
 from ai_whisperer.config import load_config
 import logging # Import logging
 import signal # Import signal
@@ -20,17 +19,17 @@ class InteractiveUIBase(App):
 
     CTRL_C_TIMEOUT = 0.5 # Seconds
 
-    def __init__(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs):
+    def __init__(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
         """Initialize the InteractiveUIBase with dependencies."""
         super().__init__(**kwargs)
         self._delegate_manager = delegate_manager
-        self._engine = engine
+        self._ai_config = ai_config
         self._context_manager = context_manager
         self._config = config  # Store the passed config
         self._ai_runner_shutdown_event: Optional[threading.Event] = None # Instance variable for shutdown event
         self._ctrl_c_pressed_time: float = 0 # Instance variable for Ctrl-C timestamp
-        logger.debug("InteractiveUIBase initialized with delegate_manager, engine, context_manager, and config.")
-
+        logger.debug("InteractiveUIBase initialized with delegate_manager, ai_config, context_manager, and config.")
+ 
 
     def on_mount(self) -> None:
         """Called when the app is mounted."""
@@ -86,4 +85,3 @@ class InteractiveUIBase(App):
         """Handle incoming messages as a delegate (sender, event_data)."""
         # For compatibility, extract message if present
         message = event_data["message"] if isinstance(event_data, dict) and "message" in event_data else str(event_data)
-        # Existing logic (if any) can go here

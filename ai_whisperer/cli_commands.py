@@ -8,6 +8,7 @@ from pathlib import Path
 import threading # Import threading
 from typing import Optional
 
+from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.execution_engine import ExecutionEngine
@@ -39,7 +40,7 @@ class BaseCliCommand(ABC):
         pass
 
     @abstractmethod
-    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
         """Sets up the UI for the command if applicable."""
         pass
 
@@ -117,11 +118,11 @@ class ListModelsCliCommand(BaseCliCommand):
                     event_data={"message": model_text, "level": UserMessageLevel.INFO}
                 )
         return 0
-    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
         logger.debug(f"Type of delegate_manager: {type(delegate_manager)}")
         return InteractiveListModelsUI(
             delegate_manager=delegate_manager,
-            engine=engine,
+            ai_config=ai_config,
             context_manager=context_manager,
             config=config
         )
@@ -149,10 +150,10 @@ class GenerateInitialPlanCliCommand(BaseCliCommand):
 
         logger.debug(f"[green]Successfully generated task JSON: {result_path}[/green]")
         return 0
-    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
         return InteractiveUIBase(
             delegate_manager=delegate_manager,
-            engine=engine,
+            ai_config=ai_config,
             context_manager=context_manager,
             config=config
         )
@@ -182,10 +183,10 @@ class GenerateOverviewPlanCliCommand(BaseCliCommand):
             logger.debug(f"  {i}. {subtask_path}")
 
         return 0
-    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
         return InteractiveUIBase(
             delegate_manager=delegate_manager,
-            engine=engine,
+            ai_config=ai_config,
             context_manager=context_manager,
             config=config
         )
@@ -218,10 +219,10 @@ class RefineCliCommand(BaseCliCommand):
         #     current_input_file = result
         # logger.debug(f"[green]Successfully refined requirements: {result}[/green]")
         return 0 # Or appropriate exit code
-    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
         return InteractiveUIBase(
             delegate_manager=delegate_manager,
-            engine=engine,
+            ai_config=ai_config,
             context_manager=context_manager,
             config=config
         )
@@ -368,10 +369,10 @@ class RunCliCommand(BaseCliCommand):
             return 0
         else:
             return 1
-    def setup_ui(self, delegate_manager: DelegateManager, engine: ExecutionEngine, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
         return InteractiveUIBase(
             delegate_manager=delegate_manager,
-            engine=engine,
+            ai_config=ai_config,
             context_manager=context_manager,
             config=config
         )
