@@ -1,3 +1,11 @@
+/* Ensure MultiLineInput fills the available width in the chat area */
+MultiLineInput {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    align-horizontal: center;
+}
 
 
 /* Remove all borders from the floating tooltip (Textual CSS) */
@@ -89,6 +97,8 @@ Static.user-message {
     margin-right: 10;
     border: solid rgb(33, 126, 212);
     padding: 0 1;
+    padding-top: 1; /* Adjust vertical alignment */
+    padding-bottom: 1; /* Adjust vertical alignment */
 }
 
 Static.ai-message {
@@ -100,4 +110,6 @@ Static.ai-message {
     margin-right: 1;
     border: solid rgb(18, 149, 18);
     padding: 0 1;
+    padding-top: 1; /* Adjust vertical alignment */
+    padding-bottom: 1; /* Adjust vertical alignment */
 }

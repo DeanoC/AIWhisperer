@@ -7,6 +7,17 @@ from textual.containers import Container # Import Container
 from textual.message import Message # Import Message
 from textual.reactive import var # Import var
 from textual import on # Import on
+import logging
+from rich.text import Text  # <-- Add this import
+import asyncio
+
+from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.context_management import ContextManager
+from ai_whisperer.delegate_manager import DelegateManager
+from ai_whisperer.model_info_provider import ModelInfoProvider
+from ai_whisperer.interactive_ai import InteractiveAI
+from monitor.interactive_ui_base import InteractiveUIBase
+from monitor.multiline_input import MultiLineInput
 
 # Floating tooltip message
 class ShowTooltipMessage(Message):
@@ -64,15 +75,7 @@ class ModelListItem(ListItem):
     def on_leave(self, event) -> None:
         # Send a message to parent to hide tooltip
         self.post_message(HideTooltipMessage())
-from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.context_management import ContextManager
-from ai_whisperer.delegate_manager import DelegateManager
-from ai_whisperer.model_info_provider import ModelInfoProvider
-from ai_whisperer.interactive_ai import InteractiveAI
-import logging
-from .interactive_ui_base import InteractiveUIBase
-from rich.text import Text  # <-- Add this import
-import asyncio
+
 
 logger = logging.getLogger(__name__)
 
@@ -126,26 +129,28 @@ class InteractiveListModelsUI(InteractiveUIBase):
     def on_mount(self) -> None:
         super().on_mount()
         self.set_theme(self.theme)
-        tooltip = self.query_one("#floating_tooltip", Static)
-        tooltip.visible = False
-        tooltip.display = "none"
+        # tooltip = self.query_one("#floating_tooltip", Static)
+        # tooltip.visible = False
+        # tooltip.display = "none"
         model_provider = ModelInfoProvider(self._config)
         models = model_provider.list_models()
         self.display_model_list(models)
 
     def on_mount(self) -> None:
         super().on_mount()
-        tooltip = self.query_one("#floating_tooltip", Static)
-        tooltip.visible = False
-        tooltip.display = "none"
+        # tooltip = self.query_one("#floating_tooltip", Static)
+        # tooltip.visible = False
+        # tooltip.display = "none"
         model_provider = ModelInfoProvider(self._config)
         models = model_provider.list_models()
         self.display_model_list(models)
+        # Focus the input widget
+#        self.query_one("#chat-input").focus()
         # Ensure the Input widget captures key events
-        command_input = self.query_one("#command_input", Input)
-        command_input.capture_key_events = True
-        command_input.on_key = self.on_key  # Bind the key event handler
-        command_input.focus()  # Focus the command input area on mount
+        # command_input = self.query_one("#command_input", Input)
+        # command_input.capture_key_events = True
+        # command_input.on_key = self.on_key  # Bind the key event handler
+        # command_input.focus()  # Focus the command input area on mount
         
     def compose(self):
         yield Header()  # Yield Header first
@@ -154,51 +159,52 @@ class InteractiveListModelsUI(InteractiveUIBase):
             # Chat area with chat window and command editor stacked vertically
             with Container(id="chat_area", classes="chat-area"):
                 yield Static(id="chat_window")  # Chat window (messages)
-                # Command editor at the bottom (single line)
-                yield Static("Commands", id="command_label", classes="command-label")
-                yield Input(id="command_input", classes="command-input")
+                yield Label("Enter your message (Ctrl+Enter to send):", id="command-label")
+                yield MultiLineInput(id="chat-input")
+#                yield Static("Commands", id="command_label", classes="command-label")
+#                yield Input(id="command_input", classes="command-input")
         # Floating tooltip (initially hidden)
-        yield Static("", id="floating_tooltip", classes="floating-tooltip")
+        # yield Static("", id="floating_tooltip", classes="floating-tooltip")
         yield Footer()  # Yield Footer last
 
-    @on(ShowTooltipMessage)
-    def show_floating_tooltip(self, message: ShowTooltipMessage) -> None:
-        tooltip = self.query_one("#floating_tooltip", Static)
-        tooltip.update(message.tooltip_text)
-        # Get screen size if possible (fallback to 800x600)
-        try:
-            screen_width = self.size.width
-            screen_height = self.size.height
-        except Exception:
-            screen_width = 800
-            screen_height = 600
-        # Tooltip size estimate (max width 50 chars, height 8 lines)
-        tooltip_width = 50 * 8  # 8px per char
-        tooltip_height = 8 * 20 # 20px per line
-        # Default offset
-        left = message.x + 32
-        # If mouse is in lower half, show above; else below
-        if message.y > screen_height // 2:
-            top = max(0, message.y - tooltip_height - 32)
-        else:
-            top = message.y + 32
-        # Flip left if near right edge
-        if left + tooltip_width > screen_width:
-            left = max(0, message.x - tooltip_width - 32)
-        tooltip.styles.left = left
-        tooltip.styles.top = top
-        tooltip.styles.max_width = 400
-        tooltip.styles.max_height = 200
-        tooltip.styles.overflow_y = "auto"
-        tooltip.styles.word_break = "break-word"
-        tooltip.display = "block"
-        tooltip.visible = True
+    # @on(ShowTooltipMessage)
+    # def show_floating_tooltip(self, message: ShowTooltipMessage) -> None:
+    #     tooltip = self.query_one("#floating_tooltip", Static)
+    #     tooltip.update(message.tooltip_text)
+    #     # Get screen size if possible (fallback to 800x600)
+    #     try:
+    #         screen_width = self.size.width
+    #         screen_height = self.size.height
+    #     except Exception:
+    #         screen_width = 800
+    #         screen_height = 600
+    #     # Tooltip size estimate (max width 50 chars, height 8 lines)
+    #     tooltip_width = 50 * 8  # 8px per char
+    #     tooltip_height = 8 * 20 # 20px per line
+    #     # Default offset
+    #     left = message.x + 32
+    #     # If mouse is in lower half, show above; else below
+    #     if message.y > screen_height // 2:
+    #         top = max(0, message.y - tooltip_height - 32)
+    #     else:
+    #         top = message.y + 32
+    #     # Flip left if near right edge
+    #     if left + tooltip_width > screen_width:
+    #         left = max(0, message.x - tooltip_width - 32)
+    #     tooltip.styles.left = left
+    #     tooltip.styles.top = top
+    #     tooltip.styles.max_width = 400
+    #     tooltip.styles.max_height = 200
+    #     tooltip.styles.overflow_y = "auto"
+    #     tooltip.styles.word_break = "break-word"
+    #     tooltip.display = "block"
+    #     tooltip.visible = True
 
-    @on(HideTooltipMessage)
-    def hide_floating_tooltip(self, message: HideTooltipMessage) -> None:
-        tooltip = self.query_one("#floating_tooltip", Static)
-        tooltip.visible = False
-        tooltip.display = "none"
+    # @on(HideTooltipMessage)
+    # def hide_floating_tooltip(self, message: HideTooltipMessage) -> None:
+    #     tooltip = self.query_one("#floating_tooltip", Static)
+    #     tooltip.visible = False
+    #     tooltip.display = "none"
 
     def display_model_list(self, models: list) -> None:
         # Only update the list if the models have actually changed
@@ -308,12 +314,42 @@ class InteractiveListModelsUI(InteractiveUIBase):
             if has_newline:
                 self.current_ai_message_widget = None # This line is complete, next part/chunk starts new Static
 
-    def on_key(self, event: Key) -> None:
-        """Handle key press events in the command input."""
-        command_input = self.query_one("#command_input", Input)
-        if event.key == "enter":
-            user_input = command_input.value.strip()
-            if user_input:
-                self._write_user_message(self.query_one("#chat_window", Static), user_input)
-                command_input.value = ""  # Clear the input field
-                asyncio.create_task(self.interactive_ai.send_message(message=user_input))
+    # def on_key(self, event: Key) -> None:
+    #     """Handle key press events in the command input."""
+    #     command_input = self.query_one("#command_input", Input)
+    #     if event.key == "enter":
+    #         user_input = command_input.value.strip()
+    #         if user_input:
+    #             self._write_user_message(self.query_one("#chat_window", Static), user_input)
+    #             command_input.value = ""  # Clear the input field
+    #             asyncio.create_task(self.interactive_ai.send_message(message=user_input))
+#     def on_multiline_input_submitted(self, message: MultiLineInput.Submitted) -> None:
+#         """Handle submission of the input widget."""
+#         if not message.value.strip():
+#             return
+            
+#         # Add user message to chat
+# #        chat_container = self.query_one("#chat-container")
+# #        chat_container.mount(ChatMessage(message.value))
+        
+#         # Process command (in a real app, this would send to an AI)
+#         command_parts = message.value.strip().split(maxsplit=1)
+#         command = command_parts[0].lower() if command_parts else ""
+        
+#         # Simple command handling
+#         if command == "quit":
+#             self.exit()
+#         elif command == "clear":
+#             # Clear all messages except the first one
+#             chat_container = self.query_one("#chat-container")
+#             messages = chat_container.query("ChatMessage")
+#             for i, msg in enumerate(messages):
+#                 if i > 0:  # Keep the first welcome message
+#                     msg.remove()
+#         else:
+#             # Simulate AI response
+#             response = f"You said: {message.value}\n\nThis is a demo response. In a real application, this would be processed by an AI."
+# #            chat_container.mount(ChatMessage(response, is_user=False))
+        
+#         # Scroll to the bottom
+#         chat_container.scroll_end(animate=False)
