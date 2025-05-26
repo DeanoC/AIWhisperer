@@ -1,3 +1,4 @@
+websockets
 pip>=23.0
 
 PyYAML>=5.4
@@ -16,3 +17,6 @@ pytest-asyncio
 
 prompt_toolkit>=3.0.0 # For interactive terminal command mode
 debugpy
+fastapi
+uvicorn
+httpx

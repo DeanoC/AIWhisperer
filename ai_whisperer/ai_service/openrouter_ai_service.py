@@ -721,10 +721,27 @@ class OpenRouterAIService(AIService):
         def run_sync():
             try:
                 for item in sync_stream():
-                    loop.call_soon_threadsafe(queue.put_nowait, item)
-                loop.call_soon_threadsafe(queue.put_nowait, StopAsyncIteration)
+                    try:
+                        if loop.is_closed():
+                            break
+                        loop.call_soon_threadsafe(queue.put_nowait, item)
+                    except RuntimeError as re:
+                        if 'closed' in str(re):
+                            break
+                        raise
+                try:
+                    if not loop.is_closed():
+                        loop.call_soon_threadsafe(queue.put_nowait, StopAsyncIteration)
+                except RuntimeError as re:
+                    if 'closed' not in str(re):
+                        raise
             except Exception as e:
-                loop.call_soon_threadsafe(queue.put_nowait, e)
+                try:
+                    if not loop.is_closed():
+                        loop.call_soon_threadsafe(queue.put_nowait, e)
+                except RuntimeError as re:
+                    if 'closed' not in str(re):
+                        raise
 
         import threading
         threading.Thread(target=run_sync, daemon=True).start()

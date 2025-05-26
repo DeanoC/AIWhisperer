@@ -11,7 +11,7 @@ Based on the current unit tests, here's a breakdown of component status:
   * It heavily utilizes the delegate system for notifications (session start/end, errors, AI message chunks, tool calls, status changes) and control (start, stop, pause, resume, send user message, provide tool result). This is an excellent foundation for the new interactive mode.
   * Async operations and tool handling are being integrated.
   * `test_refactored_ai_loop.py` appears to be the most current test suite for `AILoop`.
-  * **Status:** _IN PROGRESS_
+  * **Status:** _DONE_
 
 * **Execution Engine (`ai_whisperer.execution_engine.ExecutionEngine`):**
   * Interacts with `AILoop` and also uses the delegate system for notifications (`engine_started`, `engine_stopped`, `task_execution_started`, etc.) and control (`engine_request_pause`, `engine_request_stop`).

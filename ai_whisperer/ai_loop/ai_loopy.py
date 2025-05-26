@@ -380,58 +380,49 @@ class AILoop:
                 # Attempt to parse accumulated tool call parts into ToolCall objects
                 try:
                     logger.debug(f"_run_session: Attempting to parse accumulated_tool_calls_part: '{accumulated_tool_calls_part}'")
-                    parsed_response_object = json.loads(accumulated_tool_calls_part) # type: ignore
-                    logger.debug(f"_run_session: Parsed response object: {parsed_response_object}")
-                    if "tool_calls" in parsed_response_object and isinstance(parsed_response_object["tool_calls"], list):
-                        # Ensure the assistant message that requests the tool call includes the tool_calls
-                        assistant_message_to_add["tool_calls"] = parsed_response_object["tool_calls"]
-
-                        logger.debug(f"_run_session: Found 'tool_calls' list in parsed object: {parsed_response_object['tool_calls']}")
-
-                        tool_names_for_delegate_notification = []
-                        for tc in parsed_response_object["tool_calls"]:
-                            name = tc.get("function", {}).get("name")
-                            args_str = tc.get("function", {}).get("arguments")
-                            tool_id = tc.get("id")
-
-                            if name and args_str and tool_id:
-                                tool_names_for_delegate_notification.append(name)
-                                tool_instance = get_tool_registry().get_tool_by_name(name)
-                                if tool_instance:
-                                    try:
-                                        tool_args_dict = json.loads(args_str) # Parse arguments string into dict
-                                        tool_result_content = tool_instance.execute(arguments=tool_args_dict)
-                                        tool_result_msg = {"role": "tool", "tool_call_id": tool_id, "name": name, "content": str(tool_result_content)}
-                                        await self._tool_result_queue.put(tool_result_msg) # Use await and put the full message
-                                    except json.JSONDecodeError as e_args:
-                                        logger.error(f"_run_session: Failed to parse arguments for tool {name}: {e_args}. Arguments: {args_str}")
-                                        await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error: Invalid arguments for tool {name}."})
-                                    except Exception as e_exec:
-                                        logger.error(f"_run_session: Error executing tool {name}: {e_exec}", exc_info=True)
-                                        await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e_exec) # Add this line
-                                        await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error executing tool {name}: {str(e_exec)}"})
-                                else:
-                                    logger.error(f"_run_session: Tool {name} not found in registry.")
-                                    await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error: Tool {name} not found."})
-                            else:
-                                logger.warning(f"Malformed tool call data received: {tc}")
-                        logger.debug(f"_run_session: Identified tool calls for delegate notification: {tool_names_for_delegate_notification}")
-                        if tool_names_for_delegate_notification: # Check if the list is not empty
-                          await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.identified", event_data=tool_names_for_delegate_notification)
+                    parsed_tool_calls = json.loads(accumulated_tool_calls_part) # This should be a list or dict
+                    # If it's a list, treat as tool_calls; if dict with 'tool_calls', extract
+                    if isinstance(parsed_tool_calls, dict) and "tool_calls" in parsed_tool_calls:
+                        tool_calls = parsed_tool_calls["tool_calls"]
                     else:
-                        logger.warning("_run_session: Parsed tool calls JSON does not contain a 'tool_calls' list.")
+                        tool_calls = parsed_tool_calls
+                    if not isinstance(tool_calls, list):
+                        tool_calls = [tool_calls]
+                    assistant_message_to_add["tool_calls"] = tool_calls
+                    logger.debug(f"_run_session: Found tool_calls: {tool_calls}")
+                    # Notify delegate with full tool call dicts (for websocket notification)
+                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.identified", event_data=tool_calls)
+                    # Continue with tool execution as before
+                    for tc in tool_calls:
+                        name = tc.get("function", {}).get("name")
+                        args_str = tc.get("function", {}).get("arguments")
+                        tool_id = tc.get("id")
+                        if name and args_str and tool_id:
+                            tool_instance = get_tool_registry().get_tool_by_name(name)
+                            if tool_instance:
+                                try:
+                                    tool_args_dict = json.loads(args_str) # Parse arguments string into dict
+                                    tool_result_content = tool_instance.execute(arguments=tool_args_dict)
+                                    tool_result_msg = {"role": "tool", "tool_call_id": tool_id, "name": name, "content": str(tool_result_content)}
+                                    await self._tool_result_queue.put(tool_result_msg)
+                                except json.JSONDecodeError as e_args:
+                                    logger.error(f"_run_session: Failed to parse arguments for tool {name}: {e_args}. Arguments: {args_str}")
+                                    await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error: Invalid arguments for tool {name}."})
+                                except Exception as e_exec:
+                                    logger.error(f"_run_session: Error executing tool {name}: {e_exec}", exc_info=True)
+                                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e_exec)
+                                    await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error executing tool {name}: {str(e_exec)}"})
+                            else:
+                                logger.error(f"_run_session: Tool {name} not found in registry.")
+                                await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error: Tool {name} not found."})
+                        else:
+                            logger.warning(f"Malformed tool call data received: {tc}")
                 except json.JSONDecodeError as e:
                     logger.error(f"_run_session: Failed to parse tool calls JSON: {e}")
-                    # Notify about the parsing error
                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
-                    # Optionally, put an error message on the tool result queue if a tool_call_id can be inferred
-                    # For now, we'll just log and notify the error delegate.
-                    pass
                 except TypeError as e:
                     logger.error(f"_run_session: TypeError during ToolCall instantiation or processing: {e}")
-                    # Notify about the TypeError
                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
-                    pass
 
             # Add the assembled assistant message to context if it has content or tool_calls
             if "content" in assistant_message_to_add or "tool_calls" in assistant_message_to_add:
