@@ -611,6 +611,7 @@ class MultiLineInput(ScrollView):
 
     def action_copy(self) -> None:
         """Copy the selected text to the clipboard."""
+        logger.debug("Copying selected text to clipboard.")
         if self.has_selection:
             selected_text = self._get_selected_text()
             self.app.copy_to_clipboard(selected_text)
@@ -632,6 +633,7 @@ class MultiLineInput(ScrollView):
 
     def action_submit(self) -> None:
         """Submit the current content."""
+        logger.debug("Submitting content: %s", self.value)
         # Add to history if not empty
         if self.value.strip():
             self._history.append(self.value)
@@ -694,6 +696,11 @@ class MultiLineInput(ScrollView):
 
     def on_key(self, event: events.Key) -> None:
         """Handle key events."""
+        logger.debug(
+            f"MultiLineInput on_key: key={event.key!r}, char={event.character!r}, "
+            f"ctrl={event.ctrl}, shift={event.shift}, alt={event.alt}, meta={event.meta}, "
+            f"name={event.name!r}"
+        )
         # Handle printable characters
         if event.character and event.character.isprintable():
             self._insert_text(event.character)

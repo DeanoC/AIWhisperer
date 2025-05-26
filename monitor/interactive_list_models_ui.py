@@ -144,13 +144,7 @@ class InteractiveListModelsUI(InteractiveUIBase):
         model_provider = ModelInfoProvider(self._config)
         models = model_provider.list_models()
         self.display_model_list(models)
-        # Focus the input widget
-#        self.query_one("#chat-input").focus()
-        # Ensure the Input widget captures key events
-        # command_input = self.query_one("#command_input", Input)
-        # command_input.capture_key_events = True
-        # command_input.on_key = self.on_key  # Bind the key event handler
-        # command_input.focus()  # Focus the command input area on mount
+
         
     def compose(self):
         yield Header()  # Yield Header first
@@ -314,42 +308,43 @@ class InteractiveListModelsUI(InteractiveUIBase):
             if has_newline:
                 self.current_ai_message_widget = None # This line is complete, next part/chunk starts new Static
 
-    # def on_key(self, event: Key) -> None:
-    #     """Handle key press events in the command input."""
-    #     command_input = self.query_one("#command_input", Input)
-    #     if event.key == "enter":
-    #         user_input = command_input.value.strip()
-    #         if user_input:
-    #             self._write_user_message(self.query_one("#chat_window", Static), user_input)
-    #             command_input.value = ""  # Clear the input field
-    #             asyncio.create_task(self.interactive_ai.send_message(message=user_input))
-#     def on_multiline_input_submitted(self, message: MultiLineInput.Submitted) -> None:
-#         """Handle submission of the input widget."""
-#         if not message.value.strip():
-#             return
+    @on(MultiLineInput.Submitted)
+    def on_multiline_input_submitted(self, message: MultiLineInput.Submitted) -> None:
+        """Handle submission of the input widget (triggered by Ctrl+Enter)."""
+        if not message.value.strip():
+            return
             
-#         # Add user message to chat
-# #        chat_container = self.query_one("#chat-container")
-# #        chat_container.mount(ChatMessage(message.value))
+        # Add user message to chat
+#        chat_container = self.query_one("#chat-container")
+#        chat_container.mount(ChatMessage(message.value))
         
-#         # Process command (in a real app, this would send to an AI)
-#         command_parts = message.value.strip().split(maxsplit=1)
-#         command = command_parts[0].lower() if command_parts else ""
+        # Process command (in a real app, this would send to an AI)
+        command_parts = message.value.strip().split(maxsplit=1)
+        command = command_parts[0].lower() if command_parts else ""
         
-#         # Simple command handling
-#         if command == "quit":
-#             self.exit()
-#         elif command == "clear":
-#             # Clear all messages except the first one
-#             chat_container = self.query_one("#chat-container")
-#             messages = chat_container.query("ChatMessage")
-#             for i, msg in enumerate(messages):
-#                 if i > 0:  # Keep the first welcome message
-#                     msg.remove()
-#         else:
-#             # Simulate AI response
-#             response = f"You said: {message.value}\n\nThis is a demo response. In a real application, this would be processed by an AI."
-# #            chat_container.mount(ChatMessage(response, is_user=False))
+        # Simple command handling
+        if command == "quit":
+            self.exit()
+        elif command == "clear":
+            # Clear all messages except the first one
+            chat_container = self.query_one("#chat-container")
+            messages = chat_container.query("ChatMessage")
+            for i, msg in enumerate(messages):
+                if i > 0:  # Keep the first welcome message
+                    msg.remove()
+        else:
+            # Simulate AI response
+            response = f"You said: {message.value}\n\nThis is a demo response. In a real application, this would be processed by an AI."
+#            chat_container.mount(ChatMessage(response, is_user=False))
         
-#         # Scroll to the bottom
-#         chat_container.scroll_end(animate=False)
+            # Scroll to the bottom
+            chat_container.scroll_end(animate=False)
+            if i > 0:  # Keep the first welcome message
+                        msg.remove()
+            else:
+                # Simulate AI response
+                response = f"You said: {message.value}\n\nThis is a demo response. In a real application, this would be processed by an AI."
+    #            chat_container.mount(ChatMessage(response, is_user=False))
+            
+            # Scroll to the bottom
+            chat_container.scroll_end(animate=False)

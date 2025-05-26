@@ -17,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def handle_ai_interaction(
+async def handle_ai_interaction( # Make async
         engine: ExecutionEngine,
         task_definition: dict,
         prompt_system: PromptSystem # Accept PromptSystem instance
@@ -166,7 +166,7 @@ def handle_ai_interaction(
         logger.debug(f"Task {task_id}: Conversation history: {messages_history}")
 
         # Use streaming API call to allow for interruption
-        stream_generator = self.aiservice.stream_chat_completion(
+        stream_generator = self.aiservice.stream_chat_completion( # This is an async generator
             prompt_text=prompt,
             model=merged_ai_config.get("model"),
             params=merged_ai_config.get("params", {}),
@@ -179,7 +179,7 @@ def handle_ai_interaction(
 
 
         try: # Try block for processing the stream
-            for chunk in stream_generator:
+            async for chunk in stream_generator: # Use async for
                 # Check for shutdown signal during streaming
                 if self.shutdown_event.is_set():
                     # Use the module-level logger
@@ -196,26 +196,23 @@ def handle_ai_interaction(
                     # Raise an exception to stop processing this task
                     raise TaskExecutionError(f"Task {task_id} interrupted by shutdown signal during AI streaming.")
 
-                # Process the chunk
-                delta = chunk.get("choices", [{}])[0].get("delta", {})
-                if "content" in delta:
-                    full_response_content += delta["content"]
-                    # Optionally update monitor with streamed content
-                    # self.monitor.update_ai_response(task_id, full_response_content)
-
-                if "tool_calls" in delta:
-                    # Accumulate tool calls. This might require more sophisticated handling
-                    # if tool calls are split across chunks. For simplicity, assuming
-                    # tool_calls delta contains the full list or appendable parts.
-                    # A robust implementation would reconstruct tool calls from deltas.
-                    # For now, we'll just store the last received tool_calls delta.
-                    # This needs refinement for real-world tool call streaming.
-                    if delta["tool_calls"] is not None: # Ensure it's not null
-                         tool_calls.extend(delta["tool_calls"])
-
-                # Capture usage info from the last chunk (often present in the final chunk)
-                if "usage" in chunk:
-                     usage_info = chunk["usage"]
+                # Process the chunk (assuming AIStreamChunk structure from ai_service.py)
+                if chunk.delta_content:
+                    full_response_content += chunk.delta_content
+                
+                # For simplicity, assuming tool_calls are sent in full in one chunk or accumulated correctly
+                # A more robust implementation would handle partial tool_call deltas.
+                # This part needs to align with how OpenRouterAIService yields tool call information.
+                # For now, let's assume if a chunk has tool_calls, it's the complete list for that turn.
+                # The AIStreamChunk does not directly have a 'tool_calls' attribute in its definition.
+                # This logic needs to be consistent with what AIService.stream_chat_completion yields.
+                # If tool calls are part of delta_tool_call_part, that needs to be accumulated and parsed.
+                # For now, this part is simplified and might need adjustment based on actual stream format for tools.
+                if hasattr(chunk, 'tool_calls') and chunk.tool_calls: # Placeholder for actual tool call streaming logic
+                    tool_calls.extend(chunk.tool_calls)
+                
+                if hasattr(chunk, 'usage') and chunk.usage: # Placeholder for usage info
+                    usage_info = chunk.usage
 
 
             # After the stream finishes, process the full response

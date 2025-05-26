@@ -1,0 +1,27 @@
+.chat-window {
+  flex: 1;
+  background: #fff;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-message.user {
+  background: #2196f3;
+  color: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  align-self: flex-start;
+  max-width: 80%;
+  font-family: monospace;
+}
+.chat-message.ai {
+  background: #2ecc40;
+  color: #222;
+  padding: 12px;
+  border-radius: 6px;
+  align-self: flex-start;
+  max-width: 80%;
+  font-family: monospace;
+}

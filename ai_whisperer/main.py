@@ -38,44 +38,10 @@ if __name__ == "__main__":
 
 
         if config.get("interactive"):
-            logger.debug("Interactive mode enabled. Running Textual app.")
-            logger.info("Interactive mode enabled. Running Textual app.")
-
-            ai_config = AIConfig(
-                api_key= config.get("openrouter", {}).get("api_key", ""),
-                model_id= config.get("openrouter", {}).get("model_id", "gpt-4"),
-                temperature=config.get("openrouter", {}).get("params", {}).get("temperature", 0.7),
-                max_tokens=config.get("openrouter", {}).get("params", {}).get("max_tokens", None),
-            )
-
-            # Properly instantiate ExecutionEngine with all required arguments
-            prompt_config = PromptConfiguration(config)
-            prompt_system = PromptSystem(prompt_config=prompt_config)
-            context_manager = ContextManager() # Create a ContextManager instance
-            delegate_manager.set_shared_state("original_delegate_user_message_display", ansi_handler.display_message)
-
-            # only do the first command setup_ui, as it is expected to be the main interactive app
-            logger.debug("Setting up interactive commands...") 
-
-            if commands is None or len(commands) == 0:
-                raise ValueError("No commands provided for interactive mode.")
-
-            logger.debug(f"First command class: {commands[0].__class__.__name__}")
-            # Only process the first command for interactive mode
-            interactive_app = commands[0].setup_ui(
-                config=config,
-                ai_config=ai_config,
-                delegate_manager=delegate_manager,
-                context_manager=context_manager
-            )
-
-            # Store the original delegate before setting the interactive one
-            delegate_manager.set_active_delegate("user_message_display", interactive_app.handle_message) # Set the interactive delegate as the active one for the duration of the interactive session
-            interactive_app.run() # Run the Textual app. This call is blocking.
-
-            # Restore the original delegate after the interactive session exits
-            delegate_manager.restore_original_delegate("user_message_display")
-            logger.debug("Interactive session ended. Active delegate restored.")
+            logger.info("Interactive mode enabled. (Textual UI removed; awaiting websocket/react integration)")
+            # Placeholder for websocket/react-based interactive mode
+            # TODO: Implement websocket server and React UI integration here
+            raise NotImplementedError("Interactive mode via websocket/react is not yet implemented.")
         else:
             logger.debug("Executing commands...")
             exit_code = 0

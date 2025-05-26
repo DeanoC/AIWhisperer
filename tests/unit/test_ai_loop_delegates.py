@@ -1,232 +1,352 @@
-from typing import Any
 import pytest
-import threading
-from unittest.mock import MagicMock, call
 import asyncio
-import unittest
+from unittest.mock import AsyncMock, MagicMock, call, patch # Added patch
+import json # Added for tool argument stringification
 
-from ai_whisperer.exceptions import TaskExecutionError
-from ai_whisperer.execution_engine import ExecutionEngine
-from ai_whisperer.state_management import StateManager
-from ai_whisperer.context_management import ContextManager
+# Import real components
+from ai_whisperer.state_management import StateManager # Not strictly needed for these tests but good for context
 from ai_whisperer.delegate_manager import DelegateManager
+from ai_whisperer.ai_service.ai_service import AIService, AIStreamChunk
+from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.ai_loop.ai_loopy import AILoop
+from ai_whisperer.context_management import ContextManager
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.tools.tool_registry import get_tool_registry, ToolRegistry
+from typing import Dict, Any # Added for MockTestTool
 
-# Mock dependencies
-@pytest.fixture
-def mock_engine():
-    engine = MagicMock(spec=ExecutionEngine)
-    # Place ai_model and ai_temperature at the top level for correct config lookup
-    engine.config = {"ai_model": "fake_model", "ai_temperature": 0.1, "openrouter": {"ai_model": "fake_model", "ai_temperature": 0.1}}
-    engine.openrouter_api = MagicMock()
-    engine.shutdown_event = threading.Event() # Provide a shutdown event
-    return engine
 
 @pytest.fixture
-def mock_context_manager():
-    cm = MagicMock(spec=ContextManager)
-    cm.get_history.return_value = []
-    return cm
+def mock_ai_config_fixture(): # Renamed to avoid conflict
+    """Fixture for an AIConfig."""
+    return AIConfig(api_key="test_api_key", model_id="test_model", temperature=0.7)
 
 @pytest.fixture
-def mock_delegate_manager():
-    # Use a real DelegateManager for testing delegate interactions
+def mock_ai_service_fixture(): # Renamed
+    """Fixture for a mock AIService."""
+    service = AsyncMock(spec=AIService)
+    # Default behavior for stream_chat_completion
+    async def default_stream_generator(*args, **kwargs):
+        yield AIStreamChunk(delta_content="Default AI response.")
+        yield AIStreamChunk(finish_reason="stop")
+    service.stream_chat_completion.side_effect = default_stream_generator
+    return service
+
+@pytest.fixture
+def context_manager_fixture(): # Renamed
+    """Fixture for a real ContextManager."""
+    return ContextManager()
+
+@pytest.fixture
+def delegate_manager_fixture(): # Renamed
+    """Fixture for a real DelegateManager."""
     return DelegateManager()
 
 @pytest.fixture
-def task_definition():
-    return {"subtask_id": "test_ai_task"}
+def mock_tool_registry_fixture():
+    """Fixture to provide a ToolRegistry instance and ensure it's clean."""
+    registry = get_tool_registry()
+    registry.reset_tools()
+    return registry
+
+# Dummy Tool for testing tool-related delegates
+class MockTestTool(AITool):
+    @property
+    def name(self) -> str:
+        return "test_tool_for_delegates"
+
+    @property
+    def description(self) -> str:
+        return "A mock tool for testing delegate invocations."
+
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        return {"type": "object", "properties": {"arg1": {"type": "string"}}}
+
+    def get_ai_prompt_instructions(self) -> str:
+        return "Use this tool to perform a test action with 'arg1'."
+
+    def execute(self, arguments: Dict[str, Any]) -> str:
+        return f"test_tool_for_delegates executed with {arguments}"
 
 @pytest.fixture
-def initial_prompt():
-    return "Hello AI"
+def ai_loop_fixture(mock_ai_config_fixture, mock_ai_service_fixture, context_manager_fixture, delegate_manager_fixture):
+    """Fixture to create an AILoop instance."""
+    loop = AILoop(
+        config=mock_ai_config_fixture,
+        ai_service=mock_ai_service_fixture,
+        context_manager=context_manager_fixture,
+        delegate_manager=delegate_manager_fixture
+    )
+    loop._tool_registry = get_tool_registry() # Ensure AILoop has a tool registry
+    return loop
 
-def test_ai_loop_started_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
-    mock_delegate = MagicMock()
-    mock_delegate_manager.register_notification("ai_loop_started", mock_delegate)
+# Helper for asyncio cleanup
+async def cleanup_tasks():
+    pending = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+    if pending:
+        for task in pending:
+            task.cancel()
+        await asyncio.gather(*pending, return_exceptions=True)
 
-    # Mock the AI call to return a simple response to exit the loop (OpenRouter format)
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"message": {"content": "response"}}
+# --- Tests for Notification Delegates Invoked BY AILoop ---
 
-    run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
+@pytest.mark.asyncio
+async def test_session_started_notification_invoked(ai_loop_fixture: AILoop, delegate_manager_fixture: DelegateManager):
+    """Tests that 'ai_loop.session_started' notification is invoked."""
+    delegate_manager_fixture.invoke_notification = AsyncMock() # Spy on invoke_notification
 
-    mock_delegate.assert_called_once_with(mock_engine, {"task_id": "test_ai_task"})
+    await ai_loop_fixture.start_session(system_prompt="System prompt")
+    await asyncio.sleep(0) # Yield to allow the session task to run and emit the notification
 
-def test_ai_loop_stopped_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
-    mock_delegate = MagicMock()
-    mock_delegate_manager.register_notification("ai_loop_stopped", mock_delegate)
+    delegate_manager_fixture.invoke_notification.assert_any_call(
+        sender=ai_loop_fixture,
+        event_type="ai_loop.session_started" # Removed event_data=None
+    )
+    await ai_loop_fixture.stop_session()
+    await cleanup_tasks()
 
-    # Mock the AI call to return a simple response to exit the loop (OpenRouter format)
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"message": {"content": "response"}}
+@pytest.mark.asyncio
+async def test_session_ended_notification_invoked_on_stop(ai_loop_fixture: AILoop, delegate_manager_fixture: DelegateManager):
+    """Tests that 'ai_loop.session_ended' is invoked with 'stopped' on normal stop."""
+    delegate_manager_fixture.invoke_notification = AsyncMock()
 
-    run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
+    await ai_loop_fixture.start_session(system_prompt="System prompt")
+    await ai_loop_fixture.stop_session()
 
-    mock_delegate.assert_called_once_with(mock_engine, {"task_id": "test_ai_task"})
+    found_session_ended = False
+    for mock_call in delegate_manager_fixture.invoke_notification.call_args_list:
+        args, kwargs = mock_call
+        if kwargs.get('sender') == ai_loop_fixture and \
+           kwargs.get('event_type') == "ai_loop.session_ended" and \
+           kwargs.get('event_data') == "stopped":
+            found_session_ended = True
+            break
+    assert found_session_ended, "ai_loop.session_ended with event_data='stopped' not invoked"
+    await cleanup_tasks()
 
-def test_ai_request_prepared_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
-    mock_delegate = MagicMock()
-    mock_delegate_manager.register_notification("ai_request_prepared", mock_delegate)
 
-    # First call returns non-empty tool_calls (so loop continues), second call returns content (so loop exits)
-    mock_engine.openrouter_api.call_chat_completion.side_effect = [
-        {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}},
-        {"message": {"content": "response"}}  # Second turn, exits loop
+@pytest.mark.asyncio
+async def test_user_message_processed_notification_invoked(ai_loop_fixture: AILoop, delegate_manager_fixture: DelegateManager):
+    """Tests that 'ai_loop.message.user_processed' notification is invoked."""
+    delegate_manager_fixture.invoke_notification = AsyncMock()
+    user_msg = "Hello AI!"
+
+    await ai_loop_fixture.start_session(system_prompt="System prompt")
+    await ai_loop_fixture.send_user_message(user_msg)
+    await ai_loop_fixture.wait_for_idle(timeout=2.0)
+
+    delegate_manager_fixture.invoke_notification.assert_any_call(
+        sender=ai_loop_fixture,
+        event_type="ai_loop.message.user_processed",
+        event_data=user_msg
+    )
+    await ai_loop_fixture.stop_session()
+    await cleanup_tasks()
+
+@pytest.mark.asyncio
+async def test_ai_chunk_received_notification_invoked(
+    ai_loop_fixture: AILoop,
+    delegate_manager_fixture: DelegateManager,
+    mock_ai_service_fixture: AsyncMock
+):
+    """Tests that 'ai_loop.message.ai_chunk_received' is invoked for each content chunk."""
+    delegate_manager_fixture.invoke_notification = AsyncMock()
+
+    async def custom_stream_generator(*args, **kwargs):
+        yield AIStreamChunk(delta_content="Chunk 1. ")
+        yield AIStreamChunk(delta_content="Chunk 2.")
+        yield AIStreamChunk(finish_reason="stop")
+    mock_ai_service_fixture.stream_chat_completion.side_effect = custom_stream_generator
+
+    await ai_loop_fixture.start_session(system_prompt="System prompt")
+    await ai_loop_fixture.send_user_message("User message")
+    await ai_loop_fixture.wait_for_idle(timeout=2.0)
+
+    chunk_calls = [
+        c.kwargs['event_data'] for c in delegate_manager_fixture.invoke_notification.call_args_list
+        if c.kwargs.get('event_type') == "ai_loop.message.ai_chunk_received"
     ]
+    assert chunk_calls == ["Chunk 1. ", "Chunk 2."]
 
-    # Patch both ToolRegistry and get_tool_registry to return a mock tool with an execute method
-    mock_tool_registry = MagicMock()
-    mock_tool_instance = MagicMock()
-    mock_tool_instance.execute.return_value = "fake tool output"
-    mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
-    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
-        run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
+    await ai_loop_fixture.stop_session()
+    await cleanup_tasks()
 
-    # Only the initial call triggers ai_request_prepared in the current implementation
-    assert mock_delegate.call_count == 1
-    # Check the arguments for the only call (prompt_text is '', params includes tool_choice)
-    mock_delegate.assert_any_call(
-        mock_engine,
-        {"request_payload": {"prompt_text": "", "model": "fake_model", "params": {"temperature": 0.1, "tool_choice": "auto"}, "messages_history": []}}
+@pytest.mark.asyncio
+async def test_tool_call_identified_notification_invoked(
+    ai_loop_fixture: AILoop,
+    delegate_manager_fixture: DelegateManager,
+    mock_ai_service_fixture: AsyncMock,
+    mock_tool_registry_fixture: ToolRegistry
+):
+    """Tests that 'ai_loop.tool_call.identified' is invoked."""
+    delegate_manager_fixture.invoke_notification = AsyncMock()
+
+    mock_tool_instance = MockTestTool()
+    mock_tool_registry_fixture.register_tool(mock_tool_instance)
+    ai_loop_fixture._tool_registry = mock_tool_registry_fixture
+
+    tool_call_id = "call_deleg_test"
+    tool_name = "test_tool_for_delegates"
+    tool_args_str = '{"arg1": "val_deleg"}'
+
+    # Counter for AI service calls
+    ai_call_count = 0
+    async def tool_call_generator(*args, **kwargs):
+        nonlocal ai_call_count
+        ai_call_count += 1
+        if ai_call_count == 1: # First call, request tool
+            yield AIStreamChunk(delta_tool_call_part='{"tool_calls": [')
+            yield AIStreamChunk(delta_tool_call_part=f'{{"id": "{tool_call_id}", "type": "function", "function": {{"name": "{tool_name}", "arguments": {json.dumps(tool_args_str)}}}}}')
+            yield AIStreamChunk(delta_tool_call_part=']}')
+            yield AIStreamChunk(finish_reason="tool_calls")
+        else: # Subsequent calls, respond normally to stop the loop
+            yield AIStreamChunk(delta_content="AI response after tool call.")
+            yield AIStreamChunk(finish_reason="stop")
+    mock_ai_service_fixture.stream_chat_completion.side_effect = tool_call_generator
+
+    await ai_loop_fixture.start_session(system_prompt="System prompt")
+    await ai_loop_fixture.send_user_message("User message invoking tool")
+    await ai_loop_fixture.wait_for_idle(timeout=3.0)
+
+    delegate_manager_fixture.invoke_notification.assert_any_call(
+        sender=ai_loop_fixture,
+        event_type="ai_loop.tool_call.identified",
+        event_data=[tool_name]
+    )
+    await ai_loop_fixture.stop_session()
+    await cleanup_tasks()
+
+@pytest.mark.asyncio
+async def test_tool_result_processed_notification_invoked(
+    ai_loop_fixture: AILoop,
+    delegate_manager_fixture: DelegateManager,
+    mock_ai_service_fixture: AsyncMock,
+    mock_tool_registry_fixture: ToolRegistry,
+    context_manager_fixture: ContextManager
+):
+    """Tests that 'ai_loop.tool_call.result_processed' is invoked."""
+    delegate_manager_fixture.invoke_notification = AsyncMock()
+
+    mock_tool_instance = MockTestTool()
+    mock_tool_registry_fixture.register_tool(mock_tool_instance)
+    ai_loop_fixture._tool_registry = mock_tool_registry_fixture
+
+    tool_call_id = "call_res_proc"
+    tool_name = "test_tool_for_delegates"
+    tool_args_dict = {"arg1": "val_res_proc"}
+    tool_args_str_for_ai = json.dumps(tool_args_dict) # This is what AI would see as string arg
+    expected_tool_result_content = mock_tool_instance.execute(arguments=tool_args_dict)
+
+    expected_tool_message_in_context = {
+        "role": "tool",
+        "tool_call_id": tool_call_id,
+        "name": tool_name,
+        "content": expected_tool_result_content
+    }
+
+    call_count = 0
+    async def multi_turn_ai_response(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            yield AIStreamChunk(delta_tool_call_part='{"tool_calls": [')
+            yield AIStreamChunk(delta_tool_call_part=f'{{"id": "{tool_call_id}", "type": "function", "function": {{"name": "{tool_name}", "arguments": {json.dumps(tool_args_str_for_ai)}}}}}')
+            yield AIStreamChunk(delta_tool_call_part=']}')
+            yield AIStreamChunk(finish_reason="tool_calls")
+        elif call_count == 2:
+            yield AIStreamChunk(delta_content="Tool was executed.")
+            yield AIStreamChunk(finish_reason="stop")
+        else:
+            pytest.fail("AI service called too many times.")
+
+    mock_ai_service_fixture.stream_chat_completion.side_effect = multi_turn_ai_response
+
+    await ai_loop_fixture.start_session(system_prompt="System prompt")
+    await ai_loop_fixture.send_user_message("User message invoking tool")
+    await ai_loop_fixture.wait_for_idle(timeout=3.0)
+
+    found_result_processed = any(
+        c.kwargs.get('event_type') == "ai_loop.tool_call.result_processed" and \
+        c.kwargs.get('event_data') == expected_tool_message_in_context
+        for c in delegate_manager_fixture.invoke_notification.call_args_list
+    )
+    assert found_result_processed, f"ai_loop.tool_call.result_processed not invoked with correct data. Expected: {expected_tool_message_in_context}, Got: {[c.kwargs for c in delegate_manager_fixture.invoke_notification.call_args_list if c.kwargs.get('event_type') == 'ai_loop.tool_call.result_processed']}"
+
+    history = context_manager_fixture.get_history()
+    assert expected_tool_message_in_context in history, f"Tool result message not found in context. History: {history}"
+
+    await ai_loop_fixture.stop_session()
+    await cleanup_tasks()
+
+@pytest.mark.asyncio
+async def test_status_paused_resumed_notifications_invoked(ai_loop_fixture: AILoop, delegate_manager_fixture: DelegateManager):
+    """Tests that 'ai_loop.status.paused' and 'ai_loop.status.resumed' are invoked."""
+    delegate_manager_fixture.invoke_notification = AsyncMock()
+
+    await ai_loop_fixture.start_session(system_prompt="System prompt")
+    await asyncio.sleep(0.1) # Give AILoop a moment to transition state
+
+    await ai_loop_fixture.pause_session()
+    await asyncio.sleep(0) # Yield to allow the session task to process pause and emit notification
+    delegate_manager_fixture.invoke_notification.assert_any_call(
+        sender=ai_loop_fixture,
+        event_type="ai_loop.status.paused" # Removed event_data=None
     )
 
+    await asyncio.sleep(0) # Yield before resuming
+    await ai_loop_fixture.resume_session()
+    delegate_manager_fixture.invoke_notification.assert_any_call(
+        sender=ai_loop_fixture,
+        event_type="ai_loop.status.resumed" # Removed event_data=None
+    )
 
-def test_ai_response_received_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
-    mock_delegate = MagicMock()
-    mock_delegate_manager.register_notification("ai_response_received", mock_delegate)
+    await ai_loop_fixture.stop_session()
+    await cleanup_tasks()
 
+# --- Test for Control Delegates Handled BY AILoop ---
 
-    # First call returns non-empty tool_calls (so loop continues), second call returns content (so loop exits)
-    ai_response1 = {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}}
-    ai_response2 = {"message": {"content": "response"}}
-    mock_engine.openrouter_api.call_chat_completion.side_effect = [ai_response1, ai_response2]
+@pytest.mark.asyncio
+async def test_control_delegates_trigger_ailoop_handlers(
+    delegate_manager_fixture: DelegateManager,
+    mock_ai_config_fixture: AIConfig, # Use renamed fixture
+    mock_ai_service_fixture: AsyncMock,
+    context_manager_fixture: ContextManager
+):
+    """
+    Tests that invoking control events through DelegateManager triggers AILoop's internal handlers.
+    """
+    with patch.object(AILoop, '_handle_start_session', new_callable=AsyncMock) as mock_handle_start, \
+         patch.object(AILoop, '_handle_stop_session', new_callable=AsyncMock) as mock_handle_stop, \
+         patch.object(AILoop, '_handle_pause_session', new_callable=AsyncMock) as mock_handle_pause, \
+         patch.object(AILoop, '_handle_resume_session', new_callable=AsyncMock) as mock_handle_resume, \
+         patch.object(AILoop, '_handle_send_user_message', new_callable=AsyncMock) as mock_handle_send_user, \
+         patch.object(AILoop, '_handle_provide_tool_result', new_callable=AsyncMock) as mock_handle_tool_result:
 
-    # Patch ToolRegistry to return a mock tool with an execute method
-    mock_tool_registry = MagicMock()
-    mock_tool_instance = MagicMock()
-    mock_tool_instance.execute.return_value = "fake tool output"
-    mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
-    import unittest
-    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
-        run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
+        ai_loop_instance = AILoop(
+            config=mock_ai_config_fixture,
+            ai_service=mock_ai_service_fixture,
+            context_manager=context_manager_fixture,
+            delegate_manager=delegate_manager_fixture
+        )
+        sender_obj = object()
 
-    # Expecting two calls: one for the initial response, one for the subsequent response (even if it exits)
-    assert mock_delegate.call_count == 2
-    # Check the arguments for both calls
-    mock_delegate.assert_any_call(mock_engine, {"response_data": ai_response1})
-    mock_delegate.assert_any_call(mock_engine, {"response_data": ai_response2})
+        await delegate_manager_fixture.invoke_control(sender_obj, "ai_loop.control.start", initial_prompt="Start via delegate")
+        mock_handle_start.assert_called_once_with(sender=sender_obj, initial_prompt="Start via delegate")
 
+        await delegate_manager_fixture.invoke_control(sender_obj, "ai_loop.control.stop")
+        mock_handle_stop.assert_called_once_with(sender=sender_obj)
 
-def test_ai_processing_step_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
-    mock_delegate = MagicMock()
-    mock_delegate_manager.register_notification("ai_processing_step", mock_delegate)
+        await delegate_manager_fixture.invoke_control(sender_obj, "ai_loop.control.pause")
+        mock_handle_pause.assert_called_once_with(sender=sender_obj)
 
+        await delegate_manager_fixture.invoke_control(sender_obj, "ai_loop.control.resume")
+        mock_handle_resume.assert_called_once_with(sender=sender_obj)
 
-    # First call returns non-empty tool_calls (so loop continues), second call returns content (so loop exits)
-    mock_engine.openrouter_api.call_chat_completion.side_effect = [
-        {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}},
-        {"message": {"content": "response"}}  # Second turn, exits loop
-    ]
+        await delegate_manager_fixture.invoke_control(sender_obj, "ai_loop.control.send_user_message", message="Message via delegate")
+        mock_handle_send_user.assert_called_once_with(sender=sender_obj, message="Message via delegate")
 
-    # Patch ToolRegistry to return a mock tool with an execute method
-    mock_tool_registry = MagicMock()
-    mock_tool_instance = MagicMock()
-    mock_tool_instance.execute.return_value = "fake tool output"
-    mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
-    import unittest
-    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
-        run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
+        tool_result_data = {"role": "tool", "tool_call_id": "t1", "content": "Tool result via delegate"}
+        await delegate_manager_fixture.invoke_control(sender_obj, "ai_loop.control.provide_tool_result", result=tool_result_data)
+        mock_handle_tool_result.assert_called_once_with(sender=sender_obj, result=tool_result_data)
 
-    # Expecting calls for initial preparation and response processing, and subsequent ones
-    mock_delegate.assert_any_call(mock_engine, {"step_name": "initial_ai_call_preparation", "task_id": task_definition["subtask_id"]})
-    mock_delegate.assert_any_call(mock_engine, {"step_name": "initial_ai_response_processing", "task_id": task_definition["subtask_id"]})
-    mock_delegate.assert_any_call(mock_engine, {"step_name": "subsequent_ai_call_preparation", "task_id": task_definition["subtask_id"]})
-    mock_delegate.assert_any_call(mock_engine, {"step_name": "subsequent_ai_response_processing", "task_id": task_definition["subtask_id"]})
-
-
-def test_ai_loop_error_occurred_delegate_invoked(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
-    mock_delegate = MagicMock()
-    mock_delegate_manager.register_notification("ai_loop_error_occurred", mock_delegate)
-
-    # Mock the AI call to raise an exception
-    mock_engine.openrouter_api.call_chat_completion.side_effect = Exception("Fake AI error")
-
-    with pytest.raises(TaskExecutionError):
-        run_ai_loop(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager)
-
-    # Check if the delegate was called with the correct arguments (error_message is a string)
-    mock_delegate.assert_called_once()
-    args, kwargs = mock_delegate.call_args
-    assert args[0] == mock_engine
-    assert args[1]["error_type"] == "Exception"
-    assert "Fake AI error" in args[1]["error_message"]
-
-
-def test_ai_loop_request_pause_delegate_invoked_and_pauses(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
-    mock_pause_delegate = MagicMock(return_value=True) # Delegate requests pause
-    mock_delegate_manager.register_control("ai_loop_request_pause", mock_pause_delegate)
-
-    # Mock the AI call to return tool calls to keep the loop running (OpenRouter format)
-    mock_engine.openrouter_api.call_chat_completion.side_effect = [
-        {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}}, # First call returns tool call
-        {"message": {"content": "response"}} # Second call returns content to exit
-    ]
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"message": {"content": "response"}} # Default return after side_effect
-
-    # Mock the tool execution to prevent errors
-    mock_tool_registry = MagicMock()
-    mock_tool_instance = MagicMock()
-    mock_tool_instance.execute.return_value = "fake tool output"
-    mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
-    # Patch the ToolRegistry instance used within run_ai_loop
-    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
-        # Use a separate thread to run the AI loop so we can check its state
-        ai_loop_thread = threading.Thread(target=run_ai_loop, args=(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager))
-        ai_loop_thread.start()
-
-        # Give the AI loop a moment to start and hit the pause check
-        import time
-        time.sleep(0.1)
-
-        # Check if the pause delegate was called (may be called more than once)
-        mock_pause_delegate.assert_any_call(mock_engine)
-
-        # The rest of the test (pause/resume logic) is not strictly necessary for verifying the delegate call,
-        # and can be omitted for this assertion fix. If more robust pause/resume testing is needed, it can be re-added.
-
-
-def test_ai_loop_request_stop_delegate_invoked_and_stops(mock_engine, task_definition, initial_prompt, mock_context_manager, mock_delegate_manager):
-    mock_stop_delegate = MagicMock(return_value=True) # Delegate requests stop
-    mock_delegate_manager.register_control("ai_loop_request_stop", mock_stop_delegate)
-
-    # Mock the AI call to return tool calls to keep the loop running initially (OpenRouter format)
-    mock_engine.openrouter_api.call_chat_completion.side_effect = [
-        {"message": {"tool_calls": [{"function": {"name": "fake_tool", "arguments": "{}"}, "id": "call_1"}]}}, # First call returns tool call
-        {"message": {"content": "response"}} # Second call returns content to exit
-    ]
-    mock_engine.openrouter_api.call_chat_completion.return_value = {"message": {"content": "response"}} # Default return after side_effect
-
-    # Mock the tool execution to prevent errors
-    mock_tool_registry = MagicMock()
-    mock_tool_instance = MagicMock()
-    mock_tool_instance.execute.return_value = "fake tool output"
-    mock_tool_registry.get_tool_by_name.return_value = mock_tool_instance
-    # Patch the ToolRegistry instance used within run_ai_loop
-    with unittest.mock.patch('ai_whisperer.tools.tool_registry.get_tool_registry', return_value=mock_tool_registry):
-        # Use a separate thread to run the AI loop
-        ai_loop_thread = threading.Thread(target=run_ai_loop, args=(mock_engine, task_definition, task_definition["subtask_id"], initial_prompt, MagicMock(), mock_context_manager, mock_delegate_manager))
-        ai_loop_thread.start()
-
-        # Give the AI loop a moment to start and hit the stop check
-        import time
-        time.sleep(0.1)
-
-        # Check if the stop delegate was called
-        mock_stop_delegate.assert_called_once_with(mock_engine)
-
-        # Wait for the AI loop thread to finish
-        ai_loop_thread.join(timeout=5)
-
-        # Assert that the thread finished (AI loop stopped gracefully)
-        assert not ai_loop_thread.is_alive()
-
-# Need to import unittest for patching
-import unittest
+    await cleanup_tasks()

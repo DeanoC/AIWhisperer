@@ -20,6 +20,7 @@ def mock_cli_parser():
         mock_parser.parse_args.return_value = mock_args
         yield mock_parser.parse_args.return_value
 
+@pytest.mark.skip(reason="Old interactive mode removed, new JSON-RPC mode pending")
 def test_interactive_flag_activates_interactive_mode():
     """Test that the --interactive flag triggers interactive mode."""
     # We need to mock the actual cli function to check its behavior
@@ -110,6 +111,8 @@ def test_communication_uses_delegate_system():
     # are called for different types of communication (e.g., displaying messages, getting input).
     pass
 
+@pytest.mark.skip(reason="interactive mode not implemented yet")
+@pytest.mark.skip(reason="Old interactive mode removed, new JSON-RPC mode pending")
 def test_delegate_swapped_in_interactive_mode_main(monkeypatch):
     """Test that the standard delegate is swapped with the interactive delegate in main.py."""
 

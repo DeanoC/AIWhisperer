@@ -12,9 +12,7 @@ from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.delegate_manager import DelegateManager
 from ai_whisperer.execution_engine import ExecutionEngine
-from monitor.interactive_list_models_ui import InteractiveListModelsUI
 from monitor.user_message_delegate import UserMessageLevel # Import Optional
-from monitor.interactive_ui_base import InteractiveUIBase # Import InteractiveUIBase
 from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
 from .state_management import StateManager # Import StateManager
 
@@ -40,9 +38,9 @@ class BaseCliCommand(ABC):
         pass
 
     @abstractmethod
-    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
-        """Sets up the UI for the command if applicable."""
-        pass
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
+        """Sets up the UI for the command if applicable (Textual UI removed)."""
+        raise NotImplementedError("setup_ui is not implemented. Textual UI has been removed. Implement websocket/react UI integration here.")
 
 class ListModelsCliCommand(BaseCliCommand):
     """Command to list available OpenRouter models."""
@@ -71,7 +69,6 @@ class ListModelsCliCommand(BaseCliCommand):
                 event_data={"message": f"Successfully wrote model list to CSV: {self.output_csv}", "level": UserMessageLevel.INFO}
             )
 
-    
         avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
         logger.debug(avail_text)
         self.delegate_manager.invoke_notification(
@@ -118,14 +115,8 @@ class ListModelsCliCommand(BaseCliCommand):
                     event_data={"message": model_text, "level": UserMessageLevel.INFO}
                 )
         return 0
-    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
-        logger.debug(f"Type of delegate_manager: {type(delegate_manager)}")
-        return InteractiveListModelsUI(
-            delegate_manager=delegate_manager,
-            ai_config=ai_config,
-            context_manager=context_manager,
-            config=config
-        )
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
+        raise NotImplementedError("setup_ui is not implemented. Textual UI has been removed. Implement websocket/react UI integration here.")
 
 
 class GenerateInitialPlanCliCommand(BaseCliCommand):
@@ -150,13 +141,8 @@ class GenerateInitialPlanCliCommand(BaseCliCommand):
 
         logger.debug(f"[green]Successfully generated task JSON: {result_path}[/green]")
         return 0
-    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
-        return InteractiveUIBase(
-            delegate_manager=delegate_manager,
-            ai_config=ai_config,
-            context_manager=context_manager,
-            config=config
-        )
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
+        raise NotImplementedError("setup_ui is not implemented. Textual UI has been removed. Implement websocket/react UI integration here.")
 
 class GenerateOverviewPlanCliCommand(BaseCliCommand):
     """Command to generate the overview plan and subtasks from an initial plan."""
@@ -183,13 +169,8 @@ class GenerateOverviewPlanCliCommand(BaseCliCommand):
             logger.debug(f"  {i}. {subtask_path}")
 
         return 0
-    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
-        return InteractiveUIBase(
-            delegate_manager=delegate_manager,
-            ai_config=ai_config,
-            context_manager=context_manager,
-            config=config
-        )
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
+        raise NotImplementedError("setup_ui is not implemented. Textual UI has been removed. Implement websocket/react UI integration here.")
 
 class RefineCliCommand(BaseCliCommand):
     """Command to refine a requirements document."""
@@ -219,13 +200,8 @@ class RefineCliCommand(BaseCliCommand):
         #     current_input_file = result
         # logger.debug(f"[green]Successfully refined requirements: {result}[/green]")
         return 0 # Or appropriate exit code
-    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
-        return InteractiveUIBase(
-            delegate_manager=delegate_manager,
-            ai_config=ai_config,
-            context_manager=context_manager,
-            config=config
-        )
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
+        raise NotImplementedError("setup_ui is not implemented. Textual UI has been removed. Implement websocket/react UI integration here.")
 
 class RunCliCommand(BaseCliCommand):
     """Command to execute a project plan."""
@@ -369,10 +345,5 @@ class RunCliCommand(BaseCliCommand):
             return 0
         else:
             return 1
-    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs) -> InteractiveUIBase:
-        return InteractiveUIBase(
-            delegate_manager=delegate_manager,
-            ai_config=ai_config,
-            context_manager=context_manager,
-            config=config
-        )
+    def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
+        raise NotImplementedError("setup_ui is not implemented. Textual UI has been removed. Implement websocket/react UI integration here.")

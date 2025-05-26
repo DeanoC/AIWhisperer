@@ -15,6 +15,4 @@ deepdiff
 pytest-asyncio
 
 prompt_toolkit>=3.0.0 # For interactive terminal command mode
-textual
-textual-dev
 debugpy

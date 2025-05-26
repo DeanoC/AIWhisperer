@@ -1,7 +1,7 @@
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 
-def handle_no_op(engine: ExecutionEngine, task_definition: dict):
+async def handle_no_op(engine: ExecutionEngine, task_definition: dict): # Make async
     """
     Handle a no-op (no operation) task.
     Implementation moved from ExecutionEngine._handle_no_op.

@@ -1,0 +1,86 @@
+namespace Interactive {
+
+    /// Request to start a new AI session.
+    message StartSessionRequest {
+        userId: string
+        sessionParams: SessionParams optional
+    }
+
+    /// Response to StartSessionRequest.
+    message StartSessionResponse {
+        sessionId: string
+        status: SessionStatus
+    }
+
+    /// Request to send a user message to the AI.
+    message SendUserMessageRequest {
+        sessionId: string
+        message: string
+    }
+
+    /// Response to SendUserMessageRequest.
+    message SendUserMessageResponse {
+        messageId: string
+        status: MessageStatus
+    }
+
+    /// Notification: AI has generated a message chunk (for streaming).
+    message AIMessageChunkNotification {
+        sessionId: string
+        chunk: string
+        isFinal: bool
+    }
+
+    /// Notification: AI session status changed.
+    message SessionStatusNotification {
+        sessionId: string
+        status: SessionStatus
+        reason: string optional
+    }
+
+    /// Request to stop the session.
+    message StopSessionRequest {
+        sessionId: string
+    }
+
+    /// Response to StopSessionRequest.
+    message StopSessionResponse {
+        status: SessionStatus
+    }
+
+    /// Request to provide a tool result.
+    message ProvideToolResultRequest {
+        sessionId: string
+        toolCallId: string
+        result: string
+    }
+
+    /// Response to ProvideToolResultRequest.
+    message ProvideToolResultResponse {
+        status: ToolResultStatus
+    }
+
+    /// Session parameters for starting a session.
+    message SessionParams {
+        language: string optional
+        model: string optional
+        context: string optional
+    }
+
+    enum SessionStatus {
+        Starting = 0,
+        Active = 1,
+        Stopped = 2,
+        Error = 3
+    }
+
+    enum MessageStatus {
+        OK = 0,
+        Error = 1
+    }
+
+    enum ToolResultStatus {
+        OK = 0,
+        Error = 1
+    }
+}

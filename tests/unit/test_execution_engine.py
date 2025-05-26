@@ -16,12 +16,12 @@ class TestExecutionEngine(unittest.TestCase):
         self.addCleanup(patcher.stop)
         import threading # Import threading
         self.mock_config = {"openrouter": {"api_key": "dummy", "model": "test-model", "params": {}}}
-        import threading # Import threading
-        self.mock_config = {"openrouter": {"api_key": "dummy", "model": "test-model", "params": {}}}
         self.mock_prompt_system = MagicMock(spec=PromptSystem) # Create a mock PromptSystem
         self.mock_delegate_manager = MagicMock() # Create a mock DelegateManager
         # Ensure pause/stop controls are not triggered in these unit tests
+        self.mock_delegate_manager.invoke_control = MagicMock()
         self.mock_delegate_manager.invoke_control.return_value = False
+        self.mock_delegate_manager.invoke_notification = MagicMock()
         self.mock_shutdown_event = MagicMock(spec=threading.Event) # Create a mock shutdown event
         self.mock_shutdown_event.is_set.return_value = False # Default to not set
         self.engine = ExecutionEngine(self.mock_state_manager, config=self.mock_config, prompt_system=self.mock_prompt_system, delegate_manager=self.mock_delegate_manager, shutdown_event=self.mock_shutdown_event) # Add mock_prompt_system, mock_delegate_manager, and mock_shutdown_event
@@ -54,26 +54,26 @@ class TestExecutionEngine(unittest.TestCase):
         self.assertEqual(self.engine.state_manager, self.mock_state_manager)
 
     @patch("ai_whisperer.execution_engine.ParserPlan")
-    def test_execute_empty_plan(self, MockParserPlan):
+    async def test_execute_empty_plan(self, MockParserPlan):
         empty_plan_data = {"plan": []}
         mock_parser_instance = MagicMock(spec=ParserPlan)
         mock_parser_instance.get_parsed_plan.return_value = empty_plan_data
         MockParserPlan.return_value = mock_parser_instance
-        self.engine.execute_plan(mock_parser_instance)
+        await self.engine.execute_plan(mock_parser_instance)
         self.mock_state_manager.set_task_state.assert_not_called()
         self.mock_execute_single_task.assert_not_called()
 
     @patch("ai_whisperer.execution_engine.ParserPlan")
-    def test_execute_plan_none(self, MockParserPlan):
+    async def test_execute_plan_none(self, MockParserPlan):
         with self.assertRaises(ValueError) as cm:
-            self.engine.execute_plan(None)
+            await self.engine.execute_plan(None)
         self.assertEqual(str(cm.exception), "Plan parser cannot be None.")
         self.mock_state_manager.set_task_state.assert_not_called()
         self.mock_execute_single_task.assert_not_called()
         MockParserPlan.assert_not_called()
 
     @patch("ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
-    def test_execute_simple_sequential_plan(self, MockParserPlan):
+    async def test_execute_simple_sequential_plan(self, MockParserPlan):
         sample_plan_data = self._get_sample_plan(num_tasks=2)
         task1_def = sample_plan_data["plan"][0]
         task2_def = sample_plan_data["plan"][1]
@@ -85,10 +85,11 @@ class TestExecutionEngine(unittest.TestCase):
         # Set the mock to return the expected results for each task
         self.mock_execute_single_task.side_effect = ["Result of task_1", "Result of task_2"]
 
-        self.engine.execute_plan(mock_parser_instance)
+        await self.engine.execute_plan(mock_parser_instance)
 
-        self.mock_execute_single_task.assert_any_call(self.engine, task1_def)
-        self.mock_execute_single_task.assert_any_call(self.engine, task2_def)
+        # Assert calls include the engine instance and the plan_parser
+        self.mock_execute_single_task.assert_any_call(self.engine, task1_def, mock_parser_instance)
+        self.mock_execute_single_task.assert_any_call(self.engine, task2_def, mock_parser_instance)
         self.assertEqual(self.mock_execute_single_task.call_count, 2)
 
         expected_state_calls = [
@@ -130,7 +131,7 @@ class TestExecutionEngine(unittest.TestCase):
         self.assertIsNone(result)
 
     @patch("ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
-    def test_execute_plan_with_task_failure(self, MockParserPlan):
+    async def test_execute_plan_with_task_failure(self, MockParserPlan):
         # This test mocks _execute_single_task to simulate a TaskExecutionError
         sample_plan_data = self._get_sample_plan(num_tasks=1, add_failing_task=True)
         # plan: task_1, task_that_fails
@@ -143,14 +144,14 @@ class TestExecutionEngine(unittest.TestCase):
         MockParserPlan.return_value = mock_parser_instance  # Ensure the engine gets this mock
 
         # Set the mock: first call returns result, second call raises TaskExecutionError
-        def side_effect(engine, task_def):
+        def side_effect(engine, task_def, plan_parser_arg): # Added plan_parser_arg
             if task_def["subtask_id"] == "task_1":
                 return "Result of task_1"
             elif task_def["subtask_id"] == "task_that_fails":
                 raise TaskExecutionError("Intentional failure for task_that_fails")
         self.mock_execute_single_task.side_effect = side_effect
 
-        self.engine.execute_plan(mock_parser_instance)
+        await self.engine.execute_plan(mock_parser_instance)
 
         # Check state manager calls for both tasks
         expected_state_calls_for_failure = [
@@ -162,6 +163,7 @@ class TestExecutionEngine(unittest.TestCase):
             call.set_task_state("task_that_fails", "pending"),
             call.set_task_state("task_that_fails", "in-progress"),
             call.set_task_state("task_that_fails", "failed", {"error": "Intentional failure for task_that_fails"}),
+            call.store_task_result("task_that_fails", {"status": "failed", "error": "Intentional failure for task_that_fails", "error_details": None}), # Added store_task_result with details
             call.save_state(),
         ]
         self.mock_state_manager.assert_has_calls(expected_state_calls_for_failure, any_order=False)
@@ -175,10 +177,11 @@ class TestExecutionEngine(unittest.TestCase):
                 self.assertIsInstance(failure_result, dict)
                 self.assertEqual(failure_result["status"], "failed")
                 self.assertEqual(failure_result["error"], "Intentional failure for task_that_fails")
+                self.assertIsNone(failure_result["error_details"]) # Assert error_details is None for TaskExecutionError without details
         self.assertTrue(found, "store_task_result was not called for the failing task")
 
     @patch("ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
-    def test_execute_plan_with_dependency_met(self, MockParserPlan):
+    async def test_execute_plan_with_dependency_met(self, MockParserPlan):
         sample_plan_data = self._get_sample_plan(num_tasks=2, add_dependent_task=True)  # task_2 depends on task_1
         task1_def = sample_plan_data["plan"][0]
         task2_def = sample_plan_data["plan"][1]
@@ -192,11 +195,12 @@ class TestExecutionEngine(unittest.TestCase):
         # Set the mock to return the expected results for each task
         self.mock_execute_single_task.side_effect = ["Result of task_1", "Result of task_2"]
 
-        self.engine.execute_plan(mock_parser_instance)
+        await self.engine.execute_plan(mock_parser_instance)
 
         self.mock_state_manager.get_task_status.assert_called_once_with("task_1")
-        self.mock_execute_single_task.assert_any_call(self.engine, task1_def)
-        self.mock_execute_single_task.assert_any_call(self.engine, task2_def)
+        # Assert calls include the engine instance and the plan_parser
+        self.mock_execute_single_task.assert_any_call(self.engine, task1_def, mock_parser_instance)
+        self.mock_execute_single_task.assert_any_call(self.engine, task2_def, mock_parser_instance)
         self.assertEqual(self.mock_execute_single_task.call_count, 2)
 
         expected_state_calls = [
@@ -207,7 +211,6 @@ class TestExecutionEngine(unittest.TestCase):
             call.save_state(),
             call.set_task_state("task_2", "pending"),
             call.get_task_status("task_1"),
-            # get_task_status("task_1") is called by the engine here
             call.set_task_state("task_2", "in-progress"),
             call.set_task_state("task_2", "completed"),
             call.store_task_result("task_2", "Result of task_2"),
@@ -216,7 +219,7 @@ class TestExecutionEngine(unittest.TestCase):
         self.mock_state_manager.assert_has_calls(expected_state_calls, any_order=False)
 
     @patch("ai_whisperer.execution_engine.ParserPlan")  # Patch ParserPlan
-    def test_execute_plan_with_dependency_not_met(self, MockParserPlan):
+    async def test_execute_plan_with_dependency_not_met(self, MockParserPlan):
         sample_plan_data = self._get_sample_plan(num_tasks=2, add_dependent_task=True)  # task_2 depends on task_1
         task1_def = sample_plan_data["plan"][0]
         # task2_def = sample_plan_data["plan"][1] # Will be skipped
@@ -230,11 +233,11 @@ class TestExecutionEngine(unittest.TestCase):
         # Only the first task will be executed
         self.mock_execute_single_task.side_effect = ["Result of task_1"]
 
-        self.engine.execute_plan(mock_parser_instance)
+        await self.engine.execute_plan(mock_parser_instance)
 
         self.mock_state_manager.get_task_status.assert_called_once_with("task_1")
-        # Only task_1 should be attempted
-        self.mock_execute_single_task.assert_called_once_with(self.engine, task1_def)
+        # Only task_1 should be attempted, assert call includes plan_parser
+        self.mock_execute_single_task.assert_called_once_with(self.engine, task1_def, mock_parser_instance)
 
         expected_state_calls = [
             call.set_task_state("task_1", "pending"),
@@ -244,7 +247,6 @@ class TestExecutionEngine(unittest.TestCase):
             call.save_state(),
             call.set_task_state("task_2", "pending"),
             call.get_task_status("task_1"),
-            # get_task_status("task_1") is called by the engine here, returns "failed"
             call.set_task_state("task_2", "skipped", {"reason": "Dependency task_1 not met. Status: failed"}),
         ]
         self.mock_state_manager.assert_has_calls(expected_state_calls, any_order=False)

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 # We'll need to mock these components for testing.
 
 class MockInteractiveApp:
-    """A mock Textual application for testing graceful exit."""
+    """A mock interactive application for testing graceful exit."""
     def __init__(self):
         self.exit_called = False
         self.screen = MagicMock()
@@ -83,5 +83,5 @@ async def test_ctrl_c_timeout_resets():
 
 
 # Note: These tests are based on a mock implementation of the interactive app
-# and delegate manager. Actual implementation details in the Textual app
+# and delegate manager. Actual implementation details in the interactive app
 # might require adjustments to these tests.

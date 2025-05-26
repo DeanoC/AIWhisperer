@@ -16,7 +16,9 @@ from ai_whisperer.utils import build_ascii_directory_tree
 
 logger = get_logger(__name__)  # Get logger for execution engine
 
-def handle_code_generation(engine: ExecutionEngine, task_definition: dict, prompt_system: PromptSystem):
+import asyncio
+
+async def handle_code_generation(engine: ExecutionEngine, task_definition: dict, prompt_system: PromptSystem):
     """
     Handles the execution of a 'code_generation' task.
     """
@@ -57,9 +59,9 @@ def handle_code_generation(engine: ExecutionEngine, task_definition: dict, promp
             raise TaskExecutionError(f"ContextManager not found for task {task_id} in StateManager.")
 
         ## start_session means the ai loop is now running
-        ai_loop.start_session(system_prompt="TODO:")
-        ai_loop.send_user_message(message=initial_prompt)
-        ai_loop.wait_for_idle()
+        await ai_loop.start_session(system_prompt="TODO:")
+        await ai_loop.send_user_message(message=initial_prompt)
+        await ai_loop.wait_for_idle()
 
         final_ai_result = context_manager.get_history()[-1]
 

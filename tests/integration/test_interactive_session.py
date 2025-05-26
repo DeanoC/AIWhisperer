@@ -11,9 +11,9 @@ import sys
 def run_interactive_cli(command, timeout=10):
     """Helper to run the CLI in interactive mode and handle input/output."""
     # This is a placeholder. Actual implementation will need to interact
-    # with the running Textual application, potentially in a separate thread/process.
+    # with the running interactive application, potentially in a separate thread/process.
     # For now, we'll simulate running a command that should keep the session alive.
-    # A real test would involve sending input to the Textual app and observing its state.
+    # A real test would involve sending input to the websocket/react app and observing its state.
     print(f"Simulating interactive CLI run with command: {command}")
     # Example: Use subprocess to run the CLI
     # process = subprocess.Popen([sys.executable, "-m", "ai_whisperer.cli", "--interactive"] + command.split(),
@@ -28,7 +28,7 @@ def test_interactive_session_persists_after_task():
     """
     Tests that the interactive session remains active after an AI task completes.
     """
-    # This test requires a mechanism to check if the Textual app is still running
+    # This test requires a mechanism to check if the interactive app is still running
     # after a command that simulates an AI task is executed within it.
     # The actual implementation will depend on how the interactive session
     # and task execution are integrated.
@@ -49,7 +49,7 @@ def test_graceful_termination_on_double_ctrl_c():
     a double Ctrl+C signal.
     """
     # This test requires a mechanism to send simulated Ctrl+C signals
-    # to the running Textual application and verify graceful shutdown.
+    # to the running interactive application and verify graceful shutdown.
 
     # Simulate running an interactive session
     # process = run_interactive_cli("some_command_to_keep_session_alive")

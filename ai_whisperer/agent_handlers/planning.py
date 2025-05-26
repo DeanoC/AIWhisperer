@@ -2,7 +2,7 @@ from ai_whisperer.exceptions import TaskExecutionError
 from ai_whisperer.execution_engine import ExecutionEngine
 from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import log_event
 
-def handle_planning(engine: ExecutionEngine, task_definition: dict):
+async def handle_planning(engine: ExecutionEngine, task_definition: dict):
     """
     Handle a planning task.
     Implementation moved from ExecutionEngine._handle_planning.
@@ -29,7 +29,7 @@ def handle_planning(engine: ExecutionEngine, task_definition: dict):
         landmark_file_path = Path("landmark_selection.md").resolve()
         try:
             with open(landmark_file_path, "w", encoding="utf-8") as f:
-                f.write(landmark)
+                f.write(landmark) # File operations are not async
             if logger:
                 logger.info(f"Created landmark_selection.md with landmark: {landmark}")
             log_event(

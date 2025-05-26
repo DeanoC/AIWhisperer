@@ -1,0 +1,29 @@
+
+body, html, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.main-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: #f5f5f5;
+}
+
+.sidebar {
+  width: 260px;
+  background: #e0e5e0;
+  border-right: 1px solid #bbb;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-width: 0;
+}
