@@ -158,17 +158,10 @@ class DelegateBridge:
         """
         if not self.is_active:
             return
-            
+
         try:
             # Support for final chunk notification (is_final_chunk kwarg)
             is_final = kwargs.get("is_final_chunk", False)
-            # Only send a non-empty chunk for normal chunks; for final, send the last chunk again or skip if empty
-            if is_final:
-                # For final chunk, do not send an empty string (test expects non-empty)
-                # If the last chunk was empty, skip sending
-                if not event_data or not str(event_data).strip():
-                    logger.debug(f"Skipping final AI chunk notification for {self.session.session_id} because chunk is empty.")
-                    return
             chunk_content = str(event_data) if event_data else ""
             notification = AIMessageChunkNotification(
                 sessionId=self.session.session_id,
@@ -176,7 +169,7 @@ class DelegateBridge:
                 isFinal=is_final
             )
             await self.session.send_notification("AIMessageChunkNotification", notification)
-            logger.debug(f"Sent AI chunk notification for {self.session.session_id}: {len(chunk_content)} chars, isFinal={is_final}")
+            logger.debug(f"Sent AI chunk notification for {self.session.session_id}: {len(chunk_content)} chars, isFinal={is_final}, content='{chunk_content}'")
         except Exception as e:
             logger.error(f"Error handling ai_chunk_received event: {e}")
     

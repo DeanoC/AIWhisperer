@@ -372,8 +372,11 @@ class AILoop:
             if isinstance(ai_response_stream, types.CoroutineType):
                 ai_response_stream = await ai_response_stream
             logger.debug("_run_session: Processing AI stream.")
-            last_nonempty_chunk = None
+            last_chunk = None
+            saw_any_chunk = False
             async for chunk in ai_response_stream:
+                saw_any_chunk = True
+                last_chunk = chunk
                 # Check for shutdown or pause requests frequently
                 if self.shutdown_event.is_set():
                     logger.debug("_assemble_ai_stream: Shutdown event set, stopping stream processing.")
@@ -385,8 +388,6 @@ class AILoop:
                 if chunk.delta_content:
                     full_response_content += chunk.delta_content
                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.ai_chunk_received", event_data=chunk.delta_content)
-                    if str(chunk.delta_content).strip():
-                        last_nonempty_chunk = chunk.delta_content
                 await asyncio.sleep(0.05) # Yield control to allow other tasks to run
 
                 if chunk.delta_tool_call_part:
@@ -396,12 +397,22 @@ class AILoop:
                     finish_reason = chunk.finish_reason
                     logger.debug(f"_run_session: Received finish_reason: {finish_reason}")
 
-            # After streaming, send a final chunk notification to indicate the end of the stream
-            if last_nonempty_chunk is not None:
+            # Always send a final chunk notification for the last chunk, even if empty
+            if saw_any_chunk and last_chunk is not None:
+                logger.debug(f"[DEBUG] Sending final chunk notification: event_data='{last_chunk.delta_content}', is_final_chunk=True")
                 await self.delegate_manager.invoke_notification(
                     sender=self,
                     event_type="ai_loop.message.ai_chunk_received",
-                    event_data=last_nonempty_chunk,
+                    event_data=last_chunk.delta_content if last_chunk.delta_content is not None else "",
+                    is_final_chunk=True
+                )
+            else:
+                # If no chunks at all, send empty final chunk
+                logger.debug(f"[DEBUG] Sending final chunk notification: event_data='', is_final_chunk=True (no chunks at all)")
+                await self.delegate_manager.invoke_notification(
+                    sender=self,
+                    event_type="ai_loop.message.ai_chunk_received",
+                    event_data="",
                     is_final_chunk=True
                 )
 

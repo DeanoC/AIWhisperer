@@ -24,4 +24,23 @@ def test_interactive_client_script(script_file, tmp_path):
     print("STDERR:\n", result.stderr)
     assert result.returncode == 0
     assert log_path.exists()
-    # Optionally, check log contents for expected server responses
+
+    # Check log contents for expected server responses
+    found_message_id = False
+    found_final_chunk = False
+    found_hello = False
+    found_weather = False
+    with open(log_path, "r", encoding="utf-8") as f:
+        for line in f:
+            if '"messageId"' in line:
+                found_message_id = True
+            if '"AIMessageChunkNotification"' in line and '"isFinal": true' in line:
+                found_final_chunk = True
+            if 'Hello, AI!' in line:
+                found_hello = True
+            if 'What is the weather?' in line:
+                found_weather = True
+    assert found_message_id, "No messageId found in log (sendUserMessage response missing)"
+    assert found_final_chunk, "No final AIMessageChunkNotification found in log"
+    assert found_hello, "Expected user message 'Hello, AI!' not found in log"
+    assert found_weather, "Expected user message 'What is the weather?' not found in log"

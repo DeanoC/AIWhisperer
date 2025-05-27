@@ -92,6 +92,39 @@ async def interactive_client(script_path=None, log_path=None):
         await websocket.send(json.dumps(req))
         msg_id += 1
 
+        # Wait for and print at least one response (result or notification)
+        # Print all messages until we get the result for this msg_id and at least one AIMessageChunkNotification (isFinal True)
+        got_result = False
+        got_final_chunk = False
+        while not got_result or not got_final_chunk:
+            try:
+                msg = await websocket.recv()
+                try:
+                    parsed = json.loads(msg)
+                except Exception:
+                    parsed = msg
+                print("[SERVER]", parsed)
+                # Debug: print message type and keys
+                if isinstance(parsed, dict):
+                    print(f"[DEBUG] Received dict message keys: {list(parsed.keys())}")
+                    if parsed.get("id") == req["id"] and parsed.get("result") and "messageId" in parsed["result"]:
+                        print(f"[DEBUG] Got result for messageId: {parsed['result']['messageId']}")
+                        got_result = True
+                    if parsed.get("method") == "AIMessageChunkNotification":
+                        params = parsed.get("params", {})
+                        print(f"[DEBUG] AIMessageChunkNotification params: {params}")
+                        if params.get("isFinal"):
+                            print(f"[DEBUG] Got isFinal chunk for session {params.get('sessionId')}")
+                            got_final_chunk = True
+                else:
+                    print(f"[DEBUG] Received non-dict message: {parsed}")
+            except websockets.ConnectionClosed:
+                print("[INFO] WebSocket connection closed.")
+                break
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                break
+
     async def send_tool_result():
         nonlocal session_id, msg_id
         if not session_id:
@@ -178,6 +211,8 @@ async def interactive_client(script_path=None, log_path=None):
                     # Add more as needed
         if log_f:
             log_f.close()
+        # Wait briefly to allow any in-flight notifications to arrive before disconnecting
+        await asyncio.sleep(0.5)
         await disconnect()
         return
 

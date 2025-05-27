@@ -639,7 +639,9 @@ class OpenRouterAIService(AIService):
                     if not isinstance(timeout, (int, float)) or timeout <= 0:
                         timeout = 60
 
+                import pprint
                 logger.debug(f"OpenRouter API stream_chat_completion payload: <payload with {len(str(payload))} chars>")
+                logger.info("OpenRouter API stream_chat_completion FULL PAYLOAD:\n" + pprint.pformat(payload, width=120))
 
                 # Use stream=True for streaming responses
                 response = requests.post(API_URL, headers=headers, json=payload, stream=True, timeout=timeout)
