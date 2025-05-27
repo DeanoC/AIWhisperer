@@ -106,11 +106,11 @@ class DelegateManager:
         with self._lock:
             return self._shared_state.get(key, default)
 
-    async def invoke_notification(self, sender: Any, event_type: str, event_data: Any = None) -> None:
+    async def invoke_notification(self, sender: Any, event_type: str, event_data: Any = None, **kwargs) -> None:
         """
         Invoke the active notification delegate for the given event type.
         If no active delegate is set, fall back to invoking all registered delegates.
-        Delegates are called with (sender, event_type, event_data)
+        Delegates are called with (sender, event_type, event_data) and any extra kwargs.
         """
         delegate_to_invoke = None
         with self._lock: # Keep lock for accessing _active_delegate
@@ -119,9 +119,9 @@ class DelegateManager:
         if delegate_to_invoke:
             try:
                 if asyncio.iscoroutinefunction(delegate_to_invoke):
-                    await delegate_to_invoke(sender=sender, event_type=event_type, event_data=event_data)
+                    await delegate_to_invoke(sender=sender, event_type=event_type, event_data=event_data, **kwargs)
                 else:
-                    delegate_to_invoke(sender=sender, event_type=event_type, event_data=event_data)
+                    delegate_to_invoke(sender=sender, event_type=event_type, event_data=event_data, **kwargs)
             except Exception as e:
                 logger.error(traceback.format_exc())
                 logger.error(f"Error invoking active notification delegate for {event_type}: {e}", exc_info=True)
@@ -139,9 +139,9 @@ class DelegateManager:
             for delegate in delegates_to_invoke:
                 try:
                     if asyncio.iscoroutinefunction(delegate):
-                        await delegate(sender=sender, event_type=event_type, event_data=event_data)
+                        await delegate(sender=sender, event_type=event_type, event_data=event_data, **kwargs)
                     else:
-                        delegate(sender=sender, event_type=event_type, event_data=event_data)
+                        delegate(sender=sender, event_type=event_type, event_data=event_data, **kwargs)
                 except Exception as e:
                     logger.error(traceback.format_exc())
                     logger.error(f"Error invoking notification delegate for {event_type}: {e}", exc_info=True)

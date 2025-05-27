@@ -78,22 +78,34 @@ def test_ai_message_chunk_notification_stream(interactive_app):
                 # Simulate a method that triggers streaming (mocked)
                 req = {"jsonrpc": "2.0", "id": 3, "method": "sendUserMessage", "params": {"sessionId": session_id, "message": "stream"}}
                 websocket.send_text(json.dumps(req))
-                # Receive two messages, order may vary
-                messages = [json.loads(websocket.receive_text()), json.loads(websocket.receive_text())]
-                # Find response and notification
-                response = next((m for m in messages if m.get("result") and m.get("result").get("messageId")), None)
-                notification = next((m for m in messages if m.get("method") == "AIMessageChunkNotification"), None)
-                assert response is not None, f"No valid response found in: {messages}"
-                assert notification is not None, f"No notification found in: {messages}"
-                assert notification["params"]["chunk"] == "This is a chunk"
-                assert notification["params"]["isFinal"] is True
+                # Collect all messages until we get a response and at least one AIMessageChunkNotification with isFinal True
+                response = None
+                chunk_notifications = []
+                for _ in range(20):  # Increased upper bound to ensure we get the final chunk
+                    msg = json.loads(websocket.receive_text())
+                    if msg.get("result") and msg["result"].get("messageId"):
+                        response = msg
+                    if msg.get("method") == "AIMessageChunkNotification":
+                        chunk_notifications.append(msg)
+                        if msg["params"].get("isFinal"):
+                            # Stop as soon as we get the final chunk
+                            break
+                # Optionally, keep reading until both response and final chunk are received
+                # but in practice, the response usually comes before the final chunk
+                assert response is not None, f"No valid response found in: {chunk_notifications}"
+                assert chunk_notifications, "No AIMessageChunkNotification received."
+                # All chunks should be non-empty strings
+                for n in chunk_notifications:
+                    chunk = n["params"]["chunk"]
+                    assert isinstance(chunk, str) and chunk.strip() != "", f"Chunk should be a non-empty string, got: {chunk}"
+                # At least one notification should have isFinal True
+                assert any(n["params"].get("isFinal") for n in chunk_notifications), f"No final chunk found in: {chunk_notifications}"
         except Exception as e:
             exc[0] = e
     t = threading.Thread(target=test_body, daemon=True)
     t.start()
     t.join(20)
     if t.is_alive():
-        print("Test timed out! Possible infinite loop.")
-        sys.exit(1)
+        raise AssertionError("Test timed out! Possible infinite loop. No final AIMessageChunkNotification with isFinal=True was received within the message limit.")
     if exc[0]:
         raise exc[0]

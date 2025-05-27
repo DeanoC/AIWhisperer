@@ -343,10 +343,12 @@ class AILoop:
         assistant_message_to_add = {"role": "assistant"} # Initialize the message to be added
 
         try:
+
             # If ai_response_stream is a coroutine (from AsyncMock), await it to get the async generator
             if isinstance(ai_response_stream, types.CoroutineType):
                 ai_response_stream = await ai_response_stream
             logger.debug("_run_session: Processing AI stream.")
+            last_nonempty_chunk = None
             async for chunk in ai_response_stream:
                 # Check for shutdown or pause requests frequently
                 if self.shutdown_event.is_set():
@@ -359,6 +361,8 @@ class AILoop:
                 if chunk.delta_content:
                     full_response_content += chunk.delta_content
                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.ai_chunk_received", event_data=chunk.delta_content)
+                    if str(chunk.delta_content).strip():
+                        last_nonempty_chunk = chunk.delta_content
                 await asyncio.sleep(0.05) # Yield control to allow other tasks to run
 
                 if chunk.delta_tool_call_part:
@@ -367,6 +371,15 @@ class AILoop:
                 if chunk.finish_reason:
                     finish_reason = chunk.finish_reason
                     logger.debug(f"_run_session: Received finish_reason: {finish_reason}")
+
+            # After streaming, send a final chunk notification to indicate the end of the stream
+            if last_nonempty_chunk is not None:
+                await self.delegate_manager.invoke_notification(
+                    sender=self,
+                    event_type="ai_loop.message.ai_chunk_received",
+                    event_data=last_nonempty_chunk,
+                    is_final_chunk=True
+                )
 
             # After streaming, process the full response and identified tool calls
             logger.debug(f"_run_session: full_response_content after stream: '{full_response_content}'")
