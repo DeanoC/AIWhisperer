@@ -1,10 +1,6 @@
 import React from 'react';
 import './ChatWindow.css';
-
-export interface ChatMessage {
-  sender: 'user' | 'ai';
-  text: string;
-}
+import { ChatMessage, MessageSender } from './types/chat';
 
 interface ChatWindowProps {
   messages: ChatMessage[];
@@ -14,10 +10,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages }) => (
   <div className="chat-window">
     {messages.map((msg, idx) => (
       <div
-        key={idx}
-        className={`chat-message ${msg.sender === 'user' ? 'user' : 'ai'}`}
+        key={msg.id || idx}
+        className={`chat-message ${msg.sender === MessageSender.User ? 'user' : msg.sender === MessageSender.AI ? 'ai' : 'system'}`}
       >
-        {msg.text}
+        {msg.content}
       </div>
     ))}
   </div>

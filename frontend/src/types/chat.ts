@@ -1,5 +1,6 @@
-// Chat Message Type Definitions
+import { MessageStatus } from './ai';
 
+// Chat Message Type Definitions
 export interface ChatMessage {
   id: string;
   sender: MessageSender;
@@ -13,5 +14,3 @@ export enum MessageSender {
   AI = 'ai',
   System = 'system',
 }
-
-import { MessageStatus } from './ai';

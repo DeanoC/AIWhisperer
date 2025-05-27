@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AIService } from '../services/aiService';
 import { SessionInfo, SessionStatus, AIMessageChunk } from '../types/ai';
 
-export function useAISession(aiService: AIService, userId: string) {
+export function useAISession(aiService: AIService | undefined, userId: string) {
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Idle);
   const [error, setError] = useState<string | null>(null);
@@ -10,18 +10,21 @@ export function useAISession(aiService: AIService, userId: string) {
   const [loading, setLoading] = useState(false);
   const aiServiceRef = useRef(aiService);
 
+
   useEffect(() => {
     aiServiceRef.current = aiService;
   }, [aiService]);
 
-  // Listen for AI message chunks
+  // Listen for AI message chunks only if aiService is available
   useEffect(() => {
+    if (!aiService) return;
     aiService.onAIMessageChunk((chunk) => {
       setChunks((prev) => [...prev, chunk]);
     });
   }, [aiService]);
 
   const startSession = useCallback(async () => {
+    if (!aiServiceRef.current) return;
     setLoading(true);
     setError(null);
     setChunks([]);
@@ -37,6 +40,7 @@ export function useAISession(aiService: AIService, userId: string) {
   }, [userId]);
 
   const stopSession = useCallback(async () => {
+    if (!aiServiceRef.current) return;
     setLoading(true);
     setError(null);
     try {
@@ -50,6 +54,7 @@ export function useAISession(aiService: AIService, userId: string) {
   }, []);
 
   const sendUserMessage = useCallback(async (message: string) => {
+    if (!aiServiceRef.current) return;
     setLoading(true);
     setError(null);
     try {
