@@ -30,7 +30,7 @@ class DummyNotificationDelegate:
         self.called = False
         self.received_data = None
 
-    def handle(self, sender: Any, event_data: TestEventPayload):
+    def handle(self, sender: Any, event_data: TestEventPayload, **kwargs):
         self.called = True
         self.received_data = event_data
 
@@ -39,7 +39,7 @@ class DummyControlDelegate:
         self.called = False
         self._return_value = return_value
 
-    def handle(self, sender: Any) -> bool:
+    def handle(self, sender: Any, **kwargs) -> bool:
         self.called = True
         return self._return_value
 
@@ -60,7 +60,8 @@ def test_notification_delegate_registration_and_invocation():
     manager.register_notification(TestNotificationType.TEST_EVENT, delegate.handle)
     
     payload = TestEventPayload(message="Hello", data={"key": "value"})
-    manager.invoke_notification(None, TestNotificationType.TEST_EVENT, payload)
+    import asyncio
+    asyncio.run(manager.invoke_notification(None, TestNotificationType.TEST_EVENT, payload))
     
     assert delegate.called is True
     assert delegate.received_data == payload
@@ -77,7 +78,8 @@ def test_control_delegate_registration_and_invocation():
     manager.register_control(TestControlType.TEST_CONTROL, delegate_true.handle)
     
     # Invoke control - should return True because delegate_true returns True
-    result = manager.invoke_control(None, TestControlType.TEST_CONTROL)
+    import asyncio
+    result = asyncio.run(manager.invoke_control(None, TestControlType.TEST_CONTROL))
 
     assert result is True
     # Only assert that at least one delegate was called and that the True-returning delegate was called

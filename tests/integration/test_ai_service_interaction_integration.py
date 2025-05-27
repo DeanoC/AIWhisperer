@@ -286,7 +286,8 @@ class TestOpenRouterAIServiceIntegration:
     @patch("requests.post")
     @patch("ai_whisperer.state_management.StateManager") # Mock StateManagement
     @patch("ai_whisperer.execution_engine.ExecutionEngine") # Mock ExecutionEngine
-    def test_integration_cost_token_capture(self, mock_execution_engine_class, mock_state_management_class, mock_post):
+    @pytest.mark.asyncio
+    async def test_integration_cost_token_capture(self, mock_execution_engine_class, mock_state_management_class, mock_post):
         """Test end-to-end capture and storage of cost/token data."""
         # Mock the StateManagement instance
         mock_state_management = MagicMock()
@@ -305,18 +306,21 @@ class TestOpenRouterAIServiceIntegration:
         mock_engine.shutdown_event = MagicMock(is_set=MagicMock(return_value=False))
 
         # Mock AI service response with usage data (simulate streaming chunk)
-        mock_stream_chunk = {
-            "choices": [
-                {
-                    "delta": {
-                        "content": "This is a mock AI response."
-                    }
-                }
-            ],
-            "usage": {"prompt_tokens": 50, "completion_tokens": 75, "total_tokens": 125},
-        }
-        # Configure the mock openrouter_api to yield the mock chunk
-        mock_engine.openrouter_api.stream_chat_completion.return_value = iter([mock_stream_chunk])
+        from ai_whisperer.ai_service.ai_service import AIStreamChunk
+        class MockChunk(AIStreamChunk):
+            def __init__(self, delta_content=None, usage=None):
+                super().__init__(delta_content=delta_content)
+                self.usage = usage
+
+        async def mock_stream_chat_completion(*args, **kwargs):
+            yield MockChunk(
+                delta_content="This is a mock AI response.",
+                usage={"prompt_tokens": 50, "completion_tokens": 75, "total_tokens": 125}
+            )
+
+        mock_engine.openrouter_api.stream_chat_completion = mock_stream_chat_completion
+        # Patch engine.aiservice to point to the mocked openrouter_api
+        mock_engine.aiservice = mock_engine.openrouter_api
 
         # Create a mock task definition
         task_id = "mock-task-cost-token-123"
@@ -332,7 +336,7 @@ class TestOpenRouterAIServiceIntegration:
         mock_prompt_system = MagicMock()
 
         # Simulate AI interaction by calling the handler with the required prompt_system argument
-        handle_ai_interaction(mock_engine, mock_task_definition, mock_prompt_system)
+        await handle_ai_interaction(mock_engine, mock_task_definition, mock_prompt_system)
 
         # Access and verify state management
         # Assert that store_conversation_turn was called for the assistant message with usage_info

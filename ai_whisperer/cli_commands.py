@@ -63,19 +63,21 @@ class ListModelsCliCommand(BaseCliCommand):
         # If output_csv is set, write to CSV and notify
         if self.output_csv:
             model_provider.list_models_to_csv(self.output_csv)
-            self.delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(self.delegate_manager.invoke_notification(
                 sender=self,
                 event_type="user_message_display",
                 event_data={"message": f"Successfully wrote model list to CSV: {self.output_csv}", "level": UserMessageLevel.INFO}
-            )
+            ))
 
         avail_text = f"Available OpenRouter Models ({len(detailed_models)}):"
         logger.debug(avail_text)
-        self.delegate_manager.invoke_notification(
+        import asyncio
+        asyncio.run(self.delegate_manager.invoke_notification(
             sender=self,
             event_type="user_message_display",
             event_data={"message": avail_text, "level": UserMessageLevel.INFO}
-        )
+        ))
         # Only print details in DETAIL mode
         if self.detail_level == UserMessageLevel.DETAIL:
             for model in detailed_models:
@@ -99,21 +101,23 @@ class ListModelsCliCommand(BaseCliCommand):
                 detail_text = f"{' | '.join(details)}"
                 logger.debug(detail_text)
                 # Always send details to delegate_manager in DETAIL mode
-                self.delegate_manager.invoke_notification(
+                import asyncio
+                asyncio.run(self.delegate_manager.invoke_notification(
                     sender=self,
                     event_type="user_message_display",
                     event_data={"message": detail_text, "level": UserMessageLevel.DETAIL}
-                )
+                ))
         else:
             for model in detailed_models:
                 model_id = model.get('id', 'N/A')
                 model_text = f"- {model_id}"
                 logger.debug(model_text)
-                self.delegate_manager.invoke_notification(
+                import asyncio
+                asyncio.run(self.delegate_manager.invoke_notification(
                     sender=self,
                     event_type="user_message_display",
                     event_data={"message": model_text, "level": UserMessageLevel.INFO}
-                )
+                ))
         return 0
     def setup_ui(self, delegate_manager: DelegateManager, ai_config: AIConfig, context_manager: ContextManager, config: dict, **kwargs):
         raise NotImplementedError("setup_ui is not implemented. Textual UI has been removed. Implement websocket/react UI integration here.")

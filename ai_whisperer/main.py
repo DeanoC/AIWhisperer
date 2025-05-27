@@ -21,14 +21,15 @@ if __name__ == "__main__":
         event_type="user_message_display",
         delegate=ansi_handler.display_message
     )
-    delegate_manager.invoke_notification(
+    import asyncio
+    asyncio.run(delegate_manager.invoke_notification(
         sender=None,
         event_type="user_message_display",
         event_data={
             "message": f"{UserMessageColour.GREEN}Starting{UserMessageColour.BRIGHT_WHITE}{UserMessageAttribs.ITALIC} AIWhisperer",
             "level": UserMessageLevel.INFO
         }
-    )
+    ))
 
     try:
         commands, config = cli(delegate_manager=delegate_manager)
@@ -59,18 +60,20 @@ if __name__ == "__main__":
 
     except SystemExit as e:
         if e.code == 1:
-            delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(delegate_manager.invoke_notification(
                 sender=None,
                 event_type="user_message_display",
                 event_data={"message": "Exiting with errors.", "level": UserMessageLevel.INFO}
-            )
+            ))
         raise e
     except Exception as e:
-        delegate_manager.invoke_notification(
+        import asyncio
+        asyncio.run(delegate_manager.invoke_notification(
             sender=None,
             event_type="user_message_display",
             event_data={"message":
                         f"{UserMessageColour.BG_BRIGHT_RED}{UserMessageColour.BRIGHT_WHITE}Error{UserMessageColour.RESET}: {e}",
                         "level": UserMessageLevel.INFO}
-        )
+        ))
         sys.exit(1)

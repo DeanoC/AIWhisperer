@@ -1,7 +1,7 @@
 # tests/unit/test_commands.py
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 
 from ai_whisperer.cli_commands import ListModelsCliCommand
 from ai_whisperer.delegate_manager import DelegateManager
@@ -21,6 +21,7 @@ def test_list_models_mocked(mock_model_info_provider):
     ]
 
     mock_delegate_manager = MagicMock()
+    mock_delegate_manager.invoke_notification = AsyncMock()
     config = {"servers": {}, "config_path": "dummy_config.yaml"}
     detail_level = UserMessageLevel.INFO # Set detail level for this test
 
@@ -63,6 +64,7 @@ def test_list_models_csv_mocked(mock_model_info_provider):
     mock_instance = mock_model_info_provider.return_value
 
     mock_delegate_manager = MagicMock()
+    mock_delegate_manager.invoke_notification = AsyncMock()
     output_csv_path = "dummy_output.csv"
     config = {"servers": {}, "config_path": "dummy_config.yaml"}
     detail_level = UserMessageLevel.INFO # Detail level should not affect CSV output

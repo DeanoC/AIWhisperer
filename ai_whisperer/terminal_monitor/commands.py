@@ -50,19 +50,21 @@ class DebuggerCommand(BaseCliCommand):
 
     def execute(self, args: list[str]):
         delegate_manager = DelegateManager.get_instance()
-        delegate_manager.invoke_notification(
+        import asyncio
+        asyncio.run(delegate_manager.invoke_notification(
             sender=self,
             event_type="user_message_display",
             event_data={"message": "Debugger active. Waiting for connection...", "level": UserMessageLevel.INFO}
-        )
+        ))
         # This will pause execution until a debugger attaches
         debugpy.listen(("127.0.0.1", 5678)) # Example port, should be configurable
         debugpy.wait_for_client()
-        delegate_manager.invoke_notification(
+        import asyncio
+        asyncio.run(delegate_manager.invoke_notification(
             sender=self,
             event_type="user_message_display",
             event_data={"message": "Debugger attached.", "level": UserMessageLevel.INFO}
-        )
+        ))
 
 class AskCommand(BaseCliCommand):
     name = "ask"
@@ -77,11 +79,12 @@ class AskCommand(BaseCliCommand):
     def execute(self, args: list[str]):
         delegate_manager = DelegateManager.get_instance()
         if not args:
-            delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(delegate_manager.invoke_notification(
                 sender=self,
                 event_type="user_message_display",
                 event_data={"message": "Error: 'ask' command requires a query string.", "level": UserMessageLevel.INFO}
-            )
+            ))
             return
 
         query_string = " ".join(args)
@@ -98,37 +101,40 @@ class HelpCommand(BaseCliCommand):
     def execute(self, args: list[str]):
         delegate_manager = DelegateManager.get_instance()
         if not args:
-            delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(delegate_manager.invoke_notification(
                 sender=self,
                 event_type="user_message_display",
                 event_data={"message": "Available commands:", "level": UserMessageLevel.INFO}
-            )
+            ))
             # Use a set to keep track of seen command instances to avoid duplicates due to aliases
             seen_commands = set()
             for command in command_registry.values():
                 if command not in seen_commands:
-                    delegate_manager.invoke_notification(
+                    asyncio.run(delegate_manager.invoke_notification(
                         sender=self,
                         event_type="user_message_display",
                         event_data={"message": f"  {command.name}: {command.help_text.splitlines()[0]}", "level": UserMessageLevel.DETAIL}
-                    )
+                    ))
                     seen_commands.add(command)
             return
         
         command_name = args[0]
         command = command_registry.get(command_name)
         if command:
-            delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(delegate_manager.invoke_notification(
                 sender=self,
                 event_type="user_message_display",
                 event_data={"message": command.help_text, "level": UserMessageLevel.INFO}
-            )
+            ))
         else:
-            delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(delegate_manager.invoke_notification(
                 sender=self,
                 event_type="user_message_display",
                 event_data={"message": f"Error: Unknown command '{command_name}'. Type 'help' for a list of commands.", "level": UserMessageLevel.INFO}
-            )
+            ))
 
 # Conceptual command registry (actual implementation might be elsewhere)
 command_registry = {}

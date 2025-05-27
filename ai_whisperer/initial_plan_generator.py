@@ -58,14 +58,15 @@ class InitialPlanGenerator:
         text = f"InitialPlanGenerator Model: {model_config.get('model')}, Params: {model_config.get('params')}"
         logger.info(text)
 
-        self.delegate_manager.invoke_notification(
+        import asyncio
+        asyncio.run(self.delegate_manager.invoke_notification(
             sender=self,
             event_type="user_message_display",
             event_data={
                 "message": text,
                 "level": UserMessageLevel.DETAIL
             }
-        )
+        ))
         # Map relevant config values to AIConfig arguments
         ai_config = AIConfig(
             api_key=self.config.get('openrouter', {}).get('api_key', ''),
@@ -185,14 +186,15 @@ class InitialPlanGenerator:
 
         logger.info(f"Starting initial JSON generation for: {requirements_md_path}")
         logger.info(f"Using configuration file: {config_path}")
-        self.delegate_manager.invoke_notification(
+        import asyncio
+        asyncio.run(self.delegate_manager.invoke_notification(
             sender=self,
             event_type="user_message_display",
             event_data={
                 "message": f"Making Initial Plan for {requirements_md_path_str}",
                 "level": UserMessageLevel.INFO
             }
-        )
+        ))
         # Ensure requirements file exists before proceeding
         if not requirements_md_path.is_file():
             logger.error(f"Requirements file not found: {requirements_md_path}")
@@ -225,14 +227,15 @@ class InitialPlanGenerator:
                 workspace_context=workspace_context,
                 input_hashes=input_hashes
             )
-            self.delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(self.delegate_manager.invoke_notification(
                 sender=self,
                 event_type="user_message_display",
                 event_data={
                     "message": f"Initial Plan Prompt: {final_prompt}",
                     "level": UserMessageLevel.DETAIL
                 }
-            )
+            ))
 
             # logger.debug(
             #     f"Constructed final prompt:\n{final_prompt}..."
@@ -340,14 +343,15 @@ class InitialPlanGenerator:
             output_filename = f"{requirements_md_path.stem}.json"  # change extension
 
             logger.info(f"Saving validated JSON to: {self.output_dir}")
-            self.delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(self.delegate_manager.invoke_notification(
                 sender=self,
                 event_type="user_message_display",
                 event_data={
                     "message": f"Saving initial plan JSON to {output_filename}",
                     "level": UserMessageLevel.INFO
                 }
-            )
+            ))
 
             try:
                 output_path = self.save_json(json_data, output_filename)

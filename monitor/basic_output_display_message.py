@@ -20,7 +20,7 @@ class ANSIConsoleUserMessageHandler(UserMessageDelegate):
     def get_detail_level(self) -> UserMessageLevel:
         return self._detail_level
 
-    def display_message(self, sender: Any, data: dict) -> None:
+    def display_message(self, sender: Any, data: dict, **kwargs) -> None:
         message = data.get("message", "")
         level = data.get("level", UserMessageLevel.INFO)
 

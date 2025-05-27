@@ -264,14 +264,15 @@ class PlanRunner:
             )
             # Assert delegate_manager is never None
             assert self.delegate_manager is not None, "delegate_manager must not be None in PlanRunner."
-            self.delegate_manager.invoke_notification(
+            import asyncio
+            asyncio.run(self.delegate_manager.invoke_notification(
                 sender=self,
                 event_type="user_message_display",
                 event_data={
                     "message": "Plan execution passed.",
                     "level": "INFO"
                 }
-            )
+            ))
             return True  # Indicate overall success
         else:
             logger.debug("Plan execution failed.") # Log failure
