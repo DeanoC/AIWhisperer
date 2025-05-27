@@ -1,3 +1,18 @@
+# Code Quality
+
+## Linting
+Run ESLint to check for code issues:
+
+```sh
+npx eslint .
+```
+
+## Formatting
+Run Prettier to format code:
+
+```sh
+npx prettier --write .
+```
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

@@ -104,31 +104,31 @@ The primary goal is to get back to a stable development status while progressive
 
 * **Objective:** Create the bridge between the application's delegate system and the future WebSocket layer.
 * **Actions:**
-    1. **Define JSON-RPC API:** _TODO_
-    2. **Implement `JsonRpcInteractiveDelegate`:** _TODO_
-    3. **Unit Test `JsonRpcInteractiveDelegate`:** _TODO_
+    1. **Define JSON-RPC API:** _DONE__
+    2. **Implement `JsonRpcInteractiveDelegate`:** _DONE_
+    3. **Unit Test `JsonRpcInteractiveDelegate`:** _DONE_
 * **Outcome:** A testable delegate ready for integration with a WebSocket server.
-* **Status:** _TODO_
+* **Status:** _DONE_
 
 **Phase 3: Implement WebSocket Server**
 
 * **Objective:** Establish the communication channel.
 * **Actions:**
-    1. Choose a WebSocket library (e.g., `websockets`). _TODO_
+    1. Choose a WebSocket library (e.g., `websockets`). _DONE_
     2. Implement the server to:
         * Accept client connections.
         * Parse incoming JSON-RPC messages.
         * Route requests to the `JsonRpcInteractiveDelegate`.
-        * Receive messages from `JsonRpcInteractiveDelegate` to send to clients.
+        * Receive messages from `JsonRpcInteractiveDelegate` to send to clients. _DONE_
     3. Add a CLI command to start the application in this server mode (e.g., `ai-whisperer serve`). _TODO_
 * **Outcome:** A running WebSocket server capable of basic JSON-RPC message exchange.
-* **Status:** _TODO_
+* **Status:** _PARTIALLY_DONE_
 
 **Phase 4: Develop TypeScript Frontend Client**
 
 * **Objective:** Build the new user interface.
 * **Actions:**
-    1. Set up the TypeScript project. _TODO_
+    1. Set up the TypeScript project. _DONE_
     2. Implement WebSocket connection logic. _TODO_
     3. Create UI components to send JSON-RPC requests defined in Phase 2. _TODO_
     4. Implement handlers for JSON-RPC notifications from the server to update the UI dynamically (e.g., display streaming AI responses, show tool calls, update task statuses). _TODO_
