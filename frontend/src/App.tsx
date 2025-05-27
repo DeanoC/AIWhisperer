@@ -1,36 +1,85 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import ModelList from './ModelList';
-import ChatWindow, { ChatMessage } from './ChatWindow';
+import ChatWindow from './ChatWindow';
 import MessageInput from './MessageInput';
 
-const initialMessages: ChatMessage[] = [
-  {
-    sender: 'user',
-    text: 'Qwen: Qwen3 4B (free) (qwen/qwen3-4b:free)\nQwen3-4B is a 4 billion parameter dense language model from the Qwen3 series, designed to support both general-purpose and reasoning-intensive tasks. It introduces a dual-mode architecture—thinking and non-thinking—allowing dynamic switching between high-precision logical reasoning and efficient dialogue generation. This makes it well-suited for multi-turn chat, instruction following, and complex agent workflows.\n\nAsking AI about qwen/qwen3-4b:free...'
-  },
-  {
-    sender: 'ai',
-    text: "I'm sorry for any confusion, but as of my current knowledge base, there doesn't seem to be a specific AI model named 'qwen/qwen3-4b:free' supported by OpenRouter. OpenAI has developed many models like GPT-3, DAVINCI, etc.\n\nHowever, the name you've provided doesn't match any known models. It's possible that there might be a typo or misunderstanding in the name you've given. If you have more details or if there's a specific aspect of AI you're interested in, feel free to ask!"
-  }
-];
+import { useWebSocket } from './hooks/useWebSocket';
+import { AIService } from './services/aiService';
+import { JsonRpcService } from './services/jsonRpcService';
+import { useAISession } from './hooks/useAISession';
+import { useChat } from './hooks/useChat';
+// import { MessageSender } from './types/chat';
+
+const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
+const USER_ID = 'demo-user';
 
 function App() {
   const [selectedModel, setSelectedModel] = useState('qwen/qwen3-4b:free');
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-  const [history, setHistory] = useState<string[]>([]);
 
-  const handleSend = (text: string) => {
-    setMessages([...messages, { sender: 'user', text }]);
-    setHistory([...history, text]);
-    // Simulate AI response (replace with backend call)
-    setTimeout(() => {
-      setMessages(msgs => [
-        ...msgs,
-        { sender: 'ai', text: `AI response to: ${text}` }
-      ]);
-    }, 500);
+  // WebSocket connection
+
+  const { status: wsStatus, ws } = useWebSocket(WS_URL);
+
+  // AIService instance (memoized)
+  const [aiService, setAIService] = useState<AIService | undefined>(undefined);
+
+  // Only initialize AIService when WebSocket is truly open
+  useEffect(() => {
+    if (ws) {
+      const jsonRpc = new JsonRpcService(ws);
+      setAIService(new AIService(jsonRpc));
+    } else {
+      setAIService(undefined);
+    }
+  }, [ws]);
+
+  // AI session management
+  const sessionHooks = useAISession(aiService, USER_ID);
+  const sessionInfo = sessionHooks.sessionInfo;
+  const sessionStatus = sessionHooks.status;
+  const sessionError = sessionHooks.error;
+  const startSession = sessionHooks.startSession;
+  const sendUserMessage = sessionHooks.sendUserMessage;
+
+  // Chat state management
+  const {
+    messages,
+    // loading: chatLoading,
+    addUserMessage,
+    startAIMessage,
+    appendAIChunk,
+    // addSystemMessage,
+  } = useChat();
+
+  // Send user message handler
+  // Ensure session is started before sending a message
+  const handleSend = async (text: string) => {
+    if (!aiService || !sessionHooks) {
+      // Optionally, add a system message to the chat
+      // addSystemMessage && addSystemMessage('Backend not connected. Please check your server.');
+      return;
+    }
+    addUserMessage(text);
+    // Start session if needed
+    if (!sessionInfo || sessionStatus !== 'active') {
+      console.log('Starting session...');
+      await startSession?.();
+      // Wait for session to become active
+      let tries = 0;
+      while (sessionStatus !== 'active' && tries < 10) {
+        await new Promise(res => setTimeout(res, 100));
+        tries++;
+      }
+      console.log('Session status after start:', sessionStatus);
+    }
+    startAIMessage();
+    aiService.onAIMessageChunk(appendAIChunk);
+    console.log('Sending user message:', text);
+    await sendUserMessage?.(text);
+    // (Chunks will be appended as they arrive)
   };
 
   return (
@@ -39,8 +88,13 @@ function App() {
         <ModelList selected={selectedModel} onSelect={setSelectedModel} />
       </div>
       <div className="content-area">
+        <div className="status-bar">
+          WebSocket: {wsStatus}
+          {sessionStatus && <> | Session: {sessionStatus}</>}
+          {sessionError && <span className="error">Error: {sessionError}</span>}
+        </div>
         <ChatWindow messages={messages} />
-        <MessageInput onSend={handleSend} history={history} />
+        <MessageInput onSend={handleSend} />
       </div>
     </div>
   );
