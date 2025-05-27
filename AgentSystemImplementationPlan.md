@@ -227,37 +227,37 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
 ### Phase 2: Patricia the Planner Agent
 
 **Backend Tests First:**
-- [ ] `test_planner_handler.py`
-  - [ ] Test requirement extraction from conversation
-  - [ ] Test plan generation trigger detection
-  - [ ] Test plan preview generation
-  - [ ] Test plan confirmation flow
-  - [ ] Test plan JSON generation
+- [x] `test_planner_handler.py`
+  - [x] Test requirement extraction from conversation
+  - [x] Test plan generation trigger detection
+  - [x] Test plan preview generation
+  - [x] Test plan confirmation flow
+  - [x] Test plan JSON generation
 
-- [ ] `test_planner_tools.py`
-  - [ ] Test workspace analysis tools
-  - [ ] Test schema reading tools
-  - [ ] Test plan validation
+- [x] `test_planner_tools.py`
+  - [x] Test workspace analysis tools
+  - [x] Test schema reading tools
+  - [x] Test plan validation
 
 **Backend Implementation:**
-- [ ] Create PlannerAgentHandler class
-- [ ] Implement conversation-based requirement extraction
+- [x] Create PlannerAgentHandler class
+- [x] Implement conversation-based requirement extraction
 - [ ] Adapt InitialPlanGenerator for conversational use
-- [ ] Create planner-specific tool wrappers
-- [ ] Add plan preview functionality
+- [x] Create planner-specific tool wrappers
+- [x] Add plan preview functionality
 
 **Frontend Tests First:**
-- [ ] `PlanPreview.test.tsx`
-  - [ ] Test plan JSON rendering
-  - [ ] Test plan section expansion/collapse
-  - [ ] Test plan confirmation UI
-  - [ ] Test plan export functionality
+- [x] `PlanPreview.test.tsx`
+  - [x] Test plan JSON rendering
+  - [x] Test plan section expansion/collapse
+  - [x] Test plan confirmation UI
+  - [x] Test plan export functionality
 
 **Frontend Implementation:**
-- [ ] Create PlanPreview component
-- [ ] Create PlanConfirmation dialog
-- [ ] Add plan visualization features
-- [ ] Update chat to handle plan responses
+- [x] Create PlanPreview component
+- [x] Create PlanConfirmation dialog
+- [x] Add plan visualization features
+- [x] Update chat to handle plan responses
 
 ### Phase 3: Agent Session Management
 

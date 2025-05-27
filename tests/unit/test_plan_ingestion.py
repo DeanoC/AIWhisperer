@@ -347,7 +347,7 @@ def test_load_overview_plan_subtask_file_not_found(create_overview_plan_with_sub
         "overview_missing_subtask.json", overview_content, "subtasks", {}  # No subtasks created
     )
     parser = ParserPlan()
-    with pytest.raises(SubtaskFileNotFoundError, match="Step file not found:\s*.*missing_subtask.json\s*\(at index \d+\)"):
+    with pytest.raises(SubtaskFileNotFoundError, match="Step file not found:\\s*.*missing_subtask.json\\s*\\(referenced in step '.*'\\(at index \\d+\\)"):
         parser.load_overview_plan(overview_path)
 
 
@@ -368,7 +368,7 @@ def test_load_overview_plan_subtask_malformed_json(create_overview_plan_with_sub
     )
     parser = ParserPlan()
     # Expecting SubtaskValidationError due to schema violation
-    with pytest.raises(SubtaskValidationError, match="Subtask validation failed for\s*.*subtask\d+\.json\s*\(referenced in step '.*'\):\s*.*"):
+    with pytest.raises(SubtaskValidationError, match="Subtask validation failed for\\s*.*subtask\\d+\\.json\\s*\\(referenced in step '.*'\\):\\s*.*"):
         parser.load_overview_plan(overview_path)
 
 

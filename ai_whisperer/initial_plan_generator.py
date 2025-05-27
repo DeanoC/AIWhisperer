@@ -23,6 +23,32 @@ from monitor.user_message_delegate import UserMessageLevel
 logger = logging.getLogger(__name__)
 
 class InitialPlanGenerator:
+
+    def generate_plan_from_conversation(self, requirements: list[str], config: dict = None) -> dict:
+        """
+        Generate a plan JSON from a list of requirements (from conversation), using in-memory config.
+        Returns the plan as a dict (does not write to file).
+        """
+        # Use provided config or self.config
+        config = config or self.config
+        # Compose requirements markdown
+        requirements_md = "\n".join(f"- {req}" for req in requirements)
+        # Build prompt using the prompt system
+        prompt = self.prompt_system.get_formatted_prompt(
+            category="agents",
+            name="agent_planner",
+            requirements=requirements_md
+        )
+        # Call OpenRouter client (simulate for now)
+        # In real use, this would be an async call to self.openrouter_client.generate_plan(prompt)
+        # For now, return a dummy plan
+        plan = {
+            "tasks": [
+                {"description": req, "status": "pending"} for req in requirements
+            ],
+            "format": "json"
+        }
+        return plan
     """
     Generates the initial task plan JSON file based on input requirements markdown.
     """
