@@ -179,8 +179,8 @@ We use a TDD (Test-Driven Development) approach to ensure that each step is vali
 - [x] Long-running session stability
 - [x] Memory usage under load
 - [x] AI service timeout handling
-- [ ] Document performance metrics
-- [ ] Automate collection and reporting of performance metrics (latency, throughput, memory, error rate)
+- [x] Document performance metrics
+- [x] Automate collection and reporting of performance metrics (latency, throughput, memory, error rate)
 
 
 ### 5.4 Manual Testing Updates
@@ -190,7 +190,7 @@ We use a TDD (Test-Driven Development) approach to ensure that each step is vali
 - [x] Test streaming with real AI responses
 - [x] Verify error handling in real scenarios
 - [x] Create manual testing guide
-- [ ] Automate manual test scenarios using `interactive_client.py` as a test client
+- [x] Automate manual test scenarios using `interactive_client.py` as a test client
 
 ---
 

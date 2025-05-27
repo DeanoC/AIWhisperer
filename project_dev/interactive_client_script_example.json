@@ -1,0 +1,6 @@
+[
+  {"command": "startSession", "userId": "test_user"},
+  {"command": "sendUserMessage", "message": "Hello, AI!"},
+  {"command": "sendUserMessage", "message": "What is the weather?"},
+  {"command": "stopSession"}
+]

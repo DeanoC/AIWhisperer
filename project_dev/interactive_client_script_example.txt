@@ -1,0 +1,5 @@
+# Example script for interactive_client.py (plain text mode)
+startSession userId=test_user
+sendUserMessage message=Hello, AI!
+sendUserMessage message=What is the weather?
+stopSession

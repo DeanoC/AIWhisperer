@@ -2,7 +2,10 @@
 import asyncio
 import websockets
 import json
+
 import sys
+import argparse
+import pathlib
 
 async def print_server_messages(websocket):
     while True:
@@ -20,7 +23,8 @@ async def print_server_messages(websocket):
             print(f"[ERROR] {e}")
             break
 
-async def interactive_client():
+async def interactive_client(script_path=None, log_path=None):
+
     uri = "ws://127.0.0.1:8000/ws"
     print("Connecting to interactive server at", uri)
     session_id = None
@@ -28,9 +32,17 @@ async def interactive_client():
     websocket = await websockets.connect(uri)
     print("[INFO] Connected.")
 
-    async def send_start_session():
+    # For logging
+    log_f = open(log_path, "w", encoding="utf-8") if log_path else None
+    def log(msg):
+        print(msg)
+        if log_f:
+            print(msg, file=log_f)
+
+    async def send_start_session(user_id=None):
         nonlocal session_id, msg_id
-        user_id = input("Enter userId: ") or "test_user"
+        if user_id is None:
+            user_id = input("Enter userId: ") or "test_user"
         start_req = {
             "jsonrpc": "2.0",
             "id": msg_id,
@@ -42,10 +54,10 @@ async def interactive_client():
         # Wait for sessionId
         while not session_id:
             msg = json.loads(await websocket.recv())
-            print("[SERVER]", msg)
+            log(f"[SERVER] {msg}")
             if msg.get("result") and msg["result"].get("sessionId"):
                 session_id = msg["result"]["sessionId"]
-        print(f"Session started: {session_id}")
+        log(f"Session started: {session_id}")
 
     async def send_stop_session():
         nonlocal session_id, msg_id
@@ -62,12 +74,15 @@ async def interactive_client():
         msg_id += 1
         print("Sent stopSession request.")
 
-    async def send_user_message():
+    async def send_user_message(message=None):
         nonlocal session_id, msg_id
         if not session_id:
             print("[WARN] No session active.")
             return
-        user_msg = input("You: ")
+        if message is None:
+            user_msg = input("You: ")
+        else:
+            user_msg = message
         req = {
             "jsonrpc": "2.0",
             "id": msg_id,
@@ -119,6 +134,54 @@ async def interactive_client():
         msg_id = 1
         print("[INFO] Reconnected.")
 
+    # --- Scripted mode ---
+    if script_path:
+        script_path = pathlib.Path(script_path)
+        if script_path.suffix.lower() == ".json":
+            import json as _json
+            with open(script_path, "r", encoding="utf-8") as f:
+                script = _json.load(f)
+            for entry in script:
+                cmd = entry.get("command")
+                if cmd == "startSession":
+                    await send_start_session(entry.get("userId"))
+                elif cmd == "sendUserMessage":
+                    await send_user_message(entry.get("message"))
+                elif cmd == "stopSession":
+                    await send_stop_session()
+                elif cmd == "provideToolResult":
+                    # Add support as needed
+                    pass
+                elif cmd == "sendMalformedJSON":
+                    await send_malformed()
+                elif cmd == "disconnect":
+                    await disconnect()
+                elif cmd == "reconnect":
+                    await reconnect()
+                # Add more as needed
+        else:
+            # Plain text mode: one command per line, comments start with #
+            with open(script_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    parts = line.split()
+                    cmd = parts[0]
+                    args = dict(p.split("=", 1) for p in parts[1:] if "=" in p)
+                    if cmd == "startSession":
+                        await send_start_session(args.get("userId"))
+                    elif cmd == "sendUserMessage":
+                        await send_user_message(args.get("message"))
+                    elif cmd == "stopSession":
+                        await send_stop_session()
+                    # Add more as needed
+        if log_f:
+            log_f.close()
+        await disconnect()
+        return
+
+    # --- Interactive mode ---
     menu = """
 Commands:
   1. startSession
@@ -162,4 +225,8 @@ Commands:
             print("Unknown command.")
 
 if __name__ == "__main__":
-    asyncio.run(interactive_client())
+    parser = argparse.ArgumentParser(description="Interactive or scripted client for AILoop server")
+    parser.add_argument("--script", type=str, help="Path to script file (.json or .txt)")
+    parser.add_argument("--log", type=str, help="Path to log file for server responses")
+    args = parser.parse_args()
+    asyncio.run(interactive_client(script_path=args.script, log_path=args.log))
