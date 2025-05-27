@@ -2,19 +2,26 @@ import React from 'react';
 import './ChatWindow.css';
 import { ChatMessage, MessageSender } from './types/chat';
 import { Plan } from './types/plan';
+import { Agent } from './types/agent';
 import { PlanPreview } from './components/PlanPreview';
 import { PlanConfirmation } from './components/PlanConfirmation';
 import { PlanExport } from './components/PlanExport';
 
 interface ChatWindowProps {
   messages: ChatMessage[];
+  currentAgent?: Agent;
   onConfirmPlan?: () => void;
   onRejectPlan?: () => void;
 }
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onConfirmPlan, onRejectPlan }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ messages, currentAgent, onConfirmPlan, onRejectPlan }) => {
   return (
     <div className="chat-window">
+      {currentAgent && (
+        <div className="current-agent-banner" style={{ marginBottom: 12, padding: 8, background: currentAgent.color, color: '#fff', borderRadius: 6 }}>
+          <b>Current Agent:</b> {currentAgent.name}
+        </div>
+      )}
       {messages.map((msg, idx) => {
         // Detect plan JSON in AI message content
         let plan: Plan | null = null;

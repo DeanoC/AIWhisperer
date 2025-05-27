@@ -1,3 +1,4 @@
+
 # Agent System Implementation Plan for AIWhisperer
 
 ## Overview
@@ -7,6 +8,7 @@ This document outlines the implementation plan for transitioning from CLI-based 
 ## Architecture Overview
 
 The agent system will integrate with existing infrastructure:
+
 - **Tool Registry**: Use tags to group tools for each agent
 - **Prompt System**: Load agent-specific system prompts from files
 - **Chat Interface**: Extend to support agent selection and switching
@@ -191,6 +193,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
 ### Phase 1: Core Agent Infrastructure
 
 **Backend Tests First:**
+
 - [x] `test_agent_registry.py`
   - [x] Test Agent dataclass creation
   - [x] Test loading default agents
@@ -205,6 +208,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
   - [x] Test context filtering by agent needs
 
 **Backend Implementation:**
+
 - [x] Implement Agent dataclass
 - [x] Implement AgentRegistry class
 - [x] Implement AgentContextManager
@@ -212,6 +216,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
 - [x] Create agent-specific prompt files
 
 **Frontend Tests First:**
+
 - [x] `AgentSelector.test.tsx`
   - [x] Test agent list rendering
   - [x] Test current agent highlighting
@@ -219,7 +224,8 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
   - [x] Test keyboard shortcuts display
 
 **Frontend Implementation:**
-- [ ] Create AgentSelector component
+
+- [x] Create AgentSelector component
 - [x] Create AgentAvatar component
 - [x] Update chat interface to show current agent
 - [x] Add agent switching UI
@@ -227,6 +233,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
 ### Phase 2: Patricia the Planner Agent
 
 **Backend Tests First:**
+
 - [x] `test_planner_handler.py`
   - [x] Test requirement extraction from conversation
   - [x] Test plan generation trigger detection
@@ -240,6 +247,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
   - [x] Test plan validation
 
 **Backend Implementation:**
+
 - [x] Create PlannerAgentHandler class
 - [x] Implement conversation-based requirement extraction
 - [ ] Adapt InitialPlanGenerator for conversational use
@@ -247,6 +255,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
 - [x] Add plan preview functionality
 
 **Frontend Tests First:**
+
 - [x] `PlanPreview.test.tsx`
   - [x] Test plan JSON rendering
   - [x] Test plan section expansion/collapse
@@ -254,6 +263,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
   - [x] Test plan export functionality
 
 **Frontend Implementation:**
+
 - [x] Create PlanPreview component
 - [x] Create PlanConfirmation dialog
 - [x] Add plan visualization features
@@ -262,71 +272,88 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
 ### Phase 3: Agent Session Management
 
 **Backend Tests First:**
-- [ ] `test_session_manager.py`
-  - [ ] Test agent switching
-  - [ ] Test conversation history preservation
-  - [ ] Test agent handoff detection
-  - [ ] Test multi-agent session state
 
-- [ ] `test_agent_communication.py`
-  - [ ] Test handoff protocol
-  - [ ] Test context transfer between agents
-  - [ ] Test agent recommendation system
+- [x] `test_session_manager.py`
+  - [x] Test agent switching
+  - [x] Test conversation history preservation
+  - [x] Test agent handoff detection
+  - [x] Test multi-agent session state
+
+- [x] `test_agent_communication.py`
+  - [x] Test handoff protocol
+  - [x] Test context transfer between agents
+  - [x] Test agent recommendation system
 
 **Backend Implementation:**
-- [ ] Implement AgentSession class
-- [ ] Create agent handoff protocol
-- [ ] Implement conversation history management
-- [ ] Add WebSocket support for agent switching
+
+- [x] Implement AgentSession class
+- [x] Create agent handoff protocol
+- [x] Implement conversation history management
+- [x] Add WebSocket support for agent switching
 
 **Frontend Tests First:**
-- [ ] `ChatSession.test.tsx`
-  - [ ] Test agent switching UI
-  - [ ] Test conversation history per agent
-  - [ ] Test handoff notifications
-  - [ ] Test agent transition animations
+
+- [x] `ChatSession.test.tsx`
+  - [x] Test agent switching UI
+  - [x] Test conversation history per agent
+  - [x] Test handoff notifications
+  - [x] Test agent transition animations
 
 **Frontend Implementation:**
-- [ ] Update ChatWindow for multi-agent support
-- [ ] Create AgentTransition component
-- [ ] Add agent-specific styling
+
+- [x] Update ChatWindow for multi-agent support
+- [x] Create AgentTransition component
+- [x] Add agent-specific styling
 - [ ] Implement handoff UI flow
 
 ### Phase 4: Tool Registry Integration
 
 **Backend Tests First:**
+
 - [ ] `test_agent_tools.py`
-  - [ ] Test tool filtering by tags
-  - [ ] Test tool availability per agent
+  - [x] Test tool filtering by tags
+  - [x] Test tool availability per agent
   - [ ] Test tool execution with agent context
   - [ ] Test tool result formatting
 
 **Backend Implementation:**
-- [ ] Extend ToolRegistry with tag filtering
-- [ ] Create agent-specific tool wrappers
-- [ ] Implement tool permission system
-- [ ] Add tool usage logging per agent
+
+- [x] Extend ToolRegistry with tag filtering
+- [x] Create agent-specific tool wrappers
+- [x] Implement tool permission system
+- [x] Add tool usage logging per agent
 
 ### Phase 5: API Endpoints
 
 **Backend Tests First:**
-- [ ] `test_agent_endpoints.py`
-  - [ ] Test GET /api/agents endpoint
-  - [ ] Test POST /api/session/switch-agent
-  - [ ] Test GET /api/session/current-agent
-  - [ ] Test POST /api/session/handoff
+
+- [x] `test_agent_jsonrpc.py`
+  - [x] Test "agent.list" method (list all agents)
+  - [x] Test "session.switch_agent" method
+  - [x] Test "session.current_agent" method
+  - [x] Test "session.handoff" method
 
 **Backend Implementation:**
-- [ ] Create agent-related FastAPI endpoints
-- [ ] Add session management endpoints
-- [ ] Implement WebSocket agent events
-- [ ] Add agent metrics endpoints
+
+- [x] Add agent/session JSON-RPC methods to WebSocket API
+- [x] Implement agent/session state events over WebSocket
+- [ ] Add agent metrics reporting via JSON-RPC
 
 **Frontend Integration Tests:**
-- [ ] Test full agent switching flow
+
+- [x] Test full agent switching flow (via JSON-RPC)
 - [ ] Test conversation persistence
 - [ ] Test handoff user journey
-- [ ] Test error handling
+- [x] Test error handling
+
+
+## [NEXT] Ensure agent system prompts are used in context
+
+- [x] Update `AgentContextManager` to load the agent's system prompt from the correct prompt file (using the PromptSystem)
+- [x] Prepend the system prompt as the first message in the context/history (role: 'system', content: prompt text)
+- [x] Ensure session/AI loop startup always includes the correct system prompt for the current agent
+- [x] Add/Update tests to verify the system prompt is present as the first message in the context for each agent
+- [x] Add/Update tests to verify the system prompt is sent to the AI backend as the first message in the conversation
 
 ## Configuration Files
 

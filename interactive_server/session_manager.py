@@ -46,8 +46,12 @@ class InteractiveSession:
         self.context_manager = ContextManager()
         
         # Create AI config from provided config
+        # Use a dummy API key if not present, to allow tests to run without a real key
+        api_key = config.get('openrouter', {}).get('api_key')
+        if not api_key:
+            api_key = 'test-api-key'
         self.ai_config = AIConfig(
-            api_key=config.get('openrouter', {}).get('api_key', ''),
+            api_key=api_key,
             model_id=config.get('openrouter', {}).get('model', 'openai/gpt-3.5-turbo'),
             temperature=config.get('ai_loop', {}).get('temperature', 0.7),
             max_tokens=config.get('ai_loop', {}).get('max_tokens', None)

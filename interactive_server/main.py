@@ -1,4 +1,3 @@
-
 import os
 import ai_whisperer.commands.echo
 import ai_whisperer.commands.status
@@ -17,6 +16,70 @@ from .message_models import (
     ProvideToolResultRequest, ProvideToolResultResponse, SessionParams,
     SessionStatus, MessageStatus, ToolResultStatus
 )
+from ai_whisperer.agents.registry import AgentRegistry
+from ai_whisperer.agents.registry import Agent
+from pathlib import Path
+prompts_dir = Path(os.environ.get("AIWHISPERER_PROMPTS", "prompts"))
+agent_registry = AgentRegistry(prompts_dir)
+# === Agent/Session JSON-RPC Handlers ===
+async def agent_list_handler(params, websocket=None):
+    agents = [
+        {
+            "agent_id": agent.agent_id,
+            "name": agent.name,
+            "role": agent.role,
+            "description": agent.description,
+            "color": agent.color,
+            "shortcut": agent.shortcut,
+        }
+        for agent in agent_registry.list_agents()
+    ]
+    return {"agents": agents}
+
+async def session_switch_agent_handler(params, websocket=None):
+    try:
+        agent_id = params.get("agent_id")
+        session = session_manager.get_session_by_websocket(websocket)
+        if not session:
+            # Auto-create a session if none exists for this websocket
+            session_id = await session_manager.create_session(websocket)
+            await session_manager.start_session(session_id)
+            session = session_manager.get_session_by_websocket(websocket)
+        # Save/restore agent state as needed (not implemented here)
+        session.current_agent_id = agent_id
+        return {"success": True, "current_agent": agent_id}
+    except Exception as e:
+        import logging, traceback
+        logging.error(f"[session_switch_agent_handler] Exception: {e}")
+        traceback.print_exc()
+        print(f"[session_switch_agent_handler] Exception: {e}")
+        return {"success": False, "error": str(e)}
+
+async def session_current_agent_handler(params, websocket=None):
+    session = session_manager.get_session_by_websocket(websocket)
+    if not session or not hasattr(session, "current_agent_id"):
+        return {"current_agent": None}
+    return {"current_agent": session.current_agent_id}
+
+async def session_handoff_handler(params, websocket=None):
+    try:
+        to_agent = params.get("to_agent")
+        session = session_manager.get_session_by_websocket(websocket)
+        if not session:
+            # Auto-create a session if none exists for this websocket
+            session_id = await session_manager.create_session(websocket)
+            await session_manager.start_session(session_id)
+            session = session_manager.get_session_by_websocket(websocket)
+        from_agent = getattr(session, "current_agent_id", None)
+        session.current_agent_id = to_agent
+        # Optionally: send notification/event to frontend
+        return {"success": True, "from_agent": from_agent, "to_agent": to_agent}
+    except Exception as e:
+        import logging, traceback
+        logging.error(f"[session_handoff_handler] Exception: {e}")
+        traceback.print_exc()
+        print(f"[session_handoff_handler] Exception: {e}")
+        return {"success": False, "error": str(e)}
 
 app = FastAPI()
 
@@ -168,6 +231,11 @@ HANDLERS = {
     "stopSession": stop_session_handler,
     "echo": echo_handler,  # JSON-RPC echo handler for protocol/dispatch test compatibility
     "dispatchCommand": dispatch_command_handler,
+    # Agent/session management
+    "agent.list": agent_list_handler,
+    "session.switch_agent": session_switch_agent_handler,
+    "session.current_agent": session_current_agent_handler,
+    "session.handoff": session_handoff_handler,
 }
 
 
@@ -189,24 +257,27 @@ async def process_json_rpc_request(msg, websocket):
             result = await handler(msg.get("params", {}), websocket=websocket)
         else:
             result = handler(msg.get("params", {}), websocket=websocket)
-        
         # If result is a dict (from model_dump), return as is, else wrap
         if isinstance(result, dict):
             return {"jsonrpc": "2.0", "id": msg["id"], "result": result}
         else:
             return {"jsonrpc": "2.0", "id": msg["id"], "result": result}
     except (ValueError, TypeError) as e:
-        # These are parameter validation errors - return JSON-RPC error
+        import logging
+        logging.error(f"[process_json_rpc_request] ValueError/TypeError: {e}")
         return {
             "jsonrpc": "2.0",
             "id": msg["id"],
-            "error": {"code": -32602, "message": "Invalid params"}
+            "error": {"code": -32602, "message": f"Invalid params: {e}"}
         }
     except Exception as e:
-        # Other exceptions - let them bubble up to be handled by the websocket layer
-        # The specific handlers (like send_user_message_handler) should handle their own errors
-        # and return appropriate responses or trigger delegate notifications
-        raise e
+        import logging
+        logging.error(f"[process_json_rpc_request] Exception: {e}")
+        return {
+            "jsonrpc": "2.0",
+            "id": msg["id"],
+            "error": {"code": -32603, "message": f"Internal error: {e}"}
+        }
 
 
 async def handle_websocket_message(websocket, data):

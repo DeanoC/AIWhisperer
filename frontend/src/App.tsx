@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ModelList from './ModelList';
 import ChatWindow from './ChatWindow';
+import { Agent } from './types/agent';
+import { AgentSelector } from './components/AgentSelector';
+import { AgentTransition } from './components/AgentTransition';
+
 import MessageInput from './MessageInput';
 
 import { useWebSocket } from './hooks/useWebSocket';
@@ -13,11 +17,34 @@ import { useAISession } from './hooks/useAISession';
 import { useChat } from './hooks/useChat';
 import { SessionStatus } from './types/ai';
 // import { MessageSender } from './types/chat';
+import { ChatMessage } from './types/chat';
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 const USER_ID = 'demo-user';
+// Demo agent list (replace with API call in production)
+const AGENTS: Agent[] = [
+  {
+    agentId: 'P',
+    name: 'Patricia the Planner',
+    description: 'Creates structured implementation plans from feature requests',
+    color: '#4CAF50',
+    shortcut: '[P]'
+  },
+  {
+    agentId: 'T',
+    name: 'Tessa the Tester',
+    description: 'Generates comprehensive test suites and test plans',
+    color: '#2196F3',
+    shortcut: '[T]'
+  }
+];
+
+
+// (Removed invalid top-level React hooks. All hooks must be inside App function.)
 
 function App() {
+  // Handoff state for UI
+  const [handoff, setHandoff] = useState<{ from: string; to: string; show: boolean } | null>(null);
   // WebSocket connection
   const { status: wsStatus, ws } = useWebSocket(WS_URL);
 
@@ -44,6 +71,7 @@ function App() {
   const startSession = sessionHooks.startSession;
   const sendUserMessage = sessionHooks.sendUserMessage;
 
+
   // Chat state management
   // Start a session as soon as AIService and startSession are available, and session is not active
   useEffect(() => {
@@ -64,6 +92,29 @@ function App() {
     appendAIChunk,
     addSystemMessage,
   } = useChat();
+
+  // Multi-agent session state (must be after useChat)
+  const [currentAgent, setCurrentAgent] = useState<Agent>(AGENTS[0]);
+  const [conversationHistories, setConversationHistories] = useState<Record<string, ChatMessage[]>>({
+    [AGENTS[0].agentId]: []
+  });
+
+  // Handle agent switch
+  const handleAgentSelect = (agentId: string) => {
+    setConversationHistories(histories => ({
+      ...histories,
+      [currentAgent.agentId]: [...messages]
+    }));
+    const nextAgent = AGENTS.find(a => a.agentId === agentId) || AGENTS[0];
+    // Show handoff UI if switching to a different agent
+    if (nextAgent.agentId !== currentAgent.agentId) {
+      setHandoff({ from: currentAgent.name, to: nextAgent.name, show: true });
+      setTimeout(() => setHandoff(h => h && { ...h, show: false }), 1500);
+    }
+    setCurrentAgent(nextAgent);
+    // Optionally: restore messages for nextAgent
+    // Not implemented: would require useChat to support external set
+  };
 
   // Send user message handler
   // Ensure session is started before sending a message
@@ -163,7 +214,26 @@ function App() {
           {sessionStatus && <> | Session: {sessionStatus}</>}
           {sessionError && <span className="error">Error: {sessionError}</span>}
         </div>
-        <ChatWindow messages={messages} />
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24 }}>
+          <div>
+            <AgentSelector
+              agents={AGENTS}
+              currentAgent={currentAgent}
+              onAgentSelect={handleAgentSelect}
+            />
+          </div>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <ChatWindow
+              messages={messages}
+              currentAgent={currentAgent}
+            />
+            {handoff && handoff.show && (
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
+                <AgentTransition fromAgent={handoff.from} toAgent={handoff.to} show={handoff.show} />
+              </div>
+            )}
+          </div>
+        </div>
         <MessageInput onSend={handleSend} fetchCommandList={fetchCommandList} sessionStatus={sessionStatus} />
 
       </div>

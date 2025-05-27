@@ -1,12 +1,5 @@
 import React from 'react';
-
-export interface Agent {
-  agentId: string;
-  name: string;
-  description: string;
-  color: string;
-  shortcut: string;
-}
+import { Agent } from '../types/agent';
 
 export interface AgentSelectorProps {
   agents: Agent[];

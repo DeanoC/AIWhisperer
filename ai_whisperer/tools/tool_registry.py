@@ -71,13 +71,15 @@ class ToolRegistry:
         Example criteria: {"tags": ["file_io"], "category": "Utility", "name_pattern": "read_.*"}
         """
         filtered_list = []
+
         for tool in self.get_all_tools():
             match = True
 
-            # Filter by tags
+            # Filter by tags (match ANY tag, not ALL)
             if "tags" in criteria:
-                tool_tags = getattr(tool, 'tags', [])
-                if not all(tag in tool_tags for tag in criteria["tags"]):
+                tool_tags = set(getattr(tool, 'tags', []))
+                filter_tags = set(criteria["tags"])
+                if not tool_tags.intersection(filter_tags):
                     match = False
 
             # Filter by category

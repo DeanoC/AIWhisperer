@@ -1,5 +1,5 @@
 import React from 'react';
-import { Agent } from './AgentSelector';
+import { Agent } from '../types/agent';
 
 export interface AgentAvatarProps {
   agent: Agent;

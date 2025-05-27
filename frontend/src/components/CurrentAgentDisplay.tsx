@@ -1,5 +1,5 @@
 import React from 'react';
-import { Agent } from './AgentSelector';
+import { Agent } from '../types/agent';
 import { AgentAvatar } from './AgentAvatar';
 
 export interface CurrentAgentDisplayProps {
