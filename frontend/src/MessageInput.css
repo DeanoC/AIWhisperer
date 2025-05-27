@@ -1,28 +1,138 @@
+/* Command suggestions dropdown */
+.command-suggestions {
+  position: absolute;
+  left: 0;
+  bottom: 110%;
+  width: 260px;
+  max-width: 90vw;
+  background: #fff;
+  border: 1px solid #b0b0b0;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.10);
+  z-index: 10;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  font-size: 1rem;
+  font-family: inherit;
+  overflow-y: auto;
+  max-height: 220px;
+}
+
+.command-suggestions li {
+  padding: 7px 16px;
+  cursor: pointer;
+  color: #1976d2;
+  background: none;
+  transition: background 0.15s, color 0.15s;
+  border: none;
+}
+
+.command-suggestions li.selected,
+.command-suggestions li:hover {
+  background: #e0e7ef;
+  color: #0d47a1;
+}
+/* Ensure text after command is visible in command mode */
+.after-command {
+  color: #222;
+}
+
+/* Improved input bar style for lighter theme */
 .message-input-bar {
   display: flex;
   align-items: center;
-  padding: 8px;
-  background: #222;
-  border-top: 1px solid #888;
+  padding: 10px 16px;
+  background: #f9f9f9;
+  border-top: 1px solid #d0d0d0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+
 }
+
+/* Ensure highlight and input are visually aligned */
+.input-highlight-wrapper {
+  position: relative;
+  flex: 1;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Mirror input for highlight effect */
+/* Mirror input style exactly for alignment */
+.input-highlight {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  color: transparent;
+  background: none;
+  font-size: 1rem;
+  padding: 10px 0;
+  white-space: pre;
+  font-family: inherit;
+  line-height: 1.2;
+  z-index: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Improved command highlight style */
+/* Remove margin and minimize padding to avoid cursor offset */
+/* Minimize style impact for perfect caret alignment */
+.command-highlight {
+  color: #1976d2;
+  background: #e0e7ef;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: inherit;
+  letter-spacing: normal;
+}
+
+/* Input matches highlight and new bar style */
+/* Input is transparent, caret remains visible, highlight div shows text */
+/* Input matches highlight for perfect alignment */
+/* Input matches highlight for perfect alignment */
 .message-input {
   flex: 1;
-  padding: 8px;
+  padding: 10px 0;
   font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.2;
   border: none;
-  border-radius: 4px;
-  margin-right: 8px;
+  border-radius: 0;
   outline: none;
+  background: transparent;
+  color: #222;
+  caret-color: #222;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
 }
+
+/* Only make text transparent in command mode */
+.message-input.command-mode {
+  color: transparent;
+}
+
+/* Button style update for consistency */
 .send-btn {
-  background: #2196f3;
+  background: #1976d2;
   color: #fff;
   border: none;
   border-radius: 4px;
-  padding: 8px 16px;
+  padding: 10px 20px;
   font-size: 1rem;
   cursor: pointer;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(25, 118, 210, 0.08);
+  transition: background 0.2s;
 }
+/* Button hover effect */
 .send-btn:hover {
-  background: #1976d2;
+  background: #1565c0;
 }

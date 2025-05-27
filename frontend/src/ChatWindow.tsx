@@ -13,7 +13,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages }) => (
         key={msg.id || idx}
         className={`chat-message ${msg.sender === MessageSender.User ? 'user' : msg.sender === MessageSender.AI ? 'ai' : 'system'}`}
       >
-        {msg.content}
+        {msg.sender === MessageSender.System && msg.content.startsWith('ERROR:') ? (
+          <span className="system-error">{msg.content.split('\n').map((line, i) => (
+            <React.Fragment key={i}>
+              {line}
+              {i < msg.content.split('\n').length - 1 && <br />}
+            </React.Fragment>
+          ))}</span>
+        ) : (
+          msg.content.split('\n').map((line, i) => (
+            <React.Fragment key={i}>
+              {line}
+              {i < msg.content.split('\n').length - 1 && <br />}
+            </React.Fragment>
+          ))
+        )}
       </div>
     ))}
   </div>

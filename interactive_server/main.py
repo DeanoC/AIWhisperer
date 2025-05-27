@@ -1,5 +1,8 @@
 
 import os
+import ai_whisperer.commands.echo
+import ai_whisperer.commands.status
+import ai_whisperer.commands.help
 import logging
 import json
 import inspect
@@ -134,12 +137,37 @@ async def echo_handler(params, websocket=None):
 
 
 # Handler registry
+from ai_whisperer.commands.registry import CommandRegistry
+
+from ai_whisperer.commands.errors import CommandError
+
+async def dispatch_command_handler(params, websocket=None):
+    session_id = params.get("sessionId")
+    command_str = params.get("command", "")
+    if not command_str.startswith("/"):
+        return {"error": "Invalid command format. Must start with /"}
+    parts = command_str[1:].split(" ", 1)
+    cmd_name = parts[0]
+    cmd_args = parts[1] if len(parts) > 1 else ""
+    cmd_cls = CommandRegistry.get(cmd_name)
+    if not cmd_cls:
+        return {"error": f"Unknown command: {cmd_name}"}
+    cmd = cmd_cls()
+    try:
+        result = cmd.run(cmd_args, context={"session_id": session_id})
+        return {"output": result}
+    except CommandError as ce:
+        return {"error": str(ce)}
+    except Exception as e:
+        return {"error": f"Command error: {str(e)}"}
+
 HANDLERS = {
     "startSession": start_session_handler,
     "sendUserMessage": send_user_message_handler,
     "provideToolResult": provide_tool_result_handler,
     "stopSession": stop_session_handler,
     "echo": echo_handler,  # JSON-RPC echo handler for protocol/dispatch test compatibility
+    "dispatchCommand": dispatch_command_handler,
 }
 
 

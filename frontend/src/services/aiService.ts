@@ -16,6 +16,26 @@ export class AIService {
     this.rpc.setNotificationHandler(this.handleNotification.bind(this));
   }
 
+  /**
+   * Dispatch a command to the backend (e.g., /help, /echo, etc.)
+   * @param command The full command string (e.g., '/help foo')
+   * @returns Backend response (could be command output or error)
+   */
+  async dispatchCommand(command: string): Promise<any> {
+    if (!this.sessionId) throw new Error('No session active');
+    try {
+      const result = await this.rpc.sendRequest('dispatchCommand', {
+        sessionId: this.sessionId,
+        command,
+      });
+      return result;
+    } catch (err: any) {
+      this.error = err.message || 'Failed to dispatch command';
+      throw err;
+    }
+  }
+// (Removed duplicate imports and class definition)
+
   async startSession(userId: string): Promise<SessionInfo> {
     try {
       const result = await this.rpc.sendRequest('startSession', {

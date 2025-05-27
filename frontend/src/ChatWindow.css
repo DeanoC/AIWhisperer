@@ -1,3 +1,17 @@
+.system-error {
+  color: #b00020;
+  font-weight: bold;
+}
+.chat-message.system {
+  background: #e0e7ef;
+  color: #222;
+  padding: 12px;
+  border-radius: 6px;
+  align-self: flex-start;
+  max-width: 80%;
+  font-family: monospace;
+  border: 1px solid #b3d3f6;
+}
 .chat-window {
   flex: 1;
   background: #fff;
@@ -21,7 +35,8 @@
   color: #222;
   padding: 12px;
   border-radius: 6px;
-  align-self: flex-start;
+  align-self: flex-end;
   max-width: 80%;
   font-family: monospace;
+  text-align: right;
 }

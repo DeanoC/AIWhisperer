@@ -1,3 +1,13 @@
+    /// Request to dispatch a command (frontend to backend)
+    message DispatchCommandRequest {
+        sessionId: string
+        command: string
+    }
+
+    /// Response to DispatchCommandRequest
+    message DispatchCommandResponse {
+        output: string
+    }
 namespace Interactive {
 
     /// Request to start a new AI session.
