@@ -1,3 +1,36 @@
+# ---
+
+## AI Service Configuration (Required)
+
+- The `openrouter.api_key` is required and must be set via the `OPENROUTER_API_KEY` environment variable (never commit API keys to source).
+- The `model` field is required; see OpenRouter docs for available models.
+- `timeout_seconds` sets the maximum time (in seconds) for any AI service request (default: 60, can be increased for long-running tasks).
+- `cache` enables in-memory caching of API responses for efficiency.
+
+## Session Management Settings
+
+- **Session timeouts**: Controlled by `timeout_seconds` in the `openrouter` section. If a session or AI service call exceeds this, a timeout notification is sent to the client.
+- **Max sessions**: The default implementation does not hard-limit concurrent sessions, but you can add a limit in your deployment or extend the session manager.
+- **Cleanup**: Sessions are automatically cleaned up on disconnect, error, or timeout to prevent resource leaks.
+
+## Resource Limit Recommendations
+
+- **Memory**: Each session consumes memory for context/history and AI state. Monitor usage under load and adjust `max_tokens`, session timeouts, or add a session limit as needed.
+- **Timeouts**: For most use cases, 60–120 seconds is sufficient for `timeout_seconds`. Increase for long-running tasks, but beware of resource exhaustion.
+- **Concurrency**: For high concurrency, run multiple server processes and use a load balancer.
+
+## Security Considerations
+
+- **API Keys**: Always set `OPENROUTER_API_KEY` via environment variable or `.env` file. Never commit secrets to source control.
+- **Session Isolation**: Each WebSocket/session is isolated; no data is shared between sessions unless explicitly coded.
+- **User Input**: Validate and sanitize all user input in production deployments.
+
+## Cross-References
+
+- See [Architecture](architecture.md) for how configuration impacts runtime behavior.
+- See [API Documentation](interactive_mode_api.md) for how timeouts and errors are surfaced to clients.
+
+# ---
 # Configuration File (`config.yaml`)
 
 The AI Whisperer application uses a YAML configuration file to customize its behavior. The configuration file should be placed in the project root directory or specified via command line arguments.
@@ -67,9 +100,9 @@ The `openrouter` section contains settings for the OpenRouter API, which is used
 | `site_url` | No | "<http://localhost:8000>" | Your project's URL (sent as HTTP-Referer) |
 | `app_name` | No | "AIWhisperer" | Your application's name (sent as X-Title) |
 | `cache` | No | `false` | Boolean (`true` or `false`). Enables or disables in-memory caching for OpenRouter API responses. When `true`, responses to identical requests (model, messages, params, tools, response_format) are cached for the lifetime of the `OpenRouterAIService` object. |
-| `timeout_seconds` | No | `60` | Integer. Timeout in seconds for API requests to OpenRouter. |
+| `timeout_seconds` | No | `60` | Integer. Timeout in seconds for API requests to OpenRouter and session timeouts. |
 
-**Note:** The OpenRouter API key MUST be provided via the `OPENROUTER_API_KEY` environment variable. You can set this variable directly in your shell or place it in a `.env` file in the project's root directory (e.g., `OPENROUTER_API_KEY="sk-or-v1-abc...xyz"`).
+**Note:** The OpenRouter API key MUST be provided via the `OPENROUTER_API_KEY` environment variable. You can set this variable directly in your shell or place it in a `.env` file in the project's root directory (e.g., `OPENROUTER_API_KEY="sk-or-v1-abc...xyz"`). Never commit API keys to source control.
 
 ### Prompt System Configuration
 
@@ -114,7 +147,7 @@ Currently supported task names:
 - "Subtask Generation": Used when generating individual subtasks
 - "Orchestrator": Used when generating the overall project plan
 
-If a task-specific configuration is not provided, the default model from the `openrouter` section will be used.
+If a task-specific configuration is not provided, the default model from the `openrouter` section will be used. All model and parameter options are passed directly to the OpenRouter API.
 
 ### Other Application Settings
 
