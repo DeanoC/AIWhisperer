@@ -12,15 +12,19 @@ export function useWebSocket(url: string, options?: { reconnect?: boolean; recon
 
   const connect = useCallback(() => {
     if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+      console.log('[useWebSocket] Already connected or connecting');
       return;
     }
     setStatus('connecting');
+    console.log('[useWebSocket] Attempting to connect to', url);
     wsRef.current = new WebSocket(url);
     wsRef.current.onopen = () => {
+      console.log('[useWebSocket] WebSocket opened');
       setStatus('connected');
       reconnectAttempts.current = 0;
     };
-    wsRef.current.onclose = () => {
+    wsRef.current.onclose = (event) => {
+      console.log('[useWebSocket] WebSocket closed', event);
       setStatus('disconnected');
       if (reconnect) {
         reconnectTimeout.current = setTimeout(() => {
@@ -29,7 +33,8 @@ export function useWebSocket(url: string, options?: { reconnect?: boolean; recon
         }, reconnectIntervalMs);
       }
     };
-    wsRef.current.onerror = () => {
+    wsRef.current.onerror = (event) => {
+      console.error('[useWebSocket] WebSocket error', event);
       setStatus('error');
     };
   }, [url, reconnect, reconnectIntervalMs]);

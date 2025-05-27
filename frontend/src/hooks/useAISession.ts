@@ -1,12 +1,49 @@
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AIService } from '../services/aiService';
 import { SessionInfo, SessionStatus, AIMessageChunk } from '../types/ai';
 
 export function useAISession(aiService: AIService | undefined, userId: string) {
+
+  // Keep status in sync with AIService (polling)
+  useEffect(() => {
+    if (!aiService) return;
+    const interval = setInterval(() => {
+      const newStatus = aiService.getStatus && aiService.getStatus();
+      setStatus((prev: SessionStatus) => {
+        if (prev !== newStatus) {
+          console.log('[useAISession] Status changed:', prev, '->', newStatus);
+          return newStatus;
+        }
+        return prev;
+      });
+    }, 200);
+    return () => clearInterval(interval);
+  }, [aiService]);
+
+
+  // Listen for session status changes from AIService
+  useEffect(() => {
+    if (!aiService) return;
+    const interval = setInterval(() => {
+      const newStatus = aiService.getStatus && aiService.getStatus();
+      setStatus((prev: SessionStatus) => (prev !== newStatus ? newStatus : prev));
+    }, 200);
+    return () => clearInterval(interval);
+  }, [aiService]);
+  // Listen for session status changes from AIService
+  useEffect(() => {
+    if (!aiService) return;
+    const interval = setInterval(() => {
+      const newStatus = aiService.getStatus && aiService.getStatus();
+      setStatus((prev: SessionStatus) => (prev !== newStatus ? newStatus : prev));
+    }, 200);
+    return () => clearInterval(interval);
+  }, [aiService]);
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Idle);
   const [error, setError] = useState<string | null>(null);
-  const [chunks, setChunks] = useState<AIMessageChunk[]>([]);
+  // Remove unused chunks state to prevent double display and confusion
   const [loading, setLoading] = useState(false);
   const aiServiceRef = useRef(aiService);
 
@@ -15,19 +52,13 @@ export function useAISession(aiService: AIService | undefined, userId: string) {
     aiServiceRef.current = aiService;
   }, [aiService]);
 
-  // Listen for AI message chunks only if aiService is available
-  useEffect(() => {
-    if (!aiService) return;
-    aiService.onAIMessageChunk((chunk) => {
-      setChunks((prev) => [...prev, chunk]);
-    });
-  }, [aiService]);
+  // (Removed AI message chunk handler registration to prevent double display)
 
   const startSession = useCallback(async () => {
     if (!aiServiceRef.current) return;
     setLoading(true);
     setError(null);
-    setChunks([]);
+    // setChunks([]); // removed, no longer used
     try {
       const info = await aiServiceRef.current.startSession(userId);
       setSessionInfo(info);
@@ -70,7 +101,6 @@ export function useAISession(aiService: AIService | undefined, userId: string) {
     sessionInfo,
     status,
     error,
-    chunks,
     loading,
     startSession,
     stopSession,

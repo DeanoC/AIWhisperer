@@ -77,27 +77,27 @@
 ### Day 5: AI Service Layer
 
 - [ ] Create `src/services/aiService.ts`
-  - [ ] Session lifecycle management
-  - [ ] Message sending
-  - [ ] Response chunk handling
+  - [x] Session lifecycle management
+  - [x] Message sending
+  - [x] Response chunk handling
   - [ ] Error handling
 - [ ] Write tests for all functionality
-- [ ] Test session start/stop flow
-- [ ] Test message sending flow
+- [x] Test session start/stop flow
+- [x] Test message sending flow
 - [ ] Test streaming response handling
 
 ### Day 6: React Hooks
 
 - [ ] Create `src/hooks/useWebSocket.ts`
-  - [ ] Connection state management
+  - [x] Connection state management
   - [ ] Auto-reconnection
   - [ ] Connection status
 - [ ] Create `src/hooks/useAISession.ts`
-  - [ ] Session state management
+  - [x] Session state management
   - [ ] Message sending
   - [ ] Session lifecycle
 - [ ] Create `src/hooks/useChat.ts`
-  - [ ] Message history
+  - [x] Message history
   - [ ] Streaming message assembly
   - [ ] Loading states
 

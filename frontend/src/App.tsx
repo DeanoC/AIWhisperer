@@ -11,6 +11,7 @@ import { AIService } from './services/aiService';
 import { JsonRpcService } from './services/jsonRpcService';
 import { useAISession } from './hooks/useAISession';
 import { useChat } from './hooks/useChat';
+import { SessionStatus } from './types/ai';
 // import { MessageSender } from './types/chat';
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
@@ -28,13 +29,14 @@ function App() {
 
   // Only initialize AIService when WebSocket is truly open
   useEffect(() => {
-    if (ws) {
+    if (ws && wsStatus === 'connected') {
+      console.log('[App] WebSocket is connected, initializing AIService');
       const jsonRpc = new JsonRpcService(ws);
       setAIService(new AIService(jsonRpc));
     } else {
       setAIService(undefined);
     }
-  }, [ws]);
+  }, [ws, wsStatus]);
 
   // AI session management
   const sessionHooks = useAISession(aiService, USER_ID);
@@ -57,30 +59,77 @@ function App() {
   // Send user message handler
   // Ensure session is started before sending a message
   const handleSend = async (text: string) => {
+    console.log('[handleSend] called with:', text);
     if (!aiService || !sessionHooks) {
+      console.warn('[handleSend] No aiService or sessionHooks');
       // Optionally, add a system message to the chat
       // addSystemMessage && addSystemMessage('Backend not connected. Please check your server.');
       return;
     }
     addUserMessage(text);
     // Start session if needed
-    if (!sessionInfo || sessionStatus !== 'active') {
-      console.log('Starting session...');
+    // Map numeric status to string using SessionStatus enum if needed
+    let isActive = false;
+    if (typeof sessionStatus === 'string') {
+      isActive = sessionStatus === SessionStatus.Active;
+    } else if (typeof sessionStatus === 'number') {
+      // Backend sends 1 for active, 0 for idle, 2 for stopped, etc.
+      // Map to SessionStatus enum
+      isActive = sessionStatus === 1;
+    }
+    if (!sessionInfo || !isActive) {
+      console.log('[handleSend] Starting session...');
       await startSession?.();
       // Wait for session to become active
       let tries = 0;
-      while (sessionStatus !== 'active' && tries < 10) {
+      let currentStatus = sessionHooks.status;
+      while (tries < 10) {
         await new Promise(res => setTimeout(res, 100));
+        let polledStatus = aiService?.getStatus ? aiService.getStatus() : undefined;
+        let isCurrentActive = false;
+        if (typeof polledStatus === 'string') {
+          isCurrentActive = polledStatus === SessionStatus.Active;
+        } else if (typeof polledStatus === 'number') {
+          isCurrentActive = polledStatus === 1;
+        }
+        console.log(`[handleSend] Waiting for session to become active... status: ${polledStatus}`);
+        if (isCurrentActive) break;
         tries++;
       }
-      console.log('Session status after start:', sessionStatus);
+      let finalStatus = aiService?.getStatus ? aiService.getStatus() : undefined;
+      console.log('[handleSend] Session status after start:', finalStatus);
     }
+    // Final check
+    // Use the latest status from aiService for the final check
+    let latestStatus = aiService?.getStatus ? aiService.getStatus() : undefined;
+    let isFinalActive = false;
+    if (typeof latestStatus === 'string') {
+      isFinalActive = latestStatus === SessionStatus.Active;
+    } else if (typeof latestStatus === 'number') {
+      isFinalActive = latestStatus === 1;
+    }
+    console.log('[handleSend] Final status check:', latestStatus, typeof latestStatus, 'isFinalActive:', isFinalActive);
+    if (!isFinalActive) {
+      console.error('[handleSend] Session is not active, aborting send.');
+      return;
+    }
+    // Only abort if not active; otherwise, continue to send the message
     startAIMessage();
-    aiService.onAIMessageChunk(appendAIChunk);
-    console.log('Sending user message:', text);
+    console.log('[handleSend] Sending user message:', text);
     await sendUserMessage?.(text);
-    // (Chunks will be appended as they arrive)
+    console.log('[handleSend] sendUserMessage complete');
   };
+
+  // Set AI message chunk handler ONCE when aiService changes
+  // Ensure only one AI chunk handler is set, and clean up on unmount or aiService change
+  useEffect(() => {
+    if (!aiService) return;
+    aiService.onAIMessageChunk(appendAIChunk);
+    return () => {
+      // Remove the handler when aiService changes or component unmounts
+      aiService.onAIMessageChunk(() => {});
+    };
+  }, [aiService, appendAIChunk]);
 
   return (
     <div className="main-layout">

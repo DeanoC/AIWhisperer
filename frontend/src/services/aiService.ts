@@ -50,15 +50,19 @@ export class AIService {
   }
 
   async sendUserMessage(message: string): Promise<string> {
+    console.log('[AIService.sendUserMessage] called with:', message);
+    console.log('[AIService.sendUserMessage] sessionId:', this.sessionId);
     if (!this.sessionId) throw new Error('No session active');
     try {
       const result = await this.rpc.sendRequest('sendUserMessage', {
         sessionId: this.sessionId,
         message,
       });
+      console.log('[AIService.sendUserMessage] sendRequest result:', result);
       return result.messageId;
     } catch (err: any) {
       this.error = err.message || 'Failed to send message';
+      console.error('[AIService.sendUserMessage] error:', err);
       throw err;
     }
   }
@@ -79,9 +83,11 @@ export class AIService {
     }
     if (notification.method === 'SessionStatusNotification') {
       const params = notification.params || {};
-      if (params.status === 2) {
-        this.status = SessionStatus.Stopped;
-        this.sessionId = null;
+      if (typeof params.status === 'number') {
+        this.status = params.status;
+        if (params.status === 2) {
+          this.sessionId = null;
+        }
       }
     }
   }
