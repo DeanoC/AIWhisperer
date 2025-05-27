@@ -191,38 +191,38 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
 ### Phase 1: Core Agent Infrastructure
 
 **Backend Tests First:**
-- [ ] `test_agent_registry.py`
-  - [ ] Test Agent dataclass creation
-  - [ ] Test loading default agents
-  - [ ] Test get_agent by ID
-  - [ ] Test list_agents functionality
-  - [ ] Test invalid agent ID handling
+- [x] `test_agent_registry.py`
+  - [x] Test Agent dataclass creation
+  - [x] Test loading default agents
+  - [x] Test get_agent by ID
+  - [x] Test list_agents functionality
+  - [x] Test invalid agent ID handling
 
-- [ ] `test_agent_context_manager.py`
-  - [ ] Test context initialization for different agents
-  - [ ] Test workspace structure context loading
-  - [ ] Test schema context loading
-  - [ ] Test context filtering by agent needs
+- [x] `test_agent_context_manager.py`
+  - [x] Test context initialization for different agents
+  - [x] Test workspace structure context loading
+  - [x] Test schema context loading
+  - [x] Test context filtering by agent needs
 
 **Backend Implementation:**
-- [ ] Implement Agent dataclass
-- [ ] Implement AgentRegistry class
-- [ ] Implement AgentContextManager
-- [ ] Create default agent configurations
-- [ ] Create agent-specific prompt files
+- [x] Implement Agent dataclass
+- [x] Implement AgentRegistry class
+- [x] Implement AgentContextManager
+- [x] Create default agent configurations (hardcoded, config override supported)
+- [x] Create agent-specific prompt files
 
 **Frontend Tests First:**
-- [ ] `AgentSelector.test.tsx`
-  - [ ] Test agent list rendering
-  - [ ] Test current agent highlighting
-  - [ ] Test agent selection callback
-  - [ ] Test keyboard shortcuts display
+- [x] `AgentSelector.test.tsx`
+  - [x] Test agent list rendering
+  - [x] Test current agent highlighting
+  - [x] Test agent selection callback
+  - [x] Test keyboard shortcuts display
 
 **Frontend Implementation:**
 - [ ] Create AgentSelector component
-- [ ] Create AgentAvatar component
-- [ ] Update chat interface to show current agent
-- [ ] Add agent switching UI
+- [x] Create AgentAvatar component
+- [x] Update chat interface to show current agent
+- [x] Add agent switching UI
 
 ### Phase 2: Patricia the Planner Agent
 

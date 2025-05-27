@@ -1,0 +1,19 @@
+import { render, screen } from '@testing-library/react';
+import { CurrentAgentDisplay } from './CurrentAgentDisplay';
+
+describe('CurrentAgentDisplay', () => {
+  const agent = {
+    agentId: 'P',
+    name: 'Patricia the Planner',
+    description: 'Creates structured implementation plans',
+    color: '#4CAF50',
+    shortcut: '[P]'
+  };
+
+  it('renders the agent avatar and name', () => {
+    render(<CurrentAgentDisplay agent={agent} />);
+    expect(screen.getByText('Patricia the Planner')).toBeInTheDocument();
+    expect(screen.getByText('Creates structured implementation plans')).toBeInTheDocument();
+    expect(screen.getByTestId('agent-avatar-P')).toBeInTheDocument();
+  });
+});
