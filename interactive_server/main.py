@@ -110,6 +110,14 @@ async def stop_session_handler(params, websocket=None):
         session = session_manager.get_session(model.sessionId)
         if session:
             await session_manager.stop_session(model.sessionId)
+            # Send final SessionStatusNotification before cleanup
+            from .message_models import SessionStatusNotification, SessionStatus
+            notification = SessionStatusNotification(
+                sessionId=model.sessionId,
+                status=SessionStatus.Stopped,
+                reason="Session stopped"
+            )
+            await session.send_notification("SessionStatusNotification", notification)
             await session_manager.cleanup_session(model.sessionId)
     except Exception:
         pass  # Ignore all errors for idempotency
