@@ -1,4 +1,3 @@
-
 import asyncio
 import json
 import logging
@@ -271,29 +270,54 @@ class AILoop:
 
                     logger.debug(f"_run_session: Calling ai_service.stream_chat_completion with messages={messages} tools={tools_for_model}")
                     try:
-                         ai_response_stream = self.ai_service.stream_chat_completion(
-                             messages=messages,
-                             tools=tools_for_model,
-                             **self.config.__dict__
-                         )
-                         logger.debug(f"_run_session: ai_response_stream={ai_response_stream}")
-                         finish_reason = await self._assemble_ai_stream(ai_response_stream)
-                         logger.debug(f"_run_session: Finished _assemble_ai_stream with finish_reason={finish_reason}")
-                         if finish_reason == "tool_calls":
-                             self._state = SessionState.PROCESS_TOOL_RESULT
-                         elif finish_reason == "error":
-                             self._state = SessionState.SHUTDOWN # Error during stream processing leads to shutdown
-                         else:
-                             self._state = SessionState.WAIT_FOR_INPUT
+                        # Set a timeout for the entire AI service streaming process (e.g., 10 seconds)
+
+                        async def run_stream():
+                            ai_response_stream = self.ai_service.stream_chat_completion(
+                                messages=messages,
+                                tools=tools_for_model,
+                                **self.config.__dict__
+                            )
+                            try:
+                                return await self._assemble_ai_stream(ai_response_stream)
+                            except asyncio.CancelledError:
+                                logger.error("run_stream: CancelledError caught, closing ai_response_stream")
+                                if hasattr(ai_response_stream, 'aclose'):
+                                    await ai_response_stream.aclose()
+                                raise
+
+                        logger.error("_run_session: About to call asyncio.wait_for(run_stream(), timeout=10.0)")
+                        finish_reason = await asyncio.wait_for(run_stream(), timeout=10.0)
+                        logger.error(f"_run_session: Finished asyncio.wait_for, finish_reason={{finish_reason}}")
+                        logger.debug(f"_run_session: Finished _assemble_ai_stream with finish_reason={{finish_reason}}")
+                        if finish_reason == "tool_calls":
+                            self._state = SessionState.PROCESS_TOOL_RESULT
+                        elif finish_reason == "error":
+                            self._state = SessionState.SHUTDOWN # Error during stream processing leads to shutdown
+                        else:
+                            self._state = SessionState.WAIT_FOR_INPUT
+                    except asyncio.TimeoutError:
+                        logger.error("_run_session: AI service call timed out.")
+                        logger.error("_run_session: About to invoke error notification for timeout.")
+                        await self.delegate_manager.invoke_notification(
+                            sender=self,
+                            event_type="ai_loop.error",
+                            event_data="AI service timeout"
+                        )
+                        logger.error("_run_session: Finished invoke_notification for timeout.")
+                        # Add a user-friendly error message to the context history
+                        error_msg = {"role": "assistant", "content": "AI service timeout: The AI did not respond in time."}
+                        self.context_manager.add_message(error_msg)
+                        logger.debug(f"_run_session: Added timeout error message to context: {{error_msg}}")
+                        self._state = SessionState.WAIT_FOR_INPUT
                     except Exception as e:
-                         logger.exception("_run_session: Error calling ai_service.stream_chat_completion:")
-                         await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
-                         # Add a user-friendly error message to the context history
-                         # Aligning this message with the one added in _assemble_ai_stream for consistency.
-                         error_msg = {"role": "assistant", "content": f"An error occurred while processing the AI response: {e}"}
-                         self.context_manager.add_message(error_msg)
-                         logger.debug(f"_run_session: Added error message to context: {error_msg}")
-                         self._state = SessionState.WAIT_FOR_INPUT # Return to waiting for input after AI service error
+                        logger.exception("_run_session: Error calling ai_service.stream_chat_completion:")
+                        await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
+                        # Add a user-friendly error message to the context history
+                        error_msg = {"role": "assistant", "content": f"An error occurred while processing the AI response: {e}"}
+                        self.context_manager.add_message(error_msg)
+                        logger.debug(f"_run_session: Added error message to context: {{error_msg}}")
+                        self._state = SessionState.WAIT_FOR_INPUT # Return to waiting for input after AI service error
  
                 elif self._state == SessionState.PROCESS_TOOL_RESULT:
                     # Wait for tool result to be provided

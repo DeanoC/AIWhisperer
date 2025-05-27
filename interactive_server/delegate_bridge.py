@@ -301,13 +301,23 @@ class DelegateBridge:
         try:
             error_message = str(event_data) if event_data else "Unknown error"
             logging.debug(f"[DelegateBridge._handle_error] Preparing SessionStatusNotification: {error_message}")
-            notification = SessionStatusNotification(
-                sessionId=self.session.session_id,
-                status=SessionStatus.Error,
-                reason=f"Error: {error_message}"
-            )
+            # Special handling for AI service timeout
+            if error_message.strip().lower() in ["ai service timeout", "timeout"] or "timeout" in error_message.lower():
+                notification = SessionStatusNotification(
+                    sessionId=self.session.session_id,
+                    status=SessionStatus.Error,
+                    reason="timeout"
+                )
+            else:
+                notification = SessionStatusNotification(
+                    sessionId=self.session.session_id,
+                    status=SessionStatus.Error,
+                    reason=f"Error: {error_message}"
+                )
             await self.session.send_notification("SessionStatusNotification", notification)
             logging.debug(f"[DelegateBridge._handle_error] Sent error notification for {self.session.session_id}: {error_message}")
+            # Give the event loop a chance to flush the notification before shutdown/cleanup
+            await asyncio.sleep(1.0)
         except Exception as e:
             logging.error(f"[DelegateBridge._handle_error] Error handling error event: {e}")
     

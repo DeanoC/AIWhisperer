@@ -1,3 +1,48 @@
+
+import pytest
+import subprocess
+import socket
+import sys
+import time
+
+@pytest.fixture(scope="session")
+def start_interactive_server():
+    """
+    Start the interactive server in a subprocess for integration/performance tests.
+    Waits for the server to be ready, then yields. Kills the server after tests.
+    """
+    # Start the server
+    proc = subprocess.Popen([
+        sys.executable, "-m", "interactive_server.main"
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    try:
+        # Wait for the server to be ready
+        for _ in range(30):
+            try:
+                with socket.create_connection(("127.0.0.1", 8000), timeout=1):
+                    break
+            except (ConnectionRefusedError, OSError):
+                time.sleep(1)
+        else:
+            proc.terminate()
+            raise RuntimeError("Interactive server did not start in time.")
+
+        yield
+
+    finally:
+        # Ensure proper cleanup of the subprocess and its pipes
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            proc.kill()
+        
+        # Close the pipes to avoid resource warnings
+        if proc.stdout:
+            proc.stdout.close()
+        if proc.stderr:
+            proc.stderr.close()
 import pytest
 import threading
 import asyncio

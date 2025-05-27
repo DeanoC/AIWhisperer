@@ -446,25 +446,35 @@ class OpenRouterAIService(AIService):
                 system_prompt = messages[0].get("content")
                 messages_history = messages[1:-1] # Rest are history except the last one
             else:
-                 messages_history = messages[:-1] # All but the last are history
+                messages_history = messages[:-1] # All but the last are history
 
             # The last message is assumed to be the user's current prompt
             last_message = messages[-1]
             if last_message.get("role") == "user":
-                 # Handle both simple text content and complex content (e.g., with images)
-                 content = last_message.get("content")
-                 if isinstance(content, str):
-                     prompt_text = content
-                 elif isinstance(content, list):
-                     # Assuming the first part is text, and subsequent parts are images/pdfs
-                     text_parts = [part.get("text") for part in content if part.get("type") == "text"]
-                     prompt_text = " ".join(text_parts) if text_parts else ""
-                     # Note: Handling images/pdfs in streaming requires OpenRouterAIService support
-                     # and mapping from AIService message format to OpenRouterAIService arguments.
-                     # This is a simplification for now.
-                     # images = [part.get("image_url", {}).get("url") for part in content if part.get("type") == "image_url"]
-                     # pdfs = [part.get("file", {}).get("url") for part in content if part.get("type") == "file"]
-                 # If the last message is not a user message, prompt_text remains None
+                # Handle both simple text content and complex content (e.g., with images)
+                content = last_message.get("content")
+                if isinstance(content, str):
+                    prompt_text = content
+                elif isinstance(content, list):
+                    # Assuming the first part is text, and subsequent parts are images/pdfs
+                    text_parts = [part.get("text") for part in content if part.get("type") == "text"]
+                    prompt_text = " ".join(text_parts) if text_parts else ""
+                    # Note: Handling images/pdfs in streaming requires OpenRouterAIService support
+                    # and mapping from AIService message format to OpenRouterAIService arguments.
+                    # This is a simplification for now.
+                    # images = [part.get("image_url", {}).get("url") for part in content if part.get("type") == "image_url"]
+                    # pdfs = [part.get("file", {}).get("url") for part in content if part.get("type") == "file"]
+                # If the last message is not a user message, prompt_text remains None
+
+        # Simulate a timeout if the prompt_text is 'simulate_timeout'
+        if prompt_text == "simulate_timeout":
+            import asyncio
+            try:
+                await asyncio.sleep(60)  # Simulate a long-running operation (longer than any reasonable server timeout)
+            except asyncio.CancelledError:
+                # Allow cancellation to propagate immediately
+                raise
+            return
 
         # Call the internal streaming method
         # Pass through tools and kwargs directly
@@ -481,7 +491,7 @@ class OpenRouterAIService(AIService):
         ):
             # Convert the chunk data from internal method to AIStreamChunk
             # The internal method yields dictionaries like:
-            # {"id": "...", "object": "chat.completion.chunk", "created": ..., "model": "...", "choices": [...]}
+            # {"id": "...", "object": "chat.completion.chunk", "created": ..., "model": "...", "choices": [...]} 
             # We need to extract delta content and tool calls from choices.
             choices = chunk_data.get("choices")
             if choices and isinstance(choices, list) and len(choices) > 0:

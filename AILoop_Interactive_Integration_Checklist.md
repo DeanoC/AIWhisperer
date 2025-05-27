@@ -154,31 +154,33 @@ We use a TDD (Test-Driven Development) approach to ensure that each step is vali
 ## Step 5: Testing and Validation ⏳
 
 
+
 ### 5.1 Update Existing Tests
 
-- [ ] Modify tests to work with real AILoop (where appropriate)
-- [ ] Add integration test variants with real AI service mocking
-- [ ] Ensure message ordering still works correctly
-- [ ] Validate all error scenarios still covered
-- [ ] Update test fixtures and mocks
+- [x] Modify tests to work with real AILoop (where appropriate)
+- [x] Add integration test variants with real AI service mocking
+- [x] Ensure message ordering still works correctly
+- [x] Validate all error scenarios still covered
+- [x] Update test fixtures and mocks
 
 
 ### 5.2 Add New Integration Tests
 
-- [ ] End-to-end tests with real AILoop integration
-- [ ] Multi-session concurrency tests
-- [ ] Resource cleanup verification tests
-- [ ] Delegate event flow validation tests
-- [ ] Create comprehensive test suite
+- [x] End-to-end tests with real AILoop integration
+- [x] Multi-session concurrency tests
+- [x] Resource cleanup verification tests
+- [x] Delegate event flow validation tests
+- [x] Create comprehensive test suite
 
 
 ### 5.3 Performance and Stress Testing
 
 - [x] Multiple concurrent WebSocket connections
-- [ ] Long-running session stability
-- [ ] Memory usage under load
-- [ ] AI service timeout handling
+- [x] Long-running session stability
+- [x] Memory usage under load
+- [x] AI service timeout handling
 - [ ] Document performance metrics
+- [ ] Automate collection and reporting of performance metrics (latency, throughput, memory, error rate)
 
 
 ### 5.4 Manual Testing Updates
@@ -188,6 +190,7 @@ We use a TDD (Test-Driven Development) approach to ensure that each step is vali
 - [x] Test streaming with real AI responses
 - [x] Verify error handling in real scenarios
 - [x] Create manual testing guide
+- [ ] Automate manual test scenarios using `interactive_client.py` as a test client
 
 ---
 

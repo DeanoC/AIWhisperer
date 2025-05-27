@@ -26,6 +26,8 @@ class InteractiveAI:
         self.ai_config = ai_config
         self.delegate_manager = delegate_manager
         self.context_manager = context_manager
+        # Use threading.Event for compatibility with OpenRouterAIService
+        # but ensure it doesn't block the async event loop
         self.shutdown_event = threading.Event()
 
     async def start_interactive_ai_session(self, system_prompt: str = "You are an AI assistant that provides information about AI models and OpenRouter services.") -> None:
@@ -41,8 +43,7 @@ class InteractiveAI:
             config=self.ai_config,
             ai_service=ai_service,
             context_manager=self.context_manager,
-            delegate_manager=self.delegate_manager
-        )
+            delegate_manager=self.delegate_manager        )
 
         await self.ai_loop.start_session(system_prompt=system_prompt)
 
@@ -53,11 +54,14 @@ class InteractiveAI:
         Args:
             message: The message to send to the AI loop.
         """
+        logger.error(f"[send_message] ENTRY: message={message}")
         if not self.ai_loop:
             raise RuntimeError("AI loop is not initialized. Call start_interactive_ai_session first.")
 
         # Send the message to the AI loop
-        await self.ai_loop.send_user_message(message)    
+        logger.error(f"[send_message] Calling ai_loop.send_user_message")
+        await self.ai_loop.send_user_message(message)
+        logger.error(f"[send_message] ai_loop.send_user_message completed")
 
     async def wait_for_idle(self):
         """

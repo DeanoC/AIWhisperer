@@ -101,8 +101,7 @@ class InteractiveSession:
             self.is_started = True
             logger.info(f"Started AI session {self.session_id}")
             
-            return self.session_id
-            
+            return self.session_id            
         except Exception as e:
             logger.error(f"Failed to start AI session {self.session_id}: {e}")
             await self.cleanup()
@@ -118,11 +117,14 @@ class InteractiveSession:
         Raises:
             RuntimeError: If session is not started
         """
+        logger.error(f"[send_user_message] ENTRY: session_id={self.session_id}, message={message}")
         if not self.is_started or not self.interactive_ai:
             raise RuntimeError(f"Session {self.session_id} is not started")
             
         try:
+            logger.error(f"[send_user_message] Calling interactive_ai.send_message")
             await self.interactive_ai.send_message(message)
+            logger.error(f"[send_user_message] interactive_ai.send_message completed")
         except Exception as e:
             logger.error(f"Failed to send message to session {self.session_id}: {e}")
             raise
@@ -161,6 +163,7 @@ class InteractiveSession:
                 "params": params
             }
             logging.debug(f"[send_notification] About to send notification {method} to session {self.session_id}. WebSocket: {self.websocket}")
+            logging.debug(f"[send_notification] Notification payload: {notification}")
             try:
                 await self.websocket.send_text(json.dumps(notification))
                 logging.debug(f"[send_notification] Sent notification {method} to session {self.session_id}")

@@ -45,6 +45,7 @@ async def start_session_handler(params, websocket=None):
 
 
 async def send_user_message_handler(params, websocket=None):
+    logging.error(f"[send_user_message_handler] ENTRY: params={params}")
     try:
         model = SendUserMessageRequest(**params)
     except Exception as validation_error:
@@ -236,10 +237,10 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             logging.debug("[websocket_endpoint] Waiting for message...")
             data = await websocket.receive_text()
-            logging.debug(f"[websocket_endpoint] Received message: {data}")
+            logging.error(f"[websocket_endpoint] CRITICAL: Received message: {data}")
             
             response = await handle_websocket_message(websocket, data)
-            logging.debug(f"[websocket_endpoint] Generated response: {response}")
+            logging.error(f"[websocket_endpoint] CRITICAL: Generated response: {response}")
             
             if response:  # Only send response for requests (not notifications)
                 response_text = json.dumps(response)
