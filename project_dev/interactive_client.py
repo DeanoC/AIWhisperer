@@ -8,6 +8,11 @@ import argparse
 import pathlib
 
 async def print_server_messages(websocket):
+    # Use the outer log function
+    import inspect
+    frame = inspect.currentframe()
+    outer_locals = frame.f_back.f_locals
+    log = outer_locals.get('log', print)
     while True:
         try:
             msg = await websocket.recv()
@@ -15,12 +20,12 @@ async def print_server_messages(websocket):
                 parsed = json.loads(msg)
             except Exception:
                 parsed = msg
-            print("[SERVER]", parsed)
+            log(parsed)
         except websockets.ConnectionClosed:
-            print("[INFO] WebSocket connection closed.")
+            log("[INFO] WebSocket connection closed.")
             break
         except Exception as e:
-            print(f"[ERROR] {e}")
+            log(f"[ERROR] {e}")
             break
 
 async def interactive_client(script_path=None, log_path=None):
@@ -37,7 +42,27 @@ async def interactive_client(script_path=None, log_path=None):
     def log(msg):
         print(msg)
         if log_f:
-            print(msg, file=log_f)
+            import json as _json
+            # Always try to parse and re-emit [SERVER] lines as JSON
+            if isinstance(msg, str) and msg.startswith('[SERVER] '):
+                payload = msg[len('[SERVER] '):]
+                try:
+                    # Try JSON first
+                    parsed = _json.loads(payload)
+                except Exception:
+                    try:
+                        import ast
+                        parsed = ast.literal_eval(payload)
+                    except Exception:
+                        parsed = None
+                if parsed is not None:
+                    print('[SERVER] ' + _json.dumps(parsed, ensure_ascii=False), file=log_f)
+                else:
+                    print(msg, file=log_f)
+            elif isinstance(msg, (dict, list)):
+                print(_json.dumps(msg, ensure_ascii=False), file=log_f)
+            else:
+                print(msg, file=log_f)
 
     async def send_start_session(user_id=None):
         nonlocal session_id, msg_id
@@ -90,6 +115,8 @@ async def interactive_client(script_path=None, log_path=None):
             "params": {"sessionId": session_id, "message": user_msg}
         }
         await websocket.send(json.dumps(req))
+        # Log the user message for test visibility
+        log({"user_message": user_msg})
         msg_id += 1
 
         # Wait for and print at least one response (result or notification)
@@ -103,7 +130,7 @@ async def interactive_client(script_path=None, log_path=None):
                     parsed = json.loads(msg)
                 except Exception:
                     parsed = msg
-                print("[SERVER]", parsed)
+                log(parsed)
                 # Debug: print message type and keys
                 if isinstance(parsed, dict):
                     print(f"[DEBUG] Received dict message keys: {list(parsed.keys())}")
@@ -199,17 +226,25 @@ async def interactive_client(script_path=None, log_path=None):
                     line = line.strip()
                     if not line or line.startswith("#"):
                         continue
-                    parts = line.split()
-                    cmd = parts[0]
-                    args = dict(p.split("=", 1) for p in parts[1:] if "=" in p)
-                    if cmd == "startSession":
-                        await send_start_session(args.get("userId"))
-                    elif cmd == "sendUserMessage":
-                        await send_user_message(args.get("message"))
-                    elif cmd == "stopSession":
-                        await send_stop_session()
-                    # Add more as needed
+                    if line.startswith("sendUserMessage ") and "message=" in line:
+                        # Special handling: everything after 'message=' is the message
+                        cmd = "sendUserMessage"
+                        msg_idx = line.index("message=") + len("message=")
+                        message = line[msg_idx:]
+                        await send_user_message(message)
+                    else:
+                        parts = line.split()
+                        cmd = parts[0]
+                        args = dict(p.split("=", 1) for p in parts[1:] if "=" in p)
+                        if cmd == "startSession":
+                            await send_start_session(args.get("userId"))
+                        elif cmd == "stopSession":
+                            await send_stop_session()
+                        # Add more as needed
         if log_f:
+            log_f.flush()
+            import os
+            os.fsync(log_f.fileno())
             log_f.close()
         # Wait briefly to allow any in-flight notifications to arrive before disconnecting
         await asyncio.sleep(0.5)
