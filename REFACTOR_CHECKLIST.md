@@ -102,12 +102,12 @@
 
 ### 3.3 Update JSON-RPC Handlers
 
-- [ ] **Write tests** for updated RPC message handlers
-- [ ] **Write tests** for agent selection and switching
-- [ ] **Write tests** for error scenarios
-- [ ] **Update** RPC handlers to use new session structure
-- [ ] **Maintain** existing API compatibility
-- [ ] **Improve** error responses and validation
+- [x] **Write tests** for updated RPC message handlers
+- [x] **Write tests** for agent selection and switching
+- [x] **Write tests** for error scenarios
+- [x] **Update** RPC handlers to use new session structure
+- [x] **Maintain** existing API compatibility
+- [x] **Improve** error responses and validation
 - [ ] **Commit**: "Update JSON-RPC handlers for new session architecture"
 
 ### 3.4 Session Integration Testing

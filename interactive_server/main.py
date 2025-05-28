@@ -49,7 +49,7 @@ async def session_switch_agent_handler(params, websocket=None):
         await session_manager.start_session(session_id)
         session = session_manager.get_session_by_websocket(websocket)
     try:
-        session.switch_agent(agent_id)
+        await session.switch_agent(agent_id)
         return {"success": True, "current_agent": agent_id}
     except ValueError as e:
         return {
@@ -73,7 +73,7 @@ async def session_current_agent_handler(params, websocket=None):
         session = session_manager.get_session(params["sessionId"])
     if not session or not session.active_agent:
         return {"current_agent": None}
-    return {"current_agent": getattr(session.active_agent, "agent_id", None)}
+    return {"current_agent": session.active_agent}
 
 async def session_handoff_handler(params, websocket=None):
     to_agent = params.get("to_agent")
@@ -84,9 +84,9 @@ async def session_handoff_handler(params, websocket=None):
         session_id = await session_manager.create_session(websocket)
         await session_manager.start_session(session_id)
         session = session_manager.get_session_by_websocket(websocket)
-    from_agent = getattr(session.active_agent, "agent_id", None) if session and session.active_agent else None
+    from_agent = session.active_agent if session and session.active_agent else None
     try:
-        session.switch_agent(to_agent)
+        await session.switch_agent(to_agent)
         # Optionally: send notification/event to frontend
         return {"success": True, "from_agent": from_agent, "to_agent": to_agent}
     except ValueError as e:
@@ -187,13 +187,13 @@ async def provide_tool_result_handler(params, websocket=None):
 
 
 async def stop_session_handler(params, websocket=None):
+    from .message_models import SessionStatusNotification, SessionStatus
     try:
         model = StopSessionRequest(**params)
         session = session_manager.get_session(model.sessionId)
         if session:
             await session_manager.stop_session(model.sessionId)
             # Send final SessionStatusNotification before cleanup
-            from .message_models import SessionStatusNotification, SessionStatus
             notification = SessionStatusNotification(
                 sessionId=model.sessionId,
                 status=SessionStatus.Stopped,
