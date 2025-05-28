@@ -14,7 +14,7 @@ from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
 from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.context.agent_context import AgentContext
-from ai_whisperer.agents.agent import Agent
+from ai_whisperer.agents.stateless_agent import StatelessAgent
 from ai_whisperer.agents.config import AgentConfig
 
 from .message_models import (
@@ -48,7 +48,7 @@ class StreamingSession:
         self.config = config or {}
         
         # Agent management
-        self.agents: Dict[str, Agent] = {}
+        self.agents: Dict[str, StatelessAgent] = {}
         self.active_agent: Optional[str] = None
         
         # Session state
@@ -84,7 +84,7 @@ class StreamingSession:
             logger.error(f"Failed to initialize AI loop: {e}")
             self._ai_loop = None
     
-    async def create_agent(self, agent_id: str, system_prompt: str, config: Optional[AgentConfig] = None) -> Agent:
+    async def create_agent(self, agent_id: str, system_prompt: str, config: Optional[AgentConfig] = None) -> StatelessAgent:
         """
         Create a new agent in this session.
         
@@ -124,8 +124,8 @@ class StreamingSession:
                     }
                 )
             
-            # Create agent with direct AI loop reference
-            agent = Agent(
+            # Create stateless agent with direct AI loop reference
+            agent = StatelessAgent(
                 config=config,
                 context=context,
                 ai_loop=self._ai_loop  # Direct reference, no delegates
@@ -165,26 +165,35 @@ class StreamingSession:
                 async def on_chunk(chunk: str):
                     await self._send_token_notification(chunk)
                 
-                # Process with streaming
-                result = await self._ai_loop.process_with_context(
+                # Process with agent
+                result = await agent.process_message(
                     message=message,
-                    context_provider=agent.context,
                     on_stream_chunk=on_chunk
                 )
                 
                 # Send final chunk
                 await self._send_token_notification("", is_final=True)
                 
-                # Handle tool calls if present
-                if result.get('tool_calls'):
-                    await self._send_tool_notifications(result['tool_calls'])
-                
-                return {
-                    "success": True,
-                    "response": result.get('response'),
-                    "tool_calls": result.get('tool_calls'),
-                    "finish_reason": result.get('finish_reason')
-                }
+                # Handle different result types
+                if isinstance(result, dict):
+                    # Handle tool calls if present
+                    if result.get('tool_calls'):
+                        await self._send_tool_notifications(result['tool_calls'])
+                    
+                    return {
+                        "success": True,
+                        "response": result.get('response'),
+                        "tool_calls": result.get('tool_calls'),
+                        "finish_reason": result.get('finish_reason', 'stop')
+                    }
+                else:
+                    # Simple string response
+                    return {
+                        "success": True,
+                        "response": result,
+                        "tool_calls": None,
+                        "finish_reason": 'stop'
+                    }
                 
             except Exception as e:
                 logger.error(f"Error processing message: {e}")

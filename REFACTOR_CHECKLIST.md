@@ -145,12 +145,12 @@
 
 ### 4.3 Update Agent to Use New AILoop
 
-- [ ] **Write tests** for agent with new AILoop interface
-- [ ] **Write tests** for agent streaming functionality
-- [ ] **Update** `Agent` class to use new AILoop interface
-- [ ] **Remove** delegate dependencies from Agent
-- [ ] **Verify** all agent functionality preserved
-- [ ] **Commit**: "Update Agent to use stateless AILoop"
+- [x] **Write tests** for agent with new AILoop interface
+- [x] **Write tests** for agent streaming functionality
+- [x] **Update** `Agent` class to use new AILoop interface
+- [x] **Remove** delegate dependencies from Agent
+- [x] **Verify** all agent functionality preserved
+- [x] **Commit**: "Update Agent to use stateless AILoop"
 
 ### 4.4 Remove Delegate Manager
 
