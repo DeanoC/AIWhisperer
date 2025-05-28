@@ -2,6 +2,8 @@ import os
 import ai_whisperer.commands.echo
 import ai_whisperer.commands.status
 import ai_whisperer.commands.help
+import ai_whisperer.commands.agent
+import ai_whisperer.commands.session
 import logging
 import json
 import inspect

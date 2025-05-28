@@ -44,6 +44,9 @@ class InteractiveSession:
         # Initialize components for this session
         self.delegate_manager = DelegateManager()
         self.context_manager = ContextManager()
+
+        # Track the current agent for this session (default to 'default')
+        self.current_agent_id = 'default'
         
         # Create AI config from provided config
         # Use a dummy API key if not present, to allow tests to run without a real key
@@ -92,6 +95,8 @@ class InteractiveSession:
                 delegate_manager=self.delegate_manager,
                 context_manager=self.context_manager
             )
+            # Link session to interactive_ai for agent_id access
+            self.interactive_ai.session = self
             
             # Create delegate bridge to handle events
             self.delegate_bridge = DelegateBridge(self)

@@ -5,8 +5,10 @@ import './App.css';
 import ModelList from './ModelList';
 import ChatWindow from './ChatWindow';
 import { Agent } from './types/agent';
+
 import { AgentSelector } from './components/AgentSelector';
 import { AgentTransition } from './components/AgentTransition';
+import { AgentInspectorPanel } from './components';
 
 import MessageInput from './MessageInput';
 
@@ -73,15 +75,21 @@ function App() {
 
 
   // Chat state management
-  // Start a session as soon as AIService and startSession are available, and session is not active
+  // Always switch to agent P before starting session
   useEffect(() => {
-    if (
-      aiService &&
-      typeof startSession === 'function' &&
-      sessionStatus !== SessionStatus.Active
-    ) {
-      startSession();
-    }
+    const switchAndStart = async () => {
+      if (aiService && typeof aiService.dispatchCommand === 'function') {
+        try {
+          await aiService.dispatchCommand(`/session.switch_agent {\"agent_id\":\"P\"}`);
+        } catch (e) {
+          // ignore errors
+        }
+      }
+      if (aiService && typeof startSession === 'function' && sessionStatus !== SessionStatus.Active) {
+        startSession();
+      }
+    };
+    switchAndStart();
     // Only run when aiService, sessionStatus, or startSession changes
   }, [aiService, sessionStatus, startSession]);
   const {
@@ -93,8 +101,8 @@ function App() {
     addSystemMessage,
   } = useChat();
 
-  // Multi-agent session state (must be after useChat)
-  const [currentAgent, setCurrentAgent] = useState<Agent>(AGENTS[0]);
+  // Always pick agent P for now
+  const [currentAgent, setCurrentAgent] = useState<Agent>(AGENTS.find(a => a.agentId === 'P') || AGENTS[0]);
   const [conversationHistories, setConversationHistories] = useState<Record<string, ChatMessage[]>>({
     [AGENTS[0].agentId]: []
   });
@@ -169,7 +177,9 @@ function App() {
         if (result.error) {
           addSystemMessage('ERROR: ' + result.error);
         } else {
-          addSystemMessage(result.output || JSON.stringify(result));
+          // Always stringify non-string output to avoid frontend errors
+          const output = typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2);
+          addSystemMessage(output || JSON.stringify(result));
         }
       } catch (err: any) {
         appendAIChunk({ content: `Command error: ${err.message || err}`, index: 0, isFinal: true });
@@ -221,6 +231,14 @@ function App() {
               currentAgent={currentAgent}
               onAgentSelect={handleAgentSelect}
             />
+            {/* Inspector panel for debugging/development */}
+            <div style={{ marginTop: 24 }}>
+              <AgentInspectorPanel
+                agents={AGENTS.map(a => ({ id: a.agentId, name: a.name }))}
+                aiService={aiService}
+                sessionId={sessionInfo?.id}
+              />
+            </div>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <ChatWindow

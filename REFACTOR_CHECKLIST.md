@@ -1,0 +1,256 @@
+# AIWhisperer Refactor Checklist
+
+## Phase 1: Foundation - Context Management Refactor
+
+### 1.1 Create Context Provider Interface
+
+- [ ] **Write tests** for `ContextProvider` interface contract
+- [ ] **Implement** `ContextProvider` abstract base class
+- [ ] **Define** message storage and retrieval interface
+- [ ] **Add** context metadata support
+- [ ] **Commit**: "Add ContextProvider interface with tests"
+
+### 1.2 Implement AgentContext
+
+- [ ] **Write tests** for `AgentContext` message management
+- [ ] **Write tests** for system prompt handling
+- [ ] **Write tests** for conversation history retrieval
+- [ ] **Implement** `AgentContext` class inheriting from `ContextProvider`
+- [ ] **Add** agent-specific metadata support
+- [ ] **Commit**: "Implement AgentContext with full test coverage"
+
+### 1.3 Create Context Serialization
+
+- [ ] **Write tests** for context save/load functionality
+- [ ] **Write tests** for context data integrity
+- [ ] **Implement** context persistence methods
+- [ ] **Add** versioning for context format
+- [ ] **Commit**: "Add context serialization with tests"
+
+### 1.4 Integration Testing for Context
+
+- [ ] **Write integration tests** for context lifecycle
+- [ ] **Test** context with existing ContextManager
+- [ ] **Verify** backward compatibility
+- [ ] **Run all existing tests** to ensure no regressions
+- [ ] **Commit**: "Context management integration tests"
+
+---
+
+## Phase 2: Agent Architecture Refactor
+
+### 2.1 Design Agent Configuration
+
+- [ ] **Write tests** for `AgentConfig` class
+- [ ] **Write tests** for configuration validation
+- [ ] **Write tests** for generation parameters
+- [ ] **Implement** `AgentConfig` class
+- [ ] **Add** configuration serialization
+- [ ] **Commit**: "Add AgentConfig with validation and tests"
+
+### 2.2 Create Agent Class
+
+- [ ] **Write tests** for `Agent` initialization
+- [ ] **Write tests** for `Agent.process_message()`
+- [ ] **Write tests** for agent context integration
+- [ ] **Write tests** for agent configuration usage
+- [ ] **Implement** `Agent` class with context ownership
+- [ ] **Integrate** with existing AILoop (keeping delegates)
+- [ ] **Commit**: "Implement Agent class with context ownership"
+
+### 2.3 Create Agent Factory
+
+- [ ] **Write tests** for `AgentFactory.create_agent()`
+- [ ] **Write tests** for different agent types/configurations
+- [ ] **Write tests** for agent validation
+- [ ] **Implement** `AgentFactory` class
+- [ ] **Add** support for different AI models per agent
+- [ ] **Commit**: "Add AgentFactory for creating configured agents"
+
+### 2.4 Agent Integration Testing
+
+- [ ] **Write integration tests** for agent message processing
+- [ ] **Test** agent with real AILoop and AIService
+- [ ] **Verify** context persistence across messages
+- [ ] **Test** multiple agents with different configurations
+- [ ] **Run all existing tests** to ensure compatibility
+- [ ] **Commit**: "Agent integration tests and validation"
+
+---
+
+## Phase 3: Session Management Cleanup
+
+### 3.1 Refactor InteractiveSession
+
+- [ ] **Write tests** for new `InteractiveSession` agent management
+- [ ] **Write tests** for session message routing
+- [ ] **Write tests** for session lifecycle (create/destroy)
+- [ ] **Refactor** `InteractiveSession` to use new `Agent` class
+- [ ] **Remove** direct context management from session
+- [ ] **Implement** agent switching functionality
+- [ ] **Commit**: "Refactor InteractiveSession to use Agent architecture"
+
+### 3.2 Update Session Manager
+
+- [ ] **Write tests** for `InteractiveSessionManager` operations
+- [ ] **Write tests** for session cleanup and memory management
+- [ ] **Write tests** for concurrent session handling
+- [ ] **Update** `InteractiveSessionManager` for new session structure
+- [ ] **Add** session persistence support
+- [ ] **Improve** error handling and recovery
+- [ ] **Commit**: "Update SessionManager with improved lifecycle management"
+
+### 3.3 Update JSON-RPC Handlers
+
+- [ ] **Write tests** for updated RPC message handlers
+- [ ] **Write tests** for agent selection and switching
+- [ ] **Write tests** for error scenarios
+- [ ] **Update** RPC handlers to use new session structure
+- [ ] **Maintain** existing API compatibility
+- [ ] **Improve** error responses and validation
+- [ ] **Commit**: "Update JSON-RPC handlers for new session architecture"
+
+### 3.4 Session Integration Testing
+
+- [ ] **Write end-to-end tests** for session workflows
+- [ ] **Test** multi-agent conversations
+- [ ] **Test** session persistence and recovery
+- [ ] **Test** concurrent session operations
+- [ ] **Verify** WebSocket streaming still works
+- [ ] **Run full test suite** for regressions
+- [ ] **Commit**: "Session management integration tests"
+
+---
+
+## Phase 4: AILoop Simplification
+
+### 4.1 Prepare AILoop Interface Changes
+
+- [ ] **Write tests** for new stateless `AILoop.process_with_context()`
+- [ ] **Write tests** for `AILoop` without delegate dependencies
+- [ ] **Write tests** for direct result returns
+- [ ] **Create** new `AILoop` interface alongside existing one
+- [ ] **Implement** context provider integration
+- [ ] **Commit**: "Add new stateless AILoop interface"
+
+### 4.2 Implement Direct Streaming
+
+- [ ] **Write tests** for direct JSON-RPC streaming
+- [ ] **Write tests** for token-by-token updates
+- [ ] **Write tests** for streaming error handling
+- [ ] **Implement** direct streaming in session layer
+- [ ] **Create** streaming wrapper for AILoop responses
+- [ ] **Test** streaming performance vs delegate approach
+- [ ] **Commit**: "Implement direct JSON-RPC streaming"
+
+### 4.3 Update Agent to Use New AILoop
+
+- [ ] **Write tests** for agent with new AILoop interface
+- [ ] **Write tests** for agent streaming functionality
+- [ ] **Update** `Agent` class to use new AILoop interface
+- [ ] **Remove** delegate dependencies from Agent
+- [ ] **Verify** all agent functionality preserved
+- [ ] **Commit**: "Update Agent to use stateless AILoop"
+
+### 4.4 Remove Delegate Manager
+
+- [ ] **Write tests** to verify no functionality lost
+- [ ] **Remove** delegate manager from AILoop
+- [ ] **Remove** bridge classes
+- [ ] **Update** all references to use direct returns
+- [ ] **Clean up** delegate-related imports
+- [ ] **Run full test suite** to verify no regressions
+- [ ] **Commit**: "Remove delegate manager and simplify AILoop"
+
+---
+
+## Phase 5: Integration and Cleanup
+
+### 5.1 Comprehensive Integration Testing
+
+- [ ] **Write end-to-end tests** for complete user workflows
+- [ ] **Test** multi-session, multi-agent scenarios
+- [ ] **Test** error recovery and edge cases
+- [ ] **Verify** all original functionality preserved
+- [ ] **Test** with different AI providers/models
+- [ ] **Commit**: "Comprehensive integration test suite"
+
+### 5.2 Performance Validation
+
+- [ ] **Create** performance benchmarks for message processing
+- [ ] **Test** memory usage with multiple sessions/agents
+- [ ] **Benchmark** streaming performance
+- [ ] **Compare** performance vs original implementation
+- [ ] **Optimize** any performance regressions
+- [ ] **Commit**: "Performance validation and optimization"
+
+### 5.3 Code Cleanup
+
+- [ ] **Remove** deprecated code and unused imports
+- [ ] **Remove** old context management classes
+- [ ] **Clean up** InteractiveAI if no longer needed
+- [ ] **Update** type hints and documentation
+- [ ] **Run** linting and code quality checks
+- [ ] **Commit**: "Remove deprecated code and cleanup"
+
+### 5.4 Documentation and Migration
+
+- [ ] **Update** API documentation
+- [ ] **Create** architecture diagrams
+- [ ] **Write** migration guide for any breaking changes
+- [ ] **Update** README with new architecture overview
+- [ ] **Add** troubleshooting guide
+- [ ] **Commit**: "Documentation update for refactored architecture"
+
+### 5.5 Final Validation
+
+- [ ] **Run complete test suite** with coverage report
+- [ ] **Test** with frontend integration
+- [ ] **Verify** no memory leaks or resource issues
+- [ ] **Create** release notes
+- [ ] **Tag** release version
+- [ ] **Commit**: "Refactor complete - architecture v2.0"
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+
+- Each class/method has dedicated unit tests
+- Mock external dependencies (AI services, WebSocket)
+- Test error conditions and edge cases
+- Maintain >90% code coverage
+
+### Integration Tests  
+
+- Test component interactions
+- Use real but lightweight AI service for testing
+- Test session lifecycles and state management
+- Verify streaming functionality
+
+### End-to-End Tests
+
+- Complete user workflow testing
+- Multiple concurrent sessions
+- Error recovery scenarios
+- Performance under load
+
+## Rollback Strategy
+
+Each phase is designed to be independently deployable and rollback-able:
+
+- Keep existing code until new implementation is fully tested
+- Use feature flags where needed for gradual rollout
+- Maintain backward compatibility until migration complete
+- Have rollback commits identified for each phase
+
+## Success Metrics
+
+- [ ] All existing functionality preserved
+- [ ] Test coverage maintained or improved (target: >90%)
+- [ ] Performance maintained or improved
+- [ ] Memory usage not increased significantly
+- [ ] Code complexity reduced (measured by cyclomatic complexity)
+- [ ] Clear separation of concerns achieved
+- [ ] Easier to add new features and AI providers

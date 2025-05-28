@@ -17,22 +17,22 @@ The Agent Inspector feature provides a developer/debugging interface to inspect 
 ### 1. Backend: Agent Inspection COMMAND
 
 
-- [ ] Design and implement a new backend COMMAND: `agent.inspect`
-  - [ ] Accepts parameters: `agent_id` (required), `info_type` (optional, default: `context`)
-  - [ ] Returns the requested info (context, state, etc.) as JSON
-  - [ ] Integrate with `AgentContextManager` to fetch context
+- [x] Design and implement a new backend COMMAND: `agent.inspect`
+  - [x] Accepts parameters: `agent_id` (required), `info_type` (optional, default: `context`)
+  - [x] Returns the requested info (context, state, etc.) as JSON
+  - [x] Integrate with `AgentContextManager` to fetch context
   - [ ] Add support for future info types (state, memory, etc.)
   - [ ] Restrict access to dev/debug users if needed
-  - [ ] **TDD:** Write tests for the COMMAND before/with implementation
-  - [ ] **Test:** Returns correct context for valid agent
-  - [ ] **Test:** Handles invalid agent_id gracefully
-  - [ ] **Test:** Handles unknown info_type gracefully
+  - [x] **TDD:** Write tests for the COMMAND before/with implementation
+  - [x] **Test:** Returns correct context for valid agent
+  - [x] **Test:** Handles invalid agent_id gracefully
+  - [x] **Test:** Handles unknown info_type gracefully
 
 
 ### 2. Frontend: Agent Inspector UI
 
 
-- [ ] Add an "Inspector" tab or toggleable panel/button in the chat UI
+- [x] Add an "Inspector" tab or toggleable panel/button in the chat UI
 - [ ] Allow selection of agent (if multiple agents)
 - [ ] Allow selection of info type (context, state, ...)
 - [ ] Display the info in a readable format (pretty-printed JSON or message list)
