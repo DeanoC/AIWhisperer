@@ -132,8 +132,8 @@ def patch_session_manager(session_manager):
     
     session_manager.create_session = create_session_with_ws
     
-    # Patch send_user_message to use streaming
-    original_send_message = session_manager.send_user_message
+    # Patch send_message to use streaming
+    original_send_message = session_manager.send_message
     
     async def send_message_with_streaming(session_id: str, message: str) -> Dict[str, Any]:
         session = session_manager.get_session(session_id)
@@ -146,6 +146,6 @@ def patch_session_manager(session_manager):
         # Use our enhanced streaming version
         return await send_user_message_with_streaming(session, message, websocket)
     
-    session_manager.send_user_message = send_message_with_streaming
+    session_manager.send_message = send_message_with_streaming
     
     logger.info("Applied streaming patch to InteractiveSessionManager")
