@@ -141,12 +141,14 @@ def patch_session_manager(session_manager):
     original_send_message = session_manager.send_message
     
     async def send_message_with_streaming(session_id: str, message: str) -> Dict[str, Any]:
+        logger.info(f"[streaming_patch] send_message_with_streaming called for session {session_id}")
         session = session_manager.get_session(session_id)
         if not session:
             raise ValueError(f"Session {session_id} not found")
         
         # Get websocket for this session
         websocket = session_manager._websockets.get(session_id)
+        logger.info(f"[streaming_patch] Found websocket for session: {websocket is not None}")
         
         # Use our enhanced streaming version
         return await send_user_message_with_streaming(session, message, websocket)
