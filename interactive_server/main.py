@@ -39,49 +39,71 @@ async def agent_list_handler(params, websocket=None):
     return {"agents": agents}
 
 async def session_switch_agent_handler(params, websocket=None):
-    try:
-        agent_id = params.get("agent_id")
+    agent_id = params.get("agent_id")
+    session = session_manager.get_session_by_websocket(websocket)
+    if not session and "sessionId" in params:
+        session = session_manager.get_session(params["sessionId"])
+    # In test context, do not auto-create session if websocket is None and sessionId is provided
+    if not session and websocket is not None:
+        session_id = await session_manager.create_session(websocket)
+        await session_manager.start_session(session_id)
         session = session_manager.get_session_by_websocket(websocket)
-        if not session:
-            # Auto-create a session if none exists for this websocket
-            session_id = await session_manager.create_session(websocket)
-            await session_manager.start_session(session_id)
-            session = session_manager.get_session_by_websocket(websocket)
-        # Save/restore agent state as needed (not implemented here)
-        session.current_agent_id = agent_id
+    try:
+        session.switch_agent(agent_id)
         return {"success": True, "current_agent": agent_id}
+    except ValueError as e:
+        return {
+            "jsonrpc": "2.0",
+            "id": None, # ID will be filled by process_json_rpc_request
+            "error": {"code": -32001, "message": f"Agent not found: {agent_id}"}
+        }
     except Exception as e:
         import logging, traceback
         logging.error(f"[session_switch_agent_handler] Exception: {e}")
         traceback.print_exc()
-        print(f"[session_switch_agent_handler] Exception: {e}")
-        return {"success": False, "error": str(e)}
+        return {
+            "jsonrpc": "2.0",
+            "id": None, # ID will be filled by process_json_rpc_request
+            "error": {"code": -32603, "message": f"Internal error: {e}"}
+        }
 
 async def session_current_agent_handler(params, websocket=None):
     session = session_manager.get_session_by_websocket(websocket)
-    if not session or not hasattr(session, "current_agent_id"):
+    if not session and "sessionId" in params:
+        session = session_manager.get_session(params["sessionId"])
+    if not session or not session.active_agent:
         return {"current_agent": None}
-    return {"current_agent": session.current_agent_id}
+    return {"current_agent": getattr(session.active_agent, "agent_id", None)}
 
 async def session_handoff_handler(params, websocket=None):
-    try:
-        to_agent = params.get("to_agent")
+    to_agent = params.get("to_agent")
+    session = session_manager.get_session_by_websocket(websocket)
+    if not session and "sessionId" in params:
+        session = session_manager.get_session(params["sessionId"])
+    if not session and websocket is not None:
+        session_id = await session_manager.create_session(websocket)
+        await session_manager.start_session(session_id)
         session = session_manager.get_session_by_websocket(websocket)
-        if not session:
-            # Auto-create a session if none exists for this websocket
-            session_id = await session_manager.create_session(websocket)
-            await session_manager.start_session(session_id)
-            session = session_manager.get_session_by_websocket(websocket)
-        from_agent = getattr(session, "current_agent_id", None)
-        session.current_agent_id = to_agent
+    from_agent = getattr(session.active_agent, "agent_id", None) if session and session.active_agent else None
+    try:
+        session.switch_agent(to_agent)
         # Optionally: send notification/event to frontend
         return {"success": True, "from_agent": from_agent, "to_agent": to_agent}
+    except ValueError as e:
+        return {
+            "jsonrpc": "2.0",
+            "id": None, # ID will be filled by process_json_rpc_request
+            "error": {"code": -32001, "message": f"Agent not found: {to_agent}"}
+        }
     except Exception as e:
         import logging, traceback
         logging.error(f"[session_handoff_handler] Exception: {e}")
         traceback.print_exc()
-        print(f"[session_handoff_handler] Exception: {e}")
-        return {"success": False, "error": str(e)}
+        return {
+            "jsonrpc": "2.0",
+            "id": None, # ID will be filled by process_json_rpc_request
+            "error": {"code": -32603, "message": f"Internal error: {e}"}
+        }
 
 app = FastAPI()
 
@@ -117,30 +139,24 @@ async def send_user_message_handler(params, websocket=None):
     try:
         model = SendUserMessageRequest(**params)
     except Exception as validation_error:
-        # Pydantic validation failed - this is the kind of error we want to send via delegate bridge
         logging.error(f"[send_user_message_handler] Validation error: {validation_error}")
-        
-        # Get the session if possible to trigger delegate bridge notification
         session_id = params.get("sessionId")
         if session_id:
             session = session_manager.get_session(session_id)
             if session and session.delegate_bridge:
-                logging.debug("[send_user_message_handler] Calling delegate_bridge._handle_error for validation error...")
                 try:
                     await session.delegate_bridge._handle_error(sender=None, event_data=validation_error)
-                    logging.debug("[send_user_message_handler] delegate_bridge._handle_error completed.")
-                    # Add delay to allow notification delivery
                     await asyncio.sleep(0.3)
                 except Exception as bridge_error:
                     logging.error(f"[send_user_message_handler] Error in delegate bridge: {bridge_error}")
-        
-        # Re-raise for JSON-RPC error response
-        raise validation_error
-    
-    session = session_manager.get_session(model.sessionId)
+        raise ValueError(f"Missing required parameter or invalid format: {validation_error}")
+
+    session = session_manager.get_session_by_websocket(websocket)
+    if not session and hasattr(model, "sessionId"):
+        session = session_manager.get_session(model.sessionId)
     if not session:
-        raise ValueError(f"Session {model.sessionId} not found")
-    
+        raise ValueError(f"Invalid session: {getattr(model, 'sessionId', None)}")
+
     try:
         logging.debug(f"[send_user_message_handler] Calling session.send_user_message: {model.message}")
         await session.send_user_message(model.message)
@@ -149,10 +165,7 @@ async def send_user_message_handler(params, websocket=None):
         return response
     except Exception as e:
         logging.error(f"[send_user_message_handler] Exception: {e}")
-        # The AILoop should have already handled the error and triggered delegate notifications
-        # if this was an invalid message type. We just need to return a JSON-RPC error response.
-        logging.debug("[send_user_message_handler] Raising exception to return JSON-RPC error response.")
-        raise e
+        raise RuntimeError(f"Failed to send message: {e}")
 
 
 async def provide_tool_result_handler(params, websocket=None):
@@ -259,11 +272,13 @@ async def process_json_rpc_request(msg, websocket):
             result = await handler(msg.get("params", {}), websocket=websocket)
         else:
             result = handler(msg.get("params", {}), websocket=websocket)
-        # If result is a dict (from model_dump), return as is, else wrap
-        if isinstance(result, dict):
-            return {"jsonrpc": "2.0", "id": msg["id"], "result": result}
-        else:
-            return {"jsonrpc": "2.0", "id": msg["id"], "result": result}
+        # If result is a dict and contains an "error" key, return it as is (it's already a JSON-RPC error object)
+        if isinstance(result, dict) and "error" in result:
+            # Ensure the ID is set correctly for the error response
+            result["id"] = msg["id"]
+            return result
+        # Otherwise, wrap the result in a "result" key
+        return {"jsonrpc": "2.0", "id": msg["id"], "result": result}
     except (ValueError, TypeError) as e:
         import logging
         logging.error(f"[process_json_rpc_request] ValueError/TypeError: {e}")

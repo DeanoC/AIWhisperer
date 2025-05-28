@@ -14,7 +14,7 @@ class TestAgentInspectCommand:
         # Simulate agent registry/lookup if needed
         agent_id = "P"
         # Act: call the inspect command handler
-        result = await agent_commands.inspect_agent_context(agent_id=agent_id, info_type="context", context_manager=mock_context_manager)
+        result = agent_commands.inspect_agent_context(agent_id=agent_id, info_type="context", context_manager=mock_context_manager)
         # Assert: correct context is returned
         assert result["agent_id"] == agent_id
         assert result["info_type"] == "context"
@@ -24,7 +24,7 @@ class TestAgentInspectCommand:
         # Arrange: simulate agent lookup failure
         agent_id = "INVALID"
         # Act: call the inspect command handler
-        result = await agent_commands.inspect_agent_context(agent_id=agent_id, info_type="context", context_manager=None)
+        result = agent_commands.inspect_agent_context(agent_id=agent_id, info_type="context", context_manager=None)
         # Assert: returns error or empty context
         assert result["agent_id"] == agent_id
         assert result["context"] == [] or result.get("error")
@@ -34,7 +34,7 @@ class TestAgentInspectCommand:
         mock_context_manager = MagicMock()
         agent_id = "P"
         # Act: call the inspect command handler
-        result = await agent_commands.inspect_agent_context(agent_id=agent_id, info_type="unknown", context_manager=mock_context_manager)
+        result = agent_commands.inspect_agent_context(agent_id=agent_id, info_type="unknown", context_manager=mock_context_manager)
         # Assert: returns error or default behavior
         assert result["agent_id"] == agent_id
         assert result["info_type"] == "unknown"

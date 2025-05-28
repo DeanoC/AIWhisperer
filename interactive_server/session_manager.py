@@ -30,7 +30,7 @@ class InteractiveSession:
     
     def __init__(self, session_id: str, websocket: WebSocket, config: dict):
         """
-        Initialize an interactive session.
+        Initialize an interactive session using Agent architecture.
         
         Args:
             session_id: Unique identifier for this session
@@ -40,115 +40,61 @@ class InteractiveSession:
         self.session_id = session_id
         self.websocket = websocket
         self.config = config
-        
-        # Initialize components for this session
-        self.delegate_manager = DelegateManager()
-        self.context_manager = ContextManager()
 
-        # Track the current agent for this session (default to 'default')
-        self.current_agent_id = 'default'
-        
-        # Create AI config from provided config
-        # Use a dummy API key if not present, to allow tests to run without a real key
-        api_key = config.get('openrouter', {}).get('api_key')
-        if not api_key:
-            api_key = 'test-api-key'
-        self.ai_config = AIConfig(
-            api_key=api_key,
-            model_id=config.get('openrouter', {}).get('model', 'openai/gpt-3.5-turbo'),
-            temperature=config.get('ai_loop', {}).get('temperature', 0.7),
-            max_tokens=config.get('ai_loop', {}).get('max_tokens', None)
-        )
-        
-        # Model information (required by InteractiveAI)
-        self.model = {
-            'id': self.ai_config.model_id,
-            'name': self.ai_config.model_id
-        }
-        
-        # Initialize InteractiveAI wrapper
-        self.interactive_ai: Optional[InteractiveAI] = None
-        self.delegate_bridge: Optional[DelegateBridge] = None
+        # Manage agents for this session
+        self.agents = {}
+        self.active_agent = None
+
         self.is_started = False
+        self.delegate_bridge: Optional[DelegateBridge] = None
         
+    def switch_agent(self, agent_id: str):
+        """
+        Switch the active agent for this session.
+        """
+        if agent_id not in self.agents:
+            raise ValueError(f"Agent '{agent_id}' not found in session {self.session_id}")
+        self.active_agent = self.agents[agent_id]
+
     async def start_ai_session(self, system_prompt: str = None) -> str:
         """
-        Start the AI session for this connection.
-        
-        Args:
-            system_prompt: Optional system prompt to initialize the session
-            
-        Returns:
-            Session ID if successful
-            
-        Raises:
-            RuntimeError: If session is already started or initialization fails
+        Start the agent-based AI session for this connection.
         """
         if self.is_started:
             raise RuntimeError(f"Session {self.session_id} is already started")
-            
         try:
-            # Create InteractiveAI instance
-            self.interactive_ai = InteractiveAI(
-                model=self.model,
-                ai_config=self.ai_config,
-                delegate_manager=self.delegate_manager,
-                context_manager=self.context_manager
-            )
-            # Link session to interactive_ai for agent_id access
-            self.interactive_ai.session = self
-            
-            # Create delegate bridge to handle events
-            self.delegate_bridge = DelegateBridge(self)
-            
-            # Start the AI session
-            default_prompt = "You are an AI assistant that provides helpful information and assistance."
-            prompt = system_prompt or default_prompt
-            
-            await self.interactive_ai.start_interactive_ai_session(prompt)
-            
+            # Create the default agent using AgentFactory
+            from ai_whisperer.agents.factory import AgentFactory
+            agent_config = self.config.get("agent", {"preset_name": "default"})
+            agent = AgentFactory.create_agent(agent_config)
+            self.agents["default"] = agent
+            self.active_agent = agent
+
             self.is_started = True
-            logger.info(f"Started AI session {self.session_id}")
-            
-            return self.session_id            
+            return self.session_id
         except Exception as e:
-            logger.error(f"Failed to start AI session {self.session_id}: {e}")
+            import logging
+            logging.error(f"Failed to start agent session {self.session_id}: {e}")
             await self.cleanup()
-            raise RuntimeError(f"Failed to start AI session: {e}")
+            raise RuntimeError(f"Failed to start agent session: {e}")
     
-    async def send_user_message(self, message: str) -> None:
+    async def send_user_message(self, message: str):
         """
-        Send a user message to the AI session.
-        
-        Args:
-            message: User message to send
-            
-        Raises:
-            RuntimeError: If session is not started
+        Route a user message to the active agent.
         """
-        logger.error(f"[send_user_message] ENTRY: session_id={self.session_id}, message={message}")
-        if not self.is_started or not self.interactive_ai:
+        if not self.is_started or not self.active_agent:
             raise RuntimeError(f"Session {self.session_id} is not started")
-            
         try:
-            logger.error(f"[send_user_message] Calling interactive_ai.send_message")
-            await self.interactive_ai.send_message(message)
-            logger.error(f"[send_user_message] interactive_ai.send_message completed")
+            return await self.active_agent.process_message(message)
         except Exception as e:
-            logger.error(f"Failed to send message to session {self.session_id}: {e}")
+            import logging
+            logging.error(f"Failed to send message to agent in session {self.session_id}: {e}")
             raise
     
     async def stop_ai_session(self) -> None:
         """
         Stop the AI session gracefully.
         """
-        if self.is_started and self.interactive_ai and self.interactive_ai.ai_loop:
-            try:
-                await self.interactive_ai.ai_loop.stop_session()
-                logger.info(f"Stopped AI session {self.session_id}")
-            except Exception as e:
-                logger.error(f"Error stopping AI session {self.session_id}: {e}")
-        
         self.is_started = False
     
     async def send_notification(self, method: str, notification_data) -> None:
@@ -188,17 +134,11 @@ class InteractiveSession:
         """
         try:
             await self.stop_ai_session()
-            
-            if self.delegate_bridge:
-                await self.delegate_bridge.cleanup()
-                self.delegate_bridge = None
-                
-            self.interactive_ai = None
-            
-            logger.info(f"Cleaned up session {self.session_id}")
-            
+            self.agents.clear()
+            self.active_agent = None
         except Exception as e:
-            logger.error(f"Error during cleanup of session {self.session_id}: {e}")
+            import logging
+            logging.error(f"Error during cleanup of session {self.session_id}: {e}")
 
 
 class InteractiveSessionManager:
@@ -209,43 +149,43 @@ class InteractiveSessionManager:
     def __init__(self, config: dict):
         """
         Initialize the session manager.
-        
+
         Args:
             config: Application configuration dictionary
         """
         self.config = config
         self.sessions: Dict[str, InteractiveSession] = {}
         self.websocket_sessions: Dict[WebSocket, str] = {}
+        self._lock = asyncio.Lock()
+        self._persistence_path = self.config.get("session_persistence_path", "sessions.json")
         
     async def create_session(self, websocket: WebSocket, session_params: dict = None) -> str:
         """
         Create a new interactive session for a WebSocket connection.
-        
+
         Args:
             websocket: WebSocket connection
             session_params: Optional session parameters
-            
+
         Returns:
             Session ID
-            
+
         Raises:
             RuntimeError: If session creation fails
         """
         session_id = str(uuid.uuid4())
-        
-        try:
-            session = InteractiveSession(session_id, websocket, self.config)
-            
-            # Store session mappings
-            self.sessions[session_id] = session
-            self.websocket_sessions[websocket] = session_id
-            
-            logger.info(f"Created session {session_id} for WebSocket connection")
-            return session_id
-            
-        except Exception as e:
-            logger.error(f"Failed to create session: {e}")
-            raise RuntimeError(f"Failed to create session: {e}")
+
+        async with self._lock:
+            try:
+                session = InteractiveSession(session_id, websocket, self.config)
+                self.sessions[session_id] = session
+                self.websocket_sessions[websocket] = session_id
+                logger.info(f"Created session {session_id} for WebSocket connection")
+                await self.save_sessions()
+                return session_id
+            except Exception as e:
+                logger.error(f"Failed to create session: {e}")
+                raise RuntimeError(f"Failed to create session: {e}")
     
     async def start_session(self, session_id: str, system_prompt: str = None) -> str:
         """
@@ -299,27 +239,28 @@ class InteractiveSessionManager:
     async def cleanup_session(self, session_id: str) -> None:
         """
         Clean up and remove a session.
-        
+
         Args:
             session_id: Session identifier
         """
-        session = self.sessions.get(session_id)
-        if session:
-            try:
-                # Remove from websocket mapping
-                if session.websocket in self.websocket_sessions:
-                    del self.websocket_sessions[session.websocket]
-                
-                # Clean up session resources
-                await session.cleanup()
-                
-                # Remove from sessions
-                del self.sessions[session_id]
-                
-                logger.info(f"Cleaned up session {session_id}")
-                
-            except Exception as e:
-                logger.error(f"Error cleaning up session {session_id}: {e}")
+        async with self._lock:
+            session = self.sessions.get(session_id)
+            if session:
+                try:
+                    # Remove from websocket mapping
+                    if session.websocket in self.websocket_sessions:
+                        del self.websocket_sessions[session.websocket]
+
+                    # Clean up session resources
+                    await session.cleanup()
+
+                    # Remove from sessions
+                    del self.sessions[session_id]
+
+                    logger.info(f"Cleaned up session {session_id}")
+                    await self.save_sessions()
+                except Exception as e:
+                    logger.error(f"Error cleaning up session {session_id}: {e}")
     
     async def cleanup_websocket(self, websocket: WebSocket) -> None:
         """
@@ -372,8 +313,45 @@ class InteractiveSessionManager:
         """
         Clean up all active sessions.
         """
-        session_ids = list(self.sessions.keys())
-        for session_id in session_ids:
-            await self.cleanup_session(session_id)
-        
-        logger.info("Cleaned up all sessions")
+        async with self._lock:
+            session_ids = list(self.sessions.keys())
+            for session_id in session_ids:
+                await self.cleanup_session(session_id)
+            logger.info("Cleaned up all sessions")
+            await self.save_sessions()
+
+# --- Persistence Methods ---
+
+    async def save_sessions(self):
+        """
+        Persist session metadata (not websocket or live agent state).
+        """
+        import json
+        try:
+            # Only save session IDs and minimal info (not websocket or agent objects)
+            data = [{"session_id": sid} for sid in self.sessions.keys()]
+            with open(self._persistence_path, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+            logger.info(f"Saved {len(data)} sessions to {self._persistence_path}")
+        except Exception as e:
+            logger.error(f"Failed to save sessions: {e}")
+
+    async def load_sessions(self):
+        """
+        Load session metadata from disk (restores session IDs, not live objects).
+        """
+        import json
+        try:
+            with open(self._persistence_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            # Only restore session IDs for now (websockets must reconnect)
+            for entry in data:
+                sid = entry.get("session_id")
+                if sid and sid not in self.sessions:
+                    # Placeholder: cannot restore websocket or agent state
+                    self.sessions[sid] = None
+            logger.info(f"Loaded {len(data)} sessions from {self._persistence_path}")
+        except FileNotFoundError:
+            logger.info("No persisted sessions found to load.")
+        except Exception as e:
+            logger.error(f"Failed to load sessions: {e}")
