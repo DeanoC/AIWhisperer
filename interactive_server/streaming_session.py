@@ -176,6 +176,10 @@ class StreamingSession:
                 
                 # Handle different result types
                 if isinstance(result, dict):
+                    # Handle errors
+                    if result.get('error'):
+                        await self._send_error_notification(str(result['error']))
+                    
                     # Handle tool calls if present
                     if result.get('tool_calls'):
                         await self._send_tool_notifications(result['tool_calls'])

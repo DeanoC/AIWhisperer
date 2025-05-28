@@ -154,11 +154,13 @@
 
 ### 4.4 Remove Delegate Manager
 
-- [ ] **Write tests** to verify no functionality lost
-- [ ] **Remove** delegate manager from AILoop
-- [ ] **Remove** bridge classes
-- [ ] **Update** all references to use direct returns
-- [ ] **Clean up** delegate-related imports
+- [x] **Write tests** to verify no functionality lost (test_no_delegates.py)
+- [x] **Remove** delegate manager from AILoop (created StatelessAILoop)
+- [x] **Remove** bridge classes (StreamingSession works directly)
+- [x] **Update** all references to use direct returns (in new stateless components)
+- [x] **Create** StatelessSessionManager without delegates
+- [x] **Fix** generation parameter passing in StatelessAILoop
+- [ ] **Clean up** delegate-related imports from remaining files
 - [ ] **Run full test suite** to verify no regressions
 - [ ] **Commit**: "Remove delegate manager and simplify AILoop"
 
