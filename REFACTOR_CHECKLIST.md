@@ -82,13 +82,13 @@
 
 ### 3.1 Refactor InteractiveSession
 
-- [ ] **Write tests** for new `InteractiveSession` agent management
-- [ ] **Write tests** for session message routing
-- [ ] **Write tests** for session lifecycle (create/destroy)
-- [ ] **Refactor** `InteractiveSession` to use new `Agent` class
-- [ ] **Remove** direct context management from session
-- [ ] **Implement** agent switching functionality
-- [ ] **Commit**: "Refactor InteractiveSession to use Agent architecture"
+- [x] **Write tests** for new `InteractiveSession` agent management
+- [x] **Write tests** for session message routing
+- [x] **Write tests** for session lifecycle (create/destroy)
+- [x] **Refactor** `InteractiveSession` to use new `Agent` class
+- [x] **Remove** direct context management from session
+- [x] **Implement** agent switching functionality
+- [x] **Commit**: "Refactor InteractiveSession to use Agent architecture"
 
 ### 3.2 Update Session Manager
 
