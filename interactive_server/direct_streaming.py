@@ -133,12 +133,35 @@ def install_direct_streaming(session_manager):
     
     def get_streaming_session(session_id: str):
         session = original_get_session(session_id)
+        logger.info(f"[DirectStreaming] get_session called for {session_id}, found: {session is not None}, has websocket: {session_id in session_manager._websockets}")
         if session and session_id in session_manager._websockets:
             # Return wrapped session with streaming
-            return DirectStreamingSession(session, session_manager._websockets[session_id])
+            wrapped = DirectStreamingSession(session, session_manager._websockets[session_id])
+            logger.info(f"[DirectStreaming] Returning wrapped session for {session_id}")
+            return wrapped
         return session
     
     session_manager.get_session = get_streaming_session
+    
+    # Also wrap get_session_by_websocket
+    if hasattr(session_manager, 'get_session_by_websocket'):
+        original_get_by_ws = session_manager.get_session_by_websocket
+        
+        def get_session_by_websocket_wrapped(websocket):
+            session_id = None
+            # Find session_id for this websocket
+            for sid, ws in session_manager._websockets.items():
+                if ws == websocket:
+                    session_id = sid
+                    break
+            
+            if session_id:
+                return get_streaming_session(session_id)
+            
+            # Fallback to original
+            return original_get_by_ws(websocket)
+        
+        session_manager.get_session_by_websocket = get_session_by_websocket_wrapped
     
     # Wrap create_session to track websockets
     original_create_session = session_manager.create_session
