@@ -98,7 +98,7 @@
 - [x] **Update** `InteractiveSessionManager` for new session structure
 - [x] **Add** session persistence support
 - [x] **Improve** error handling and recovery
-- [ ] **Commit**: "Update SessionManager with improved lifecycle management"
+- [x] **Commit**: "Update SessionManager with improved lifecycle management"
 
 ### 3.3 Update JSON-RPC Handlers
 
