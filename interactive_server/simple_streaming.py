@@ -113,6 +113,8 @@ class SimpleStreamingWrapper:
 def install_simple_streaming(session_manager):
     """Install the simple streaming wrapper on the session manager."""
     logger.info("[SimpleStreaming] Installing simple streaming wrapper")
+    logger.info(f"[SimpleStreaming] Session manager type: {type(session_manager)}")
+    logger.info(f"[SimpleStreaming] Has send_message: {hasattr(session_manager, 'send_message')}")
     
     # Create wrapper instance
     wrapper = SimpleStreamingWrapper(session_manager)

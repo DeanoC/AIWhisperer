@@ -165,8 +165,9 @@ async def send_user_message_handler(params, websocket=None):
         raise ValueError(f"Invalid session: {getattr(model, 'sessionId', None)}")
 
     try:
-        logging.debug(f"[send_user_message_handler] Calling session.send_user_message: {model.message}")
-        await session.send_user_message(model.message)
+        logging.debug(f"[send_user_message_handler] Calling session_manager.send_message: {model.message}")
+        # Use session_manager.send_message to trigger our streaming wrapper
+        await session_manager.send_message(model.sessionId, model.message)
         response = SendUserMessageResponse(messageId=str(uuid.uuid4()), status=MessageStatus.OK).model_dump()
         logging.debug("[send_user_message_handler] Message sent successfully, returning OK response.")
         return response
