@@ -122,12 +122,15 @@ session_manager = InteractiveSessionManager(app_config)
 async def start_session_handler(params, websocket=None):
     model = StartSessionRequest(**params)
     # Create a new session for this websocket
-    session_id = await session_manager.create_session(
-        websocket, 
-        session_params=(model.sessionParams.model_dump() if model.sessionParams else {})
-    )
-    # Start the AI session (system prompt can be extended from params if needed)
-    await session_manager.start_session(session_id)
+    session_id = await session_manager.create_session(websocket)
+    
+    # Extract system prompt from session params if provided
+    system_prompt = None
+    if model.sessionParams and model.sessionParams.context:
+        system_prompt = model.sessionParams.context
+    
+    # Start the AI session with optional system prompt
+    await session_manager.start_session(session_id, system_prompt)
     # Respond with real session ID and status
     response = StartSessionResponse(sessionId=session_id, status=SessionStatus.Active).model_dump()
     # The delegate bridge will handle notifications
