@@ -11,7 +11,7 @@ import asyncio
 import uuid
 from fastapi import FastAPI, WebSocket
 from ai_whisperer.config import load_config
-from .session_manager import InteractiveSessionManager
+from .stateless_session_manager import StatelessSessionManager
 from .message_models import (
     StartSessionRequest, StartSessionResponse, SendUserMessageRequest, SendUserMessageResponse,
     AIMessageChunkNotification, SessionStatusNotification, StopSessionRequest, StopSessionResponse,
@@ -19,7 +19,6 @@ from .message_models import (
     SessionStatus, MessageStatus, ToolResultStatus
 )
 from ai_whisperer.agents.registry import AgentRegistry
-from ai_whisperer.agents.registry import Agent
 from pathlib import Path
 prompts_dir = Path(os.environ.get("AIWHISPERER_PROMPTS", "prompts"))
 agent_registry = AgentRegistry(prompts_dir)
@@ -115,11 +114,7 @@ except Exception as e:
     logging.error(f"Failed to load configuration: {e}")
     app_config = {}
 
-session_manager = InteractiveSessionManager(app_config)
-
-# Apply direct streaming to enable AI chunk notifications
-from .direct_streaming import install_direct_streaming
-install_direct_streaming(session_manager)
+session_manager = StatelessSessionManager(app_config)
 
 
 # Handler functions
@@ -137,7 +132,6 @@ async def start_session_handler(params, websocket=None):
     await session_manager.start_session(session_id, system_prompt)
     # Respond with real session ID and status
     response = StartSessionResponse(sessionId=session_id, status=SessionStatus.Active).model_dump()
-    # The delegate bridge will handle notifications
     return response
 
 
@@ -147,15 +141,6 @@ async def send_user_message_handler(params, websocket=None):
         model = SendUserMessageRequest(**params)
     except Exception as validation_error:
         logging.error(f"[send_user_message_handler] Validation error: {validation_error}")
-        session_id = params.get("sessionId")
-        if session_id:
-            session = session_manager.get_session(session_id)
-            if session and session.delegate_bridge:
-                try:
-                    await session.delegate_bridge._handle_error(sender=None, event_data=validation_error)
-                    await asyncio.sleep(0.3)
-                except Exception as bridge_error:
-                    logging.error(f"[send_user_message_handler] Error in delegate bridge: {bridge_error}")
         raise ValueError(f"Missing required parameter or invalid format: {validation_error}")
 
     session = session_manager.get_session_by_websocket(websocket)
@@ -166,7 +151,7 @@ async def send_user_message_handler(params, websocket=None):
 
     try:
         logging.debug(f"[send_user_message_handler] Calling session.send_user_message: {model.message}")
-        # The session is now wrapped with streaming support
+        # The session now has built-in streaming support
         await session.send_user_message(model.message)
         response = SendUserMessageResponse(messageId=str(uuid.uuid4()), status=MessageStatus.OK).model_dump()
         logging.debug("[send_user_message_handler] Message sent successfully, returning OK response.")
@@ -181,15 +166,8 @@ async def provide_tool_result_handler(params, websocket=None):
     session = session_manager.get_session(model.sessionId)
     if not session:
         raise ValueError(f"Session {model.sessionId} not found")
-    # Provide the tool result to the AILoop (via InteractiveAI)
-    if not session.interactive_ai or not session.interactive_ai.ai_loop:
-        raise RuntimeError("AI loop not initialized for session")
-    # The AILoop expects tool results via a delegate event
-    await session.interactive_ai.ai_loop._handle_provide_tool_result(
-        tool_call_id=model.toolCallId, 
-        result=model.result
-    )
-    # Respond with status OK
+    # Tool results are not yet implemented in the stateless architecture
+    # For now, just return OK
     response = ProvideToolResultResponse(status=ToolResultStatus.OK).model_dump()
     return response
 
