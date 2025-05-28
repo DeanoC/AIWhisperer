@@ -117,6 +117,10 @@ except Exception as e:
 
 session_manager = InteractiveSessionManager(app_config)
 
+# Apply streaming patch to enable AI chunk notifications
+from .streaming_patch import patch_session_manager
+patch_session_manager(session_manager)
+
 
 # Handler functions
 async def start_session_handler(params, websocket=None):
