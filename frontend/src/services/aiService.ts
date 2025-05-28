@@ -163,10 +163,12 @@ export class AIService {
   async listAgents(): Promise<Agent[]> {
     try {
       const result = await this.rpc.sendRequest('agent.list', {});
-      if (!Array.isArray(result)) {
+      // Handle both direct array and wrapped response
+      const agents = result.agents || result;
+      if (!Array.isArray(agents)) {
         throw new Error('Invalid response: expected array of agents');
       }
-      return result;
+      return agents;
     } catch (err: any) {
       this.error = err.message || 'Failed to list agents';
       throw err;
