@@ -105,6 +105,7 @@ export class AIService {
   }
 
   private handleNotification(notification: any) {
+    console.log('[AIService] Received notification:', notification);
     if (notification.method === 'AIMessageChunkNotification') {
       const params = notification.params || {};
       const chunk: AIMessageChunk = {
@@ -112,6 +113,7 @@ export class AIService {
         index: params.index ?? 0,
         isFinal: params.isFinal ?? false,
       };
+      console.log('[AIService] Processing AI chunk:', chunk);
       this.chunkHandler?.(chunk);
     }
     if (notification.method === 'SessionStatusNotification') {

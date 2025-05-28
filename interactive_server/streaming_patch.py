@@ -30,6 +30,8 @@ async def send_user_message_with_streaming(
     Returns:
         Result dictionary
     """
+    logger.info(f"[streaming_patch] send_user_message_with_streaming called - session: {session.session_id}, websocket: {websocket is not None}")
+    
     if not session.is_started or not session.active_agent:
         raise RuntimeError(f"Session {session.session_id} is not started or no active agent")
     
@@ -53,13 +55,16 @@ async def send_user_message_with_streaming(
                         isFinal=is_final
                     )
                     
-                    await websocket.send_json({
+                    notification_json = {
                         "jsonrpc": "2.0",
                         "method": "AIMessageChunkNotification",
                         "params": notification.model_dump()
-                    })
+                    }
                     
-                    logger.debug(f"Sent AI chunk: {len(chunk_content)} chars, final={is_final}")
+                    logger.info(f"[streaming_patch] Sending notification: {notification_json}")
+                    await websocket.send_json(notification_json)
+                    
+                    logger.info(f"[streaming_patch] Sent AI chunk: {len(chunk_content)} chars, final={is_final}")
                 except Exception as e:
                     logger.error(f"Error sending chunk notification: {e}")
             
