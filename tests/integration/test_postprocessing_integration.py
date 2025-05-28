@@ -4,22 +4,18 @@ Integration tests for the postprocessing steps with initial plan and subtask gen
 
 import pytest
 import json
-import uuid
-import os
-import yaml
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 from pathlib import Path
 import time
+from typing import Any
 
 # from ai_whisperer.orchestrator import Orchestrator
 from ai_whisperer.subtask_generator import SubtaskGenerator
 from ai_whisperer.config import load_config  # Import load_config
-from postprocessing.scripted_steps.clean_backtick_wrapper import clean_backtick_wrapper
-from postprocessing.pipeline import PostprocessingPipeline
 
 
 @pytest.fixture
-def tmp_path_with_cleanup(request, tmp_path):
+def tmp_path_with_cleanup(request: pytest.FixtureRequest, tmp_path: Path):
     """
     Pytest fixture to create a temporary directory and ensure its cleanup
     with retries to handle PermissionError on Windows.
@@ -55,15 +51,20 @@ class TestSubtaskGeneratorPostprocessingIntegration:
     @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService")
     @patch("ai_whisperer.subtask_generator.uuid.uuid4")
     @patch("postprocessing.pipeline.PostprocessingPipeline.process")
-    def test_subtask_generator_adds_subtask_id(self, mock_process, mock_uuid4, mock_api, tmp_path_with_cleanup):
+    def test_subtask_generator_adds_subtask_id(
+        self,
+        mock_process: MagicMock,
+        mock_uuid4: MagicMock,
+        mock_api: MagicMock,
+        tmp_path_with_cleanup: Path
+    ):
         """Test that the subtask generator adds subtask_id via the postprocessor."""
         # Setup
         mock_uuid4.return_value = "test-subtask-uuid"
         mock_api_instance = MagicMock()
         mock_api.return_value = mock_api_instance
-
         # Create a JSON dictionary with the expected fields
-        json_dict = {
+        json_dict: dict[str, Any] = {
             "task_id": "mock-test-task-id",
             "subtask_id": "mock-test-subtask-id",
             "description": "Test step",
