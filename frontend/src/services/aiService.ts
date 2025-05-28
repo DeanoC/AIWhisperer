@@ -185,7 +185,11 @@ export class AIService {
   async switchAgent(agentId: string): Promise<void> {
     if (!this.sessionId) throw new Error('Session not initialized');
     try {
-      await this.rpc.sendRequest('session.switch_agent', { agent_id: agentId });
+      const command = `/session.switch_agent ${JSON.stringify({ agent_id: agentId })}`;
+      const result = await this.dispatchCommand(command);
+      if (result.error) {
+        throw new Error(result.error);
+      }
     } catch (err: any) {
       this.error = err.message || 'Failed to switch agent';
       throw err;
