@@ -1,7 +1,10 @@
 import { JsonRpcService } from './jsonRpcService';
 import { SessionInfo, SessionStatus, AIMessageChunk } from '../types/ai';
+import { Agent, AgentHandoffContext, AgentHandoffNotification } from '../types/agent';
 
 export type AIMessageChunkHandler = (chunk: AIMessageChunk) => void;
+export type AgentChangedHandler = (agentId: string) => void;
+export type AgentHandoffHandler = (handoff: AgentHandoffNotification) => void;
 
 export class AIService {
   private rpc: JsonRpcService;
@@ -43,10 +46,20 @@ export class AIService {
         sessionParams: { language: 'en' },
       });
       this.sessionId = result.sessionId;
-      this.status = result.status;
+      // Convert numeric status to enum
+      const statusMap: { [key: number]: SessionStatus } = {
+        0: SessionStatus.Idle,
+        1: SessionStatus.Active,
+        2: SessionStatus.Stopped,
+        3: SessionStatus.Error
+      };
+      const status = typeof result.status === 'number' 
+        ? (statusMap[result.status] || SessionStatus.Error)
+        : result.status;
+      this.status = status;
       this.sessionInfo = {
         id: result.sessionId,
-        status: result.status,
+        status: status,
         startedAt: new Date().toISOString(),
         model: result.model || 'unknown',
       };
@@ -104,11 +117,31 @@ export class AIService {
     if (notification.method === 'SessionStatusNotification') {
       const params = notification.params || {};
       if (typeof params.status === 'number') {
-        this.status = params.status;
+        // Map numeric status to enum values
+        const statusMap: { [key: number]: SessionStatus } = {
+          0: SessionStatus.Idle,
+          1: SessionStatus.Active,
+          2: SessionStatus.Stopped,
+          3: SessionStatus.Error
+        };
+        this.status = statusMap[params.status] || SessionStatus.Error;
         if (params.status === 2) {
           this.sessionId = null;
         }
       }
+    }
+    // Handle agent-related notifications
+    if (notification.method === 'agent_changed') {
+      const params = notification.params || {};
+      this.agentChangedHandlers.forEach(handler => handler(params.agent_id));
+    }
+    if (notification.method === 'agent_handoff') {
+      const params = notification.params || {};
+      this.agentHandoffHandlers.forEach(handler => handler({
+        fromAgent: params.from_agent,
+        toAgent: params.to_agent,
+        context: params.context
+      }));
     }
   }
 
@@ -122,5 +155,77 @@ export class AIService {
 
   getError() {
     return this.error;
+  }
+
+  // Agent-related methods
+  async listAgents(): Promise<Agent[]> {
+    try {
+      const result = await this.rpc.sendRequest('agent.list', {});
+      if (!Array.isArray(result)) {
+        throw new Error('Invalid response: expected array of agents');
+      }
+      return result;
+    } catch (err: any) {
+      this.error = err.message || 'Failed to list agents';
+      throw err;
+    }
+  }
+
+  async getCurrentAgent(): Promise<string | null> {
+    if (!this.sessionId) throw new Error('Session not initialized');
+    try {
+      const result = await this.rpc.sendRequest('session.current_agent', {});
+      return result;
+    } catch (err: any) {
+      this.error = err.message || 'Failed to get current agent';
+      throw err;
+    }
+  }
+
+  async switchAgent(agentId: string): Promise<void> {
+    if (!this.sessionId) throw new Error('Session not initialized');
+    try {
+      await this.rpc.sendRequest('session.switch_agent', { agent_id: agentId });
+    } catch (err: any) {
+      this.error = err.message || 'Failed to switch agent';
+      throw err;
+    }
+  }
+
+  async handoffToAgent(agentId: string, context?: AgentHandoffContext): Promise<void> {
+    if (!this.sessionId) throw new Error('Session not initialized');
+    try {
+      await this.rpc.sendRequest('session.handoff', {
+        agent_id: agentId,
+        context
+      });
+    } catch (err: any) {
+      this.error = err.message || 'Failed to handoff to agent';
+      throw err;
+    }
+  }
+
+  // Agent notification handlers
+  private agentChangedHandlers: AgentChangedHandler[] = [];
+  private agentHandoffHandlers: AgentHandoffHandler[] = [];
+
+  onAgentChanged(handler: AgentChangedHandler): () => void {
+    this.agentChangedHandlers.push(handler);
+    return () => {
+      const index = this.agentChangedHandlers.indexOf(handler);
+      if (index > -1) {
+        this.agentChangedHandlers.splice(index, 1);
+      }
+    };
+  }
+
+  onAgentHandoff(handler: AgentHandoffHandler): () => void {
+    this.agentHandoffHandlers.push(handler);
+    return () => {
+      const index = this.agentHandoffHandlers.indexOf(handler);
+      if (index > -1) {
+        this.agentHandoffHandlers.splice(index, 1);
+      }
+    };
   }
 }

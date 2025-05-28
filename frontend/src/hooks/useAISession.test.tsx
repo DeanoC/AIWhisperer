@@ -15,7 +15,7 @@ function setupMockAIService() {
     getSessionInfo: jest.fn(() => ({ id: 'abc', status: 1, startedAt: 'now', model: 'gpt-test' })),
     getError: jest.fn(() => null),
   };
-  return { aiService, chunkHandlerRef: () => chunkHandler };
+  return { aiService, getChunkHandler: () => chunkHandler };
 }
 
 describe('useAISession', () => {
@@ -41,19 +41,8 @@ describe('useAISession', () => {
     expect(getHook().loading).toBe(false);
   });
 
-  it('handles AI message chunks', async () => {
-    const { aiService, chunkHandlerRef } = setupMockAIService();
-    const getHook = setupTest(aiService);
-    await act(async () => {
-      await getHook().startSession();
-      act(() => {
-        chunkHandlerRef()({ content: 'hi', index: 0, isFinal: false });
-        chunkHandlerRef()({ content: 'bye', index: 1, isFinal: true });
-      });
-    });
-    expect(getHook().chunks.length).toBe(2);
-    expect(getHook().chunks[1].isFinal).toBe(true);
-  });
+  // Test removed: useAISession doesn't handle chunks directly
+  // Chunk handling is done by useChat hook in the App component
 
   it('handles errors from startSession', async () => {
     const { aiService } = setupMockAIService();

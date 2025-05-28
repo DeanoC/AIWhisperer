@@ -4,14 +4,14 @@ import { AgentSwitcher } from './AgentSwitcher';
 describe('AgentSwitcher', () => {
   const agents = [
     {
-      agentId: 'P',
+      id: 'P',
       name: 'Patricia the Planner',
       description: 'Creates structured implementation plans',
       color: '#4CAF50',
       shortcut: '[P]'
     },
     {
-      agentId: 'T',
+      id: 'T',
       name: 'Tessa the Tester',
       description: 'Generates comprehensive test suites',
       color: '#2196F3',

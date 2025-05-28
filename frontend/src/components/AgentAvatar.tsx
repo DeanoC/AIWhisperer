@@ -25,7 +25,7 @@ export const AgentAvatar: React.FC<AgentAvatarProps> = ({ agent, size = 32 }) =>
         userSelect: 'none',
       }}
       title={agent.name}
-      data-testid={`agent-avatar-${agent.agentId}`}
+      data-testid={`agent-avatar-${agent.id}`}
     >
       {agent.name.charAt(0)}
     </div>

@@ -3,7 +3,7 @@ import { AgentAvatar } from './AgentAvatar';
 
 describe('AgentAvatar', () => {
   const agent = {
-    agentId: 'P',
+    id: 'P',
     name: 'Patricia the Planner',
     description: 'Creates structured implementation plans',
     color: '#4CAF50',

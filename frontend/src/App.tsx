@@ -26,15 +26,17 @@ const USER_ID = 'demo-user';
 // Demo agent list (replace with API call in production)
 const AGENTS: Agent[] = [
   {
-    agentId: 'P',
+    id: 'P',
     name: 'Patricia the Planner',
+    role: 'Planner',
     description: 'Creates structured implementation plans from feature requests',
     color: '#4CAF50',
     shortcut: '[P]'
   },
   {
-    agentId: 'T',
+    id: 'T',
     name: 'Tessa the Tester',
+    role: 'Tester',
     description: 'Generates comprehensive test suites and test plans',
     color: '#2196F3',
     shortcut: '[T]'
@@ -78,11 +80,11 @@ function App() {
   // Always switch to agent P before starting session
   useEffect(() => {
     const switchAndStart = async () => {
-      if (aiService && typeof aiService.dispatchCommand === 'function') {
+      if (aiService && typeof aiService.switchAgent === 'function' && sessionStatus === SessionStatus.Active) {
         try {
-          await aiService.dispatchCommand(`/session.switch_agent {\"agent_id\":\"P\"}`);
+          await aiService.switchAgent('P');
         } catch (e) {
-          // ignore errors
+          // ignore errors - session might not be ready yet
         }
       }
       if (aiService && typeof startSession === 'function' && sessionStatus !== SessionStatus.Active) {
@@ -102,22 +104,52 @@ function App() {
   } = useChat();
 
   // Always pick agent P for now
-  const [currentAgent, setCurrentAgent] = useState<Agent>(AGENTS.find(a => a.agentId === 'P') || AGENTS[0]);
+  const [currentAgent, setCurrentAgent] = useState<Agent>(AGENTS.find(a => a.id === 'P') || AGENTS[0]);
   const [conversationHistories, setConversationHistories] = useState<Record<string, ChatMessage[]>>({
-    [AGENTS[0].agentId]: []
+    [AGENTS[0].id]: []
   });
 
+  // Sync current agent from backend when session is active
+  useEffect(() => {
+    const syncCurrentAgent = async () => {
+      if (aiService && sessionStatus === SessionStatus.Active) {
+        try {
+          const agentId = await aiService.getCurrentAgent();
+          if (agentId) {
+            const agent = AGENTS.find(a => a.id === agentId);
+            if (agent) {
+              setCurrentAgent(agent);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to get current agent:', e);
+        }
+      }
+    };
+    syncCurrentAgent();
+  }, [aiService, sessionStatus]);
+
   // Handle agent switch
-  const handleAgentSelect = (agentId: string) => {
+  const handleAgentSelect = async (agentId: string) => {
     setConversationHistories(histories => ({
       ...histories,
-      [currentAgent.agentId]: [...messages]
+      [currentAgent.id]: [...messages]
     }));
-    const nextAgent = AGENTS.find(a => a.agentId === agentId) || AGENTS[0];
+    const nextAgent = AGENTS.find(a => a.id === agentId) || AGENTS[0];
     // Show handoff UI if switching to a different agent
-    if (nextAgent.agentId !== currentAgent.agentId) {
+    if (nextAgent.id !== currentAgent.id) {
       setHandoff({ from: currentAgent.name, to: nextAgent.name, show: true });
       setTimeout(() => setHandoff(h => h && { ...h, show: false }), 1500);
+      
+      // Switch agent on the backend
+      if (aiService && sessionStatus === SessionStatus.Active) {
+        try {
+          await aiService.switchAgent(agentId);
+        } catch (e) {
+          console.error('Failed to switch agent:', e);
+          addSystemMessage(`Failed to switch to ${nextAgent.name}`);
+        }
+      }
     }
     setCurrentAgent(nextAgent);
     // Optionally: restore messages for nextAgent
@@ -234,7 +266,7 @@ function App() {
             {/* Inspector panel for debugging/development */}
             <div style={{ marginTop: 24 }}>
               <AgentInspectorPanel
-                agents={AGENTS.map(a => ({ id: a.agentId, name: a.name }))}
+                agents={AGENTS.map(a => ({ id: a.id, name: a.name }))}
                 aiService={aiService}
                 sessionId={sessionInfo?.id}
               />

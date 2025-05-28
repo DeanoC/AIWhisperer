@@ -16,13 +16,13 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
     <div className="agent-selector">
       {agents.map(agent => (
         <div
-          key={agent.agentId}
+          key={agent.id}
           className={
-            'agent-item' + (currentAgent && agent.agentId === currentAgent.agentId ? ' selected' : '')
+            'agent-item' + (currentAgent && agent.id === currentAgent.id ? ' selected' : '')
           }
           style={{ borderLeft: `4px solid ${agent.color}` }}
-          onClick={() => onAgentSelect(agent.agentId)}
-          data-testid={`agent-${agent.agentId}`}
+          onClick={() => onAgentSelect(agent.id)}
+          data-testid={`agent-${agent.id}`}
         >
           <span className="agent-shortcut">{agent.shortcut}</span>
           <span className="agent-name">{agent.name}</span>

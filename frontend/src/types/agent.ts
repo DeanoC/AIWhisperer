@@ -1,7 +1,23 @@
 export interface Agent {
-  agentId: string;
+  id: string;
   name: string;
-  description: string;
+  role: string;
+  description?: string;
   color: string;
-  shortcut: string;
+  icon?: string;
+  status?: 'online' | 'busy' | 'offline';
+  shortcut?: string;
+}
+
+export interface AgentHandoffContext {
+  task?: string;
+  files?: string[];
+  previousAgent?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface AgentHandoffNotification {
+  fromAgent: string;
+  toAgent: string;
+  context?: AgentHandoffContext;
 }
