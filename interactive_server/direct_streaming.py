@@ -89,20 +89,27 @@ class DirectStreamingSession:
         
         # Store message count before
         agent_context = agent.context if hasattr(agent, 'context') else None
+        initial_count = 0
         if agent_context:
             initial_count = len(agent_context.retrieve_messages())
+            logger.info(f"[DirectStreaming] Initial message count: {initial_count}")
         
         # Process message
         result = await self.original_session.send_user_message(message)
+        logger.info(f"[DirectStreaming] Message processed, result type: {type(result)}")
         
         # Check for new assistant message
         if agent_context:
             messages = agent_context.retrieve_messages()
+            logger.info(f"[DirectStreaming] New message count: {len(messages)}")
             if len(messages) > initial_count:
+                logger.info(f"[DirectStreaming] Found {len(messages) - initial_count} new messages")
                 for msg in messages[initial_count:]:
+                    logger.info(f"[DirectStreaming] New message role: {msg.get('role')}, content length: {len(msg.get('content', ''))}")
                     if msg.get('role') == 'assistant':
                         content = msg.get('content', '')
                         if content:
+                            logger.info(f"[DirectStreaming] Sending assistant message as chunk: {len(content)} chars")
                             # Send as chunks
                             await send_chunk(content)
                             
@@ -117,6 +124,11 @@ class DirectStreamingSession:
                                 "method": "AIMessageChunkNotification",
                                 "params": final_notification.model_dump()
                             })
+                            logger.info(f"[DirectStreaming] Sent final chunk notification")
+            else:
+                logger.warning(f"[DirectStreaming] No new messages found after processing")
+        else:
+            logger.warning(f"[DirectStreaming] No agent context available")
         
         return result
 
