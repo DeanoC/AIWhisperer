@@ -135,13 +135,13 @@
 
 ### 4.2 Implement Direct Streaming
 
-- [ ] **Write tests** for direct JSON-RPC streaming
-- [ ] **Write tests** for token-by-token updates
-- [ ] **Write tests** for streaming error handling
-- [ ] **Implement** direct streaming in session layer
-- [ ] **Create** streaming wrapper for AILoop responses
-- [ ] **Test** streaming performance vs delegate approach
-- [ ] **Commit**: "Implement direct JSON-RPC streaming"
+- [x] **Write tests** for direct JSON-RPC streaming
+- [x] **Write tests** for token-by-token updates
+- [x] **Write tests** for streaming error handling
+- [x] **Implement** direct streaming in session layer
+- [x] **Create** streaming wrapper for AILoop responses
+- [x] **Test** streaming performance vs delegate approach
+- [x] **Commit**: "Implement direct JSON-RPC streaming"
 
 ### 4.3 Update Agent to Use New AILoop
 
