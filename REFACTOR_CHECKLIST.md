@@ -126,12 +126,12 @@
 
 ### 4.1 Prepare AILoop Interface Changes
 
-- [ ] **Write tests** for new stateless `AILoop.process_with_context()`
-- [ ] **Write tests** for `AILoop` without delegate dependencies
-- [ ] **Write tests** for direct result returns
-- [ ] **Create** new `AILoop` interface alongside existing one
-- [ ] **Implement** context provider integration
-- [ ] **Commit**: "Add new stateless AILoop interface"
+- [x] **Write tests** for new stateless `AILoop.process_with_context()`
+- [x] **Write tests** for `AILoop` without delegate dependencies
+- [x] **Write tests** for direct result returns
+- [x] **Create** new `AILoop` interface alongside existing one
+- [x] **Implement** context provider integration
+- [x] **Commit**: "Add new stateless AILoop interface"
 
 ### 4.2 Implement Direct Streaming
 
