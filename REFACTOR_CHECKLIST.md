@@ -108,7 +108,7 @@
 - [x] **Update** RPC handlers to use new session structure
 - [x] **Maintain** existing API compatibility
 - [x] **Improve** error responses and validation
-- [ ] **Commit**: "Update JSON-RPC handlers for new session architecture"
+- [x] **Commit**: "Update JSON-RPC handlers for new session architecture"
 
 ### 3.4 Session Integration Testing
 
