@@ -22,13 +22,14 @@
 }
 
 .message-bubble.agent-message {
-  color: white;
+  background-color: var(--msg-agent-bg, #f3f4f6);
+  color: var(--msg-agent-text, #111827);
   border-bottom-left-radius: 4px;
 }
 
 .message-bubble.user-message {
-  background-color: #E5E7EB;
-  color: #1F2937;
+  background-color: var(--msg-user-bg, #3b82f6);
+  color: var(--msg-user-text, #ffffff);
   border-bottom-right-radius: 4px;
 }
 
@@ -171,4 +172,19 @@
 
 .expand-button:hover {
   opacity: 1;
+}
+
+/* Theme support */
+.theme-light {
+  --msg-agent-bg: #f3f4f6;
+  --msg-agent-text: #111827;
+  --msg-user-bg: #3b82f6;
+  --msg-user-text: #ffffff;
+}
+
+.theme-dark {
+  --msg-agent-bg: #374151;
+  --msg-agent-text: #f9fafb;
+  --msg-user-bg: #60a5fa;
+  --msg-user-text: #111827;
 }

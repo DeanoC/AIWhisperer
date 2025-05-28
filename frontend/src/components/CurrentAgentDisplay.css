@@ -1,0 +1,36 @@
+.current-agent-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-agent-message {
+  font-size: 14px;
+  color: var(--text-secondary, #666666);
+}
+
+.agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-display-name {
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.agent-display-description {
+  font-size: 12px;
+  color: var(--text-secondary, #666666);
+  line-height: 1.3;
+}
+
+/* Dark theme support */
+.theme-dark .no-agent-message {
+  color: #9ca3af;
+}
+
+.theme-dark .agent-display-description {
+  color: #9ca3af;
+}

@@ -122,7 +122,7 @@ export const AgentSidebar: React.FC<AgentSidebarProps> = ({
         {agents.map((agent, index) => (
           <div
             key={agent.id}
-            ref={el => agentRefs.current[index] = el}
+            ref={(el: HTMLDivElement | null) => { agentRefs.current[index] = el; }}
             className={`agent-card ${currentAgentId === agent.id ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
             data-testid={`agent-card-${agent.id}`}
             onClick={() => handleAgentClick(agent.id)}

@@ -8,14 +8,16 @@ describe('AgentSelector', () => {
       name: 'Patricia the Planner',
       description: 'Creates structured implementation plans',
       color: '#4CAF50',
-      shortcut: '[P]'
+      shortcut: '[P]',
+      role: 'planner'
     },
     {
       id: 'T',
       name: 'Tessa the Tester',
       description: 'Generates comprehensive test suites',
       color: '#2196F3',
-      shortcut: '[T]'
+      shortcut: '[T]',
+      role: 'tester'
     }
   ];
 

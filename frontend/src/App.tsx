@@ -1,28 +1,23 @@
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
-import ModelList from './ModelList';
-import ChatWindow from './ChatWindow';
-import { Agent } from './types/agent';
-
-import { AgentSelector } from './components/AgentSelector';
-import { AgentTransition } from './components/AgentTransition';
-import { AgentInspectorPanel } from './components';
-
-import MessageInput from './MessageInput';
-
+import { MainLayout } from './components/MainLayout';
+import { ViewProvider } from './contexts/ViewContext';
+import { ChatView } from './components/ChatView';
+import { JSONPlanView } from './components/JSONPlanView';
+import { CodeChangesView } from './components/CodeChangesView';
+import { TestResultsView } from './components/TestResultsView';
 import { useWebSocket } from './hooks/useWebSocket';
 import { AIService } from './services/aiService';
 import { JsonRpcService } from './services/jsonRpcService';
 import { useAISession } from './hooks/useAISession';
 import { useChat } from './hooks/useChat';
 import { SessionStatus } from './types/ai';
-// import { MessageSender } from './types/chat';
-import { ChatMessage } from './types/chat';
+import { Agent } from './types/agent';
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 const USER_ID = 'demo-user';
+
 // Demo agent list (replace with API call in production)
 const AGENTS: Agent[] = [
   {
@@ -31,7 +26,8 @@ const AGENTS: Agent[] = [
     role: 'Planner',
     description: 'Creates structured implementation plans from feature requests',
     color: '#4CAF50',
-    shortcut: '[P]'
+    icon: '📋',
+    status: 'online'
   },
   {
     id: 'T',
@@ -39,24 +35,47 @@ const AGENTS: Agent[] = [
     role: 'Tester',
     description: 'Generates comprehensive test suites and test plans',
     color: '#2196F3',
-    shortcut: '[T]'
+    icon: '🧪',
+    status: 'online'
+  },
+  {
+    id: 'D',
+    name: 'Devon the Developer',
+    role: 'Developer',
+    description: 'Implements features and fixes bugs',
+    color: '#FF9800',
+    icon: '💻',
+    status: 'online'
+  },
+  {
+    id: 'R',
+    name: 'Riley the Reviewer',
+    role: 'Reviewer',
+    description: 'Reviews code and provides feedback',
+    color: '#9C27B0',
+    icon: '🔍',
+    status: 'online'
   }
 ];
 
-
-// (Removed invalid top-level React hooks. All hooks must be inside App function.)
-
 function App() {
-  // Handoff state for UI
-  const [handoff, setHandoff] = useState<{ from: string; to: string; show: boolean } | null>(null);
+  // Theme state
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    (localStorage.getItem('app.theme') as 'light' | 'dark') || 'light'
+  );
+
   // WebSocket connection
   const { status: wsStatus, ws } = useWebSocket(WS_URL);
 
-
-  // AIService instance (memoized)
+  // AIService instance
   const [aiService, setAIService] = useState<AIService | undefined>(undefined);
 
-  // Only initialize AIService when WebSocket is truly open
+  // Current agent and plan state
+  const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize AIService when WebSocket is connected
   useEffect(() => {
     if (ws && wsStatus === 'connected') {
       console.log('[App] WebSocket is connected, initializing AIService');
@@ -68,61 +87,61 @@ function App() {
   }, [ws, wsStatus]);
 
   // AI session management
-  const sessionHooks = useAISession(aiService, USER_ID);
-  const sessionInfo = sessionHooks.sessionInfo;
-  const sessionStatus = sessionHooks.status;
-  const sessionError = sessionHooks.error;
-  const startSession = sessionHooks.startSession;
-  const sendUserMessage = sessionHooks.sendUserMessage;
-
+  const {
+    sessionInfo,
+    status: sessionStatus,
+    error: sessionError,
+    startSession,
+    sendUserMessage
+  } = useAISession(aiService, USER_ID);
 
   // Chat state management
-  // Always switch to agent P before starting session
-  useEffect(() => {
-    const switchAndStart = async () => {
-      if (aiService && typeof aiService.switchAgent === 'function' && sessionStatus === SessionStatus.Active) {
-        try {
-          await aiService.switchAgent('P');
-        } catch (e) {
-          // ignore errors - session might not be ready yet
-        }
-      }
-      if (aiService && typeof startSession === 'function' && sessionStatus !== SessionStatus.Active) {
-        startSession();
-      }
-    };
-    switchAndStart();
-    // Only run when aiService, sessionStatus, or startSession changes
-  }, [aiService, sessionStatus, startSession]);
   const {
     messages,
-    // loading: chatLoading,
     addUserMessage,
     startAIMessage,
     appendAIChunk,
     addSystemMessage,
   } = useChat();
 
-  // Always pick agent P for now
-  const [currentAgent, setCurrentAgent] = useState<Agent>(AGENTS.find(a => a.id === 'P') || AGENTS[0]);
-  const [conversationHistories, setConversationHistories] = useState<Record<string, ChatMessage[]>>({
-    [AGENTS[0].id]: []
-  });
+  // Start session and sync agent on mount
+  useEffect(() => {
+    const initializeSession = async () => {
+      if (aiService && sessionStatus !== SessionStatus.Active) {
+        setIsLoading(true);
+        try {
+          await startSession();
+          // Default to first agent
+          if (AGENTS.length > 0) {
+            await handleAgentSelect(AGENTS[0].id);
+          }
+        } catch (error) {
+          console.error('Failed to start session:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
 
-  // Sync current agent from backend when session is active
+    initializeSession();
+  }, [aiService, sessionStatus, startSession]);
+
+  // Sync current agent from backend
   useEffect(() => {
     const syncCurrentAgent = async () => {
       if (aiService && sessionStatus === SessionStatus.Active) {
         try {
+          const agents = await aiService.listAgents();
           const agentId = await aiService.getCurrentAgent();
           if (agentId) {
-            const agent = AGENTS.find(a => a.id === agentId);
+            const agent = agents.find((a: Agent) => a.id === agentId) || 
+                         AGENTS.find(a => a.id === agentId);
             if (agent) {
               setCurrentAgent(agent);
             }
           }
         } catch (e) {
-          console.error('Failed to get current agent:', e);
+          console.error('Failed to sync agent:', e);
         }
       }
     };
@@ -130,164 +149,253 @@ function App() {
   }, [aiService, sessionStatus]);
 
   // Handle agent switch
-  const handleAgentSelect = async (agentId: string) => {
-    setConversationHistories(histories => ({
-      ...histories,
-      [currentAgent.id]: [...messages]
-    }));
-    const nextAgent = AGENTS.find(a => a.id === agentId) || AGENTS[0];
-    // Show handoff UI if switching to a different agent
-    if (nextAgent.id !== currentAgent.id) {
-      setHandoff({ from: currentAgent.name, to: nextAgent.name, show: true });
-      setTimeout(() => setHandoff(h => h && { ...h, show: false }), 1500);
-      
-      // Switch agent on the backend
-      if (aiService && sessionStatus === SessionStatus.Active) {
-        try {
-          await aiService.switchAgent(agentId);
-        } catch (e) {
-          console.error('Failed to switch agent:', e);
-          addSystemMessage(`Failed to switch to ${nextAgent.name}`);
-        }
+  const handleAgentSelect = useCallback(async (agentId: string) => {
+    if (!aiService || sessionStatus !== SessionStatus.Active) return;
+    
+    setIsLoading(true);
+    try {
+      await aiService.switchAgent(agentId);
+      const agent = AGENTS.find(a => a.id === agentId);
+      if (agent) {
+        setCurrentAgent(agent);
+        addSystemMessage(`Switched to ${agent.name}`);
       }
+    } catch (error) {
+      console.error('Failed to switch agent:', error);
+      addSystemMessage('Failed to switch agent');
+    } finally {
+      setIsLoading(false);
     }
-    setCurrentAgent(nextAgent);
-    // Optionally: restore messages for nextAgent
-    // Not implemented: would require useChat to support external set
-  };
+  }, [aiService, sessionStatus, addSystemMessage]);
 
-  // Send user message handler
-  // Ensure session is started before sending a message
-  const handleSend = async (text: string) => {
-    console.log('[handleSend] called with:', text);
-    if (!aiService || !sessionHooks) {
-      console.warn('[handleSend] No aiService or sessionHooks');
-      return;
-    }
-    addUserMessage(text);
-    // Start session if needed
-    let isActive = false;
-    if (typeof sessionStatus === 'string') {
-      isActive = sessionStatus === SessionStatus.Active;
-    } else if (typeof sessionStatus === 'number') {
-      isActive = sessionStatus === 1;
-    }
-    if (!sessionInfo || !isActive) {
-      console.log('[handleSend] Starting session...');
-      await startSession?.();
-      let tries = 0;
-      while (tries < 10) {
-        await new Promise(res => setTimeout(res, 100));
-        let polledStatus = aiService?.getStatus ? aiService.getStatus() : undefined;
-        let isCurrentActive = false;
-        if (typeof polledStatus === 'string') {
-          isCurrentActive = polledStatus === SessionStatus.Active;
-        } else if (typeof polledStatus === 'number') {
-          isCurrentActive = polledStatus === 1;
-        }
-        if (isCurrentActive) break;
-        tries++;
+  // Handle handoff to agent
+  const handleHandoffToAgent = useCallback(async (agentId: string) => {
+    if (!aiService || sessionStatus !== SessionStatus.Active) return;
+    
+    try {
+      await aiService.handoffToAgent(agentId);
+      const agent = AGENTS.find(a => a.id === agentId);
+      if (agent) {
+        addSystemMessage(`Handing off to ${agent.name}...`);
       }
+    } catch (error) {
+      console.error('Failed to handoff:', error);
+      addSystemMessage('Failed to handoff to agent');
     }
-    let latestStatus = aiService?.getStatus ? aiService.getStatus() : undefined;
-    let isFinalActive = false;
-    if (typeof latestStatus === 'string') {
-      isFinalActive = latestStatus === SessionStatus.Active;
-    } else if (typeof latestStatus === 'number') {
-      isFinalActive = latestStatus === 1;
-    }
-    if (!isFinalActive) {
-      return;
-    }
-    // Command detection: if input starts with '/', treat as command
+  }, [aiService, sessionStatus, addSystemMessage]);
+
+  // Send message handler
+  const handleSendMessage = useCallback(async (text: string) => {
+    if (!aiService || sessionStatus !== SessionStatus.Active) return;
+    
+    addUserMessage(text);
+    
+    // Handle commands
     if (text.trim().startsWith('/')) {
       try {
         startAIMessage();
         const result = await aiService.dispatchCommand(text.trim());
-        // Display command output in chat (as system/AI message)
-        // If the command is a system/command result, show as system message
         if (result.error) {
-          addSystemMessage('ERROR: ' + result.error);
+          addSystemMessage(`ERROR: ${result.error}`);
         } else {
-          // Always stringify non-string output to avoid frontend errors
-          const output = typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2);
+          const output = typeof result.output === 'string' 
+            ? result.output 
+            : JSON.stringify(result.output, null, 2);
           addSystemMessage(output || JSON.stringify(result));
         }
       } catch (err: any) {
-        appendAIChunk({ content: `Command error: ${err.message || err}`, index: 0, isFinal: true });
+        appendAIChunk({ 
+          content: `Command error: ${err.message || err}`, 
+          index: 0, 
+          isFinal: true 
+        });
       }
     } else {
       startAIMessage();
-      await sendUserMessage?.(text);
+      await sendUserMessage(text);
     }
-  };
+  }, [aiService, sessionStatus, addUserMessage, startAIMessage, appendAIChunk, addSystemMessage, sendUserMessage]);
 
-  // Set AI message chunk handler ONCE when aiService changes
-  // Ensure only one AI chunk handler is set, and clean up on unmount or aiService change
+  // Set AI message chunk handler
   useEffect(() => {
     if (!aiService) return;
     aiService.onAIMessageChunk(appendAIChunk);
     return () => {
-      // Remove the handler when aiService changes or component unmounts
       aiService.onAIMessageChunk(() => {});
     };
   }, [aiService, appendAIChunk]);
 
-  // Fetch command list for tab completion (calls /help and parses output)
-  function fetchCommandList(): Promise<string[]> {
-    if (!aiService) return Promise.resolve([]);
-    return aiService.dispatchCommand('/help').then(result => {
-      const helpText = typeof result === 'string' ? result : (result?.output || '');
-      return helpText
-        .split('\n')
-        .map((line: any) => (typeof line === 'string' ? line.trim() : ''))
-        .filter((line: any) => typeof line === 'string' && line.startsWith('/'))
-        .map((line: any) => (typeof line === 'string' ? line.split(':')[0].slice(1) : ''));
-    }).catch(() => []);
-  }
+  // Handle theme toggle
+  const toggleTheme = useCallback(() => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('app.theme', newTheme);
+  }, [theme]);
+
+  // Mock data for demo views
+  const mockPlanData = {
+    id: 'plan-1',
+    name: 'Feature Implementation Plan',
+    version: 1,
+    tasks: [
+      {
+        id: 'task-1',
+        name: 'Setup Project Structure',
+        description: 'Initialize the project with required dependencies',
+        status: 'completed',
+        subtasks: [
+          { id: 'sub-1', name: 'Create directories', status: 'completed' },
+          { id: 'sub-2', name: 'Install packages', status: 'completed' }
+        ]
+      },
+      {
+        id: 'task-2',
+        name: 'Implement Core Features',
+        description: 'Build the main functionality',
+        status: 'in_progress',
+        subtasks: [
+          { id: 'sub-3', name: 'Create components', status: 'completed' },
+          { id: 'sub-4', name: 'Add state management', status: 'in_progress' }
+        ]
+      }
+    ]
+  };
+
+  const mockCodeChanges = {
+    files: [
+      {
+        id: 'file-1',
+        path: 'src/components/Button.tsx',
+        status: 'modified' as const,
+        additions: 15,
+        deletions: 5,
+        oldContent: 'export const Button = () => {\n  return <button>Click</button>;\n};',
+        newContent: 'export const Button = ({ onClick, label }) => {\n  return <button onClick={onClick}>{label}</button>;\n};'
+      },
+      {
+        id: 'file-2',
+        path: 'src/utils/helpers.ts',
+        status: 'added' as const,
+        additions: 50,
+        deletions: 0,
+        oldContent: '',
+        newContent: 'export function formatDate(date: Date): string {\n  return date.toISOString();\n}'
+      }
+    ],
+    summary: {
+      totalFiles: 2,
+      totalAdditions: 65,
+      totalDeletions: 5
+    }
+  };
+
+  const mockTestResults = {
+    summary: {
+      total: 156,
+      passed: 142,
+      failed: 8,
+      skipped: 6,
+      duration: 12.5
+    },
+    suites: [
+      {
+        id: 'suite-1',
+        name: 'Component Tests',
+        path: 'src/components',
+        status: 'failed' as const,
+        duration: 4.2,
+        tests: [
+          { id: 'test-1', name: 'renders correctly', status: 'passed' as const, duration: 0.045 },
+          { 
+            id: 'test-2', 
+            name: 'handles user interaction', 
+            status: 'failed' as const, 
+            duration: 0.123,
+            error: {
+              message: 'Expected button to be disabled',
+              stack: 'at Button.test.tsx:45:23'
+            }
+          }
+        ]
+      }
+    ]
+  };
+
+  // Enhanced agent context for ContextPanel
+  const agentContext = currentAgent ? {
+    ...currentAgent,
+    context: {
+      files: ['src/App.tsx', 'src/components/Button.tsx'],
+      variables: { projectName: 'AI Whisperer', version: '1.0.0' },
+      history: messages.map(m => `${m.sender}: ${m.content.substring(0, 50)}...`)
+    }
+  } : null;
 
   return (
-    <div className="main-layout">
-      <div className="sidebar">
-      </div>
-      <div className="content-area">
-        <div className="status-bar">
-          WebSocket: {wsStatus}
-          {sessionStatus && <> | Session: {sessionStatus}</>}
-          {sessionError && <span className="error">Error: {sessionError}</span>}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24 }}>
-          <div>
-            <AgentSelector
-              agents={AGENTS}
-              currentAgent={currentAgent}
-              onAgentSelect={handleAgentSelect}
-            />
-            {/* Inspector panel for debugging/development */}
-            <div style={{ marginTop: 24 }}>
-              <AgentInspectorPanel
-                agents={AGENTS.map(a => ({ id: a.id, name: a.name }))}
-                aiService={aiService}
-                sessionId={sessionInfo?.id}
+    <Router>
+      <ViewProvider>
+        <MainLayout 
+          theme={theme} 
+          isLoading={isLoading}
+          currentAgent={agentContext}
+          currentPlan={currentPlan}
+        >
+          <Routes>
+            {/* Chat Route */}
+            <Route path="/chat" element={
+              <ChatView 
+                messages={messages}
+                currentAgent={currentAgent}
+                agents={AGENTS}
+                onSendMessage={handleSendMessage}
+                onAgentSelect={handleAgentSelect}
+                onHandoffToAgent={handleHandoffToAgent}
+                sessionStatus={sessionStatus}
+                wsStatus={wsStatus}
+                sessionError={sessionError || undefined}
+                onThemeToggle={toggleTheme}
+                theme={theme}
               />
-            </div>
-          </div>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <ChatWindow
-              messages={messages}
-              currentAgent={currentAgent}
-            />
-            {handoff && handoff.show && (
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
-                <AgentTransition fromAgent={handoff.from} toAgent={handoff.to} show={handoff.show} />
+            } />
+            
+            {/* Plans Route */}
+            <Route path="/plans" element={
+              <JSONPlanView data={mockPlanData} />
+            } />
+            
+            {/* Code Route */}
+            <Route path="/code" element={
+              <CodeChangesView data={mockCodeChanges} />
+            } />
+            
+            {/* Tests Route */}
+            <Route path="/tests" element={
+              <TestResultsView data={mockTestResults} />
+            } />
+            
+            {/* Settings Route */}
+            <Route path="/settings" element={
+              <div style={{ padding: '20px' }}>
+                <h2>Settings</h2>
+                <div>
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      checked={theme === 'dark'} 
+                      onChange={toggleTheme}
+                    />
+                    Dark Theme
+                  </label>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-        <MessageInput onSend={handleSend} fetchCommandList={fetchCommandList} sessionStatus={sessionStatus} />
-
-      </div>
-    </div>
+            } />
+            
+            {/* Default Route */}
+            <Route path="/" element={<Navigate to="/chat" replace />} />
+          </Routes>
+        </MainLayout>
+      </ViewProvider>
+    </Router>
   );
 }
 

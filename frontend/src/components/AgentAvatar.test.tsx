@@ -7,7 +7,8 @@ describe('AgentAvatar', () => {
     name: 'Patricia the Planner',
     description: 'Creates structured implementation plans',
     color: '#4CAF50',
-    shortcut: '[P]'
+    shortcut: '[P]',
+    role: 'planner'
   };
 
   it('renders the first letter of the agent name', () => {

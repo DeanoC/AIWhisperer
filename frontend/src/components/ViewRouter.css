@@ -1,0 +1,142 @@
+.view-router {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.view-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.view-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.view-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #E5E7EB;
+  background: white;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.view-button:hover:not(:disabled) {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+.view-button:focus-visible {
+  box-shadow: 0 0 0 2px #3B82F6;
+}
+
+.view-button.active {
+  background: #3B82F6;
+  color: white;
+  border-color: #3B82F6;
+}
+
+.view-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.view-icon {
+  font-size: 16px;
+}
+
+.view-name {
+  font-weight: 500;
+}
+
+.view-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-button {
+  padding: 8px 16px;
+  border: 1px solid #E5E7EB;
+  background: white;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover:not(:disabled) {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.view-container {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+.view-transition {
+  transition: opacity 0.15s ease-in-out;
+}
+
+.view-transition.transitioning {
+  opacity: 0.5;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Keyboard navigation focus styles */
+.view-toolbar:focus-within .view-button:focus {
+  box-shadow: 0 0 0 2px #3B82F6;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .view-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .view-buttons {
+    flex-wrap: wrap;
+  }
+  
+  .view-button {
+    padding: 6px 12px;
+  }
+  
+  .view-name {
+    display: none;
+  }
+  
+  .view-icon {
+    font-size: 20px;
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Agent } from '../types/agent';
-import { ChatMessage } from '../types/chat';
+import { ChatMessage, MessageSender } from '../types/chat';
+import { MessageStatus } from '../types/ai';
 import { AgentAvatar } from './AgentAvatar';
 import './AgentMessageBubble.css';
 
@@ -87,8 +88,8 @@ export const AgentMessageBubble: React.FC<AgentMessageBubbleProps> = ({
   const bubbleClasses = [
     'message-bubble',
     isUser ? 'user-message' : 'agent-message',
-    message.status === 'sending' && 'sending',
-    message.status === 'error' && 'error'
+    message.status === MessageStatus.Pending && 'sending',
+    message.status === MessageStatus.Error && 'error'
   ].filter(Boolean).join(' ');
   
   const ariaLabel = isUser 

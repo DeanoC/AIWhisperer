@@ -120,3 +120,46 @@
   background: #FEE2E2;
   border-radius: 6px;
 }
+
+/* Dark theme support */
+.theme-dark .agent-sidebar {
+  background: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.theme-dark .sidebar-title {
+  color: #f9fafb;
+}
+
+.theme-dark .agent-card {
+  background: #111827;
+}
+
+.theme-dark .agent-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.theme-dark .agent-card.active {
+  background: #1e3a5f;
+}
+
+.theme-dark .agent-name {
+  color: #f9fafb;
+}
+
+.theme-dark .agent-role {
+  color: #9ca3af;
+}
+
+.theme-dark .agent-description {
+  color: #9ca3af;
+}
+
+.theme-dark .loading-spinner {
+  color: #9ca3af;
+}
+
+.theme-dark .error-message {
+  color: #fca5a5;
+  background: #7f1d1d;
+}

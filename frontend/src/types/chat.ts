@@ -7,6 +7,11 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   status: MessageStatus;
+  metadata?: {
+    agentId?: string;
+    [key: string]: any;
+  };
+  isStreaming?: boolean;
 }
 
 export enum MessageSender {

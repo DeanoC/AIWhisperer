@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { AgentMessageBubble } from './AgentMessageBubble';
 import { Agent } from '../types/agent';
-import { ChatMessage } from '../types/chat';
+import { ChatMessage, MessageSender } from '../types/chat';
+import { MessageStatus } from '../types/ai';
 
 describe('AgentMessageBubble', () => {
   const agent: Agent = {
@@ -16,18 +17,18 @@ describe('AgentMessageBubble', () => {
 
   const userMessage: ChatMessage = {
     id: '1',
-    sender: 'user',
+    sender: MessageSender.User,
     content: 'Can you help me plan this feature?',
     timestamp: '2025-05-28T10:30:00Z',
-    status: 'sent'
+    status: MessageStatus.Sent
   };
 
   const agentMessage: ChatMessage = {
     id: '2',
-    sender: 'ai',
+    sender: MessageSender.AI,
     content: 'I\'ll help you create a comprehensive plan for this feature.',
     timestamp: '2025-05-28T10:31:00Z',
-    status: 'received'
+    status: MessageStatus.Received
   };
 
   describe('Message Rendering', () => {
@@ -89,7 +90,7 @@ describe('AgentMessageBubble', () => {
 
   describe('Message States', () => {
     it('shows sending state', () => {
-      const sendingMessage = { ...userMessage, status: 'sending' as const };
+      const sendingMessage = { ...userMessage, status: MessageStatus.Pending };
       render(<AgentMessageBubble message={sendingMessage} />);
       
       const bubble = screen.getByTestId('message-bubble-1');
@@ -97,7 +98,7 @@ describe('AgentMessageBubble', () => {
     });
 
     it('shows error state', () => {
-      const errorMessage = { ...userMessage, status: 'error' as const };
+      const errorMessage = { ...userMessage, status: MessageStatus.Error };
       render(<AgentMessageBubble message={errorMessage} />);
       
       const bubble = screen.getByTestId('message-bubble-1');
