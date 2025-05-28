@@ -117,9 +117,9 @@ except Exception as e:
 
 session_manager = InteractiveSessionManager(app_config)
 
-# Apply simple streaming wrapper to enable AI chunk notifications
-from .simple_streaming import install_simple_streaming
-install_simple_streaming(session_manager)
+# Apply direct streaming to enable AI chunk notifications
+from .direct_streaming import install_direct_streaming
+install_direct_streaming(session_manager)
 
 
 # Handler functions
@@ -165,9 +165,9 @@ async def send_user_message_handler(params, websocket=None):
         raise ValueError(f"Invalid session: {getattr(model, 'sessionId', None)}")
 
     try:
-        logging.debug(f"[send_user_message_handler] Calling session_manager.send_message: {model.message}")
-        # Use session_manager.send_message to trigger our streaming wrapper
-        await session_manager.send_message(model.sessionId, model.message)
+        logging.debug(f"[send_user_message_handler] Calling session.send_user_message: {model.message}")
+        # The session is now wrapped with streaming support
+        await session.send_user_message(model.message)
         response = SendUserMessageResponse(messageId=str(uuid.uuid4()), status=MessageStatus.OK).model_dump()
         logging.debug("[send_user_message_handler] Message sent successfully, returning OK response.")
         return response
