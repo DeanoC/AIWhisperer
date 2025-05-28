@@ -92,12 +92,12 @@
 
 ### 3.2 Update Session Manager
 
-- [ ] **Write tests** for `InteractiveSessionManager` operations
-- [ ] **Write tests** for session cleanup and memory management
-- [ ] **Write tests** for concurrent session handling
-- [ ] **Update** `InteractiveSessionManager` for new session structure
-- [ ] **Add** session persistence support
-- [ ] **Improve** error handling and recovery
+- [x] **Write tests** for `InteractiveSessionManager` operations
+- [x] **Write tests** for session cleanup and memory management
+- [x] **Write tests** for concurrent session handling
+- [x] **Update** `InteractiveSessionManager` for new session structure
+- [x] **Add** session persistence support
+- [x] **Improve** error handling and recovery
 - [ ] **Commit**: "Update SessionManager with improved lifecycle management"
 
 ### 3.3 Update JSON-RPC Handlers

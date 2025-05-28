@@ -249,8 +249,9 @@ class InteractiveSession:
         """
         Restore session state from a saved state dictionary.
         """
-        self.session_id = state["session_id"]
-        self.is_started = state["is_started"]
+        # Don't override session_id - keep the current one
+        # self.session_id = state["session_id"]  # Don't do this
+        self.is_started = state.get("is_started", False)
         
         # Restore agents
         for agent_id, agent_state in state.get("agents", {}).items():
