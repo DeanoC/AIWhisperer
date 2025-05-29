@@ -173,13 +173,19 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
                   setShowingAtSymbol(true);
                   setAtSymbolPosition(newValue.length - 1);
                   
+                  // Store the @ position for the callback
+                  const currentAtPos = newValue.length - 1;
+                  
                   // Request file picker
                   onFilePickerRequest((filePath: string) => {
-                    // Replace @ with the file path
-                    const beforeAt = newValue.substring(0, atSymbolPosition);
-                    const afterAt = newValue.substring(atSymbolPosition + 1);
-                    const newInput = beforeAt + filePath + afterAt;
-                    setInput(newInput);
+                    // Get the current input value at callback time
+                    setInput(currentInput => {
+                      // Insert @filePath at the @ position
+                      const beforeAt = currentInput.substring(0, currentAtPos);
+                      const afterAt = currentInput.substring(currentAtPos + 1);
+                      const newInput = beforeAt + '@' + filePath + afterAt;
+                      return newInput;
+                    });
                     setShowingAtSymbol(false);
                     setAtSymbolPosition(-1);
                     
