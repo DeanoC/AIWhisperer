@@ -1,369 +1,237 @@
 # Workspace AI Tools Specification
 
 ## Overview
-This document specifies AI tools that enable agents to explore and interact with the workspace file system, particularly useful for planner agents and code analysis tasks.
+This document outlines the implementation of AI tools for workspace file browsing and the enhancement of the tool tags/sets system in AIWhisperer.
 
-## Tool Specifications
+## Current State Analysis
 
-### 1. WorkspaceExplorerTool
+### Tool System Issues
+1. **No Tool Tags on Existing Tools**
+   - `ReadFileTool` and `WriteFileTool` don't define any tags
+   - Tools won't be available to agents through tag filtering
 
-#### Purpose
-Allows AI agents to explore the project structure, find files, and understand the codebase organization.
+2. **Tag Inconsistency**
+   - Agent configurations use tags like `"filesystem"`, `"analysis"`, `"testing"`
+   - Actual tools either have no tags or different tags
+   - No standardized tag vocabulary
 
-#### Implementation
-```python
-from typing import List, Dict, Optional
-from ai_whisperer.tools.base_tool import BaseTool
-from ai_whisperer.path_management import PathManager
+3. **No Tool Set Definitions**
+   - No concept of predefined tool sets or groups
+   - Each agent manually lists tags, leading to duplication
 
-class WorkspaceExplorerTool(BaseTool):
-    """Tool for exploring workspace file structure"""
+4. **Missing Integration**
+   - The `allow_tools` and `deny_tools` features shown in tests aren't implemented
+   - Tag filtering logic in tests isn't used in actual codebase
+
+## Proposed Tool Tag System
+
+### Standard Tag Categories
+
+#### File Operations
+- `filesystem` - General file system operations
+- `file_read` - Reading file contents
+- `file_write` - Writing/modifying files
+- `file_search` - Searching for files by name/pattern
+- `directory_browse` - Listing and exploring directories
+
+#### Code Operations
+- `code_analysis` - Analyzing code structure/content
+- `code_generation` - Generating new code
+- `code_execution` - Running commands/scripts
+
+#### Planning & Analysis
+- `planning` - Project planning operations
+- `analysis` - General analysis capabilities
+- `testing` - Test-related operations
+
+#### General
+- `general` - General purpose tools
+- `utility` - Utility operations
+
+### Tool Sets Concept
+Predefined groups of related tools:
+
+```yaml
+tool_sets:
+  file_operations:
+    description: "Core file system operations"
+    tags:
+      - file_read
+      - file_write
+      - directory_browse
+      - file_search
     
-    name = "workspace_explorer"
-    description = "Explore project files and directory structure"
+  code_tools:
+    description: "Code manipulation and execution"
+    tags:
+      - code_analysis
+      - code_execution
+      - file_read
     
-    def __init__(self, path_manager: PathManager):
-        super().__init__()
-        self.path_manager = path_manager
-    
-    async def list_files(
-        self, 
-        directory: str = ".",
-        pattern: Optional[str] = None,
-        recursive: bool = True,
-        max_depth: Optional[int] = None,
-        file_types: Optional[List[str]] = None
-    ) -> List[Dict[str, str]]:
-        """
-        List files in the workspace.
-        
-        Args:
-            directory: Starting directory (relative to workspace root)
-            pattern: Glob pattern to match files (e.g., "*.py", "test_*.js")
-            recursive: Whether to search subdirectories
-            max_depth: Maximum directory depth to search
-            file_types: List of extensions to filter (e.g., [".py", ".js"])
-            
-        Returns:
-            List of file info dicts with path, name, size, modified
-        """
-        
-    async def get_directory_tree(
-        self,
-        directory: str = ".",
-        max_depth: int = 3,
-        show_hidden: bool = False,
-        format: str = "ascii"
-    ) -> str:
-        """
-        Generate a visual directory tree.
-        
-        Args:
-            directory: Starting directory
-            max_depth: Maximum depth to display
-            show_hidden: Include hidden files/directories
-            format: Output format ("ascii", "json", "markdown")
-            
-        Returns:
-            Formatted directory tree string
-        """
-        
-    async def find_files(
-        self,
-        query: str,
-        search_type: str = "name",
-        case_sensitive: bool = False,
-        limit: int = 50
-    ) -> List[Dict[str, any]]:
-        """
-        Search for files by name or content.
-        
-        Args:
-            query: Search query
-            search_type: "name" or "content"
-            case_sensitive: Whether search is case-sensitive
-            limit: Maximum results to return
-            
-        Returns:
-            List of matches with relevance scores
-        """
-        
-    async def analyze_structure(self) -> Dict[str, any]:
-        """
-        Analyze project structure and return insights.
-        
-        Returns:
-            Dict with:
-            - total_files: int
-            - total_directories: int
-            - file_types: Dict[str, int] (extension -> count)
-            - largest_files: List[Dict]
-            - deepest_paths: List[str]
-            - suggestions: List[str] (organizational suggestions)
-        """
+  planning_tools:
+    description: "Project planning and analysis"
+    tags:
+      - filesystem
+      - analysis
+      - planning
+      
+  testing_tools:
+    description: "Testing and validation"
+    tags:
+      - testing
+      - code_execution
+      - file_read
 ```
 
-### 2. FileContextTool
+## New Tool Specifications
 
-#### Purpose
-Provides file content and context to AI agents, with intelligent chunking and summarization for large files.
-
-#### Implementation
+### 1. List Directory Tool
 ```python
-class FileContextTool(BaseTool):
-    """Tool for getting file content and context"""
-    
-    name = "file_context"
-    description = "Read and analyze file contents"
-    
-    async def read_file(
-        self,
-        file_path: str,
-        start_line: Optional[int] = None,
-        end_line: Optional[int] = None,
-        context_lines: int = 3
-    ) -> Dict[str, any]:
-        """
-        Read file content with optional line range.
-        
-        Args:
-            file_path: Path to file
-            start_line: Starting line number (1-indexed)
-            end_line: Ending line number
-            context_lines: Extra lines before/after range
-            
-        Returns:
-            Dict with:
-            - content: str
-            - total_lines: int
-            - language: str (detected language)
-            - encoding: str
-        """
-        
-    async def get_file_summary(
-        self,
-        file_path: str,
-        include_structure: bool = True
-    ) -> Dict[str, any]:
-        """
-        Get AI-generated summary of file.
-        
-        Args:
-            file_path: Path to file
-            include_structure: Include structural analysis
-            
-        Returns:
-            Dict with:
-            - summary: str (brief description)
-            - main_purpose: str
-            - dependencies: List[str]
-            - exports: List[str] (for modules)
-            - key_functions: List[Dict] (name, purpose)
-        """
-        
-    async def compare_files(
-        self,
-        file1: str,
-        file2: str,
-        comparison_type: str = "full"
-    ) -> Dict[str, any]:
-        """
-        Compare two files.
-        
-        Args:
-            file1: First file path
-            file2: Second file path
-            comparison_type: "full", "structure", "summary"
-            
-        Returns:
-            Comparison results with differences highlighted
-        """
+name: "list_directory"
+description: "List files and directories in a workspace path"
+tags: ["filesystem", "directory_browse", "analysis"]
+parameters:
+  - path: string (optional, defaults to workspace root)
+  - recursive: boolean (optional, defaults to false)
+  - max_depth: integer (optional, defaults to 3)
+  - include_hidden: boolean (optional, defaults to false)
 ```
 
-### 3. WorkspaceSearchTool
-
-#### Purpose
-Advanced search capabilities across the entire workspace with semantic understanding.
-
-#### Implementation
+### 2. Search Files Tool
 ```python
-class WorkspaceSearchTool(BaseTool):
-    """Advanced workspace search tool"""
-    
-    name = "workspace_search"
-    description = "Search across files with advanced queries"
-    
-    async def semantic_search(
-        self,
-        query: str,
-        file_types: Optional[List[str]] = None,
-        limit: int = 20
-    ) -> List[Dict[str, any]]:
-        """
-        Search using natural language queries.
-        
-        Example queries:
-        - "functions that handle authentication"
-        - "React components with state"
-        - "database connection code"
-        
-        Returns:
-            Ranked results with snippets and relevance scores
-        """
-        
-    async def find_references(
-        self,
-        identifier: str,
-        search_type: str = "all"
-    ) -> List[Dict[str, any]]:
-        """
-        Find all references to an identifier.
-        
-        Args:
-            identifier: Name to search for
-            search_type: "function", "class", "variable", "all"
-            
-        Returns:
-            List of references with context
-        """
-        
-    async def find_similar_code(
-        self,
-        code_snippet: str,
-        threshold: float = 0.7
-    ) -> List[Dict[str, any]]:
-        """
-        Find code similar to given snippet.
-        
-        Useful for finding duplicate code or patterns.
-        """
+name: "search_files"
+description: "Search for files by name pattern or content"
+tags: ["filesystem", "file_search", "analysis"]
+parameters:
+  - pattern: string (glob pattern or regex)
+  - search_type: "name" | "content" (defaults to "name")
+  - file_types: array of strings (optional, e.g., [".py", ".js"])
+  - max_results: integer (optional, defaults to 100)
 ```
 
-## Integration with Agents
+### 3. Get File Content Tool
+```python
+name: "get_file_content"
+description: "Read file content with advanced options"
+tags: ["filesystem", "file_read", "analysis"]
+parameters:
+  - path: string (required)
+  - start_line: integer (optional)
+  - end_line: integer (optional)
+  - preview_only: boolean (optional, returns first 200 lines)
+```
 
-### Agent Configuration
+### 4. Find Pattern Tool (grep-like)
+```python
+name: "find_pattern"
+description: "Search for patterns within file contents"
+tags: ["filesystem", "file_search", "code_analysis"]
+parameters:
+  - pattern: string (regex pattern)
+  - paths: array of strings (files/dirs to search)
+  - context_lines: integer (optional, lines before/after match)
+  - max_matches: integer (optional)
+```
+
+## Tool Naming Conventions
+
+Following patterns from successful AI tools:
+- Use snake_case for tool names
+- Be descriptive but concise
+- Use common terminology (read_file, not fetch_file_contents)
+- Group related operations with common prefixes
+
+### Recommended Names
+- `read_file` - Read file content
+- `write_file` - Write content to file
+- `list_directory` - List directory contents
+- `search_files` - Search for files
+- `find_pattern` - Search within files (grep-like)
+- `get_file_tree` - Get directory tree structure
+
+## @ Reference Integration
+
+### File References
+When a user includes `@file.py` in a message:
+1. System validates file exists in workspace
+2. Inserts first 200 lines into context
+3. Adds metadata:
+   ```json
+   {
+     "type": "file_reference",
+     "path": "/workspace/file.py",
+     "lines_included": 200,
+     "total_lines": 500,
+     "truncated": true
+   }
+   ```
+4. AI tools can access full content via `read_file` tool
+
+### Directory References
+When a user includes `@src/components/` in a message:
+1. System validates directory exists
+2. Inserts directory tree (max depth 3)
+3. Adds metadata:
+   ```json
+   {
+     "type": "directory_reference",
+     "path": "/workspace/src/components/",
+     "file_count": 25,
+     "total_size": "156KB"
+   }
+   ```
+
+## Security Considerations
+
+All tools must:
+1. Validate paths through PathManager
+2. Respect workspace boundaries
+3. Not access files outside workspace
+4. Not expose sensitive information
+5. Rate limit file operations
+
+## Agent Tool Assignment
+
+### Updated Agent Configurations
 ```yaml
 agents:
   alice:
-    name: "Alice - AI Assistant"
-    tools:
-      - workspace_explorer
-      - file_context
-      - workspace_search
-    capabilities:
-      - "Explore project structure"
-      - "Find and analyze files"
-      - "Understand codebase organization"
+    tool_tags: ["filesystem", "file_read", "file_search", "analysis", "general"]
+    
+  patricia:
+    tool_tags: ["filesystem", "file_read", "directory_browse", "planning", "analysis"]
+    tool_sets: ["planning_tools"]
+    
+  tessa:
+    tool_tags: ["filesystem", "file_read", "file_write", "code_execution", "testing"]
+    tool_sets: ["testing_tools"]
+    
+  code_generator:
+    tool_tags: ["file_write", "file_read", "code_generation"]
+    allow_tools: ["write_file", "read_file"]  # Explicit whitelist
 ```
 
-### Usage Examples
+## Implementation Phases
 
-#### Planner Agent Using Tools
-```python
-# In planner_handler.py
-async def analyze_project(self):
-    # Get project structure
-    tree = await self.tools.workspace_explorer.get_directory_tree(max_depth=2)
-    
-    # Find test files
-    test_files = await self.tools.workspace_explorer.list_files(
-        pattern="test_*.py",
-        recursive=True
-    )
-    
-    # Analyze main module
-    main_info = await self.tools.file_context.get_file_summary("main.py")
-    
-    # Search for configuration
-    config_files = await self.tools.workspace_search.semantic_search(
-        "configuration files"
-    )
-```
+### Phase 1: Fix Existing Tools
+- Add proper tags to existing tools
+- Ensure tag filtering works correctly
+- Update tests
 
-## Tool Registration
+### Phase 2: Implement Core Workspace Tools
+- Create list_directory tool
+- Create search_files tool
+- Create get_file_content tool
+- Register with tool registry
 
-### In tool_registry.py
-```python
-def register_workspace_tools(registry: ToolRegistry, path_manager: PathManager):
-    """Register workspace exploration tools"""
-    
-    registry.register(WorkspaceExplorerTool(path_manager))
-    registry.register(FileContextTool(path_manager))
-    registry.register(WorkspaceSearchTool(path_manager))
-```
+### Phase 3: Enhance Tool System
+- Implement tool sets concept
+- Add allow/deny list functionality
+- Create tag validation
+- Add tag documentation
 
-## Performance Considerations
-
-1. **Caching Strategy**
-   - Cache directory structures for 60 seconds
-   - Cache file summaries until file modification
-   - Use Redis for distributed caching
-
-2. **Large File Handling**
-   - Stream large files in chunks
-   - Summarize files over 10,000 lines
-   - Warn before processing binary files
-
-3. **Search Optimization**
-   - Build search index on startup
-   - Update index on file changes
-   - Use parallel search for large workspaces
-
-## Security
-
-1. **Path Validation**
-   - All paths validated through PathManager
-   - No access outside workspace
-   - Symlink resolution with security checks
-
-2. **Resource Limits**
-   - Maximum file size for reading: 50MB
-   - Maximum search results: 1000
-   - Rate limiting on expensive operations
-
-3. **Sensitive Data**
-   - Skip files matching .gitignore
-   - Filter environment files
-   - Redact detected secrets
-
-## Testing
-
-### Unit Tests
-```python
-def test_workspace_explorer_list_files():
-    """Test file listing with various filters"""
-    
-def test_file_context_read_partial():
-    """Test reading file with line ranges"""
-    
-def test_workspace_search_semantic():
-    """Test semantic search accuracy"""
-```
-
-### Integration Tests
-- Test with real project structures
-- Verify PathManager integration
-- Test error handling for invalid paths
-- Performance tests with large codebases
-
-## Future Enhancements
-
-1. **Git Integration**
-   - Show file history
-   - Find recently changed files
-   - Blame information
-
-2. **Dependency Analysis**
-   - Import/export tracking
-   - Dependency graphs
-   - Circular dependency detection
-
-3. **Code Intelligence**
-   - Symbol extraction
-   - Type information
-   - Documentation extraction
-
-4. **Workspace Insights**
-   - Code complexity metrics
-   - Test coverage integration
-   - Technical debt indicators
+### Phase 4: Advanced Features
+- Implement find_pattern tool
+- Add file preview capabilities
+- Create workspace statistics tool
+- Add caching for repeated operations
