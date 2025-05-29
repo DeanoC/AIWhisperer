@@ -1,0 +1,165 @@
+.agent-sidebar {
+  width: 280px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.sidebar-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agent-card {
+  background: white;
+  border-radius: 6px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  position: relative;
+}
+
+.agent-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.agent-card:focus {
+  box-shadow: 0 0 0 2px #3B82F6;
+}
+
+.agent-card.active {
+  background: #EFF6FF;
+}
+
+.agent-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.agent-card.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.agent-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.agent-info {
+  flex: 1;
+}
+
+.agent-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.agent-role {
+  font-size: 14px;
+  color: #666;
+}
+
+.agent-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.agent-status.status-online {
+  background: #10B981;
+}
+
+.agent-status.status-busy {
+  background: #F59E0B;
+}
+
+.agent-status.status-offline {
+  background: #6B7280;
+}
+
+.agent-description {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #666;
+  transition: all 0.2s ease;
+  height: 0;
+  overflow: hidden;
+}
+
+.agent-description.visible {
+  height: auto;
+  margin-top: 12px;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+}
+
+.error-message {
+  text-align: center;
+  padding: 20px;
+  color: #EF4444;
+  background: #FEE2E2;
+  border-radius: 6px;
+}
+
+/* Dark theme support */
+.theme-dark .agent-sidebar {
+  background: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.theme-dark .sidebar-title {
+  color: #f9fafb;
+}
+
+.theme-dark .agent-card {
+  background: #111827;
+}
+
+.theme-dark .agent-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.theme-dark .agent-card.active {
+  background: #1e3a5f;
+}
+
+.theme-dark .agent-name {
+  color: #f9fafb;
+}
+
+.theme-dark .agent-role {
+  color: #9ca3af;
+}
+
+.theme-dark .agent-description {
+  color: #9ca3af;
+}
+
+.theme-dark .loading-spinner {
+  color: #9ca3af;
+}
+
+.theme-dark .error-message {
+  color: #fca5a5;
+  background: #7f1d1d;
+}

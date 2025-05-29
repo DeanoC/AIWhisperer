@@ -91,35 +91,52 @@ def setup_logging(config_path: Optional[str] = None):
 
 def setup_basic_logging():
     """Sets up a basic console logger."""
+
     try:
         # Remove any existing handlers from the root logger to avoid duplicates
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
 
+        # Use the same formatter for all handlers, without timestamp
+        log_format = "%(asctime)s %(process)d %(threadName)s %(name)s - %(levelname)s - %(message)s"
 
-        # Use the same formatter for both handlers, without timestamp
-        log_format = "%(name)s - %(levelname)s - %(message)s"
 
+        # Console handler (for server)
         console_handler = logging.StreamHandler()
         formatter = logging.Formatter(log_format)
-
         console_handler.setFormatter(formatter)
 
-        # Add a file handler for debug logs
+        # Main server log file (only logs from 'aiwhisperer.server')
         log_dir = "logs"
-        os.makedirs(log_dir, exist_ok=True) # Create the logs directory if it doesn't exist
-        log_file_path = os.path.join(log_dir, "aiwhisperer_debug.log") # Write log file to logs directory
-        file_handler = logging.FileHandler(log_file_path, mode='w')
-        file_handler.setLevel(logging.DEBUG) # Capture all debug messages
-        file_formatter = logging.Formatter(log_format)
-        file_handler.setFormatter(file_formatter)
+        os.makedirs(log_dir, exist_ok=True)
+        server_log_path = os.path.join(log_dir, "aiwhisperer_server.log")
+        server_file_handler = logging.FileHandler(server_log_path, mode='w')
+        server_file_handler.setLevel(logging.DEBUG)
+        server_file_handler.setFormatter(formatter)
+        server_file_handler.addFilter(lambda record: record.name.startswith('aiwhisperer.server'))
 
-        logging.basicConfig(
-            level=logging.DEBUG, handlers=[file_handler]
-        )  # Set root logger level to DEBUG and add the file handler
+        # Test log file (only logs from 'aiwhisperer.test')
+        test_log_path = os.path.join(log_dir, "aiwhisperer_test.log")
+        test_file_handler = logging.FileHandler(test_log_path, mode='w')
+        test_file_handler.setLevel(logging.DEBUG)
+        test_file_handler.setFormatter(formatter)
+        test_file_handler.addFilter(lambda record: record.name.startswith('aiwhisperer.test'))
 
-        # Add a log message to confirm logging setup and file path
-        logging.info(f"Logging configured. Debug log file is at: {os.path.abspath(log_file_path)}")
+        # Debug log file (all debug info, legacy, logs everything)
+        debug_log_path = os.path.join(log_dir, "aiwhisperer_debug.log")
+        debug_file_handler = logging.FileHandler(debug_log_path, mode='w')
+        debug_file_handler.setLevel(logging.DEBUG)
+        debug_file_handler.setFormatter(formatter)
+
+        # Attach handlers to the root logger
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+        root_logger.handlers = [console_handler, debug_file_handler, server_file_handler, test_file_handler]
+
+        # Add a log message to confirm logging setup and file paths
+        logging.getLogger('aiwhisperer.server').info(f"Server logging configured. Log file: {os.path.abspath(server_log_path)}")
+        logging.getLogger('aiwhisperer.test').info(f"Test logging configured. Log file: {os.path.abspath(test_log_path)}")
+        logging.getLogger().info(f"Debug logging configured. Log file: {os.path.abspath(debug_log_path)}")
 
     except Exception as e:
         # If basic logging setup fails, print an error to stderr as a fallback
@@ -139,6 +156,12 @@ def get_logger(name: str) -> logging.Logger:
         A logging.Logger instance.
     """
     return logging.getLogger(name)
+
+def get_server_logger():
+    return get_logger('aiwhisperer.server')
+
+def get_test_logger():
+    return get_logger('aiwhisperer.test')
 
 
 def log_event(log_message: LogMessage, logger_name: str = "aiwhisperer"):

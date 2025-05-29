@@ -1,22 +1,137 @@
-
 import os
+import logging
+
+# Set up logging early
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.info("Starting AIWhisperer interactive server...")
+
 import ai_whisperer.commands.echo
 import ai_whisperer.commands.status
 import ai_whisperer.commands.help
-import logging
+import ai_whisperer.commands.agent
+import ai_whisperer.commands.session
 import json
 import inspect
 import asyncio
 import uuid
 from fastapi import FastAPI, WebSocket
 from ai_whisperer.config import load_config
-from .session_manager import InteractiveSessionManager
+from .stateless_session_manager import StatelessSessionManager
 from .message_models import (
     StartSessionRequest, StartSessionResponse, SendUserMessageRequest, SendUserMessageResponse,
     AIMessageChunkNotification, SessionStatusNotification, StopSessionRequest, StopSessionResponse,
     ProvideToolResultRequest, ProvideToolResultResponse, SessionParams,
     SessionStatus, MessageStatus, ToolResultStatus
 )
+from ai_whisperer.agents.registry import AgentRegistry
+from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
+from ai_whisperer.path_management import PathManager
+from pathlib import Path
+
+# Initialize agent registry
+try:
+    prompts_dir = Path(os.environ.get("AIWHISPERER_PROMPTS", "prompts"))
+    agent_registry = AgentRegistry(prompts_dir)
+    logger.info(f"AgentRegistry initialized with prompts_dir: {prompts_dir}")
+    logger.info(f"Available agents: {[a.agent_id for a in agent_registry.list_agents()]}")
+except Exception as e:
+    logger.error(f"Failed to initialize AgentRegistry: {e}")
+    import traceback
+    traceback.print_exc()
+    agent_registry = None
+# === Agent/Session JSON-RPC Handlers ===
+async def agent_list_handler(params, websocket=None):
+    if not agent_registry:
+        logger.error("AgentRegistry not initialized")
+        return {"agents": []}
+    
+    try:
+        agents = [
+            {
+                "agent_id": agent.agent_id.lower(),  # Ensure lowercase for frontend consistency
+                "name": agent.name,
+                "role": agent.role,
+                "description": agent.description,
+                "color": agent.color,
+                "shortcut": agent.shortcut,
+                "icon": getattr(agent, 'icon', '🤖'),
+            }
+            for agent in agent_registry.list_agents()
+        ]
+        return {"agents": agents}
+    except Exception as e:
+        logger.error(f"Error listing agents: {e}")
+        return {"agents": []}
+
+async def session_switch_agent_handler(params, websocket=None):
+    agent_id = params.get("agent_id")
+    logger.info(f"session_switch_agent_handler called with agent_id: {agent_id}")
+    session = session_manager.get_session_by_websocket(websocket)
+    if not session and "sessionId" in params:
+        session = session_manager.get_session(params["sessionId"])
+    # In test context, do not auto-create session if websocket is None and sessionId is provided
+    if not session and websocket is not None:
+        session_id = await session_manager.create_session(websocket)
+        await session_manager.start_session(session_id)
+        session = session_manager.get_session_by_websocket(websocket)
+    try:
+        await session.switch_agent(agent_id)
+        return {"success": True, "current_agent": agent_id}
+    except ValueError as e:
+        return {
+            "jsonrpc": "2.0",
+            "id": None, # ID will be filled by process_json_rpc_request
+            "error": {"code": -32001, "message": f"Agent not found: {agent_id}"}
+        }
+    except Exception as e:
+        import logging, traceback
+        logging.error(f"[session_switch_agent_handler] Exception: {e}")
+        traceback.print_exc()
+        return {
+            "jsonrpc": "2.0",
+            "id": None, # ID will be filled by process_json_rpc_request
+            "error": {"code": -32603, "message": f"Internal error: {e}"}
+        }
+
+async def session_current_agent_handler(params, websocket=None):
+    session = session_manager.get_session_by_websocket(websocket)
+    if not session and "sessionId" in params:
+        session = session_manager.get_session(params["sessionId"])
+    if not session or not session.active_agent:
+        return {"current_agent": None}
+    # Return lowercase to match frontend expectations
+    return {"current_agent": session.active_agent.lower() if session.active_agent else None}
+
+async def session_handoff_handler(params, websocket=None):
+    to_agent = params.get("to_agent")
+    session = session_manager.get_session_by_websocket(websocket)
+    if not session and "sessionId" in params:
+        session = session_manager.get_session(params["sessionId"])
+    if not session and websocket is not None:
+        session_id = await session_manager.create_session(websocket)
+        await session_manager.start_session(session_id)
+        session = session_manager.get_session_by_websocket(websocket)
+    from_agent = session.active_agent if session and session.active_agent else None
+    try:
+        await session.switch_agent(to_agent)
+        # Optionally: send notification/event to frontend
+        return {"success": True, "from_agent": from_agent, "to_agent": to_agent}
+    except ValueError as e:
+        return {
+            "jsonrpc": "2.0",
+            "id": None, # ID will be filled by process_json_rpc_request
+            "error": {"code": -32001, "message": f"Agent not found: {to_agent}"}
+        }
+    except Exception as e:
+        import logging, traceback
+        logging.error(f"[session_handoff_handler] Exception: {e}")
+        traceback.print_exc()
+        return {
+            "jsonrpc": "2.0",
+            "id": None, # ID will be filled by process_json_rpc_request
+            "error": {"code": -32603, "message": f"Internal error: {e}"}
+        }
 
 app = FastAPI()
 
@@ -28,22 +143,51 @@ except Exception as e:
     logging.error(f"Failed to load configuration: {e}")
     app_config = {}
 
-session_manager = InteractiveSessionManager(app_config)
+# Initialize PathManager
+try:
+    PathManager.get_instance().initialize(config_values=app_config)
+    logging.info("PathManager initialized successfully")
+except Exception as e:
+    logging.error(f"Failed to initialize PathManager: {e}")
+    # Continue without PathManager
+
+# Initialize prompt system
+prompt_system = None
+try:
+    prompt_config = PromptConfiguration(app_config)
+    prompt_system = PromptSystem(prompt_config)
+    logging.info("PromptSystem initialized successfully")
+except Exception as e:
+    logging.error(f"Failed to initialize PromptSystem: {e}")
+    # Continue without prompt system
+
+try:
+    session_manager = StatelessSessionManager(app_config, agent_registry, prompt_system)
+    logger.info("StatelessSessionManager initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize StatelessSessionManager: {e}")
+    import traceback
+    traceback.print_exc()
+    # Create a basic session manager without extras
+    session_manager = StatelessSessionManager(app_config, None, None)
+    logger.info("Created basic StatelessSessionManager without agent registry")
 
 
 # Handler functions
 async def start_session_handler(params, websocket=None):
     model = StartSessionRequest(**params)
     # Create a new session for this websocket
-    session_id = await session_manager.create_session(
-        websocket, 
-        session_params=(model.sessionParams.model_dump() if model.sessionParams else {})
-    )
-    # Start the AI session (system prompt can be extended from params if needed)
-    await session_manager.start_session(session_id)
+    session_id = await session_manager.create_session(websocket)
+    
+    # Extract system prompt from session params if provided
+    system_prompt = None
+    if model.sessionParams and model.sessionParams.context:
+        system_prompt = model.sessionParams.context
+    
+    # Start the AI session with optional system prompt
+    await session_manager.start_session(session_id, system_prompt)
     # Respond with real session ID and status
     response = StartSessionResponse(sessionId=session_id, status=SessionStatus.Active).model_dump()
-    # The delegate bridge will handle notifications
     return response
 
 
@@ -52,42 +196,26 @@ async def send_user_message_handler(params, websocket=None):
     try:
         model = SendUserMessageRequest(**params)
     except Exception as validation_error:
-        # Pydantic validation failed - this is the kind of error we want to send via delegate bridge
         logging.error(f"[send_user_message_handler] Validation error: {validation_error}")
-        
-        # Get the session if possible to trigger delegate bridge notification
-        session_id = params.get("sessionId")
-        if session_id:
-            session = session_manager.get_session(session_id)
-            if session and session.delegate_bridge:
-                logging.debug("[send_user_message_handler] Calling delegate_bridge._handle_error for validation error...")
-                try:
-                    await session.delegate_bridge._handle_error(sender=None, event_data=validation_error)
-                    logging.debug("[send_user_message_handler] delegate_bridge._handle_error completed.")
-                    # Add delay to allow notification delivery
-                    await asyncio.sleep(0.3)
-                except Exception as bridge_error:
-                    logging.error(f"[send_user_message_handler] Error in delegate bridge: {bridge_error}")
-        
-        # Re-raise for JSON-RPC error response
-        raise validation_error
-    
-    session = session_manager.get_session(model.sessionId)
+        raise ValueError(f"Missing required parameter or invalid format: {validation_error}")
+
+    session = session_manager.get_session_by_websocket(websocket)
+    if not session and hasattr(model, "sessionId"):
+        session = session_manager.get_session(model.sessionId)
+    logging.info(f"[send_user_message_handler] Found session: {session.session_id if session else 'None'}, active agent: {session.active_agent if session else 'None'}")
     if not session:
-        raise ValueError(f"Session {model.sessionId} not found")
-    
+        raise ValueError(f"Invalid session: {getattr(model, 'sessionId', None)}")
+
     try:
         logging.debug(f"[send_user_message_handler] Calling session.send_user_message: {model.message}")
+        # The session now has built-in streaming support
         await session.send_user_message(model.message)
         response = SendUserMessageResponse(messageId=str(uuid.uuid4()), status=MessageStatus.OK).model_dump()
         logging.debug("[send_user_message_handler] Message sent successfully, returning OK response.")
         return response
     except Exception as e:
         logging.error(f"[send_user_message_handler] Exception: {e}")
-        # The AILoop should have already handled the error and triggered delegate notifications
-        # if this was an invalid message type. We just need to return a JSON-RPC error response.
-        logging.debug("[send_user_message_handler] Raising exception to return JSON-RPC error response.")
-        raise e
+        raise RuntimeError(f"Failed to send message: {e}")
 
 
 async def provide_tool_result_handler(params, websocket=None):
@@ -95,27 +223,20 @@ async def provide_tool_result_handler(params, websocket=None):
     session = session_manager.get_session(model.sessionId)
     if not session:
         raise ValueError(f"Session {model.sessionId} not found")
-    # Provide the tool result to the AILoop (via InteractiveAI)
-    if not session.interactive_ai or not session.interactive_ai.ai_loop:
-        raise RuntimeError("AI loop not initialized for session")
-    # The AILoop expects tool results via a delegate event
-    await session.interactive_ai.ai_loop._handle_provide_tool_result(
-        tool_call_id=model.toolCallId, 
-        result=model.result
-    )
-    # Respond with status OK
+    # Tool results are not yet implemented in the stateless architecture
+    # For now, just return OK
     response = ProvideToolResultResponse(status=ToolResultStatus.OK).model_dump()
     return response
 
 
 async def stop_session_handler(params, websocket=None):
+    from .message_models import SessionStatusNotification, SessionStatus
     try:
         model = StopSessionRequest(**params)
         session = session_manager.get_session(model.sessionId)
         if session:
             await session_manager.stop_session(model.sessionId)
             # Send final SessionStatusNotification before cleanup
-            from .message_models import SessionStatusNotification, SessionStatus
             notification = SessionStatusNotification(
                 sessionId=model.sessionId,
                 status=SessionStatus.Stopped,
@@ -168,6 +289,11 @@ HANDLERS = {
     "stopSession": stop_session_handler,
     "echo": echo_handler,  # JSON-RPC echo handler for protocol/dispatch test compatibility
     "dispatchCommand": dispatch_command_handler,
+    # Agent/session management
+    "agent.list": agent_list_handler,
+    "session.switch_agent": session_switch_agent_handler,
+    "session.current_agent": session_current_agent_handler,
+    "session.handoff": session_handoff_handler,
 }
 
 
@@ -189,24 +315,29 @@ async def process_json_rpc_request(msg, websocket):
             result = await handler(msg.get("params", {}), websocket=websocket)
         else:
             result = handler(msg.get("params", {}), websocket=websocket)
-        
-        # If result is a dict (from model_dump), return as is, else wrap
-        if isinstance(result, dict):
-            return {"jsonrpc": "2.0", "id": msg["id"], "result": result}
-        else:
-            return {"jsonrpc": "2.0", "id": msg["id"], "result": result}
+        # If result is a dict and contains an "error" key, return it as is (it's already a JSON-RPC error object)
+        if isinstance(result, dict) and "error" in result:
+            # Ensure the ID is set correctly for the error response
+            result["id"] = msg["id"]
+            return result
+        # Otherwise, wrap the result in a "result" key
+        return {"jsonrpc": "2.0", "id": msg["id"], "result": result}
     except (ValueError, TypeError) as e:
-        # These are parameter validation errors - return JSON-RPC error
+        import logging
+        logging.error(f"[process_json_rpc_request] ValueError/TypeError: {e}")
         return {
             "jsonrpc": "2.0",
             "id": msg["id"],
-            "error": {"code": -32602, "message": "Invalid params"}
+            "error": {"code": -32602, "message": f"Invalid params: {e}"}
         }
     except Exception as e:
-        # Other exceptions - let them bubble up to be handled by the websocket layer
-        # The specific handlers (like send_user_message_handler) should handle their own errors
-        # and return appropriate responses or trigger delegate notifications
-        raise e
+        import logging
+        logging.error(f"[process_json_rpc_request] Exception: {e}")
+        return {
+            "jsonrpc": "2.0",
+            "id": msg["id"],
+            "error": {"code": -32603, "message": f"Internal error: {e}"}
+        }
 
 
 async def handle_websocket_message(websocket, data):

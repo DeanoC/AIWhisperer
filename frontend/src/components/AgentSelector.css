@@ -1,0 +1,108 @@
+.agent-selector {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.agent-item {
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  background: var(--bg-primary, #ffffff);
+  position: relative;
+  min-width: 150px;
+}
+
+.agent-item:hover {
+  background: var(--bg-tertiary, #f3f4f6);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.agent-item.selected {
+  background: var(--accent-bg, #eff6ff);
+  border-color: var(--accent-color, #3b82f6);
+}
+
+.agent-shortcut {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  margin-right: 8px;
+  font-family: monospace;
+}
+
+.agent-name {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin-bottom: 4px;
+}
+
+.agent-description {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.4;
+}
+
+/* Dark theme support */
+.theme-dark .agent-selector {
+  --bg-primary: #1f2937;
+  --bg-secondary: #111827;
+  --bg-tertiary: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --accent-color: #60a5fa;
+  --accent-bg: #1e3a5f;
+}
+
+.theme-dark .agent-item {
+  box-shadow: none;
+}
+
+.theme-dark .agent-item:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.theme-dark .agent-item.selected {
+  background: #1e3a5f;
+  border-color: #60a5fa;
+}
+
+/* Scrollbar styling for horizontal scroll */
+.agent-selector::-webkit-scrollbar {
+  height: 4px;
+}
+
+.agent-selector::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.agent-selector::-webkit-scrollbar-thumb {
+  background: var(--border-color, #e5e7eb);
+  border-radius: 2px;
+}
+
+.theme-dark .agent-selector::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .agent-selector {
+    padding: 4px;
+    gap: 4px;
+  }
+  
+  .agent-item {
+    min-width: 120px;
+    padding: 6px 12px;
+  }
+}

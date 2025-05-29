@@ -56,7 +56,7 @@ class AILoop:
     - ai_loop.error: Emitted when an unhandled exception occurs within the AI loop.
       event_data: The exception object.
     """
-    def __init__(self, config: AIConfig, ai_service: AIService, context_manager: ContextManager, delegate_manager: DelegateManager):
+    def __init__(self, config: AIConfig, ai_service: AIService, context_manager: ContextManager, delegate_manager: DelegateManager, get_agent_id=None):
         """
         Initializes the AILoop with necessary components and sets up control delegate registrations.
 
@@ -70,6 +70,7 @@ class AILoop:
         self.ai_service = ai_service
         self.context_manager = context_manager
         self.delegate_manager = delegate_manager
+        self.get_agent_id = get_agent_id  # Function or lambda to get current agent_id
         self.shutdown_event = asyncio.Event()
         self.pause_event = asyncio.Event()
         self.pause_event.set() # Start in unpaused state
@@ -103,7 +104,10 @@ class AILoop:
             return self._session_task
 
         self.context_manager.clear_history()
-        self.context_manager.add_message({"role": "system", "content": system_prompt})
+        agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+        import logging
+        logging.error(f"[AILoop.start_session] Adding system prompt to context for agent_id={agent_id}: {system_prompt}")
+        self.context_manager.add_message({"role": "system", "content": system_prompt}, agent_id=agent_id)
         await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.session_started")
 
         self._session_task = asyncio.create_task(self._run_session())
@@ -191,7 +195,8 @@ class AILoop:
                                 await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
                             else:
                                 logger.debug(f"_run_session: Got user_message from queue: {user_message}")
-                                self.context_manager.add_message({"role": "user", "content": user_message}) # type: ignore
+                                agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+                                self.context_manager.add_message({"role": "user", "content": user_message}, agent_id=agent_id) # type: ignore
                                 await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
                                 processed_queue_item = True
                         else:
@@ -210,7 +215,8 @@ class AILoop:
                                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
                                 else:
                                     logger.debug(f"_run_session: Got tool_result from queue: {tool_result}")
-                                    self.context_manager.add_message(tool_result) # type: ignore
+                                    agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+                                    self.context_manager.add_message(tool_result, agent_id=agent_id) # type: ignore
                                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
                                     processed_queue_item = True
                             else:
@@ -239,7 +245,8 @@ class AILoop:
                                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
                                 else:
                                     logger.debug(f"_run_session: Got user_message from awaited queue: {user_message}")
-                                    self.context_manager.add_message({"role": "user", "content": user_message}) # type: ignore
+                                    agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+                                    self.context_manager.add_message({"role": "user", "content": user_message}, agent_id=agent_id) # type: ignore
                                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
                             # If None, it's a shutdown signal, handled by the main loop condition
                         else: # result_task is tool_task
@@ -251,7 +258,8 @@ class AILoop:
                                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
                                 else:
                                     logger.debug(f"_run_session: Got tool_result from awaited queue: {tool_result}")
-                                    self.context_manager.add_message(tool_result) # type: ignore
+                                    agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+                                    self.context_manager.add_message(tool_result, agent_id=agent_id) # type: ignore
                                     await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
                             # If None, it's a shutdown signal, handled by the main loop condition
                     # After processing input, move to AI stream state if not shutting down
@@ -307,7 +315,8 @@ class AILoop:
                         logger.error("_run_session: Finished invoke_notification for timeout.")
                         # Add a user-friendly error message to the context history
                         error_msg = {"role": "assistant", "content": "AI service timeout: The AI did not respond in time."}
-                        self.context_manager.add_message(error_msg)
+                        agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+                        self.context_manager.add_message(error_msg, agent_id=agent_id)
                         logger.debug(f"_run_session: Added timeout error message to context: {{error_msg}}")
                         self._state = SessionState.WAIT_FOR_INPUT
                     except Exception as e:
@@ -315,7 +324,8 @@ class AILoop:
                         await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
                         # Add a user-friendly error message to the context history
                         error_msg = {"role": "assistant", "content": f"An error occurred while processing the AI response: {e}"}
-                        self.context_manager.add_message(error_msg)
+                        agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+                        self.context_manager.add_message(error_msg, agent_id=agent_id)
                         logger.debug(f"_run_session: Added error message to context: {{error_msg}}")
                         self._state = SessionState.WAIT_FOR_INPUT # Return to waiting for input after AI service error
  
@@ -325,7 +335,8 @@ class AILoop:
                     if tool_result is None:
                         self._state = SessionState.SHUTDOWN
                     else:
-                        self.context_manager.add_message(tool_result) # type: ignore
+                        agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+                        self.context_manager.add_message(tool_result, agent_id=agent_id) # type: ignore
                         await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
                         self._state = SessionState.ASSEMBLE_AI_STREAM
 
@@ -474,7 +485,8 @@ class AILoop:
 
             # Add the assembled assistant message to context if it has content or tool_calls
             if "content" in assistant_message_to_add or "tool_calls" in assistant_message_to_add:
-                self.context_manager.add_message(assistant_message_to_add)
+                agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+                self.context_manager.add_message(assistant_message_to_add, agent_id=agent_id)
                 logger.debug(f"_run_session: Added assistant message to context: {assistant_message_to_add}")
 
             # If finish_reason is "stop" or "error", the loop should now break if queues are empty
@@ -487,7 +499,8 @@ class AILoop:
             await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
             # Add an error message to context
             error_msg = {"role": "assistant", "content": f"Error processing AI stream: Invalid stream format. Details: {e}"}
-            self.context_manager.add_message(error_msg)
+            agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+            self.context_manager.add_message(error_msg, agent_id=agent_id)
             logger.debug(f"_assemble_ai_stream: Added error message to context: {error_msg}")
             finish_reason = "stop" # Return "stop" to allow the loop to continue
             # Do NOT re-raise, handle it gracefully
@@ -502,7 +515,8 @@ class AILoop:
              await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
              # Add a user-friendly error message to the context history
              error_msg = {"role": "assistant", "content": f"An error occurred while processing the AI response: {e}"}
-             self.context_manager.add_message(error_msg)
+             agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+             self.context_manager.add_message(error_msg, agent_id=agent_id)
              logger.debug(f"_assemble_ai_stream: Added error message to context: {error_msg}")
              finish_reason = "stop" # Return "stop" to allow the loop to continue
              # Do NOT re-raise, handle it gracefully

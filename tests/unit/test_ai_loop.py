@@ -12,6 +12,54 @@ from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.ai_service.ai_service import AIService, AIStreamChunk
 from ai_whisperer.tools.tool_registry import get_tool_registry, ToolRegistry
 from ai_whisperer.tools.base_tool import AITool
+# Additional test: verify system prompt is first in context and sent to AI backend
+import types
+
+@pytest.mark.asyncio
+async def test_system_prompt_is_first_in_context_and_sent_to_ai_backend(mock_ai_config, context_manager, delegate_manager):
+    """Test that the agent's system prompt is the first message in context and is sent to the AI backend as the first message."""
+    # Arrange: create a mock PromptSystem and AIService
+    class MockPromptSystem:
+        def get_agent_system_prompt(self, agent_id):
+            return "MOCK SYSTEM PROMPT"
+
+    # Patch the context_manager to use the mock prompt system
+    if hasattr(context_manager, 'set_prompt_system'):
+        context_manager.set_prompt_system(MockPromptSystem())
+    elif hasattr(context_manager, 'prompt_system'):
+        context_manager.prompt_system = MockPromptSystem()
+
+    # Create a mock AIService that records the messages it receives
+    class RecordingAIService(AsyncMock):
+        def __init__(self, *args, **kwargs):
+            super().__init__(spec=AIService)
+            self.last_messages = None
+        async def stream_chat_completion(self, *args, **kwargs):
+            self.last_messages = kwargs.get("messages", [])
+            yield AIStreamChunk(delta_content="Hello!", finish_reason=None)
+            yield AIStreamChunk(delta_content="", finish_reason="stop")
+
+    mock_ai_service = RecordingAIService()
+    ai_loop = AILoop(mock_ai_config, mock_ai_service, context_manager, delegate_manager)
+
+    # Act: start session and send a user message
+    await ai_loop.start_session(system_prompt="MOCK SYSTEM PROMPT")
+    await ai_loop.send_user_message("User message")
+    await ai_loop.wait_for_idle(timeout=2.0)
+
+    # Assert: system prompt is first in context
+    history = context_manager.get_history()
+    assert history[0]["role"] == "system", f"First message role should be 'system', got {history[0]['role']}" 
+    assert history[0]["content"] == "MOCK SYSTEM PROMPT", f"First message content should be the system prompt, got {history[0]['content']}"
+
+    # Assert: system prompt is first in messages sent to AI backend
+    sent_messages = mock_ai_service.last_messages
+    assert sent_messages is not None, "AI backend was not called with messages."
+    assert sent_messages[0]["role"] == "system", f"First message sent to AI backend should be 'system', got {sent_messages[0]['role']}"
+    assert sent_messages[0]["content"] == "MOCK SYSTEM PROMPT", f"First message sent to AI backend should be the system prompt, got {sent_messages[0]['content']}"
+
+    await ai_loop.stop_session()
+    await cleanup_tasks()
 
 # Helper for asyncio cleanup
 async def cleanup_tasks():

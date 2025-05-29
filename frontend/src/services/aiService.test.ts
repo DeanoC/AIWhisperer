@@ -21,7 +21,7 @@ describe('AIService', () => {
     rpc.sendRequest.mockResolvedValue({ sessionId: 'abc', status: 1, model: 'gpt-test' });
     const info = await service.startSession('user1');
     expect(info.id).toBe('abc');
-    expect(service.getStatus()).toBe(1);
+    expect(service.getStatus()).toBe(SessionStatus.Active);
     expect(service.getSessionInfo()?.model).toBe('gpt-test');
   });
 

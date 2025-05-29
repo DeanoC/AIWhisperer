@@ -5,13 +5,18 @@ import { MessageStatus } from '../types/ai';
 import { AIMessageChunk } from '../types/ai';
 
 
-export function useChat() {
+export interface ChatOptions {
+  currentAgentId?: string;
+}
+
+export function useChat(options?: ChatOptions) {
   const finalized = useRef(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentAIMessage, setCurrentAIMessage] = useState<string>('');
   // Track a unique ID for the current streaming AI message
   const currentAIMessageId = useRef<string | null>(null);
+  const currentAgentId = options?.currentAgentId;
 
   // Add a user message
   const addUserMessage = useCallback((content: string) => {
@@ -35,7 +40,6 @@ export function useChat() {
   }, []);
 
   // Append a chunk to the current AI message
-  // Memoize appendAIChunk with an empty dependency array to ensure stability
   const appendAIChunk = useCallback((chunk: AIMessageChunk) => {
     if (finalized.current) return; // Prevent double-finalizing
     console.log('[useChat.appendAIChunk] called with:', chunk);
@@ -49,6 +53,7 @@ export function useChat() {
             content: next,
             timestamp: new Date().toISOString(),
             status: MessageStatus.Received,
+            metadata: currentAgentId ? { agentId: currentAgentId } : undefined,
           };
           setMessages((prevMsgs) => {
             if (prevMsgs.some(m => m.id === msg.id)) {
@@ -66,7 +71,7 @@ export function useChat() {
       }
       return next;
     });
-  }, []);
+  }, [currentAgentId]);
 
   // Add a system message
   const addSystemMessage = useCallback((content: string) => {

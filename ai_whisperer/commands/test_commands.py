@@ -10,7 +10,10 @@ class TestCommands(unittest.TestCase):
 
     def test_status(self):
         cmd = StatusCommand()
-        self.assertEqual(cmd.run(''), 'Status: OK')
+        result = cmd.run('')
+        self.assertTrue(result.startswith('Status: OK'))
+        self.assertIn('Version: 0.1.0', result)
+        self.assertIn('Uptime:', result)
 
 if __name__ == '__main__':
     unittest.main()

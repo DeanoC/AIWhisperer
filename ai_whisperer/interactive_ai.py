@@ -12,6 +12,12 @@ from ai_whisperer.context_management import ContextManager
 logger = logging.getLogger(__name__)
 
 class InteractiveAI:
+    @property
+    def current_agent_id(self):
+        # Try to get from session if available, else fallback to 'default'
+        if hasattr(self, 'session') and hasattr(self.session, 'current_agent_id'):
+            return self.session.current_agent_id
+        return 'default'
     def __init__(self, model: dict, ai_config: AIConfig, delegate_manager: DelegateManager, context_manager: ContextManager):
         """
         Initializes the InteractiveAI class with the required parameters.
@@ -39,11 +45,14 @@ class InteractiveAI:
         ai_service = OpenRouterAIService(config=self.ai_config, shutdown_event=self.shutdown_event)
 
         # Instantiate the new AILoop
+        # Pass a getter for current_agent_id to AILoop
         self.ai_loop = AILoop(
             config=self.ai_config,
             ai_service=ai_service,
             context_manager=self.context_manager,
-            delegate_manager=self.delegate_manager        )
+            delegate_manager=self.delegate_manager,
+            get_agent_id=lambda: getattr(self, 'current_agent_id', 'default')
+        )
 
         await self.ai_loop.start_session(system_prompt=system_prompt)
 

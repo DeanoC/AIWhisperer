@@ -9,27 +9,33 @@ class ContextManager:
     """
     def __init__(self):
         """
-        Initializes a new instance of the ContextManager with an empty conversation history.
+        Initializes a new instance of the ContextManager with per-agent conversation histories.
         """
-        self._history = [] # Internal storage for messages
+        self._agent_histories = {}  # {agent_id: [messages]}
 
-    def add_message(self, message: dict):
+    def add_message(self, message: dict, agent_id: str = None):
         """
-        Adds a new message dictionary to the end of the conversation history.
+        Adds a new message dictionary to the end of the conversation history for the given agent.
 
         Args:
             message: A dictionary representing the message. Expected keys include 'role' (e.g., 'user', 'assistant', 'tool') and 'content'.
+            agent_id: The agent ID to associate the message with. If None, uses 'default'.
         """
         if not isinstance(message, dict):
             # Optionally log a warning or raise an error for invalid message format
-            pass # For now, just append whatever is provided
-        self._history.append(message)
+            pass
+        if agent_id is None:
+            agent_id = 'default'
+        if agent_id not in self._agent_histories:
+            self._agent_histories[agent_id] = []
+        self._agent_histories[agent_id].append(message)
 
-    def get_history(self, limit: int = None) -> list[dict]:
+    def get_history(self, agent_id: str = None, limit: int = None) -> list[dict]:
         """
-        Retrieves the conversation history.
+        Retrieves the conversation history for a specific agent.
 
         Args:
+            agent_id: The agent ID whose history to retrieve. If None, uses 'default'.
             limit: An optional integer specifying the maximum number of recent messages to return.
                    If None, the entire history is returned. If the limit is greater than the
                    number of messages in the history, the entire history is returned.
@@ -38,15 +44,21 @@ class ContextManager:
             A list of message dictionaries, ordered from oldest to newest.
             Returns an empty list if the history is empty.
         """
-        if limit is None or limit >= len(self._history):
-            return self._history
-        return self._history[-limit:]
+        if agent_id is None:
+            agent_id = 'default'
+        history = self._agent_histories.get(agent_id, [])
+        if limit is None or limit >= len(history):
+            return history
+        return history[-limit:]
 
-    def clear_history(self):
+    def clear_history(self, agent_id: str = None):
         """
-        Clears the entire conversation history, resetting it to an empty state.
+        Clears the conversation history for a specific agent, or all if agent_id is None.
         """
-        self._history = []
+        if agent_id is None:
+            self._agent_histories = {}
+        else:
+            self._agent_histories.pop(agent_id, None)
 
     # Although not explicitly detailed in the design, a method to format history
     # for AI interaction might be needed depending on the AI service requirements.

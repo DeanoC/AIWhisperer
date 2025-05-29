@@ -17,10 +17,11 @@ interface MessageInputProps {
   onSend: (text: string) => void;
   fetchCommandList: () => Promise<string[]>;
   sessionStatus?: any;
+  disabled?: boolean;
 }
 
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, sessionStatus }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, sessionStatus, disabled }) => {
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const [commandList, setCommandList] = useState<string[]>([]);
@@ -159,6 +160,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
           onKeyDown={handleKeyDown}
           placeholder="Enter your message and press Enter to send"
           autoFocus
+          disabled={disabled}
         />
       </div>
       <button
@@ -169,6 +171,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
             setInput('');
           }
         }}
+        disabled={disabled}
       >
         Send
       </button>

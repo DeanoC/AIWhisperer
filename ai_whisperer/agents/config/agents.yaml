@@ -1,0 +1,28 @@
+agents:
+  a:
+    name: "Alice the Assistant"
+    role: "assistant"
+    description: "General assistant providing help and guidance with the AIWhisperer system"
+    tool_tags: ["filesystem", "analysis", "general"]
+    prompt_file: "alice_assistant"
+    context_sources: ["workspace_structure", "recent_changes"]
+    color: "#9C27B0"
+    icon: "🤖"
+  p:
+    name: "Patricia the Planner"
+    role: "planner"
+    description: "Creates structured implementation plans from feature requests"
+    tool_tags: ["filesystem", "analysis", "planning"]
+    prompt_file: "agent_planner"
+    context_sources: ["workspace_structure", "existing_schemas", "recent_changes"]
+    color: "#4CAF50"
+    icon: "📋"
+  t:
+    name: "Tessa the Tester"
+    role: "tester"
+    description: "Generates comprehensive test suites and test plans"
+    tool_tags: ["filesystem", "testing", "analysis"]
+    prompt_file: "agent_tester"
+    context_sources: ["existing_tests", "code_coverage", "test_patterns"]
+    color: "#2196F3"
+    icon: "🧪"
