@@ -1,1 +1,4 @@
-"""Services package for interactive server."""
+"""Services for interactive server."""
+from .file_service import FileService
+
+__all__ = ["FileService"]

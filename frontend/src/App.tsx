@@ -16,6 +16,7 @@ import { useChat } from './hooks/useChat';
 import { SessionStatus } from './types/ai';
 import { Agent } from './types/agent';
 import { ProjectIntegration } from './components/ProjectIntegration';
+import { FileBrowser } from './components/FileBrowser';
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 const USER_ID = 'demo-user';
@@ -451,6 +452,17 @@ function App() {
             {/* Tests Route */}
             <Route path="/tests" element={
               <TestResultsView data={mockTestResults} />
+            } />
+            
+            {/* Files Route */}
+            <Route path="/files" element={
+              <FileBrowser 
+                jsonRpcService={jsonRpcService}
+                onFileSelect={(filePath) => {
+                  console.log('File selected:', filePath);
+                  // TODO: Handle file selection - could add to chat context
+                }}
+              />
             } />
             
             {/* Settings Route */}

@@ -144,6 +144,8 @@ Interactive mode uses JSON-RPC 2.0 over WebSocket:
 
 ## Important Considerations
 
+- Our back and frontends communicate exclusively via JSON-RPC over websockets
+
 ### Security
 - PathManager enforces directory restrictions
 - Never commit API keys or secrets

@@ -30,6 +30,7 @@ from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
 from ai_whisperer.path_management import PathManager
 from pathlib import Path
 from .handlers.project_handlers import init_project_handlers, PROJECT_HANDLERS
+from .handlers.workspace_handler import WorkspaceHandler
 
 # Initialize agent registry
 try:
@@ -195,8 +196,10 @@ except Exception as e:
     app_config = {}
 
 # Initialize PathManager
+path_manager = None
 try:
-    PathManager.get_instance().initialize(config_values=app_config)
+    path_manager = PathManager.get_instance()
+    path_manager.initialize(config_values=app_config)
     logging.info("PathManager initialized successfully")
 except Exception as e:
     logging.error(f"Failed to initialize PathManager: {e}")
@@ -211,6 +214,16 @@ try:
 except Exception as e:
     logging.error(f"Failed to initialize ProjectManager: {e}")
     project_manager = None
+
+# Initialize workspace handler
+workspace_handler = None
+if path_manager:
+    try:
+        workspace_handler = WorkspaceHandler(path_manager)
+        logging.info("WorkspaceHandler initialized successfully")
+    except Exception as e:
+        logging.error(f"Failed to initialize WorkspaceHandler: {e}")
+        workspace_handler = None
 
 # Initialize prompt system
 prompt_system = None
@@ -358,6 +371,14 @@ HANDLERS = {
     # Project management handlers
     **PROJECT_HANDLERS
 }
+
+# Add workspace handlers if available
+if workspace_handler:
+    workspace_methods = workspace_handler.get_methods()
+    logging.info(f"Adding workspace methods to handlers: {list(workspace_methods.keys())}")
+    HANDLERS.update(workspace_methods)
+else:
+    logging.warning("WorkspaceHandler not available, workspace methods will not be registered")
 
 
 async def process_json_rpc_request(msg, websocket):
