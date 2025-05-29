@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, ReactNode } from 'reac
 import { Sidebar } from './Sidebar';
 import { ContextPanel } from './ContextPanel';
 import { ViewRouter } from './ViewRouter';
+import { ProjectSelector } from './ProjectSelector';
 import './MainLayout.css';
 
 interface MainLayoutProps {
@@ -226,6 +227,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             </button>
           )}
           <h1>AI Whisperer</h1>
+          <div className="header-controls">
+            <ProjectSelector />
+          </div>
         </div>
       </header>
 

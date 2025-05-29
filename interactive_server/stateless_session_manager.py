@@ -31,7 +31,7 @@ class StatelessInteractiveSession:
     Supports direct streaming without delegates.
     """
     
-    def __init__(self, session_id: str, websocket: WebSocket, config: dict, agent_registry=None, prompt_system=None):
+    def __init__(self, session_id: str, websocket: WebSocket, config: dict, agent_registry=None, prompt_system=None, project_path: Optional[str] = None):
         """
         Initialize a stateless interactive session.
         
@@ -41,12 +41,14 @@ class StatelessInteractiveSession:
             config: Configuration dictionary for AI service
             agent_registry: Optional AgentRegistry instance
             prompt_system: Optional PromptSystem instance
+            project_path: Optional path to the project workspace
         """
         self.session_id = session_id
         self.websocket = websocket
         self.config = config
         self.agent_registry = agent_registry
         self.prompt_system = prompt_system
+        self.project_path = project_path
         
         # Agent management
         self.agents: Dict[str, StatelessAgent] = {}
@@ -518,24 +520,32 @@ class StatelessSessionManager:
         except Exception as e:
             logger.error(f"Failed to save sessions: {e}")
     
-    async def create_session(self, websocket: WebSocket) -> str:
+    async def create_session(self, websocket: WebSocket, project_path: Optional[str] = None) -> str:
         """
         Create a new session for a WebSocket connection.
         
         Args:
             websocket: The WebSocket connection
+            project_path: Optional path to the project workspace
             
         Returns:
             The session ID
         """
         async with self._lock:
             session_id = str(uuid.uuid4())
-            session = StatelessInteractiveSession(session_id, websocket, self.config, self.agent_registry, self.prompt_system)
+            session = StatelessInteractiveSession(
+                session_id, 
+                websocket, 
+                self.config, 
+                self.agent_registry, 
+                self.prompt_system,
+                project_path=project_path
+            )
             
             self.sessions[session_id] = session
             self.websocket_sessions[websocket] = session_id
             
-            logger.info(f"Created session {session_id} for WebSocket connection")
+            logger.info(f"Created session {session_id} for WebSocket connection with project: {project_path}")
             
             # Save sessions
             self._save_sessions()

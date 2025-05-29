@@ -75,6 +75,13 @@
   font-weight: 600;
 }
 
+.header-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .mobile-menu-button {
   display: none;
   background: none;

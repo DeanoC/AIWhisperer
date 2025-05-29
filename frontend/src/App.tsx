@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './App.css';
 import { MainLayout } from './components/MainLayout';
 import { ViewProvider } from './contexts/ViewContext';
+import { ProjectProvider } from './contexts/ProjectContext';
 import { ChatView } from './components/ChatView';
 import { JSONPlanView } from './components/JSONPlanView';
 import { CodeChangesView } from './components/CodeChangesView';
@@ -331,13 +332,14 @@ function App() {
 
   return (
     <Router>
-      <ViewProvider>
-        <MainLayout 
-          theme={theme} 
-          isLoading={isLoading}
-          currentAgent={agentContext}
-          currentPlan={currentPlan}
-        >
+      <ProjectProvider>
+        <ViewProvider>
+          <MainLayout 
+            theme={theme} 
+            isLoading={isLoading}
+            currentAgent={agentContext}
+            currentPlan={currentPlan}
+          >
           <Routes>
             {/* Chat Route */}
             <Route path="/chat" element={
@@ -393,6 +395,7 @@ function App() {
           </Routes>
         </MainLayout>
       </ViewProvider>
+    </ProjectProvider>
     </Router>
   );
 }

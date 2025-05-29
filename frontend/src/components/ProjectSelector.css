@@ -1,0 +1,295 @@
+/* Project Selector Styles */
+
+.project-selector {
+  position: relative;
+}
+
+.project-selector-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.project-selector-button:hover {
+  background: #e8e8e8;
+  border-color: #ccc;
+}
+
+.project-selector-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.project-icon {
+  font-size: 16px;
+}
+
+.project-name {
+  font-weight: 500;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* Dropdown */
+.project-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 300px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.project-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.project-dropdown-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.connect-button {
+  padding: 6px 12px;
+  background: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.connect-button:hover {
+  background: #005a9e;
+}
+
+/* Project List */
+.project-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.project-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.project-item:hover {
+  background: #f5f5f5;
+}
+
+.project-item.active {
+  background: #e3f2fd;
+}
+
+.project-item-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.project-item-path {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-projects {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+}
+
+.no-projects p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+/* Dialog Styles */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.dialog {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.dialog-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.dialog-close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+/* Form Styles */
+form {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+.path-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.path-input-group input {
+  flex: 1;
+}
+
+.browse-button {
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.browse-button:hover {
+  background: #e8e8e8;
+  border-color: #ccc;
+}
+
+.error-message {
+  margin: 16px 0;
+  padding: 12px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+  color: #c00;
+  font-size: 14px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.dialog-actions button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dialog-actions button[type="button"] {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.dialog-actions button[type="button"]:hover {
+  background: #e8e8e8;
+}
+
+.dialog-actions button[type="submit"] {
+  background: #007acc;
+  color: white;
+}
+
+.dialog-actions button[type="submit"]:hover {
+  background: #005a9e;
+}
+
+.dialog-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
