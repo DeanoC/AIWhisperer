@@ -16,6 +16,7 @@ import inspect
 import asyncio
 import uuid
 from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 from ai_whisperer.config import load_config
 from .stateless_session_manager import StatelessSessionManager
 from .message_models import (
@@ -135,6 +136,15 @@ async def session_handoff_handler(params, websocket=None):
         }
 
 app = FastAPI()
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # React dev servers
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include project management routes
 app.include_router(projects_router)
