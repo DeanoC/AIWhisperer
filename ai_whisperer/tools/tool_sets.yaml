@@ -72,12 +72,15 @@ agent_sets:
       - analyze_languages
       - find_similar_code
       - get_project_structure
+      - web_search
+      - fetch_url
     tags:
       - rfc
       - project_management
       - planning
       - analysis
       - codebase
+      - research
 
   # Tool set for testing agents
   tester:

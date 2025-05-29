@@ -90,6 +90,13 @@ class PlanRunner:
         tool_registry.register_tool(AnalyzeLanguagesTool())
         tool_registry.register_tool(FindSimilarCodeTool())
         tool_registry.register_tool(GetProjectStructureTool())
+        
+        # Register web research tools
+        from ai_whisperer.tools.web_search_tool import WebSearchTool
+        from ai_whisperer.tools.fetch_url_tool import FetchURLTool
+        
+        tool_registry.register_tool(WebSearchTool())
+        tool_registry.register_tool(FetchURLTool())
 
         logger.debug("Tools registered with ToolRegistry.")
 
