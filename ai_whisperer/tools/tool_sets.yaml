@@ -12,12 +12,16 @@ base_sets:
       - list_directory
       - search_files
       - get_file_content
+      - find_pattern
+      - workspace_stats
     tags:
       - filesystem
       - file_read
       - directory_browse
       - file_search
       - analysis
+      - pattern_matching
+      - statistics
 
   # File modification tools
   write_filesystem:

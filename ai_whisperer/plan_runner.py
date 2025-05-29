@@ -20,6 +20,7 @@ from .exceptions import OrchestratorError, PlanNotLoadedError
 from .plan_parser import ParserPlan
 from .state_management import StateManager
 from .execution_engine import ExecutionEngine
+from .path_management import PathManager
 from .logging_custom import (
     setup_logging,
     get_logger,
@@ -62,6 +63,15 @@ class PlanRunner:
         tool_registry.register_tool(ListDirectoryTool())
         tool_registry.register_tool(SearchFilesTool())
         tool_registry.register_tool(GetFileContentTool())
+        
+        # Register advanced analysis tools
+        from ai_whisperer.tools.find_pattern_tool import FindPatternTool
+        from ai_whisperer.tools.workspace_stats_tool import WorkspaceStatsTool
+        
+        # These tools need PathManager instance
+        path_manager = PathManager()
+        tool_registry.register_tool(FindPatternTool(path_manager))
+        tool_registry.register_tool(WorkspaceStatsTool(path_manager))
 
         logger.debug("Tools registered with ToolRegistry.")
 

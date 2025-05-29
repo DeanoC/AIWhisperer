@@ -118,20 +118,27 @@
   - [x] Document allow/deny list usage
   - [x] Provide configuration examples
 
-## Phase 4: Advanced Features 🔮
+## Phase 4: Advanced Features ✅
 
 ### Find Pattern Tool (grep-like)
-- [ ] Create `ai_whisperer/tools/find_pattern_tool.py`
-  - [ ] Support regex patterns
-  - [ ] Add context lines feature
-  - [ ] Implement result limiting
-  - [ ] Optimize for performance
+- [x] Create `ai_whisperer/tools/find_pattern_tool.py`
+  - [x] Support regex patterns
+  - [x] Add context lines feature
+  - [x] Implement result limiting
+  - [x] Optimize for performance with ThreadPoolExecutor
+  - [x] Add case sensitivity and whole word options
+  - [x] Implement directory and file type filtering
+  - [x] Write comprehensive tests
 
 ### Workspace Statistics Tool
-- [ ] Create tool for workspace analysis
-  - [ ] File count by type
-  - [ ] Directory size analysis
-  - [ ] Recent file changes
+- [x] Create tool for workspace analysis
+  - [x] File count by type
+  - [x] Directory size analysis
+  - [x] Recent file changes
+  - [x] File age distribution
+  - [x] Largest files tracking
+  - [x] Human-readable size formatting
+  - [x] Write comprehensive tests
 
 ### Caching Layer
 - [ ] Implement caching for repeated operations
@@ -178,7 +185,7 @@
 - **Phase 1**: 100% - COMPLETE ✅
 - **Phase 2**: 100% - COMPLETE ✅
 - **Phase 3**: 100% - COMPLETE ✅
-- **Phase 4**: 0% - Ready to start
+- **Phase 4**: 66% - Advanced tools implemented, caching deferred
 - **@ Reference Integration**: 100% - COMPLETE ✅
 
 ## Next Steps
@@ -186,7 +193,7 @@
 1. ~~Start with Phase 1: Add tags to existing tools~~ ✅
 2. ~~Implement core workspace tools (Phase 2)~~ ✅
 3. ~~Enhance tool system with sets and permissions (Phase 3)~~ ✅
-4. Implement advanced features (Phase 4)
+4. ~~Implement advanced features (Phase 4)~~ ✅ (except caching)
 
 ## Completed Features Summary
 
@@ -214,6 +221,20 @@
 - Implemented directory navigation with breadcrumbs and Backspace
 - Fixed cache deadlock in file service
 - Full integration between frontend file picker and backend file service
+
+### Phase 4 Achievements
+- Created FindPatternTool with regex pattern searching
+  - Supports case sensitivity, whole word matching, context lines
+  - File type and directory filtering
+  - Optimized with ThreadPoolExecutor for parallel searching
+- Created WorkspaceStatsTool for workspace analysis
+  - Tracks file/directory counts, sizes by extension
+  - Shows largest files and directory sizes
+  - Analyzes recent changes and file age distribution
+  - Human-readable size formatting
+- Both tools fully integrated with PathManager for security
+- Added get_ai_prompt_instructions to all tools for AI guidance
+- Comprehensive test coverage for all new features
 
 ## Notes
 
