@@ -11,7 +11,7 @@ interface ProjectIntegrationProps {
 }
 
 export function ProjectIntegration({ jsonRpcService }: ProjectIntegrationProps) {
-  const { setJsonRpcService, activeProject, loadProject } = useProject();
+  const { setJsonRpcService, activeProject, activateProject } = useProject();
 
   useEffect(() => {
     setJsonRpcService(jsonRpcService || null);
@@ -22,11 +22,12 @@ export function ProjectIntegration({ jsonRpcService }: ProjectIntegrationProps) 
     if (jsonRpcService && activeProject) {
       // Re-load the active project to ensure backend is in sync
       console.log('[ProjectIntegration] Re-establishing active project after reconnect:', activeProject.id);
-      loadProject(activeProject.id).catch(err => {
+      activateProject(activeProject.id).catch((err: Error) => {
         console.error('[ProjectIntegration] Failed to re-establish project:', err);
       });
     }
-  }, [jsonRpcService, activeProject?.id]); // Only trigger when jsonRpcService changes
+    // Only depend on jsonRpcService changing, not activeProject
+  }, [jsonRpcService]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null; // This component doesn't render anything
 }
