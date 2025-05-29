@@ -400,6 +400,15 @@ class StatelessInteractiveSession:
             # Process message with streaming
             result = await agent.process_message(message, on_stream_chunk=send_chunk)
             
+            # Defensive: ensure result is a dict
+            if not isinstance(result, dict):
+                logger.error(f"Unexpected result type from agent.process_message: {type(result)}")
+                result = {
+                    'response': str(result) if result else None,
+                    'finish_reason': 'error',
+                    'error': f'Unexpected result type: {type(result)}'
+                }
+            
             # Send final notification
             final_notification = AIMessageChunkNotification(
                 sessionId=self.session_id,
@@ -427,7 +436,13 @@ class StatelessInteractiveSession:
                 logger.debug("Reset continuation depth to 0")
             
             # Check if continuation is needed (like old delegate system)
-            if await self._should_continue_after_tools(result, message):
+            try:
+                should_continue = await self._should_continue_after_tools(result, message)
+            except Exception as e:
+                logger.error(f"Error in _should_continue_after_tools: {e}", exc_info=True)
+                should_continue = False
+            
+            if should_continue:
                 # Check continuation depth to prevent infinite loops
                 if self._continuation_depth >= self._max_continuation_depth:
                     logger.warning(f"Hit max continuation depth ({self._max_continuation_depth}), stopping continuation")
@@ -656,14 +671,35 @@ class StatelessInteractiveSession:
             # Check if Patricia needs to continue after listing RFCs
             if 'list_rfcs' in tool_names:
                 # Check if original message implies creation
-                create_keywords = ['create', 'new', 'add', 'make', 'generate']
+                create_keywords = ['create', 'new', 'add', 'make', 'generate', 'write', 'draft']
                 message_lower = original_message.lower()
                 if any(keyword in message_lower for keyword in create_keywords):
                     # User asked to create, but Patricia only listed
+                    logger.info(f"Patricia: Detected creation intent in '{original_message}' after list_rfcs")
+                    return True
+                
+                # Also check if the message asks for a specific RFC that doesn't exist
+                # This is harder to detect without parsing the list_rfcs output
+                # but we can check for phrases like "RFC for X"
+                if 'rfc for' in message_lower or 'rfc about' in message_lower:
+                    logger.info(f"Patricia: Detected specific RFC request in '{original_message}' after list_rfcs")
                     return True
         
         # Check for explicit multi-step indicators in response
         response_text = result.get('response', '').lower()
+        
+        # Special handling for empty or tool-only responses
+        if not response_text or response_text.strip().startswith('🔧'):
+            # If Patricia called list_rfcs with no text response, check the context
+            if self.active_agent and self.active_agent.lower() == 'p' and 'list_rfcs' in tool_names:
+                # Patricia often doesn't say anything when listing RFCs, just executes the tool
+                # So we need to check the original intent more carefully
+                message_lower = original_message.lower()
+                action_keywords = ['create', 'new', 'add', 'make', 'generate', 'write', 'draft', 'update', 'move']
+                if any(keyword in message_lower for keyword in action_keywords):
+                    logger.info(f"Patricia: Empty response after list_rfcs but action intent detected")
+                    return True
+        
         continuation_phrases = [
             'let me', 'now i', "i'll", 'next', 'then i',
             'following that', 'after that'

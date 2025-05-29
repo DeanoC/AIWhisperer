@@ -78,11 +78,36 @@ class StatelessAILoop:
             
             # Get message history
             messages = context_provider.retrieve_messages()
-            logger.debug(f"Processing with {len(messages)} messages, first message role: {messages[0].get('role') if messages else 'N/A'}")
+            
+            # Ensure all messages are dicts (defensive programming)
+            validated_messages = []
+            for msg in messages:
+                if isinstance(msg, str):
+                    logger.warning(f"Found string message in context, converting to dict: {msg[:100]}...")
+                    validated_messages.append({"role": "user", "content": msg})
+                elif isinstance(msg, dict):
+                    validated_messages.append(msg)
+                else:
+                    logger.error(f"Found unexpected message type in context: {type(msg)}")
+                    # Skip invalid messages
+                    continue
+            messages = validated_messages
+            
+            if messages and isinstance(messages[0], dict):
+                first_role = messages[0].get('role', 'unknown')
+            else:
+                first_role = 'N/A'
+            logger.debug(f"Processing with {len(messages)} messages, first message role: {first_role}")
             
             # If no messages were stored, add the current message
-            if not store_messages and not any(msg.get('content') == message for msg in messages):
-                messages = messages + [{"role": "user", "content": message}]
+            if not store_messages:
+                # Check if current message already exists in messages
+                message_exists = any(
+                    isinstance(msg, dict) and msg.get('content') == message 
+                    for msg in messages
+                )
+                if not message_exists:
+                    messages = messages + [{"role": "user", "content": message}]
             
             # Get tools if not provided
             if tools is None:
