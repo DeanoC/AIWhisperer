@@ -115,11 +115,24 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 - Custom agent creation UI
 - Agent marketplace/sharing
 
-### Context Management
+### Context Management (Extended)
 - Persistent context across sessions
 - Context templates for common scenarios
 - Context versioning
 - Shared context between agents
+- **API Endpoints for Context Management**
+  - GET /api/context/{session_id}/{agent_id} - Get current context
+  - POST /api/context/refresh - Refresh stale items
+  - DELETE /api/context/item/{item_id} - Remove specific item
+  - GET /api/context/history/{session_id} - Context access history
+  - POST /api/context/template - Save context as template
+  - GET /api/context/templates - List available templates
+- **Context-Aware Features**
+  - Auto-suggest related files based on context
+  - Context-based code completion hints
+  - Warning when referencing outdated context
+  - Context search (find in all context items)
+  - Context bookmarks for important sections
 
 ## Interactive Mode Enhancements
 
@@ -168,6 +181,10 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 
 ### Version Control
 - Deep git integration
+  - Show git blame info in context items
+  - Track context items across git history
+  - Auto-refresh context on git pull
+  - Context diff between branches
 - Support for other VCS (SVN, Mercurial)
 - Automated commit message generation
 - Branch management UI
@@ -223,11 +240,40 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 
 **Still TODO for Context Tracking:**
 - File watching for automatic refresh
+  - Use watchdog library for file system monitoring
+  - Queue refresh operations for batch processing
+  - Configurable refresh policies (auto/manual/hybrid)
 - Context panel UI component
+  - Show files/sections in current context
+  - Freshness indicators (green/yellow/red based on staleness)
+  - Quick actions (refresh, remove, view full file)
+  - Context size and token count display
 - Context timeline visualization
+  - Visual timeline of when files were added/removed
+  - Show file modifications over time
+  - Context size changes graph
+  - Agent switch events on timeline
 - Cross-agent context sharing
+  - Ability to transfer context between agents
+  - Shared context pool for common files
+  - Context inheritance when switching agents
 - Smart section extraction (AST parsing)
+  - Extract relevant functions/classes for context
+  - Language-aware parsing (Python, JS, etc.)
+  - Automatic related code discovery
+  - Context compression for large files
 - Context persistence/storage layer
+  - SQLite/PostgreSQL storage backend
+  - Context versioning and history
+  - Export/import context sets
+  - Context analytics and usage patterns
+- Advanced Context Features
+  - Context templates for common tasks
+  - ML-based relevance scoring for context items
+  - Automatic context pruning based on usage
+  - Context diff visualization (what changed)
+  - Integration with git for tracking file changes
+  - Context recommendations based on current task
 
 ## Recently Deferred Items
 
@@ -243,4 +289,4 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 
 ---
 
-*Last Updated: 2024-01-29*
+*Last Updated: 2025-05-29*
