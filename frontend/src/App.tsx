@@ -57,6 +57,25 @@ function App() {
     }
   }, [ws, wsStatus]);
 
+  // AI session management
+  const {
+    sessionInfo,
+    status: sessionStatus,
+    error: sessionError,
+    startSession,
+    sendUserMessage
+  } = useAISession(aiService, USER_ID);
+
+  // Chat state management
+  const {
+    messages,
+    loading,
+    addUserMessage,
+    startAIMessage,
+    appendAIChunk,
+    addSystemMessage,
+  } = useChat({ currentAgentId: currentAgent?.id });
+
   // Function to reload agents
   const reloadAgents = useCallback(async () => {
     if (!aiService) return;
@@ -108,25 +127,6 @@ function App() {
       window.removeEventListener('workspace-changed', handleWorkspaceChange);
     };
   }, [reloadAgents]);
-
-  // AI session management
-  const {
-    sessionInfo,
-    status: sessionStatus,
-    error: sessionError,
-    startSession,
-    sendUserMessage
-  } = useAISession(aiService, USER_ID);
-
-  // Chat state management
-  const {
-    messages,
-    loading,
-    addUserMessage,
-    startAIMessage,
-    appendAIChunk,
-    addSystemMessage,
-  } = useChat({ currentAgentId: currentAgent?.id });
 
   // Start session and load agents on mount
   useEffect(() => {
