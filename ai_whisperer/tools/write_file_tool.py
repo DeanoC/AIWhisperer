@@ -3,8 +3,8 @@ import pathlib
 from typing import Any, Dict
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.delegate_manager import DelegateManager
-from monitor.user_message_delegate import UserMessageLevel
+# Delegate system removed
+from ai_whisperer.user_message_level import UserMessageLevel
 from ai_whisperer.path_management import PathManager
 from ai_whisperer.exceptions import FileRestrictionError
 

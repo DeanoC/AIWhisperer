@@ -10,10 +10,9 @@ from typing import Optional
 
 from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.context_management import ContextManager
-from ai_whisperer.delegate_manager import DelegateManager
+# Delegate system removed
 from ai_whisperer.execution_engine import ExecutionEngine
-from monitor.user_message_delegate import UserMessageLevel # Import Optional
-from monitor.basic_output_display_message import ANSIConsoleUserMessageHandler
+from .user_message_level import UserMessageLevel
 from .state_management import StateManager # Import StateManager
 
 from .config import load_config

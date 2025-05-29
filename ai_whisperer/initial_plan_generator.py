@@ -12,7 +12,7 @@ from typing import Dict, Any
 
 from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
-from ai_whisperer.delegate_manager import DelegateManager
+# Delegate system removed
 from ai_whisperer.exceptions import ConfigError, OpenRouterAIServiceError, HashMismatchError, ProcessingError, OrchestratorError
 from ai_whisperer.utils import calculate_sha256, build_ascii_directory_tree
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService

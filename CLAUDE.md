@@ -9,12 +9,12 @@ AIWhisperer is a Python CLI tool that uses AI models via OpenRouter to automate 
 ## Key Architecture Components
 
 ### Core Systems
-- **AI Loop** (`ai_whisperer/ai_loop/`): Manages AI interactions and conversation flow with delegate-based event handling
-- **Agent System** (`ai_whisperer/agents/`): Modular handlers for different task types (code generation, planning, validation)
-- **Execution Engine** (`ai_whisperer/execution_engine.py`): Orchestrates plan execution with state management
+- **AI Loop** (`ai_whisperer/ai_loop/`): Manages AI interactions with stateless architecture and direct streaming
+- **Agent System** (`ai_whisperer/agents/`): Modular handlers with specialized agents (Alice, Patricia, Tessa)
+- **Stateless Session Management** (`interactive_server/stateless_session_manager.py`): Handles concurrent sessions without delegates
 - **Tool Registry** (`ai_whisperer/tools/`): Pluggable tools for file operations and command execution
 - **Postprocessing Pipeline** (`postprocessing/`): Cleans and enhances AI-generated content
-- **Config Management** (`@ai_whisperer/config.py`): Handles API keys and other important configuration items
+- **Config Management** (`ai_whisperer/config.py`): Handles API keys and configuration
 
 ### Interactive Mode
 - **Backend** (`interactive_server/`): FastAPI server with WebSocket support for real-time communication
@@ -68,8 +68,9 @@ python -m ai_whisperer.main generate initial-plan requirements.md
 # List available models
 python -m ai_whisperer.main list-models --config config.yaml --output-csv models.csv
 
-# Run a plan with monitoring
-python -m ai_whisperer.main run --plan-file plan.json --state-file state.json --config config.yaml --monitor
+# Interactive mode is now the primary way to execute plans
+# CLI run command still available for batch processing
+python -m ai_whisperer.main run --plan-file plan.json --state-file state.json --config config.yaml
 
 # Start interactive server
 python -m interactive_server.main
@@ -116,9 +117,9 @@ Prompts are loaded from files, never inlined:
 
 ### Agent Development
 When creating new agents:
-1. Extend `BaseAgentHandler`
-2. Register in `agent_handlers/__init__.py`
-3. Create corresponding prompt in `prompts/agents/`
+1. Define agent in `agents.yaml` configuration
+2. Create system prompt in `prompts/agents/agent_name.prompt.md`
+3. Register in `AgentRegistry` if needed
 4. Add tests in `tests/unit/test_agent_*.py`
 
 ### Tool Development
@@ -154,6 +155,7 @@ Interactive mode uses JSON-RPC 2.0 over WebSocket:
 - Clean up resources properly in all error paths
 
 ### Current Development Focus
-- Agent Inspector feature for debugging context
-- Command system refactoring for modularity
-- Enhanced interactive mode capabilities
+- Stateless architecture refinement
+- Agent system enhancements
+- Interactive mode improvements
+- Performance optimization for WebSocket streaming

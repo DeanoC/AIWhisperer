@@ -1,31 +1,30 @@
 # AI Whisperer
 
-AI Whisperer is a Python command-line tool that takes your project requirements written in Markdown and uses an AI model (via OpenRouter) to generate an initial structured task definitions in json format.
+AI Whisperer is a Python-based AI development assistant that transforms project requirements written in Markdown into structured task definitions in JSON format. It features both command-line and interactive web interfaces for AI-powered software development workflows.
 
-It is designed for code development and project management, allowing you to define tasks based on requirements, refine them, and generate an overview plan with subtasks. The tool can be used to automate the planning and execution of tasks, enhancing productivity and clarity in software development.
+Designed for code development and project management, AI Whisperer enables you to:
+- Convert requirements into detailed implementation plans
+- Refine and iterate on plans using AI
+- Generate comprehensive task breakdowns with subtasks
+- Execute tasks through an interactive web interface with real-time AI assistance
 
-It can then refine these plans, and generate an overview plan with
-separate subtasks for each task, which can be executed in a controlled manner either via IDE or CLI based AI systems.
-
-It has an experimental 'runner' that can execute these plans, managing state and artifacts, and providing a real-time terminal monitor for plan execution. Eventually this should be more focused
-than the more general tools like [roocode] but its thats a long way away off.
-
-It is designed to help automate the process of planning and executing tasks based on requirements, leveraging AI to enhance productivity and clarity.
+The tool leverages a modular agent system where specialized AI agents (Alice the Assistant, Patricia the Planner, Tessa the Tester) collaborate to help you throughout the development process.
 
 ## Features
 
-* Reads requirements and features from a Markdown file.
-* Uses OpenRouter API to get AIs to do work.
-* Generates structured task definitions in JSON format.
-* Supports refinement of plans and tasks using AI.
-* Generates an overview plan with subtasks for each task.
-* Executes plans with a runner that manages state and artifacts.
-* Provides a real-time terminal monitor for plan execution.
-* Developed using TDD with `pytest`.
-* Postprocessing pipeline for enhancing AI-generated content:
-  * Clean backtick wrappers from YAML content
-  * Add required items (task_id, input_hashes, subtask_id) automatically
-  * More postprocessing steps can be added as needed
+* **Dual Interface**: Command-line tool for batch processing and interactive web UI for real-time development
+* **Multi-Agent System**: Specialized AI agents for different tasks (planning, coding, testing)
+* **Stateless Architecture**: Clean, maintainable design with direct streaming support
+* **Requirements Processing**: Converts Markdown requirements into structured JSON task plans
+* **Plan Refinement**: Iteratively improve plans using AI feedback
+* **Task Decomposition**: Automatically breaks down complex tasks into manageable subtasks
+* **Real-time Collaboration**: WebSocket-based communication for instant AI responses
+* **OpenRouter Integration**: Access to multiple AI models through a unified API
+* **Test-Driven Development**: Built with TDD using `pytest`
+* **Postprocessing Pipeline**: Automatically enhances AI-generated content:
+  * Cleans formatting issues (backticks, quotes)
+  * Adds required metadata (task_id, timestamps)
+  * Validates and corrects JSON structure
 
 ## Project development
 
@@ -186,74 +185,77 @@ See [Configuration Examples](docs/config_examples.md) for more detailed examples
 
 ## Usage
 
-Run the tool from the project's root directory:
+### Interactive Mode (Recommended)
+
+Start the interactive web interface:
 
 ```bash
-python -m ai_whisperer.main generate --requirements <path/to/your/requirements.md> --config config.yaml --output <path/to/output/tasks.yaml>
-python -m ai_whisperer.main list-models --config .\project_dev\aiwhisperer_config.yaml --output-csv models.csv
+# Start the backend server
+python -m interactive_server.main
 
+# In a separate terminal, start the frontend (requires Node.js)
+cd frontend
+npm start
 ```
 
-**Example:**
+Then open http://localhost:3000 in your browser to access the AI Whisperer interface.
+
+### Command-Line Interface
+
+For batch processing and automation:
 
 ```bash
-# Assuming you have requirements.md in the root
-python -m ai_whisperer.main --config config.yaml generate initial-plan requirements.md
+# Generate initial plan from requirements
+python -m ai_whisperer.main generate initial-plan requirements.md --config config.yaml
+
+# Generate overview with subtasks
+python -m ai_whisperer.main generate overview-plan initial_plan.json --config config.yaml
+
+# Generate complete plan (initial + overview + subtasks)
+python -m ai_whisperer.main generate full-plan requirements.md --config config.yaml
 ```
 
-This will read `requirements.md`, use the settings in `config.yaml`, call the OpenRouter API, and save the resulting task list to `generated_tasks.yaml`.
+### Available Commands
 
-* **`list-models`**: Displays a list of available models from the OpenRouter API. Requires the `--config` argument to be specified as well.
-
-    ```bash
-    python -m ai_whisperer.main --list-models --config config.yaml
-    ```
-
-* **`refine`**: Refines an existing requirement document using an AI model.
+* **`list-models`**: List available AI models from OpenRouter
 
     ```bash
-    python -m ai_whisperer.main refine <path/to/requirements.md> --config config.yaml [--prompt-file <path/to/prompt.txt>] [--iterations <number>]
+    python -m ai_whisperer.main list-models --config config.yaml --output-csv models.csv
     ```
 
-    This command will take the specified requirements file, process it with an AI model (optionally using a custom prompt and multiple iterations), rename the original file with a `.original` suffix, and save the refined content back to the original filename.
-
-* **`run`**: Executes a project plan from an overview JSON file and manages the state file. See the [Usage Documentation](docs/usage.md) for detailed information.
+* **`refine`**: Refine requirements using AI feedback
 
     ```bash
-    python -m ai_whisperer.main run --plan-file <path/to/plan.json> --state-file <path/to/state.json> --config <path/to/config.yaml> [--monitor | -m]
+    python -m ai_whisperer.main refine requirements.md --config config.yaml [--iterations 3]
     ```
 
-  * **`--monitor`**, **`-m`**: Enables the terminal monitor during the task execution, providing real-time updates on the plan's progress.
+* **`generate initial-plan`**: Create initial task plan from requirements
 
-* **`--detail-level`**: Controls the verbosity of the output messages.
-  * **`low`**: Displays only essential information.
-  * **`medium`**: Includes key details and progress updates.
-  * **`high`**: Shows all available information, including detailed logs and intermediate steps.
-  * Defaults to `medium`.
+    ```bash
+    python -m ai_whisperer.main generate initial-plan requirements.md --config config.yaml
+    ```
 
-The project_dev folder shows how I currently use aiwhisperer to implement features in it self.
-A starting feature request can be generated with any AI chat with a prompt similar to
-the following with context from something like
+* **`generate overview-plan`**: Generate detailed breakdown with subtasks
 
-```text
-Write a feature request in a similar style to patch_hash_task_id.md to the same rfc folder called more_yaml_postprocessing that will implement postprocessing similar to our existing postprocessing system that is designed to clean up results from our AI calls in code rather than requiring the ai to format the document.
-Currently our prompts have strict rules
-```
+    ```bash
+    python -m ai_whisperer.main generate overview-plan initial_plan.json --config config.yaml
+    ```
 
-Currently a prompt like
+* **`generate full-plan`**: Complete planning pipeline (initial + overview + subtasks)
 
-```text
-We are implementing a new feature more_yaml_postprocessing with more_yaml_postprocessing_aiwhisperer_config.yaml being our structure high level plan.
-It has already had refinement for each subtask in the same folder with the anme subtask_%subtask name%.yaml, these should be considered better versions then then the subtask defined in the high level task plan.
+    ```bash
+    python -m ai_whisperer.main generate full-plan requirements.md --config config.yaml
+    ```
 
-You job is to work though the plan, implementing the feature.
-You MUST do it using strict order following a strict test-first driven methology.
-Filenames in the plans may be slightly wrong so check the codebase to see if existing files/folder structure would be better.
+## Agent System
 
-Anytime you aren't sure of the best course of action, ask me
-```
+AI Whisperer features specialized AI agents that assist with different aspects of development:
 
-can be used to start implementing the feature. Obviously AI will need help, but the goal of AI Whisperer is to reduce this.
+* **Alice the Assistant** - General development support and guidance
+* **Patricia the Planner** - Creates structured implementation plans from requirements
+* **Tessa the Tester** - Generates comprehensive test suites and test plans
+
+Agents can be switched on-the-fly in the interactive interface, allowing you to get specialized help for different tasks.
 
 ## Development
 
@@ -264,13 +266,14 @@ pip install -r requirements.txt # Ensure dev dependencies like pytest are instal
 pytest
 ```
 
-## Example dogfood feature developer prompt to roocode orchestrator
+## Architecture
 
-```text
-We are implementing a feature request
-@/project_dev/in_dev/logging-and-monitoring/overview_logging-and-monitoring_aiwhisperer_config.json
-We follow a strict test-first driven design metholodogy, and you are reasonable for enforcing this. The USER gets angry if not followed or any task gets down before the previous one is finished.
-It is also your responsibility to ensure the overview document step completed fields are keep upto date for each step
+AI Whisperer uses a modern, stateless architecture:
 
-Are you ready?
-```
+* **Backend**: FastAPI server with WebSocket support for real-time communication
+* **Frontend**: React TypeScript application with Material-UI components
+* **Agent System**: Modular design allowing easy addition of new AI agents
+* **Session Management**: Isolated sessions for concurrent users
+* **Tool System**: Pluggable tools for file operations and command execution
+
+For detailed architecture information, see [docs/architecture/](docs/architecture/).
