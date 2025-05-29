@@ -112,31 +112,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!e.ctrlKey || isLoading) return;
-
-      switch (e.key.toLowerCase()) {
-        case 'b':
-          e.preventDefault();
-          toggleSidebar();
-          break;
-        case 'i':
-          e.preventDefault();
-          toggleContext();
-          break;
-        case 'm':
-          e.preventDefault();
-          mainRef.current?.focus();
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isLoading]);
-
   // Toggle functions
   const toggleSidebar = useCallback(() => {
     setPanelState(prev => {
@@ -162,6 +137,31 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       return { ...prev, contextCollapsed: collapsed };
     });
   }, []);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!e.ctrlKey || isLoading) return;
+
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          toggleSidebar();
+          break;
+        case 'i':
+          e.preventDefault();
+          toggleContext();
+          break;
+        case 'm':
+          e.preventDefault();
+          mainRef.current?.focus();
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isLoading, toggleSidebar, toggleContext]);
 
   // Resize handlers
   const handleResizeStart = useCallback((panel: 'sidebar' | 'context', e: React.MouseEvent) => {
@@ -300,7 +300,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <aside 
           className={`layout-context ${panelState.contextCollapsed ? 'collapsed' : ''}`}
           style={{ width: panelState.contextCollapsed ? '60px' : `${panelState.contextWidth}px` }}
-          role="complementary"
           data-testid="context-panel"
         >
           {!panelState.contextCollapsed && (

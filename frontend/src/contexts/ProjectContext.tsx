@@ -95,6 +95,15 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     }
   };
 
+  const refreshProjects = useCallback(async () => {
+    try {
+      const recent = await projectService.getRecentProjects();
+      setRecentProjects(recent);
+    } catch (err) {
+      console.error('Failed to refresh projects:', err);
+    }
+  }, []);
+
   const connectWorkspace = useCallback(async (name: string, path: string, description?: string, outputPath?: string) => {
     try {
       setError(null);
@@ -110,7 +119,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
       setError(err.message);
       throw err;
     }
-  }, []);
+  }, [refreshProjects]);
 
   const activateProject = useCallback(async (projectId: string) => {
     try {
@@ -127,7 +136,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
       setError(err.message);
       throw err;
     }
-  }, []);
+  }, [refreshProjects]);
 
   const updateProject = useCallback(async (projectId: string, updates: any) => {
     try {
@@ -171,16 +180,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
       setError(err.message);
       throw err;
     }
-  }, []);
-
-  const refreshProjects = useCallback(async () => {
-    try {
-      const recent = await projectService.getRecentProjects();
-      setRecentProjects(recent);
-    } catch (err) {
-      console.error('Failed to refresh projects:', err);
-    }
-  }, []);
+  }, [refreshProjects]);
 
   const updateUISettings = useCallback(async (settings: UISettings) => {
     try {
@@ -191,7 +191,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
       setError(err.message);
       throw err;
     }
-  }, []);
+  }, [refreshProjects]);
 
   const value: ProjectContextType = {
     activeProject,

@@ -20,9 +20,6 @@ import { ProjectIntegration } from './components/ProjectIntegration';
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 const USER_ID = 'demo-user';
 
-// This will be loaded from backend
-let AGENTS: Agent[] = [];
-
 function App() {
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>(
@@ -35,10 +32,9 @@ function App() {
   // AIService instance
   const [aiService, setAIService] = useState<AIService | undefined>(undefined);
 
-  // Current agent and plan state
+  // Current agent state
   const [agents, setAgents] = useState<Agent[]>([]);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
-  const [currentPlan, setCurrentPlan] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // JSON-RPC service for reuse
@@ -62,7 +58,6 @@ function App() {
 
   // AI session management
   const {
-    sessionInfo,
     status: sessionStatus,
     error: sessionError,
     startSession,
@@ -101,7 +96,6 @@ function App() {
         shortcut: agent.shortcut
       }));
       setAgents(mappedAgents);
-      AGENTS = mappedAgents;
       
       // If current agent is not in the new list, switch to Alice
       if (currentAgent && !mappedAgents.find((a: Agent) => a.id === currentAgent.id)) {
@@ -135,6 +129,22 @@ function App() {
     };
   }, [reloadAgents]);
 
+  // Handle agent switch
+  const handleAgentSelect = useCallback(async (agentId: string) => {
+    if (!aiService || sessionStatus !== SessionStatus.Active) return;
+    
+    setIsLoading(true);
+    try {
+      await aiService.switchAgent(agentId.toLowerCase());
+      // Don't update state here - the agent.switched notification will handle it
+    } catch (error) {
+      console.error('Failed to switch agent:', error);
+      addSystemMessage('Failed to switch agent');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [aiService, sessionStatus, addSystemMessage]);
+
   // Start session and load agents on mount
   useEffect(() => {
     const initializeSession = async () => {
@@ -157,7 +167,6 @@ function App() {
             shortcut: agent.shortcut
           }));
           setAgents(mappedAgents);
-          AGENTS = mappedAgents; // Update global for compatibility
           
           // Get current agent from backend
           const currentAgentId = await aiService.getCurrentAgent();
@@ -180,25 +189,9 @@ function App() {
     };
 
     initializeSession();
-  }, [aiService, sessionStatus, startSession]);
+  }, [aiService, sessionStatus, startSession, handleAgentSelect]);
 
   // No need for separate sync, handled in initialization
-
-  // Handle agent switch
-  const handleAgentSelect = useCallback(async (agentId: string) => {
-    if (!aiService || sessionStatus !== SessionStatus.Active) return;
-    
-    setIsLoading(true);
-    try {
-      await aiService.switchAgent(agentId.toLowerCase());
-      // Don't update state here - the agent.switched notification will handle it
-    } catch (error) {
-      console.error('Failed to switch agent:', error);
-      addSystemMessage('Failed to switch agent');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [aiService, sessionStatus, addSystemMessage]);
 
   // Handle handoff to agent
   const handleHandoffToAgent = useCallback(async (agentId: string) => {
@@ -214,7 +207,7 @@ function App() {
       console.error('Failed to handoff:', error);
       addSystemMessage('Failed to handoff to agent');
     }
-  }, [aiService, sessionStatus, addSystemMessage]);
+  }, [aiService, sessionStatus, addSystemMessage, agents]);
 
   // Send message handler
   const handleSendMessage = useCallback(async (text: string) => {
@@ -425,7 +418,6 @@ function App() {
             theme={theme} 
             isLoading={isLoading}
             currentAgent={agentContext}
-            currentPlan={currentPlan}
             onThemeToggle={toggleTheme}
           >
           <Routes>
