@@ -116,6 +116,29 @@ Prompts are loaded from files, never inlined:
 
 ## Key Development Patterns
 
+### Agent Architecture and Tool Integration
+
+**IMPORTANT ARCHITECTURAL PRINCIPLE**: Agents should work **through the normal AI tool system**, not through separate handlers that bypass the AI loop.
+
+**The Right Way**:
+- Agent receives message → AI processes with system prompt → AI decides to use tools → Tools execute through ToolRegistry → Results incorporated into response
+- Tools are registered in the ToolRegistry and made available to the AI
+- Agent behavior is controlled through system prompts, not custom code paths
+- The AI makes autonomous decisions about when and how to use tools
+
+**The Wrong Way**:
+- Agent receives message → Custom handler intercepts → Handler bypasses AI to execute tools directly
+- This breaks the AI's autonomy and creates fragile, hard-coded behavior
+- Results in agents that don't feel natural or intelligent
+
+**Example**: Agent Patricia (RFC specialist) should use her system prompt to instruct the AI to call `create_rfc()`, `analyze_languages()`, etc. The AI should decide when to use these tools based on context, not through predetermined logic.
+
+**Key Implementation Points**:
+1. Register all tools in `ToolRegistry` during session initialization
+2. Make agent system prompts explicit about tool usage with examples
+3. Let the AI decide which tools to use and when
+4. Avoid custom message routing that bypasses the AI loop
+
 ### Agent Development
 When creating new agents:
 1. Define agent in `agents.yaml` configuration
@@ -162,3 +185,16 @@ Interactive mode uses JSON-RPC 2.0 over WebSocket:
 - Agent system enhancements
 - Interactive mode improvements
 - Performance optimization for WebSocket streaming
+
+### Agent Architecture and Tool Integration
+
+**IMPORTANT ARCHITECTURAL PRINCIPLE**: Agents should work **through the normal AI tool system**, not through separate handlers that bypass the AI loop.
+
+#### Continuation Mechanism
+The stateless session manager implements automatic continuation for multi-step tool operations:
+- **Single-tool models** (like Gemini): Automatically continues after each tool call
+- **Multi-tool models** (like GPT-4): Executes all tools in one turn
+- **Depth limiting**: Maximum 3 continuation levels to prevent infinite loops
+- **Smart detection**: Only continues when the AI indicates more steps are needed
+
+This ensures that agents like Patricia can perform complex multi-step operations (e.g., creating RFCs after listing them) regardless of the underlying model's capabilities.

@@ -9,7 +9,7 @@ from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.exceptions import TaskExecutionError, FileRestrictionError, PromptNotFoundError
 from ai_whisperer.tools.tool_registry import get_tool_registry
 from ai_whisperer.path_management import PathManager
-from ai_whisperer.delegate_manager import DelegateManager
+# Delegate system removed
 from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get_logger, log_event  # Import logging components and log_event
 from ai_whisperer.state_management import StateManager
 from ai_whisperer.plan_parser import ParserPlan
@@ -32,7 +32,7 @@ class ExecutionEngine:
     Integrates logging and a general delegation system for visibility and control of the execution process.
     """
 
-    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, delegate_manager: DelegateManager, shutdown_event: threading.Event = None):
+    def __init__(self, state_manager: StateManager, config: dict, prompt_system: PromptSystem, delegate_manager=None, shutdown_event: threading.Event = None):
         """
         Initializes the ExecutionEngine.
 

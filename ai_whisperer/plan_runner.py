@@ -77,10 +77,14 @@ class PlanRunner:
         from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
         from ai_whisperer.tools.read_rfc_tool import ReadRFCTool
         from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
+        from ai_whisperer.tools.update_rfc_tool import UpdateRFCTool
+        from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
         
         tool_registry.register_tool(CreateRFCTool())
         tool_registry.register_tool(ReadRFCTool())
         tool_registry.register_tool(ListRFCsTool())
+        tool_registry.register_tool(UpdateRFCTool())
+        tool_registry.register_tool(MoveRFCTool())
         
         # Register codebase analysis tools
         from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool

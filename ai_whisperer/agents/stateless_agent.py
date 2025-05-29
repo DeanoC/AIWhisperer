@@ -4,7 +4,7 @@ This agent doesn't manage sessions or use delegates - it simply processes
 messages through the AI loop and returns results directly.
 """
 import logging
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Dict, Optional, Callable, List
 
 from ai_whisperer.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
@@ -19,7 +19,7 @@ class StatelessAgent:
     Each message is processed independently through the AI loop.
     """
     
-    def __init__(self, config: AgentConfig, context: AgentContext, ai_loop: StatelessAILoop):
+    def __init__(self, config: AgentConfig, context: AgentContext, ai_loop: StatelessAILoop, agent_registry_info=None):
         """
         Initialize a stateless agent.
         
@@ -27,6 +27,7 @@ class StatelessAgent:
             config: Agent configuration
             context: Agent context for storing conversation history
             ai_loop: Stateless AI loop instance
+            agent_registry_info: Optional agent info from AgentRegistry for tool filtering
             
         Raises:
             ValueError: If any required parameter is None
@@ -41,6 +42,7 @@ class StatelessAgent:
         self.config = config
         self.context = context
         self.ai_loop = ai_loop
+        self.agent_registry_info = agent_registry_info
         
         logger.info(f"Created stateless agent: {config.name}")
     
@@ -79,11 +81,15 @@ class StatelessAgent:
             # Extract store_messages parameter if provided
             store_messages = kwargs.get('store_messages', True)
             
-            # Process through stateless AI loop
+            # Get filtered tools for this agent
+            tools = self._get_agent_tools()
+            
+            # Process through stateless AI loop with agent-specific tools
             result = await self.ai_loop.process_with_context(
                 message=message,
                 context_provider=self.context,
                 on_stream_chunk=on_stream_chunk,
+                tools=tools,  # Pass filtered tools
                 store_messages=store_messages,
                 **generation_params
             )
@@ -104,8 +110,11 @@ class StatelessAgent:
                     'finish_reason': result['finish_reason']
                 }
             else:
-                # Return just the response text for simple messages
-                return result['response']
+                # Return full result for consistency
+                return {
+                    'response': result['response'],
+                    'finish_reason': result.get('finish_reason', 'stop')
+                }
                 
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -150,6 +159,42 @@ class StatelessAgent:
     def system_prompt(self) -> str:
         """Get the system prompt."""
         return self.config.system_prompt
+    
+    def _get_agent_tools(self) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get filtered tools for this agent based on registry configuration.
+        
+        Returns:
+            List of tool definitions for this agent, or None to use all tools
+        """
+        if not self.agent_registry_info:
+            # No registry info, use all tools (fallback behavior)
+            logger.debug(f"Agent {self.config.name}: No registry info, using all tools")
+            return None
+        
+        try:
+            from ai_whisperer.tools.tool_registry import get_tool_registry
+            
+            tool_registry = get_tool_registry()
+            
+            # Get filtered tools based on agent configuration
+            filtered_tools = tool_registry.get_tools_for_agent(
+                tool_sets=getattr(self.agent_registry_info, 'tool_sets', None),
+                tags=getattr(self.agent_registry_info, 'tool_tags', None),
+                allow_tools=getattr(self.agent_registry_info, 'allow_tools', None),
+                deny_tools=getattr(self.agent_registry_info, 'deny_tools', None)
+            )
+            
+            # Convert tools to OpenRouter tool definitions
+            tool_definitions = [tool.get_openrouter_tool_definition() for tool in filtered_tools]
+            
+            logger.info(f"Agent {self.config.name}: Using {len(tool_definitions)} filtered tools")
+            return tool_definitions
+            
+        except Exception as e:
+            logger.error(f"Failed to get filtered tools for agent {self.config.name}: {e}")
+            # Fallback to all tools on error
+            return None
     
     def __repr__(self) -> str:
         """String representation of the agent."""

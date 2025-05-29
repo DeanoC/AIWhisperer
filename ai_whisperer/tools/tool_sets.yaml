@@ -68,6 +68,8 @@ agent_sets:
     tools:
       - create_rfc
       - read_rfc
+      - update_rfc
+      - move_rfc
       - list_rfcs
       - analyze_languages
       - find_similar_code

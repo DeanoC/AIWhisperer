@@ -56,7 +56,7 @@ class AILoop:
     - ai_loop.error: Emitted when an unhandled exception occurs within the AI loop.
       event_data: The exception object.
     """
-    def __init__(self, config: AIConfig, ai_service: AIService, context_manager: ContextManager, delegate_manager: DelegateManager, get_agent_id=None):
+    def __init__(self, config: AIConfig, ai_service: AIService, context_manager: ContextManager, delegate_manager=None, get_agent_id=None):
         """
         Initializes the AILoop with necessary components and sets up control delegate registrations.
 

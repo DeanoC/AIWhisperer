@@ -364,3 +364,474 @@ class TestStatelessAILoop:
         mock_ai_service.stream_chat_completion.assert_called_once()
         call_args = mock_ai_service.stream_chat_completion.call_args
         assert call_args[1]['messages'] == messages
+    
+    @pytest.mark.asyncio
+    async def test_tool_execution_success(self, mock_config, mock_ai_service, mock_context_provider):
+        """Test successful tool execution in stateless AI loop."""
+        # Setup AI service to return tool calls
+        async def mock_stream_with_tool_execution():
+            from types import SimpleNamespace
+            import json
+            
+            yield SimpleNamespace(
+                delta_content="I'll help you create an RFC.",
+                delta_tool_call_part=None,
+                finish_reason=None
+            )
+            
+            tool_calls = [{
+                "id": "call_123",
+                "function": {
+                    "name": "create_rfc",
+                    "arguments": '{"title": "Test RFC", "summary": "Test summary", "author": "Test"}'
+                }
+            }]
+            
+            yield SimpleNamespace(
+                delta_content="",
+                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                finish_reason="tool_calls"
+            )
+        
+        mock_ai_service.stream_chat_completion = AsyncMock(return_value=mock_stream_with_tool_execution())
+        
+        # Mock tool registry with a test tool
+        with patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry') as mock_registry:
+            mock_tool = Mock()
+            mock_tool.execute = Mock(return_value="RFC created successfully!")
+            
+            registry_instance = Mock()
+            registry_instance.get_tool_by_name.return_value = mock_tool
+            mock_registry.return_value = registry_instance
+            
+            from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+            
+            ai_loop = StatelessAILoop(
+                config=mock_config,
+                ai_service=mock_ai_service
+            )
+            
+            # Process message that triggers tool execution
+            result = await ai_loop.process_with_context(
+                message="Create an RFC for testing",
+                context_provider=mock_context_provider
+            )
+            
+            # Verify tool was executed
+            mock_tool.execute.assert_called_once_with(arguments={
+                "title": "Test RFC",
+                "summary": "Test summary", 
+                "author": "Test"
+            })
+            
+            # Verify tool execution result is included in response
+            assert "🔧 **create_rfc** executed:" in result['response']
+            assert "RFC created successfully!" in result['response']
+            assert result['finish_reason'] == "tool_calls"
+            assert result['tool_calls'] is not None
+    
+    @pytest.mark.asyncio
+    async def test_tool_execution_async_tool(self, mock_config, mock_ai_service, mock_context_provider):
+        """Test execution of async tools."""
+        # Setup AI service to return tool calls
+        async def mock_stream_with_async_tool():
+            from types import SimpleNamespace
+            import json
+            
+            tool_calls = [{
+                "id": "call_456",
+                "function": {
+                    "name": "async_tool",
+                    "arguments": '{"param": "value"}'
+                }
+            }]
+            
+            yield SimpleNamespace(
+                delta_content="Processing...",
+                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                finish_reason="tool_calls"
+            )
+        
+        mock_ai_service.stream_chat_completion = AsyncMock(return_value=mock_stream_with_async_tool())
+        
+        # Mock tool registry with an async tool
+        with patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry') as mock_registry:
+            mock_tool = Mock()
+            mock_tool.execute = AsyncMock(return_value="Async operation completed!")
+            
+            registry_instance = Mock()
+            registry_instance.get_tool_by_name.return_value = mock_tool
+            mock_registry.return_value = registry_instance
+            
+            from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+            
+            ai_loop = StatelessAILoop(
+                config=mock_config,
+                ai_service=mock_ai_service
+            )
+            
+            # Process message
+            result = await ai_loop.process_with_context(
+                message="Execute async tool",
+                context_provider=mock_context_provider
+            )
+            
+            # Verify async tool was executed
+            mock_tool.execute.assert_called_once_with(arguments={"param": "value"})
+            
+            # Verify result includes tool execution output
+            assert "🔧 **async_tool** executed:" in result['response']
+            assert "Async operation completed!" in result['response']
+    
+    @pytest.mark.asyncio
+    async def test_tool_execution_tool_not_found(self, mock_config, mock_ai_service, mock_context_provider):
+        """Test handling when tool is not found in registry."""
+        # Setup AI service to return tool calls
+        async def mock_stream_with_missing_tool():
+            from types import SimpleNamespace
+            import json
+            
+            tool_calls = [{
+                "id": "call_789",
+                "function": {
+                    "name": "missing_tool",
+                    "arguments": '{"param": "value"}'
+                }
+            }]
+            
+            yield SimpleNamespace(
+                delta_content="Calling tool...",
+                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                finish_reason="tool_calls"
+            )
+        
+        mock_ai_service.stream_chat_completion = AsyncMock(return_value=mock_stream_with_missing_tool())
+        
+        # Mock tool registry that returns None for missing tool
+        with patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry') as mock_registry:
+            registry_instance = Mock()
+            registry_instance.get_tool_by_name.return_value = None
+            mock_registry.return_value = registry_instance
+            
+            from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+            
+            ai_loop = StatelessAILoop(
+                config=mock_config,
+                ai_service=mock_ai_service
+            )
+            
+            # Process message
+            result = await ai_loop.process_with_context(
+                message="Call missing tool",
+                context_provider=mock_context_provider
+            )
+            
+            # Verify error is handled gracefully
+            assert "🔧 Tool Error: Tool 'missing_tool' not found" in result['response']
+            assert result['finish_reason'] == "tool_calls"
+    
+    @pytest.mark.asyncio
+    async def test_tool_execution_invalid_arguments(self, mock_config, mock_ai_service, mock_context_provider):
+        """Test handling of invalid tool arguments."""
+        # Setup AI service to return tool calls with invalid JSON
+        async def mock_stream_with_invalid_args():
+            from types import SimpleNamespace
+            import json
+            
+            tool_calls = [{
+                "id": "call_invalid",
+                "function": {
+                    "name": "test_tool",
+                    "arguments": '{"invalid": json}'  # Invalid JSON
+                }
+            }]
+            
+            yield SimpleNamespace(
+                delta_content="Processing...",
+                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                finish_reason="tool_calls"
+            )
+        
+        mock_ai_service.stream_chat_completion = AsyncMock(return_value=mock_stream_with_invalid_args())
+        
+        from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+        
+        ai_loop = StatelessAILoop(
+            config=mock_config,
+            ai_service=mock_ai_service
+        )
+        
+        # Process message
+        result = await ai_loop.process_with_context(
+            message="Execute tool with invalid args",
+            context_provider=mock_context_provider
+        )
+        
+        # Verify invalid arguments error is handled
+        assert "🔧 Tool Error: Invalid arguments for test_tool" in result['response']
+        assert result['finish_reason'] == "tool_calls"
+    
+    @pytest.mark.asyncio
+    async def test_tool_execution_tool_raises_exception(self, mock_config, mock_ai_service, mock_context_provider):
+        """Test handling when tool execution raises an exception."""
+        # Setup AI service to return tool calls
+        async def mock_stream_with_failing_tool():
+            from types import SimpleNamespace
+            import json
+            
+            tool_calls = [{
+                "id": "call_fail",
+                "function": {
+                    "name": "failing_tool",
+                    "arguments": '{"param": "value"}'
+                }
+            }]
+            
+            yield SimpleNamespace(
+                delta_content="Executing tool...",
+                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                finish_reason="tool_calls"
+            )
+        
+        mock_ai_service.stream_chat_completion = AsyncMock(return_value=mock_stream_with_failing_tool())
+        
+        # Mock tool registry with a tool that raises an exception
+        with patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry') as mock_registry:
+            mock_tool = Mock()
+            mock_tool.execute = Mock(side_effect=Exception("Tool execution failed"))
+            
+            registry_instance = Mock()
+            registry_instance.get_tool_by_name.return_value = mock_tool
+            mock_registry.return_value = registry_instance
+            
+            from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+            
+            ai_loop = StatelessAILoop(
+                config=mock_config,
+                ai_service=mock_ai_service
+            )
+            
+            # Process message
+            result = await ai_loop.process_with_context(
+                message="Execute failing tool",
+                context_provider=mock_context_provider
+            )
+            
+            # Verify tool execution was attempted
+            mock_tool.execute.assert_called_once_with(arguments={"param": "value"})
+            
+            # Verify error is handled gracefully
+            assert "🔧 Tool Error: Failed to execute failing_tool" in result['response']
+            assert "Tool execution failed" in result['response']
+            assert result['finish_reason'] == "tool_calls"
+    
+    @pytest.mark.asyncio
+    async def test_multiple_tool_execution(self, mock_config, mock_ai_service, mock_context_provider):
+        """Test execution of multiple tools in one response."""
+        # Setup AI service to return multiple tool calls
+        async def mock_stream_with_multiple_tools():
+            from types import SimpleNamespace
+            import json
+            
+            tool_calls = [
+                {
+                    "id": "call_1",
+                    "function": {
+                        "name": "tool_one",
+                        "arguments": '{"arg1": "value1"}'
+                    }
+                },
+                {
+                    "id": "call_2", 
+                    "function": {
+                        "name": "tool_two",
+                        "arguments": '{"arg2": "value2"}'
+                    }
+                }
+            ]
+            
+            yield SimpleNamespace(
+                delta_content="Executing multiple tools...",
+                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                finish_reason="tool_calls"
+            )
+        
+        mock_ai_service.stream_chat_completion = AsyncMock(return_value=mock_stream_with_multiple_tools())
+        
+        # Mock tool registry with multiple tools
+        with patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry') as mock_registry:
+            mock_tool_one = Mock()
+            mock_tool_one.execute = Mock(return_value="Tool one result")
+            
+            mock_tool_two = Mock()
+            mock_tool_two.execute = Mock(return_value="Tool two result")
+            
+            registry_instance = Mock()
+            def get_tool_side_effect(name):
+                if name == "tool_one":
+                    return mock_tool_one
+                elif name == "tool_two":
+                    return mock_tool_two
+                return None
+            
+            registry_instance.get_tool_by_name.side_effect = get_tool_side_effect
+            mock_registry.return_value = registry_instance
+            
+            from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+            
+            ai_loop = StatelessAILoop(
+                config=mock_config,
+                ai_service=mock_ai_service
+            )
+            
+            # Process message
+            result = await ai_loop.process_with_context(
+                message="Execute multiple tools",
+                context_provider=mock_context_provider
+            )
+            
+            # Verify both tools were executed
+            mock_tool_one.execute.assert_called_once_with(arguments={"arg1": "value1"})
+            mock_tool_two.execute.assert_called_once_with(arguments={"arg2": "value2"})
+            
+            # Verify both tool results are in response
+            assert "🔧 **tool_one** executed:" in result['response']
+            assert "Tool one result" in result['response']
+            assert "🔧 **tool_two** executed:" in result['response']
+            assert "Tool two result" in result['response']
+            assert result['finish_reason'] == "tool_calls"
+            assert len(result['tool_calls']) == 2
+    
+    @pytest.mark.asyncio
+    async def test_tool_execution_signature_fallback(self, mock_config, mock_ai_service, mock_context_provider):
+        """Test fallback from arguments= to **kwargs signature."""
+        # Setup AI service to return tool calls
+        async def mock_stream_with_kwargs_tool():
+            from types import SimpleNamespace
+            import json
+            
+            tool_calls = [{
+                "id": "call_kwargs",
+                "function": {
+                    "name": "kwargs_tool",
+                    "arguments": '{"command": "ls", "cwd": "."}'
+                }
+            }]
+            
+            yield SimpleNamespace(
+                delta_content="Executing command...",
+                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                finish_reason="tool_calls"
+            )
+        
+        mock_ai_service.stream_chat_completion = AsyncMock(return_value=mock_stream_with_kwargs_tool())
+        
+        # Mock tool registry with a tool that only accepts **kwargs
+        with patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry') as mock_registry:
+            mock_tool = Mock()
+            # First call (arguments=) raises TypeError, second call (**kwargs) succeeds
+            mock_tool.execute.side_effect = [
+                TypeError("unexpected keyword argument 'arguments'"),
+                "Command executed successfully"
+            ]
+            
+            registry_instance = Mock()
+            registry_instance.get_tool_by_name.return_value = mock_tool
+            mock_registry.return_value = registry_instance
+            
+            from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+            
+            ai_loop = StatelessAILoop(
+                config=mock_config,
+                ai_service=mock_ai_service
+            )
+            
+            # Process message
+            result = await ai_loop.process_with_context(
+                message="Execute command",
+                context_provider=mock_context_provider
+            )
+            
+            # Verify both call patterns were tried
+            assert mock_tool.execute.call_count == 2
+            # First call with arguments=
+            mock_tool.execute.assert_any_call(arguments={"command": "ls", "cwd": "."})
+            # Second call with **kwargs
+            mock_tool.execute.assert_any_call(command="ls", cwd=".")
+            
+            # Verify result includes tool execution output
+            assert "🔧 **kwargs_tool** executed:" in result['response']
+            assert "Command executed successfully" in result['response']
+    
+    @pytest.mark.asyncio
+    async def test_tool_execution_streaming(self, mock_config, mock_ai_service, mock_context_provider):
+        """Test that tool execution results are streamed to the client."""
+        # Setup AI service to return tool calls
+        async def mock_stream_with_tool_for_streaming():
+            from types import SimpleNamespace
+            import json
+            
+            yield SimpleNamespace(
+                delta_content="I'll help you with that.",
+                delta_tool_call_part=None,
+                finish_reason=None
+            )
+            
+            tool_calls = [{
+                "id": "call_stream",
+                "function": {
+                    "name": "streaming_tool",
+                    "arguments": '{"param": "test"}'
+                }
+            }]
+            
+            yield SimpleNamespace(
+                delta_content="",
+                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                finish_reason="tool_calls"
+            )
+        
+        mock_ai_service.stream_chat_completion = AsyncMock(return_value=mock_stream_with_tool_for_streaming())
+        
+        # Mock tool registry with a test tool
+        with patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry') as mock_registry:
+            mock_tool = Mock()
+            mock_tool.execute = Mock(return_value="Tool result for streaming")
+            
+            registry_instance = Mock()
+            registry_instance.get_tool_by_name.return_value = mock_tool
+            mock_registry.return_value = registry_instance
+            
+            from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+            
+            ai_loop = StatelessAILoop(
+                config=mock_config,
+                ai_service=mock_ai_service
+            )
+            
+            # Track streaming chunks
+            chunks = []
+            async def on_chunk(chunk):
+                chunks.append(chunk)
+            
+            # Process message with streaming
+            result = await ai_loop.process_with_context(
+                message="Execute streaming tool",
+                context_provider=mock_context_provider,
+                on_stream_chunk=on_chunk
+            )
+            
+            # Verify tool was executed
+            mock_tool.execute.assert_called_once_with(arguments={"param": "test"})
+            
+            # Verify tool results were streamed
+            assert len(chunks) >= 3  # Initial content + final empty + tool results
+            
+            # Check that tool execution results appear in chunks
+            all_chunks = "".join(chunks)
+            assert "🔧 **streaming_tool** executed:" in all_chunks
+            assert "Tool result for streaming" in all_chunks
+            
+            # Verify final result also contains tool execution
+            assert "🔧 **streaming_tool** executed:" in result['response']
+            assert "Tool result for streaming" in result['response']

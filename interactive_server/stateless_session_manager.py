@@ -57,6 +57,10 @@ class StatelessInteractiveSession:
         self.active_agent: Optional[str] = None
         self.introduced_agents: set = set()  # Track which agents have introduced themselves
         
+        # Continuation tracking
+        self._continuation_depth = 0  # Track continuation depth to prevent loops
+        self._max_continuation_depth = 3  # Maximum continuation depth
+        
         # Session state
         self.is_started = False
         
@@ -68,6 +72,70 @@ class StatelessInteractiveSession:
         if project_path:
             path_manager.initialize(config_values={'workspace_path': project_path})
         self.context_manager = AgentContextManager(session_id, path_manager)
+        
+        # Register tools for interactive sessions
+        self._register_tools()
+    
+    def _register_tools(self):
+        """Register all tools needed for interactive sessions."""
+        from ai_whisperer.tools.tool_registry import get_tool_registry
+        
+        tool_registry = get_tool_registry()
+        
+        # Register basic file operation tools
+        from ai_whisperer.tools.read_file_tool import ReadFileTool
+        from ai_whisperer.tools.write_file_tool import WriteFileTool
+        from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
+        from ai_whisperer.tools.list_directory_tool import ListDirectoryTool
+        from ai_whisperer.tools.search_files_tool import SearchFilesTool
+        from ai_whisperer.tools.get_file_content_tool import GetFileContentTool
+        
+        tool_registry.register_tool(ReadFileTool())
+        tool_registry.register_tool(WriteFileTool())
+        tool_registry.register_tool(ExecuteCommandTool())
+        tool_registry.register_tool(ListDirectoryTool())
+        tool_registry.register_tool(SearchFilesTool())
+        tool_registry.register_tool(GetFileContentTool())
+        
+        # Register advanced analysis tools
+        from ai_whisperer.tools.find_pattern_tool import FindPatternTool
+        from ai_whisperer.tools.workspace_stats_tool import WorkspaceStatsTool
+        
+        # These tools need PathManager instance
+        path_manager = PathManager()
+        tool_registry.register_tool(FindPatternTool(path_manager))
+        tool_registry.register_tool(WorkspaceStatsTool(path_manager))
+        
+        # Register RFC management tools
+        from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
+        from ai_whisperer.tools.read_rfc_tool import ReadRFCTool
+        from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
+        from ai_whisperer.tools.update_rfc_tool import UpdateRFCTool
+        from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
+        
+        tool_registry.register_tool(CreateRFCTool())
+        tool_registry.register_tool(ReadRFCTool())
+        tool_registry.register_tool(ListRFCsTool())
+        tool_registry.register_tool(UpdateRFCTool())
+        tool_registry.register_tool(MoveRFCTool())
+        
+        # Register codebase analysis tools
+        from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool
+        from ai_whisperer.tools.find_similar_code_tool import FindSimilarCodeTool
+        from ai_whisperer.tools.get_project_structure_tool import GetProjectStructureTool
+        
+        tool_registry.register_tool(AnalyzeLanguagesTool())
+        tool_registry.register_tool(FindSimilarCodeTool())
+        tool_registry.register_tool(GetProjectStructureTool())
+        
+        # Register web research tools
+        from ai_whisperer.tools.web_search_tool import WebSearchTool
+        from ai_whisperer.tools.fetch_url_tool import FetchURLTool
+        
+        tool_registry.register_tool(WebSearchTool())
+        tool_registry.register_tool(FetchURLTool())
+        
+        logger.info("Registered all tools for interactive session")
     
     def _create_stateless_ai_loop(self, agent_id: str = None) -> StatelessAILoop:
         """Create a StatelessAILoop instance for an agent"""
@@ -104,7 +172,7 @@ class StatelessInteractiveSession:
         async with self._lock:
             return await self._create_agent_internal(agent_id, system_prompt, config)
     
-    async def _create_agent_internal(self, agent_id: str, system_prompt: str, config: Optional[AgentConfig] = None) -> StatelessAgent:
+    async def _create_agent_internal(self, agent_id: str, system_prompt: str, config: Optional[AgentConfig] = None, agent_registry_info=None) -> StatelessAgent:
         """Internal method to create agent - assumes lock is already held"""
         if agent_id in self.agents:
             raise ValueError(f"Agent '{agent_id}' already exists in session")
@@ -132,8 +200,8 @@ class StatelessInteractiveSession:
         # Create stateless AI loop for this agent
         ai_loop = self._create_stateless_ai_loop(agent_id)
         
-        # Create stateless agent
-        agent = StatelessAgent(config, context, ai_loop)
+        # Create stateless agent with registry info for tool filtering
+        agent = StatelessAgent(config, context, ai_loop, agent_registry_info)
         logger.info(f"Created StatelessAgent for {agent_id}")
         
         # Store agent
@@ -235,9 +303,9 @@ class StatelessInteractiveSession:
                         logger.error(f"Failed to load prompt for agent {agent_id}: {e}")
                         logger.error(f"Using fallback prompt for {agent_info.name}")
                 
-                # Create the agent with the loaded prompt
+                # Create the agent with the loaded prompt and registry info
                 logger.info(f"About to create agent with prompt: {system_prompt[:200]}...")
-                await self._create_agent_internal(agent_id, system_prompt)
+                await self._create_agent_internal(agent_id, system_prompt, agent_registry_info=agent_info)
                 logger.info(f"Created agent '{agent_id}' from registry with system prompt")
             
             # Verify agent exists now
@@ -263,11 +331,15 @@ class StatelessInteractiveSession:
                 await self._agent_introduction()
                 self.introduced_agents.add(self.active_agent)
     
-    async def send_user_message(self, message: str):
+    async def send_user_message(self, message: str, is_continuation: bool = False):
         """
         Route a user message to the active agent with streaming support.
         
         Processes @ file references and adds them to the agent's context.
+        
+        Args:
+            message: The user message to send
+            is_continuation: Whether this is a continuation message (internal use)
         """
         if not self.is_started or not self.active_agent:
             raise RuntimeError(f"Session {self.session_id} is not started or no active agent")
@@ -336,10 +408,55 @@ class StatelessInteractiveSession:
                 "params": final_notification.model_dump()
             })
             
+            # Reset continuation depth if this is not a continuation and we got a non-tool response
+            if not is_continuation and (not result.get('tool_calls') or result.get('error')):
+                self._continuation_depth = 0
+                logger.debug("Reset continuation depth to 0")
+            
+            # Check if continuation is needed (like old delegate system)
+            if await self._should_continue_after_tools(result, message):
+                # Check continuation depth to prevent infinite loops
+                if self._continuation_depth >= self._max_continuation_depth:
+                    logger.warning(f"Hit max continuation depth ({self._max_continuation_depth}), stopping continuation")
+                    # Reset for next interaction
+                    self._continuation_depth = 0
+                else:
+                    # Increment continuation depth
+                    self._continuation_depth += 1
+                    logger.info(f"Auto-continuing after tool execution for agent {self.active_agent} (depth: {self._continuation_depth})")
+                    
+                    # Give a brief pause to let UI update
+                    await asyncio.sleep(0.5)
+                    
+                    # Send continuation message
+                    continuation_msg = "Please continue with the next step."
+                    continuation_result = await self.send_user_message(continuation_msg, is_continuation=True)
+                    
+                    # Merge results for the original caller
+                    if isinstance(result, dict) and isinstance(continuation_result, dict):
+                        # Append continuation response
+                        if result.get('response') and continuation_result.get('response'):
+                            result['response'] += "\n\n" + continuation_result['response']
+                        # Merge tool calls
+                        if continuation_result.get('tool_calls'):
+                            if result.get('tool_calls'):
+                                result['tool_calls'].extend(continuation_result['tool_calls'])
+                            else:
+                                result['tool_calls'] = continuation_result['tool_calls']
+            
+            # Reset continuation depth if we're done with continuations
+            if not is_continuation and self._continuation_depth > 0:
+                logger.debug(f"Resetting continuation depth from {self._continuation_depth} to 0")
+                self._continuation_depth = 0
+            
             return result
             
         except Exception as e:
             logger.error(f"Failed to send message to agent '{self.active_agent}' in session {self.session_id}: {e}")
+            # Reset continuation depth on error
+            if self._continuation_depth > 0:
+                logger.debug("Resetting continuation depth due to error")
+                self._continuation_depth = 0
             raise
     
     async def _agent_introduction(self):
@@ -472,6 +589,76 @@ class StatelessInteractiveSession:
         if state.get("active_agent") and state["active_agent"] in self.agents:
             self.active_agent = state["active_agent"]
     
+    async def _should_continue_after_tools(self, result: Any, original_message: str) -> bool:
+        """
+        Determine if we should automatically continue after tool execution.
+        This mimics the old delegate system's behavior.
+        
+        Args:
+            result: The result from agent.process_message
+            original_message: The original user message
+            
+        Returns:
+            True if continuation is needed, False otherwise
+        """
+        # Only continue if we have a dict result with tool calls
+        if not isinstance(result, dict) or not result.get('tool_calls'):
+            return False
+        
+        # Check if model supports multi-tool
+        from ai_whisperer.model_capabilities import supports_multi_tool
+        
+        # Get model name from active agent or config
+        model_name = None
+        if self.active_agent and self.active_agent in self.agents:
+            agent = self.agents[self.active_agent]
+            model_name = agent.config.model_name
+        
+        if not model_name:
+            # Fallback to config
+            model_name = self.config.get('openrouter', {}).get('model', 'google/gemini-2.5-flash-preview')
+        
+        model_supports_multi_tool = supports_multi_tool(model_name)
+        logger.debug(f"Model {model_name} multi-tool support: {model_supports_multi_tool}")
+        
+        if model_supports_multi_tool:
+            # Multi-tool models handle everything in one go
+            return False
+        
+        # Single-tool model continuation logic
+        tool_calls = result.get('tool_calls', [])
+        if not tool_calls:
+            return False
+        
+        # Get the tool that was called
+        tool_names = [tc.get('function', {}).get('name', '') for tc in tool_calls]
+        
+        # Agent-specific continuation rules
+        if self.active_agent and self.active_agent.lower() == 'p':  # Patricia
+            # Check if Patricia needs to continue after listing RFCs
+            if 'list_rfcs' in tool_names:
+                # Check if original message implies creation
+                create_keywords = ['create', 'new', 'add', 'make', 'generate']
+                message_lower = original_message.lower()
+                if any(keyword in message_lower for keyword in create_keywords):
+                    # User asked to create, but Patricia only listed
+                    return True
+        
+        # Check for explicit multi-step indicators in response
+        response_text = result.get('response', '').lower()
+        continuation_phrases = [
+            'let me', 'now i', "i'll", 'next', 'then i',
+            'following that', 'after that'
+        ]
+        
+        # If the AI's response suggests it plans to do more
+        if any(phrase in response_text for phrase in continuation_phrases):
+            # But it only did one tool call, it probably needs continuation
+            if len(tool_calls) == 1:
+                return True
+        
+        return False
+    
     async def stop_ai_session(self) -> None:
         """
         Stop the AI session gracefully.
@@ -586,8 +773,74 @@ class StatelessSessionManager:
         self.websocket_sessions: Dict[WebSocket, str] = {}
         self._lock = asyncio.Lock()
         
+        # Register tools with the tool registry
+        self._register_tools()
+        
         # Load persisted sessions
         self._load_sessions()
+    
+    def _register_tools(self):
+        """Register tools with the ToolRegistry (copied from plan_runner.py)"""
+        from ai_whisperer.tools.tool_registry import get_tool_registry
+        from ai_whisperer.tools.read_file_tool import ReadFileTool
+        from ai_whisperer.tools.write_file_tool import WriteFileTool
+        from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
+        from ai_whisperer.tools.list_directory_tool import ListDirectoryTool
+        from ai_whisperer.tools.search_files_tool import SearchFilesTool
+        from ai_whisperer.tools.get_file_content_tool import GetFileContentTool
+        from ai_whisperer.path_management import PathManager
+        
+        tool_registry = get_tool_registry()
+        
+        # Register file operation tools
+        tool_registry.register_tool(ReadFileTool())
+        tool_registry.register_tool(WriteFileTool())
+        tool_registry.register_tool(ExecuteCommandTool())
+        
+        # Register workspace browsing tools
+        tool_registry.register_tool(ListDirectoryTool())
+        tool_registry.register_tool(SearchFilesTool())
+        tool_registry.register_tool(GetFileContentTool())
+        
+        # Register advanced analysis tools
+        from ai_whisperer.tools.find_pattern_tool import FindPatternTool
+        from ai_whisperer.tools.workspace_stats_tool import WorkspaceStatsTool
+        
+        # These tools need PathManager instance
+        path_manager = PathManager()
+        tool_registry.register_tool(FindPatternTool(path_manager))
+        tool_registry.register_tool(WorkspaceStatsTool(path_manager))
+        
+        # Register RFC management tools
+        from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
+        from ai_whisperer.tools.read_rfc_tool import ReadRFCTool
+        from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
+        from ai_whisperer.tools.update_rfc_tool import UpdateRFCTool
+        from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
+        
+        tool_registry.register_tool(CreateRFCTool())
+        tool_registry.register_tool(ReadRFCTool())
+        tool_registry.register_tool(ListRFCsTool())
+        tool_registry.register_tool(UpdateRFCTool())
+        tool_registry.register_tool(MoveRFCTool())
+        
+        # Register codebase analysis tools
+        from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool
+        from ai_whisperer.tools.find_similar_code_tool import FindSimilarCodeTool
+        from ai_whisperer.tools.get_project_structure_tool import GetProjectStructureTool
+        
+        tool_registry.register_tool(AnalyzeLanguagesTool())
+        tool_registry.register_tool(FindSimilarCodeTool())
+        tool_registry.register_tool(GetProjectStructureTool())
+        
+        # Register web research tools
+        from ai_whisperer.tools.web_search_tool import WebSearchTool
+        from ai_whisperer.tools.fetch_url_tool import FetchURLTool
+        
+        tool_registry.register_tool(WebSearchTool())
+        tool_registry.register_tool(FetchURLTool())
+        
+        logger.info(f"Registered {len(tool_registry.get_all_tools())} tools with ToolRegistry")
         
     def _load_sessions(self):
         """Load persisted session IDs from file"""

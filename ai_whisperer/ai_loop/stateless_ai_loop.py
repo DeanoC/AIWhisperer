@@ -245,7 +245,14 @@ class StatelessAILoop:
                 
                 # Accumulate tool calls
                 if chunk.delta_tool_call_part:
-                    accumulated_tool_calls += chunk.delta_tool_call_part
+                    if isinstance(chunk.delta_tool_call_part, list):
+                        # Convert list to JSON string and append
+                        accumulated_tool_calls += json.dumps(chunk.delta_tool_call_part)
+                    elif isinstance(chunk.delta_tool_call_part, str):
+                        accumulated_tool_calls += chunk.delta_tool_call_part
+                    else:
+                        # Convert other types to JSON string
+                        accumulated_tool_calls += json.dumps(chunk.delta_tool_call_part)
                 
                 # Track finish reason
                 if chunk.finish_reason:
@@ -270,6 +277,15 @@ class StatelessAILoop:
                 except json.JSONDecodeError as e:
                     logger.error(f"Failed to parse tool calls: {e}")
             
+            # Execute tool calls if present
+            if tool_calls:
+                tool_results = await self._execute_tool_calls(tool_calls)
+                full_response += tool_results
+                
+                # Stream the tool results if callback is provided
+                if on_stream_chunk and tool_results:
+                    await on_stream_chunk(tool_results)
+            
             return {
                 'response': full_response,
                 'finish_reason': finish_reason,
@@ -285,3 +301,78 @@ class StatelessAILoop:
                 'tool_calls': None,
                 'error': e
             }
+    
+    async def _execute_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> str:
+        """
+        Execute tool calls and return formatted results.
+        
+        Args:
+            tool_calls: List of tool call dictionaries
+            
+        Returns:
+            String containing formatted tool results
+        """
+        tool_registry = get_tool_registry()
+        results = []
+        
+        for tool_call in tool_calls:
+            try:
+                # Extract tool call information
+                tool_id = tool_call.get('id', 'unknown')
+                function_info = tool_call.get('function', {})
+                tool_name = function_info.get('name')
+                tool_args_str = function_info.get('arguments', '{}')
+                
+                if not tool_name:
+                    logger.error(f"Tool call {tool_id} missing function name")
+                    results.append(f"\n\n🔧 Tool Error: Missing function name for tool call {tool_id}")
+                    continue
+                
+                # Parse arguments
+                try:
+                    tool_args = json.loads(tool_args_str) if tool_args_str else {}
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse arguments for tool {tool_name}: {e}")
+                    results.append(f"\n\n🔧 Tool Error: Invalid arguments for {tool_name}: {e}")
+                    continue
+                
+                # Get tool instance
+                tool_instance = tool_registry.get_tool_by_name(tool_name)
+                if not tool_instance:
+                    logger.error(f"Tool {tool_name} not found in registry")
+                    results.append(f"\n\n🔧 Tool Error: Tool '{tool_name}' not found")
+                    continue
+                
+                # Execute tool
+                logger.info(f"Executing tool: {tool_name} with args: {tool_args}")
+                
+                # Check if execute method is async
+                if asyncio.iscoroutinefunction(tool_instance.execute):
+                    # Try different calling conventions
+                    try:
+                        # First try the newer 'arguments' pattern (RFC tools, read_file_tool)
+                        tool_result = await tool_instance.execute(arguments=tool_args)
+                    except TypeError:
+                        # Fallback to **kwargs pattern (base_tool, execute_command_tool, write_file_tool)
+                        tool_result = await tool_instance.execute(**tool_args)
+                else:
+                    # Try different calling conventions
+                    try:
+                        # First try the newer 'arguments' pattern (RFC tools, read_file_tool)
+                        tool_result = tool_instance.execute(arguments=tool_args)
+                    except TypeError:
+                        # Fallback to **kwargs pattern (base_tool, execute_command_tool, write_file_tool)
+                        tool_result = tool_instance.execute(**tool_args)
+                
+                # Format result
+                formatted_result = f"\n\n🔧 **{tool_name}** executed:\n{str(tool_result)}"
+                results.append(formatted_result)
+                
+                logger.info(f"Tool {tool_name} executed successfully")
+                
+            except Exception as e:
+                logger.exception(f"Error executing tool call {tool_call}: {e}")
+                tool_name = tool_call.get('function', {}).get('name', 'unknown')
+                results.append(f"\n\n🔧 Tool Error: Failed to execute {tool_name}: {str(e)}")
+        
+        return "".join(results)
