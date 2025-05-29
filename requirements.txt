@@ -11,12 +11,12 @@ requests-mock>=1.11,<2.0 # For mocking HTTP requests in tests
 pytest-mock # Added for mocker fixture
 python-dotenv # For loading .env files
 jsonschema>=4.0,<5.0 # For validating YAML/JSON structures
-pydantic # Added for DelegateManager integration tests
+pydantic # For data validation and API models
 deepdiff
 
 pytest-asyncio
 
-prompt_toolkit>=3.0.0 # For interactive terminal command mode
+# prompt_toolkit>=3.0.0 # Deprecated - using web interface instead
 debugpy
 fastapi
 uvicorn

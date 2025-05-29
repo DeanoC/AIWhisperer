@@ -7,7 +7,7 @@ from pathlib import Path
 import os
 import csv
 
-from monitor.user_message_delegate import UserMessageLevel
+from .user_message_level import UserMessageLevel
 
 # Import necessary components from the application
 from .config import load_config
@@ -15,11 +15,11 @@ from .exceptions import AIWhispererError, ConfigError, OpenRouterAIServiceError,
 from .cli_commands import ListModelsCliCommand, GenerateInitialPlanCliCommand, GenerateOverviewPlanCliCommand, RefineCliCommand, RunCliCommand, BaseCliCommand
 from . import logging_custom
 from ai_whisperer.path_management import PathManager
-from ai_whisperer.delegate_manager import DelegateManager
+# Delegate system removed - CLI refactoring pending
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 
 logger = None # Will be initialized in main after logging is configured
-delegate_manager = None # Will be initialized in main after logging is configured
+# Delegate system removed
 
 def user_message_level_type(value: str) -> UserMessageLevel:
     """Custom argparse type function for UserMessageLevel."""
@@ -30,12 +30,12 @@ def user_message_level_type(value: str) -> UserMessageLevel:
             f"Invalid detail level: {value}. Choose from {list(UserMessageLevel.__members__.keys())}"
         )
 
-def cli(args=None, delegate_manager: DelegateManager = None) -> list[BaseCliCommand]:
+def cli(args=None) -> list[BaseCliCommand]:
     """Main entry point for the AI Whisperer CLI application.
     
     Parses command-line arguments and instantiates the appropriate command object.
     Accepts an optional 'args' parameter for testability (list of CLI args, or None to use sys.argv).
-    Accepts an optional 'delegate_manager' instance.
+    # Delegate system has been removed
     Returns the instantiated command object.
     """
     # Remove the global delegate_manager declaration
