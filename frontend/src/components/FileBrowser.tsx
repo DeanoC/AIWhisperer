@@ -149,10 +149,17 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
     
     setLoadingContent(true);
     try {
+      console.log('Loading file content for path:', path);
       const result = await jsonRpcService.sendRequest('workspace.getFileContent', { path });
+      console.log('File content result:', result);
       setFileContent(result);
     } catch (err) {
       console.error('Failed to load file content:', err);
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined,
+        error: err
+      });
       setFileContent({
         path,
         content: null,

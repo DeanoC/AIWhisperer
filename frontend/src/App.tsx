@@ -420,6 +420,7 @@ function App() {
             isLoading={isLoading}
             currentAgent={agentContext}
             onThemeToggle={toggleTheme}
+            connectionStatus={wsStatus}
           >
           <Routes>
             {/* Chat Route */}

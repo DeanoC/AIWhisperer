@@ -13,6 +13,7 @@ interface MainLayoutProps {
   currentAgent?: any;
   currentPlan?: any;
   onThemeToggle?: () => void;
+  connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'error';
 }
 
 interface PanelState {
@@ -64,7 +65,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   theme = 'light',
   currentAgent,
   currentPlan,
-  onThemeToggle
+  onThemeToggle,
+  connectionStatus = 'disconnected'
 }) => {
   const [panelState, setPanelState] = useState<PanelState>(() => {
     // Initialize from localStorage
@@ -322,9 +324,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* Footer */}
       <footer className="main-footer" role="contentinfo">
         <div className="status-bar" data-testid="status-bar">
-          <span>Ready</span>
+          <span>WebSocket</span>
           <span className="separator">•</span>
-          <span>Connected</span>
+          <span className={`connection-status status-${connectionStatus}`}>
+            {connectionStatus === 'connected' && '✓ Connected'}
+            {connectionStatus === 'connecting' && '⟳ Connecting...'}
+            {connectionStatus === 'disconnected' && '✗ Disconnected'}
+            {connectionStatus === 'error' && '⚠ Error'}
+          </span>
         </div>
       </footer>
 

@@ -83,7 +83,8 @@ class FileService:
             Dict with content, total_lines, and metadata
         """
         try:
-            resolved_path = self.path_manager.resolve_path(path)
+            resolved_path_str = self.path_manager.resolve_path(path)
+            resolved_path = Path(resolved_path_str)
             
             # Check if file exists and is a file
             if not resolved_path.exists():
