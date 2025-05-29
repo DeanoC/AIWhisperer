@@ -48,7 +48,8 @@ function App() {
   useEffect(() => {
     if (ws && wsStatus === 'connected') {
       console.log('[App] WebSocket is connected, initializing services');
-      const jsonRpc = new JsonRpcService(ws);
+      // Use longer timeout for file operations which can be slow on large workspaces
+      const jsonRpc = new JsonRpcService(ws, 30000); // 30 second timeout
       setJsonRpcService(jsonRpc);
       setAIService(new AIService(jsonRpc));
     } else {

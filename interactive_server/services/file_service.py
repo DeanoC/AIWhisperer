@@ -206,8 +206,10 @@ class FileService:
                 items = sorted(dir_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
                 
                 for item in items:
-                    # Skip ignored patterns
-                    if item.name in ['.git', '__pycache__', '.pytest_cache', 'node_modules']:
+                    # Skip ignored patterns and common large directories
+                    if item.name in ['.git', '__pycache__', '.pytest_cache', 'node_modules', 
+                                    '.venv', 'venv', 'env', 'build', 'dist', '.idea', '.vscode',
+                                    'coverage', '.nyc_output', 'logs', '.next', '.nuxt']:
                         continue
                     
                     if should_include_file(item):
@@ -230,8 +232,10 @@ class FileService:
             try:
                 items = sorted(resolved_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
                 for item in items:
-                    # Skip ignored patterns
-                    if item.name in ['.git', '__pycache__', '.pytest_cache', 'node_modules']:
+                    # Skip ignored patterns and common large directories
+                    if item.name in ['.git', '__pycache__', '.pytest_cache', 'node_modules', 
+                                    '.venv', 'venv', 'env', 'build', 'dist', '.idea', '.vscode',
+                                    'coverage', '.nyc_output', 'logs', '.next', '.nuxt']:
                         continue
                         
                     if should_include_file(item):

@@ -63,7 +63,7 @@ export const FilePicker: React.FC<FilePickerProps> = ({
       const response = await jsonRpcService.sendRequest('workspace.listDirectory', {
         path: '.',
         recursive: true,
-        maxDepth: 10,
+        maxDepth: 3,  // Reduced from 10 to avoid timeout
         includeHidden: false,
         sortBy: 'name',
         sortDirection: 'asc'
