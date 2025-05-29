@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { JsonRpcService } from '../services/jsonRpcService';
+import { FileNode, DirectoryListingResponse } from '../types/fileSystem';
 import './FileBrowser.css';
 
 interface FileBrowserProps {
   jsonRpcService?: JsonRpcService;
   onFileSelect?: (filePath: string) => void;
-}
-
-interface TreeNode {
-  name: string;
-  path: string;
-  isFile: boolean;
-  depth: number;
 }
 
 interface FileContent {
@@ -24,9 +18,10 @@ interface FileContent {
 }
 
 export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFileSelect }) => {
-  const [treeData, setTreeData] = useState<string>('');
-  const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
+  const [rootNodes, setRootNodes] = useState<FileNode[]>([]);
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [loadingPaths, setLoadingPaths] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<FileContent | null>(null);
@@ -34,150 +29,12 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
 
   useEffect(() => {
     if (jsonRpcService) {
-      loadFileTree();
+      loadRootDirectory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jsonRpcService]);
 
-  const parseTreeToNodes = (treeText: string): TreeNode[] => {
-    const lines = treeText.split('\n');
-    const nodes: TreeNode[] = [];
-    const pathStack: string[] = [];
-    let lastDepth = -1;
-    
-    // Create a node for each line, even empty ones, to maintain index alignment
-    lines.forEach((line, index) => {
-      if (!line.trim()) {
-        // Push null for empty lines to maintain index alignment
-        nodes.push(null as any);
-        return;
-      }
-
-      // Calculate depth by counting the tree structure characters
-      let depth = 0;
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '│' || char === ' ' || char === '├' || char === '└' || char === '─') {
-          continue;
-        } else {
-          // Found the first real character, calculate depth
-          // Each level in the tree uses 4 characters (e.g., "│   " or "    ")
-          depth = Math.floor(i / 4);
-          break;
-        }
-      }
-      
-      // Extract the actual name from the line
-      const name = line
-        .replace(/[│├└─\s]+/g, ' ')
-        .trim()
-        .split(' ')
-        .filter(part => part && !part.match(/^[│├└─]+$/))
-        .join(' ');
-
-      if (!name || name === 'AIWhisperer') {
-        // Root directory - still push a node to maintain alignment
-        nodes.push({
-          name: 'AIWhisperer',
-          path: '.',
-          isFile: false,
-          depth: 0
-        });
-        pathStack[0] = '.';
-        return;
-      }
-
-      // Adjust path stack based on depth
-      if (depth <= lastDepth) {
-        // Pop items from stack when going back up the tree
-        pathStack.splice(depth + 1);
-      }
-
-      // Build the full path
-      // Ensure pathStack has entries up to current depth
-      while (pathStack.length <= depth) {
-        pathStack.push('.');
-      }
-      
-      const parentPath = depth === 0 ? '.' : (pathStack[depth - 1] || '.');
-      const fullPath = parentPath === '.' ? name : `${parentPath}/${name}`;
-      
-      // Update path stack
-      pathStack[depth] = fullPath;
-      lastDepth = depth;
-
-      // Determine if it's a file (doesn't have children in next lines)
-      let isFile = true;
-      if (index < lines.length - 1) {
-        const nextLine = lines[index + 1];
-        if (nextLine.trim()) {
-          // Calculate next line's depth using the same method
-          let nextDepth = 0;
-          for (let i = 0; i < nextLine.length; i++) {
-            const char = nextLine[i];
-            if (char === '│' || char === ' ' || char === '├' || char === '└' || char === '─') {
-              continue;
-            } else {
-              nextDepth = Math.floor(i / 4);
-              break;
-            }
-          }
-          if (nextDepth > depth) {
-            isFile = false;
-          }
-        }
-      }
-
-      // Use file extension as a hint when no children are detected
-      // This prevents directories like .github or node_modules.old from being marked as files
-      if (isFile) {
-        // Check if it looks like a file based on extension
-        const hasCommonExtension = /\.\w{1,5}$/.test(name);
-        const hasDotInName = name.includes('.');
-        
-        // If no extension and no dots, it's probably a directory
-        // Common patterns: directories rarely have extensions, files usually do
-        if (!hasCommonExtension && !hasDotInName) {
-          isFile = false;
-        }
-        
-        // Special case: hidden directories often start with dot but have no extension
-        // e.g., .git, .vscode, .github
-        if (hasDotInName && !hasCommonExtension) {
-          const parts = name.split('.');
-          const lastPart = parts[parts.length - 1];
-          // If the part after the last dot is long or contains no numbers, probably a directory
-          if (lastPart.length > 5 || !/\d/.test(lastPart)) {
-            isFile = false;
-          }
-        }
-      }
-
-      const nodeData = {
-        name,
-        path: fullPath,
-        isFile,
-        depth
-      };
-      
-      // Log all nodes for debugging to track path construction
-      if (depth <= 3) {
-        console.log(`Node (depth ${depth}):`, {
-          name,
-          fullPath,
-          isFile,
-          parentPath,
-          pathStack: [...pathStack]
-        });
-      }
-      
-      nodes.push(nodeData);
-    });
-
-    return nodes;
-  };
-
-  const loadFileTree = async () => {
+  const loadRootDirectory = async () => {
     if (!jsonRpcService) {
       setError('WebSocket not connected');
       setLoading(false);
@@ -188,24 +45,91 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
       setLoading(true);
       setError(null);
       
-      const result = await jsonRpcService.sendRequest('workspace.getTree', { path: '.' });
+      const response = await jsonRpcService.sendRequest('workspace.listDirectory', { 
+        path: '.',
+        includeHidden: false,
+        sortBy: 'name',
+        sortDirection: 'asc'
+      }) as DirectoryListingResponse;
       
-      if (result && result.tree) {
-        setTreeData(result.tree);
-        const nodes = parseTreeToNodes(result.tree);
-        setTreeNodes(nodes);
-      } else if (result && result.error) {
-        setError(result.error);
-        setTreeData('');
-        setTreeNodes([]);
+      if (response.error) {
+        setError(response.error);
+        setRootNodes([]);
       } else {
-        setError('No tree data received');
+        setRootNodes(response.nodes || []);
       }
     } catch (err) {
-      console.error('Failed to load file tree:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load file tree');
+      console.error('Failed to load directory:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load directory');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDirectoryContents = async (path: string) => {
+    if (!jsonRpcService || loadingPaths.has(path)) return;
+    
+    setLoadingPaths(prev => new Set(prev).add(path));
+    
+    try {
+      const response = await jsonRpcService.sendRequest('workspace.listDirectory', { 
+        path,
+        includeHidden: false,
+        sortBy: 'name',
+        sortDirection: 'asc'
+      }) as DirectoryListingResponse;
+      
+      if (!response.error && response.nodes) {
+        // Update the tree structure with the loaded children
+        const updateNodes = (nodes: FileNode[]): FileNode[] => {
+          return nodes.map(node => {
+            if (node.path === path) {
+              return {
+                ...node,
+                children: response.nodes,
+                isLoaded: true
+              };
+            } else if (node.children) {
+              return {
+                ...node,
+                children: updateNodes(node.children)
+              };
+            }
+            return node;
+          });
+        };
+        
+        setRootNodes(updateNodes(rootNodes));
+      }
+    } catch (err) {
+      console.error('Failed to load directory contents:', err);
+    } finally {
+      setLoadingPaths(prev => {
+        const next = new Set(prev);
+        next.delete(path);
+        return next;
+      });
+    }
+  };
+
+  const toggleDirectory = async (node: FileNode) => {
+    const isExpanded = expandedPaths.has(node.path);
+    
+    if (isExpanded) {
+      // Collapse
+      setExpandedPaths(prev => {
+        const next = new Set(prev);
+        next.delete(node.path);
+        return next;
+      });
+    } else {
+      // Expand
+      setExpandedPaths(prev => new Set(prev).add(node.path));
+      
+      // Load children if not already loaded
+      if (!node.isLoaded) {
+        await loadDirectoryContents(node.path);
+      }
     }
   };
 
@@ -233,12 +157,6 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
         errorMessage = err.message;
       }
       
-      console.error('Error details:', {
-        message: errorMessage,
-        error: err,
-        fullError: JSON.stringify(err, null, 2)
-      });
-      
       setFileContent({
         path,
         content: null,
@@ -251,7 +169,7 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
     }
   };
 
-  const handleNodeClick = (node: TreeNode) => {
+  const handleNodeClick = (node: FileNode) => {
     if (node.isFile) {
       setSelectedPath(node.path);
       loadFileContent(node.path);
@@ -259,46 +177,49 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
         onFileSelect(node.path);
       }
     } else {
-      // For directories, just clear the selection
-      setSelectedPath(null);
-      setFileContent(null);
+      toggleDirectory(node);
     }
   };
 
-  const handleLineClick = (line: string, lineIndex: number) => {
-    // Find the corresponding node for this line
-    const node = treeNodes[lineIndex];
-    if (node && node.isFile) {
-      handleNodeClick(node);
-    }
-  };
-
-  const renderTreeLine = (line: string, index: number) => {
-    const node = treeNodes[index];
-    const isSelected = node && selectedPath === node.path;
-    const isClickable = node && node.isFile;
-    
-    // Add visual indicators for files vs folders
-    let enhancedLine = line;
-    if (node) {
-      const icon = node.isFile ? '📄' : '📁';
-      // Find where to insert the icon (after tree characters)
-      const match = line.match(/([│├└─\s]+)(.+)/);
-      if (match) {
-        enhancedLine = match[1] + icon + ' ' + match[2];
-      }
-    }
+  const renderFileNode = (node: FileNode, level: number = 0): React.ReactNode => {
+    const isExpanded = expandedPaths.has(node.path);
+    const isLoading = loadingPaths.has(node.path);
+    const isSelected = selectedPath === node.path;
+    const indent = level * 20;
     
     return (
-      <div
-        key={index}
-        className={`tree-line ${isSelected ? 'selected' : ''} ${isClickable ? 'clickable' : ''} ${node && !node.isFile ? 'directory' : ''}`}
-        onClick={() => handleLineClick(line, index)}
-        title={node ? node.path : ''}
-      >
-        {enhancedLine}
+      <div key={node.path}>
+        <div
+          className={`file-node ${isSelected ? 'selected' : ''} ${node.isFile ? 'file' : 'directory'}`}
+          style={{ paddingLeft: `${indent}px` }}
+          onClick={() => handleNodeClick(node)}
+          title={node.path}
+        >
+          <span className="file-icon">
+            {!node.isFile ? (
+              isLoading ? '⏳' : (isExpanded ? '📂' : '📁')
+            ) : '📄'}
+          </span>
+          <span className="file-name">{node.name}</span>
+          {node.isFile && node.size !== undefined && (
+            <span className="file-size">{formatFileSize(node.size)}</span>
+          )}
+        </div>
+        {!node.isFile && isExpanded && node.children && (
+          <div className="file-children">
+            {node.children.map(child => renderFileNode(child, level + 1))}
+          </div>
+        )}
       </div>
     );
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
   return (
@@ -310,7 +231,7 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
             <h3>Files</h3>
             <button 
               className="refresh-button"
-              onClick={loadFileTree}
+              onClick={loadRootDirectory}
               disabled={loading}
               aria-label="Refresh file tree"
               title="Refresh"
@@ -330,17 +251,17 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
               <div className="error-state">
                 <span className="error-icon">⚠️</span>
                 <span>{error}</span>
-                <button onClick={loadFileTree}>Retry</button>
+                <button onClick={loadRootDirectory}>Retry</button>
               </div>
             )}
             
-            {!loading && !error && treeData && (
-              <pre className="file-tree">
-                {treeData.split('\n').map((line, index) => renderTreeLine(line, index))}
-              </pre>
+            {!loading && !error && rootNodes.length > 0 && (
+              <div className="file-tree-structured">
+                {rootNodes.map(node => renderFileNode(node))}
+              </div>
             )}
             
-            {!loading && !error && !treeData && (
+            {!loading && !error && rootNodes.length === 0 && (
               <div className="empty-state">
                 No files to display
               </div>
@@ -355,7 +276,7 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
               <h3>{selectedPath}</h3>
               {fileContent && !fileContent.is_binary && fileContent.total_lines && (
                 <span className="file-info">
-                  {fileContent.total_lines} lines • {(fileContent.size / 1024).toFixed(1)} KB
+                  {fileContent.total_lines} lines • {formatFileSize(fileContent.size)}
                 </span>
               )}
             </div>
@@ -384,7 +305,7 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
                 <div className="binary-file-message">
                   <span className="icon">📎</span>
                   <p>Binary file - preview not available</p>
-                  <p className="file-size">{(fileContent.size / 1024).toFixed(1)} KB</p>
+                  <p className="file-size">{formatFileSize(fileContent.size)}</p>
                 </div>
               )}
             </div>

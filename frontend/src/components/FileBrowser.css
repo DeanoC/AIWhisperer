@@ -223,6 +223,69 @@
   color: var(--text-secondary, #666);
 }
 
+/* Structured tree styles */
+.file-tree-structured {
+  padding: 8px 0;
+}
+
+.file-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+  user-select: none;
+  min-height: 28px;
+}
+
+.file-node:hover {
+  background-color: var(--hover-background, rgba(0, 0, 0, 0.05));
+}
+
+.file-node.selected {
+  background-color: var(--selection-background, rgba(0, 123, 255, 0.1));
+  font-weight: 500;
+}
+
+.file-node.directory {
+  font-weight: 500;
+}
+
+.file-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-node .file-size {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.file-children {
+  position: relative;
+}
+
+.file-children::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--border-color, #e0e0e0);
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .file-browser,
@@ -269,5 +332,21 @@
   
   .error-state {
     color: #f44336;
+  }
+  
+  .file-node:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .file-node.selected {
+    background-color: rgba(0, 123, 255, 0.2);
+  }
+  
+  .file-node .file-size {
+    color: #999;
+  }
+  
+  .file-children::before {
+    background-color: #3a3a3a;
   }
 }

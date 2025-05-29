@@ -51,19 +51,131 @@ class FileService:
         
         return tree
     
-    async def list_directory(self, path: str = ".", recursive: bool = False) -> List[Dict[str, Any]]:
+    async def list_directory(self, path: str = ".", recursive: bool = False, 
+                           max_depth: int = 1, include_hidden: bool = False,
+                           file_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """List files and directories in given path.
         
         Args:
             path: Relative path from workspace root
             recursive: Whether to list recursively
+            max_depth: Maximum depth for recursive listing
+            include_hidden: Whether to include hidden files (starting with .)
+            file_types: List of file extensions to filter (e.g., [".py", ".js"])
             
         Returns:
             List of file/directory information dicts
         """
-        # TODO: Implement structured directory listing
-        # For now, return empty list as placeholder
-        return []
+        # Resolve path safely through PathManager
+        resolved_path_str = self.path_manager.resolve_path(path)
+        
+        # Convert to Path and handle relative paths
+        resolved_path = Path(resolved_path_str)
+        if not resolved_path.is_absolute():
+            workspace_path = self.path_manager.workspace_path
+            if workspace_path:
+                resolved_path = Path(workspace_path) / resolved_path
+            else:
+                resolved_path = resolved_path.resolve()
+        
+        # Check if path exists and is a directory
+        if not resolved_path.exists():
+            raise ValueError(f"Path not found: {path}")
+        if not resolved_path.is_dir():
+            raise ValueError(f"Not a directory: {path}")
+        
+        nodes = []
+        
+        def should_include_file(file_path: Path) -> bool:
+            """Check if file should be included based on filters."""
+            # Skip hidden files if not requested
+            if not include_hidden and file_path.name.startswith('.'):
+                return False
+            
+            # Apply file type filter if specified
+            if file_types and file_path.is_file():
+                return file_path.suffix.lower() in file_types
+            
+            return True
+        
+        def build_node(file_path: Path, base_path: Path) -> Dict[str, Any]:
+            """Build a file node dictionary."""
+            try:
+                stat = file_path.stat()
+                relative_path = file_path.relative_to(base_path)
+                
+                node = {
+                    "name": file_path.name,
+                    "path": str(relative_path).replace('\\', '/'),
+                    "isFile": file_path.is_file(),
+                    "lastModified": stat.st_mtime
+                }
+                
+                if file_path.is_file():
+                    node["size"] = stat.st_size
+                    node["extension"] = file_path.suffix.lower() if file_path.suffix else None
+                    
+                    # Determine if binary
+                    text_extensions = {'.py', '.js', '.ts', '.tsx', '.json', '.md', '.txt', '.yaml', '.yml', 
+                                     '.css', '.html', '.xml', '.sh', '.bat', '.ps1', '.java', '.cpp', '.c', 
+                                     '.h', '.hpp', '.cs', '.rb', '.go', '.rs', '.swift', '.kt', '.toml', '.ini',
+                                     '.cfg', '.conf', '.log', '.csv', '.sql', '.r', '.R', '.m', '.lua', '.bak',
+                                     '.backup', '.orig', '.old', '.save', '.tmp', '.temp', '.dist', '.example',
+                                     '.sample', '.default', '.tpl', '.template', '.in', '.out', '.lock'}
+                    
+                    node["isBinary"] = node["extension"] not in text_extensions if node["extension"] else True
+                
+                return node
+            except (OSError, PermissionError):
+                # Handle files we can't stat
+                return None
+        
+        def list_dir_recursive(dir_path: Path, current_depth: int = 0) -> None:
+            """Recursively list directory contents."""
+            if current_depth >= max_depth:
+                return
+            
+            try:
+                # Get all items in directory
+                items = sorted(dir_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+                
+                for item in items:
+                    # Skip ignored patterns
+                    if item.name in ['.git', '__pycache__', '.pytest_cache', 'node_modules']:
+                        continue
+                    
+                    if should_include_file(item):
+                        node = build_node(item, self.path_manager.workspace_path or resolved_path)
+                        if node:
+                            nodes.append(node)
+                            
+                            # Recurse into directories if requested
+                            if recursive and item.is_dir() and current_depth + 1 < max_depth:
+                                list_dir_recursive(item, current_depth + 1)
+                                
+            except (OSError, PermissionError):
+                # Skip directories we can't read
+                pass
+        
+        # Start listing
+        if recursive:
+            list_dir_recursive(resolved_path, 0)
+        else:
+            try:
+                items = sorted(resolved_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+                for item in items:
+                    # Skip ignored patterns
+                    if item.name in ['.git', '__pycache__', '.pytest_cache', 'node_modules']:
+                        continue
+                        
+                    if should_include_file(item):
+                        node = build_node(item, self.path_manager.workspace_path or resolved_path)
+                        if node:
+                            nodes.append(node)
+            except (OSError, PermissionError):
+                raise RuntimeError(f"Cannot read directory: {path}")
+        
+        return nodes
     
     async def search_files(self, query: str, file_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """Search for files by name pattern.

@@ -1,5 +1,5 @@
 """JSON-RPC handlers for workspace operations."""
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 
 from interactive_server.services.file_service import FileService
@@ -69,39 +69,94 @@ class WorkspaceHandler:
             raise RuntimeError(f"Failed to get directory tree: {str(e)}")
     
     async def list_directory(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
-        """List files in a directory.
+        """List files in a directory with structured data.
         
         JSON-RPC method: workspace.listDirectory
         
         Args:
-            params: Dict with 'path' and optional 'recursive' keys
+            params: Dict with:
+                - path: Directory path (default: ".")
+                - recursive: Whether to list recursively (default: False)
+                - maxDepth: Maximum depth for recursive listing (default: 1)
+                - includeHidden: Whether to include hidden files (default: False)
+                - fileTypes: List of file extensions to filter (optional)
+                - limit: Maximum number of items to return (optional)
+                - offset: Offset for pagination (default: 0)
+                - sortBy: Field to sort by - name, size, lastModified (default: "name")
+                - sortDirection: Sort direction - asc, desc (default: "asc")
             websocket: WebSocket connection (optional, unused)
             
         Returns:
-            Dict with 'files' list
+            Dict with nodes list and metadata
         """
         # Check if there's an active project
         try:
             project_manager = get_project_manager()
             if not project_manager.get_active_project():
-                raise RuntimeError("No active workspace. Please open a project first.")
+                return {
+                    "path": params.get("path", "."),
+                    "nodes": [],
+                    "error": "No active workspace. Please open a project first."
+                }
         except Exception as e:
             logger.error(f"Error checking active project: {e}")
-            raise RuntimeError("Unable to access project manager.")
+            return {
+                "path": params.get("path", "."),
+                "nodes": [],
+                "error": "Unable to access project manager."
+            }
             
+        # Extract parameters
         path = params.get("path", ".")
         recursive = params.get("recursive", False)
+        max_depth = params.get("maxDepth", 1)
+        include_hidden = params.get("includeHidden", False)
+        file_types = params.get("fileTypes", None)
+        limit = params.get("limit", None)
+        offset = params.get("offset", 0)
+        sort_by = params.get("sortBy", "name")
+        sort_direction = params.get("sortDirection", "asc")
         
         try:
-            files = await self.file_service.list_directory(path, recursive)
+            # Get nodes from file service
+            nodes = await self.file_service.list_directory(
+                path=path,
+                recursive=recursive,
+                max_depth=max_depth,
+                include_hidden=include_hidden,
+                file_types=file_types
+            )
+            
+            # Apply sorting
+            if sort_by == "name":
+                nodes.sort(key=lambda n: (not n.get("isFile", False), n["name"].lower()),
+                          reverse=(sort_direction == "desc"))
+            elif sort_by == "size":
+                nodes.sort(key=lambda n: n.get("size", 0),
+                          reverse=(sort_direction == "desc"))
+            elif sort_by == "lastModified":
+                nodes.sort(key=lambda n: n.get("lastModified", 0),
+                          reverse=(sort_direction == "desc"))
+            
+            # Apply pagination
+            total_count = len(nodes)
+            if limit:
+                nodes = nodes[offset:offset + limit]
+            
             return {
-                "files": files,
                 "path": path,
-                "count": len(files)
+                "nodes": nodes,
+                "totalCount": total_count,
+                "isTruncated": limit and total_count > offset + limit
             }
+            
         except Exception as e:
             logger.error(f"Error listing directory {path}: {e}")
-            raise RuntimeError(f"Failed to list directory: {str(e)}")
+            return {
+                "path": path,
+                "nodes": [],
+                "error": str(e)
+            }
     
     async def search_files(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Search for files in workspace.

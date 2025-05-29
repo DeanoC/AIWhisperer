@@ -92,9 +92,10 @@ The project uses a "dogfooding" approach where AIWhisperer develops itself:
 
 ### Test-Driven Development
 The project enforces TDD methodology. When implementing features:
-1. Write tests first
-2. Implement functionality to pass tests
-3. Refactor while keeping tests green
+1. Write tests first (RED)
+2. Implement functionality to pass tests (GREEN)
+3. Refactor while keeping tests green (REFRACTOR)
+4. Verify all tests pass before committing
 
 ### Path Management
 All file operations use the PathManager system:
