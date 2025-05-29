@@ -1,8 +1,10 @@
 """JSON-RPC handlers for project management"""
 
 import logging
+from datetime import datetime
 from typing import Optional, Dict, Any
 from pathlib import Path
+import json
 
 from ..services.project_manager import ProjectManager
 from ..models.project import ProjectCreate, ProjectUpdate
@@ -10,14 +12,26 @@ from ..models.project import ProjectCreate, ProjectUpdate
 logger = logging.getLogger(__name__)
 
 
+def serialize_datetime(obj):
+    """JSON serializer for datetime objects"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
+
+
 def model_to_dict(model) -> dict:
     """Convert a Pydantic model to dict, handling both v1 and v2"""
+    # First get the dict representation
     if hasattr(model, 'model_dump'):
-        return model.model_dump()
+        data = model.model_dump()
     elif hasattr(model, 'dict'):
-        return model.dict()
+        data = model.dict()
     else:
-        return dict(model)
+        data = dict(model)
+    
+    # Convert datetime objects to ISO format strings
+    data_str = json.dumps(data, default=serialize_datetime)
+    return json.loads(data_str)
 
 # Global project manager instance
 _project_manager: Optional[ProjectManager] = None
