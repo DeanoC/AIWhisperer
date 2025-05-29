@@ -20,6 +20,8 @@ from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
 from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.context_management import ContextManager
+from ai_whisperer.context.context_manager import AgentContextManager
+from ai_whisperer.path_management import PathManager
 from .message_models import AIMessageChunkNotification
 
 logger = logging.getLogger(__name__)
@@ -60,6 +62,12 @@ class StatelessInteractiveSession:
         
         # Lock for thread-safe operations
         self._lock = asyncio.Lock()
+        
+        # Initialize context tracking
+        path_manager = PathManager()
+        if project_path:
+            path_manager.initialize(config_values={'workspace_path': project_path})
+        self.context_manager = AgentContextManager(session_id, path_manager)
     
     def _create_stateless_ai_loop(self, agent_id: str = None) -> StatelessAILoop:
         """Create a StatelessAILoop instance for an agent"""
@@ -258,12 +266,42 @@ class StatelessInteractiveSession:
     async def send_user_message(self, message: str):
         """
         Route a user message to the active agent with streaming support.
+        
+        Processes @ file references and adds them to the agent's context.
         """
         if not self.is_started or not self.active_agent:
             raise RuntimeError(f"Session {self.session_id} is not started or no active agent")
         
         try:
             agent = self.agents[self.active_agent]
+            
+            # Process @ references in the message
+            context_items = self.context_manager.process_message_references(
+                self.active_agent, 
+                message
+            )
+            
+            # If we added context items, notify the client
+            if context_items:
+                await self.send_notification("context.updated", {
+                    "agent_id": self.active_agent,
+                    "items_added": len(context_items),
+                    "context_summary": self.context_manager.get_context_summary(self.active_agent)
+                })
+                
+                # Add file contents to the message for the agent
+                # This ensures the agent sees the actual content, not just the reference
+                enriched_message = message
+                for item in context_items:
+                    file_ref = f"@{item.path}"
+                    if item.line_range:
+                        file_ref += f":{item.line_range[0]}-{item.line_range[1]}"
+                    
+                    # Replace the reference with the actual content
+                    content_block = f"\n\n[Content of {file_ref}]:\n```\n{item.content}\n```\n"
+                    enriched_message = enriched_message.replace(file_ref, content_block)
+                
+                message = enriched_message
             
             # Create streaming callback
             async def send_chunk(chunk: str):
@@ -470,6 +508,61 @@ class StatelessInteractiveSession:
                 await self.websocket.send_json(notification)
             except Exception as e:
                 logger.error(f"Failed to send notification to client: {e}")
+    
+    async def get_agent_context(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+        """Get context items for an agent.
+        
+        Args:
+            agent_id: Agent ID, uses active agent if not provided
+            
+        Returns:
+            Dictionary with context items and summary
+        """
+        if agent_id is None:
+            agent_id = self.active_agent
+        
+        if not agent_id:
+            return {"items": [], "summary": {}}
+        
+        items = self.context_manager.get_agent_context(agent_id)
+        summary = self.context_manager.get_context_summary(agent_id)
+        
+        return {
+            "agent_id": agent_id,
+            "items": [item.to_dict() for item in items],
+            "summary": summary
+        }
+    
+    async def refresh_context(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+        """Refresh stale context items for an agent.
+        
+        Args:
+            agent_id: Agent ID, uses active agent if not provided
+            
+        Returns:
+            Dictionary with refreshed items
+        """
+        if agent_id is None:
+            agent_id = self.active_agent
+        
+        if not agent_id:
+            return {"refreshed": 0, "items": []}
+        
+        refreshed_items = self.context_manager.refresh_stale_items(agent_id)
+        
+        # Notify client if items were refreshed
+        if refreshed_items:
+            await self.send_notification("context.refreshed", {
+                "agent_id": agent_id,
+                "refreshed_count": len(refreshed_items),
+                "context_summary": self.context_manager.get_context_summary(agent_id)
+            })
+        
+        return {
+            "agent_id": agent_id,
+            "refreshed": len(refreshed_items),
+            "items": [item.to_dict() for item in refreshed_items]
+        }
 
 
 class StatelessSessionManager:
