@@ -4,6 +4,7 @@ import logging
 
 from interactive_server.services.file_service import FileService
 from ai_whisperer.path_management import PathManager
+from interactive_server.handlers.project_handlers import get_project_manager
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,25 @@ class WorkspaceHandler:
         Returns:
             Dict with 'tree' key containing ASCII tree
         """
+        # Check if there's an active project
+        try:
+            project_manager = get_project_manager()
+            if not project_manager.get_active_project():
+                return {
+                    "tree": "",
+                    "path": "",
+                    "type": "ascii",
+                    "error": "No active workspace. Please open a project first."
+                }
+        except Exception as e:
+            logger.error(f"Error checking active project: {e}")
+            return {
+                "tree": "",
+                "path": "",
+                "type": "ascii",
+                "error": "Unable to access project manager."
+            }
+            
         path = params.get("path", ".")
         
         try:
@@ -60,6 +80,15 @@ class WorkspaceHandler:
         Returns:
             Dict with 'files' list
         """
+        # Check if there's an active project
+        try:
+            project_manager = get_project_manager()
+            if not project_manager.get_active_project():
+                raise RuntimeError("No active workspace. Please open a project first.")
+        except Exception as e:
+            logger.error(f"Error checking active project: {e}")
+            raise RuntimeError("Unable to access project manager.")
+            
         path = params.get("path", ".")
         recursive = params.get("recursive", False)
         
@@ -86,6 +115,15 @@ class WorkspaceHandler:
         Returns:
             Dict with 'results' list
         """
+        # Check if there's an active project
+        try:
+            project_manager = get_project_manager()
+            if not project_manager.get_active_project():
+                raise RuntimeError("No active workspace. Please open a project first.")
+        except Exception as e:
+            logger.error(f"Error checking active project: {e}")
+            raise RuntimeError("Unable to access project manager.")
+            
         query = params.get("query", "")
         file_types = params.get("fileTypes", None)
         
@@ -114,6 +152,15 @@ class WorkspaceHandler:
         Returns:
             Dict with file content and metadata
         """
+        # Check if there's an active project
+        try:
+            project_manager = get_project_manager()
+            if not project_manager.get_active_project():
+                raise RuntimeError("No active workspace. Please open a project first.")
+        except Exception as e:
+            logger.error(f"Error checking active project: {e}")
+            raise RuntimeError("Unable to access project manager.")
+            
         path = params.get("path")
         if not path:
             raise ValueError("File path is required")

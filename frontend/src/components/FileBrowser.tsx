@@ -133,6 +133,10 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
         setTreeData(result.tree);
         const nodes = parseTreeToNodes(result.tree);
         setTreeNodes(nodes);
+      } else if (result && result.error) {
+        setError(result.error);
+        setTreeData('');
+        setTreeNodes([]);
       } else {
         setError('No tree data received');
       }
