@@ -15,9 +15,9 @@ class BatchModeCliCommand(BaseCliCommand):
         try:
             from ai_whisperer.workspace_detection import find_whisper_workspace, WorkspaceNotFoundError
             workspace = find_whisper_workspace()
-            print(f"Workspace detected: {workspace}")
+            logger.info(f"Workspace detected: {workspace}")
         except Exception as e:
-            print(f"Error: {e}")
+            logger.error(f"Error: {e}")
             return 1
         # Run the batch client
         try:
