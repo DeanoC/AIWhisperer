@@ -101,6 +101,11 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
       const response = await projectService.connectWorkspace({ name, path, description });
       setActiveProject(response.project);
       await refreshProjects();
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('workspace-changed', { 
+        detail: { workspace: response.project } 
+      }));
     } catch (err: any) {
       setError(err.message);
       throw err;
@@ -113,6 +118,11 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
       const response = await projectService.activateProject(projectId);
       setActiveProject(response.project);
       await refreshProjects();
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('workspace-changed', { 
+        detail: { workspace: response.project } 
+      }));
     } catch (err: any) {
       setError(err.message);
       throw err;
@@ -152,6 +162,11 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
       setError(null);
       await projectService.closeWorkspace();
       setActiveProject(null);
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('workspace-changed', { 
+        detail: { workspace: null } 
+      }));
     } catch (err: any) {
       setError(err.message);
       throw err;

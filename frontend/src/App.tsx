@@ -57,6 +57,58 @@ function App() {
     }
   }, [ws, wsStatus]);
 
+  // Function to reload agents
+  const reloadAgents = useCallback(async () => {
+    if (!aiService) return;
+    
+    try {
+      console.log('[App] Reloading agents...');
+      const loadedAgents = await aiService.listAgents();
+      const mappedAgents = loadedAgents.map((agent: any) => ({
+        id: (agent.agent_id || agent.id).toLowerCase(),
+        name: agent.name,
+        role: agent.role,
+        description: agent.description,
+        color: agent.color,
+        icon: agent.icon || '🤖',
+        status: 'online' as const,
+        shortcut: agent.shortcut
+      }));
+      setAgents(mappedAgents);
+      AGENTS = mappedAgents;
+      
+      // If current agent is not in the new list, switch to Alice
+      if (currentAgent && !mappedAgents.find((a: Agent) => a.id === currentAgent.id)) {
+        const alice = mappedAgents.find((a: Agent) => a.id.toLowerCase() === 'a');
+        if (alice) {
+          // Switch to Alice
+          try {
+            await aiService.switchAgent(alice.id);
+            setCurrentAgent(alice);
+            addSystemMessage(`Switched to ${alice.name}`);
+          } catch (error) {
+            console.error('Failed to switch to Alice:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to reload agents:', error);
+    }
+  }, [aiService, currentAgent, addSystemMessage]);
+
+  // Listen for workspace changes
+  useEffect(() => {
+    const handleWorkspaceChange = () => {
+      console.log('[App] Workspace changed, reloading agents...');
+      reloadAgents();
+    };
+
+    window.addEventListener('workspace-changed', handleWorkspaceChange);
+    return () => {
+      window.removeEventListener('workspace-changed', handleWorkspaceChange);
+    };
+  }, [reloadAgents]);
+
   // AI session management
   const {
     sessionInfo,
