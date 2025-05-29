@@ -1,0 +1,116 @@
+# Tool Sets Configuration
+# Defines collections of tools that can be assigned to agents
+# Tool sets support inheritance via the 'inherits' field
+
+# Base tool sets that other sets can inherit from
+base_sets:
+  # Essential read-only tools for analysis
+  readonly_filesystem:
+    description: "Read-only file system access tools"
+    tools:
+      - read_file
+      - list_directory
+      - search_files
+      - get_file_content
+    tags:
+      - filesystem
+      - file_read
+      - directory_browse
+      - file_search
+      - analysis
+
+  # File modification tools
+  write_filesystem:
+    description: "File system write access tools"
+    tools:
+      - write_file
+    tags:
+      - file_write
+
+  # Code execution tools
+  code_execution:
+    description: "Tools for executing code and commands"
+    tools:
+      - execute_command
+    tags:
+      - code_execution
+      - utility
+
+# Agent-specific tool sets
+agent_sets:
+  # Default tool set for analysis agents
+  analyst:
+    description: "Tools for code analysis and exploration"
+    inherits:
+      - readonly_filesystem
+    # Additional tools specific to analysts
+    tools: []
+    # Additional tags
+    tags: []
+
+  # Tool set for planning agents
+  planner:
+    description: "Tools for project planning and requirements analysis"
+    inherits:
+      - readonly_filesystem
+    tools: []
+    tags: []
+
+  # Tool set for testing agents
+  tester:
+    description: "Tools for test development and execution"
+    inherits:
+      - readonly_filesystem
+      - code_execution
+    tools: []
+    tags: []
+
+  # Tool set for development agents
+  developer:
+    description: "Full development tools including write access"
+    inherits:
+      - readonly_filesystem
+      - write_filesystem
+      - code_execution
+    tools: []
+    tags: []
+
+  # Tool set for documentation agents
+  documenter:
+    description: "Tools for reading code and writing documentation"
+    inherits:
+      - readonly_filesystem
+      - write_filesystem
+    # Might want to restrict to only markdown/text files
+    tools: []
+    tags: []
+
+# Specialized tool sets for specific tasks
+specialized_sets:
+  # Minimal set for simple queries
+  minimal:
+    description: "Minimal tool set for basic file reading"
+    tools:
+      - read_file
+    tags: []
+
+  # Security-focused set with no execution
+  secure_readonly:
+    description: "Secure read-only access without any execution"
+    inherits:
+      - readonly_filesystem
+    # Explicitly exclude any execution-related tools
+    deny_tags:
+      - code_execution
+      - file_write
+
+  # CI/CD focused tools
+  ci_cd:
+    description: "Tools for CI/CD pipeline operations"
+    inherits:
+      - code_execution
+    tools:
+      - list_directory
+      - read_file
+    tags:
+      - automation

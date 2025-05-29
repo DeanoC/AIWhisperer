@@ -14,6 +14,9 @@ class Agent:
     context_sources: List[str]  # Types of context to include
     color: str  # UI color for agent identification
     icon: str = "🤖"  # Icon for UI display
+    tool_sets: Optional[List[str]] = None  # Tool sets from tool_sets.yaml
+    allow_tools: Optional[List[str]] = None  # Explicitly allowed tool names
+    deny_tools: Optional[List[str]] = None  # Explicitly denied tool names
 
     @property
     def shortcut(self) -> str:
@@ -47,7 +50,10 @@ class AgentRegistry:
                         prompt_file=agent_cfg['prompt_file'],
                         context_sources=agent_cfg.get('context_sources', []),
                         color=agent_cfg.get('color', '#888888'),
-                        icon=agent_cfg.get('icon', '🤖')
+                        icon=agent_cfg.get('icon', '🤖'),
+                        tool_sets=agent_cfg.get('tool_sets'),
+                        allow_tools=agent_cfg.get('allow_tools'),
+                        deny_tools=agent_cfg.get('deny_tools')
                     )
         else:
             # Hardcoded fallback
