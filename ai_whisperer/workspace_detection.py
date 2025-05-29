@@ -11,17 +11,28 @@ class WorkspaceNotFoundError(Exception):
 def find_whisper_workspace(start_path=None):
     """
     Search for a .WHISPER folder starting from start_path (or cwd) and walking up to the filesystem root.
+    Resolves symlinks and handles permission errors gracefully.
     Returns the Path to the workspace root (parent of .WHISPER).
     Raises WorkspaceNotFoundError if not found.
     """
     if start_path is None:
-        current = Path.cwd()
+        current = Path.cwd().resolve()
     else:
         current = Path(start_path).resolve()
+    visited = set()
     while True:
-        whisper = current / ".WHISPER"
-        if whisper.is_dir():
-            return current
+        try:
+            real_current = current.resolve()
+            if str(real_current) in visited:
+                break  # Prevent infinite loops with symlinks
+            visited.add(str(real_current))
+            whisper = real_current / ".WHISPER"
+            if whisper.is_dir():
+                return str(real_current)
+        except PermissionError as e:
+            raise WorkspaceNotFoundError(f"Permission denied while accessing {current}: {e}")
+        except Exception:
+            pass  # Ignore other errors and continue up
         if current.parent == current:
             break
         current = current.parent
@@ -30,14 +41,11 @@ def find_whisper_workspace(start_path=None):
 def load_project_json(workspace_path) -> Any:
     """
     Loads .WHISPER/project.json from the workspace and returns the parsed dict.
-    Returns None if not found or invalid.
+    Returns None if not found. Raises if invalid JSON.
     """
     whisper_dir = Path(workspace_path) / ".WHISPER"
     project_file = whisper_dir / "project.json"
     if not project_file.exists():
         return None
-    try:
-        with open(project_file, 'r') as f:
-            return json.load(f)
-    except Exception:
-        return None
+    with open(project_file, 'r') as f:
+        return json.load(f)
