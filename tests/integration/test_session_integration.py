@@ -3,7 +3,6 @@ pytestmark = pytest.mark.xfail(reason="Depends on removed InteractiveSessionMana
 
 def test_session_integration_placeholder():
     assert True
-import pytest
 import asyncio
 import json
 from interactive_server.main import process_json_rpc_request, handle_websocket_message # Import the actual handler functions
