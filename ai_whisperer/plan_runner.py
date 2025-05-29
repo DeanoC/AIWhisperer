@@ -81,6 +81,15 @@ class PlanRunner:
         tool_registry.register_tool(CreateRFCTool())
         tool_registry.register_tool(ReadRFCTool())
         tool_registry.register_tool(ListRFCsTool())
+        
+        # Register codebase analysis tools
+        from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool
+        from ai_whisperer.tools.find_similar_code_tool import FindSimilarCodeTool
+        from ai_whisperer.tools.get_project_structure_tool import GetProjectStructureTool
+        
+        tool_registry.register_tool(AnalyzeLanguagesTool())
+        tool_registry.register_tool(FindSimilarCodeTool())
+        tool_registry.register_tool(GetProjectStructureTool())
 
         logger.debug("Tools registered with ToolRegistry.")
 

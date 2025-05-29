@@ -69,10 +69,15 @@ agent_sets:
       - create_rfc
       - read_rfc
       - list_rfcs
+      - analyze_languages
+      - find_similar_code
+      - get_project_structure
     tags:
       - rfc
       - project_management
       - planning
+      - analysis
+      - codebase
 
   # Tool set for testing agents
   tester:
