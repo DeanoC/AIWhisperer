@@ -51,18 +51,23 @@ async def agent_list_handler(params, websocket=None):
     try:
         # Check if a workspace is active
         has_active_workspace = False
-        if project_manager:
-            try:
-                active_project = project_manager.get_active_project()
-                has_active_workspace = active_project is not None
-            except:
-                pass
+        from .handlers.project_handlers import get_project_manager
+        try:
+            pm = get_project_manager()
+            active_project = pm.get_active_project()
+            has_active_workspace = active_project is not None
+            logger.info(f"Active workspace check: project={active_project.name if active_project else None}, has_workspace={has_active_workspace}")
+        except Exception as e:
+            logger.error(f"Error checking active workspace: {e}")
+            pass
         
         all_agents = agent_registry.list_agents()
+        logger.info(f"All agents from registry: {[a.agent_id for a in all_agents]}")
         
         # If no workspace is active, only show Alice (agent 'a')
         if not has_active_workspace:
             all_agents = [agent for agent in all_agents if agent.agent_id.lower() == 'a']
+            logger.info(f"Filtered to Alice only: {[a.agent_id for a in all_agents]}")
         
         agents = [
             {
@@ -76,6 +81,7 @@ async def agent_list_handler(params, websocket=None):
             }
             for agent in all_agents
         ]
+        logger.info(f"Returning {len(agents)} agents to frontend")
         return {"agents": agents}
     except Exception as e:
         logger.error(f"Error listing agents: {e}")
@@ -88,12 +94,13 @@ async def session_switch_agent_handler(params, websocket=None):
     # Check if trying to switch to non-Alice agent without workspace
     if agent_id and agent_id.lower() != 'a':
         has_active_workspace = False
-        if project_manager:
-            try:
-                active_project = project_manager.get_active_project()
-                has_active_workspace = active_project is not None
-            except:
-                pass
+        from .handlers.project_handlers import get_project_manager
+        try:
+            pm = get_project_manager()
+            active_project = pm.get_active_project()
+            has_active_workspace = active_project is not None
+        except:
+            pass
         
         if not has_active_workspace:
             return {
