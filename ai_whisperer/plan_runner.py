@@ -7,12 +7,15 @@ import traceback
 import threading # Import threading
 from typing import Dict, Any, Optional # Import Optional
 
-from .delegate_manager import DelegateManager # Import DelegateManager
+# Delegate system removed
 from .config import load_config
 from .tools.tool_registry import get_tool_registry
 from .tools.read_file_tool import ReadFileTool
 from .tools.write_file_tool import WriteFileTool
 from .tools.execute_command_tool import ExecuteCommandTool
+from .tools.list_directory_tool import ListDirectoryTool
+from .tools.search_files_tool import SearchFilesTool
+from .tools.get_file_content_tool import GetFileContentTool
 from .exceptions import OrchestratorError, PlanNotLoadedError
 from .plan_parser import ParserPlan
 from .state_management import StateManager
@@ -33,7 +36,7 @@ class PlanRunner:
     """
     Executes a project plan from a parsed plan object.
     """
-    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False, delegate_manager: Optional[DelegateManager] = None): # Add delegate_manager parameter
+    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False, delegate_manager: Optional[Any] = None): # delegate_manager kept for compatibility
         """
         Initializes the PlanRunner with application configuration.
 
@@ -50,10 +53,15 @@ class PlanRunner:
     def _register_tools(self):
         """Registers the necessary tools with the ToolRegistry."""
         tool_registry = get_tool_registry()
-        # Register main tool instances only (no legacy aliases)
+        # Register file operation tools
         tool_registry.register_tool(ReadFileTool())
         tool_registry.register_tool(WriteFileTool())
         tool_registry.register_tool(ExecuteCommandTool())
+        
+        # Register workspace browsing tools
+        tool_registry.register_tool(ListDirectoryTool())
+        tool_registry.register_tool(SearchFilesTool())
+        tool_registry.register_tool(GetFileContentTool())
 
         logger.debug("Tools registered with ToolRegistry.")
 
