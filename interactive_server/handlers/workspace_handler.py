@@ -233,6 +233,33 @@ class WorkspaceHandler:
             logger.error(f"Error reading file {path}: {e}")
             raise RuntimeError(f"Failed to read file: {str(e)}")
     
+    async def clear_cache(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
+        """Clear directory listing cache.
+        
+        JSON-RPC method: workspace.clearCache
+        
+        Args:
+            params: Dict with optional 'path' key to clear specific path
+            websocket: WebSocket connection (optional, unused)
+            
+        Returns:
+            Dict with success status
+        """
+        path = params.get("path", None)
+        
+        try:
+            self.file_service.clear_cache(path)
+            return {
+                "success": True,
+                "message": f"Cache cleared for {'path: ' + path if path else 'all paths'}"
+            }
+        except Exception as e:
+            logger.error(f"Error clearing cache: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
     def get_methods(self) -> Dict[str, Any]:
         """Get all methods provided by this handler.
         
@@ -244,4 +271,5 @@ class WorkspaceHandler:
             "workspace.listDirectory": self.list_directory,
             "workspace.searchFiles": self.search_files,
             "workspace.getFileContent": self.get_file_content,
+            "workspace.clearCache": self.clear_cache,
         }

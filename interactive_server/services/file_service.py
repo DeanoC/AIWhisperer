@@ -2,6 +2,8 @@
 from typing import Dict, List, Optional, Any
 import os
 from pathlib import Path
+import time
+from threading import Lock
 
 from ai_whisperer.utils import build_ascii_directory_tree
 from ai_whisperer.path_management import PathManager
@@ -10,6 +12,10 @@ from ai_whisperer.path_management import PathManager
 class FileService:
     """Service for file system operations within workspace boundaries."""
     
+    # Cache configuration
+    CACHE_TTL = 30  # Cache time-to-live in seconds
+    CACHE_MAX_ENTRIES = 100  # Maximum number of cached directories
+    
     def __init__(self, path_manager: PathManager):
         """Initialize file service with path manager.
         
@@ -17,6 +23,55 @@ class FileService:
             path_manager: PathManager instance for secure path resolution
         """
         self.path_manager = path_manager
+        
+        # Directory listing cache: {path: (nodes, timestamp)}
+        self._dir_cache: Dict[str, tuple[List[Dict[str, Any]], float]] = {}
+        self._cache_lock = Lock()
+        
+        # Track access order for LRU eviction
+        self._cache_access_order: List[str] = []
+    
+    def _get_cache_key(self, path: str, recursive: bool, max_depth: int, 
+                      include_hidden: bool, file_types: Optional[List[str]]) -> str:
+        """Generate a unique cache key for the given parameters."""
+        file_types_str = ','.join(sorted(file_types)) if file_types else ''
+        return f"{path}|{recursive}|{max_depth}|{include_hidden}|{file_types_str}"
+    
+    def _is_cache_valid(self, timestamp: float) -> bool:
+        """Check if a cache entry is still valid."""
+        return (time.time() - timestamp) < self.CACHE_TTL
+    
+    def _update_cache_access(self, key: str) -> None:
+        """Update access order for LRU eviction."""
+        with self._cache_lock:
+            if key in self._cache_access_order:
+                self._cache_access_order.remove(key)
+            self._cache_access_order.append(key)
+            
+            # Evict oldest entries if cache is too large
+            while len(self._dir_cache) > self.CACHE_MAX_ENTRIES:
+                oldest_key = self._cache_access_order.pop(0)
+                if oldest_key in self._dir_cache:
+                    del self._dir_cache[oldest_key]
+    
+    def clear_cache(self, path: Optional[str] = None) -> None:
+        """Clear cache entries.
+        
+        Args:
+            path: If provided, only clear entries for this path. Otherwise clear all.
+        """
+        with self._cache_lock:
+            if path:
+                # Clear all entries that start with this path
+                keys_to_remove = [k for k in self._dir_cache.keys() if k.startswith(path)]
+                for key in keys_to_remove:
+                    del self._dir_cache[key]
+                    if key in self._cache_access_order:
+                        self._cache_access_order.remove(key)
+            else:
+                # Clear everything
+                self._dir_cache.clear()
+                self._cache_access_order.clear()
     
     async def get_tree_ascii(self, path: str = ".", max_depth: Optional[int] = None) -> str:
         """Get ASCII representation of directory tree.
@@ -54,7 +109,7 @@ class FileService:
     async def list_directory(self, path: str = ".", recursive: bool = False, 
                            max_depth: int = 1, include_hidden: bool = False,
                            file_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-        """List files and directories in given path.
+        """List files and directories in given path with caching support.
         
         Args:
             path: Relative path from workspace root
@@ -66,6 +121,17 @@ class FileService:
         Returns:
             List of file/directory information dicts
         """
+        # Generate cache key
+        cache_key = self._get_cache_key(path, recursive, max_depth, include_hidden, file_types)
+        
+        # Check cache first
+        with self._cache_lock:
+            if cache_key in self._dir_cache:
+                nodes, timestamp = self._dir_cache[cache_key]
+                if self._is_cache_valid(timestamp):
+                    self._update_cache_access(cache_key)
+                    return nodes.copy()  # Return a copy to prevent external modifications
+        
         # Resolve path safely through PathManager
         resolved_path_str = self.path_manager.resolve_path(path)
         
@@ -174,6 +240,11 @@ class FileService:
                             nodes.append(node)
             except (OSError, PermissionError):
                 raise RuntimeError(f"Cannot read directory: {path}")
+        
+        # Store in cache
+        with self._cache_lock:
+            self._dir_cache[cache_key] = (nodes.copy(), time.time())
+            self._update_cache_access(cache_key)
         
         return nodes
     
