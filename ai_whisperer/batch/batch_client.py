@@ -25,7 +25,7 @@ class BatchClient:
         print(f"[DEBUG] BatchClient.run: script_path={self.script_path} cwd={os.getcwd()} dry_run={self.dry_run}")
         if not os.path.isfile(self.script_path):
             print(f"Error: Script file not found: {self.script_path}", file=sys.stderr)
-            sys.exit(2)
+            raise ScriptFileNotFoundError(f"Script file not found: {self.script_path}")
         try:
             self.script_processor.load_script()
             if self.dry_run:
