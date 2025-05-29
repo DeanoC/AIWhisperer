@@ -103,6 +103,34 @@ class WorkspaceHandler:
             logger.error(f"Error searching files with query '{query}': {e}")
             raise RuntimeError(f"Failed to search files: {str(e)}")
     
+    async def get_file_content(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
+        """Get file content with optional line range.
+        
+        JSON-RPC method: workspace.getFileContent
+        
+        Args:
+            params: Dict with 'path' and optional 'startLine', 'endLine' keys
+            
+        Returns:
+            Dict with file content and metadata
+        """
+        path = params.get("path")
+        if not path:
+            raise ValueError("File path is required")
+            
+        start_line = params.get("startLine")
+        end_line = params.get("endLine")
+        
+        try:
+            result = await self.file_service.get_file_content(path, start_line, end_line)
+            return result
+        except ValueError as e:
+            logger.error(f"Invalid file request: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error reading file {path}: {e}")
+            raise RuntimeError(f"Failed to read file: {str(e)}")
+    
     def get_methods(self) -> Dict[str, Any]:
         """Get all methods provided by this handler.
         
@@ -113,4 +141,5 @@ class WorkspaceHandler:
             "workspace.getTree": self.get_tree,
             "workspace.listDirectory": self.list_directory,
             "workspace.searchFiles": self.search_files,
+            "workspace.getFileContent": self.get_file_content,
         }

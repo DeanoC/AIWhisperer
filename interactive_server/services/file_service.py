@@ -82,6 +82,91 @@ class FileService:
         Returns:
             Dict with content, total_lines, and metadata
         """
-        # TODO: Implement file content retrieval
-        # For now, return empty dict as placeholder
-        return {}
+        try:
+            resolved_path = self.path_manager.resolve_path(path)
+            
+            # Check if file exists and is a file
+            if not resolved_path.exists():
+                raise ValueError(f"File not found: {path}")
+            if not resolved_path.is_file():
+                raise ValueError(f"Not a file: {path}")
+            
+            # Get file metadata
+            stat = resolved_path.stat()
+            file_size = stat.st_size
+            
+            # Check if it's likely a text file
+            text_extensions = {'.py', '.js', '.ts', '.tsx', '.json', '.md', '.txt', '.yaml', '.yml', 
+                             '.css', '.html', '.xml', '.sh', '.bat', '.ps1', '.java', '.cpp', '.c', 
+                             '.h', '.hpp', '.cs', '.rb', '.go', '.rs', '.swift', '.kt', '.toml', '.ini',
+                             '.cfg', '.conf', '.log', '.csv', '.sql', '.r', '.R', '.m', '.lua'}
+            
+            is_text = resolved_path.suffix.lower() in text_extensions or file_size == 0
+            
+            # Check for common binary file signatures if no extension
+            if not resolved_path.suffix and file_size > 0:
+                with open(resolved_path, 'rb') as f:
+                    header = f.read(min(8, file_size))
+                    # Common binary file signatures
+                    binary_signatures = [
+                        b'\x7fELF',      # ELF
+                        b'MZ',           # DOS/Windows executable
+                        b'\x89PNG',      # PNG
+                        b'\xff\xd8\xff', # JPEG
+                        b'GIF8',         # GIF
+                        b'PK',           # ZIP
+                        b'\x50\x4b\x03\x04', # ZIP
+                    ]
+                    is_text = not any(header.startswith(sig) for sig in binary_signatures)
+            
+            if not is_text:
+                return {
+                    "path": path,
+                    "content": None,
+                    "is_binary": True,
+                    "size": file_size,
+                    "error": "Binary file - content preview not available"
+                }
+            
+            # Read text file
+            try:
+                with open(resolved_path, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    total_lines = len(lines)
+                    
+                    # Apply line range if specified
+                    if start_line is not None:
+                        start_idx = max(0, start_line - 1)  # Convert to 0-indexed
+                    else:
+                        start_idx = 0
+                        
+                    if end_line is not None:
+                        end_idx = min(total_lines, end_line)  # end_line is inclusive
+                    else:
+                        end_idx = min(total_lines, start_idx + 100)  # Default to 100 lines
+                    
+                    selected_lines = lines[start_idx:end_idx]
+                    content = ''.join(selected_lines)
+                    
+                    return {
+                        "path": path,
+                        "content": content.rstrip(),
+                        "is_binary": False,
+                        "size": file_size,
+                        "total_lines": total_lines,
+                        "start_line": start_idx + 1,
+                        "end_line": min(end_idx, total_lines),
+                        "truncated": end_idx < total_lines
+                    }
+                    
+            except UnicodeDecodeError:
+                return {
+                    "path": path,
+                    "content": None,
+                    "is_binary": True,
+                    "size": file_size,
+                    "error": "Unable to decode file as UTF-8 text"
+                }
+                
+        except Exception as e:
+            raise RuntimeError(f"Failed to read file: {str(e)}")
