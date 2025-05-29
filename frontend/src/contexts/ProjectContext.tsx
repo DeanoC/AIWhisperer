@@ -15,7 +15,7 @@ interface ProjectContextType {
   error: string | null;
   
   // Actions
-  connectWorkspace: (name: string, path: string, description?: string) => Promise<void>;
+  connectWorkspace: (name: string, path: string, description?: string, outputPath?: string) => Promise<void>;
   activateProject: (projectId: string) => Promise<void>;
   updateProject: (projectId: string, updates: any) => Promise<void>;
   deleteProject: (projectId: string, deleteFiles?: boolean) => Promise<void>;
@@ -95,10 +95,10 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     }
   };
 
-  const connectWorkspace = useCallback(async (name: string, path: string, description?: string) => {
+  const connectWorkspace = useCallback(async (name: string, path: string, description?: string, outputPath?: string) => {
     try {
       setError(null);
-      const response = await projectService.connectWorkspace({ name, path, description });
+      const response = await projectService.connectWorkspace({ name, path, description, outputPath });
       setActiveProject(response.project);
       await refreshProjects();
       

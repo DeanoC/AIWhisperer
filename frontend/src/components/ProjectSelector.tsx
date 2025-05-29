@@ -79,6 +79,11 @@ export function ProjectSelector() {
                   >
                     <div className="project-item-name">{project.name}</div>
                     <div className="project-item-path">{project.path}</div>
+                    {activeProject?.id === project.id && activeProject.outputPath && (
+                      <div className="project-item-output">
+                        Output: {activeProject.outputPath}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -107,9 +112,11 @@ function ConnectWorkspaceDialog({ onClose }: ConnectWorkspaceDialogProps) {
   const { connectWorkspace } = useProject();
   const [name, setName] = useState('');
   const [path, setPath] = useState('');
+  const [outputPath, setOutputPath] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +124,7 @@ function ConnectWorkspaceDialog({ onClose }: ConnectWorkspaceDialogProps) {
     setIsConnecting(true);
 
     try {
-      await connectWorkspace(name, path, description);
+      await connectWorkspace(name, path, description, outputPath || undefined);
       onClose();
     } catch (err: any) {
       setError(err.message);
@@ -181,6 +188,37 @@ function ConnectWorkspaceDialog({ onClose }: ConnectWorkspaceDialogProps) {
               rows={3}
             />
           </div>
+
+          <div className="form-group">
+            <button
+              type="button"
+              className="advanced-toggle"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              {showAdvanced ? '▼' : '▶'} Advanced Options
+            </button>
+          </div>
+
+          {showAdvanced && (
+            <div className="form-group">
+              <label htmlFor="outputPath">Output Path (optional)</label>
+              <div className="path-input-group">
+                <input
+                  id="outputPath"
+                  type="text"
+                  value={outputPath}
+                  onChange={e => setOutputPath(e.target.value)}
+                  placeholder="Leave empty to use workspace path"
+                />
+                <button type="button" onClick={handleBrowse} className="browse-button">
+                  Browse
+                </button>
+              </div>
+              <small className="form-help">
+                Specify a separate directory for generated files. Useful for restricting tool write access.
+              </small>
+            </div>
+          )}
 
           {error && (
             <div className="error-message">{error}</div>

@@ -138,6 +138,15 @@
   white-space: nowrap;
 }
 
+.project-item-output {
+  font-size: 11px;
+  color: #3b82f6;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .no-projects {
   padding: 24px;
   text-align: center;
@@ -295,6 +304,30 @@ form {
 
 .dialog-actions button[type="button"]:hover {
   background: #e8e8e8;
+}
+
+/* Advanced options */
+.advanced-toggle {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px 0;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.advanced-toggle:hover {
+  color: #2563eb;
+}
+
+.form-help {
+  display: block;
+  margin-top: 4px;
+  color: #666;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .dialog-actions button[type="submit"] {

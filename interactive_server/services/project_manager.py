@@ -3,7 +3,7 @@
 import os
 import json
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import logging
@@ -13,6 +13,7 @@ from ..models.project import (
     Project, ProjectCreate, ProjectUpdate, ProjectSummary,
     ProjectHistory, UISettings, ProjectSettings
 )
+from ai_whisperer.path_management import PathManager
 
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ class ProjectManager:
         """Save projects to disk."""
         try:
             data = {
-                pid: proj.dict() for pid, proj in self.projects.items()
+                pid: proj.model_dump() for pid, proj in self.projects.items()
             }
             with open(self.projects_file, 'w') as f:
                 json.dump(data, f, indent=2, default=str)
@@ -86,7 +87,7 @@ class ProjectManager:
         """Save project history to disk."""
         try:
             with open(self.history_file, 'w') as f:
-                json.dump(self.history.dict(), f, indent=2, default=str)
+                json.dump(self.history.model_dump(), f, indent=2, default=str)
         except Exception as e:
             logger.error(f"Failed to save project history: {e}")
     
@@ -110,7 +111,7 @@ class ProjectManager:
         """Save UI settings to disk."""
         try:
             with open(self.ui_settings_file, 'w') as f:
-                json.dump(self.ui_settings.dict(), f, indent=2)
+                json.dump(self.ui_settings.model_dump(), f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save UI settings: {e}")
     
@@ -158,6 +159,25 @@ class ProjectManager:
         
         self._save_history()
     
+    def _initialize_path_manager(self, project: Project):
+        """Initialize PathManager with project configuration."""
+        path_manager = PathManager.get_instance()
+        
+        # Build project.json compatible dict
+        project_json = {
+            "path": project.path,
+            "output_path": project.output_path if project.output_path else None,
+            "workspace_path": project.path,  # workspace is same as project path
+            "prompt_path": project.path      # prompt path defaults to project path
+        }
+        
+        # Initialize PathManager with project settings
+        path_manager.initialize_with_project_json(project_json)
+        
+        logger.info(f"Initialized PathManager for project: {project.name}")
+        logger.info(f"  - Workspace: {path_manager.workspace_path}")
+        logger.info(f"  - Output: {path_manager.output_path}")
+    
     def create_project(self, project_data: ProjectCreate) -> Project:
         """Create a new project."""
         project_path = Path(project_data.path)
@@ -182,13 +202,14 @@ class ProjectManager:
             name=project_data.name,
             path=str(project_path),
             whisper_path=str(whisper_path),
+            output_path=project_data.output_path if project_data.output_path else None,
             description=project_data.description
         )
         
         # Save project metadata
         project_file = whisper_path / "project.json"
         with open(project_file, 'w') as f:
-            json.dump(project.dict(), f, indent=2, default=str)
+            json.dump(project.model_dump(), f, indent=2, default=str)
         
         # Add to projects
         self.projects[project.id] = project
@@ -230,6 +251,9 @@ class ProjectManager:
         if update_data.name is not None:
             project.name = update_data.name
         
+        if update_data.output_path is not None:
+            project.output_path = update_data.output_path
+        
         if update_data.description is not None:
             project.description = update_data.description
         
@@ -242,7 +266,7 @@ class ProjectManager:
         # Update project.json in .WHISPER
         project_file = Path(project.whisper_path) / "project.json"
         with open(project_file, 'w') as f:
-            json.dump(project.dict(), f, indent=2, default=str)
+            json.dump(project.model_dump(), f, indent=2, default=str)
         
         logger.info(f"Updated project: {project.name}")
         
@@ -292,7 +316,7 @@ class ProjectManager:
             return None
         
         # Update last accessed time
-        project.last_accessed_at = datetime.utcnow()
+        project.last_accessed_at = datetime.now(timezone.utc)
         self._save_projects()
         
         # Set as active
@@ -301,6 +325,9 @@ class ProjectManager:
         # Update history
         self.history.last_active_project_id = project_id
         self._update_recent_projects(project)
+        
+        # Initialize PathManager with project paths
+        self._initialize_path_manager(project)
         
         logger.info(f"Activated project: {project.name}")
         
@@ -343,3 +370,5 @@ class ProjectManager:
             # Restore previous project
             if previous_project:
                 self.active_project = previous_project
+                # Re-initialize PathManager with previous project
+                self._initialize_path_manager(previous_project)

@@ -1,6 +1,6 @@
 """Project management models and schemas."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from pydantic import BaseModel, Field
 import uuid
@@ -18,8 +18,9 @@ class Project(BaseModel):
     name: str = Field(..., description="Project display name")
     path: str = Field(..., description="Absolute path to project directory")
     whisper_path: str = Field(..., description="Path to .WHISPER folder")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
-    last_accessed_at: datetime = Field(default_factory=datetime.utcnow, description="Last access timestamp")
+    output_path: Optional[str] = Field(None, description="Output path for generated files (defaults to project path)")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Creation timestamp")
+    last_accessed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Last access timestamp")
     description: Optional[str] = Field(None, description="Project description")
     settings: ProjectSettings = Field(default_factory=ProjectSettings, description="Project settings")
 
@@ -28,12 +29,14 @@ class ProjectCreate(BaseModel):
     """Schema for creating a new project."""
     name: str = Field(..., description="Project name")
     path: str = Field(..., description="Project directory path")
+    output_path: Optional[str] = Field(None, description="Output path for generated files")
     description: Optional[str] = Field(None, description="Project description")
 
 
 class ProjectUpdate(BaseModel):
     """Schema for updating a project."""
     name: Optional[str] = Field(None, description="Project name")
+    output_path: Optional[str] = Field(None, description="Output path for generated files")
     description: Optional[str] = Field(None, description="Project description")
     settings: Optional[ProjectSettings] = Field(None, description="Project settings")
 

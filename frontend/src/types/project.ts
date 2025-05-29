@@ -12,6 +12,7 @@ export interface Project {
   name: string;
   path: string;
   whisperPath: string;
+  outputPath?: string;
   createdAt: string;
   lastAccessedAt: string;
   description?: string;
@@ -21,11 +22,13 @@ export interface Project {
 export interface ProjectCreate {
   name: string;
   path: string;
+  outputPath?: string;
   description?: string;
 }
 
 export interface ProjectUpdate {
   name?: string;
+  outputPath?: string;
   description?: string;
   settings?: ProjectSettings;
 }
