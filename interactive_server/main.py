@@ -49,6 +49,21 @@ async def agent_list_handler(params, websocket=None):
         return {"agents": []}
     
     try:
+        # Check if a workspace is active
+        has_active_workspace = False
+        if project_manager:
+            try:
+                active_project = project_manager.get_active_project()
+                has_active_workspace = active_project is not None
+            except:
+                pass
+        
+        all_agents = agent_registry.list_agents()
+        
+        # If no workspace is active, only show Alice (agent 'a')
+        if not has_active_workspace:
+            all_agents = [agent for agent in all_agents if agent.agent_id.lower() == 'a']
+        
         agents = [
             {
                 "agent_id": agent.agent_id.lower(),  # Ensure lowercase for frontend consistency
@@ -59,7 +74,7 @@ async def agent_list_handler(params, websocket=None):
                 "shortcut": agent.shortcut,
                 "icon": getattr(agent, 'icon', '🤖'),
             }
-            for agent in agent_registry.list_agents()
+            for agent in all_agents
         ]
         return {"agents": agents}
     except Exception as e:
@@ -69,6 +84,24 @@ async def agent_list_handler(params, websocket=None):
 async def session_switch_agent_handler(params, websocket=None):
     agent_id = params.get("agent_id")
     logger.info(f"session_switch_agent_handler called with agent_id: {agent_id}")
+    
+    # Check if trying to switch to non-Alice agent without workspace
+    if agent_id and agent_id.lower() != 'a':
+        has_active_workspace = False
+        if project_manager:
+            try:
+                active_project = project_manager.get_active_project()
+                has_active_workspace = active_project is not None
+            except:
+                pass
+        
+        if not has_active_workspace:
+            return {
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {"code": -32001, "message": f"Agent '{agent_id}' requires an active workspace"}
+            }
+    
     session = session_manager.get_session_by_websocket(websocket)
     if not session and "sessionId" in params:
         session = session_manager.get_session(params["sessionId"])

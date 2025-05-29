@@ -105,6 +105,14 @@ class ProjectService {
     }
   }
 
+  async closeWorkspace(): Promise<void> {
+    try {
+      await this.ensureJsonRpc().sendRequest('project.close', {});
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to close workspace');
+    }
+  }
+
   async getUISettings(): Promise<UISettings> {
     try {
       const result = await this.ensureJsonRpc().sendRequest('project.settings.get', {});

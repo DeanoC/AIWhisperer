@@ -19,6 +19,7 @@ interface ProjectContextType {
   activateProject: (projectId: string) => Promise<void>;
   updateProject: (projectId: string, updates: any) => Promise<void>;
   deleteProject: (projectId: string, deleteFiles?: boolean) => Promise<void>;
+  closeWorkspace: () => Promise<void>;
   refreshProjects: () => Promise<void>;
   updateUISettings: (settings: UISettings) => Promise<void>;
   
@@ -146,6 +147,17 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     }
   }, [activeProject]);
 
+  const closeWorkspace = useCallback(async () => {
+    try {
+      setError(null);
+      await projectService.closeWorkspace();
+      setActiveProject(null);
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  }, []);
+
   const refreshProjects = useCallback(async () => {
     try {
       const recent = await projectService.getRecentProjects();
@@ -176,6 +188,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     activateProject,
     updateProject,
     deleteProject,
+    closeWorkspace,
     refreshProjects,
     updateUISettings,
     setJsonRpcService

@@ -7,7 +7,7 @@ import { useProject } from '../contexts/ProjectContext';
 import './ProjectSelector.css';
 
 export function ProjectSelector() {
-  const { activeProject, recentProjects, activateProject, isLoading } = useProject();
+  const { activeProject, recentProjects, activateProject, closeWorkspace, isLoading } = useProject();
   const [isOpen, setIsOpen] = useState(false);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
 
@@ -17,6 +17,15 @@ export function ProjectSelector() {
       setIsOpen(false);
     } catch (err) {
       console.error('Failed to activate project:', err);
+    }
+  };
+
+  const handleCloseWorkspace = async () => {
+    try {
+      await closeWorkspace();
+      setIsOpen(false);
+    } catch (err) {
+      console.error('Failed to close workspace:', err);
     }
   };
 
@@ -39,15 +48,25 @@ export function ProjectSelector() {
           <div className="project-dropdown">
             <div className="project-dropdown-header">
               <h3>Workspaces</h3>
-              <button
-                className="connect-button"
-                onClick={() => {
-                  setShowConnectDialog(true);
-                  setIsOpen(false);
-                }}
-              >
-                Connect Workspace
-              </button>
+              <div className="header-buttons">
+                {activeProject && (
+                  <button
+                    className="close-button"
+                    onClick={handleCloseWorkspace}
+                  >
+                    Close Workspace
+                  </button>
+                )}
+                <button
+                  className="connect-button"
+                  onClick={() => {
+                    setShowConnectDialog(true);
+                    setIsOpen(false);
+                  }}
+                >
+                  Connect Workspace
+                </button>
+              </div>
             </div>
 
             {recentProjects.length > 0 ? (

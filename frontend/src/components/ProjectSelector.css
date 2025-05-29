@@ -73,10 +73,13 @@
   font-weight: 600;
 }
 
-.connect-button {
+.header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.connect-button, .close-button {
   padding: 6px 12px;
-  background: #007acc;
-  color: white;
   border: none;
   border-radius: 4px;
   font-size: 12px;
@@ -84,8 +87,22 @@
   transition: background 0.2s;
 }
 
+.connect-button {
+  background: #007acc;
+  color: white;
+}
+
 .connect-button:hover {
   background: #005a9e;
+}
+
+.close-button {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.close-button:hover {
+  background: #d0d0d0;
 }
 
 /* Project List */

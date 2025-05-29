@@ -207,6 +207,22 @@ async def project_delete_handler(params: Dict[str, Any], websocket=None) -> Dict
         }
 
 
+async def project_close_handler(params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
+    """Close the currently active workspace"""
+    try:
+        manager = get_project_manager()
+        manager.active_project = None
+        
+        return {
+            "message": "Workspace closed successfully"
+        }
+    except Exception as e:
+        logger.error(f"Failed to close workspace: {e}")
+        return {
+            "error": {"code": -32603, "message": "Failed to close workspace"}
+        }
+
+
 async def project_activate_handler(params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
     """Activate a project"""
     try:
@@ -281,6 +297,7 @@ PROJECT_HANDLERS = {
     "project.update": project_update_handler,
     "project.delete": project_delete_handler,
     "project.activate": project_activate_handler,
+    "project.close": project_close_handler,
     "project.settings.get": project_settings_get_handler,
     "project.settings.update": project_settings_update_handler,
 }
