@@ -15,6 +15,7 @@ import { useAISession } from './hooks/useAISession';
 import { useChat } from './hooks/useChat';
 import { SessionStatus } from './types/ai';
 import { Agent } from './types/agent';
+import { ProjectIntegration } from './components/ProjectIntegration';
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 const USER_ID = 'demo-user';
@@ -40,13 +41,18 @@ function App() {
   const [currentPlan, setCurrentPlan] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize AIService when WebSocket is connected
+  // JSON-RPC service for reuse
+  const [jsonRpcService, setJsonRpcService] = useState<JsonRpcService | undefined>(undefined);
+
+  // Initialize services when WebSocket is connected
   useEffect(() => {
     if (ws && wsStatus === 'connected') {
-      console.log('[App] WebSocket is connected, initializing AIService');
+      console.log('[App] WebSocket is connected, initializing services');
       const jsonRpc = new JsonRpcService(ws);
+      setJsonRpcService(jsonRpc);
       setAIService(new AIService(jsonRpc));
     } else {
+      setJsonRpcService(undefined);
       setAIService(undefined);
     }
   }, [ws, wsStatus]);
@@ -333,6 +339,7 @@ function App() {
   return (
     <Router>
       <ProjectProvider>
+        <ProjectIntegration jsonRpcService={jsonRpcService} />
         <ViewProvider>
           <MainLayout 
             theme={theme} 

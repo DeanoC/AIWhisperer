@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Project, ProjectSummary, UISettings } from '../types/project';
 import projectService from '../services/projectService';
+import { JsonRpcService } from '../services/jsonRpcService';
 
 interface ProjectContextType {
   activeProject: Project | null;
@@ -20,6 +21,9 @@ interface ProjectContextType {
   deleteProject: (projectId: string, deleteFiles?: boolean) => Promise<void>;
   refreshProjects: () => Promise<void>;
   updateUISettings: (settings: UISettings) => Promise<void>;
+  
+  // WebSocket integration
+  setJsonRpcService: (service: JsonRpcService | null) => void;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -42,11 +46,22 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
   const [uiSettings, setUiSettings] = useState<UISettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [jsonRpcService, setJsonRpcServiceState] = useState<JsonRpcService | null>(null);
 
-  // Load initial data
-  useEffect(() => {
-    loadInitialData();
+  // Set JSON-RPC service
+  const setJsonRpcService = useCallback((service: JsonRpcService | null) => {
+    setJsonRpcServiceState(service);
+    if (service) {
+      projectService.setJsonRpcService(service);
+    }
   }, []);
+
+  // Load initial data when JSON-RPC service is available
+  useEffect(() => {
+    if (jsonRpcService) {
+      loadInitialData();
+    }
+  }, [jsonRpcService]);
 
   const loadInitialData = async () => {
     try {
@@ -162,7 +177,8 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     updateProject,
     deleteProject,
     refreshProjects,
-    updateUISettings
+    updateUISettings,
+    setJsonRpcService
   };
 
   return (

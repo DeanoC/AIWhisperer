@@ -29,7 +29,7 @@ from ai_whisperer.agents.registry import AgentRegistry
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
 from ai_whisperer.path_management import PathManager
 from pathlib import Path
-from .api.projects import router as projects_router, init_project_manager
+from .handlers.project_handlers import init_project_handlers, PROJECT_HANDLERS
 
 # Initialize agent registry
 try:
@@ -137,7 +137,7 @@ async def session_handoff_handler(params, websocket=None):
 
 app = FastAPI()
 
-# Configure CORS
+# Configure CORS for any remaining REST endpoints
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:3001"],  # React dev servers
@@ -145,9 +145,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Include project management routes
-app.include_router(projects_router)
 
 # Load config and initialize session manager at startup
 CONFIG_PATH = os.environ.get("AIWHISPERER_CONFIG", "config.yaml")
@@ -169,7 +166,7 @@ except Exception as e:
 try:
     data_dir = Path.home() / ".aiwhisperer" / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
-    project_manager = init_project_manager(data_dir)
+    project_manager = init_project_handlers(data_dir)
     logging.info("ProjectManager initialized successfully")
 except Exception as e:
     logging.error(f"Failed to initialize ProjectManager: {e}")
@@ -318,6 +315,8 @@ HANDLERS = {
     "session.switch_agent": session_switch_agent_handler,
     "session.current_agent": session_current_agent_handler,
     "session.handoff": session_handoff_handler,
+    # Project management handlers
+    **PROJECT_HANDLERS
 }
 
 

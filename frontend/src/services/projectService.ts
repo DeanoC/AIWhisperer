@@ -1,5 +1,5 @@
 /**
- * Project management service for API interactions
+ * Project management service using JSON-RPC over WebSocket
  */
 
 import {
@@ -11,132 +11,106 @@ import {
   UISettings,
   DeleteProjectResponse
 } from '../types/project';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import { JsonRpcService } from './jsonRpcService';
 
 class ProjectService {
-  private baseUrl = `${API_BASE}/api/projects`;
+  private jsonRpc: JsonRpcService | null = null;
+
+  setJsonRpcService(service: JsonRpcService) {
+    this.jsonRpc = service;
+  }
+
+  private ensureJsonRpc(): JsonRpcService {
+    if (!this.jsonRpc) {
+      throw new Error('JsonRpcService not initialized. WebSocket connection required.');
+    }
+    return this.jsonRpc;
+  }
 
   async connectWorkspace(data: ProjectCreate): Promise<ProjectResponse> {
-    const response = await fetch(`${this.baseUrl}/connect`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to connect to workspace');
+    const result = await this.ensureJsonRpc().call('project.connect', data);
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to connect to workspace');
     }
-
-    return response.json();
+    return result;
   }
 
   async listProjects(): Promise<Project[]> {
-    const response = await fetch(this.baseUrl);
-    
-    if (!response.ok) {
-      throw new Error('Failed to list projects');
+    const result = await this.ensureJsonRpc().call('project.list', {});
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to list projects');
     }
-
-    return response.json();
+    return result.projects;
   }
 
   async getRecentProjects(): Promise<ProjectSummary[]> {
-    const response = await fetch(`${this.baseUrl}/recent`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to get recent projects');
+    const result = await this.ensureJsonRpc().call('project.recent', {});
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to get recent projects');
     }
-
-    return response.json();
+    return result.projects;
   }
 
   async getActiveProject(): Promise<Project | null> {
-    const response = await fetch(`${this.baseUrl}/active`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to get active project');
+    const result = await this.ensureJsonRpc().call('project.active', {});
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to get active project');
     }
-
-    const data = await response.json();
-    return data || null;
+    return result.project || null;
   }
 
   async getProject(id: string): Promise<Project> {
-    const response = await fetch(`${this.baseUrl}/${id}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to get project');
+    const result = await this.ensureJsonRpc().call('project.get', { project_id: id });
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to get project');
     }
-
-    return response.json();
+    return result.project;
   }
 
   async updateProject(id: string, data: ProjectUpdate): Promise<ProjectResponse> {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+    const result = await this.ensureJsonRpc().call('project.update', { 
+      project_id: id,
+      ...data 
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to update project');
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to update project');
     }
-
-    return response.json();
+    return result;
   }
 
   async deleteProject(id: string, deleteFiles: boolean = false): Promise<DeleteProjectResponse> {
-    const response = await fetch(`${this.baseUrl}/${id}?delete_files=${deleteFiles}`, {
-      method: 'DELETE'
+    const result = await this.ensureJsonRpc().call('project.delete', { 
+      project_id: id,
+      delete_files: deleteFiles 
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to delete project');
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to delete project');
     }
-
-    return response.json();
+    return result;
   }
 
   async activateProject(id: string): Promise<ProjectResponse> {
-    const response = await fetch(`${this.baseUrl}/${id}/activate`, {
-      method: 'POST'
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to activate project');
+    const result = await this.ensureJsonRpc().call('project.activate', { project_id: id });
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to activate project');
     }
-
-    return response.json();
+    return result;
   }
 
   async getUISettings(): Promise<UISettings> {
-    const response = await fetch(`${this.baseUrl}/settings/ui`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to get UI settings');
+    const result = await this.ensureJsonRpc().call('project.settings.get', {});
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to get UI settings');
     }
-
-    return response.json();
+    return result.settings;
   }
 
   async updateUISettings(settings: UISettings): Promise<UISettings> {
-    const response = await fetch(`${this.baseUrl}/settings/ui`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to update UI settings');
+    const result = await this.ensureJsonRpc().call('project.settings.update', settings);
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to update UI settings');
     }
-
-    return response.json();
+    return result.settings;
   }
 }
 
