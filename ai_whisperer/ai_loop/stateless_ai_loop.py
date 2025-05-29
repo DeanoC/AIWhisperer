@@ -78,6 +78,7 @@ class StatelessAILoop:
             
             # Get message history
             messages = context_provider.retrieve_messages()
+            logger.debug(f"Processing with {len(messages)} messages, first message role: {messages[0].get('role') if messages else 'N/A'}")
             
             # If no messages were stored, add the current message
             if not store_messages and not any(msg.get('content') == message for msg in messages):

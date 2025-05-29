@@ -18,45 +18,8 @@ import { Agent } from './types/agent';
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 const USER_ID = 'demo-user';
 
-// Demo agent list (replace with API call in production)
-const AGENTS: Agent[] = [
-  {
-    id: 'P',
-    name: 'Patricia the Planner',
-    role: 'Planner',
-    description: 'Creates structured implementation plans from feature requests',
-    color: '#4CAF50',
-    icon: '📋',
-    status: 'online'
-  },
-  {
-    id: 'T',
-    name: 'Tessa the Tester',
-    role: 'Tester',
-    description: 'Generates comprehensive test suites and test plans',
-    color: '#2196F3',
-    icon: '🧪',
-    status: 'online'
-  },
-  {
-    id: 'D',
-    name: 'Devon the Developer',
-    role: 'Developer',
-    description: 'Implements features and fixes bugs',
-    color: '#FF9800',
-    icon: '💻',
-    status: 'online'
-  },
-  {
-    id: 'R',
-    name: 'Riley the Reviewer',
-    role: 'Reviewer',
-    description: 'Reviews code and provides feedback',
-    color: '#9C27B0',
-    icon: '🔍',
-    status: 'online'
-  }
-];
+// This will be loaded from backend
+let AGENTS: Agent[] = [];
 
 function App() {
   // Theme state
@@ -71,6 +34,7 @@ function App() {
   const [aiService, setAIService] = useState<AIService | undefined>(undefined);
 
   // Current agent and plan state
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [currentPlan, setCurrentPlan] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,22 +62,48 @@ function App() {
   // Chat state management
   const {
     messages,
+    loading,
     addUserMessage,
     startAIMessage,
     appendAIChunk,
     addSystemMessage,
-  } = useChat();
+  } = useChat({ currentAgentId: currentAgent?.id });
 
-  // Start session and sync agent on mount
+  // Start session and load agents on mount
   useEffect(() => {
     const initializeSession = async () => {
       if (aiService && sessionStatus !== SessionStatus.Active) {
         setIsLoading(true);
         try {
           await startSession();
-          // Default to first agent
-          if (AGENTS.length > 0) {
-            await handleAgentSelect(AGENTS[0].id);
+          
+          // Load agents from backend
+          const loadedAgents = await aiService.listAgents();
+          // Map backend format to frontend format
+          const mappedAgents = loadedAgents.map((agent: any) => ({
+            id: (agent.agent_id || agent.id).toLowerCase(),  // Ensure lowercase for consistency
+            name: agent.name,
+            role: agent.role,
+            description: agent.description,
+            color: agent.color,
+            icon: agent.icon || '🤖',
+            status: 'online' as const,
+            shortcut: agent.shortcut
+          }));
+          setAgents(mappedAgents);
+          AGENTS = mappedAgents; // Update global for compatibility
+          
+          // Get current agent from backend
+          const currentAgentId = await aiService.getCurrentAgent();
+          if (currentAgentId) {
+            const agent = mappedAgents.find((a: Agent) => a.id.toLowerCase() === currentAgentId.toLowerCase());
+            if (agent) {
+              setCurrentAgent(agent);
+            }
+          } else if (mappedAgents.length > 0) {
+            // If no current agent, default to first (should be Alice)
+            const defaultAgent = mappedAgents.find((a: Agent) => a.id.toLowerCase() === 'a') || mappedAgents[0];
+            await handleAgentSelect(defaultAgent.id);
           }
         } catch (error) {
           console.error('Failed to start session:', error);
@@ -126,27 +116,7 @@ function App() {
     initializeSession();
   }, [aiService, sessionStatus, startSession]);
 
-  // Sync current agent from backend
-  useEffect(() => {
-    const syncCurrentAgent = async () => {
-      if (aiService && sessionStatus === SessionStatus.Active) {
-        try {
-          const agents = await aiService.listAgents();
-          const agentId = await aiService.getCurrentAgent();
-          if (agentId) {
-            const agent = agents.find((a: Agent) => a.id === agentId) || 
-                         AGENTS.find(a => a.id === agentId);
-            if (agent) {
-              setCurrentAgent(agent);
-            }
-          }
-        } catch (e) {
-          console.error('Failed to sync agent:', e);
-        }
-      }
-    };
-    syncCurrentAgent();
-  }, [aiService, sessionStatus]);
+  // No need for separate sync, handled in initialization
 
   // Handle agent switch
   const handleAgentSelect = useCallback(async (agentId: string) => {
@@ -154,12 +124,8 @@ function App() {
     
     setIsLoading(true);
     try {
-      await aiService.switchAgent(agentId);
-      const agent = AGENTS.find(a => a.id === agentId);
-      if (agent) {
-        setCurrentAgent(agent);
-        addSystemMessage(`Switched to ${agent.name}`);
-      }
+      await aiService.switchAgent(agentId.toLowerCase());
+      // Don't update state here - the agent.switched notification will handle it
     } catch (error) {
       console.error('Failed to switch agent:', error);
       addSystemMessage('Failed to switch agent');
@@ -173,8 +139,8 @@ function App() {
     if (!aiService || sessionStatus !== SessionStatus.Active) return;
     
     try {
-      await aiService.handoffToAgent(agentId);
-      const agent = AGENTS.find(a => a.id === agentId);
+      await aiService.handoffToAgent(agentId.toLowerCase());
+      const agent = agents.find(a => a.id === agentId.toLowerCase());
       if (agent) {
         addSystemMessage(`Handing off to ${agent.name}...`);
       }
@@ -219,11 +185,43 @@ function App() {
   // Set AI message chunk handler
   useEffect(() => {
     if (!aiService) return;
-    aiService.onAIMessageChunk(appendAIChunk);
+    
+    let introductionStarted = false;
+    
+    aiService.onAIMessageChunk((chunk) => {
+      // If we receive a chunk without loading state being true,
+      // it's likely an agent introduction, so start the AI message
+      if (!loading && chunk.content && !introductionStarted) {
+        introductionStarted = true;
+        startAIMessage();
+      }
+      appendAIChunk(chunk);
+      
+      // Reset the flag when message is final
+      if (chunk.isFinal) {
+        introductionStarted = false;
+      }
+    });
     return () => {
       aiService.onAIMessageChunk(() => {});
     };
-  }, [aiService, appendAIChunk]);
+  }, [aiService, appendAIChunk, loading, startAIMessage]);
+
+  // Set agent change handler
+  useEffect(() => {
+    if (!aiService) return;
+    
+    const unsubscribe = aiService.onAgentChanged(async (agentId) => {
+      console.log('[App] Agent changed notification received:', agentId);
+      const agent = agents.find(a => a.id.toLowerCase() === agentId.toLowerCase());
+      if (agent) {
+        setCurrentAgent(agent);
+        addSystemMessage(`Switched to ${agent.name}`);
+      }
+    });
+    
+    return unsubscribe;
+  }, [aiService, agents, addSystemMessage]);
 
   // Handle theme toggle
   const toggleTheme = useCallback(() => {
@@ -346,7 +344,7 @@ function App() {
               <ChatView 
                 messages={messages}
                 currentAgent={currentAgent}
-                agents={AGENTS}
+                agents={agents}
                 onSendMessage={handleSendMessage}
                 onAgentSelect={handleAgentSelect}
                 onHandoffToAgent={handleHandoffToAgent}

@@ -76,11 +76,15 @@ class StatelessAgent:
             elif 'max_tokens' in self.config.generation_params:
                 generation_params['max_tokens'] = self.config.generation_params['max_tokens']
             
+            # Extract store_messages parameter if provided
+            store_messages = kwargs.get('store_messages', True)
+            
             # Process through stateless AI loop
             result = await self.ai_loop.process_with_context(
                 message=message,
                 context_provider=self.context,
                 on_stream_chunk=on_stream_chunk,
+                store_messages=store_messages,
                 **generation_params
             )
             

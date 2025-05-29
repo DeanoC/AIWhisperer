@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AgentInspectorPanel from './AgentInspectorPanel';
 import { PlanPreview } from './PlanPreview';
+import { AgentAvatar } from './AgentAvatar';
 import './ContextPanel.css';
 
 interface AgentContext {
@@ -13,7 +14,9 @@ interface Agent {
   id: string;
   name: string;
   role: string;
-  status: 'active' | 'idle' | 'error';
+  color: string;
+  icon?: string;
+  status?: 'online' | 'busy' | 'offline';
   context: AgentContext;
 }
 
@@ -165,11 +168,16 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
         <div className="collapsed-indicators" data-testid="collapsed-indicators">
           {currentAgent && (
             <div 
-              className={`agent-indicator status-${currentAgent.status}`}
+              className="agent-indicator"
               data-testid="agent-status-indicator"
               title={`${currentAgent.name} (${currentAgent.status})`}
             >
-              👤
+              <AgentAvatar 
+                agent={currentAgent} 
+                size="small" 
+                showStatus={true}
+                preferIcon={true}
+              />
             </div>
           )}
           

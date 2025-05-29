@@ -133,9 +133,10 @@ export class AIService {
       }
     }
     // Handle agent-related notifications
-    if (notification.method === 'agent_changed') {
+    if (notification.method === 'agent.switched') {
       const params = notification.params || {};
-      this.agentChangedHandlers.forEach(handler => handler(params.agent_id));
+      // The 'to' field contains the new agent ID
+      this.agentChangedHandlers.forEach(handler => handler(params.to));
     }
     if (notification.method === 'agent_handoff') {
       const params = notification.params || {};
@@ -179,7 +180,8 @@ export class AIService {
     if (!this.sessionId) throw new Error('Session not initialized');
     try {
       const result = await this.rpc.sendRequest('session.current_agent', {});
-      return result;
+      // Handle both direct string and wrapped response
+      return result.current_agent || result || null;
     } catch (err: any) {
       this.error = err.message || 'Failed to get current agent';
       throw err;
@@ -189,8 +191,9 @@ export class AIService {
   async switchAgent(agentId: string): Promise<void> {
     if (!this.sessionId) throw new Error('Session not initialized');
     try {
-      const command = `/session.switch_agent ${JSON.stringify({ agent_id: agentId })}`;
-      const result = await this.dispatchCommand(command);
+      const result = await this.rpc.sendRequest('session.switch_agent', {
+        agent_id: agentId
+      });
       if (result.error) {
         throw new Error(result.error);
       }

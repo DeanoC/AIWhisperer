@@ -22,7 +22,18 @@ class AgentContext(ContextProvider):
         self._messages.append(message)
 
     def retrieve_messages(self):
-        return list(self._messages)
+        """Retrieve all messages including the system prompt as the first message."""
+        messages = []
+        
+        # Include system prompt as first message if available
+        system_prompt = self.get_system_prompt()
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        
+        # Add all stored messages
+        messages.extend(self._messages)
+        
+        return messages
 
     def set_metadata(self, key, value):
         self._metadata[key] = value

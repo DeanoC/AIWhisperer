@@ -18,12 +18,23 @@ jest.mock('./PlanPreview', () => ({
   )
 }));
 
+// Mock AgentAvatar
+jest.mock('./AgentAvatar', () => ({
+  AgentAvatar: ({ agent }: any) => (
+    <div data-testid="agent-avatar" style={{ backgroundColor: agent.color }}>
+      {agent.icon || agent.name.charAt(0)}
+    </div>
+  )
+}));
+
 describe('ContextPanel', () => {
   const mockAgent = {
     id: 'agent-1',
     name: 'Code Assistant',
     role: 'Developer',
-    status: 'active' as const,
+    color: '#4CAF50',
+    icon: '🤖',
+    status: 'online' as const,
     context: {
       files: ['src/App.tsx', 'src/index.ts'],
       variables: { projectName: 'Test Project' },

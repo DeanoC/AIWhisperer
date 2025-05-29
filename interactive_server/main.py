@@ -1,10 +1,16 @@
 import os
+import logging
+
+# Set up logging early
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.info("Starting AIWhisperer interactive server...")
+
 import ai_whisperer.commands.echo
 import ai_whisperer.commands.status
 import ai_whisperer.commands.help
 import ai_whisperer.commands.agent
 import ai_whisperer.commands.session
-import logging
 import json
 import inspect
 import asyncio
@@ -19,26 +25,48 @@ from .message_models import (
     SessionStatus, MessageStatus, ToolResultStatus
 )
 from ai_whisperer.agents.registry import AgentRegistry
+from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
+from ai_whisperer.path_management import PathManager
 from pathlib import Path
-prompts_dir = Path(os.environ.get("AIWHISPERER_PROMPTS", "prompts"))
-agent_registry = AgentRegistry(prompts_dir)
+
+# Initialize agent registry
+try:
+    prompts_dir = Path(os.environ.get("AIWHISPERER_PROMPTS", "prompts"))
+    agent_registry = AgentRegistry(prompts_dir)
+    logger.info(f"AgentRegistry initialized with prompts_dir: {prompts_dir}")
+    logger.info(f"Available agents: {[a.agent_id for a in agent_registry.list_agents()]}")
+except Exception as e:
+    logger.error(f"Failed to initialize AgentRegistry: {e}")
+    import traceback
+    traceback.print_exc()
+    agent_registry = None
 # === Agent/Session JSON-RPC Handlers ===
 async def agent_list_handler(params, websocket=None):
-    agents = [
-        {
-            "agent_id": agent.agent_id,
-            "name": agent.name,
-            "role": agent.role,
-            "description": agent.description,
-            "color": agent.color,
-            "shortcut": agent.shortcut,
-        }
-        for agent in agent_registry.list_agents()
-    ]
-    return {"agents": agents}
+    if not agent_registry:
+        logger.error("AgentRegistry not initialized")
+        return {"agents": []}
+    
+    try:
+        agents = [
+            {
+                "agent_id": agent.agent_id.lower(),  # Ensure lowercase for frontend consistency
+                "name": agent.name,
+                "role": agent.role,
+                "description": agent.description,
+                "color": agent.color,
+                "shortcut": agent.shortcut,
+                "icon": getattr(agent, 'icon', '🤖'),
+            }
+            for agent in agent_registry.list_agents()
+        ]
+        return {"agents": agents}
+    except Exception as e:
+        logger.error(f"Error listing agents: {e}")
+        return {"agents": []}
 
 async def session_switch_agent_handler(params, websocket=None):
     agent_id = params.get("agent_id")
+    logger.info(f"session_switch_agent_handler called with agent_id: {agent_id}")
     session = session_manager.get_session_by_websocket(websocket)
     if not session and "sessionId" in params:
         session = session_manager.get_session(params["sessionId"])
@@ -72,7 +100,8 @@ async def session_current_agent_handler(params, websocket=None):
         session = session_manager.get_session(params["sessionId"])
     if not session or not session.active_agent:
         return {"current_agent": None}
-    return {"current_agent": session.active_agent}
+    # Return lowercase to match frontend expectations
+    return {"current_agent": session.active_agent.lower() if session.active_agent else None}
 
 async def session_handoff_handler(params, websocket=None):
     to_agent = params.get("to_agent")
@@ -114,7 +143,34 @@ except Exception as e:
     logging.error(f"Failed to load configuration: {e}")
     app_config = {}
 
-session_manager = StatelessSessionManager(app_config)
+# Initialize PathManager
+try:
+    PathManager.get_instance().initialize(config_values=app_config)
+    logging.info("PathManager initialized successfully")
+except Exception as e:
+    logging.error(f"Failed to initialize PathManager: {e}")
+    # Continue without PathManager
+
+# Initialize prompt system
+prompt_system = None
+try:
+    prompt_config = PromptConfiguration(app_config)
+    prompt_system = PromptSystem(prompt_config)
+    logging.info("PromptSystem initialized successfully")
+except Exception as e:
+    logging.error(f"Failed to initialize PromptSystem: {e}")
+    # Continue without prompt system
+
+try:
+    session_manager = StatelessSessionManager(app_config, agent_registry, prompt_system)
+    logger.info("StatelessSessionManager initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize StatelessSessionManager: {e}")
+    import traceback
+    traceback.print_exc()
+    # Create a basic session manager without extras
+    session_manager = StatelessSessionManager(app_config, None, None)
+    logger.info("Created basic StatelessSessionManager without agent registry")
 
 
 # Handler functions
@@ -146,6 +202,7 @@ async def send_user_message_handler(params, websocket=None):
     session = session_manager.get_session_by_websocket(websocket)
     if not session and hasattr(model, "sessionId"):
         session = session_manager.get_session(model.sessionId)
+    logging.info(f"[send_user_message_handler] Found session: {session.session_id if session else 'None'}, active agent: {session.active_agent if session else 'None'}")
     if not session:
         raise ValueError(f"Invalid session: {getattr(model, 'sessionId', None)}")
 

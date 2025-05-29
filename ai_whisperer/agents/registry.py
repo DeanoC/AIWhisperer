@@ -13,6 +13,7 @@ class Agent:
     prompt_file: str  # Filename in prompts directory
     context_sources: List[str]  # Types of context to include
     color: str  # UI color for agent identification
+    icon: str = "🤖"  # Icon for UI display
 
     @property
     def shortcut(self) -> str:
@@ -45,7 +46,8 @@ class AgentRegistry:
                         tool_tags=agent_cfg.get('tool_tags', []),
                         prompt_file=agent_cfg['prompt_file'],
                         context_sources=agent_cfg.get('context_sources', []),
-                        color=agent_cfg.get('color', '#888888')
+                        color=agent_cfg.get('color', '#888888'),
+                        icon=agent_cfg.get('icon', '🤖')
                     )
         else:
             # Hardcoded fallback

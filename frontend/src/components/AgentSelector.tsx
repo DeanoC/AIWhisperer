@@ -25,7 +25,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
           onClick={() => onAgentSelect(agent.id)}
           data-testid={`agent-${agent.id}`}
         >
-          <span className="agent-shortcut">[{agent.shortcut || agent.id}]</span>
+          <span className="agent-shortcut">{agent.shortcut || `[${agent.id.toUpperCase()}]`}</span>
           <span className="agent-name">{agent.name}</span>
           <span className="agent-description">{agent.description}</span>
         </div>

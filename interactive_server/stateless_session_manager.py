@@ -31,7 +31,7 @@ class StatelessInteractiveSession:
     Supports direct streaming without delegates.
     """
     
-    def __init__(self, session_id: str, websocket: WebSocket, config: dict):
+    def __init__(self, session_id: str, websocket: WebSocket, config: dict, agent_registry=None, prompt_system=None):
         """
         Initialize a stateless interactive session.
         
@@ -39,14 +39,19 @@ class StatelessInteractiveSession:
             session_id: Unique identifier for this session
             websocket: WebSocket connection for this session
             config: Configuration dictionary for AI service
+            agent_registry: Optional AgentRegistry instance
+            prompt_system: Optional PromptSystem instance
         """
         self.session_id = session_id
         self.websocket = websocket
         self.config = config
+        self.agent_registry = agent_registry
+        self.prompt_system = prompt_system
         
         # Agent management
         self.agents: Dict[str, StatelessAgent] = {}
         self.active_agent: Optional[str] = None
+        self.introduced_agents: set = set()  # Track which agents have introduced themselves
         
         # Session state
         self.is_started = False
@@ -87,91 +92,166 @@ class StatelessInteractiveSession:
             The created StatelessAgent instance
         """
         async with self._lock:
-            if agent_id in self.agents:
-                raise ValueError(f"Agent '{agent_id}' already exists in session")
-            
-            # Create agent config if not provided
-            if config is None:
-                openrouter_config = self.config.get("openrouter", {})
-                config = AgentConfig(
-                    name=agent_id,
-                    description=f"Agent {agent_id}",
-                    system_prompt=system_prompt,
-                    model_name=openrouter_config.get("model", "openai/gpt-3.5-turbo"),
-                    provider="openrouter",
-                    api_settings={"api_key": openrouter_config.get("api_key")},
-                    generation_params=openrouter_config.get("params", {}),
-                    tool_permissions=[],
-                    tool_limits={},
-                    context_settings={"max_context_messages": 50}
-                )
-            
-            # Create agent context
-            context = AgentContext(agent_id=agent_id, system_prompt=system_prompt)
-            
-            # Create stateless AI loop for this agent
-            ai_loop = self._create_stateless_ai_loop(agent_id)
-            
-            # Create stateless agent
-            agent = StatelessAgent(config, context, ai_loop)
-            
-            # Store agent
-            self.agents[agent_id] = agent
-            
-            # Set as active if first agent
-            if self.active_agent is None:
-                self.active_agent = agent_id
-                # Mark session as started when first agent is created
-                self.is_started = True
-            
-            # Notify client
-            await self.send_notification("agent.created", {
-                "agent_id": agent_id,
-                "active": self.active_agent == agent_id
-            })
-            
-            return agent
+            return await self._create_agent_internal(agent_id, system_prompt, config)
+    
+    async def _create_agent_internal(self, agent_id: str, system_prompt: str, config: Optional[AgentConfig] = None) -> StatelessAgent:
+        """Internal method to create agent - assumes lock is already held"""
+        if agent_id in self.agents:
+            raise ValueError(f"Agent '{agent_id}' already exists in session")
+        
+        # Create agent config if not provided
+        if config is None:
+            openrouter_config = self.config.get("openrouter", {})
+            config = AgentConfig(
+                name=agent_id,
+                description=f"Agent {agent_id}",
+                system_prompt=system_prompt,
+                model_name=openrouter_config.get("model", "openai/gpt-3.5-turbo"),
+                provider="openrouter",
+                api_settings={"api_key": openrouter_config.get("api_key")},
+                generation_params=openrouter_config.get("params", {}),
+                tool_permissions=[],
+                tool_limits={},
+                context_settings={"max_context_messages": 50}
+            )
+        
+        # Create agent context
+        context = AgentContext(agent_id=agent_id, system_prompt=system_prompt)
+        logger.info(f"Created AgentContext for {agent_id} with system prompt length: {len(system_prompt)}")
+        
+        # Create stateless AI loop for this agent
+        ai_loop = self._create_stateless_ai_loop(agent_id)
+        
+        # Create stateless agent
+        agent = StatelessAgent(config, context, ai_loop)
+        logger.info(f"Created StatelessAgent for {agent_id}")
+        
+        # Store agent
+        self.agents[agent_id] = agent
+        
+        # Set as active if first agent
+        if self.active_agent is None:
+            self.active_agent = agent_id
+            # Mark session as started when first agent is created
+            self.is_started = True
+        
+        # Notify client
+        await self.send_notification("agent.created", {
+            "agent_id": agent_id,
+            "active": self.active_agent == agent_id
+        })
+        
+        return agent
     
     async def start_ai_session(self, system_prompt: str = None) -> str:
         """
         Start the AI session by creating a default agent.
+        Uses Alice (agent 'a') as the default if available.
         """
         if self.is_started:
             raise RuntimeError(f"Session {self.session_id} is already started")
         
         try:
-            # Create default agent
+            self.is_started = True
+            
+            # Try to use Alice as default agent
+            if self.agent_registry and self.agent_registry.get_agent("A"):
+                try:
+                    # Switch to Alice - this will create the agent from registry
+                    await self.switch_agent("a")
+                    logger.info(f"Started session {self.session_id} with Alice agent")
+                    return self.session_id
+                except Exception as e:
+                    logger.error(f"Failed to create Alice agent: {e}, falling back to default")
+                    # Fall through to create default agent
+            
+            # Fallback to generic default agent
             system_prompt = system_prompt or "You are a helpful AI assistant."
             await self.create_agent("default", system_prompt)
-            
-            self.is_started = True
             logger.info(f"Started session {self.session_id} with default agent")
+            
+            # Have the default agent introduce itself
+            await self._agent_introduction()
             
             return self.session_id
             
         except Exception as e:
             logger.error(f"Failed to start session {self.session_id}: {e}")
+            import traceback
+            traceback.print_exc()
+            self.is_started = False
             await self.cleanup()
             raise RuntimeError(f"Failed to start session: {e}")
     
     async def switch_agent(self, agent_id: str) -> None:
         """
         Switch the active agent for this session.
+        Creates the agent from registry if it doesn't exist.
         """
+        logger.info(f"switch_agent called with agent_id: {agent_id}")
+        
         async with self._lock:
+            logger.info(f"Acquired lock for switch_agent")
+            
+            # If agent doesn't exist in session, try to create it from registry
+            if agent_id not in self.agents and self.agent_registry:
+                logger.info(f"Agent {agent_id} not in session, checking registry")
+                agent_info = self.agent_registry.get_agent(agent_id.upper())
+                if not agent_info:
+                    raise ValueError(f"Agent '{agent_id}' not found in registry")
+                
+                logger.info(f"Found agent info: {agent_info.name}")
+                
+                # Load the agent's prompt from the prompt system
+                system_prompt = f"You are {agent_info.name}, {agent_info.description}"  # Better fallback
+                if self.prompt_system and agent_info.prompt_file:
+                    logger.info(f"Attempting to load prompt file: {agent_info.prompt_file}")
+                    try:
+                        # Remove .md extension if present for prompt system
+                        prompt_name = agent_info.prompt_file.replace('.md', '')
+                        logger.info(f"Trying to load prompt: agents/{prompt_name}")
+                        # Try without .prompt suffix first (for compatibility)
+                        try:
+                            prompt = self.prompt_system.get_formatted_prompt("agents", prompt_name)
+                            system_prompt = prompt
+                            logger.info(f"Successfully loaded prompt for {agent_id}")
+                        except Exception as e1:
+                            logger.warning(f"First attempt failed: {e1}")
+                            # Try with the original filename
+                            prompt = self.prompt_system.get_formatted_prompt("agents", agent_info.prompt_file)
+                            system_prompt = prompt
+                            logger.info(f"Successfully loaded prompt on second attempt")
+                    except Exception as e:
+                        logger.error(f"Failed to load prompt for agent {agent_id}: {e}")
+                        logger.error(f"Using fallback prompt for {agent_info.name}")
+                
+                # Create the agent with the loaded prompt
+                logger.info(f"About to create agent with prompt: {system_prompt[:200]}...")
+                await self._create_agent_internal(agent_id, system_prompt)
+                logger.info(f"Created agent '{agent_id}' from registry with system prompt")
+            
+            # Verify agent exists now
             if agent_id not in self.agents:
+                logger.error(f"Agent '{agent_id}' not found in session after creation attempt")
                 raise ValueError(f"Agent '{agent_id}' not found in session")
             
             old_agent = self.active_agent
             self.active_agent = agent_id
+            logger.info(f"Set active agent to: {agent_id}")
             
             # Notify client
+            logger.info(f"Sending agent.switched notification")
             await self.send_notification("agent.switched", {
                 "from": old_agent,
                 "to": agent_id
             })
             
             logger.info(f"Switched active agent from '{old_agent}' to '{agent_id}' in session {self.session_id}")
+            
+            # Have the agent introduce itself if not already introduced
+            if self.active_agent and self.active_agent not in self.introduced_agents:
+                await self._agent_introduction()
+                self.introduced_agents.add(self.active_agent)
     
     async def send_user_message(self, message: str):
         """
@@ -222,6 +302,67 @@ class StatelessInteractiveSession:
             logger.error(f"Failed to send message to agent '{self.active_agent}' in session {self.session_id}: {e}")
             raise
     
+    async def _agent_introduction(self):
+        """
+        Have the active agent introduce itself to the user.
+        This helps verify the system prompt is working correctly.
+        """
+        if not self.active_agent or self.active_agent not in self.agents:
+            return
+        
+        # Skip if agent has already introduced itself
+        if self.active_agent in self.introduced_agents:
+            return
+        
+        try:
+            # Send a simple introduction request
+            introduction_prompt = "Please introduce yourself briefly, mentioning your name and what you help with."
+            
+            # Create streaming callback for introduction
+            async def send_intro_chunk(chunk: str):
+                """Send introduction chunk to the client"""
+                try:
+                    notification = AIMessageChunkNotification(
+                        sessionId=self.session_id,
+                        chunk=chunk,
+                        isFinal=False
+                    )
+                    await self.websocket.send_json({
+                        "jsonrpc": "2.0",
+                        "method": "AIMessageChunkNotification",
+                        "params": notification.model_dump()
+                    })
+                except Exception as e:
+                    logger.error(f"Error sending introduction chunk: {e}")
+            
+            # Get the agent to introduce itself without storing in context
+            agent = self.agents[self.active_agent]
+            
+            # Process introduction without storing messages
+            await agent.process_message(
+                introduction_prompt, 
+                on_stream_chunk=send_intro_chunk,
+                store_messages=False  # Don't store introduction in context
+            )
+            
+            # Send final notification
+            final_notification = AIMessageChunkNotification(
+                sessionId=self.session_id,
+                chunk="",
+                isFinal=True
+            )
+            await self.websocket.send_json({
+                "jsonrpc": "2.0",
+                "method": "AIMessageChunkNotification",
+                "params": final_notification.model_dump()
+            })
+            
+            logger.info(f"Agent '{self.active_agent}' introduced itself")
+            
+        except Exception as e:
+            logger.error(f"Failed to get agent introduction: {e}")
+            # Don't raise - introduction is nice to have but not critical
+    
     async def get_state(self) -> Dict[str, Any]:
         """
         Get the current state of the session for persistence.
@@ -230,6 +371,7 @@ class StatelessInteractiveSession:
             "session_id": self.session_id,
             "is_started": self.is_started,
             "active_agent": self.active_agent,
+            "introduced_agents": list(self.introduced_agents),
             "agents": {}
         }
         
@@ -262,6 +404,7 @@ class StatelessInteractiveSession:
         Restore session state from a saved state dictionary.
         """
         self.is_started = state.get("is_started", False)
+        self.introduced_agents = set(state.get("introduced_agents", []))
         
         # Restore agents
         for agent_id, agent_state in state.get("agents", {}).items():
@@ -332,14 +475,18 @@ class StatelessSessionManager:
     Manages multiple stateless interactive sessions for WebSocket connections.
     """
     
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, agent_registry=None, prompt_system=None):
         """
         Initialize the session manager.
         
         Args:
             config: Global configuration dictionary
+            agent_registry: Optional AgentRegistry instance
+            prompt_system: Optional PromptSystem instance
         """
         self.config = config
+        self.agent_registry = agent_registry
+        self.prompt_system = prompt_system
         self.sessions: Dict[str, StatelessInteractiveSession] = {}
         self.websocket_sessions: Dict[WebSocket, str] = {}
         self._lock = asyncio.Lock()
@@ -383,7 +530,7 @@ class StatelessSessionManager:
         """
         async with self._lock:
             session_id = str(uuid.uuid4())
-            session = StatelessInteractiveSession(session_id, websocket, self.config)
+            session = StatelessInteractiveSession(session_id, websocket, self.config, self.agent_registry, self.prompt_system)
             
             self.sessions[session_id] = session
             self.websocket_sessions[websocket] = session_id
