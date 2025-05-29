@@ -1,7 +1,7 @@
 import subprocess
 import logging
 import sys
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from .base_tool import AITool
 import asyncio # Import asyncio for sleep
@@ -45,8 +45,8 @@ class ExecuteCommandTool(AITool):
         return "System"
 
     @property
-    def tags(self) -> list[str]:
-        return ["cli", "command", "execute", "system"]
+    def tags(self) -> List[str]:
+        return ["code_execution", "utility"]
 
     def get_ai_prompt_instructions(self) -> str:
         return """

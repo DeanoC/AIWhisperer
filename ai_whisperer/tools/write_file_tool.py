@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, Optional, List
 
 from ai_whisperer.tools.base_tool import AITool
 # Delegate system removed
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class WriteFileTool(AITool):
     @property
     def name(self) -> str:
-        return "write_to_file"
+        return "write_file"
 
     @property
     def description(self) -> str:
@@ -40,6 +40,14 @@ class WriteFileTool(AITool):
             },
             "required": ["path", "content"]
         }
+
+    @property
+    def category(self) -> Optional[str]:
+        return "File System"
+
+    @property
+    def tags(self) -> List[str]:
+        return ["filesystem", "file_write"]
 
     def execute(self, path: str, content: str, line_count: int = None) -> Dict[str, Any]:
         """
@@ -102,7 +110,7 @@ class WriteFileTool(AITool):
         Returns instructions for the AI on how to use this tool.
         """
         return """
-        Use the 'write_to_file' tool to write content to a file within the output directory.
+        Use the 'write_file' tool to write content to a file within the output directory.
         This tool is useful for creating new files or overwriting existing ones with specific content.
         Provide the 'path' parameter with the desired path to the file (relative to the output directory).
         Provide the 'content' parameter with the exact content you want to write into the file.
@@ -110,6 +118,6 @@ class WriteFileTool(AITool):
         Ensure the file path is within the output directory.
         Example usage:
         <tool_code>
-        write_to_file(path='my_output.txt', content='Generated report data.', line_count=1)
+        write_file(path='my_output.txt', content='Generated report data.', line_count=1)
         </tool_code>
         """

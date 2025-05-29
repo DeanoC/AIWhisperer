@@ -67,19 +67,19 @@ class FileReferenceTool(BaseTool):
 
 ## Implementation Phases
 
-### Phase 1: Backend Infrastructure (Week 1)
+### Phase 1: Backend Infrastructure (Week 1) [DONE]
 1. Implement FileService with basic listing capabilities
 2. Add JSON-RPC methods for file operations
 3. Create workspace utility functions (tree generation, file filtering)
 4. Add tests for file service
 
-### Phase 2: Basic File Browser UI (Week 1-2)
+### Phase 2: Basic File Browser UI (Week 1-2) [DONE]
 1. Create FileBrowser component with tree view
 2. Integrate with existing Sidebar
 3. Connect to backend APIs
 4. Add loading states and error handling
 
-### Phase 3: @ Command System (Week 2)
+### Phase 3: @ Command System (Week 2) [DONE]
 1. Enhance MessageInput with @ detection
 2. Create FilePicker modal component
 3. Implement keyboard navigation

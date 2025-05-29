@@ -92,7 +92,7 @@ def test_cli_run_command_programmatic(clean_output):
                     {
                         "id": "call_abc",
                         "function": {
-                            "name": "write_to_file",
+                            "name": "write_file",
                             "arguments": '{"path": "output/n_times_4.py", "content": "def n_times_4(x):\\n    return x * 4\\n", "line_count": 2}'
                         }
                     }
@@ -111,7 +111,7 @@ def test_cli_run_command_programmatic(clean_output):
         # Mock the tool execution itself
         with patch('ai_whisperer.tools.tool_registry.ToolRegistry.get_tool_by_name') as mock_get_tool_by_name:
             mock_write_tool = MagicMock()
-            def write_to_file_side_effect(path, content, line_count=None):
+            def write_file_side_effect(path, content, line_count=None):
                 # Actually create the file in the test's output directory so validation passes
                 # If the path is relative, resolve it relative to the test's output dir
                 output_dir = Path(tmpdir)
@@ -126,7 +126,7 @@ def test_cli_run_command_programmatic(clean_output):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 output_path.write_text(content)
                 return {"success": True, "message": "File written successfully."}
-            mock_write_tool.execute.side_effect = write_to_file_side_effect
+            mock_write_tool.execute.side_effect = write_file_side_effect
             mock_get_tool_by_name.return_value = mock_write_tool
 
             # Mock PathManager.get_instance().initialize to prevent re-initialization issues

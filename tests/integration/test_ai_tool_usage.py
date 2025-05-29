@@ -191,7 +191,7 @@ def test_ai_read_file_tool_call(openrouter_api: OpenRouterAIService, tool_regist
 @pytest.mark.integration
 def test_ai_write_file_tool_call(openrouter_api: OpenRouterAIService, tool_registry: ToolRegistry, temp_write_file_path: str):
     """
-    Test that the AI correctly identifies the need to use the write_to_file tool
+    Test that the AI correctly identifies the need to use the write_file tool
     and formulates the correct tool call when prompted to write to a file.
     """
     file_path = temp_write_file_path
@@ -217,14 +217,14 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAIService, tool_regis
         assert isinstance(tool_calls, list)
         assert len(tool_calls) > 0
 
-        # Find the write_to_file tool call
+        # Find the write_file tool call
         write_file_call = None
         for call in tool_calls:
-            if call.get("function", {}).get("name") == "write_to_file":
+            if call.get("function", {}).get("name") == "write_file":
                 write_file_call = call
                 break
 
-        assert write_file_call is not None, "AI did not call the write_to_file tool"
+        assert write_file_call is not None, "AI did not call the write_file tool"
         assert "function" in write_file_call
         assert "arguments" in write_file_call["function"]
 
@@ -323,7 +323,7 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAIService, too
     """
     read_file_path, expected_content = temp_test_file
     write_file_path = temp_write_file_path
-    write_content = "Content written by the AI using the write_to_file tool."
+    write_content = "Content written by the AI using the write_file tool."
 
     # Scenario 1: AI reads a file with valid path
     read_prompt = f"Read the content of the file at {read_file_path}."
@@ -388,7 +388,7 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAIService, too
         write_tool_calls = write_response_obj["message"]["tool_calls"]
         assert len(write_tool_calls) > 0
 
-        # Assuming the first tool call is the write_to_file call
+        # Assuming the first tool call is the write_file call
         write_call_args = json.loads(write_tool_calls[0]["function"]["arguments"])
         # Normalize paths for comparison
         # Accept both with and without 'output/' prefix for AI path
@@ -399,13 +399,13 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAIService, too
         assert write_call_args.get("content") == write_content
 
         # Simulate the system executing the tool call
-        write_tool_instance = tool_registry.get_tool_by_name("write_to_file")
-        assert write_tool_instance is not None, "write_to_file tool not found in registry"
+        write_tool_instance = tool_registry.get_tool_by_name("write_file")
+        assert write_tool_instance is not None, "write_file tool not found in registry"
 
         # Execute the tool with the AI's provided arguments, unpacking the dictionary
         write_tool_output = write_tool_instance.execute(**write_call_args)
 
-        # Assert the tool execution was successful (write_to_file might return None or a success message)
+        # Assert the tool execution was successful (write_file might return None or a success message)
         # Check the actual file content
         assert os.path.exists(write_file_path)
         with open(write_file_path, "r") as f:
@@ -446,7 +446,7 @@ def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAIService, to
     with pytest.raises(FileRestrictionError):
         read_tool_instance.execute(read_call_args)
 
-    # Scenario 2: Simulate AI calling write_to_file with missing content
+    # Scenario 2: Simulate AI calling write_file with missing content
     invalid_write_path = "temp_invalid_write.txt"
     # The WriteFileTool.execute method expects 'path' and 'content'
     write_call_args_missing_content = {"path": invalid_write_path} # Missing 'content'

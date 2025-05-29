@@ -122,7 +122,7 @@ class TestCodeGenerationHandlerIntegration:
                                 {
                                     "id": "call_123",
                                     "function": {
-                                        "name": "write_to_file",
+                                        "name": "write_file",
                                         "arguments": '{"path": "new_file.py", "content": "print(\\"Hello, World!\\")\\n", "line_count": 2}'
                                     }
                                 }
@@ -205,7 +205,7 @@ class TestCodeGenerationHandlerIntegration:
 
                 # Assertions
                 assert mock_call_chat_completion.call_count == 2
-                mock_get_tool_by_name.assert_called_once_with("write_to_file")
+                mock_get_tool_by_name.assert_called_once_with("write_file")
                 mock_write_tool.execute.assert_called_once_with(path="new_file.py", content='print("Hello, World!")\n', line_count=2)
                 mock_state_manager.set_task_state.assert_any_call("subtask_1", "in-progress")
                 # Since the file is not actually created, validation fails and state is 'failed'
@@ -443,7 +443,7 @@ class TestCodeGenerationHandlerIntegration:
                                     {
                                         "id": "call_789",
                                         "function": {
-                                            "name": "write_to_file",
+                                            "name": "write_file",
                                             "arguments": '{"path": "generated_code.py", "content": "def my_func():\\n    pass\\n", "line_count": 2}'
                                         }
                                     }
@@ -467,7 +467,7 @@ class TestCodeGenerationHandlerIntegration:
             mock_call_chat_completion.side_effect = [self._wrap_openai_response(r) for r in openai_responses]
 
 
-            # Patch get_tool_by_name for write_to_file
+            # Patch get_tool_by_name for write_file
             from ai_whisperer.tools import tool_registry
             mock_write_tool = MagicMock()
             with patch.object(tool_registry.ToolRegistry, "get_tool_by_name", return_value=mock_write_tool) as mock_get_tool_by_name:
@@ -481,7 +481,7 @@ class TestCodeGenerationHandlerIntegration:
 
                 # Assertions
                 assert mock_call_chat_completion.call_count == 2
-                mock_get_tool_by_name.assert_called_once_with("write_to_file")
+                mock_get_tool_by_name.assert_called_once_with("write_file")
                 mock_write_tool.execute.assert_called_once_with(path="generated_code.py", content='def my_func():\n    pass\n', line_count=2)
                 mock_state_manager.set_task_state.assert_any_call("subtask_3a", "in-progress")
                 mock_state_manager.set_task_state.assert_any_call("subtask_3a", "failed", ANY)
@@ -577,7 +577,7 @@ class TestCodeGenerationHandlerIntegration:
                                     {
                                         "id": "call_abc",
                                         "function": {
-                                            "name": "write_to_file",
+                                            "name": "write_file",
                                             "arguments": '{"path": "new_file.py", "content": "print(\\"Hello, World!\\")\\n", "line_count": 2' # Missing closing brace
                                         }
                                     }
@@ -616,7 +616,7 @@ class TestCodeGenerationHandlerIntegration:
                 # Assertions to verify the error details were stored
                 mock_state_manager.store_task_result.assert_called() # Check if store_task_result was called at all
                 stored_result = mock_state_manager.store_task_result.call_args[0][1]
-                assert "Failed to parse tool arguments JSON for tool 'write_to_file'" in str(stored_result["error"])
+                assert "Failed to parse tool arguments JSON for tool 'write_file'" in str(stored_result["error"])
 
                 # Only the user prompt and the malformed AI response should be stored
                 # Just check that store_conversation_turn was called at all (malformed response may not store turns)
@@ -725,7 +725,7 @@ class TestCodeGenerationHandlerIntegration:
                                     {
                                         "id": "call_test_fail",
                                         "function": {
-                                            "name": "write_to_file",
+                                            "name": "write_file",
                                             "arguments": '{"path": "generated_code_fail.py", "content": "def my_func():\\n    raise ValueError(\\"Test fail\\")\\n", "line_count": 2}'
                                         }
                                     }
@@ -748,12 +748,12 @@ class TestCodeGenerationHandlerIntegration:
             ]
             mock_call_chat_completion.side_effect = [self._wrap_openai_response(r) for r in openai_responses]
 
-            # Patch get_tool_by_name for write_to_file and execute_command
+            # Patch get_tool_by_name for write_file and execute_command
             from ai_whisperer.tools import tool_registry
             mock_write_tool = MagicMock()
             mock_execute_tool = MagicMock()
             def get_tool_by_name_side_effect(name):
-                if name == 'write_to_file':
+                if name == 'write_file':
                     return mock_write_tool
                 elif name == 'execute_command':
                     return mock_execute_tool
@@ -996,7 +996,7 @@ class TestCodeGenerationHandlerIntegration:
                                     {
                                         "id": "call_multi_1",
                                         "function": {
-                                            "name": "write_to_file",
+                                            "name": "write_file",
                                             "arguments": '{"path": "file1.txt", "content": "content1", "line_count": 1}'
                                         }
                                     },
@@ -1031,7 +1031,7 @@ class TestCodeGenerationHandlerIntegration:
             mock_write_tool = MagicMock()
             mock_diff_tool = MagicMock()
             def get_tool_by_name_side_effect(name):
-                if name == 'write_to_file':
+                if name == 'write_file':
                     return mock_write_tool
                 elif name == 'apply_diff':
                     return mock_diff_tool

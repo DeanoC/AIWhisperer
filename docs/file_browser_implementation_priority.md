@@ -3,13 +3,13 @@
 ## Quick Start Priority List
 
 ### Week 1: Foundation
-1. **Backend File Service** (2 days)
+1. **Backend File Service** (2 days) [DONE]
    - Basic directory listing API
    - File content retrieval
    - PathManager integration
    - JSON-RPC endpoints
 
-2. **Basic File Browser UI** (2 days)
+2. **Basic File Browser UI** (2 days) [DONE]
    - Simple tree view in sidebar
    - Expand/collapse directories
    - Connect to backend API
@@ -21,7 +21,7 @@
    - Basic tests
 
 ### Week 2: Core Features
-1. **@ Command Implementation** (3 days)
+1. **@ Command Implementation** (3 days) [DONE]
    - Detect @ in MessageInput
    - Basic FilePicker modal
    - File selection and insertion
@@ -33,7 +33,7 @@
    - Integration tests
 
 ### Week 3: Polish & Advanced
-1. **Search & Filtering** (2 days)
+1. **Search & Filtering** (2 days) [PARTIALY-DONE]
    - File search in picker
    - Fuzzy matching
    - Recent files
