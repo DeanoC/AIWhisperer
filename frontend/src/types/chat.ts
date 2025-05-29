@@ -1,4 +1,5 @@
 import { MessageStatus } from './ai';
+import { Agent } from './agent';
 
 // Chat Message Type Definitions
 export interface ChatMessage {
@@ -9,6 +10,7 @@ export interface ChatMessage {
   status: MessageStatus;
   metadata?: {
     agentId?: string;
+    agent?: Agent; // Store complete agent data for persistent display
     [key: string]: any;
   };
   isStreaming?: boolean;

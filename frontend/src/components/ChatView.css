@@ -57,18 +57,18 @@
   color: #dc2626;
 }
 
-.theme-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+/* Theme toggle styles moved to MainLayout.css */
+
+/* Compact status bar - only shows when there are issues */
+.chat-status-bar.compact {
+  padding: 4px 16px;
+  background: var(--status-warning-bg, #fef3c7);
+  border-bottom-color: var(--status-warning-border, #f59e0b);
 }
 
-.theme-toggle:hover {
-  background: var(--bg-tertiary, #f3f4f6);
+.theme-dark .chat-status-bar.compact {
+  --status-warning-bg: #451a03;
+  --status-warning-border: #92400e;
 }
 
 /* Chat Header */

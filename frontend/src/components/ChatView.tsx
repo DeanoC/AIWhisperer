@@ -4,7 +4,6 @@ import { Agent } from '../types/agent';
 import { SessionStatus } from '../types/ai';
 import { AgentSelector } from './AgentSelector';
 import { AgentTransition } from './AgentTransition';
-import { CurrentAgentDisplay } from './CurrentAgentDisplay';
 import { AgentMessageBubble } from './AgentMessageBubble';
 import MessageInput from '../MessageInput';
 import './ChatView.css';
@@ -40,6 +39,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 }) => {
   const [showTransition, setShowTransition] = useState(false);
   const [transitionAgents, setTransitionAgents] = useState<{ from: string; to: string } | null>(null);
+  const [isAgentSelectorCompact, setIsAgentSelectorCompact] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -67,13 +67,22 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const getAgentForMessage = (message: ChatMessage): Agent | undefined => {
     if (message.sender === 'user') return undefined;
     
-    // Try to match by agent ID in metadata
+    // Try to match by agent ID in current agents list first
     if (message.metadata?.agentId) {
-      return agents.find(a => a.id === message.metadata?.agentId);
+      const currentAgent = agents.find(a => a.id === message.metadata?.agentId);
+      if (currentAgent) {
+        return currentAgent;
+      }
     }
     
-    // Default to current agent for AI messages
-    return message.sender === 'ai' ? currentAgent || undefined : undefined;
+    // If not found in current agents, use stored agent data from message
+    // This preserves the original agent's color even if the agent is no longer active
+    if (message.metadata?.agent) {
+      return message.metadata.agent;
+    }
+    
+    // For AI messages without any agent metadata, return undefined
+    return undefined;
   };
 
   // Fetch command list for autocomplete
@@ -87,37 +96,38 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   return (
     <div className="chat-view" data-testid="chat-view">
-      {/* Status Bar */}
-      <div className="chat-status-bar">
-        <div className="status-indicators">
-          <span className={`status-indicator ${wsStatus === 'connected' ? 'connected' : 'disconnected'}`}>
-            WebSocket: {wsStatus}
-          </span>
-          <span className={`status-indicator ${sessionStatus === SessionStatus.Active ? 'active' : 'inactive'}`}>
-            Session: {sessionStatus}
-          </span>
-          {sessionError && (
-            <span className="status-error">Error: {sessionError}</span>
-          )}
+      {/* Status Bar - Compact */}
+      {(wsStatus !== 'connected' || sessionStatus !== SessionStatus.Active || sessionError) && (
+        <div className="chat-status-bar compact">
+          <div className="status-indicators">
+            {wsStatus !== 'connected' && (
+              <span className={`status-indicator ${wsStatus === 'connected' ? 'connected' : 'disconnected'}`}>
+                WebSocket: {wsStatus}
+              </span>
+            )}
+            {sessionStatus !== SessionStatus.Active && (
+              <span className="status-indicator inactive">
+                Session: {sessionStatus}
+              </span>
+            )}
+            {sessionError && (
+              <span className="status-error">Error: {sessionError}</span>
+            )}
+          </div>
         </div>
-        <div className="status-actions">
-          {onThemeToggle && (
-            <button onClick={onThemeToggle} className="theme-toggle">
-              {theme === 'light' ? '🌙' : '☀️'}
-            </button>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Chat Header */}
-      <div className="chat-header">
-        <CurrentAgentDisplay agent={currentAgent} />
-        <AgentSelector
-          agents={agents}
-          currentAgent={currentAgent}
-          onAgentSelect={handleAgentChange}
-        />
-      </div>
+      {!isAgentSelectorCompact && (
+        <div className="chat-header">
+          <AgentSelector
+            agents={agents}
+            currentAgent={currentAgent}
+            onAgentSelect={handleAgentChange}
+            onCompactChange={setIsAgentSelectorCompact}
+          />
+        </div>
+      )}
 
       {/* Messages Container */}
       <div className="chat-messages" ref={chatContainerRef}>
@@ -207,6 +217,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
           List Agents
         </button>
       </div>
+
+      {/* Floating Compact Agent Selector */}
+      {isAgentSelectorCompact && (
+        <AgentSelector
+          agents={agents}
+          currentAgent={currentAgent}
+          onAgentSelect={handleAgentChange}
+          onCompactChange={setIsAgentSelectorCompact}
+        />
+      )}
     </div>
   );
 };

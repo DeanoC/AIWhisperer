@@ -28,6 +28,10 @@ jest.mock('./ViewRouter', () => ({
   ViewRouter: () => <div data-testid="view-router">View Router Content</div>
 }));
 
+jest.mock('./ProjectSelector', () => ({
+  ProjectSelector: () => <div data-testid="project-selector">Project Selector</div>
+}));
+
 describe('MainLayout', () => {
   const renderWithProvider = (ui: React.ReactElement) => {
     return render(

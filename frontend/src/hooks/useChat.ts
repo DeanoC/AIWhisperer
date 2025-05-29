@@ -3,10 +3,12 @@ import { useState, useCallback, useRef } from 'react';
 import { ChatMessage, MessageSender } from '../types/chat';
 import { MessageStatus } from '../types/ai';
 import { AIMessageChunk } from '../types/ai';
+import { Agent } from '../types/agent';
 
 
 export interface ChatOptions {
   currentAgentId?: string;
+  currentAgent?: Agent;
 }
 
 export function useChat(options?: ChatOptions) {
@@ -17,6 +19,7 @@ export function useChat(options?: ChatOptions) {
   // Track a unique ID for the current streaming AI message
   const currentAIMessageId = useRef<string | null>(null);
   const currentAgentId = options?.currentAgentId;
+  const currentAgent = options?.currentAgent;
 
   // Add a user message
   const addUserMessage = useCallback((content: string) => {
@@ -53,7 +56,10 @@ export function useChat(options?: ChatOptions) {
             content: next,
             timestamp: new Date().toISOString(),
             status: MessageStatus.Received,
-            metadata: currentAgentId ? { agentId: currentAgentId } : undefined,
+            metadata: currentAgent ? { 
+              agentId: currentAgent.id, 
+              agent: currentAgent 
+            } : undefined,
           };
           setMessages((prevMsgs) => {
             if (prevMsgs.some(m => m.id === msg.id)) {
@@ -71,7 +77,7 @@ export function useChat(options?: ChatOptions) {
       }
       return next;
     });
-  }, [currentAgentId]);
+  }, [currentAgent]);
 
   // Add a system message
   const addSystemMessage = useCallback((content: string) => {
@@ -85,6 +91,25 @@ export function useChat(options?: ChatOptions) {
     setMessages((prev) => [...prev, msg]);
   }, []);
 
+  // Function to update agent metadata for messages that don't have it
+  const updateMessageAgent = useCallback((messageId: string, agent: Agent) => {
+    setMessages(prevMessages => 
+      prevMessages.map(msg => {
+        if (msg.id === messageId && msg.sender === MessageSender.AI && !msg.metadata?.agent) {
+          return {
+            ...msg,
+            metadata: {
+              ...msg.metadata,
+              agentId: agent.id,
+              agent: agent
+            }
+          };
+        }
+        return msg;
+      })
+    );
+  }, []);
+
   return {
     messages,
     loading,
@@ -93,5 +118,6 @@ export function useChat(options?: ChatOptions) {
     startAIMessage,
     appendAIChunk,
     addSystemMessage,
+    updateMessageAgent,
   };
 }

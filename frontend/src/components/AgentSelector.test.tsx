@@ -45,4 +45,30 @@ describe('AgentSelector', () => {
     expect(screen.getByText('[P]')).toBeInTheDocument();
     expect(screen.getByText('[T]')).toBeInTheDocument();
   });
+
+  it('toggles compact mode', () => {
+    const onCompactChange = jest.fn();
+    render(
+      <AgentSelector 
+        agents={agents} 
+        currentAgent={agents[0]} 
+        onAgentSelect={() => {}} 
+        onCompactChange={onCompactChange}
+      />
+    );
+    
+    // Should start in expanded mode (check for agent names)
+    expect(screen.getByText('Patricia the Planner')).toBeInTheDocument();
+    
+    // Click compact toggle
+    const compactToggle = screen.getByTitle('Compact view');
+    fireEvent.click(compactToggle);
+    
+    // Should now be in compact mode (no agent names visible)
+    expect(screen.queryByText('Patricia the Planner')).not.toBeInTheDocument();
+    expect(onCompactChange).toHaveBeenCalledWith(true);
+    
+    // But should still have agent avatars
+    expect(screen.getByTestId('agent-P-compact')).toBeInTheDocument();
+  });
 });

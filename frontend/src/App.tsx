@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { MainLayout } from './components/MainLayout';
@@ -43,6 +43,9 @@ function App() {
 
   // JSON-RPC service for reuse
   const [jsonRpcService, setJsonRpcService] = useState<JsonRpcService | undefined>(undefined);
+  
+  // Track which agent we've updated messages for to prevent duplicate updates
+  const lastUpdatedAgentRef = useRef<string | null>(null);
 
   // Initialize services when WebSocket is connected
   useEffect(() => {
@@ -74,7 +77,11 @@ function App() {
     startAIMessage,
     appendAIChunk,
     addSystemMessage,
-  } = useChat({ currentAgentId: currentAgent?.id });
+    updateMessageAgent,
+  } = useChat({ 
+    currentAgentId: currentAgent?.id,
+    currentAgent: currentAgent || undefined
+  });
 
   // Function to reload agents
   const reloadAgents = useCallback(async () => {
@@ -266,6 +273,27 @@ function App() {
     };
   }, [aiService, appendAIChunk, loading, startAIMessage]);
 
+  // Update message agent metadata when current agent is set
+  useEffect(() => {
+    if (currentAgent && messages.length > 0 && lastUpdatedAgentRef.current !== currentAgent.id) {
+      // Find recent AI messages without agent metadata and update them
+      // This handles the case where agent introduction arrives before agent data is loaded
+      const recentMessages = messages.slice(-3); // Check last 3 messages only
+      const updatedAnyMessage = recentMessages.some(msg => {
+        if (msg.sender === 'ai' && !msg.metadata?.agent) {
+          console.log(`[App] Updating message ${msg.id} with agent metadata for ${currentAgent.name}`);
+          updateMessageAgent(msg.id, currentAgent);
+          return true;
+        }
+        return false;
+      });
+      
+      if (updatedAnyMessage || recentMessages.length === 0) {
+        lastUpdatedAgentRef.current = currentAgent.id;
+      }
+    }
+  }, [currentAgent, messages, updateMessageAgent]);
+
   // Set agent change handler
   useEffect(() => {
     if (!aiService) return;
@@ -398,6 +426,7 @@ function App() {
             isLoading={isLoading}
             currentAgent={agentContext}
             currentPlan={currentPlan}
+            onThemeToggle={toggleTheme}
           >
           <Routes>
             {/* Chat Route */}

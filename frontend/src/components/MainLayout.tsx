@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { ContextPanel } from './ContextPanel';
 import { ViewRouter } from './ViewRouter';
 import { ProjectSelector } from './ProjectSelector';
+import { CurrentAgentDisplay } from './CurrentAgentDisplay';
 import './MainLayout.css';
 
 interface MainLayoutProps {
@@ -11,6 +12,7 @@ interface MainLayoutProps {
   theme?: 'light' | 'dark';
   currentAgent?: any;
   currentPlan?: any;
+  onThemeToggle?: () => void;
 }
 
 interface PanelState {
@@ -61,7 +63,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   isLoading = false,
   theme = 'light',
   currentAgent,
-  currentPlan
+  currentPlan,
+  onThemeToggle
 }) => {
   const [panelState, setPanelState] = useState<PanelState>(() => {
     // Initialize from localStorage
@@ -228,6 +231,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           )}
           <h1>AI Whisperer</h1>
           <div className="header-controls">
+            <CurrentAgentDisplay agent={currentAgent} />
+            {onThemeToggle && (
+              <button onClick={onThemeToggle} className="theme-toggle">
+                {theme === 'light' ? '🌙' : '☀️'}
+              </button>
+            )}
             <ProjectSelector />
           </div>
         </div>
