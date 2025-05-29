@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, Callable, List
 from ai_whisperer.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
 from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,12 @@ class StatelessAgent:
         self.context = context
         self.ai_loop = ai_loop
         self.agent_registry_info = agent_registry_info
+        
+        # Initialize continuation strategy if configured
+        self.continuation_strategy = None
+        if agent_registry_info and hasattr(agent_registry_info, 'continuation_config') and agent_registry_info.continuation_config:
+            self.continuation_strategy = ContinuationStrategy(agent_registry_info.continuation_config)
+            logger.info(f"Initialized continuation strategy for agent: {config.name}")
         
         logger.info(f"Created stateless agent: {config.name}")
     
@@ -195,6 +202,36 @@ class StatelessAgent:
             logger.error(f"Failed to get filtered tools for agent {self.config.name}: {e}")
             # Fallback to all tools on error
             return None
+    
+    def should_continue_after_tools(self, result: Dict[str, Any], original_message: str) -> bool:
+        """
+        Determine if continuation is needed after tool execution.
+        
+        Args:
+            result: The result from process_message with tool_calls
+            original_message: The original user message
+            
+        Returns:
+            True if continuation is needed, False otherwise
+        """
+        if not self.continuation_strategy:
+            return False
+        return self.continuation_strategy.should_continue(result, original_message)
+    
+    def get_continuation_message(self, tool_names: List[str], original_message: str) -> str:
+        """
+        Get the appropriate continuation message based on context.
+        
+        Args:
+            tool_names: List of tool names that were just executed
+            original_message: The original user message
+            
+        Returns:
+            The continuation message to send
+        """
+        if not self.continuation_strategy:
+            return "Please continue with the next step."
+        return self.continuation_strategy.get_continuation_message(tool_names, original_message)
     
     def __repr__(self) -> str:
         """String representation of the agent."""

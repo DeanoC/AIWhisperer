@@ -285,20 +285,22 @@ class StatelessInteractiveSession:
                 if self.prompt_system and agent_info.prompt_file:
                     logger.info(f"Attempting to load prompt file: {agent_info.prompt_file}")
                     try:
-                        # Remove .md extension if present for prompt system
-                        prompt_name = agent_info.prompt_file.replace('.md', '')
+                        # Remove .prompt.md extension if present for prompt system
+                        prompt_name = agent_info.prompt_file
+                        if prompt_name.endswith('.prompt.md'):
+                            prompt_name = prompt_name[:-10]  # Remove '.prompt.md'
+                        elif prompt_name.endswith('.md'):
+                            prompt_name = prompt_name[:-3]  # Remove '.md'
+                        
                         logger.info(f"Trying to load prompt: agents/{prompt_name}")
-                        # Try without .prompt suffix first (for compatibility)
                         try:
                             prompt = self.prompt_system.get_formatted_prompt("agents", prompt_name)
                             system_prompt = prompt
                             logger.info(f"Successfully loaded prompt for {agent_id}")
                         except Exception as e1:
-                            logger.warning(f"First attempt failed: {e1}")
-                            # Try with the original filename
-                            prompt = self.prompt_system.get_formatted_prompt("agents", agent_info.prompt_file)
-                            system_prompt = prompt
-                            logger.info(f"Successfully loaded prompt on second attempt")
+                            logger.warning(f"Failed to load prompt: {e1}")
+                            # Keep the fallback prompt
+                            logger.info(f"Using fallback prompt for {agent_info.name}")
                     except Exception as e:
                         logger.error(f"Failed to load prompt for agent {agent_id}: {e}")
                         logger.error(f"Using fallback prompt for {agent_info.name}")
@@ -443,6 +445,9 @@ class StatelessInteractiveSession:
                 should_continue = False
             
             if should_continue:
+                # Extract tool names for context-aware continuation
+                tool_calls = result.get('tool_calls', [])
+                tool_names = [tc.get('function', {}).get('name', '') for tc in tool_calls]
                 # Check continuation depth to prevent infinite loops
                 if self._continuation_depth >= self._max_continuation_depth:
                     logger.warning(f"Hit max continuation depth ({self._max_continuation_depth}), stopping continuation")
@@ -456,8 +461,17 @@ class StatelessInteractiveSession:
                     # Give a brief pause to let UI update
                     await asyncio.sleep(0.5)
                     
-                    # Send continuation message
-                    continuation_msg = "Please continue with the next step."
+                    # Get continuation message from agent or use default
+                    if self.active_agent and self.active_agent in self.agents:
+                        agent = self.agents[self.active_agent]
+                        if hasattr(agent, 'get_continuation_message'):
+                            continuation_msg = agent.get_continuation_message(tool_names, message)
+                        else:
+                            continuation_msg = "Please continue with the next step."
+                    else:
+                        continuation_msg = "Please continue with the next step."
+                    
+                    logger.info(f"Sending continuation message: {continuation_msg}")
                     continuation_result = await self.send_user_message(continuation_msg, is_continuation=True)
                     
                     # Ensure continuation_result is also a dict
@@ -666,39 +680,11 @@ class StatelessInteractiveSession:
         # Get the tool that was called
         tool_names = [tc.get('function', {}).get('name', '') for tc in tool_calls]
         
-        # Agent-specific continuation rules
-        if self.active_agent and self.active_agent.lower() == 'p':  # Patricia
-            # Check if Patricia needs to continue after listing RFCs
-            if 'list_rfcs' in tool_names:
-                # Check if original message implies creation
-                create_keywords = ['create', 'new', 'add', 'make', 'generate', 'write', 'draft']
-                message_lower = original_message.lower()
-                if any(keyword in message_lower for keyword in create_keywords):
-                    # User asked to create, but Patricia only listed
-                    logger.info(f"Patricia: Detected creation intent in '{original_message}' after list_rfcs")
-                    return True
-                
-                # Also check if the message asks for a specific RFC that doesn't exist
-                # This is harder to detect without parsing the list_rfcs output
-                # but we can check for phrases like "RFC for X"
-                if 'rfc for' in message_lower or 'rfc about' in message_lower:
-                    logger.info(f"Patricia: Detected specific RFC request in '{original_message}' after list_rfcs")
-                    return True
-        
-        # Check for explicit multi-step indicators in response
-        response_text = result.get('response', '').lower()
-        
-        # Special handling for empty or tool-only responses
-        if not response_text or response_text.strip().startswith('🔧'):
-            # If Patricia called list_rfcs with no text response, check the context
-            if self.active_agent and self.active_agent.lower() == 'p' and 'list_rfcs' in tool_names:
-                # Patricia often doesn't say anything when listing RFCs, just executes the tool
-                # So we need to check the original intent more carefully
-                message_lower = original_message.lower()
-                action_keywords = ['create', 'new', 'add', 'make', 'generate', 'write', 'draft', 'update', 'move']
-                if any(keyword in message_lower for keyword in action_keywords):
-                    logger.info(f"Patricia: Empty response after list_rfcs but action intent detected")
-                    return True
+        # Check if agent has custom continuation logic
+        if self.active_agent and self.active_agent in self.agents:
+            agent = self.agents[self.active_agent]
+            if hasattr(agent, 'should_continue_after_tools'):
+                return agent.should_continue_after_tools(result, original_message)
         
         continuation_phrases = [
             'let me', 'now i', "i'll", 'next', 'then i',

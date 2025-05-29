@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from pathlib import Path
 
 @dataclass
@@ -17,6 +17,7 @@ class Agent:
     tool_sets: Optional[List[str]] = None  # Tool sets from tool_sets.yaml
     allow_tools: Optional[List[str]] = None  # Explicitly allowed tool names
     deny_tools: Optional[List[str]] = None  # Explicitly denied tool names
+    continuation_config: Optional[Dict[str, Any]] = None  # Configuration for continuation behavior
 
     @property
     def shortcut(self) -> str:
@@ -53,7 +54,8 @@ class AgentRegistry:
                         icon=agent_cfg.get('icon', '🤖'),
                         tool_sets=agent_cfg.get('tool_sets'),
                         allow_tools=agent_cfg.get('allow_tools'),
-                        deny_tools=agent_cfg.get('deny_tools')
+                        deny_tools=agent_cfg.get('deny_tools'),
+                        continuation_config=agent_cfg.get('continuation_config')
                     )
         else:
             # Hardcoded fallback

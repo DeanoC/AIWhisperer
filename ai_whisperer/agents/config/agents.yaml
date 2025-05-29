@@ -1,35 +1,40 @@
 agents:
-  a:
-    name: "Alice the Assistant"
-    role: "assistant"
-    description: "General assistant providing help and guidance with the AIWhisperer system"
-    # Tool access configuration - can use tool_sets, tool_tags, or both
-    tool_sets: ["analyst"]  # Uses the analyst tool set
-    tool_tags: ["filesystem", "analysis", "general"]  # Additional tags
-    # Optional explicit allow/deny lists
-    # allow_tools: []  # If specified, only these tools are allowed
-    # deny_tools: []   # These tools are always denied
-    prompt_file: "alice_assistant"
-    context_sources: ["workspace_structure", "recent_changes"]
-    color: "#9C27B0"
-    icon: "🤖"
   p:
-    name: "Patricia the Planner"
-    role: "planner"
-    description: "Creates structured implementation plans from feature requests, starting with RFC refinement"
-    tool_sets: ["rfc_specialist", "planner"]  # Uses both RFC and planner tool sets
-    tool_tags: ["filesystem", "analysis", "rfc", "project_management", "planning"]
-    prompt_file: "agent_patricia"
-    context_sources: ["workspace_structure", "existing_rfcs", "existing_schemas", "recent_changes", "codebase_languages"]
-    color: "#4CAF50"
-    icon: "📋"
+    name: "Patricia the RFC Producer"
+    role: "rfc_producer"
+    description: "Specializes in refining ideas into well-structured RFC documents"
+    tool_tags: ["rfc", "codebase_analysis", "web_research"]
+    prompt_file: "agent_patricia.prompt.md"
+    context_sources: ["rfc_templates", "existing_rfcs", "codebase_structure"]
+    color: "#9C27B0"
+    icon: "📝"
+    tool_sets: ["rfc_management", "codebase_analysis", "web_research"]
+    continuation_config:
+      rules:
+        - trigger_tools: ["list_rfcs"]
+          keywords: ["create", "new", "add", "make", "generate", "write", "draft", "test"]
+          continuation_message: "Now create the RFC as requested. Use any details mentioned in the conversation, or use reasonable defaults for title, author, and body."
+        - trigger_tools: ["list_rfcs"]
+          keywords: ["rfc for", "rfc about"]
+          continuation_message: "Now create the RFC for the topic mentioned."
+      default_message: "Continue with the RFC refinement process."
+  
+  a:
+    name: "Alice the AI Assistant"
+    role: "assistant" 
+    description: "General-purpose AI assistant for coding and problem-solving"
+    tool_tags: ["filesystem", "command", "analysis"]
+    prompt_file: "alice_assistant.prompt.md"
+    context_sources: ["conversation_history", "workspace_structure"]
+    color: "#2196F3"
+    icon: "🤖"
+    
   t:
     name: "Tessa the Tester"
     role: "tester"
     description: "Generates comprehensive test suites and test plans"
-    tool_sets: ["tester"]  # Uses the tester tool set (includes code execution)
     tool_tags: ["filesystem", "testing", "analysis"]
-    prompt_file: "agent_tester"
+    prompt_file: "agent_tester.prompt.md"
     context_sources: ["existing_tests", "code_coverage", "test_patterns"]
-    color: "#2196F3"
+    color: "#4CAF50"
     icon: "🧪"
