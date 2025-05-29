@@ -437,6 +437,7 @@ function App() {
                 sessionError={sessionError || undefined}
                 onThemeToggle={toggleTheme}
                 theme={theme}
+                jsonRpcService={jsonRpcService}
               />
             } />
             

@@ -18,15 +18,18 @@ interface MessageInputProps {
   fetchCommandList: () => Promise<string[]>;
   sessionStatus?: any;
   disabled?: boolean;
+  onFilePickerRequest?: (callback: (filePath: string) => void) => void;
 }
 
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, sessionStatus, disabled }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, sessionStatus, disabled, onFilePickerRequest }) => {
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const [commandList, setCommandList] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showingAtSymbol, setShowingAtSymbol] = useState(false);
+  const [atSymbolPosition, setAtSymbolPosition] = useState(-1);
 
   // Fetch command list from backend (via fetchCommandList) on mount or when session becomes active
   useEffect(() => {
@@ -156,7 +159,39 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
           className={`message-input${isCommand ? ' command-mode' : ''}`}
           type="text"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={e => {
+            const newValue = e.target.value;
+            const oldValue = input;
+            
+            // Check if @ was just typed
+            if (newValue.length > oldValue.length) {
+              const lastChar = newValue[newValue.length - 1];
+              if (lastChar === '@' && onFilePickerRequest) {
+                // Check if @ is at word boundary (start of input or after space)
+                const prevChar = newValue[newValue.length - 2];
+                if (!prevChar || prevChar === ' ') {
+                  setShowingAtSymbol(true);
+                  setAtSymbolPosition(newValue.length - 1);
+                  
+                  // Request file picker
+                  onFilePickerRequest((filePath: string) => {
+                    // Replace @ with the file path
+                    const beforeAt = newValue.substring(0, atSymbolPosition);
+                    const afterAt = newValue.substring(atSymbolPosition + 1);
+                    const newInput = beforeAt + filePath + afterAt;
+                    setInput(newInput);
+                    setShowingAtSymbol(false);
+                    setAtSymbolPosition(-1);
+                    
+                    // Focus back on input
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  });
+                }
+              }
+            }
+            
+            setInput(newValue);
+          }}
           onKeyDown={handleKeyDown}
           placeholder="Enter your message and press Enter to send"
           autoFocus
