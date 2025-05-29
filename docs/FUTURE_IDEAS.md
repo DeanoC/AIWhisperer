@@ -212,6 +212,23 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 - Evaluate ROI for each feature
 - Some features may require significant architectural changes
 
+## Recently Implemented Items
+
+### Agent Context Tracking (2024-01-29)
+- ✅ Core context tracking models (ContextItem, AgentContextManager)
+- ✅ @ file reference parsing and automatic loading
+- ✅ Integration with session manager
+- ✅ Context freshness tracking
+- ✅ Basic context size management
+
+**Still TODO for Context Tracking:**
+- File watching for automatic refresh
+- Context panel UI component
+- Context timeline visualization
+- Cross-agent context sharing
+- Smart section extraction (AST parsing)
+- Context persistence/storage layer
+
 ## Recently Deferred Items
 
 ### From Phase 4 Implementation
