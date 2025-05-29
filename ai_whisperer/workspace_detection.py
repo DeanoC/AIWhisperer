@@ -30,7 +30,7 @@ def find_whisper_workspace(start_path=None):
             if whisper.is_dir():
                 return str(real_current)
         except PermissionError as e:
-            raise WorkspaceNotFoundError(f"Permission denied while accessing {current}: {e}")
+            logging.warning(f"Permission denied while accessing {current}: {e}. Skipping to parent directory.")
         except Exception:
             pass  # Ignore other errors and continue up
         if current.parent == current:
