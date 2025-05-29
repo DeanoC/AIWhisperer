@@ -71,18 +71,23 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
 
       // Load UI settings
       const settings = await projectService.getUISettings();
+      console.log('[ProjectContext] UI Settings:', settings);
       setUiSettings(settings);
 
       // Load recent projects
       const recent = await projectService.getRecentProjects();
+      console.log('[ProjectContext] Recent projects:', recent);
       setRecentProjects(recent);
 
       // Load active project or last project if auto-load is enabled
       const active = await projectService.getActiveProject();
+      console.log('[ProjectContext] Active project:', active);
+      
       if (active) {
         setActiveProject(active);
       } else if (settings.autoLoadLastProject && recent.length > 0) {
         // Auto-load last project
+        console.log('[ProjectContext] Auto-loading last project:', recent[0]);
         const lastProject = await projectService.getProject(recent[0].id);
         await projectService.activateProject(lastProject.id);
         setActiveProject(lastProject);

@@ -77,13 +77,21 @@ export function ProjectSelector() {
                     className={`project-item ${project.id === activeProject?.id ? 'active' : ''}`}
                     onClick={() => handleProjectSelect(project.id)}
                   >
-                    <div className="project-item-name">{project.name}</div>
-                    <div className="project-item-path">{project.path}</div>
-                    {activeProject?.id === project.id && activeProject.outputPath && (
-                      <div className="project-item-output">
-                        Output: {activeProject.outputPath}
+                    <div className="project-item-content">
+                      <div className="project-item-header">
+                        <span className="project-item-icon">📁</span>
+                        <span className="project-item-name">{project.name}</span>
+                        {project.id === activeProject?.id && (
+                          <span className="project-item-badge">Active</span>
+                        )}
                       </div>
-                    )}
+                      <div className="project-item-path" title={project.path}>
+                        {project.path}
+                      </div>
+                      <div className="project-item-meta">
+                        Last accessed: {new Date(project.lastAccessedAt).toLocaleDateString()}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
