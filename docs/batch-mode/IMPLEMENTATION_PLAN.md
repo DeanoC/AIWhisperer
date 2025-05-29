@@ -1,5 +1,12 @@
 # Batch Mode Implementation Plan
 
+> **TDD Policy (applies to all phases):**
+> All new features and modules must be developed using strict Test-Driven Development (TDD). This means:
+> - Tests must be fully implemented first, and must fail (RED) before any production code is written.
+> - Test names and logic should reflect the intended feature/behavior, not the absence of it (e.g., use `test_server_starts_on_valid_port` instead of `test_server_does_not_fail_to_start`).
+> - Only after confirming failing tests should implementation proceed to make them pass (GREEN).
+> - This policy applies to all phases and all batch mode components.
+
 **Date**: May 29, 2025  
 **Status**: Planning Phase  
 **Objective**: Replace current CLI mode with batch mode that drives interactive mode via JSON-RPC
@@ -120,15 +127,14 @@ b:
 - Create `ai_whisperer/cli_commands.py::BatchCliCommand`
 
 #### CLI Interface
+
 ```bash
-# New batch mode command
-python -m ai_whisperer.main batch script.txt --config config.yaml
+# New batch mode command (config is required)
+python -m ai_whisperer.cli SCRIPT --config config.yaml [--dry-run]
 
 # Options
 --config     Configuration file (required)
---verbose    Enable verbose output
---port       Specific port (optional, defaults to random)
---timeout    Session timeout (optional)
+--dry-run    Echo commands only, do not start server or connect
 ```
 
 #### Test Strategy
@@ -137,11 +143,15 @@ python -m ai_whisperer.main batch script.txt --config config.yaml
 - Integration with batch client tests
 - Error handling and cleanup tests
 
+
 ### Phase 5: Integration & Testing (3 days)
 **Objective**: End-to-end integration and validation
 
 #### Comprehensive Testing
-- Full workflow integration tests
+- **End-to-end batch mode test:**
+    - Launch CLI with a real batch script and connect to a real AI (OpenRouter API key from `.env`).
+    - Validate full workflow: script → CLI → server → AI → response → output.
+    - Ensure test fails if API key is missing or output is not as expected.
 - Multiple script format tests
 - Concurrent execution safety tests
 - Performance and memory usage tests
@@ -152,6 +162,14 @@ python -m ai_whisperer.main batch script.txt --config config.yaml
 - Troubleshooting documentation
 - Performance guidelines
 - Migration guide from old CLI
+
+#### Checklist (Phase 5)
+- [ ] Integration test runs CLI with real server and OpenRouter AI
+- [ ] Test fails if API key is missing or output is not as expected
+- [ ] Output and error logs are captured for debugging
+- [ ] Documentation updated with integration test instructions
+
+See `tests/integration/test_batch_mode_e2e.py` for the new end-to-end test.
 
 ## Technical Specifications
 

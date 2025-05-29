@@ -1,3 +1,7 @@
+if __name__ == "__main__":
+    import sys
+    from ai_whisperer.cli import cli
+    cli(sys.argv[1:])
 
 import argparse
 import sys
@@ -11,22 +15,30 @@ from ai_whisperer.path_management import PathManager
 
 logger = None
 
-def cli(args=None) -> list[BaseCliCommand]:
+def cli(args=None):
     """Main entry point for the AI Whisperer CLI application (batch mode only)."""
-    # Remove the global delegate_manager declaration
-    # global delegate_manager # Removed
-    # Logging will be set up after argument parsing to use the config path.
-    # --- Argument Parsing ---
-
     parser = argparse.ArgumentParser(
         description="AI Whisperer CLI application (batch mode only)",
         prog="ai-whisperer",
     )
+
     parser.add_argument(
-        "batch-mode",
+        "script",
         metavar="SCRIPT",
         type=str,
         help="Path to the batch script to execute."
+    )
+    parser.add_argument(
+        "--config",
+        metavar="CONFIG",
+        type=str,
+        required=True,
+        help="Path to the configuration YAML file. (Required)"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Echo commands only, do not start server or connect."
     )
 
     try:
@@ -40,9 +52,22 @@ def cli(args=None) -> list[BaseCliCommand]:
         global logger
         logger = logging_custom.get_logger(__name__)
 
-        script_path = getattr(parsed_args, "batch_mode")
-        command = BatchModeCliCommand(script_path=script_path)
-        return [command], {}
+
+        script_path = getattr(parsed_args, "script")
+        config_path = getattr(parsed_args, "config")
+        dry_run = getattr(parsed_args, "dry_run", False)
+
+        # Load config and .env (enforces API key and config validation)
+        try:
+            config = load_config(config_path)
+        except Exception as e:
+            print(f"Error loading config: {e}", file=sys.stderr)
+            sys.exit(2)
+
+        command = BatchModeCliCommand(script_path=script_path, config=config, dry_run=dry_run)
+        # Actually execute the command and exit with its code
+        exit_code = command.execute()
+        sys.exit(exit_code)
 
     except SystemExit as e:
         raise e
