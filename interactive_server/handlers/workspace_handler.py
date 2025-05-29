@@ -129,7 +129,7 @@ class WorkspaceHandler:
             
             # Apply sorting
             if sort_by == "name":
-                nodes.sort(key=lambda n: (not n.get("isFile", False), n["name"].lower()),
+                nodes.sort(key=lambda n: (n.get("isFile", False), n["name"].lower()),
                           reverse=(sort_direction == "desc"))
             elif sort_by == "size":
                 nodes.sort(key=lambda n: n.get("size", 0),

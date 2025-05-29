@@ -55,6 +55,9 @@ export interface DirectoryListingResponse {
   
   /** Whether the listing is truncated */
   isTruncated?: boolean;
+  
+  /** Error message if the operation failed */
+  error?: string;
 }
 
 /**
