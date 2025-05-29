@@ -22,20 +22,26 @@ export const FilePicker: React.FC<FilePickerProps> = ({
   const [filteredNodes, setFilteredNodes] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPath, setCurrentPath] = useState('.');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Load all files recursively when modal opens
+  // Load files when modal opens or path changes
   useEffect(() => {
-    if (isOpen && jsonRpcService && allNodes.length === 0) {
+    if (isOpen && jsonRpcService) {
       loadAllFiles();
     }
-  }, [isOpen, jsonRpcService]);
+  }, [isOpen, jsonRpcService, currentPath]);
 
-  // Focus search input when modal opens
+  // Focus search input when modal opens and reset state
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
+    } else if (!isOpen) {
+      // Reset state when closing
+      setCurrentPath('.');
+      setSearchQuery('');
+      setSelectedIndex(0);
     }
   }, [isOpen]);
 
@@ -61,9 +67,9 @@ export const FilePicker: React.FC<FilePickerProps> = ({
     
     try {
       const response = await jsonRpcService.sendRequest('workspace.listDirectory', {
-        path: '.',
-        recursive: true,
-        maxDepth: 3,  // Reduced from 10 to avoid timeout
+        path: currentPath,
+        recursive: false,  // Don't recurse, just show current directory
+        maxDepth: 1,
         includeHidden: false,
         sortBy: 'name',
         sortDirection: 'asc'
@@ -72,10 +78,10 @@ export const FilePicker: React.FC<FilePickerProps> = ({
       if (response.error) {
         setError(response.error);
       } else {
-        // Filter to only files
-        const files = (response.nodes || []).filter(node => node.isFile);
-        setAllNodes(files);
-        setFilteredNodes(files);
+        // Include both files and directories for navigation
+        const nodes = response.nodes || [];
+        setAllNodes(nodes);
+        setFilteredNodes(nodes);
       }
     } catch (err) {
       console.error('Failed to load files:', err);
@@ -145,8 +151,20 @@ export const FilePicker: React.FC<FilePickerProps> = ({
       case 'Enter':
         e.preventDefault();
         if (filteredNodes[selectedIndex]) {
-          handleSelect(filteredNodes[selectedIndex]);
+          // Shift+Enter selects directories, Enter navigates into them
+          handleSelect(filteredNodes[selectedIndex], e.shiftKey);
         }
+        break;
+      case 'Backspace':
+        // Only navigate up if search is empty and we're not at root
+        if (currentPath !== '.' && searchQuery === '') {
+          e.preventDefault();
+          const parentPath = currentPath.includes('/') 
+            ? currentPath.substring(0, currentPath.lastIndexOf('/')) || '.'
+            : '.';
+          setCurrentPath(parentPath);
+        }
+        // Otherwise, let backspace work normally in the search field
         break;
       case 'Escape':
         e.preventDefault();
@@ -155,9 +173,16 @@ export const FilePicker: React.FC<FilePickerProps> = ({
     }
   };
 
-  const handleSelect = (node: FileNode) => {
-    onSelect(node.path);
-    onClose();
+  const handleSelect = (node: FileNode, forceSelect: boolean = false) => {
+    if (node.isFile || forceSelect) {
+      // Select the file or directory
+      onSelect(node.path);
+      onClose();
+    } else {
+      // Navigate into the directory
+      setCurrentPath(node.path);
+      setSearchQuery(''); // Clear search when navigating
+    }
   };
 
   if (!isOpen) return null;
@@ -166,18 +191,47 @@ export const FilePicker: React.FC<FilePickerProps> = ({
     <div className="file-picker-overlay">
       <div className="file-picker-modal" ref={modalRef}>
         <div className="file-picker-header">
-          <input
-            ref={searchInputRef}
-            type="text"
-            className="file-picker-search"
-            placeholder="Search files..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <button className="file-picker-close" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+          <div className="file-picker-breadcrumb">
+            <button 
+              className="breadcrumb-item"
+              onClick={() => setCurrentPath('.')}
+              disabled={currentPath === '.'}
+            >
+              Root
+            </button>
+            {currentPath !== '.' && (
+              <>
+                <span className="breadcrumb-separator">/</span>
+                <span className="breadcrumb-current">{currentPath}</span>
+                <button
+                  className="breadcrumb-up"
+                  onClick={() => {
+                    const parentPath = currentPath.includes('/') 
+                      ? currentPath.substring(0, currentPath.lastIndexOf('/')) || '.'
+                      : '.';
+                    setCurrentPath(parentPath);
+                  }}
+                  title="Go up one level (Backspace)"
+                >
+                  ↑
+                </button>
+              </>
+            )}
+          </div>
+          <div className="file-picker-search-row">
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="file-picker-search"
+              placeholder="Search in current directory..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button className="file-picker-close" onClick={onClose} aria-label="Close">
+              ✕
+            </button>
+          </div>
         </div>
         
         <div className="file-picker-content">
@@ -209,11 +263,23 @@ export const FilePicker: React.FC<FilePickerProps> = ({
                   onClick={() => handleSelect(node)}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
-                  <span className="file-picker-icon">📄</span>
+                  <span className="file-picker-icon">{node.isFile ? '📄' : '📁'}</span>
                   <div className="file-picker-item-info">
                     <div className="file-picker-name">{node.name}</div>
                     <div className="file-picker-path">{node.path}</div>
                   </div>
+                  {!node.isFile && (
+                    <button
+                      className="file-picker-select-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelect(node, true);
+                      }}
+                      title="Select this directory"
+                    >
+                      Select
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -222,7 +288,7 @@ export const FilePicker: React.FC<FilePickerProps> = ({
         
         <div className="file-picker-footer">
           <div className="file-picker-hint">
-            Use ↑↓ to navigate • Enter to select • Esc to cancel
+            ↑↓ Navigate • Enter to open/select • Shift+Enter to select dir • Backspace to go up • Esc to cancel
           </div>
         </div>
       </div>

@@ -4,9 +4,13 @@ import os
 from pathlib import Path
 import time
 from threading import Lock
+import asyncio
+import logging
 
 from ai_whisperer.utils import build_ascii_directory_tree
 from ai_whisperer.path_management import PathManager
+
+logger = logging.getLogger(__name__)
 
 
 class FileService:
@@ -15,6 +19,10 @@ class FileService:
     # Cache configuration
     CACHE_TTL = 30  # Cache time-to-live in seconds
     CACHE_MAX_ENTRIES = 100  # Maximum number of cached directories
+    
+    # Safety limits to prevent hanging
+    MAX_FILES_LIMIT = 1000  # Maximum files to process in recursive listing
+    YIELD_INTERVAL = 100  # Yield control to event loop every N files
     
     def __init__(self, path_manager: PathManager):
         """Initialize file service with path manager.
@@ -42,17 +50,19 @@ class FileService:
         return (time.time() - timestamp) < self.CACHE_TTL
     
     def _update_cache_access(self, key: str) -> None:
-        """Update access order for LRU eviction."""
-        with self._cache_lock:
-            if key in self._cache_access_order:
-                self._cache_access_order.remove(key)
-            self._cache_access_order.append(key)
-            
-            # Evict oldest entries if cache is too large
-            while len(self._dir_cache) > self.CACHE_MAX_ENTRIES:
-                oldest_key = self._cache_access_order.pop(0)
-                if oldest_key in self._dir_cache:
-                    del self._dir_cache[oldest_key]
+        """Update access order for LRU eviction.
+        
+        NOTE: This method assumes the caller already holds the cache lock.
+        """
+        if key in self._cache_access_order:
+            self._cache_access_order.remove(key)
+        self._cache_access_order.append(key)
+        
+        # Evict oldest entries if cache is too large
+        while len(self._dir_cache) > self.CACHE_MAX_ENTRIES:
+            oldest_key = self._cache_access_order.pop(0)
+            if oldest_key in self._dir_cache:
+                del self._dir_cache[oldest_key]
     
     def clear_cache(self, path: Optional[str] = None) -> None:
         """Clear cache entries.
@@ -151,6 +161,8 @@ class FileService:
             raise ValueError(f"Not a directory: {path}")
         
         nodes = []
+        files_processed = 0
+        truncated = False
         
         def should_include_file(file_path: Path) -> bool:
             """Check if file should be included based on filters."""
@@ -196,16 +208,34 @@ class FileService:
                 # Handle files we can't stat
                 return None
         
-        def list_dir_recursive(dir_path: Path, current_depth: int = 0) -> None:
-            """Recursively list directory contents."""
+        async def list_dir_recursive(dir_path: Path, current_depth: int = 0) -> bool:
+            """Recursively list directory contents.
+            
+            Returns:
+                bool: True if limit was reached, False otherwise
+            """
+            nonlocal files_processed, truncated
+            
             if current_depth >= max_depth:
-                return
+                return False
+            
+            # Check if we've hit the file limit
+            if files_processed >= self.MAX_FILES_LIMIT:
+                truncated = True
+                logger.warning(f"File limit reached ({self.MAX_FILES_LIMIT} files) while listing {dir_path}")
+                return True
             
             try:
                 # Get all items in directory
                 items = sorted(dir_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
                 
                 for item in items:
+                    # Check limit again inside loop
+                    if files_processed >= self.MAX_FILES_LIMIT:
+                        truncated = True
+                        logger.warning(f"File limit reached ({self.MAX_FILES_LIMIT} files) while processing {item}")
+                        return True
+                    
                     # Skip ignored patterns and common large directories
                     if item.name in ['.git', '__pycache__', '.pytest_cache', 'node_modules', 
                                     '.venv', 'venv', 'env', 'build', 'dist', '.idea', '.vscode',
@@ -216,22 +246,38 @@ class FileService:
                         node = build_node(item, self.path_manager.workspace_path or resolved_path)
                         if node:
                             nodes.append(node)
+                            files_processed += 1
+                            
+                            # Yield to event loop periodically
+                            if files_processed % self.YIELD_INTERVAL == 0:
+                                await asyncio.sleep(0)
+                                logger.debug(f"Processed {files_processed} files, yielding control...")
                             
                             # Recurse into directories if requested
                             if recursive and item.is_dir() and current_depth + 1 < max_depth:
-                                list_dir_recursive(item, current_depth + 1)
+                                limit_reached = await list_dir_recursive(item, current_depth + 1)
+                                if limit_reached:
+                                    return True
                                 
-            except (OSError, PermissionError):
+            except (OSError, PermissionError) as e:
                 # Skip directories we can't read
-                pass
+                logger.debug(f"Skipping unreadable directory {dir_path}: {e}")
+                
+            return False
         
         # Start listing
         if recursive:
-            list_dir_recursive(resolved_path, 0)
+            await list_dir_recursive(resolved_path, 0)
         else:
             try:
                 items = sorted(resolved_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
                 for item in items:
+                    # Check file limit even in non-recursive mode
+                    if files_processed >= self.MAX_FILES_LIMIT:
+                        truncated = True
+                        logger.warning(f"File limit reached ({self.MAX_FILES_LIMIT} files) in non-recursive listing")
+                        break
+                    
                     # Skip ignored patterns and common large directories
                     if item.name in ['.git', '__pycache__', '.pytest_cache', 'node_modules', 
                                     '.venv', 'venv', 'env', 'build', 'dist', '.idea', '.vscode',
@@ -242,15 +288,38 @@ class FileService:
                         node = build_node(item, self.path_manager.workspace_path or resolved_path)
                         if node:
                             nodes.append(node)
+                            files_processed += 1
+                            
+                            # Yield periodically even in non-recursive mode
+                            if files_processed % self.YIELD_INTERVAL == 0:
+                                await asyncio.sleep(0)
             except (OSError, PermissionError):
                 raise RuntimeError(f"Cannot read directory: {path}")
         
-        # Store in cache
+        # Log final statistics
+        if truncated:
+            logger.info(f"Directory listing truncated at {files_processed} files (limit: {self.MAX_FILES_LIMIT})")
+        else:
+            logger.debug(f"Directory listing completed with {files_processed} files")
+        
+        # Store in cache with truncation flag
+        result_nodes = nodes.copy()
+        if truncated:
+            # Add a metadata node to indicate truncation
+            result_nodes.append({
+                "name": "_truncated",
+                "path": "_truncated",
+                "isFile": False,
+                "truncated": True,
+                "filesProcessed": files_processed,
+                "maxFilesLimit": self.MAX_FILES_LIMIT
+            })
+        
         with self._cache_lock:
-            self._dir_cache[cache_key] = (nodes.copy(), time.time())
+            self._dir_cache[cache_key] = (result_nodes, time.time())
             self._update_cache_access(cache_key)
         
-        return nodes
+        return result_nodes
     
     async def search_files(self, query: str, file_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """Search for files by name pattern.
