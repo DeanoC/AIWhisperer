@@ -120,7 +120,9 @@ class FileService:
             text_extensions = {'.py', '.js', '.ts', '.tsx', '.json', '.md', '.txt', '.yaml', '.yml', 
                              '.css', '.html', '.xml', '.sh', '.bat', '.ps1', '.java', '.cpp', '.c', 
                              '.h', '.hpp', '.cs', '.rb', '.go', '.rs', '.swift', '.kt', '.toml', '.ini',
-                             '.cfg', '.conf', '.log', '.csv', '.sql', '.r', '.R', '.m', '.lua'}
+                             '.cfg', '.conf', '.log', '.csv', '.sql', '.r', '.R', '.m', '.lua', '.bak',
+                             '.backup', '.orig', '.old', '.save', '.tmp', '.temp', '.dist', '.example',
+                             '.sample', '.default', '.tpl', '.template', '.in', '.out', '.lock'}
             
             is_text = resolved_path.suffix.lower() in text_extensions or file_size == 0
             

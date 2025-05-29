@@ -110,17 +110,47 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
       let isFile = true;
       if (index < lines.length - 1) {
         const nextLine = lines[index + 1];
-        const nextDepth = Math.floor((nextLine.length - nextLine.trimStart().length) / 4);
-        if (nextDepth > depth) {
-          isFile = false;
+        if (nextLine.trim()) {
+          // Calculate next line's depth using the same method
+          let nextDepth = 0;
+          for (let i = 0; i < nextLine.length; i++) {
+            const char = nextLine[i];
+            if (char === '│' || char === ' ' || char === '├' || char === '└' || char === '─') {
+              continue;
+            } else {
+              nextDepth = Math.floor(i / 4);
+              break;
+            }
+          }
+          if (nextDepth > depth) {
+            isFile = false;
+          }
         }
       }
 
-      // Check for file extensions as additional hint
-      // But don't assume all dots mean files (e.g., .git, .claude are directories)
-      const hasCommonExtension = /\.\w{1,4}$/.test(name);
-      if (hasCommonExtension) {
-        isFile = true;
+      // Use file extension as a hint when no children are detected
+      // This prevents directories like .github or node_modules.old from being marked as files
+      if (isFile) {
+        // Check if it looks like a file based on extension
+        const hasCommonExtension = /\.\w{1,5}$/.test(name);
+        const hasDotInName = name.includes('.');
+        
+        // If no extension and no dots, it's probably a directory
+        // Common patterns: directories rarely have extensions, files usually do
+        if (!hasCommonExtension && !hasDotInName) {
+          isFile = false;
+        }
+        
+        // Special case: hidden directories often start with dot but have no extension
+        // e.g., .git, .vscode, .github
+        if (hasDotInName && !hasCommonExtension) {
+          const parts = name.split('.');
+          const lastPart = parts[parts.length - 1];
+          // If the part after the last dot is long or contains no numbers, probably a directory
+          if (lastPart.length > 5 || !/\d/.test(lastPart)) {
+            isFile = false;
+          }
+        }
       }
 
       const nodeData = {
