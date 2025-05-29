@@ -59,6 +59,20 @@ agent_sets:
       - readonly_filesystem
     tools: []
     tags: []
+  
+  # Tool set for RFC refinement (Agent Patricia)
+  rfc_specialist:
+    description: "Tools for RFC creation and refinement"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - create_rfc
+      - read_rfc
+      - list_rfcs
+    tags:
+      - rfc
+      - project_management
+      - planning
 
   # Tool set for testing agents
   tester:

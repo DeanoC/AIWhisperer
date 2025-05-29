@@ -72,6 +72,15 @@ class PlanRunner:
         path_manager = PathManager()
         tool_registry.register_tool(FindPatternTool(path_manager))
         tool_registry.register_tool(WorkspaceStatsTool(path_manager))
+        
+        # Register RFC management tools
+        from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
+        from ai_whisperer.tools.read_rfc_tool import ReadRFCTool
+        from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
+        
+        tool_registry.register_tool(CreateRFCTool())
+        tool_registry.register_tool(ReadRFCTool())
+        tool_registry.register_tool(ListRFCsTool())
 
         logger.debug("Tools registered with ToolRegistry.")
 
