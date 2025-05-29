@@ -345,6 +345,10 @@ class StatelessInteractiveSession:
             raise RuntimeError(f"Session {self.session_id} is not started or no active agent")
         
         try:
+            if self.active_agent not in self.agents:
+                logger.error(f"Active agent '{self.active_agent}' not found in agents dict")
+                raise RuntimeError(f"Active agent '{self.active_agent}' not found")
+                
             agent = self.agents[self.active_agent]
             
             # Process @ references in the message
@@ -408,6 +412,15 @@ class StatelessInteractiveSession:
                 "params": final_notification.model_dump()
             })
             
+            # Debug logging to understand the result type
+            logger.debug(f"Result type: {type(result)}, value: {result}")
+            
+            # Ensure result is a dict for continuation logic
+            if not isinstance(result, dict):
+                logger.warning(f"Unexpected result type from agent.process_message: {type(result)}")
+                # Convert to dict format if needed
+                result = {'response': str(result) if result else None}
+            
             # Reset continuation depth if this is not a continuation and we got a non-tool response
             if not is_continuation and (not result.get('tool_calls') or result.get('error')):
                 self._continuation_depth = 0
@@ -432,6 +445,11 @@ class StatelessInteractiveSession:
                     continuation_msg = "Please continue with the next step."
                     continuation_result = await self.send_user_message(continuation_msg, is_continuation=True)
                     
+                    # Ensure continuation_result is also a dict
+                    if not isinstance(continuation_result, dict):
+                        logger.warning(f"Unexpected continuation result type: {type(continuation_result)}")
+                        continuation_result = {'response': str(continuation_result) if continuation_result else None}
+                    
                     # Merge results for the original caller
                     if isinstance(result, dict) and isinstance(continuation_result, dict):
                         # Append continuation response
@@ -452,7 +470,7 @@ class StatelessInteractiveSession:
             return result
             
         except Exception as e:
-            logger.error(f"Failed to send message to agent '{self.active_agent}' in session {self.session_id}: {e}")
+            logger.error(f"Failed to send message to agent '{self.active_agent}' in session {self.session_id}: {e}", exc_info=True)
             # Reset continuation depth on error
             if self._continuation_depth > 0:
                 logger.debug("Resetting continuation depth due to error")
