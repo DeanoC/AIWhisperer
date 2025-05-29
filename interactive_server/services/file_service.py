@@ -32,7 +32,16 @@ class FileService:
             ValueError: If path is outside workspace
         """
         # Resolve path safely through PathManager
-        resolved_path = self.path_manager.resolve_path(path)
+        resolved_path_str = self.path_manager.resolve_path(path)
+        
+        # Convert to Path and handle relative paths
+        resolved_path = Path(resolved_path_str)
+        if not resolved_path.is_absolute():
+            workspace_path = self.path_manager.workspace_path
+            if workspace_path:
+                resolved_path = Path(workspace_path) / resolved_path
+            else:
+                resolved_path = resolved_path.resolve()
         
         # Use existing utility function
         tree = build_ascii_directory_tree(
@@ -83,8 +92,19 @@ class FileService:
             Dict with content, total_lines, and metadata
         """
         try:
+            # First resolve any template strings
             resolved_path_str = self.path_manager.resolve_path(path)
+            
+            # Convert to Path object
             resolved_path = Path(resolved_path_str)
+            
+            # If it's a relative path, make it relative to workspace
+            if not resolved_path.is_absolute():
+                workspace_path = self.path_manager.workspace_path
+                if workspace_path:
+                    resolved_path = Path(workspace_path) / resolved_path
+                else:
+                    resolved_path = resolved_path.resolve()
             
             # Check if file exists and is a file
             if not resolved_path.exists():

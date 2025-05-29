@@ -96,6 +96,11 @@
   background-color: var(--hover-background, rgba(0, 0, 0, 0.05));
 }
 
+.tree-line.directory {
+  cursor: default;
+  font-weight: 500;
+}
+
 .tree-line.selected {
   background-color: var(--selection-background, rgba(0, 123, 255, 0.1));
   font-weight: 600;

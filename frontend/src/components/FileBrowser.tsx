@@ -53,8 +53,19 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
         return;
       }
 
-      // Calculate depth based on indentation and tree characters
-      const depth = Math.floor((line.length - line.trimStart().length) / 4);
+      // Calculate depth by counting the tree structure characters
+      let depth = 0;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '│' || char === ' ' || char === '├' || char === '└' || char === '─') {
+          continue;
+        } else {
+          // Found the first real character, calculate depth
+          // Each level in the tree uses 4 characters (e.g., "│   " or "    ")
+          depth = Math.floor(i / 4);
+          break;
+        }
+      }
       
       // Extract the actual name from the line
       const name = line
@@ -83,11 +94,16 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
       }
 
       // Build the full path
-      const parentPath = pathStack[depth] || '.';
+      // Ensure pathStack has entries up to current depth
+      while (pathStack.length <= depth) {
+        pathStack.push('.');
+      }
+      
+      const parentPath = depth === 0 ? '.' : (pathStack[depth - 1] || '.');
       const fullPath = parentPath === '.' ? name : `${parentPath}/${name}`;
       
       // Update path stack
-      pathStack[depth + 1] = fullPath;
+      pathStack[depth] = fullPath;
       lastDepth = depth;
 
       // Determine if it's a file (doesn't have children in next lines)
@@ -101,16 +117,31 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
       }
 
       // Check for file extensions as additional hint
-      if (name.includes('.')) {
+      // But don't assume all dots mean files (e.g., .git, .claude are directories)
+      const hasCommonExtension = /\.\w{1,4}$/.test(name);
+      if (hasCommonExtension) {
         isFile = true;
       }
 
-      nodes.push({
+      const nodeData = {
         name,
         path: fullPath,
         isFile,
         depth
-      });
+      };
+      
+      // Log all nodes for debugging to track path construction
+      if (depth <= 3) {
+        console.log(`Node (depth ${depth}):`, {
+          name,
+          fullPath,
+          isFile,
+          parentPath,
+          pathStack: [...pathStack]
+        });
+      }
+      
+      nodes.push(nodeData);
     });
 
     return nodes;
@@ -157,19 +188,33 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
       const result = await jsonRpcService.sendRequest('workspace.getFileContent', { path });
       console.log('File content result:', result);
       setFileContent(result);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load file content:', err);
+      
+      // Extract error message from JSON-RPC error object
+      let errorMessage = 'Failed to load file';
+      if (err && typeof err === 'object') {
+        if (err.message) {
+          errorMessage = err.message;
+        } else if (err.error && err.error.message) {
+          errorMessage = err.error.message;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
       console.error('Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        stack: err instanceof Error ? err.stack : undefined,
-        error: err
+        message: errorMessage,
+        error: err,
+        fullError: JSON.stringify(err, null, 2)
       });
+      
       setFileContent({
         path,
         content: null,
         is_binary: false,
         size: 0,
-        error: err instanceof Error ? err.message : 'Failed to load file'
+        error: errorMessage
       });
     } finally {
       setLoadingContent(false);
@@ -183,6 +228,10 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
       if (onFileSelect) {
         onFileSelect(node.path);
       }
+    } else {
+      // For directories, just clear the selection
+      setSelectedPath(null);
+      setFileContent(null);
     }
   };
 
@@ -213,7 +262,7 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
     return (
       <div
         key={index}
-        className={`tree-line ${isSelected ? 'selected' : ''} ${isClickable ? 'clickable' : ''}`}
+        className={`tree-line ${isSelected ? 'selected' : ''} ${isClickable ? 'clickable' : ''} ${node && !node.isFile ? 'directory' : ''}`}
         onClick={() => handleLineClick(line, index)}
         title={node ? node.path : ''}
       >
