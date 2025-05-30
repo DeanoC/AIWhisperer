@@ -1,0 +1,1189 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.6.0 -- /home/deano/projects/AIWhisperer-refactor-cli/.venv/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /home/deano/projects/AIWhisperer-refactor-cli
+configfile: pytest.ini
+plugins: anyio-4.9.0, timeout-2.4.0, asyncio-0.23.8, mock-3.14.1, requests-mock-1.12.1
+asyncio: mode=Mode.STRICT
+collecting ... collected 747 items
+
+test_workspace_api.py::test_workspace_api XFAIL (Known failure: see ...) [  0%]
+ai_whisperer/commands/test_commands.py::TestCommands::test_echo PASSED   [  0%]
+ai_whisperer/commands/test_commands.py::TestCommands::test_status PASSED [  0%]
+tests/test_config.py::test_load_config_success_new_prompts PASSED        [  0%]
+tests/test_config.py::test_load_config_success_empty_task_prompts PASSED [  0%]
+tests/test_config.py::test_load_config_file_not_found XPASS (Known f...) [  0%]
+tests/test_config.py::test_load_config_invalid_yaml XPASS (Known fai...) [  0%]
+tests/test_config.py::test_load_config_missing_required_env_var_api_key PASSED [  1%]
+tests/test_config.py::test_load_config_empty_file XPASS (Known failu...) [  1%]
+tests/test_config.py::test_load_config_not_a_dictionary XPASS (Known...) [  1%]
+tests/test_config.py::test_load_config_optional_keys_openrouter PASSED   [  1%]
+tests/test_config.py::test_load_config_optional_key_output_dir PASSED    [  1%]
+tests/test_config.py::test_load_config_missing_task_model_config PASSED  [  1%]
+tests/test_config.py::test_load_config_invalid_task_model_settings_type PASSED [  1%]
+tests/test_config.py::test_load_config_missing_openrouter_model PASSED   [  2%]
+tests/test_openrouter_api.py::test_openrouter_api_init_success PASSED    [  2%]
+tests/test_openrouter_api.py::test_openrouter_api_init_config_error PASSED [  2%]
+tests/test_openrouter_api.py::test_chat_completion_success PASSED        [  2%]
+tests/test_openrouter_api.py::test_chat_completion_auth_error PASSED     [  2%]
+tests/test_openrouter_api.py::test_chat_completion_rate_limit_error PASSED [  2%]
+tests/test_openrouter_api.py::test_chat_completion_not_found_error PASSED [  2%]
+tests/test_openrouter_api.py::test_chat_completion_server_error PASSED   [  2%]
+tests/test_openrouter_api.py::test_chat_completion_connection_error PASSED [  3%]
+tests/test_openrouter_api.py::test_chat_completion_timeout_error PASSED  [  3%]
+tests/test_openrouter_api.py::test_chat_completion_unexpected_response_format_no_choices PASSED [  3%]
+tests/test_openrouter_api.py::test_chat_completion_unexpected_response_format_empty_choices PASSED [  3%]
+tests/test_openrouter_api.py::test_chat_completion_unexpected_response_format_no_message PASSED [  3%]
+tests/test_openrouter_api.py::test_chat_completion_unexpected_response_format_no_content PASSED [  3%]
+tests/test_openrouter_api.py::test_list_models_success PASSED            [  3%]
+tests/test_openrouter_api.py::test_list_models_auth_error PASSED         [  4%]
+tests/test_openrouter_api.py::test_list_models_rate_limit_error PASSED   [  4%]
+tests/test_openrouter_api.py::test_list_models_server_error PASSED       [  4%]
+tests/test_openrouter_api.py::test_list_models_connection_error PASSED   [  4%]
+tests/test_openrouter_api.py::test_list_models_invalid_json PASSED       [  4%]
+tests/test_openrouter_api.py::test_list_models_empty_data PASSED         [  4%]
+tests/test_openrouter_api.py::test_call_openrouter_success_refactored PASSED [  4%]
+tests/test_processing.py::test_read_markdown_success PASSED              [  4%]
+tests/test_processing.py::test_read_markdown_file_not_found PASSED       [  5%]
+tests/test_processing.py::test_read_markdown_empty_file PASSED           [  5%]
+tests/test_processing.py::test_read_markdown_encoding_error PASSED       [  5%]
+tests/test_processing.py::test_save_json_success PASSED                  [  5%]
+tests/test_processing.py::test_save_json_empty_dict PASSED               [  5%]
+tests/test_processing.py::test_save_json_overwrite PASSED                [  5%]
+tests/test_processing.py::test_format_prompt_basic PASSED                [  5%]
+tests/test_processing.py::test_format_prompt_missing_vars_in_template PASSED [  6%]
+tests/test_processing.py::test_format_prompt_no_vars_in_template PASSED  [  6%]
+tests/test_processing.py::test_process_response_valid_json PASSED        [  6%]
+tests/test_processing.py::test_process_response_nested_json PASSED       [  6%]
+tests/test_processing.py::test_process_response_empty_string PASSED      [  6%]
+tests/test_processing.py::test_process_response_invalid_json PASSED      [  6%]
+tests/test_processing.py::test_process_response_non_json_string PASSED   [  6%]
+tests/test_utils.py::test_setup_logging_runs_without_error PASSED        [  6%]
+tests/integration/test_agent_jsonrpc_ws.py::test_agent_list_ws XFAIL     [  7%]
+tests/integration/test_agent_jsonrpc_ws.py::test_session_switch_agent_ws XFAIL [  7%]
+tests/integration/test_agent_jsonrpc_ws.py::test_session_current_agent_ws PASSED [  7%]
+tests/integration/test_agent_jsonrpc_ws.py::test_session_handoff_ws FAILED [  7%]
+tests/integration/test_ai_tool_usage.py::test_ai_read_file_tool_call PASSED [  7%]
+tests/integration/test_ai_tool_usage.py::test_ai_write_file_tool_call PASSED [  7%]
+tests/integration/test_ai_tool_usage.py::test_ai_execute_command_tool_call PASSED [  7%]
+tests/integration/test_ai_tool_usage.py::test_ai_tool_valid_params_execution PASSED [  8%]
+tests/integration/test_ai_tool_usage.py::test_ai_tool_invalid_params_handling FAILED [  8%]
+tests/integration/test_batch_mode_e2e.py::test_batch_mode_e2e XFAIL      [  8%]
+tests/integration/test_context_integration.py::test_context_lifecycle_creation_usage_persistence_recovery PASSED [  8%]
+tests/integration/test_context_integration.py::test_multi_agent_context_isolation PASSED [  8%]
+tests/integration/test_context_integration.py::test_context_sharing_and_isolation PASSED [  8%]
+tests/integration/test_context_integration.py::test_error_recovery_on_corrupted_file PASSED [  8%]
+tests/integration/test_context_integration.py::test_contextmanager_compatibility PASSED [  8%]
+tests/integration/test_context_integration.py::test_agentcontextmanager_compatibility PASSED [  9%]
+tests/integration/test_context_integration.py::test_thread_safety_of_agent_context PASSED [  9%]
+tests/integration/test_graceful_exit.py::test_single_ctrl_c_prompts_for_second XPASS [  9%]
+tests/integration/test_graceful_exit.py::test_double_ctrl_c_exits_gracefully XPASS [  9%]
+tests/integration/test_graceful_exit.py::test_ctrl_c_timeout_resets XPASS [  9%]
+tests/integration/test_interactive_session.py::test_interactive_session_persists_after_task SKIPPED [  9%]
+tests/integration/test_interactive_session.py::test_graceful_termination_on_double_ctrl_c SKIPPED [  9%]
+tests/integration/test_project_pathmanager_integration.py::TestProjectPathManagerIntegration::test_project_creation_initializes_pathmanager PASSED [ 10%]
+tests/integration/test_project_pathmanager_integration.py::TestProjectPathManagerIntegration::test_project_with_custom_output_path PASSED [ 10%]
+tests/integration/test_project_pathmanager_integration.py::TestProjectPathManagerIntegration::test_update_project_output_path PASSED [ 10%]
+tests/integration/test_project_pathmanager_integration.py::TestProjectPathManagerIntegration::test_project_context_manager_preserves_pathmanager PASSED [ 10%]
+tests/integration/test_project_pathmanager_integration.py::TestProjectPathManagerIntegration::test_project_json_integration PASSED [ 10%]
+tests/integration/test_project_pathmanager_integration.py::TestProjectPathManagerIntegration::test_path_restriction_with_output_path PASSED [ 10%]
+tests/integration/test_rfc_workflow.py::TestRFCWorkflow::test_complete_rfc_lifecycle PASSED [ 10%]
+tests/integration/test_rfc_workflow.py::TestRFCWorkflow::test_codebase_analysis_integration PASSED [ 10%]
+tests/integration/test_rfc_workflow.py::TestRFCWorkflow::test_web_research_integration PASSED [ 11%]
+tests/integration/test_rfc_workflow.py::TestRFCWorkflow::test_rfc_refinement_handler_integration PASSED [ 11%]
+tests/integration/test_rfc_workflow.py::TestRFCWorkflow::test_error_scenarios PASSED [ 11%]
+tests/integration/test_run_plan_script.py::test_run_plan_script SKIPPED  [ 11%]
+tests/integration/test_runner_plan_ingestion.py::test_runner_successfully_loads_valid_overview_plan PASSED [ 11%]
+tests/integration/test_runner_plan_ingestion.py::test_runner_handles_malformed_plan_json PASSED [ 11%]
+tests/integration/test_runner_plan_ingestion.py::test_runner_handles_plan_with_missing_top_level_field PASSED [ 11%]
+tests/integration/test_runner_plan_ingestion.py::test_runner_handles_plan_file_not_found PASSED [ 12%]
+tests/integration/test_runner_plan_ingestion.py::test_runner_handles_subtask_file_not_found PASSED [ 12%]
+tests/integration/test_runner_plan_ingestion.py::test_runner_handles_subtask_malformed_json PASSED [ 12%]
+tests/integration/test_runner_plan_ingestion.py::test_runner_handles_subtask_validation_error PASSED [ 12%]
+tests/integration/test_runner_plan_ingestion.py::test_runner_integration_with_empty_plan_array PASSED [ 12%]
+tests/integration/test_session_integration.py::test_session_integration_placeholder XPASS [ 12%]
+tests/integration/test_session_integration.py::TestSessionIntegration::test_multi_agent_conversation_workflow XFAIL [ 12%]
+tests/integration/test_session_integration.py::TestSessionIntegration::test_session_persistence_and_recovery XFAIL [ 12%]
+tests/integration/test_session_integration.py::TestSessionIntegration::test_concurrent_session_operations XFAIL [ 13%]
+tests/integration/test_session_integration.py::TestSessionIntegration::test_websocket_streaming_validation XFAIL [ 13%]
+tests/integration/test_session_integration.py::TestSessionIntegration::test_error_recovery_and_edge_cases XFAIL [ 13%]
+tests/integration/test_workspace_pathmanager_integration.py::test_pathmanager_rejects_non_whisper_workspace PASSED [ 13%]
+tests/integration/test_workspace_pathmanager_integration.py::test_workspace_config_overrides_pathmanager_defaults PASSED [ 13%]
+tests/integration/test_workspace_pathmanager_integration.py::test_pathmanager_uses_whisper_workspace XFAIL [ 13%]
+tests/integration/test_workspace_tools_integration.py::test_all_tools_registered PASSED [ 13%]
+tests/integration/test_workspace_tools_integration.py::test_filesystem_tag_filtering PASSED [ 14%]
+tests/integration/test_workspace_tools_integration.py::test_file_read_tag_filtering PASSED [ 14%]
+tests/integration/test_workspace_tools_integration.py::test_directory_browse_tag_filtering PASSED [ 14%]
+tests/integration/test_workspace_tools_integration.py::test_file_search_tag_filtering XFAIL [ 14%]
+tests/integration/test_workspace_tools_integration.py::test_analysis_tag_filtering PASSED [ 14%]
+tests/integration/test_workspace_tools_integration.py::test_workspace_tools_with_pathmanager PASSED [ 14%]
+tests/interactive_server/test_ai_service_timeout.py::test_ai_service_timeout_handling XFAIL [ 14%]
+tests/interactive_server/test_integration_end_to_end.py::test_end_to_end_websocket_jsonrpc PASSED [ 14%]
+tests/interactive_server/test_integration_end_to_end.py::test_invalid_jsonrpc_request PASSED [ 15%]
+tests/interactive_server/test_interactive_client_script.py::test_interactive_client_script[interactive_client_script_example.txt] PASSED [ 15%]
+tests/interactive_server/test_interactive_client_script.py::test_interactive_client_script[interactive_client_script_example.json] PASSED [ 15%]
+tests/interactive_server/test_interactive_message_models.py::test_start_session_request PASSED [ 15%]
+tests/interactive_server/test_interactive_message_models.py::test_start_session_response PASSED [ 15%]
+tests/interactive_server/test_interactive_message_models.py::test_send_user_message_request PASSED [ 15%]
+tests/interactive_server/test_interactive_message_models.py::test_send_user_message_response PASSED [ 15%]
+tests/interactive_server/test_interactive_message_models.py::test_ai_message_chunk_notification PASSED [ 16%]
+tests/interactive_server/test_interactive_message_models.py::test_session_status_notification PASSED [ 16%]
+tests/interactive_server/test_interactive_message_models.py::test_stop_session_request PASSED [ 16%]
+tests/interactive_server/test_interactive_message_models.py::test_stop_session_response PASSED [ 16%]
+tests/interactive_server/test_interactive_message_models.py::test_provide_tool_result_request PASSED [ 16%]
+tests/interactive_server/test_interactive_message_models.py::test_provide_tool_result_response PASSED [ 16%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_start_session_request_roundtrip PASSED [ 16%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_start_session_response_roundtrip PASSED [ 17%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_send_user_message_request_roundtrip PASSED [ 17%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_send_user_message_response_roundtrip PASSED [ 17%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_ai_message_chunk_notification_roundtrip PASSED [ 17%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_session_status_notification_roundtrip PASSED [ 17%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_stop_session_request_roundtrip PASSED [ 17%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_stop_session_response_roundtrip PASSED [ 17%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_provide_tool_result_request_roundtrip PASSED [ 17%]
+tests/interactive_server/test_interactive_message_models_roundtrip.py::test_provide_tool_result_response_roundtrip PASSED [ 18%]
+tests/interactive_server/test_jsonrpc_notifications.py::test_jsonrpc_notification_no_response SKIPPED [ 18%]
+tests/interactive_server/test_jsonrpc_notifications.py::test_jsonrpc_response_for_request SKIPPED [ 18%]
+tests/interactive_server/test_jsonrpc_protocol.py::test_jsonrpc_request_response SKIPPED [ 18%]
+tests/interactive_server/test_jsonrpc_protocol.py::test_jsonrpc_invalid_request SKIPPED [ 18%]
+tests/interactive_server/test_jsonrpc_protocol.py::test_jsonrpc_notification SKIPPED [ 18%]
+tests/interactive_server/test_jsonrpc_protocol_more.py::test_jsonrpc_method_not_found SKIPPED [ 18%]
+tests/interactive_server/test_jsonrpc_protocol_more.py::test_jsonrpc_parse_error SKIPPED [ 19%]
+tests/interactive_server/test_jsonrpc_protocol_more.py::test_jsonrpc_invalid_params SKIPPED [ 19%]
+tests/interactive_server/test_jsonrpc_routing.py::test_jsonrpc_routing_to_handlers SKIPPED [ 19%]
+tests/interactive_server/test_long_running_session.py::test_long_running_session_stability SKIPPED [ 19%]
+tests/interactive_server/test_memory_usage_under_load.py::test_memory_usage_under_load SKIPPED [ 19%]
+tests/interactive_server/test_message_models.py::test_echo_params_valid PASSED [ 19%]
+tests/interactive_server/test_message_models.py::test_echo_params_invalid PASSED [ 19%]
+tests/interactive_server/test_message_models.py::test_add_params_valid PASSED [ 19%]
+tests/interactive_server/test_message_models.py::test_add_params_invalid PASSED [ 20%]
+tests/interactive_server/test_mocked_ailoop.py::test_tool_call_and_result_flow SKIPPED [ 20%]
+tests/interactive_server/test_mocked_ailoop.py::test_start_session_mocked SKIPPED [ 20%]
+tests/interactive_server/test_mocked_ailoop.py::test_send_user_message_mocked SKIPPED [ 20%]
+tests/interactive_server/test_mocked_ailoop.py::test_ai_message_chunk_notification_stream PASSED [ 20%]
+tests/interactive_server/test_notifications_streaming.py::test_server_to_client_session_status_notification SKIPPED [ 20%]
+tests/interactive_server/test_notifications_streaming.py::test_async_notification_streaming SKIPPED [ 20%]
+tests/interactive_server/test_project_setup.py::test_interactive_server_directory_exists XFAIL [ 21%]
+tests/interactive_server/test_project_setup.py::test_main_entrypoint_exists XFAIL [ 21%]
+tests/interactive_server/test_project_setup.py::test_main_entrypoint_importable SKIPPED [ 21%]
+tests/interactive_server/test_real_session_handlers.py::test_start_session_real SKIPPED [ 21%]
+tests/interactive_server/test_real_session_handlers.py::test_send_user_message_real SKIPPED [ 21%]
+tests/interactive_server/test_real_session_handlers.py::test_stop_session_real SKIPPED [ 21%]
+tests/interactive_server/test_real_session_handlers.py::test_error_event_notification SKIPPED [ 21%]
+tests/interactive_server/test_tool_result_handler.py::test_tool_result_flow_real PASSED [ 21%]
+tests/interactive_server/test_websocket_endpoint.py::test_websocket_route_exists PASSED [ 22%]
+tests/interactive_server/test_websocket_endpoint.py::test_websocket_multiple_clients SKIPPED [ 22%]
+tests/interactive_server/test_websocket_endpoint.py::test_websocket_lifecycle SKIPPED [ 22%]
+tests/interactive_server/test_websocket_stress.py::test_websocket_stress XFAIL [ 22%]
+tests/interactive_server/test_websocket_stress_subprocess.py::test_websocket_stress_subprocess XFAIL [ 22%]
+tests/unit/test_agent_communication.py::test_handoff_protocol PASSED     [ 22%]
+tests/unit/test_agent_communication.py::test_context_transfer_between_agents PASSED [ 22%]
+tests/unit/test_agent_communication.py::test_agent_recommendation_system PASSED [ 23%]
+tests/unit/test_agent_config.py::test_valid_agent_config_initialization PASSED [ 23%]
+tests/unit/test_agent_config.py::test_missing_required_fields XFAIL      [ 23%]
+tests/unit/test_agent_config.py::test_invalid_types PASSED               [ 23%]
+tests/unit/test_agent_config.py::test_generation_param_ranges PASSED     [ 23%]
+tests/unit/test_agent_config.py::test_model_selection_and_api_settings PASSED [ 23%]
+tests/unit/test_agent_config.py::test_tool_permissions_and_limits PASSED [ 23%]
+tests/unit/test_agent_config.py::test_context_settings_and_limits PASSED [ 23%]
+tests/unit/test_agent_config.py::test_serialization_and_deserialization PASSED [ 24%]
+tests/unit/test_agent_config.py::test_invalid_serialization_input PASSED [ 24%]
+tests/unit/test_agent_config.py::test_error_messages_are_clear PASSED    [ 24%]
+tests/unit/test_agent_context.py::test_inherits_context_provider PASSED  [ 24%]
+tests/unit/test_agent_context.py::test_store_and_retrieve_messages PASSED [ 24%]
+tests/unit/test_agent_context.py::test_filter_messages_by_role PASSED    [ 24%]
+tests/unit/test_agent_context.py::test_system_prompt_handling PASSED     [ 24%]
+tests/unit/test_agent_context.py::test_conversation_history PASSED       [ 25%]
+tests/unit/test_agent_context.py::test_metadata_storage_and_retrieval PASSED [ 25%]
+tests/unit/test_agent_context.py::test_agent_specific_metadata PASSED    [ 25%]
+tests/unit/test_agent_context.py::test_system_prompt_as_string_in_retrieve_messages PASSED [ 25%]
+tests/unit/test_agent_context.py::test_system_prompt_as_dict_in_retrieve_messages PASSED [ 25%]
+tests/unit/test_agent_context.py::test_no_system_prompt_in_retrieve_messages PASSED [ 25%]
+tests/unit/test_agent_context_manager.py::test_context_initialization_workspace_structure PASSED [ 25%]
+tests/unit/test_agent_context_manager.py::test_context_filtering_by_agent PASSED [ 25%]
+tests/unit/test_agent_factory.py::test_create_agent_from_config PASSED   [ 26%]
+tests/unit/test_agent_factory.py::test_create_agent_from_dict PASSED     [ 26%]
+tests/unit/test_agent_factory.py::test_create_agent_with_different_models PASSED [ 26%]
+tests/unit/test_agent_factory.py::test_agent_validation_missing_required_fields PASSED [ 26%]
+tests/unit/test_agent_factory.py::test_agent_validation_invalid_model PASSED [ 26%]
+tests/unit/test_agent_factory.py::test_error_on_invalid_config_type PASSED [ 26%]
+tests/unit/test_agent_factory.py::test_register_and_create_from_template PASSED [ 26%]
+tests/unit/test_agent_factory.py::test_error_on_unknown_template PASSED  [ 27%]
+tests/unit/test_agent_factory.py::test_create_agent_with_custom_params PASSED [ 27%]
+tests/unit/test_agent_factory.py::test_agent_factory_supports_presets PASSED [ 27%]
+tests/unit/test_agent_inspect_command.py::TestAgentInspectCommand::test_returns_context_for_valid_agent PASSED [ 27%]
+tests/unit/test_agent_inspect_command.py::TestAgentInspectCommand::test_handles_invalid_agent_id PASSED [ 27%]
+tests/unit/test_agent_inspect_command.py::TestAgentInspectCommand::test_handles_unknown_info_type PASSED [ 27%]
+tests/unit/test_agent_jsonrpc.py::test_agent_list PASSED                 [ 27%]
+tests/unit/test_agent_jsonrpc.py::test_session_switch_agent PASSED       [ 27%]
+tests/unit/test_agent_jsonrpc.py::test_session_current_agent PASSED      [ 28%]
+tests/unit/test_agent_jsonrpc.py::test_session_handoff PASSED            [ 28%]
+tests/unit/test_agent_registry.py::test_agent_dataclass_creation PASSED  [ 28%]
+tests/unit/test_agent_registry.py::test_agent_registry_loads_default_agents PASSED [ 28%]
+tests/unit/test_agent_registry.py::test_agent_registry_get_agent_invalid_id PASSED [ 28%]
+tests/unit/test_agent_registry.py::test_agent_registry_list_agents PASSED [ 28%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_creation_with_stateless_loop PASSED [ 28%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_process_message_stateless XFAIL [ 29%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_streaming_support XFAIL [ 29%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_tool_execution PASSED [ 29%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_error_handling PASSED [ 29%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_context_persistence PASSED [ 29%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_custom_generation_params PASSED [ 29%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_no_session_management XFAIL [ 29%]
+tests/unit/test_agent_stateless.py::TestAgentWithStatelessAILoop::test_agent_config_validation PASSED [ 29%]
+tests/unit/test_agent_tool_filtering.py::test_agent_tool_filtering PASSED [ 30%]
+tests/unit/test_agent_tool_permission.py::test_agent_tool_permission_allow PASSED [ 30%]
+tests/unit/test_agent_tool_permission.py::test_agent_tool_permission_deny PASSED [ 30%]
+tests/unit/test_agent_tools.py::test_tool_tag_filtering PASSED           [ 30%]
+tests/unit/test_agent_tools.py::test_tool_category_filtering PASSED      [ 30%]
+tests/unit/test_agent_tools.py::test_tool_name_pattern_filtering PASSED  [ 30%]
+tests/unit/test_ai_interaction_history.py::test_chat_completion_with_history PASSED [ 30%]
+tests/unit/test_ai_interaction_history.py::test_chat_completion_with_multi_turn_history PASSED [ 31%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_initialization_success PASSED [ 31%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_initialization_invalid_config_type PASSED [ 31%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_success PASSED [ 31%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_with_history PASSED [ 31%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_with_tool_calls PASSED [ 31%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_auth_error PASSED [ 31%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_rate_limit_error PASSED [ 31%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_api_error PASSED [ 32%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_connection_error PASSED [ 32%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_timeout_error PASSED [ 32%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_success PASSED [ 32%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_with_history PASSED [ 32%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_initial_auth_error PASSED [ 32%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_initial_api_error PASSED [ 32%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_initial_connection_error PASSED [ 33%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_initial_timeout_error PASSED [ 33%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_mid_stream_error PASSED [ 33%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_invalid_json_chunk PASSED [ 33%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_non_data_lines PASSED [ 33%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_list_models_success PASSED [ 33%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_list_models_api_error PASSED [ 33%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_list_models_connection_error PASSED [ 34%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_list_models_invalid_response_format PASSED [ 34%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_cache_disabled PASSED [ 34%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_cache_enabled PASSED [ 34%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_cache_hit PASSED [ 34%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_call_chat_completion_cache_miss PASSED [ 34%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_cache_disabled PASSED [ 34%]
+tests/unit/test_ai_service_interaction.py::TestOpenRouterAIServiceUnit::test_stream_chat_completion_cache_enabled_no_caching PASSED [ 34%]
+tests/unit/test_cli_workspace_validation.py::test_cli_validates_workspace_before_execution PASSED [ 35%]
+tests/unit/test_cli_workspace_validation.py::test_cli_workspace_error_message PASSED [ 35%]
+tests/unit/test_codebase_analysis_tools.py::TestAnalyzeLanguagesTool::test_tool_properties PASSED [ 35%]
+tests/unit/test_codebase_analysis_tools.py::TestAnalyzeLanguagesTool::test_analyze_languages_basic PASSED [ 35%]
+tests/unit/test_codebase_analysis_tools.py::TestAnalyzeLanguagesTool::test_framework_detection PASSED [ 35%]
+tests/unit/test_codebase_analysis_tools.py::TestAnalyzeLanguagesTool::test_exclude_config_files PASSED [ 35%]
+tests/unit/test_codebase_analysis_tools.py::TestAnalyzeLanguagesTool::test_min_files_filter PASSED [ 35%]
+tests/unit/test_codebase_analysis_tools.py::TestAnalyzeLanguagesTool::test_project_type_inference PASSED [ 36%]
+tests/unit/test_codebase_analysis_tools.py::TestFindSimilarCodeTool::test_find_caching_patterns PASSED [ 36%]
+tests/unit/test_codebase_analysis_tools.py::TestFindSimilarCodeTool::test_find_authentication_patterns PASSED [ 36%]
+tests/unit/test_codebase_analysis_tools.py::TestFindSimilarCodeTool::test_custom_patterns PASSED [ 36%]
+tests/unit/test_codebase_analysis_tools.py::TestFindSimilarCodeTool::test_file_type_filter PASSED [ 36%]
+tests/unit/test_codebase_analysis_tools.py::TestFindSimilarCodeTool::test_no_matches PASSED [ 36%]
+tests/unit/test_codebase_analysis_tools.py::TestFindSimilarCodeTool::test_context_extraction PASSED [ 36%]
+tests/unit/test_codebase_analysis_tools.py::TestGetProjectStructureTool::test_basic_structure_analysis PASSED [ 36%]
+tests/unit/test_codebase_analysis_tools.py::TestGetProjectStructureTool::test_important_files_detection PASSED [ 37%]
+tests/unit/test_codebase_analysis_tools.py::TestGetProjectStructureTool::test_project_components PASSED [ 37%]
+tests/unit/test_codebase_analysis_tools.py::TestGetProjectStructureTool::test_directory_tree PASSED [ 37%]
+tests/unit/test_codebase_analysis_tools.py::TestGetProjectStructureTool::test_ignored_directories PASSED [ 37%]
+tests/unit/test_codebase_analysis_tools.py::TestGetProjectStructureTool::test_max_depth_limit PASSED [ 37%]
+tests/unit/test_codebase_analysis_tools.py::TestGetProjectStructureTool::test_file_type_distribution PASSED [ 37%]
+tests/unit/test_context_manager.py::test_context_manager_initialization PASSED [ 37%]
+tests/unit/test_context_manager.py::test_add_message PASSED              [ 38%]
+tests/unit/test_context_manager.py::test_add_multiple_messages PASSED    [ 38%]
+tests/unit/test_context_manager.py::test_get_history_with_limit PASSED   [ 38%]
+tests/unit/test_context_manager.py::test_clear_history PASSED            [ 38%]
+tests/unit/test_context_manager.py::test_message_roles PASSED            [ 38%]
+tests/unit/test_context_provider.py::test_context_provider_is_abstract PASSED [ 38%]
+tests/unit/test_context_provider.py::test_dummy_provider_implements_interface PASSED [ 38%]
+tests/unit/test_context_provider.py::test_metadata_support PASSED        [ 38%]
+tests/unit/test_context_provider.py::test_interface_contract_methods_exist PASSED [ 39%]
+tests/unit/test_context_serialization.py::test_context_save_and_load_basic PASSED [ 39%]
+tests/unit/test_context_serialization.py::test_context_data_integrity PASSED [ 39%]
+tests/unit/test_context_serialization.py::test_context_version_compatibility PASSED [ 39%]
+tests/unit/test_context_serialization.py::test_context_handles_corrupted_data PASSED [ 39%]
+tests/unit/test_context_serialization.py::test_context_empty_context PASSED [ 39%]
+tests/unit/test_context_serialization.py::test_context_large_context_performance PASSED [ 39%]
+tests/unit/test_context_serialization.py::test_context_json_serialization_interoperability PASSED [ 40%]
+tests/unit/test_context_tracking.py::TestContextItem::test_create_context_item PASSED [ 40%]
+tests/unit/test_context_tracking.py::TestContextItem::test_calculate_hash PASSED [ 40%]
+tests/unit/test_context_tracking.py::TestContextItem::test_is_stale PASSED [ 40%]
+tests/unit/test_context_tracking.py::TestContextItem::test_serialization PASSED [ 40%]
+tests/unit/test_context_tracking.py::TestAgentContextManager::test_parse_file_references PASSED [ 40%]
+tests/unit/test_context_tracking.py::TestAgentContextManager::test_add_file_reference PASSED [ 40%]
+tests/unit/test_context_tracking.py::TestAgentContextManager::test_add_file_section PASSED [ 40%]
+tests/unit/test_context_tracking.py::TestAgentContextManager::test_process_message_references PASSED [ 41%]
+tests/unit/test_context_tracking.py::TestAgentContextManager::test_context_summary PASSED [ 41%]
+tests/unit/test_context_tracking.py::TestAgentContextManager::test_remove_item PASSED [ 41%]
+tests/unit/test_context_tracking.py::TestAgentContextManager::test_context_size_limit PASSED [ 41%]
+tests/unit/test_continuation_depth.py::test_continuation_depth_reset_on_non_tool_response PASSED [ 41%]
+tests/unit/test_continuation_depth.py::test_continuation_depth_increments_on_tool_continuation PASSED [ 41%]
+tests/unit/test_continuation_depth.py::test_max_continuation_depth_prevents_infinite_loop PASSED [ 41%]
+tests/unit/test_continuation_depth.py::test_continuation_depth_reset_on_error PASSED [ 42%]
+tests/unit/test_continuation_depth.py::test_continuation_with_is_continuation_flag PASSED [ 42%]
+tests/unit/test_continuation_strategy.py::TestContinuationStrategy::test_init_with_no_config PASSED [ 42%]
+tests/unit/test_continuation_strategy.py::TestContinuationStrategy::test_init_with_config PASSED [ 42%]
+tests/unit/test_continuation_strategy.py::TestContinuationStrategy::test_should_continue_no_tool_calls PASSED [ 42%]
+tests/unit/test_continuation_strategy.py::TestContinuationStrategy::test_should_continue_with_matching_rule PASSED [ 42%]
+tests/unit/test_continuation_strategy.py::TestContinuationStrategy::test_should_continue_no_matching_keyword PASSED [ 42%]
+tests/unit/test_continuation_strategy.py::TestContinuationStrategy::test_get_continuation_message_default PASSED [ 42%]
+tests/unit/test_continuation_strategy.py::TestContinuationStrategy::test_get_continuation_message_with_rule PASSED [ 43%]
+tests/unit/test_continuation_strategy.py::TestContinuationStrategy::test_get_continuation_message_dynamic_test PASSED [ 43%]
+tests/unit/test_direct_streaming.py::TestDirectStreaming::test_direct_streaming_session XFAIL [ 43%]
+tests/unit/test_direct_streaming.py::TestDirectStreaming::test_streaming_wrapper XFAIL [ 43%]
+tests/unit/test_direct_streaming.py::TestDirectStreaming::test_token_by_token_updates XFAIL [ 43%]
+tests/unit/test_direct_streaming.py::TestDirectStreaming::test_streaming_error_handling XFAIL [ 43%]
+tests/unit/test_direct_streaming.py::TestDirectStreaming::test_no_delegate_dependencies XFAIL [ 43%]
+tests/unit/test_direct_streaming.py::TestDirectStreaming::test_concurrent_streaming_sessions XFAIL [ 44%]
+tests/unit/test_direct_streaming.py::TestDirectStreaming::test_tool_call_streaming XFAIL [ 44%]
+tests/unit/test_direct_streaming.py::TestDirectStreaming::test_streaming_performance_metrics XFAIL [ 44%]
+tests/unit/test_execute_command_tool.py::test_execute_command_tool_name PASSED [ 44%]
+tests/unit/test_execute_command_tool.py::test_execute_command_tool_description PASSED [ 44%]
+tests/unit/test_execute_command_tool.py::test_execute_command_tool_parameters_schema PASSED [ 44%]
+tests/unit/test_execute_command_tool.py::test_execute_command_tool_category PASSED [ 44%]
+tests/unit/test_execute_command_tool.py::test_execute_command_tool_tags XFAIL [ 44%]
+tests/unit/test_execute_command_tool.py::test_execute_command_tool_ai_prompt_instructions PASSED [ 45%]
+tests/unit/test_execute_command_tool.py::test_execute_success_simple PASSED [ 45%]
+tests/unit/test_execute_command_tool.py::test_execute_success_with_cwd PASSED [ 45%]
+tests/unit/test_execute_command_tool.py::test_execute_command_not_found XFAIL [ 45%]
+tests/unit/test_execute_command_tool.py::test_execute_command_produces_stderr_and_nonzero_return PASSED [ 45%]
+tests/unit/test_execute_command_tool.py::test_execute_empty_command PASSED [ 45%]
+tests/unit/test_file_service.py::TestFileService::test_init PASSED       [ 45%]
+tests/unit/test_file_service.py::TestFileService::test_cache_key_generation PASSED [ 46%]
+tests/unit/test_file_service.py::TestFileService::test_cache_validity PASSED [ 46%]
+tests/unit/test_file_service.py::TestFileService::test_cache_access_update PASSED [ 46%]
+tests/unit/test_file_service.py::TestFileService::test_cache_eviction PASSED [ 46%]
+tests/unit/test_file_service.py::TestFileService::test_clear_cache_all PASSED [ 46%]
+tests/unit/test_file_service.py::TestFileService::test_clear_cache_specific_path PASSED [ 46%]
+tests/unit/test_file_service.py::TestFileService::test_list_directory_basic XFAIL [ 46%]
+tests/unit/test_file_service.py::TestFileService::test_list_directory_with_cache PASSED [ 46%]
+tests/unit/test_file_service.py::TestFileService::test_list_directory_cache_expiry PASSED [ 47%]
+tests/unit/test_file_service.py::TestFileService::test_list_directory_filters PASSED [ 47%]
+tests/unit/test_file_service.py::TestFileService::test_list_directory_sorting PASSED [ 47%]
+tests/unit/test_file_tools.py::test_read_file_tool_name PASSED           [ 47%]
+tests/unit/test_file_tools.py::test_read_file_tool_description PASSED    [ 47%]
+tests/unit/test_file_tools.py::test_read_file_tool_parameters_schema PASSED [ 47%]
+tests/unit/test_file_tools.py::test_read_file_tool_openrouter_tool_definition PASSED [ 47%]
+tests/unit/test_file_tools.py::test_read_file_tool_ai_prompt_instructions PASSED [ 48%]
+tests/unit/test_file_tools.py::test_read_file_tool_execute_success PASSED [ 48%]
+tests/unit/test_file_tools.py::test_read_file_tool_execute_file_not_found PASSED [ 48%]
+tests/unit/test_file_tools.py::test_read_file_tool_execute_permission_denied PASSED [ 48%]
+tests/unit/test_file_tools.py::test_read_file_tool_execute_missing_file_path PASSED [ 48%]
+tests/unit/test_file_tools.py::test_read_file_tool_execute_path_outside_project_dir PASSED [ 48%]
+tests/unit/test_file_tools.py::test_read_file_tool_execute_unsupported_file_type PASSED [ 48%]
+tests/unit/test_file_tools.py::test_write_file_tool_name PASSED          [ 48%]
+tests/unit/test_file_tools.py::test_write_file_tool_description PASSED   [ 49%]
+tests/unit/test_file_tools.py::test_write_file_tool_parameters_schema PASSED [ 49%]
+tests/unit/test_file_tools.py::test_write_file_tool_openrouter_api_definition PASSED [ 49%]
+tests/unit/test_file_tools.py::test_write_file_tool_ai_prompt_instructions PASSED [ 49%]
+tests/unit/test_file_tools.py::test_write_file_tool_run_success PASSED   [ 49%]
+tests/unit/test_file_tools.py::test_write_file_tool_run_overwrite PASSED [ 49%]
+tests/unit/test_file_tools.py::test_write_file_tool_run_permission_denied PASSED [ 49%]
+tests/unit/test_file_tools.py::test_write_file_tool_run_directory_created PASSED [ 50%]
+tests/unit/test_file_tools.py::test_write_file_tool_run_missing_arguments PASSED [ 50%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_basic_pattern_search PASSED [ 50%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_case_sensitive_search PASSED [ 50%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_whole_word_search PASSED [ 50%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_file_type_filtering PASSED [ 50%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_context_lines PASSED [ 50%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_max_results_limiting PASSED [ 51%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_regex_patterns PASSED [ 51%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_invalid_regex PASSED [ 51%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_exclude_directories PASSED [ 51%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_single_file_search PASSED [ 51%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_nonexistent_path PASSED [ 51%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_relative_paths_in_results PASSED [ 51%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_empty_pattern PASSED [ 51%]
+tests/unit/test_find_pattern_tool.py::TestFindPatternTool::test_performance_with_many_files PASSED [ 52%]
+tests/unit/test_format_json.py::TestFormatJson::test_data_dict_initialization PASSED [ 52%]
+tests/unit/test_format_json.py::TestFormatJson::test_empty_json_array_string PASSED [ 52%]
+tests/unit/test_format_json.py::TestFormatJson::test_empty_json_string PASSED [ 52%]
+tests/unit/test_format_json.py::TestFormatJson::test_format_already_formatted_json_string PASSED [ 52%]
+tests/unit/test_format_json.py::TestFormatJson::test_format_json_string_with_unicode PASSED [ 52%]
+tests/unit/test_format_json.py::TestFormatJson::test_format_valid_json_string PASSED [ 52%]
+tests/unit/test_format_json.py::TestFormatJson::test_input_is_dictionary PASSED [ 53%]
+tests/unit/test_format_json.py::TestFormatJson::test_invalid_json_string PASSED [ 53%]
+tests/unit/test_get_file_content_tool.py::test_get_file_content_tool_properties PASSED [ 53%]
+tests/unit/test_get_file_content_tool.py::test_read_small_file PASSED    [ 53%]
+tests/unit/test_get_file_content_tool.py::test_read_with_line_range PASSED [ 53%]
+tests/unit/test_get_file_content_tool.py::test_preview_mode PASSED       [ 53%]
+tests/unit/test_get_file_content_tool.py::test_preview_mode_small_file PASSED [ 53%]
+tests/unit/test_get_file_content_tool.py::test_read_empty_file PASSED    [ 53%]
+tests/unit/test_get_file_content_tool.py::test_read_unicode_file PASSED  [ 54%]
+tests/unit/test_get_file_content_tool.py::test_binary_file_detection PASSED [ 54%]
+tests/unit/test_get_file_content_tool.py::test_nonexistent_file PASSED   [ 54%]
+tests/unit/test_get_file_content_tool.py::test_directory_instead_of_file PASSED [ 54%]
+tests/unit/test_get_file_content_tool.py::test_outside_workspace_access PASSED [ 54%]
+tests/unit/test_get_file_content_tool.py::test_missing_path_argument PASSED [ 54%]
+tests/unit/test_get_file_content_tool.py::test_invalid_line_range PASSED [ 54%]
+tests/unit/test_get_file_content_tool.py::test_line_range_adjustment PASSED [ 55%]
+tests/unit/test_get_file_content_tool.py::test_file_size_formatting PASSED [ 55%]
+tests/unit/test_jsonrpc_handlers_refactor.py::test_jsonrpc_handlers_refactor_placeholder XPASS [ 55%]
+tests/unit/test_jsonrpc_handlers_refactor.py::test_route_message_to_correct_session_and_agent XFAIL [ 55%]
+tests/unit/test_jsonrpc_handlers_refactor.py::test_agent_selection_and_switching XFAIL [ 55%]
+tests/unit/test_jsonrpc_handlers_refactor.py::test_error_on_invalid_session_id XPASS [ 55%]
+tests/unit/test_jsonrpc_handlers_refactor.py::test_error_on_invalid_agent_switch XFAIL [ 55%]
+tests/unit/test_jsonrpc_handlers_refactor.py::test_api_compatibility_response_format XFAIL [ 55%]
+tests/unit/test_jsonrpc_handlers_refactor.py::test_validation_and_error_messages XFAIL [ 56%]
+tests/unit/test_list_directory_tool.py::test_list_directory_tool_properties PASSED [ 56%]
+tests/unit/test_list_directory_tool.py::test_list_directory_flat PASSED  [ 56%]
+tests/unit/test_list_directory_tool.py::test_list_directory_with_hidden PASSED [ 56%]
+tests/unit/test_list_directory_tool.py::test_list_directory_subdirectory PASSED [ 56%]
+tests/unit/test_list_directory_tool.py::test_list_directory_recursive PASSED [ 56%]
+tests/unit/test_list_directory_tool.py::test_list_directory_recursive_depth_limit PASSED [ 56%]
+tests/unit/test_list_directory_tool.py::test_list_directory_nonexistent_path PASSED [ 57%]
+tests/unit/test_list_directory_tool.py::test_list_directory_file_not_directory PASSED [ 57%]
+tests/unit/test_list_directory_tool.py::test_list_directory_outside_workspace PASSED [ 57%]
+tests/unit/test_list_directory_tool.py::test_list_directory_empty_directory PASSED [ 57%]
+tests/unit/test_list_directory_tool.py::test_list_directory_file_sizes PASSED [ 57%]
+tests/unit/test_list_directory_tool.py::test_list_directory_max_depth_validation PASSED [ 57%]
+tests/unit/test_logging.py::test_log_message_structure PASSED            [ 57%]
+tests/unit/test_logging.py::test_logging_different_levels PASSED         [ 57%]
+tests/unit/test_logging.py::test_logging_with_metadata PASSED            [ 58%]
+tests/unit/test_minimal_schema_validation.py::test_minimal_required_field PASSED [ 58%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_system_prompt_basic PASSED [ 58%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_system_prompt_with_caching_tags PASSED [ 58%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_tools_basic_flow PASSED [ 58%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_structured_output_json_schema PASSED [ 58%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_caching_initialization PASSED [ 58%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_caching_caches_response XFAIL [ 59%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_multimodal_image_url PASSED [ 59%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_multimodal_image_base64 PASSED [ 59%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_multimodal_pdf_base64 PASSED [ 59%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_multimodal_pdf_with_annotations_reuse PASSED [ 59%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_api_error_handling PASSED [ 59%]
+tests/unit/test_openrouter_advanced_features.py::TestOpenRouterAdvancedFeatures::test_api_error_handling_non_json_response PASSED [ 59%]
+tests/unit/test_openrouter_api_detailed.py::test_list_models_detailed_single PASSED [ 59%]
+tests/unit/test_openrouter_api_detailed.py::test_list_models_detailed_multiple PASSED [ 60%]
+tests/unit/test_openrouter_api_detailed.py::test_list_models_detailed_missing_fields PASSED [ 60%]
+tests/unit/test_openrouter_api_detailed.py::test_list_models_detailed_empty_data PASSED [ 60%]
+tests/unit/test_openrouter_api_detailed.py::test_list_models_detailed_api_error PASSED [ 60%]
+tests/unit/test_path_management.py::test_singleton_instance PASSED       [ 60%]
+tests/unit/test_plan_ingestion.py::test_parser_plan_not_loaded_init PASSED [ 60%]
+tests/unit/test_plan_ingestion.py::test_load_single_file_plan_success PASSED [ 60%]
+tests/unit/test_plan_ingestion.py::test_load_single_file_plan_file_not_found PASSED [ 61%]
+tests/unit/test_plan_ingestion.py::test_load_single_file_plan_malformed_json PASSED [ 61%]
+tests/unit/test_plan_ingestion.py::test_load_single_file_plan_missing_top_level_field PASSED [ 61%]
+tests/unit/test_plan_ingestion.py::test_load_single_file_plan_missing_required_input_hashes_field PASSED [ 61%]
+tests/unit/test_plan_ingestion.py::test_load_single_file_plan_plan_not_a_list PASSED [ 61%]
+tests/unit/test_plan_ingestion.py::test_load_single_file_plan_missing_required_subtask_field PASSED [ 61%]
+tests/unit/test_plan_ingestion.py::test_load_single_file_plan_extra_property_in_subtask PASSED [ 61%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_success PASSED [ 61%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_file_not_found PASSED [ 62%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_malformed_json PASSED [ 62%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_missing_top_level_field PASSED [ 62%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_plan_not_a_list PASSED [ 62%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_missing_required_step_field PASSED [ 62%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_subtask_file_not_found XFAIL [ 62%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_subtask_malformed_json PASSED [ 62%]
+tests/unit/test_plan_ingestion.py::test_load_overview_plan_subtask_validation_error PASSED [ 63%]
+tests/unit/test_plan_ingestion.py::test_data_access_after_single_file_load PASSED [ 63%]
+tests/unit/test_plan_ingestion.py::test_data_access_after_overview_load PASSED [ 63%]
+tests/unit/test_plan_ingestion.py::test_plan_with_optional_fields_missing_single_file PASSED [ 63%]
+tests/unit/test_plan_ingestion.py::test_overview_plan_with_optional_subtask_fields_missing PASSED [ 63%]
+tests/unit/test_planner_handler.py::test_requirement_extraction PASSED   [ 63%]
+tests/unit/test_planner_handler.py::test_plan_generation_trigger PASSED  [ 63%]
+tests/unit/test_planner_handler.py::test_plan_preview_generation PASSED  [ 63%]
+tests/unit/test_planner_handler.py::test_plan_confirmation_flow PASSED   [ 64%]
+tests/unit/test_planner_handler.py::test_plan_json_generation PASSED     [ 64%]
+tests/unit/test_planner_tools.py::test_analyze_workspace PASSED          [ 64%]
+tests/unit/test_planner_tools.py::test_read_schema_files PASSED          [ 64%]
+tests/unit/test_planner_tools.py::test_validate_plan PASSED              [ 64%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_top_level_items PASSED [ 64%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_step_level_items PASSED [ 64%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_both_top_and_step_level_items PASSED [ 65%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_empty_json_string PASSED [ 65%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_invalid_json_string PASSED [ 65%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_no_items_to_add PASSED [ 65%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_empty_items_to_add PASSED [ 65%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_with_existing_keys PASSED [ 65%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_nested_steps PASSED [ 65%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_missing_step_container PASSED [ 65%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_step_container_not_a_list PASSED [ 66%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_input_is_dictionary XFAIL [ 66%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_input_is_list PASSED [ 66%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_empty_dict_input PASSED [ 66%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_empty_list_input PASSED [ 66%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_whitespace PASSED [ 66%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_comments PASSED [ 66%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_backticks PASSED [ 67%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_extra_text PASSED [ 67%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_unicode PASSED [ 67%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_null_values PASSED [ 67%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_boolean_values PASSED [ 67%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_number_values PASSED [ 67%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_nested_empty_objects_and_arrays PASSED [ 67%]
+tests/unit/test_postprocessing_add_items.py::TestAddItemsPostprocessor::test_add_items_to_json_string_with_complex_nested_structure XFAIL [ 68%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper[{"key": "value"}-{"key": "value"}] PASSED [ 68%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper[```json\n{"key": "value"}\n```-{"key": "value"}\n] PASSED [ 68%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper[```javascript\n{"key": "value"}\n```-{"key": "value"}\n] PASSED [ 68%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper[```json\n{"key": "```nested```"}\n```-{"key": "```nested```"}\n] PASSED [ 68%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper[-] PASSED [ 68%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper[```json\n```-\n] PASSED [ 68%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper[```json\n{\n  "key1": "value1",\n  "key2": "value2"\n}\n```-{\n  "key1": "value1",\n  "key2": "value2"\n}\n] PASSED [ 68%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper_with_dictionary_input PASSED [ 69%]
+tests/unit/test_postprocessing_backticks.py::test_clean_backtick_wrapper_with_real_world_example PASSED [ 69%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[All required fields present (dict)-input_content0-expected_content0] PASSED [ 69%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Missing required fields (dict)-input_content1-expected_content1] PASSED [ 69%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Extra fields (dict)-input_content2-expected_content2] PASSED [ 69%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Incorrect data types (dict)-input_content3-expected_content3] PASSED [ 69%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Empty input (dict)-input_content4-expected_content4] PASSED [ 69%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Fields set to null (dict)-input_content5-expected_content5] PASSED [ 70%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[All required fields present (JSON string)-{"required_field_1": "value1", "required_field_2": "value2", "nested_field": {"nested_required_1": "value3"}}-expected_content6] PASSED [ 70%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Missing required fields (JSON string)-{"required_field_1": "value1"}-expected_content7] PASSED [ 70%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Extra fields (JSON string)-{"required_field_1": "value1", "extra_field": "invalid"}-expected_content8] PASSED [ 70%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Incorrect data types (JSON string)-{"required_field_1": 123, "required_field_2": null, "nested_field": {"nested_required_1": 456}}-expected_content9] PASSED [ 70%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Empty input (JSON string)-{}-expected_content10] PASSED [ 70%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Fields set to null (JSON string)-{"required_field_1": null, "nested_field": {"nested_required_1": null}}-expected_content11] PASSED [ 70%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Whitespace only (JSON string)-   \n  -expected_content12] PASSED [ 70%]
+tests/unit/test_postprocessing_fields.py::test_handle_required_fields[Invalid JSON string-{"key": "value"-{"key": "value"] PASSED [ 71%]
+tests/unit/test_postprocessing_pipeline.py::test_pipeline_with_identity_step PASSED [ 71%]
+tests/unit/test_postprocessing_pipeline.py::test_pipeline_with_multiple_identity_steps PASSED [ 71%]
+tests/unit/test_postprocessing_pipeline.py::test_clean_backtick_wrapper PASSED [ 71%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[Valid JSON string-{"key": "value", "text": "This is a string: with a colon."}-expected_content_after_parse0-Input is a valid JSON string. No escaping applied by this step.-False] PASSED [ 71%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[Valid JSON array string-[1, "string with spaces", {"nested": "value: more text"}]-expected_content_after_parse1-Input is a valid JSON string. No escaping applied by this step.-False] PASSED [ 71%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[Input is dictionary-input_content2-expected_content_after_parse2-Input is a dict, no escaping performed by this step.-False] PASSED [ 71%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[Input is list-input_content3-expected_content_after_parse3-Input is a list, no escaping performed by this step.-False] PASSED [ 72%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[Invalid JSON string (missing quote)-{"key": "value, "text": "missing end quote}-{"key": "value, "text": "missing end quote}-Failed to parse content as JSON in escape_text_fields-True] PASSED [ 72%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[Invalid JSON string (trailing comma)-{"key": "value",}-{"key": "value",}-Failed to parse content as JSON in escape_text_fields-True] PASSED [ 72%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[Empty string---Input content is empty or whitespace-only.-False] PASSED [ 72%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[Whitespace string-   \n\t  -   \n\t  -Input content is empty or whitespace-only.-False] PASSED [ 72%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[JSON string literal-"a string literal"-a string literal-Input is a valid JSON string. No escaping applied by this step.-False] PASSED [ 72%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_json[JSON number literal-123-123-Input is a valid JSON string. No escaping applied by this step.-False] PASSED [ 72%]
+tests/unit/test_postprocessing_text_fields.py::test_escape_text_fields_unsupported_type PASSED [ 72%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_identity_transform_preserves_dict_type PASSED [ 73%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_identity_transform_preserves_str_type PASSED [ 73%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_add_items_postprocessor_preserves_dict_type PASSED [ 73%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_add_items_postprocessor_preserves_str_type PASSED [ 73%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_handle_required_fields_preserves_dict_type PASSED [ 73%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_handle_required_fields_preserves_str_type PASSED [ 73%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_validate_syntax_preserves_dict_type PASSED [ 73%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_validate_syntax_preserves_str_type PASSED [ 74%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_clean_backtick_wrapper_preserves_dict_type PASSED [ 74%]
+tests/unit/test_postprocessing_type_preservation.py::TestTypePreservation::test_clean_backtick_wrapper_preserves_str_type PASSED [ 74%]
+tests/unit/test_prompt_rules_removal.py::TestInitialPlanPromptRules::test_input_hashes_rule_removed PASSED [ 74%]
+tests/unit/test_prompt_rules_removal.py::TestInitialPlanPromptRules::test_task_id_rule_removed PASSED [ 74%]
+tests/unit/test_prompt_rules_removal.py::TestSubtaskGeneratorPromptRules::test_subtask_id_rule_removed PASSED [ 74%]
+tests/unit/test_prompt_rules_removal.py::test_initial_plan_prompt_exists PASSED [ 74%]
+tests/unit/test_prompt_rules_removal.py::test_subtask_generator_prompt_exists PASSED [ 74%]
+tests/unit/test_refactored_ai_loop.py::test_refactored_ai_loop_placeholder XPASS [ 75%]
+tests/unit/test_refine_ai_interaction.py::TestRefineAIInteraction::test_file_saving_with_iterations PASSED [ 75%]
+tests/unit/test_refine_ai_interaction.py::TestRefineAIInteraction::test_handle_mocked_ai_response_and_save PASSED [ 75%]
+tests/unit/test_refine_ai_interaction.py::TestRefineAIInteraction::test_prompt_construction_custom PASSED [ 75%]
+tests/unit/test_refine_ai_interaction.py::TestRefineAIInteraction::test_prompt_construction_default PASSED [ 75%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_can_handle_rfc_keywords PASSED [ 75%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_handle_new_rfc_creation PASSED [ 75%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_handle_question_answer PASSED [ 76%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_handle_rfc_refinement PASSED [ 76%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_handle_status_transition PASSED [ 76%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_handle_web_research PASSED [ 76%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_extract_tool_calls PASSED [ 76%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_determine_action PASSED [ 76%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_get_next_steps PASSED [ 76%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_get_state_summary PASSED [ 76%]
+tests/unit/test_rfc_refinement_handler.py::TestRFCRefinementHandler::test_error_handling PASSED [ 77%]
+tests/unit/test_rfc_tools.py::TestCreateRFCTool::test_tool_properties PASSED [ 77%]
+tests/unit/test_rfc_tools.py::TestCreateRFCTool::test_create_basic_rfc PASSED [ 77%]
+tests/unit/test_rfc_tools.py::TestCreateRFCTool::test_create_rfc_with_requirements PASSED [ 77%]
+tests/unit/test_rfc_tools.py::TestCreateRFCTool::test_generate_unique_rfc_id PASSED [ 77%]
+tests/unit/test_rfc_tools.py::TestCreateRFCTool::test_metadata_file_creation PASSED [ 77%]
+tests/unit/test_rfc_tools.py::TestReadRFCTool::test_read_full_rfc PASSED [ 77%]
+tests/unit/test_rfc_tools.py::TestReadRFCTool::test_read_specific_section PASSED [ 78%]
+tests/unit/test_rfc_tools.py::TestReadRFCTool::test_read_nonexistent_rfc PASSED [ 78%]
+tests/unit/test_rfc_tools.py::TestListRFCsTool::test_list_all_rfcs PASSED [ 78%]
+tests/unit/test_rfc_tools.py::TestListRFCsTool::test_list_by_status PASSED [ 78%]
+tests/unit/test_rfc_tools.py::TestListRFCsTool::test_sort_by_created PASSED [ 78%]
+tests/unit/test_rfc_tools.py::TestListRFCsTool::test_empty_status PASSED [ 78%]
+tests/unit/test_rfc_tools_complete.py::TestUpdateRFCTool::test_tool_properties PASSED [ 78%]
+tests/unit/test_rfc_tools_complete.py::TestUpdateRFCTool::test_update_existing_section PASSED [ 78%]
+tests/unit/test_rfc_tools_complete.py::TestUpdateRFCTool::test_append_to_section PASSED [ 79%]
+tests/unit/test_rfc_tools_complete.py::TestUpdateRFCTool::test_update_title PASSED [ 79%]
+tests/unit/test_rfc_tools_complete.py::TestUpdateRFCTool::test_add_new_section PASSED [ 79%]
+tests/unit/test_rfc_tools_complete.py::TestUpdateRFCTool::test_history_tracking PASSED [ 79%]
+tests/unit/test_rfc_tools_complete.py::TestUpdateRFCTool::test_metadata_update PASSED [ 79%]
+tests/unit/test_rfc_tools_complete.py::TestUpdateRFCTool::test_rfc_not_found PASSED [ 79%]
+tests/unit/test_rfc_tools_complete.py::TestMoveRFCTool::test_tool_properties PASSED [ 79%]
+tests/unit/test_rfc_tools_complete.py::TestMoveRFCTool::test_move_new_to_in_progress PASSED [ 80%]
+tests/unit/test_rfc_tools_complete.py::TestMoveRFCTool::test_move_with_metadata PASSED [ 80%]
+tests/unit/test_rfc_tools_complete.py::TestMoveRFCTool::test_history_tracking PASSED [ 80%]
+tests/unit/test_rfc_tools_complete.py::TestMoveRFCTool::test_already_in_target_status PASSED [ 80%]
+tests/unit/test_rfc_tools_complete.py::TestMoveRFCTool::test_rfc_not_found PASSED [ 80%]
+tests/unit/test_rfc_tools_complete.py::TestMoveRFCTool::test_transition_messages PASSED [ 80%]
+tests/unit/test_scripted_postprocessing.py::test_identity_transform PASSED [ 80%]
+tests/unit/test_scripted_postprocessing.py::test_identity_transform_with_empty_input PASSED [ 80%]
+tests/unit/test_scripted_postprocessing.py::test_identity_transform_with_complex_nested_structure PASSED [ 81%]
+tests/unit/test_search_files_tool.py::test_search_files_tool_properties PASSED [ 81%]
+tests/unit/test_search_files_tool.py::test_search_by_name_glob_pattern PASSED [ 81%]
+tests/unit/test_search_files_tool.py::test_search_by_name_specific_pattern PASSED [ 81%]
+tests/unit/test_search_files_tool.py::test_search_by_name_with_file_types PASSED [ 81%]
+tests/unit/test_search_files_tool.py::test_search_by_content_simple PASSED [ 81%]
+tests/unit/test_search_files_tool.py::test_search_by_content_regex PASSED [ 81%]
+tests/unit/test_search_files_tool.py::test_search_with_ignore_case PASSED [ 82%]
+tests/unit/test_search_files_tool.py::test_search_with_search_path PASSED [ 82%]
+tests/unit/test_search_files_tool.py::test_search_max_results PASSED     [ 82%]
+tests/unit/test_search_files_tool.py::test_search_no_results PASSED      [ 82%]
+tests/unit/test_search_files_tool.py::test_search_invalid_pattern PASSED [ 82%]
+tests/unit/test_search_files_tool.py::test_search_missing_pattern PASSED [ 82%]
+tests/unit/test_search_files_tool.py::test_search_invalid_search_type PASSED [ 82%]
+tests/unit/test_search_files_tool.py::test_search_nonexistent_path PASSED [ 82%]
+tests/unit/test_search_files_tool.py::test_search_outside_workspace PASSED [ 83%]
+tests/unit/test_search_files_tool.py::test_search_skips_binary_files PASSED [ 83%]
+tests/unit/test_session_manager.py::test_agent_switching PASSED          [ 83%]
+tests/unit/test_session_manager.py::test_conversation_history_preservation PASSED [ 83%]
+tests/unit/test_session_manager.py::test_agent_handoff_detection PASSED  [ 83%]
+tests/unit/test_session_manager.py::test_multi_agent_session_state PASSED [ 83%]
+tests/unit/test_session_manager_refactor.py::test_session_manager_refactor_placeholder XPASS [ 83%]
+tests/unit/test_session_manager_refactor.py::test_create_and_retrieve_session XFAIL [ 84%]
+tests/unit/test_session_manager_refactor.py::test_start_and_send_message XFAIL [ 84%]
+tests/unit/test_session_manager_refactor.py::test_stop_and_cleanup_session XFAIL [ 84%]
+tests/unit/test_session_manager_refactor.py::test_cleanup_websocket XFAIL [ 84%]
+tests/unit/test_session_manager_refactor.py::test_cleanup_all_sessions XFAIL [ 84%]
+tests/unit/test_session_manager_refactor.py::test_error_on_missing_session XFAIL [ 84%]
+tests/unit/test_session_manager_refactor.py::test_concurrent_session_handling XFAIL [ 84%]
+tests/unit/test_session_manager_refactor.py::test_session_persistence SKIPPED [ 85%]
+tests/unit/test_session_manager_refactor.py::test_cleanup_handles_exceptions XFAIL [ 85%]
+tests/unit/test_state_management.py::TestStateManagement::test_get_global_state PASSED [ 85%]
+tests/unit/test_state_management.py::TestStateManagement::test_get_task_result PASSED [ 85%]
+tests/unit/test_state_management.py::TestStateManagement::test_initial_state_structure_compliance PASSED [ 85%]
+tests/unit/test_state_management.py::TestStateManagement::test_load_state_corrupted_file PASSED [ 85%]
+tests/unit/test_state_management.py::TestStateManagement::test_load_state_file_not_found PASSED [ 85%]
+tests/unit/test_state_management.py::TestStateManagement::test_save_and_load_state PASSED [ 85%]
+tests/unit/test_state_management.py::TestStateManagement::test_save_state_atomicity_failure PASSED [ 86%]
+tests/unit/test_state_management.py::TestStateManagement::test_store_ai_message_interaction_with_usage_info PASSED [ 86%]
+tests/unit/test_state_management.py::TestStateManagement::test_store_task_result PASSED [ 86%]
+tests/unit/test_state_management.py::TestStateManagement::test_store_user_message_interaction_with_timestamp PASSED [ 86%]
+tests/unit/test_state_management.py::TestStateManagement::test_update_global_state PASSED [ 86%]
+tests/unit/test_state_management.py::TestStateManagement::test_update_task_status PASSED [ 86%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_process_with_context_simple_response PASSED [ 86%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_process_with_context_streaming PASSED [ 87%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_process_with_context_tool_calls PASSED [ 87%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_process_with_context_no_delegates PASSED [ 87%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_process_with_context_error_handling PASSED [ 87%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_process_with_context_timeout PASSED [ 87%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_process_with_context_custom_tools PASSED [ 87%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_process_with_context_without_storing PASSED [ 87%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_direct_process_without_context PASSED [ 87%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_tool_execution_success PASSED [ 88%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_tool_execution_async_tool PASSED [ 88%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_tool_execution_tool_not_found PASSED [ 88%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_tool_execution_invalid_arguments PASSED [ 88%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_tool_execution_tool_raises_exception PASSED [ 88%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_multiple_tool_execution PASSED [ 88%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_tool_execution_signature_fallback PASSED [ 88%]
+tests/unit/test_stateless_ailoop.py::TestStatelessAILoop::test_tool_execution_streaming PASSED [ 89%]
+tests/unit/test_subtask_generator.py::test_subtask_generator_initialization XFAIL [ 89%]
+tests/unit/test_subtask_generator.py::test_generate_subtask_success XFAIL [ 89%]
+tests/unit/test_subtask_generator.py::test_generate_subtask_ai_error XFAIL [ 89%]
+tests/unit/test_subtask_generator.py::test_generate_subtask_schema_validation_error XFAIL [ 89%]
+tests/unit/test_subtask_generator.py::test_generate_subtask_json_parsing_error XFAIL [ 89%]
+tests/unit/test_tool_management.py::test_register_and_get_tool PASSED    [ 89%]
+tests/unit/test_tool_management.py::test_get_non_existent_tool PASSED    [ 89%]
+tests/unit/test_tool_management.py::test_register_duplicate_tool PASSED  [ 90%]
+tests/unit/test_tool_management.py::test_get_all_tools PASSED            [ 90%]
+tests/unit/test_tool_management.py::test_get_all_tool_definitions PASSED [ 90%]
+tests/unit/test_tool_management.py::test_get_all_ai_prompt_instructions PASSED [ 90%]
+tests/unit/test_tool_management.py::test_get_filtered_tools PASSED       [ 90%]
+tests/unit/test_tool_management.py::test_register_non_aitool PASSED      [ 90%]
+tests/unit/test_tool_sets.py::TestToolSet::test_tool_set_creation PASSED [ 90%]
+tests/unit/test_tool_sets.py::TestToolSet::test_tool_set_minimal_config PASSED [ 91%]
+tests/unit/test_tool_sets.py::TestToolSetManager::test_load_config PASSED [ 91%]
+tests/unit/test_tool_sets.py::TestToolSetManager::test_inheritance_resolution PASSED [ 91%]
+tests/unit/test_tool_sets.py::TestToolSetManager::test_circular_inheritance_detection PASSED [ 91%]
+tests/unit/test_tool_sets.py::TestToolSetManager::test_get_tool_set_info PASSED [ 91%]
+tests/unit/test_tool_sets.py::TestToolRegistryWithSets::test_get_tools_by_set PASSED [ 91%]
+tests/unit/test_tool_sets.py::TestToolRegistryWithSets::test_get_tools_by_set_with_deny_tags PASSED [ 91%]
+tests/unit/test_tool_sets.py::TestToolRegistryWithSets::test_get_tools_for_agent PASSED [ 91%]
+tests/unit/test_tool_sets.py::TestToolRegistryWithSets::test_tool_filtering_precedence PASSED [ 92%]
+tests/unit/test_tool_sets.py::test_registry_singleton_with_tool_sets PASSED [ 92%]
+tests/unit/test_tool_tags.py::test_read_file_tool_tags PASSED            [ 92%]
+tests/unit/test_tool_tags.py::test_write_file_tool_tags PASSED           [ 92%]
+tests/unit/test_tool_tags.py::test_execute_command_tool_tags PASSED      [ 92%]
+tests/unit/test_tool_tags.py::test_tool_registry_filtering_by_tags PASSED [ 92%]
+tests/unit/test_tool_tags.py::test_tool_registry_filtering_by_category PASSED [ 92%]
+tests/unit/test_tool_usage_logging.py::test_tool_usage_logging PASSED    [ 93%]
+tests/unit/test_web_tools.py::TestWebSearchTool::test_tool_properties PASSED [ 93%]
+tests/unit/test_web_tools.py::TestWebSearchTool::test_basic_search PASSED [ 93%]
+tests/unit/test_web_tools.py::TestWebSearchTool::test_search_with_focus PASSED [ 93%]
+tests/unit/test_web_tools.py::TestWebSearchTool::test_cache_functionality PASSED [ 93%]
+tests/unit/test_web_tools.py::TestWebSearchTool::test_search_error_handling PASSED [ 93%]
+tests/unit/test_web_tools.py::TestWebSearchTool::test_no_results PASSED  [ 93%]
+tests/unit/test_web_tools.py::TestWebSearchTool::test_max_results_limit PASSED [ 93%]
+tests/unit/test_web_tools.py::TestFetchURLTool::test_tool_properties PASSED [ 94%]
+tests/unit/test_web_tools.py::TestFetchURLTool::test_fetch_markdown PASSED [ 94%]
+tests/unit/test_web_tools.py::TestFetchURLTool::test_fetch_code_blocks PASSED [ 94%]
+tests/unit/test_web_tools.py::TestFetchURLTool::test_url_validation PASSED [ 94%]
+tests/unit/test_web_tools.py::TestFetchURLTool::test_cache_functionality PASSED [ 94%]
+tests/unit/test_web_tools.py::TestFetchURLTool::test_error_handling PASSED [ 94%]
+tests/unit/test_web_tools.py::TestFetchURLTool::test_content_size_limit PASSED [ 94%]
+tests/unit/test_web_tools.py::TestFetchURLTool::test_include_links_option PASSED [ 95%]
+tests/unit/test_workspace_detection.py::test_whisper_folder_detected_in_current_dir XFAIL [ 95%]
+tests/unit/test_workspace_detection.py::test_whisper_folder_detected_in_parent_dir XFAIL [ 95%]
+tests/unit/test_workspace_detection.py::test_no_whisper_folder_raises_error PASSED [ 95%]
+tests/unit/test_workspace_detection.py::test_whisper_folder_stops_at_filesystem_root PASSED [ 95%]
+tests/unit/test_workspace_detection.py::test_whisper_folder_with_workspace_config XFAIL [ 95%]
+tests/unit/test_workspace_detection_edge_cases.py::test_symlink_handling PASSED [ 95%]
+tests/unit/test_workspace_detection_edge_cases.py::test_permission_denied_handling XFAIL [ 95%]
+tests/unit/test_workspace_detection_edge_cases.py::test_corrupted_workspace_config PASSED [ 96%]
+tests/unit/test_workspace_detection_edge_cases.py::test_multiple_whisper_folders_in_hierarchy PASSED [ 96%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_list_directory_no_active_project PASSED [ 96%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_list_directory_basic XFAIL [ 96%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_list_directory_with_sorting PASSED [ 96%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_list_directory_with_pagination PASSED [ 96%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_list_directory_with_filters PASSED [ 96%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_list_directory_error_handling PASSED [ 97%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_clear_cache_success PASSED [ 97%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_clear_cache_error PASSED [ 97%]
+tests/unit/test_workspace_handler.py::TestWorkspaceHandler::test_get_methods PASSED [ 97%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_basic_statistics PASSED [ 97%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_file_extension_statistics PASSED [ 97%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_size_by_extension PASSED [ 97%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_largest_files PASSED [ 97%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_directory_sizes PASSED [ 98%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_recent_changes PASSED [ 98%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_file_age_distribution PASSED [ 98%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_exclude_directories PASSED [ 98%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_include_hidden_files PASSED [ 98%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_max_depth_limiting PASSED [ 98%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_summary_information PASSED [ 98%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_empty_directory PASSED [ 99%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_single_file_path PASSED [ 99%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_nonexistent_path PASSED [ 99%]
+tests/unit/test_workspace_stats_tool.py::TestWorkspaceStatsTool::test_size_formatting PASSED [ 99%]
+tests/unit/test_workspace_tools.py::test_workspace_tools_can_be_instantiated PASSED [ 99%]
+tests/unit/test_workspace_tools.py::test_workspace_tools_have_correct_tags PASSED [ 99%]
+tests/unit/test_workspace_tools.py::test_workspace_tools_registration PASSED [ 99%]
+tests/unit/test_workspace_tools.py::test_workspace_tools_filtering PASSED [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_session_handoff_ws ____________________________
+
+    @pytest.mark.asyncio
+    async def test_session_handoff_ws():
+        logger.info("Starting test_session_handoff_ws")
+        async with websockets.connect(WS_URL) as ws:
+            req = {"jsonrpc": "2.0", "id": 4, "method": "session.handoff", "params": {"to_agent": "T"}}
+            await ws.send(json.dumps(req))
+>           data = await recv_until(ws, match_id=4)
+
+tests/integration/test_agent_jsonrpc_ws.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+ws = <websockets.asyncio.client.ClientConnection object at 0x7f44ada6d3d0>
+match_id = 4, timeout = 5
+
+    async def recv_until(ws, match_id=None, timeout=5):
+        """
+        Receive messages from ws until a message with 'id' == match_id is found (or any response if match_id is None).
+        Returns the matching message, or raises asyncio.TimeoutError.
+        """
+        import time
+        start = time.monotonic()
+        while True:
+            if time.monotonic() - start > timeout:
+>               raise asyncio.TimeoutError(f"Timeout waiting for response with id={match_id}")
+E               TimeoutError: Timeout waiting for response with id=4
+
+tests/integration/test_agent_jsonrpc_ws.py:20: TimeoutError
+---------------------------- Captured stderr setup -----------------------------
+2025-05-30 11:43:04,601 634807 MainThread asyncio - DEBUG - Using selector: EpollSelector
+------------------------------ Captured log setup ------------------------------
+DEBUG    asyncio:selector_events.py:64 Using selector: EpollSelector
+----------------------------- Captured stderr call -----------------------------
+2025-05-30 11:43:04,602 634807 MainThread aiwhisperer.test - INFO - Starting test_session_handoff_ws
+2025-05-30 11:43:04,602 634807 MainThread websockets.client - DEBUG - = connection is CONNECTING
+2025-05-30 11:43:04,603 634807 MainThread websockets.client - DEBUG - > GET /ws HTTP/1.1
+2025-05-30 11:43:04,603 634807 MainThread websockets.client - DEBUG - > Host: localhost:8000
+2025-05-30 11:43:04,603 634807 MainThread websockets.client - DEBUG - > Upgrade: websocket
+2025-05-30 11:43:04,603 634807 MainThread websockets.client - DEBUG - > Connection: Upgrade
+2025-05-30 11:43:04,603 634807 MainThread websockets.client - DEBUG - > Sec-WebSocket-Key: goMgDqR1jTx1zyhJOHjdpg==
+2025-05-30 11:43:04,603 634807 MainThread websockets.client - DEBUG - > Sec-WebSocket-Version: 13
+2025-05-30 11:43:04,603 634807 MainThread websockets.client - DEBUG - > Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+2025-05-30 11:43:04,603 634807 MainThread websockets.client - DEBUG - > User-Agent: Python/3.12 websockets/15.0.1
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - < HTTP/1.1 101 Switching Protocols
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - < Upgrade: websocket
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - < Connection: Upgrade
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - < Sec-WebSocket-Accept: 6CR7IJBxxSsBX6xKGkuED912JSg=
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - < Sec-WebSocket-Extensions: permessage-deflate
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - < date: Fri, 30 May 2025 11:43:03 GMT
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - < server: uvicorn
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - = connection is OPEN
+2025-05-30 11:43:04,604 634807 MainThread websockets.client - DEBUG - > TEXT '{"jsonrpc": "2.0", "id": 4, "method": "session....ms": {"to_agent": "T"}}' [85 bytes]
+2025-05-30 11:43:04,607 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"agent.created","para...id":"a","active":true}}' [82 bytes]
+2025-05-30 11:43:04,607 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'agent.created', 'params': {'agent_id': 'a', 'active': True}}
+2025-05-30 11:43:04,607 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"agent.switched","par...:{"from":"a","to":"a"}}' [74 bytes]
+2025-05-30 11:43:04,607 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'agent.switched', 'params': {'from': 'a', 'to': 'a'}}
+2025-05-30 11:43:05,967 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...:"Hi","isFinal":false}}' [146 bytes]
+2025-05-30 11:43:05,968 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'Hi', 'isFinal': False}}
+2025-05-30 11:43:06,015 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...":"!","isFinal":false}}' [145 bytes]
+2025-05-30 11:43:06,016 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '!', 'isFinal': False}}
+2025-05-30 11:43:06,311 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...your","isFinal":false}}' [160 bytes]
+2025-05-30 11:43:06,312 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': " I'm Alice, your", 'isFinal': False}}
+2025-05-30 11:43:06,318 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... for","isFinal":false}}' [170 bytes]
+2025-05-30 11:43:06,318 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' friendly AI assistant for', 'isFinal': False}}
+2025-05-30 11:43:06,320 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... the","isFinal":false}}' [148 bytes]
+2025-05-30 11:43:06,321 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the', 'isFinal': False}}
+2025-05-30 11:43:06,323 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...stem","isFinal":false}}' [163 bytes]
+2025-05-30 11:43:06,323 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' AIWhisperer system', 'isFinal': False}}
+2025-05-30 11:43:06,323 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...e to","isFinal":false}}' [157 bytes]
+2025-05-30 11:43:06,323 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ". I'm here to", 'isFinal': False}}
+2025-05-30 11:43:06,348 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...gate","isFinal":false}}' [162 bytes]
+2025-05-30 11:43:06,348 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' help you navigate', 'isFinal': False}}
+2025-05-30 11:43:06,395 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... the","isFinal":false}}' [148 bytes]
+2025-05-30 11:43:06,396 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the', 'isFinal': False}}
+2025-05-30 11:43:06,445 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...stem","isFinal":false}}' [151 bytes]
+2025-05-30 11:43:06,445 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' system', 'isFinal': False}}
+2025-05-30 11:43:06,493 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...stan","isFinal":false}}' [155 bytes]
+2025-05-30 11:43:06,494 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ', understan', 'isFinal': False}}
+2025-05-30 11:43:06,548 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... get","isFinal":false}}' [167 bytes]
+2025-05-30 11:43:06,548 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd its features, and get', 'isFinal': False}}
+2025-05-30 11:43:06,597 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...your","isFinal":false}}' [165 bytes]
+2025-05-30 11:43:06,597 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the most out of your', 'isFinal': False}}
+2025-05-30 11:43:06,646 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ence","isFinal":false}}' [155 bytes]
+2025-05-30 11:43:06,646 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' experience', 'isFinal': False}}
+2025-05-30 11:43:06,695 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...":".","isFinal":false}}' [145 bytes]
+2025-05-30 11:43:06,696 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '.', 'isFinal': False}}
+2025-05-30 11:43:06,745 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... can","isFinal":false}}' [153 bytes]
+2025-05-30 11:43:06,745 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n\nI can', 'isFinal': False}}
+2025-05-30 11:43:06,828 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...help","isFinal":false}}' [149 bytes]
+2025-05-30 11:43:06,829 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' help', 'isFinal': False}}
+2025-05-30 11:43:06,849 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... you","isFinal":false}}' [148 bytes]
+2025-05-30 11:43:06,850 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' you', 'isFinal': False}}
+2025-05-30 11:43:06,895 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ith:","isFinal":false}}' [150 bytes]
+2025-05-30 11:43:06,896 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' with:', 'isFinal': False}}
+2025-05-30 11:43:06,945 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...\\n-","isFinal":false}}' [147 bytes]
+2025-05-30 11:43:06,945 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n-', 'isFinal': False}}
+2025-05-30 11:43:06,997 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [158 bytes]
+2025-05-30 11:43:06,997 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' Understanding', 'isFinal': False}}
+2025-05-30 11:43:07,049 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...erer","isFinal":false}}' [160 bytes]
+2025-05-30 11:43:07,049 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' how AIWhisperer', 'isFinal': False}}
+2025-05-30 11:43:07,096 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...s an","isFinal":false}}' [153 bytes]
+2025-05-30 11:43:07,096 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' works an', 'isFinal': False}}
+2025-05-30 11:43:07,156 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ties","isFinal":false}}' [162 bytes]
+2025-05-30 11:43:07,157 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd its capabilities', 'isFinal': False}}
+2025-05-30 11:43:07,201 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [157 bytes]
+2025-05-30 11:43:07,201 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n- Providing', 'isFinal': False}}
+2025-05-30 11:43:07,254 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [159 bytes]
+2025-05-30 11:43:07,254 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' general coding', 'isFinal': False}}
+2025-05-30 11:43:07,307 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ance","isFinal":false}}' [168 bytes]
+2025-05-30 11:43:07,307 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' assistance and guidance', 'isFinal': False}}
+2025-05-30 11:43:07,353 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ting","isFinal":false}}' [158 bytes]
+2025-05-30 11:43:07,353 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n- Connecting', 'isFinal': False}}
+2025-05-30 11:43:07,404 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...lize","isFinal":false}}' [164 bytes]
+2025-05-30 11:43:07,404 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' you with specialize', 'isFinal': False}}
+2025-05-30 11:43:07,451 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...like","isFinal":false}}' [157 bytes]
+2025-05-30 11:43:07,451 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd agents like', 'isFinal': False}}
+2025-05-30 11:43:07,504 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ia (","isFinal":false}}' [155 bytes]
+2025-05-30 11:43:07,504 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' Patricia (', 'isFinal': False}}
+2025-05-30 11:43:07,549 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi..."for","isFinal":false}}' [147 bytes]
+2025-05-30 11:43:07,549 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'for', 'isFinal': False}}
+2025-05-30 11:43:07,601 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ning","isFinal":false}}' [153 bytes]
+2025-05-30 11:43:07,601 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' planning', 'isFinal': False}}
+2025-05-30 11:43:07,649 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...essa","isFinal":false}}' [154 bytes]
+2025-05-30 11:43:07,650 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ') or Tessa', 'isFinal': False}}
+2025-05-30 11:43:07,701 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ing)","isFinal":false}}' [158 bytes]
+2025-05-30 11:43:07,702 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' (for testing)', 'isFinal': False}}
+2025-05-30 11:43:07,750 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... you","isFinal":false}}' [153 bytes]
+2025-05-30 11:43:07,750 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' when you', 'isFinal': False}}
+2025-05-30 11:43:07,800 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ific","isFinal":false}}' [158 bytes]
+2025-05-30 11:43:07,801 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' need specific', 'isFinal': False}}
+2025-05-30 11:43:07,853 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...tise","isFinal":false}}' [154 bytes]
+2025-05-30 11:43:07,853 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' expertise', 'isFinal': False}}
+2025-05-30 11:43:07,905 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...bles","isFinal":false}}' [156 bytes]
+2025-05-30 11:43:07,905 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n- Troubles', 'isFinal': False}}
+2025-05-30 11:43:07,952 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...sues","isFinal":false}}' [165 bytes]
+2025-05-30 11:43:07,953 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'hooting common issues', 'isFinal': False}}
+2025-05-30 11:43:08,002 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...best","isFinal":false}}' [163 bytes]
+2025-05-30 11:43:08,002 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n- Explaining best', 'isFinal': False}}
+2025-05-30 11:43:08,053 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...s an","isFinal":false}}' [157 bytes]
+2025-05-30 11:43:08,054 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' practices an', 'isFinal': False}}
+2025-05-30 11:43:08,105 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ring","isFinal":false}}' [154 bytes]
+2025-05-30 11:43:08,106 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd offering', 'isFinal': False}}
+2025-05-30 11:43:08,162 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...pful","isFinal":false}}' [152 bytes]
+2025-05-30 11:43:08,162 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' helpful', 'isFinal': False}}
+2025-05-30 11:43:08,205 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...hink","isFinal":false}}' [158 bytes]
+2025-05-30 11:43:08,205 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' tips\n\nThink', 'isFinal': False}}
+2025-05-30 11:43:08,257 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...irst","isFinal":false}}' [164 bytes]
+2025-05-30 11:43:08,257 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' of me as your first', 'isFinal': False}}
+2025-05-30 11:43:08,305 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...t an","isFinal":false}}' [164 bytes]
+2025-05-30 11:43:08,306 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' point of contact an', 'isFinal': False}}
+2025-05-30 11:43:08,362 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...eral","isFinal":false}}' [153 bytes]
+2025-05-30 11:43:08,362 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd general', 'isFinal': False}}
+2025-05-30 11:43:08,411 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...e in","isFinal":false}}' [153 bytes]
+2025-05-30 11:43:08,412 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' guide in', 'isFinal': False}}
+2025-05-30 11:43:08,456 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...erer","isFinal":false}}' [160 bytes]
+2025-05-30 11:43:08,456 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the AIWhisperer', 'isFinal': False}}
+2025-05-30 11:43:08,506 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ther","isFinal":false}}' [163 bytes]
+2025-05-30 11:43:08,506 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' ecosystem. Whether', 'isFinal': False}}
+2025-05-30 11:43:08,559 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... nee","isFinal":false}}' [152 bytes]
+2025-05-30 11:43:08,560 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' you nee', 'isFinal': False}}
+2025-05-30 11:43:08,612 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [164 bytes]
+2025-05-30 11:43:08,613 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd help understanding', 'isFinal': False}}
+2025-05-30 11:43:08,662 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...zing","isFinal":false}}' [165 bytes]
+2025-05-30 11:43:08,662 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' a feature, analyzing', 'isFinal': False}}
+2025-05-30 11:43:08,708 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [161 bytes]
+2025-05-30 11:43:08,708 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' code, or finding', 'isFinal': False}}
+2025-05-30 11:43:08,757 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...lize","isFinal":false}}' [165 bytes]
+2025-05-30 11:43:08,758 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the right specialize', 'isFinal': False}}
+2025-05-30 11:43:08,812 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... for","isFinal":false}}' [155 bytes]
+2025-05-30 11:43:08,813 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd agent for', 'isFinal': False}}
+2025-05-30 11:43:08,858 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...task","isFinal":false}}' [154 bytes]
+2025-05-30 11:43:08,858 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' your task', 'isFinal': False}}
+2025-05-30 11:43:08,912 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...e to","isFinal":false}}' [157 bytes]
+2025-05-30 11:43:08,912 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ", I'm here to", 'isFinal': False}}
+2025-05-30 11:43:08,963 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...help","isFinal":false}}' [149 bytes]
+2025-05-30 11:43:08,964 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' help', 'isFinal': False}}
+2025-05-30 11:43:09,015 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...":"!","isFinal":false}}' [145 bytes]
+2025-05-30 11:43:09,015 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '!', 'isFinal': False}}
+2025-05-30 11:43:09,060 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...What","isFinal":false}}' [152 bytes]
+2025-05-30 11:43:09,060 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n\nWhat', 'isFinal': False}}
+2025-05-30 11:43:09,114 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...know","isFinal":false}}' [167 bytes]
+2025-05-30 11:43:09,114 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' would you like to know', 'isFinal': False}}
+2025-05-30 11:43:09,160 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...more","isFinal":false}}' [149 bytes]
+2025-05-30 11:43:09,160 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' more', 'isFinal': False}}
+2025-05-30 11:43:09,212 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...out?","isFinal":false}}' [151 bytes]
+2025-05-30 11:43:09,212 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' about?', 'isFinal': False}}
+2025-05-30 11:43:09,240 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...k":"","isFinal":false}}' [144 bytes]
+2025-05-30 11:43:09,240 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '', 'isFinal': False}}
+2025-05-30 11:43:09,240 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...nk":"","isFinal":true}}' [143 bytes]
+2025-05-30 11:43:09,240 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '', 'isFinal': True}}
+2025-05-30 11:43:09,241 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"agent.created","para...d":"T","active":false}}' [83 bytes]
+2025-05-30 11:43:09,241 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'agent.created', 'params': {'agent_id': 'T', 'active': False}}
+2025-05-30 11:43:09,241 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"agent.switched","par...:{"from":"a","to":"T"}}' [74 bytes]
+2025-05-30 11:43:09,241 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'agent.switched', 'params': {'from': 'a', 'to': 'T'}}
+2025-05-30 11:43:10,995 634807 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...:"Hi","isFinal":false}}' [146 bytes]
+2025-05-30 11:43:10,996 634807 MainThread aiwhisperer.test - INFO - recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'Hi', 'isFinal': False}}
+2025-05-30 11:43:10,996 634807 MainThread websockets.client - DEBUG - > CLOSE 1000 (OK) [2 bytes]
+2025-05-30 11:43:10,996 634807 MainThread websockets.client - DEBUG - = connection is CLOSING
+2025-05-30 11:43:10,996 634807 MainThread websockets.client - DEBUG - < CLOSE 1000 (OK) [2 bytes]
+2025-05-30 11:43:10,996 634807 MainThread websockets.client - DEBUG - < EOF
+2025-05-30 11:43:10,996 634807 MainThread websockets.client - DEBUG - > EOF
+2025-05-30 11:43:10,997 634807 MainThread websockets.client - DEBUG - = connection is CLOSED
+2025-05-30 11:43:10,997 634807 MainThread websockets.client - DEBUG - x half-closing TCP connection
+------------------------------ Captured log call -------------------------------
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:67 Starting test_session_handoff_ws
+DEBUG    websockets.client:protocol.py:175 = connection is CONNECTING
+DEBUG    websockets.client:client.py:292 > GET /ws HTTP/1.1
+DEBUG    websockets.client:client.py:294 > Host: localhost:8000
+DEBUG    websockets.client:client.py:294 > Upgrade: websocket
+DEBUG    websockets.client:client.py:294 > Connection: Upgrade
+DEBUG    websockets.client:client.py:294 > Sec-WebSocket-Key: goMgDqR1jTx1zyhJOHjdpg==
+DEBUG    websockets.client:client.py:294 > Sec-WebSocket-Version: 13
+DEBUG    websockets.client:client.py:294 > Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+DEBUG    websockets.client:client.py:294 > User-Agent: Python/3.12 websockets/15.0.1
+DEBUG    websockets.client:client.py:318 < HTTP/1.1 101 Switching Protocols
+DEBUG    websockets.client:client.py:320 < Upgrade: websocket
+DEBUG    websockets.client:client.py:320 < Connection: Upgrade
+DEBUG    websockets.client:client.py:320 < Sec-WebSocket-Accept: 6CR7IJBxxSsBX6xKGkuED912JSg=
+DEBUG    websockets.client:client.py:320 < Sec-WebSocket-Extensions: permessage-deflate
+DEBUG    websockets.client:client.py:320 < date: Fri, 30 May 2025 11:43:03 GMT
+DEBUG    websockets.client:client.py:320 < server: uvicorn
+DEBUG    websockets.client:protocol.py:175 = connection is OPEN
+DEBUG    websockets.client:protocol.py:745 > TEXT '{"jsonrpc": "2.0", "id": 4, "method": "session....ms": {"to_agent": "T"}}' [85 bytes]
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"agent.created","para...id":"a","active":true}}' [82 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'agent.created', 'params': {'agent_id': 'a', 'active': True}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"agent.switched","par...:{"from":"a","to":"a"}}' [74 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'agent.switched', 'params': {'from': 'a', 'to': 'a'}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...:"Hi","isFinal":false}}' [146 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'Hi', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...":"!","isFinal":false}}' [145 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '!', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...your","isFinal":false}}' [160 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': " I'm Alice, your", 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... for","isFinal":false}}' [170 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' friendly AI assistant for', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... the","isFinal":false}}' [148 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...stem","isFinal":false}}' [163 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' AIWhisperer system', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...e to","isFinal":false}}' [157 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ". I'm here to", 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...gate","isFinal":false}}' [162 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' help you navigate', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... the","isFinal":false}}' [148 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...stem","isFinal":false}}' [151 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' system', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...stan","isFinal":false}}' [155 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ', understan', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... get","isFinal":false}}' [167 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd its features, and get', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...your","isFinal":false}}' [165 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the most out of your', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ence","isFinal":false}}' [155 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' experience', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...":".","isFinal":false}}' [145 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '.', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... can","isFinal":false}}' [153 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n\nI can', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...help","isFinal":false}}' [149 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' help', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... you","isFinal":false}}' [148 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' you', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ith:","isFinal":false}}' [150 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' with:', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...\\n-","isFinal":false}}' [147 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n-', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [158 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' Understanding', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...erer","isFinal":false}}' [160 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' how AIWhisperer', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...s an","isFinal":false}}' [153 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' works an', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ties","isFinal":false}}' [162 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd its capabilities', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [157 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n- Providing', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [159 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' general coding', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ance","isFinal":false}}' [168 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' assistance and guidance', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ting","isFinal":false}}' [158 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n- Connecting', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...lize","isFinal":false}}' [164 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' you with specialize', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...like","isFinal":false}}' [157 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd agents like', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ia (","isFinal":false}}' [155 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' Patricia (', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi..."for","isFinal":false}}' [147 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'for', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ning","isFinal":false}}' [153 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' planning', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...essa","isFinal":false}}' [154 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ') or Tessa', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ing)","isFinal":false}}' [158 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' (for testing)', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... you","isFinal":false}}' [153 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' when you', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ific","isFinal":false}}' [158 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' need specific', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...tise","isFinal":false}}' [154 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' expertise', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...bles","isFinal":false}}' [156 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n- Troubles', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...sues","isFinal":false}}' [165 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'hooting common issues', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...best","isFinal":false}}' [163 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n- Explaining best', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...s an","isFinal":false}}' [157 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' practices an', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ring","isFinal":false}}' [154 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd offering', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...pful","isFinal":false}}' [152 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' helpful', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...hink","isFinal":false}}' [158 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' tips\n\nThink', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...irst","isFinal":false}}' [164 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' of me as your first', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...t an","isFinal":false}}' [164 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' point of contact an', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...eral","isFinal":false}}' [153 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd general', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...e in","isFinal":false}}' [153 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' guide in', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...erer","isFinal":false}}' [160 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the AIWhisperer', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ther","isFinal":false}}' [163 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' ecosystem. Whether', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... nee","isFinal":false}}' [152 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' you nee', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [164 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd help understanding', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...zing","isFinal":false}}' [165 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' a feature, analyzing', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...ding","isFinal":false}}' [161 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' code, or finding', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...lize","isFinal":false}}' [165 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' the right specialize', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi... for","isFinal":false}}' [155 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'd agent for', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...task","isFinal":false}}' [154 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' your task', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...e to","isFinal":false}}' [157 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ", I'm here to", 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...help","isFinal":false}}' [149 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' help', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...":"!","isFinal":false}}' [145 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '!', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...What","isFinal":false}}' [152 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '\n\nWhat', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...know","isFinal":false}}' [167 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' would you like to know', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...more","isFinal":false}}' [149 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' more', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...out?","isFinal":false}}' [151 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': ' about?', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...k":"","isFinal":false}}' [144 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...nk":"","isFinal":true}}' [143 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': '', 'isFinal': True}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"agent.created","para...d":"T","active":false}}' [83 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'agent.created', 'params': {'agent_id': 'T', 'active': False}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"agent.switched","par...:{"from":"a","to":"T"}}' [74 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'agent.switched', 'params': {'from': 'a', 'to': 'T'}}
+DEBUG    websockets.client:protocol.py:599 < TEXT '{"jsonrpc":"2.0","method":"AIMessageChunkNotifi...:"Hi","isFinal":false}}' [146 bytes]
+INFO     aiwhisperer.test:test_agent_jsonrpc_ws.py:23 recv_until: got message: {'jsonrpc': '2.0', 'method': 'AIMessageChunkNotification', 'params': {'sessionId': '00739a6a-e125-4585-93a5-e4a80a5cd3c6', 'chunk': 'Hi', 'isFinal': False}}
+DEBUG    websockets.client:protocol.py:745 > CLOSE 1000 (OK) [2 bytes]
+DEBUG    websockets.client:protocol.py:175 = connection is CLOSING
+DEBUG    websockets.client:protocol.py:599 < CLOSE 1000 (OK) [2 bytes]
+DEBUG    websockets.client:protocol.py:649 < EOF
+DEBUG    websockets.client:protocol.py:757 > EOF
+DEBUG    websockets.client:protocol.py:175 = connection is CLOSED
+DEBUG    websockets.client:connection.py:974 x half-closing TCP connection
+--------------------------- Captured stderr teardown ---------------------------
+2025-05-30 11:43:11,000 634807 MainThread asyncio - DEBUG - Using selector: EpollSelector
+---------------------------- Captured log teardown -----------------------------
+DEBUG    asyncio:selector_events.py:64 Using selector: EpollSelector
+_____________________ test_ai_tool_invalid_params_handling _____________________
+
+openrouter_api = <ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService object at 0x7f44ada6eba0>
+tool_registry = <ai_whisperer.tools.tool_registry.ToolRegistry object at 0x7f44ae691a30>
+
+    @pytest.mark.integration
+    def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAIService, tool_registry: ToolRegistry):
+        """
+        Test that the AI or the system correctly handles attempts to use file tools
+        with invalid parameters (e.g., non-existent file path for read, missing content for write).
+        This test focuses on the system's handling of invalid parameters passed to the tool's execute method.
+        Simulating the AI generating *invalid* tool calls is harder and might require mocking the AI response.
+        For this test, we will simulate the system receiving an invalid tool call from the AI
+        and verify that the tool's execute method raises an appropriate error or returns an error structure.
+        """
+    
+        # Scenario 1: Simulate AI calling read_file with a non-existent path
+        invalid_read_path = "/path/to/nonexistent/file.txt"
+        # The ReadFileTool.execute method expects 'path', not 'file_path'
+        read_call_args = {"path": invalid_read_path}
+    
+        read_tool_instance = tool_registry.get_tool_by_name("read_file")
+        assert read_tool_instance is not None, "read_file tool not found in registry"
+    
+        # Expecting the tool's execute method to raise FileRestrictionError for out-of-workspace path
+        from ai_whisperer.exceptions import FileRestrictionError
+        with pytest.raises(FileRestrictionError):
+            read_tool_instance.execute(read_call_args)
+    
+        # Scenario 2: Simulate AI calling write_file with missing content
+        invalid_write_path = "temp_invalid_write.txt"
+        # The WriteFileTool.execute method expects 'path' and 'content'
+        write_call_args_missing_content = {"path": invalid_write_path} # Missing 'content'
+    
+        write_tool_instance = tool_registry.get_tool_by_name("write_to_file")
+>       assert write_tool_instance is not None, "write_to_file tool not found in registry"
+E       AssertionError: write_to_file tool not found in registry
+E       assert None is not None
+
+tests/integration/test_ai_tool_usage.py:455: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+2025-05-30 11:43:15,027 634807 MainThread ai_whisperer.tools.tool_registry - INFO - Tool 'read_file' registered successfully.
+2025-05-30 11:43:15,027 634807 MainThread ai_whisperer.tools.tool_registry - INFO - Tool 'write_file' registered successfully.
+2025-05-30 11:43:15,027 634807 MainThread ai_whisperer.tools.tool_registry - INFO - Tool 'execute_command' registered successfully.
+------------------------------ Captured log setup ------------------------------
+INFO     ai_whisperer.tools.tool_registry:tool_registry.py:43 Tool 'read_file' registered successfully.
+INFO     ai_whisperer.tools.tool_registry:tool_registry.py:43 Tool 'write_file' registered successfully.
+INFO     ai_whisperer.tools.tool_registry:tool_registry.py:43 Tool 'execute_command' registered successfully.
+=========================== short test summary info ============================
+FAILED tests/integration/test_agent_jsonrpc_ws.py::test_session_handoff_ws - ...
+FAILED tests/integration/test_ai_tool_usage.py::test_ai_tool_invalid_params_handling
+= 2 failed, 648 passed, 27 skipped, 58 xfailed, 12 xpassed in 78.23s (0:01:18) =
