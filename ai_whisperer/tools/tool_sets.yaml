@@ -142,3 +142,20 @@ specialized_sets:
       - read_file
     tags:
       - automation
+  
+  # Debugging tools for Debbie
+  debugging_tools:
+    description: "Advanced debugging and monitoring tools for system analysis"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - session_inspector
+      - message_injector
+      - workspace_validator
+      - python_executor
+    tags:
+      - debugging
+      - monitoring
+      - intervention
+      - analysis
+      - python

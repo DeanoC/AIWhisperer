@@ -1,4 +1,4 @@
-# Phase 2: Billy the Batcher Agent - Detailed Task List
+# Phase 2: Debbie the Batcher Agent - Detailed Task List
 
 **Date**: May 29, 2025  
 **Status**: Ready for Implementation  
@@ -8,11 +8,11 @@
 ## Overview
 
 
-Phase 2 creates "Billy the Batcher," a specialized agent that interprets batch scripts and acts as an automated user in the interactive mode. Billy's core function is to run an ai-loop similar to the existing chat mode, but instead of a human user, Billy reads the script and sends messages/commands to the normal project flow as if they were typed by a user. This means:
+Phase 2 creates "Debbie the Batcher," a specialized agent that interprets batch scripts and acts as an automated user in the interactive mode. Debbie's core function is to run an ai-loop similar to the existing chat mode, but instead of a human user, Debbie reads the script and sends messages/commands to the normal project flow as if they were typed by a user. This means:
 
-- Billy replaces the human user in the interactive session, driving the ai-loop by following the provided script.
+- Debbie replaces the human user in the interactive session, driving the ai-loop by following the provided script.
 - The batch mode is not a separate execution path, but a scripted automation of the existing interactive flow.
-- Billy will read, interpret, and "chat" to the system, imitating an interactive user, ensuring all project logic and agent interactions remain unchanged except for the source of input.
+- Debbie will read, interpret, and "chat" to the system, imitating an interactive user, ensuring all project logic and agent interactions remain unchanged except for the source of input.
 
 This phase follows strict Test-Driven Development (TDD) principles where **tests are written first** before any implementation.
 
@@ -37,7 +37,7 @@ For each task:
 
 ## Detailed Task Breakdown
 
-### Task 2.1: Billy Agent Configuration Setup (Day 1, Morning)
+### Task 2.1: Debbie Agent Configuration Setup (Day 1, Morning)
 **Objective**: Create agent configuration and registration infrastructure
 
 #### TDD Approach:
@@ -48,34 +48,34 @@ For each task:
    - Test agent loading from configuration
 
 2. **Implementation**:
-   - Add Billy to `config/agents.yaml`
+   - Add Debbie to `config/agents.yaml`
    - Create agent validation functions
    - Implement configuration loader tests
 
 3. **Test Files to Create**:
    ```
-   tests/unit/test_billy_agent_config.py
-   tests/integration/test_agent_registry_billy.py
+   tests/unit/test_debbie_agent_config.py
+   tests/integration/test_agent_registry_debbie.py
    ```
 
 #### Expected Test Cases:
 ```python
-def test_billy_agent_exists_in_config()
-def test_billy_agent_has_required_properties()
-def test_billy_agent_role_is_batch_processor()
-def test_billy_agent_tools_are_configured()
-def test_billy_agent_prompt_file_specified()
-def test_billy_agent_integration_with_registry()
+def test_debbie_agent_exists_in_config()
+def test_debbie_agent_has_required_properties()
+def test_debbie_agent_role_is_batch_processor()
+def test_debbie_agent_tools_are_configured()
+def test_debbie_agent_prompt_file_specified()
+def test_debbie_agent_integration_with_registry()
 ```
 
 #### Deliverables:
-- ✅ Billy agent configuration in agents.yaml
+- ✅ Debbie agent configuration in agents.yaml
 - ✅ Agent configuration validation tests
 - ✅ All tests passing
 
 ---
 
-### Task 2.2: Billy Agent Prompt System (Day 1, Afternoon)
+### Task 2.2: Debbie Agent Prompt System (Day 1, Afternoon)
 **Objective**: Create specialized prompt for batch script interpretation
 
 #### TDD Approach:
@@ -86,27 +86,27 @@ def test_billy_agent_integration_with_registry()
    - Test prompt integration with agent system
 
 2. **Implementation**:
-   - Create `prompts/agents/billy_batcher.prompt.md`
+   - Create `prompts/agents/debbie_batcher.prompt.md`
    - Implement prompt validation
    - Create prompt loading tests
 
 3. **Test Files to Create**:
    ```
-   tests/unit/test_billy_prompt_system.py
-   tests/integration/test_billy_prompt_loading.py
+   tests/unit/test_debbie_prompt_system.py
+   tests/integration/test_debbie_prompt_loading.py
    ```
 
 #### Expected Test Cases:
 ```python
-def test_billy_prompt_file_exists()
-def test_billy_prompt_contains_batch_instructions()
-def test_billy_prompt_variable_substitution()
-def test_billy_prompt_integration_with_agent()
-def test_billy_prompt_error_handling()
+def test_debbie_prompt_file_exists()
+def test_debbie_prompt_contains_batch_instructions()
+def test_debbie_prompt_variable_substitution()
+def test_debbie_prompt_integration_with_agent()
+def test_debbie_prompt_error_handling()
 ```
 
 #### Deliverables:
-- ✅ Billy batcher prompt file
+- ✅ Debbie batcher prompt file
 - ✅ Prompt system integration tests
 - ✅ All tests passing
 
@@ -161,7 +161,7 @@ def test_script_parser_checks_file_size_limits()
 
 # Integration
 def test_script_parser_tool_registry_integration()
-def test_script_parser_billy_agent_integration()
+def test_script_parser_debbie_agent_integration()
 ```
 
 #### Deliverables:
@@ -223,7 +223,7 @@ def test_security_violation_detection()
 
 # Integration
 def test_batch_command_tool_registry_integration()
-def test_batch_command_billy_agent_integration()
+def test_batch_command_debbie_agent_integration()
 def test_batch_command_script_parser_integration()
 ```
 
@@ -238,8 +238,8 @@ def test_batch_command_script_parser_integration()
 ---
 
 
-### Task 2.5: Billy Agent Integration Testing (Day 4, Morning)
-**Objective**: Comprehensive integration testing of Billy agent with all components, focusing on Billy's ai-loop imitating an interactive user
+### Task 2.5: Debbie Agent Integration Testing (Day 4, Morning)
+**Objective**: Comprehensive integration testing of Debbie agent with all components, focusing on Debbie's ai-loop imitating an interactive user
 
 #### TDD Approach:
 1. **Write Tests First**:
@@ -256,35 +256,35 @@ def test_batch_command_script_parser_integration()
 
 3. **Test Files to Create**:
    ```
-   tests/integration/test_billy_agent_complete_workflow.py
-   tests/integration/test_billy_agent_tool_interactions.py
-   tests/integration/test_billy_agent_error_scenarios.py
-   tests/performance/test_billy_agent_performance.py
+   tests/integration/test_debbie_agent_complete_workflow.py
+   tests/integration/test_debbie_agent_tool_interactions.py
+   tests/integration/test_debbie_agent_error_scenarios.py
+   tests/performance/test_debbie_agent_performance.py
    ```
 
 
 #### Expected Test Cases:
 ```python
 # Complete workflow
-def test_billy_ai_loop_processes_simple_script()
-def test_billy_ai_loop_processes_complex_script()
-def test_billy_ai_loop_handles_multi_step_commands()
-def test_billy_ai_loop_imitates_interactive_user()
+def test_debbie_ai_loop_processes_simple_script()
+def test_debbie_ai_loop_processes_complex_script()
+def test_debbie_ai_loop_handles_multi_step_commands()
+def test_debbie_ai_loop_imitates_interactive_user()
 
 # Tool interactions
-def test_billy_uses_script_parser_tool()
-def test_billy_uses_batch_command_tool()
-def test_billy_chains_tool_usage_correctly()
+def test_debbie_uses_script_parser_tool()
+def test_debbie_uses_batch_command_tool()
+def test_debbie_chains_tool_usage_correctly()
 
 # Error scenarios
-def test_billy_handles_tool_failures()
-def test_billy_handles_invalid_scripts()
-def test_billy_provides_helpful_error_messages()
+def test_debbie_handles_tool_failures()
+def test_debbie_handles_invalid_scripts()
+def test_debbie_provides_helpful_error_messages()
 
 # Performance
-def test_billy_processes_large_scripts()
-def test_billy_memory_usage_acceptable()
-def test_billy_response_time_acceptable()
+def test_debbie_processes_large_scripts()
+def test_debbie_memory_usage_acceptable()
+def test_debbie_response_time_acceptable()
 ```
 
 #### Deliverables:
@@ -296,7 +296,7 @@ def test_billy_response_time_acceptable()
 ---
 
 ### Task 2.6: Documentation and API Design (Day 4, Afternoon)
-**Objective**: Document Billy agent API for Phase 3 integration
+**Objective**: Document Debbie agent API for Phase 3 integration
 
 #### TDD Approach:
 1. **Write Tests First**:
@@ -311,8 +311,8 @@ def test_billy_response_time_acceptable()
 
 3. **Documentation Files to Create**:
    ```
-   docs/batch-mode/BILLY_AGENT_API.md
-   docs/batch-mode/BILLY_USAGE_EXAMPLES.md
+   docs/batch-mode/DEBBIE_AGENT_API.md
+   docs/batch-mode/DEBBIE_USAGE_EXAMPLES.md
    docs/batch-mode/PHASE3_INTEGRATION_GUIDE.md
    ```
 
@@ -324,7 +324,7 @@ def test_example_scripts_are_valid()
 ```
 
 #### Deliverables:
-- ✅ Billy agent API documentation
+- ✅ Debbie agent API documentation
 - ✅ Usage examples and tutorials
 - ✅ Phase 3 integration specifications
 - ✅ Documentation tests passing
@@ -341,8 +341,8 @@ def test_example_scripts_are_valid()
 ```
 tests/
 ├── unit/
-│   ├── test_billy_agent_config.py
-│   ├── test_billy_prompt_system.py
+│   ├── test_debbie_agent_config.py
+│   ├── test_debbie_prompt_system.py
 │   ├── test_script_parser_tool.py
 │   ├── test_script_parser_validation.py
 │   ├── test_script_parser_security.py
@@ -350,21 +350,21 @@ tests/
 │   ├── test_batch_command_mapping.py
 │   └── test_batch_command_validation.py
 ├── integration/
-│   ├── test_agent_registry_billy.py
-│   ├── test_billy_prompt_loading.py
+│   ├── test_agent_registry_debbie.py
+│   ├── test_debbie_prompt_loading.py
 │   ├── test_script_parser_tool_integration.py
 │   ├── test_batch_command_tool_integration.py
-│   ├── test_billy_agent_complete_workflow.py
-│   ├── test_billy_agent_tool_interactions.py
-│   └── test_billy_agent_error_scenarios.py
+│   ├── test_debbie_agent_complete_workflow.py
+│   ├── test_debbie_agent_tool_interactions.py
+│   └── test_debbie_agent_error_scenarios.py
 └── performance/
-    └── test_billy_agent_performance.py
+    └── test_debbie_agent_performance.py
 ```
 
 ## Phase 2 Success Criteria
 
 ### Functional Requirements:
-- ✅ Billy agent loads and registers correctly
+- ✅ Debbie agent loads and registers correctly
 - ✅ Script parser tool handles multiple formats
 - ✅ Batch command tool converts scripts to actions
 - ✅ Complete workflow processes scripts end-to-end

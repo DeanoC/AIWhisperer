@@ -42,4 +42,4 @@ def test_batch_mode_e2e(monkeypatch):
 
     # Check for expected output (AI response, success message, etc.)
     assert proc.returncode == 0, f"CLI exited with code {proc.returncode}"
-    assert b"Billy" in stdout or b"batch complete" in stdout.lower(), "Expected batch output not found."
+    assert b"Debbie" in stdout or b"batch complete" in stdout.lower(), "Expected batch output not found."

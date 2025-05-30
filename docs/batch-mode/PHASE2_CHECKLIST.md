@@ -1,6 +1,6 @@
-# Phase 2: Billy the Batcher Agent - Progress Checklist
+# Phase 2: Debbie the Batcher Agent - Progress Checklist
 
-**Phase**: Billy the Batcher Agent Development  
+**Phase**: Debbie the Batcher Agent Development  
 **Start Date**: [TBD]  
 **Target Completion**: [TBD + 4 days]  
 **Status**: 🔄 Ready for Implementation
@@ -16,19 +16,19 @@
 
 ## Task Progress Tracking
 
-### Task 2.1: Billy Agent Configuration Setup ⏳ Day 1 Morning
+### Task 2.1: Debbie Agent Configuration Setup ⏳ Day 1 Morning
 **TDD Status**: 🔴 Tests First → 🟢 Implementation → 🔵 Refactor
 
 - [ ] **RED**: Write failing tests for agent configuration
-  - [ ] `test_billy_agent_exists_in_config()`
-  - [ ] `test_billy_agent_has_required_properties()`
-  - [ ] `test_billy_agent_role_is_batch_processor()`
-  - [ ] `test_billy_agent_tools_are_configured()`
-  - [ ] `test_billy_agent_prompt_file_specified()`
-  - [ ] `test_billy_agent_integration_with_registry()`
+  - [ ] `test_debbie_agent_exists_in_config()`
+  - [ ] `test_debbie_agent_has_required_properties()`
+  - [ ] `test_debbie_agent_role_is_batch_processor()`
+  - [ ] `test_debbie_agent_tools_are_configured()`
+  - [ ] `test_debbie_agent_prompt_file_specified()`
+  - [ ] `test_debbie_agent_integration_with_registry()`
 
 - [ ] **GREEN**: Implement minimal code to pass tests
-  - [ ] Add Billy to `config/agents.yaml`
+  - [ ] Add Debbie to `config/agents.yaml`
   - [ ] Create agent validation functions
   - [ ] Implement configuration loader
 
@@ -42,18 +42,18 @@
 
 ---
 
-### Task 2.2: Billy Agent Prompt System ⏳ Day 1 Afternoon
+### Task 2.2: Debbie Agent Prompt System ⏳ Day 1 Afternoon
 **TDD Status**: 🔴 Tests First → 🟢 Implementation → 🔵 Refactor
 
 - [ ] **RED**: Write failing tests for prompt system
-  - [ ] `test_billy_prompt_file_exists()`
-  - [ ] `test_billy_prompt_contains_batch_instructions()`
-  - [ ] `test_billy_prompt_variable_substitution()`
-  - [ ] `test_billy_prompt_integration_with_agent()`
-  - [ ] `test_billy_prompt_error_handling()`
+  - [ ] `test_debbie_prompt_file_exists()`
+  - [ ] `test_debbie_prompt_contains_batch_instructions()`
+  - [ ] `test_debbie_prompt_variable_substitution()`
+  - [ ] `test_debbie_prompt_integration_with_agent()`
+  - [ ] `test_debbie_prompt_error_handling()`
 
 - [ ] **GREEN**: Implement minimal code to pass tests
-  - [ ] Create `prompts/agents/billy_batcher.prompt.md`
+  - [ ] Create `prompts/agents/debbie_batcher.prompt.md`
   - [ ] Implement prompt validation
   - [ ] Create prompt loading mechanism
 
@@ -117,7 +117,7 @@
 
 ---
 
-### Task 2.5: Billy Agent Integration Testing ⏳ Day 4 Morning
+### Task 2.5: Debbie Agent Integration Testing ⏳ Day 4 Morning
 **TDD Status**: 🔴 Tests First → 🟢 Implementation → 🔵 Refactor
 
 - [ ] **RED**: Write failing integration tests
@@ -150,8 +150,8 @@
   - [ ] `test_example_scripts_are_valid()`
 
 - [ ] **GREEN**: Create documentation
-  - [ ] Create `docs/batch-mode/BILLY_AGENT_API.md`
-  - [ ] Create `docs/batch-mode/BILLY_USAGE_EXAMPLES.md`
+  - [ ] Create `docs/batch-mode/DEBBIE_AGENT_API.md`
+  - [ ] Create `docs/batch-mode/DEBBIE_USAGE_EXAMPLES.md`
   - [ ] Create `docs/batch-mode/PHASE3_INTEGRATION_GUIDE.md`
 
 - [ ] **REFACTOR**: Improve documentation
@@ -184,8 +184,8 @@
 ## Test File Creation Checklist
 
 ### Unit Tests Created
-- [ ] `tests/unit/test_billy_agent_config.py`
-- [ ] `tests/unit/test_billy_prompt_system.py`
+- [ ] `tests/unit/test_debbie_agent_config.py`
+- [ ] `tests/unit/test_debbie_prompt_system.py`
 - [ ] `tests/unit/test_script_parser_tool.py`
 - [ ] `tests/unit/test_script_parser_validation.py`
 - [ ] `tests/unit/test_script_parser_security.py`
@@ -194,38 +194,38 @@
 - [ ] `tests/unit/test_batch_command_validation.py`
 
 ### Integration Tests Created
-- [ ] `tests/integration/test_agent_registry_billy.py`
-- [ ] `tests/integration/test_billy_prompt_loading.py`
+- [ ] `tests/integration/test_agent_registry_debbie.py`
+- [ ] `tests/integration/test_debbie_prompt_loading.py`
 - [ ] `tests/integration/test_script_parser_tool_integration.py`
 - [ ] `tests/integration/test_batch_command_tool_integration.py`
-- [ ] `tests/integration/test_billy_agent_complete_workflow.py`
-- [ ] `tests/integration/test_billy_agent_tool_interactions.py`
-- [ ] `tests/integration/test_billy_agent_error_scenarios.py`
+- [ ] `tests/integration/test_debbie_agent_complete_workflow.py`
+- [ ] `tests/integration/test_debbie_agent_tool_interactions.py`
+- [ ] `tests/integration/test_debbie_agent_error_scenarios.py`
 
 ### Performance Tests Created
-- [ ] `tests/performance/test_billy_agent_performance.py`
+- [ ] `tests/performance/test_debbie_agent_performance.py`
 
 ## Implementation Files Checklist
 
 ### Configuration Files
-- [ ] Billy agent added to `config/agents.yaml`
+- [ ] Debbie agent added to `config/agents.yaml`
 - [ ] Agent properties correctly configured
 - [ ] Tool associations properly defined
 
 ### Core Implementation
 - [ ] `ai_whisperer/tools/script_parser_tool.py` created
 - [ ] `ai_whisperer/tools/batch_command_tool.py` created
-- [ ] `prompts/agents/billy_batcher.prompt.md` created
+- [ ] `prompts/agents/debbie_batcher.prompt.md` created
 
 ### Documentation
-- [ ] `docs/batch-mode/BILLY_AGENT_API.md` created
-- [ ] `docs/batch-mode/BILLY_USAGE_EXAMPLES.md` created
+- [ ] `docs/batch-mode/DEBBIE_AGENT_API.md` created
+- [ ] `docs/batch-mode/DEBBIE_USAGE_EXAMPLES.md` created
 - [ ] `docs/batch-mode/PHASE3_INTEGRATION_GUIDE.md` created
 
 ## Phase 2 Success Validation
 
 ### Functional Validation
-- [ ] Billy agent loads without errors
+- [ ] Debbie agent loads without errors
 - [ ] Script parser handles JSON, YAML, and text formats
 - [ ] Batch command tool converts scripts to actions
 - [ ] End-to-end workflow processes test scripts successfully
@@ -258,7 +258,7 @@
 - [ ] Phase 3 integration guide ready
 
 ### Ready for Phase 3: Interactive Mode Integration
-- [ ] Billy agent fully functional
+- [ ] Debbie agent fully functional
 - [ ] Tools properly integrated
 - [ ] API documented for Phase 3 team
 - [ ] Handoff documentation complete

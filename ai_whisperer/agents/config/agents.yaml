@@ -38,3 +38,38 @@ agents:
     context_sources: ["existing_tests", "code_coverage", "test_patterns"]
     color: "#4CAF50"
     icon: "🧪"
+    
+  d:
+    name: "Debbie the Debugger"
+    role: "debugging_assistant"
+    description: "Intelligent debugging companion for AIWhisperer development"
+    tool_tags: ["debugging", "monitoring", "testing", "analysis", "filesystem", "command"]
+    prompt_file: "debbie_debugger.prompt.md"
+    context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure"]
+    color: "#FF5722"
+    icon: "🐛"
+    tool_sets: ["debugging_tools", "filesystem", "command", "analysis"]
+    capabilities:
+      - session_monitoring
+      - error_detection
+      - performance_analysis
+      - automated_recovery
+      - script_execution
+    configuration:
+      monitoring:
+        continuation_timeout: 30  # seconds
+        memory_threshold: 512    # MB
+        response_time_alert: 10  # seconds
+      intervention:
+        auto_continue: true
+        max_retries: 3
+        recovery_strategies: ["prompt", "restart", "escalate"]
+    continuation_config:
+      rules:
+        - trigger_tools: ["session_inspector", "log_analyzer"]
+          keywords: ["stall", "stuck", "waiting", "timeout", "not responding"]
+          continuation_message: "Based on the analysis, I'll now attempt to resolve the issue. Let me inject a continuation prompt to unstick the agent."
+        - trigger_tools: ["python_executor"]
+          keywords: ["analyze", "debug", "investigate", "examine"]
+          continuation_message: "I've executed the debugging script. Let me analyze the results and provide recommendations."
+      default_message: "Continue with the debugging investigation."

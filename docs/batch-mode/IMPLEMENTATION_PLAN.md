@@ -17,14 +17,14 @@ The batch mode feature will replace the existing CLI with a system that:
 1. Reads batch scripts specified via command line
 2. Creates a local interactive server on a random port
 3. Connects via WebSocket using JSON-RPC 2.0
-4. Uses a new agent "Billy the Batcher" to interpret scripts
+4. Uses a new agent "Debbie the Batcher" to interpret scripts
 5. Converts script commands into AIWhisperer actions
 6. Requires workspace detection via `.WHISPER` folder
 
 ## High-Level Architecture
 
 ```
-[CLI] → [Workspace Detection] → [Batch Client] → [Local Server] → [Billy Agent] → [AIWhisperer Actions]
+[CLI] → [Workspace Detection] → [Batch Client] → [Local Server] → [Debbie Agent] → [AIWhisperer Actions]
   ↓              ↓                    ↓              ↓              ↓              ↓
 Script File → .WHISPER Check → WebSocket Client → JSON-RPC → Script Analysis → Commands
 ```
@@ -36,7 +36,7 @@ Script File → .WHISPER Check → WebSocket Client → JSON-RPC → Script Anal
 - **Implementation**: Look for `.WHISPER/` folder in current and parent directories
 - **Error Handling**: Exit with error if no workspace found
 
-### 2. Billy the Batcher Agent
+### 2. Debbie the Batcher Agent
 - **Agent ID**: B
 - **Role**: batch_processor
 - **Capabilities**: Script interpretation, command generation, batch automation
@@ -67,24 +67,24 @@ Script File → .WHISPER Check → WebSocket Client → JSON-RPC → Script Anal
 - Integration tests for various folder structures
 - Error scenario testing
 
-### Phase 2: Billy the Batcher Agent (4 days)
+### Phase 2: Debbie the Batcher Agent (4 days)
 **Objective**: Create new agent specialized in batch script interpretation
 
 #### Backend Changes
-- Add Billy to `agents.yaml` configuration
-- Create `prompts/agents/billy_batcher.prompt.md`
-- Implement Billy-specific tools:
+- Add Debbie to `agents.yaml` configuration
+- Create `prompts/agents/debbie_batcher.prompt.md`
+- Implement Debbie-specific tools:
   - `ai_whisperer/tools/script_parser_tool.py`
   - `ai_whisperer/tools/batch_command_tool.py`
 
 #### Agent Configuration
 ```yaml
 b:
-  name: "Billy the Batcher"
+  name: "Debbie the Batcher"
   role: "batch_processor"
   description: "Processes batch scripts and converts them to AIWhisperer commands"
   tool_tags: ["batch", "script", "automation"]
-  prompt_file: "billy_batcher"
+  prompt_file: "debbie_batcher"
   context_sources: ["workspace_structure", "batch_history"]
   color: "#FF9800"
   icon: "⚡"
@@ -176,8 +176,8 @@ See `tests/integration/test_batch_mode_e2e.py` for the new end-to-end test.
 ### JSON-RPC Protocol Usage
 The batch mode will use existing JSON-RPC methods:
 - `startSession` - Initialize batch session
-- `session.switch_agent` - Switch to Billy agent
-- `sendUserMessage` - Send script content to Billy
+- `session.switch_agent` - Switch to Debbie agent
+- `sendUserMessage` - Send script content to Debbie
 - `stopSession` - Clean up session
 
 ### Workspace Detection Rules
@@ -197,7 +197,7 @@ The batch mode will use existing JSON-RPC methods:
 ## Coordination Requirements
 
 ### With Interactive Team
-1. **Agent Registry**: Confirm Billy agent integration approach
+1. **Agent Registry**: Confirm Debbie agent integration approach
 2. **JSON-RPC Extensions**: Verify existing methods are sufficient
 3. **Session Management**: Ensure batch sessions don't conflict
 4. **Tool Registry**: Coordinate batch tool registration
@@ -205,7 +205,7 @@ The batch mode will use existing JSON-RPC methods:
 
 ### Backend Changes Summary
 **Minimal backend changes as requested:**
-- New agent configuration (Billy)
+- New agent configuration (Debbie)
 - New tools for batch processing
 - New workspace detection utility
 - No changes to existing interactive server
@@ -252,7 +252,7 @@ Each phase follows strict TDD methodology:
 | Phase | Duration | Deliverables |
 |-------|----------|--------------|
 | Phase 1 | 1-2 days | Workspace detection with tests |
-| Phase 2 | 4 days | Billy agent with tools and tests |
+| Phase 2 | 4 days | Debbie agent with tools and tests |
 | Phase 3 | 6 days | Batch client with full test suite |
 | Phase 4 | 3 days | CLI integration with tests |
 | Phase 5 | 3 days | Integration testing and docs |
@@ -262,7 +262,7 @@ Each phase follows strict TDD methodology:
 ## Success Criteria
 
 ### Functional Requirements
-- ✅ Batch scripts execute successfully via Billy agent
+- ✅ Batch scripts execute successfully via Debbie agent
 - ✅ Workspace detection prevents execution outside AIWhisperer projects
 - ✅ Server starts on random port without conflicts
 - ✅ JSON-RPC communication works reliably
