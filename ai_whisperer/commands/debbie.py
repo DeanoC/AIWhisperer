@@ -54,16 +54,28 @@ class DebbieCommand(Command):
         """Get the Debbie observer instance"""
         try:
             from interactive_server.debbie_observer import get_observer
-            return get_observer()
+            observer = get_observer()
+            if not observer._enabled:
+                return None  # Observer exists but is disabled
+            return observer
         except ImportError:
-            raise CommandError("Debbie observer not available - monitoring may not be enabled")
+            return None  # Observer not available
 
     def _status_command(self, session_id: Optional[str], options: Dict[str, Any]) -> str:
         """Get current session health status"""
         observer = self._get_observer()
         
-        if not observer._enabled:
-            return "❌ Debbie monitoring is disabled"
+        if not observer:
+            return """❌ Debbie monitoring is not active
+
+To enable monitoring, restart the server with:
+  python -m interactive_server.main --debbie-monitor
+
+Available monitoring levels:
+  --monitor-level passive  (observe only)
+  --monitor-level active   (can intervene)
+
+For now, I'm available for general debugging assistance!"""
         
         # Get detailed status
         detailed = options.get('detailed', False) or options.get('d', False)
@@ -120,6 +132,9 @@ class DebbieCommand(Command):
     def _analyze_command(self, session_id: Optional[str], time_range: int, options: Dict[str, Any]) -> str:
         """Deep analysis of recent session activity"""
         observer = self._get_observer()
+        
+        if not observer:
+            return "❌ Session analysis requires active monitoring. Use `/debbie status` for setup instructions."
         
         if not session_id:
             return "❌ Session ID required for analysis"
@@ -185,8 +200,21 @@ class DebbieCommand(Command):
         """Get recommendations for current session"""
         observer = self._get_observer()
         
+        if not observer:
+            return """💡 General Debugging Suggestions:
+
+1. 🔍 Check server logs for error messages
+2. 🔄 Try refreshing the browser if UI is unresponsive  
+3. 🔌 Verify WebSocket connection to backend
+4. 🐛 Look for JavaScript console errors
+5. 📊 Monitor memory usage and performance
+6. 🚀 Restart server if issues persist
+
+For session-specific suggestions, enable monitoring with:
+  python -m interactive_server.main --debbie-monitor"""
+        
         if not session_id:
-            return "❌ Session ID required for suggestions"
+            return "❌ Session ID required for specific suggestions"
         
         monitor = observer.monitors.get(session_id)
         if not monitor:
@@ -239,6 +267,9 @@ class DebbieCommand(Command):
     def _report_command(self, session_id: Optional[str], options: Dict[str, Any]) -> str:
         """Generate comprehensive session report"""
         observer = self._get_observer()
+        
+        if not observer:
+            return "❌ Session reports require active monitoring. Use `/debbie status` for setup instructions."
         
         if not session_id:
             return "❌ Session ID required for report generation"

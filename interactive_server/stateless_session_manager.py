@@ -78,8 +78,11 @@ class StatelessInteractiveSession:
         
         # Initialize Debbie observer for this session if provided
         if self.observer:
-            self.observer.observe_session(session_id)
-            logger.info(f"Debbie observer initialized for session {session_id}")
+            try:
+                self.observer.observe_session(session_id)
+                logger.info(f"Debbie observer initialized for session {session_id}")
+            except Exception as e:
+                logger.error(f"Failed to initialize Debbie observer for session {session_id}: {e}")
         else:
             logger.debug(f"No observer provided for session {session_id}")
         
@@ -337,7 +340,7 @@ class StatelessInteractiveSession:
             })
             
             # Notify observer about agent switch
-            if old_agent:
+            if old_agent and self.observer:
                 self.observer.on_agent_switch(self.session_id, old_agent, agent_id)
             
             logger.info(f"Switched active agent from '{old_agent}' to '{agent_id}' in session {self.session_id}")
@@ -747,8 +750,11 @@ class StatelessInteractiveSession:
         self.active_agent = None
         
         # Stop observing this session
-        self.observer.stop_observing(self.session_id)
-        logger.info(f"Stopped Debbie observer for session {self.session_id}")
+        if self.observer:
+            self.observer.stop_observing(self.session_id)
+            logger.info(f"Stopped Debbie observer for session {self.session_id}")
+        else:
+            logger.debug(f"No observer to stop for session {self.session_id}")
         
         logger.info(f"Session {self.session_id} cleaned up")
     

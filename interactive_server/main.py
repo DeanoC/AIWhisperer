@@ -67,10 +67,11 @@ async def agent_list_handler(params, websocket=None):
         all_agents = agent_registry.list_agents()
         logger.info(f"All agents from registry: {[a.agent_id for a in all_agents]}")
         
-        # If no workspace is active, only show Alice (agent 'a')
+        # If no workspace is active, only show Alice (agent 'a') and Debbie (agent 'd')
+        # Debbie should always be available for debugging regardless of workspace status
         if not has_active_workspace:
-            all_agents = [agent for agent in all_agents if agent.agent_id.lower() == 'a']
-            logger.info(f"Filtered to Alice only: {[a.agent_id for a in all_agents]}")
+            all_agents = [agent for agent in all_agents if agent.agent_id.lower() in ['a', 'd']]
+            logger.info(f"Filtered to Alice and Debbie: {[a.agent_id for a in all_agents]}")
         
         agents = [
             {
@@ -94,8 +95,9 @@ async def session_switch_agent_handler(params, websocket=None):
     agent_id = params.get("agent_id")
     logger.info(f"session_switch_agent_handler called with agent_id: {agent_id}")
     
-    # Check if trying to switch to non-Alice agent without workspace
-    if agent_id and agent_id.lower() != 'a':
+    # Check if trying to switch to non-Alice/non-Debbie agent without workspace
+    # Debbie should always be available for debugging regardless of workspace status
+    if agent_id and agent_id.lower() not in ['a', 'd']:
         has_active_workspace = False
         from .handlers.project_handlers import get_project_manager
         try:
