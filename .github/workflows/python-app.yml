@@ -12,10 +12,11 @@ permissions:
 
 jobs:
   build:
-
     runs-on: windows-latest
-
     steps:
+    - name: Clean up invalid paths
+      run: |
+        git config --global core.protectNTFS false
     - uses: actions/checkout@v4
     - name: Set up Python 3.12
       uses: actions/setup-python@v3
@@ -51,16 +52,14 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
     - name: Run tests
-      if: false   # TEMPORARILY DISABLED DUE TO HANGING TESTS
       env:
         OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       run: pytest
     - name: Summarize performance metrics
-      if: false   # TEMPORARILY DISABLED DUE TO HANGING TESTS
       run: python project_dev/summarize_performance_metrics.py
       shell: pwsh
     - name: Run interactive client script tests
-      if: false   # TEMPORARILY DISABLED DUE TO HANGING TESTS
       run: pytest tests/interactive_server/test_interactive_client_script.py
       shell: pwsh
