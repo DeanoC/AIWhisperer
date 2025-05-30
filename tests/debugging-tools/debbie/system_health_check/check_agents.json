@@ -1,0 +1,30 @@
+{
+  "name": "Agent Health Check",
+  "description": "Verify all agents are functioning correctly",
+  "steps": [
+    {
+      "command": "switch_agent",
+      "agent": "a",
+      "expect_response": ["Alice", "assistant", "friendly"]
+    },
+    {
+      "command": "switch_agent", 
+      "agent": "p",
+      "expect_response": ["Patricia", "RFC", "Producer"]
+    },
+    {
+      "command": "switch_agent",
+      "agent": "t", 
+      "expect_response": ["Tessa", "Tester", "test"]
+    },
+    {
+      "command": "switch_agent",
+      "agent": "d",
+      "expect_response": ["Debbie", "debugging", "🐛"]
+    },
+    {
+      "command": "message",
+      "content": "All agents tested successfully!"
+    }
+  ]
+}

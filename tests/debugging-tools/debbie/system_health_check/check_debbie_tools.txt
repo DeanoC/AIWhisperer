@@ -1,0 +1,20 @@
+# Debbie's Specialized Tools Check
+# Simple text format for batch commands
+
+# Test session health monitoring
+session_health current
+
+# Test session analysis with different focus areas
+session_analysis current errors
+session_analysis current performance
+
+# Test monitoring control
+monitoring_control status
+monitoring_control enable current
+monitoring_control set_threshold error_rate 15
+
+# Inject a test message
+message_injector current "Health check test message"
+
+# Final status check
+session_health current

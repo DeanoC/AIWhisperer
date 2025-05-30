@@ -71,10 +71,14 @@ class PromptResolver:
         2. Fallback to app_path (codebase) for agents/core if not found in project
         3. Fallback to default.md in the category directory (project then app_path)
         """
+        logger.info(f"resolve_prompt_path called: category={category}, name={name}")
 
         prompt_path = PathManager.get_instance().prompt_path
         app_path = PathManager.get_instance().app_path
 
+        # Track all attempted paths for debugging
+        attempted_paths = []
+        
         # 1. User-Defined Path (via PromptConfiguration overrides)
         override_path_str = self._prompt_config.get_override_path(category, name)
         if override_path_str:
@@ -84,8 +88,12 @@ class PromptResolver:
             else:
                 # Always resolve relative to prompt_path (no 'prompts' prefix)
                 candidate = PathManager.get_instance().prompt_path / override_path
+            attempted_paths.append(f"Override: {candidate}")
             if candidate.exists():
+                logger.info(f"✅ Found prompt at override path: {candidate}")
                 return candidate
+            else:
+                logger.debug(f"❌ Override path not found: {candidate}")
 
         # 2. User-Defined Path (via PromptConfiguration definitions)
         definition_path_str = self._prompt_config.get_definition_path(category, name)
@@ -93,8 +101,12 @@ class PromptResolver:
             resolved_definition = Path(PathManager.get_instance().resolve_path(definition_path_str))
             if not resolved_definition.is_absolute():
                 resolved_definition = PathManager.get_instance().prompt_path / resolved_definition
+            attempted_paths.append(f"Definition: {resolved_definition}")
             if resolved_definition.exists():
+                logger.info(f"✅ Found prompt at definition path: {resolved_definition}")
                 return resolved_definition
+            else:
+                logger.debug(f"❌ Definition path not found: {resolved_definition}")
 
         # 3. Custom Directory (project)
         custom_base = self._prompt_config.get_base_path("custom") or "prompts/custom"
@@ -102,33 +114,59 @@ class PromptResolver:
         if not custom_base_path.is_absolute():
             custom_base_path = PathManager.get_instance().prompt_path / custom_base_path
         custom_path = custom_base_path / category / f"{name}.prompt.md"
-        import sys
+        attempted_paths.append(f"Custom: {custom_path}")
         if custom_path.exists():
+            logger.info(f"✅ Found prompt at custom path: {custom_path}")
             return custom_path
+        else:
+            logger.debug(f"❌ Custom path not found: {custom_path}")
 
         # 4. Category-Specific Directory (prompt_path)
         category_path = prompt_path / "prompts" / category / f"{name}.prompt.md"
+        attempted_paths.append(f"Project category: {category_path}")
         if category_path.exists():
+            logger.info(f"✅ Found prompt at project category path: {category_path}")
             return category_path
+        else:
+            logger.debug(f"❌ Project category path not found: {category_path}")
 
         # 5. Fallback to default.md in the category directory (prompt_path)
         default_path = prompt_path / "prompts" / category / "default.md"
+        attempted_paths.append(f"Project default: {default_path}")
         if default_path.exists():
+            logger.warning(f"⚠️  FALLBACK: Using default.md from project path: {default_path}")
+            logger.warning(f"⚠️  Failed to find '{name}.prompt.md' in category '{category}'")
+            logger.warning(f"⚠️  Attempted paths: {attempted_paths}")
             return default_path
 
         # 6. Fallback to app_path (codebase prompts)
         category_path_app = app_path / "prompts" / category / f"{name}.prompt.md"
+        attempted_paths.append(f"App category: {category_path_app}")
         if category_path_app.exists():
+            logger.info(f"✅ Found prompt at app category path: {category_path_app}")
             return category_path_app
+        else:
+            logger.debug(f"❌ App category path not found: {category_path_app}")
 
         # 7. Fallback to default.md in the category directory (app_path)
         default_path_app = app_path / "prompts" / category / "default.md"
+        attempted_paths.append(f"App default: {default_path_app}")
         if default_path_app.exists():
+            logger.warning(f"⚠️  FALLBACK: Using default.md from app path: {default_path_app}")
+            logger.warning(f"⚠️  Failed to find '{name}.prompt.md' in category '{category}'")
+            logger.warning(f"⚠️  Attempted paths: {attempted_paths}")
             return default_path_app
 
         # final error if no default.md for category
+        logger.error(f"❌ CRITICAL: Failed to find prompt '{category}.{name}' or any fallback")
+        logger.error(f"❌ Attempted paths:")
+        for path in attempted_paths:
+            logger.error(f"   - {path}")
+        logger.error(f"❌ Current directories:")
+        logger.error(f"   - prompt_path: {prompt_path}")
+        logger.error(f"   - app_path: {app_path}")
         raise PromptNotFoundError(
-            f"Prompt '{category}.{name}' not found in project or codebase prompts, and no default.md for category '{category}' found in either project or app_path."
+            f"Prompt '{category}.{name}' not found in project or codebase prompts, and no default.md for category '{category}' found. Attempted paths: {attempted_paths}"
         )
 
 
@@ -164,9 +202,12 @@ class PromptSystem:
         Handles parameter injection if templating is supported.
         Raises PromptNotFoundError.
         """
+        logger.info(f"get_formatted_prompt called: category={category}, name={name}, include_tools={include_tools}")
         prompt = self.get_prompt(category, name)
+        logger.info(f"Resolved prompt path: {prompt.path}")
         # Assuming Prompt.content handles lazy loading
         content = prompt.content
+        logger.info(f"Loaded prompt content length: {len(content)}, first 100 chars: {content[:100]}")
 
         # Include tool instructions if requested and tool registry is available
         if include_tools and self._tool_registry:

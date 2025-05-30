@@ -153,12 +153,14 @@ specialized_sets:
       - message_injector
       - workspace_validator
       - python_executor
+      - system_health_check
     tags:
       - debugging
       - monitoring
       - intervention
       - analysis
       - python
+      - health_check
   
   # Batch processing tools for Debbie's batch mode
   batch_tools:

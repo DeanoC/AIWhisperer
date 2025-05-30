@@ -1,0 +1,18 @@
+# Debbie Self-Test Script
+# Use this script to test Debbie's tool usage after fixes
+
+Hi Debbie! Please process the following test commands to verify your tool functionality:
+
+1. Check your tool awareness: what debugging tools do you have available?
+
+2. Test session health: use your session_health tool to check this session
+
+3. Test global status: use your monitoring_control tool to check global monitoring status
+
+4. Test session analysis: use your session_analysis tool to analyze recent activity
+
+5. Run a comprehensive health check on this session
+
+6. Show me what patterns you can detect in sessions
+
+Please use your actual tools for each request and demonstrate your debugging capabilities.

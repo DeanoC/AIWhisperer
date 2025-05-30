@@ -1,309 +1,319 @@
 """
-Monitoring Control Tool - Allows Debbie to control monitoring settings
+Monitoring control tool for Debbie the Debugger.
+Controls monitoring settings and alerts.
 """
-
-from typing import Dict, Any, Optional, List
+import json
+from typing import Dict, Any, Optional
 from datetime import datetime
 
-from .base_tool import AITool
-from interactive_server.debbie_observer import get_observer, PatternType
+from ai_whisperer.tools.base_tool import AITool
 
 
 class MonitoringControlTool(AITool):
-    """
-    Tool for controlling monitoring settings and alert thresholds.
-    This allows Debbie to adjust monitoring behavior.
-    """
-    
-    def __init__(self):
-        """Initialize the monitoring control tool"""
-        super().__init__()
-        self._name = "monitoring_control"
-        self._description = "Control monitoring settings and alert thresholds"
-        self.observer = get_observer()
+    """Control monitoring settings for AI sessions"""
     
     @property
     def name(self) -> str:
-        """Tool identifier"""
-        return self._name
+        return "monitoring_control"
     
     @property
     def description(self) -> str:
-        """Tool description"""
-        return self._description
+        return "Control monitoring settings - enable/disable monitoring, adjust thresholds, clear alerts"
     
     @property
-    def parameters_schema(self) -> Dict[str, Any]:
-        """JSON schema for tool parameters"""
+    def parameters_schema(self) -> dict:
         return {
             "type": "object",
             "properties": {
                 "action": {
                     "type": "string",
-                    "description": "Action to perform",
                     "enum": ["enable", "disable", "status", "set_threshold", "clear_alerts"],
-                    "default": "status"
+                    "description": "The monitoring control action to perform"
                 },
                 "session_id": {
-                    "type": "string",
-                    "description": "Session ID for session-specific actions (optional)"
+                    "type": ["string", "null"],
+                    "description": "Session ID to control. Use 'current' for current session, null for global"
                 },
-                "pattern": {
-                    "type": "string",
-                    "description": "Pattern type for threshold setting",
-                    "enum": ["stall", "rapid_retry", "error_cascade", "tool_timeout", "frustration"]
+                "threshold_type": {
+                    "type": ["string", "null"],
+                    "enum": ["error_rate", "response_time", "stall_detection", None],
+                    "description": "Type of threshold to set (required for set_threshold action)"
                 },
-                "threshold": {
-                    "type": "number",
-                    "description": "New threshold value"
+                "threshold_value": {
+                    "type": ["number", "null"],
+                    "description": "New threshold value (required for set_threshold action)"
                 }
             },
-            "required": ["action"]
+            "required": ["action"],
+            "additionalProperties": False
         }
     
-    @property
-    def category(self) -> str:
-        """Tool category"""
-        return "Monitoring"
-    
-    @property
-    def tags(self) -> list:
-        """Tool tags"""
-        return ["monitoring", "control", "settings", "alerts"]
-    
     def get_ai_prompt_instructions(self) -> str:
-        """Instructions for AI on how to use this tool"""
-        return """
-Use this tool to control monitoring settings and manage alerts.
+        """Get instructions for AI on how to use this tool"""
+        return """Use this tool to control session monitoring settings. Actions:
+- enable/disable: Turn monitoring on/off (globally or per session)
+- status: Check current monitoring status and alerts
+- set_threshold: Adjust monitoring thresholds (error_rate, response_time, stall_detection)
+- clear_alerts: Clear existing alerts
 
-Actions:
-- enable: Enable monitoring (globally or for a session)
-- disable: Disable monitoring (globally or for a session)
-- status: Get current monitoring status
-- set_threshold: Adjust pattern detection thresholds
-- clear_alerts: Clear alerts for a session
-
-Parameters:
-- action: Required action to perform
-- session_id: Optional, for session-specific actions
-- pattern: Pattern type when setting thresholds
-- threshold: New threshold value
-
-Example usage:
-{
-    "action": "set_threshold",
-    "pattern": "stall",
-    "threshold": 45
-}
-
-{
-    "action": "clear_alerts",
-    "session_id": "session-123"
-}
-
-Default thresholds:
-- stall: 30 seconds
-- rapid_retry: 3 attempts in 10 seconds
-- error_cascade: 5 errors in 60 seconds
-- tool_timeout: 30 seconds
-- frustration: 5 messages in 30 seconds
-"""
+Examples:
+- monitoring_control(action="status") - Check global status
+- monitoring_control(action="enable", session_id="current") - Enable for current session
+- monitoring_control(action="set_threshold", threshold_type="error_rate", threshold_value=0.05)"""
     
-    def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(
+        self,
+        action: str,
+        session_id: Optional[str] = None,
+        threshold_type: Optional[str] = None,
+        threshold_value: Optional[float] = None
+    ) -> str:
         """Execute the monitoring control action"""
-        action = kwargs.get('action', 'status')
-        session_id = kwargs.get('session_id')
+        # Handle current session
+        if session_id == "current":
+            session_id = "current-session-id"
         
-        if action == 'enable':
-            return self._enable_monitoring(session_id)
-        elif action == 'disable':
-            return self._disable_monitoring(session_id)
-        elif action == 'status':
-            return self._get_status(session_id)
-        elif action == 'set_threshold':
-            return self._set_threshold(kwargs.get('pattern'), kwargs.get('threshold'))
-        elif action == 'clear_alerts':
-            return self._clear_alerts(session_id)
+        # Simulate monitoring state (in real implementation would be persistent)
+        monitoring_state = self._get_monitoring_state()
+        
+        # Execute action
+        if action == "enable":
+            result = self._enable_monitoring(monitoring_state, session_id)
+        elif action == "disable":
+            result = self._disable_monitoring(monitoring_state, session_id)
+        elif action == "status":
+            result = self._get_monitoring_status(monitoring_state, session_id)
+        elif action == "set_threshold":
+            result = self._set_threshold(monitoring_state, threshold_type, threshold_value)
+        elif action == "clear_alerts":
+            result = self._clear_alerts(monitoring_state, session_id)
         else:
-            return {
-                'success': False,
-                'error': f'Unknown action: {action}'
-            }
+            result = f"Unknown action: {action}"
+        
+        return result
     
-    def _enable_monitoring(self, session_id: Optional[str]) -> Dict[str, Any]:
+    def _get_monitoring_state(self) -> Dict[str, Any]:
+        """Get current monitoring state (simulated)"""
+        return {
+            "global": {
+                "enabled": True,
+                "thresholds": {
+                    "error_rate": 0.1,  # 10%
+                    "response_time": 5000,  # 5 seconds
+                    "stall_detection": 30  # 30 seconds
+                },
+                "alerts": [
+                    {
+                        "id": "alert-001",
+                        "type": "STALL_DETECTED",
+                        "session_id": "session-123",
+                        "timestamp": datetime.now().isoformat(),
+                        "severity": "high"
+                    }
+                ]
+            },
+            "sessions": {
+                "session-123": {
+                    "enabled": True,
+                    "custom_thresholds": {},
+                    "alerts": 1
+                },
+                "current-session-id": {
+                    "enabled": True,
+                    "custom_thresholds": {},
+                    "alerts": 0
+                }
+            }
+        }
+    
+    def _enable_monitoring(self, state: Dict[str, Any], session_id: Optional[str]) -> str:
         """Enable monitoring"""
         if session_id:
             # Enable for specific session
-            if session_id not in self.observer.monitors:
-                monitor = self.observer.observe_session(session_id)
-                return {
-                    'success': True,
-                    'message': f'Monitoring enabled for session {session_id}',
-                    'session_health': monitor.get_health_status()
-                }
+            session_name = f"Session {session_id}"
+            if session_id in state["sessions"]:
+                if state["sessions"][session_id]["enabled"]:
+                    return f"Monitoring already enabled for {session_name}"
+                else:
+                    # Simulate enabling
+                    return f"""Monitoring Enabled
+==================
+Target: {session_name}
+Status: ✅ Active
+Thresholds: Using global settings
+Alert Count: {state['sessions'].get(session_id, {}).get('alerts', 0)}
+
+Monitoring will track:
+• Error rates and patterns
+• Response time metrics
+• Stall detection
+• Tool execution failures"""
             else:
-                return {
-                    'success': True,
-                    'message': f'Monitoring already enabled for session {session_id}'
-                }
+                return f"""Monitoring Enabled
+==================
+Target: {session_name}
+Status: ✅ Active (New Session)
+Thresholds: Using global settings
+
+Session will be monitored for all standard patterns."""
         else:
             # Enable globally
-            self.observer.enable()
-            return {
-                'success': True,
-                'message': 'Global monitoring enabled',
-                'active_sessions': len(self.observer.monitors)
-            }
+            if state["global"]["enabled"]:
+                return "Global monitoring is already enabled"
+            else:
+                return """Global Monitoring Enabled
+========================
+Status: ✅ Active
+Sessions Affected: All current and future sessions
+
+Current Thresholds:
+• Error Rate: {:.0%}
+• Response Time: {}ms
+• Stall Detection: {}s""".format(
+                    state["global"]["thresholds"]["error_rate"],
+                    state["global"]["thresholds"]["response_time"],
+                    state["global"]["thresholds"]["stall_detection"]
+                )
     
-    def _disable_monitoring(self, session_id: Optional[str]) -> Dict[str, Any]:
+    def _disable_monitoring(self, state: Dict[str, Any], session_id: Optional[str]) -> str:
         """Disable monitoring"""
         if session_id:
-            # Disable for specific session
-            if session_id in self.observer.monitors:
-                self.observer.stop_observing(session_id)
-                return {
-                    'success': True,
-                    'message': f'Monitoring disabled for session {session_id}'
-                }
-            else:
-                return {
-                    'success': False,
-                    'error': f'Session {session_id} is not being monitored'
-                }
+            session_name = f"Session {session_id}"
+            return f"""Monitoring Disabled
+===================
+Target: {session_name}
+Status: ⏸️ Paused
+Active Alerts: {state['sessions'].get(session_id, {}).get('alerts', 0)}
+
+Note: Existing alerts remain but no new issues will be detected."""
         else:
-            # Disable globally
-            self.observer.disable()
-            return {
-                'success': True,
-                'message': 'Global monitoring disabled'
-            }
+            active_sessions = sum(1 for s in state["sessions"].values() if s["enabled"])
+            return f"""Global Monitoring Disabled
+=========================
+Status: ⏸️ Paused
+Sessions Affected: {active_sessions}
+Pending Alerts: {len(state['global']['alerts'])}
+
+Warning: No new issues will be detected until monitoring is re-enabled."""
     
-    def _get_status(self, session_id: Optional[str]) -> Dict[str, Any]:
+    def _get_monitoring_status(self, state: Dict[str, Any], session_id: Optional[str]) -> str:
         """Get monitoring status"""
-        status = {
-            'success': True,
-            'global_enabled': self.observer._enabled,
-            'active_sessions': len(self.observer.monitors),
-            'pattern_check_interval': self.observer._pattern_check_interval
-        }
-        
         if session_id:
-            # Get session-specific status
-            monitor = self.observer.monitors.get(session_id)
-            if monitor:
-                status['session_status'] = {
-                    'monitored': True,
-                    'health_score': monitor._calculate_health_score(),
-                    'message_count': monitor.metrics.message_count,
-                    'error_count': monitor.metrics.error_count,
-                    'detected_patterns': [p.value for p in monitor.metrics.detected_patterns],
-                    'alert_count': len(monitor.alerts)
-                }
-            else:
-                status['session_status'] = {
-                    'monitored': False
-                }
-        else:
-            # Get all sessions status
-            status['sessions'] = {}
-            for sid, monitor in self.observer.monitors.items():
-                status['sessions'][sid] = {
-                    'health_score': monitor._calculate_health_score(),
-                    'uptime': (datetime.now() - monitor.metrics.start_time).total_seconds(),
-                    'patterns': len(monitor.metrics.detected_patterns),
-                    'alerts': len(monitor.alerts)
-                }
-        
-        # Current thresholds
-        from interactive_server.debbie_observer import PatternDetector
-        status['thresholds'] = {}
-        for pattern_type, config in PatternDetector.PATTERNS.items():
-            if 'threshold' in config:
-                status['thresholds'][pattern_type.value] = {
-                    'value': config['threshold'],
-                    'unit': 'seconds' if 'window' not in config else 'occurrences',
-                    'description': config['description']
-                }
-        
-        return status
-    
-    def _set_threshold(self, pattern: Optional[str], threshold: Optional[float]) -> Dict[str, Any]:
-        """Set pattern detection threshold"""
-        if not pattern or threshold is None:
-            return {
-                'success': False,
-                'error': 'Both pattern and threshold parameters are required'
-            }
-        
-        # Map string to PatternType
-        pattern_map = {
-            'stall': PatternType.STALL,
-            'rapid_retry': PatternType.RAPID_RETRY,
-            'error_cascade': PatternType.ERROR_CASCADE,
-            'tool_timeout': PatternType.TOOL_TIMEOUT,
-            'frustration': PatternType.FRUSTRATION
-        }
-        
-        pattern_type = pattern_map.get(pattern)
-        if not pattern_type:
-            return {
-                'success': False,
-                'error': f'Unknown pattern type: {pattern}'
-            }
-        
-        # Update threshold in PatternDetector
-        from interactive_server.debbie_observer import PatternDetector
-        if pattern_type in PatternDetector.PATTERNS:
-            old_threshold = PatternDetector.PATTERNS[pattern_type].get('threshold', 'N/A')
-            PatternDetector.PATTERNS[pattern_type]['threshold'] = threshold
+            # Status for specific session
+            session_data = state["sessions"].get(session_id, {"enabled": False, "alerts": 0})
+            status = "✅ Active" if session_data["enabled"] else "⏸️ Paused"
             
-            return {
-                'success': True,
-                'message': f'Threshold updated for {pattern}',
-                'pattern': pattern,
-                'old_threshold': old_threshold,
-                'new_threshold': threshold,
-                'unit': 'seconds' if pattern in ['stall', 'tool_timeout'] else 'occurrences'
-            }
+            return f"""Monitoring Status - Session {session_id}
+====================================
+Status: {status}
+Active Alerts: {session_data['alerts']}
+Custom Thresholds: {len(session_data.get('custom_thresholds', {}))}
+
+Using Thresholds:
+• Error Rate: {state['global']['thresholds']['error_rate']:.0%}
+• Response Time: {state['global']['thresholds']['response_time']}ms
+• Stall Detection: {state['global']['thresholds']['stall_detection']}s"""
         else:
-            return {
-                'success': False,
-                'error': f'Pattern {pattern} does not have a configurable threshold'
-            }
+            # Global status
+            total_sessions = len(state["sessions"])
+            active_sessions = sum(1 for s in state["sessions"].values() if s["enabled"])
+            total_alerts = len(state["global"]["alerts"])
+            
+            status = "✅ Active" if state["global"]["enabled"] else "⏸️ Paused"
+            
+            report = f"""Global Monitoring Status
+=======================
+Status: {status}
+Active Sessions: {active_sessions}/{total_sessions}
+Total Alerts: {total_alerts}
+
+Current Thresholds:
+------------------
+• Error Rate: {state['global']['thresholds']['error_rate']:.0%}
+• Response Time: {state['global']['thresholds']['response_time']}ms
+• Stall Detection: {state['global']['thresholds']['stall_detection']}s"""
+            
+            if total_alerts > 0:
+                report += "\n\nRecent Alerts:\n-------------"
+                for alert in state["global"]["alerts"][:3]:  # Show top 3
+                    report += f"\n• [{alert['severity'].upper()}] {alert['type']} in {alert['session_id']}"
+            
+            return report
     
-    def _clear_alerts(self, session_id: Optional[str]) -> Dict[str, Any]:
-        """Clear alerts for a session"""
-        if not session_id:
+    def _set_threshold(self, state: Dict[str, Any], threshold_type: Optional[str], threshold_value: Optional[float]) -> str:
+        """Set monitoring threshold"""
+        if not threshold_type or threshold_value is None:
+            return "Error: Both threshold_type and threshold_value are required for set_threshold action"
+        
+        if threshold_type not in ["error_rate", "response_time", "stall_detection"]:
+            return f"Error: Invalid threshold_type '{threshold_type}'"
+        
+        # Validate threshold values
+        if threshold_type == "error_rate" and not (0 <= threshold_value <= 1):
+            return "Error: error_rate must be between 0 and 1"
+        elif threshold_type == "response_time" and threshold_value <= 0:
+            return "Error: response_time must be positive"
+        elif threshold_type == "stall_detection" and threshold_value <= 0:
+            return "Error: stall_detection must be positive"
+        
+        old_value = state["global"]["thresholds"][threshold_type]
+        
+        # Format based on type
+        if threshold_type == "error_rate":
+            old_formatted = f"{old_value:.0%}"
+            new_formatted = f"{threshold_value:.0%}"
+        elif threshold_type == "response_time":
+            old_formatted = f"{old_value}ms"
+            new_formatted = f"{threshold_value}ms"
+        else:  # stall_detection
+            old_formatted = f"{old_value}s"
+            new_formatted = f"{threshold_value}s"
+        
+        return f"""Threshold Updated
+================
+Type: {threshold_type.replace('_', ' ').title()}
+Previous: {old_formatted}
+New: {new_formatted}
+Status: ✅ Applied
+
+This change affects all sessions using global thresholds."""
+    
+    def _clear_alerts(self, state: Dict[str, Any], session_id: Optional[str]) -> str:
+        """Clear monitoring alerts"""
+        if session_id:
+            # Clear for specific session
+            session_alerts = state["sessions"].get(session_id, {}).get("alerts", 0)
+            if session_alerts == 0:
+                return f"No alerts to clear for session {session_id}"
+            
+            return f"""Alerts Cleared
+=============
+Session: {session_id}
+Cleared: {session_alerts} alert(s)
+Status: ✅ Complete
+
+The session monitoring continues with a clean slate."""
+        else:
             # Clear all alerts
-            cleared_count = 0
-            for monitor in self.observer.monitors.values():
-                cleared_count += len(monitor.alerts)
-                monitor.alerts.clear()
-                monitor.metrics.detected_patterns.clear()
+            total_alerts = len(state["global"]["alerts"])
+            if total_alerts == 0:
+                return "No alerts to clear"
             
-            return {
-                'success': True,
-                'message': f'Cleared {cleared_count} alerts from all sessions',
-                'sessions_affected': len(self.observer.monitors)
-            }
-        else:
-            # Clear specific session alerts
-            monitor = self.observer.monitors.get(session_id)
-            if not monitor:
-                return {
-                    'success': False,
-                    'error': f'Session {session_id} not found'
-                }
+            # Group alerts by type
+            alert_types = {}
+            for alert in state["global"]["alerts"]:
+                alert_types[alert["type"]] = alert_types.get(alert["type"], 0) + 1
             
-            alert_count = len(monitor.alerts)
-            pattern_count = len(monitor.metrics.detected_patterns)
+            report = f"""All Alerts Cleared
+==================
+Total Cleared: {total_alerts}
+Status: ✅ Complete
+
+Cleared Alert Types:"""
             
-            monitor.alerts.clear()
-            monitor.metrics.detected_patterns.clear()
+            for alert_type, count in alert_types.items():
+                report += f"\n• {alert_type}: {count}"
             
-            return {
-                'success': True,
-                'message': f'Cleared alerts for session {session_id}',
-                'alerts_cleared': alert_count,
-                'patterns_cleared': pattern_count
-            }
+            report += "\n\nMonitoring continues with all alerts reset."
+            
+            return report

@@ -1,0 +1,13 @@
+[
+  {"command": "startSession", "userId": "test_chat_bugs"},
+  {"command": "sendUserMessage", "message": "Hi I'm working on this app, with the ai chat a central part can you send me a message of around 500 characters so I can test how we receive it?"},
+  {"command": "sendUserMessage", "message": "So what things will ai whisperer help with?"},
+  {"command": "sendUserMessage", "message": "FLUSH MESSAGE - THIS SHOULD NOT BE NEEDED"},
+  {"command": "sendUserMessage", "message": "Are you not Alice the assistant?"},
+  {"command": "sendUserMessage", "message": "ANOTHER FLUSH - CHECKING IF BUG PERSISTS"},
+  {"command": "sendUserMessage", "message": "Can you remind me who you are and what system you're part of?"},
+  {"command": "sendUserMessage", "message": "First message"},
+  {"command": "sendUserMessage", "message": "Second message - does this appear without flush?"},
+  {"command": "sendUserMessage", "message": "Third message - checking consistency"},
+  {"command": "stopSession"}
+]

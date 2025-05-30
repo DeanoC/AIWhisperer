@@ -1,0 +1,50 @@
+{
+  "name": "Agent Announcement Health Check", 
+  "description": "Test that all agents introduce themselves properly when switched to",
+  "steps": [
+    {
+      "command": "message",
+      "content": "Starting agent announcement tests..."
+    },
+    {
+      "command": "switch_agent", 
+      "agent": "a",
+      "expect_response": ["Alice", "assistant", "coding"],
+      "timeout": 10
+    },
+    {
+      "command": "message",
+      "content": "Alice announcement test complete"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "p", 
+      "expect_response": ["Patricia", "RFC", "Producer"],
+      "timeout": 10
+    },
+    {
+      "command": "message",
+      "content": "Patricia announcement test complete"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "t",
+      "expect_response": ["Tessa", "Tester", "test"],
+      "timeout": 10
+    },
+    {
+      "command": "message",
+      "content": "Tessa announcement test complete"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "d",
+      "expect_response": ["Debbie", "debugging", "🐛"],
+      "timeout": 10
+    },
+    {
+      "command": "message",
+      "content": "✅ All agent announcements tested successfully!"
+    }
+  ]
+}

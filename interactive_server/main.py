@@ -1,11 +1,21 @@
 import os
+import sys
 import logging
 import argparse
+
+# Ensure we're using modules from the current worktree directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+    print(f"Added {project_root} to Python path to ensure correct module loading")
 
 # Set up logging early
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.info("Starting AIWhisperer interactive server...")
+logger.info(f"Python executable: {sys.executable}")
+logger.info(f"Project root: {project_root}")
 
 import ai_whisperer.commands.echo
 import ai_whisperer.commands.status
@@ -200,6 +210,8 @@ def parse_args():
                        help="Monitoring level: passive (observe only) or active (can intervene)")
     parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "config.yaml"),
                        help="Configuration file path")
+    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
     return parser.parse_args()
 
 def initialize_server(cli_args=None):
@@ -270,6 +282,22 @@ try:
     path_manager = PathManager.get_instance()
     path_manager.initialize(config_values=app_config)
     logging.info("PathManager initialized successfully")
+    logging.info(f"  - app_path: {path_manager.app_path}")
+    logging.info(f"  - prompt_path: {path_manager.prompt_path}")
+    logging.info(f"  - workspace_path: {path_manager.workspace_path}")
+    logging.info(f"  - project_path: {path_manager.project_path}")
+    
+    # Verify prompts directory exists
+    prompts_dir = path_manager.app_path / "prompts" / "agents"
+    if prompts_dir.exists():
+        agent_prompts = list(prompts_dir.glob("*.md"))
+        logging.info(f"  - Found {len(agent_prompts)} agent prompts in {prompts_dir}")
+        if any("debbie" in p.name.lower() for p in agent_prompts):
+            logging.info("  - ✓ Debbie's prompt file found")
+        else:
+            logging.warning("  - ⚠️ Debbie's prompt file NOT found in agent prompts!")
+    else:
+        logging.warning(f"  - ⚠️ Prompts directory not found at {prompts_dir}")
 except Exception as e:
     logging.error(f"Failed to initialize PathManager: {e}")
     # Continue without PathManager
@@ -297,9 +325,11 @@ if path_manager:
 # Initialize prompt system
 prompt_system = None
 try:
+    from ai_whisperer.tools.tool_registry import get_tool_registry
     prompt_config = PromptConfiguration(app_config)
-    prompt_system = PromptSystem(prompt_config)
-    logging.info("PromptSystem initialized successfully")
+    tool_registry = get_tool_registry()
+    prompt_system = PromptSystem(prompt_config, tool_registry)
+    logging.info("PromptSystem initialized successfully with tool registry")
 except Exception as e:
     logging.error(f"Failed to initialize PromptSystem: {e}")
     # Continue without prompt system
@@ -607,8 +637,24 @@ async def handle_websocket_message(websocket, data):
                 "error": {"code": -32603, "message": "Internal error"}
             }
     else:
-        # Notification - do nothing
-        return None
+        # Notification - still process certain critical methods
+        method = msg.get("method", "")
+        if method in ["sendUserMessage", "provideToolResult"]:
+            # These methods should be processed even as notifications
+            # to prevent message buffering issues
+            logging.warning(f"[handle_websocket_message] Processing critical notification: {method}")
+            try:
+                # Create a fake ID for internal processing
+                msg["id"] = f"notification_{method}_{id(msg)}"
+                response = await process_json_rpc_request(msg, websocket)
+                # Don't return the response for notifications
+                return None
+            except Exception as e:
+                logging.error(f"[handle_websocket_message] Error processing notification: {e}")
+                return None
+        else:
+            # Other notifications - do nothing
+            return None
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -621,6 +667,14 @@ async def websocket_endpoint(websocket: WebSocket):
             logging.debug("[websocket_endpoint] Waiting for message...")
             data = await websocket.receive_text()
             logging.error(f"[websocket_endpoint] CRITICAL: Received message: {data}")
+            
+            # Debug: Check if this is a notification
+            try:
+                parsed_data = json.loads(data)
+                if isinstance(parsed_data, dict) and "method" in parsed_data and "id" not in parsed_data:
+                    logging.warning(f"[websocket_endpoint] WARNING: Received notification for method: {parsed_data.get('method')}")
+            except:
+                pass
             
             response = await handle_websocket_message(websocket, data)
             logging.error(f"[websocket_endpoint] CRITICAL: Generated response: {response}")
@@ -639,6 +693,24 @@ async def websocket_endpoint(websocket: WebSocket):
             websocket_closed = True
             break
     
+    # Cleanup session when WebSocket closes
+    try:
+        if websocket in session_manager.websocket_sessions:
+            session_id = session_manager.websocket_sessions[websocket]
+            logging.info(f"[websocket_endpoint] Cleaning up session {session_id} for closed WebSocket")
+            
+            # Remove the WebSocket association
+            del session_manager.websocket_sessions[websocket]
+            
+            # Note: We don't remove the session itself - it may be reconnected
+            # But we should mark it as disconnected
+            if session_id in session_manager.sessions:
+                session = session_manager.sessions[session_id]
+                session.websocket = None  # Clear the WebSocket reference
+                logging.info(f"[websocket_endpoint] Cleared WebSocket reference for session {session_id}")
+    except Exception as cleanup_error:
+        logging.error(f"[websocket_endpoint] Error during session cleanup: {cleanup_error}")
+    
     logging.debug("[websocket_endpoint] WebSocket endpoint exiting, closing websocket.")
     if not websocket_closed:
         try:
@@ -651,5 +723,5 @@ async def websocket_endpoint(websocket: WebSocket):
 if __name__ == "__main__":
     import uvicorn
     # CLI args are already parsed in the initialization above
-    logger.info(f"Starting server with Debbie monitoring: {cli_args.debbie_monitor}")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    logger.info(f"Starting server on {cli_args.host}:{cli_args.port} with Debbie monitoring: {cli_args.debbie_monitor}")
+    uvicorn.run(app, host=cli_args.host, port=cli_args.port)

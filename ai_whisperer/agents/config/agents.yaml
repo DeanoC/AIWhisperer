@@ -9,15 +9,6 @@ agents:
     color: "#9C27B0"
     icon: "📝"
     tool_sets: ["rfc_management", "codebase_analysis", "web_research"]
-    continuation_config:
-      rules:
-        - trigger_tools: ["list_rfcs"]
-          keywords: ["create", "new", "add", "make", "generate", "write", "draft", "test"]
-          continuation_message: "Now create the RFC as requested. Use any details mentioned in the conversation, or use reasonable defaults for title, author, and body."
-        - trigger_tools: ["list_rfcs"]
-          keywords: ["rfc for", "rfc about"]
-          continuation_message: "Now create the RFC for the topic mentioned."
-      default_message: "Continue with the RFC refinement process."
   
   a:
     name: "Alice the AI Assistant"
@@ -73,27 +64,3 @@ agents:
         execution_timeout: 3600   # 1 hour
         auto_continue: true
         error_handling: "continue_on_error"
-    continuation_config:
-      rules:
-        - trigger_tools: ["session_inspector", "log_analyzer"]
-          keywords: ["stall", "stuck", "waiting", "timeout", "not responding"]
-          continuation_message: "Based on the analysis, I'll now attempt to resolve the issue. Let me inject a continuation prompt to unstick the agent."
-        - trigger_tools: ["python_executor"]
-          keywords: ["analyze", "debug", "investigate", "examine"]
-          continuation_message: "I've executed the debugging script. Let me analyze the results and provide recommendations."
-        - trigger_tools: ["script_parser"]
-          keywords: ["parse", "read", "load", "process"]
-          continuation_message: "I've parsed the script. Now let me execute the commands in sequence."
-        - trigger_tools: ["batch_command"]
-          keywords: ["execute", "run", "process", "command"]
-          continuation_message: "Command executed. Proceeding to the next command in the script."
-        - trigger_tools: ["session_health"]
-          keywords: ["health", "status", "check", "monitor"]
-          continuation_message: "I've checked the session health. Let me analyze the results and provide insights."
-        - trigger_tools: ["session_analysis"]
-          keywords: ["analyze", "investigate", "diagnose", "troubleshoot"]
-          continuation_message: "Based on my analysis, here are my findings and recommendations."
-        - trigger_tools: ["monitoring_control"]
-          keywords: ["enable", "disable", "configure", "adjust", "threshold"]
-          continuation_message: "Monitoring settings have been updated. The changes are now active."
-      default_message: "Continue with the current task."

@@ -1,0 +1,40 @@
+name: Tool Functionality Check
+description: Test core tool operations
+steps:
+  - command: use_tool
+    tool: write_file
+    params:
+      path: test_health_check.txt
+      content: |
+        Health check test file
+        Created by Debbie's system health check
+        Timestamp: {{timestamp}}
+    
+  - command: use_tool
+    tool: read_file
+    params:
+      path: test_health_check.txt
+    expect_output: "Health check test file"
+    
+  - command: use_tool
+    tool: list_directory
+    params:
+      path: .
+      recursive: false
+    expect_output: ["test_health_check.txt"]
+    
+  - command: use_tool
+    tool: workspace_stats
+    params:
+      path: .
+      max_depth: 2
+    expect_output: ["files", "size", "total"]
+    
+  - command: use_tool
+    tool: session_health
+    params:
+      session_id: current
+    expect_output: ["Health Score", "Status"]
+    
+  - command: message
+    content: "Core tools tested successfully!"

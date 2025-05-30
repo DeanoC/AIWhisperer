@@ -148,6 +148,34 @@ class StatelessInteractiveSession:
         tool_registry.register_tool(WebSearchTool())
         tool_registry.register_tool(FetchURLTool())
         
+        # Register Debbie's debugging and monitoring tools
+        try:
+            from ai_whisperer.tools.session_health_tool import SessionHealthTool
+            from ai_whisperer.tools.session_analysis_tool import SessionAnalysisTool
+            from ai_whisperer.tools.monitoring_control_tool import MonitoringControlTool
+            from ai_whisperer.tools.session_inspector_tool import SessionInspectorTool
+            from ai_whisperer.tools.message_injector_tool import MessageInjectorTool
+            from ai_whisperer.tools.workspace_validator_tool import WorkspaceValidatorTool
+            from ai_whisperer.tools.python_executor_tool import PythonExecutorTool
+            from ai_whisperer.tools.script_parser_tool import ScriptParserTool
+            from ai_whisperer.tools.batch_command_tool import BatchCommandTool
+            
+            tool_registry.register_tool(SessionHealthTool())
+            tool_registry.register_tool(SessionAnalysisTool())
+            tool_registry.register_tool(MonitoringControlTool())
+            tool_registry.register_tool(SessionInspectorTool())
+            tool_registry.register_tool(MessageInjectorTool())
+            tool_registry.register_tool(WorkspaceValidatorTool())
+            tool_registry.register_tool(PythonExecutorTool())
+            tool_registry.register_tool(ScriptParserTool())
+            tool_registry.register_tool(BatchCommandTool())
+            
+            logger.info("Successfully registered Debbie's debugging and batch processing tools")
+        except ImportError as e:
+            logger.warning(f"Some debugging/batch tools not available: {e}")
+        except Exception as e:
+            logger.error(f"Failed to register debugging/batch tools: {e}")
+        
         logger.info("Registered all tools for interactive session")
     
     def _create_stateless_ai_loop(self, agent_id: str = None) -> StatelessAILoop:
@@ -158,7 +186,8 @@ class StatelessInteractiveSession:
             api_key=openrouter_config.get("api_key"),
             model_id=openrouter_config.get("model", "openai/gpt-3.5-turbo"),
             temperature=openrouter_config.get("params", {}).get("temperature", 0.7),
-            max_tokens=openrouter_config.get("params", {}).get("max_tokens", 1000)
+            max_tokens=openrouter_config.get("params", {}).get("max_tokens", 1000),
+            max_reasoning_tokens=openrouter_config.get("params", {}).get("max_reasoning_tokens", None)
         )
         
         # Create AI service
@@ -295,44 +324,75 @@ class StatelessInteractiveSession:
                 
                 # Load the agent's prompt from the prompt system
                 system_prompt = f"You are {agent_info.name}, {agent_info.description}"  # Better fallback
+                prompt_source = "fallback"  # Track where the prompt came from
+                
                 if self.prompt_system and agent_info.prompt_file:
                     logger.info(f"Attempting to load prompt file: {agent_info.prompt_file}")
                     try:
-                        # Remove .prompt.md extension if present for prompt system
+                        # Try with prompt system first to get proper tool instructions
                         prompt_name = agent_info.prompt_file
                         if prompt_name.endswith('.prompt.md'):
                             prompt_name = prompt_name[:-10]  # Remove '.prompt.md'
                         elif prompt_name.endswith('.md'):
                             prompt_name = prompt_name[:-3]  # Remove '.md'
                         
-                        logger.info(f"Trying to load prompt: agents/{prompt_name}")
+                        logger.info(f"Trying to load prompt via PromptSystem with tools: agents/{prompt_name}")
                         try:
-                            prompt = self.prompt_system.get_formatted_prompt("agents", prompt_name)
+                            # Include tools for debugging agents like Debbie
+                            include_tools = agent_id.lower() in ['d', 'debbie'] or 'debug' in agent_info.name.lower()
+                            prompt = self.prompt_system.get_formatted_prompt("agents", prompt_name, include_tools=include_tools)
                             system_prompt = prompt
-                            logger.info(f"Successfully loaded prompt for {agent_id}")
+                            prompt_source = f"prompt_system:agents/{prompt_name}" + (" (with_tools)" if include_tools else "")
+                            logger.info(f"✅ Successfully loaded prompt via PromptSystem for {agent_id} (tools included: {include_tools})")
                         except Exception as e1:
-                            logger.warning(f"Failed to load prompt via PromptSystem: {e1}")
+                            logger.warning(f"⚠️ PromptSystem failed: {e1}, trying direct file read")
                             # Try direct file read as fallback
-                            try:
-                                from pathlib import Path
-                                prompt_file = Path("prompts") / "agents" / agent_info.prompt_file
-                                if prompt_file.exists():
-                                    with open(prompt_file, 'r', encoding='utf-8') as f:
-                                        system_prompt = f.read()
-                                    logger.info(f"Successfully loaded prompt via direct file read for {agent_id}")
+                            from pathlib import Path
+                            prompt_file = Path("prompts") / "agents" / agent_info.prompt_file
+                            if prompt_file.exists():
+                                with open(prompt_file, 'r', encoding='utf-8') as f:
+                                    base_prompt = f.read()
+                                
+                                # Add tool instructions manually for debugging agents
+                                if agent_id.lower() in ['d', 'debbie'] or 'debug' in agent_info.name.lower():
+                                    try:
+                                        from ai_whisperer.tools.tool_registry import get_tool_registry
+                                        tool_registry = get_tool_registry()
+                                        tool_instructions = tool_registry.get_all_ai_prompt_instructions()
+                                        if tool_instructions:
+                                            system_prompt = base_prompt + "\n\n## AVAILABLE TOOLS\n" + tool_instructions
+                                            prompt_source = f"direct_file:{prompt_file} (with_tools)"
+                                            logger.info(f"✅ Added tool instructions to direct file prompt for {agent_id}")
+                                        else:
+                                            system_prompt = base_prompt
+                                            prompt_source = f"direct_file:{prompt_file} (no_tools)"
+                                            logger.warning(f"⚠️ No tool instructions available for {agent_id}")
+                                    except Exception as e2:
+                                        logger.warning(f"⚠️ Failed to add tool instructions: {e2}")
+                                        system_prompt = base_prompt
+                                        prompt_source = f"direct_file:{prompt_file} (tools_failed)"
                                 else:
-                                    logger.warning(f"Prompt file not found: {prompt_file}")
-                            except Exception as e2:
-                                logger.warning(f"Direct file read also failed: {e2}")
+                                    system_prompt = base_prompt
+                                    prompt_source = f"direct_file:{prompt_file}"
+                                
+                                logger.info(f"✅ Successfully loaded prompt via direct file read for {agent_id}: {prompt_file}")
+                            else:
+                                logger.warning(f"❌ Prompt file not found: {prompt_file}")
+                                logger.warning(f"❌ FALLBACK ACTIVATED: Using basic fallback prompt for {agent_info.name}")
+                                prompt_source = "basic_fallback"
                                 # Keep the fallback prompt
-                                logger.info(f"Using fallback prompt for {agent_info.name}")
                     except Exception as e:
-                        logger.error(f"Failed to load prompt for agent {agent_id}: {e}")
-                        logger.error(f"Using fallback prompt for {agent_info.name}")
+                        logger.error(f"❌ Failed to load prompt for agent {agent_id}: {e}")
+                        logger.error(f"❌ FALLBACK ACTIVATED: Using basic fallback prompt for {agent_info.name}")
+                        prompt_source = "error_fallback"
+                else:
+                    logger.warning(f"⚠️ No prompt system or prompt file configured for {agent_id}, using basic fallback")
+                    prompt_source = "no_config_fallback"
                 
                 # Create the agent with the loaded prompt and registry info
+                logger.info(f"📝 Agent {agent_id} ({agent_info.name}) prompt loaded from: {prompt_source}")
                 logger.info(f"About to create agent with prompt: {system_prompt[:200]}...")
-                await self._create_agent_internal(agent_id, system_prompt, agent_registry_info=agent_info)
+                await self._create_agent_internal(agent_id, system_prompt, config=None, agent_registry_info=agent_info)
                 logger.info(f"Created agent '{agent_id}' from registry with system prompt")
             
             # Verify agent exists now
@@ -418,6 +478,11 @@ class StatelessInteractiveSession:
             async def send_chunk(chunk: str):
                 """Send a chunk of AI response to the client"""
                 try:
+                    # Check if WebSocket is still connected
+                    if self.websocket is None:
+                        logger.warning(f"WebSocket disconnected for session {self.session_id}, skipping chunk")
+                        return
+                        
                     notification = AIMessageChunkNotification(
                         sessionId=self.session_id,
                         chunk=chunk,
@@ -431,6 +496,9 @@ class StatelessInteractiveSession:
                     logger.debug(f"Sent chunk: {len(chunk)} chars")
                 except Exception as e:
                     logger.error(f"Error sending chunk: {e}")
+                    # If we get a RuntimeError about closed connection, clear the WebSocket
+                    if "closed" in str(e).lower():
+                        self.websocket = None
             
             # Process message with streaming
             result = await agent.process_message(message, on_stream_chunk=send_chunk)
@@ -444,17 +512,23 @@ class StatelessInteractiveSession:
                     'error': f'Unexpected result type: {type(result)}'
                 }
             
-            # Send final notification
-            final_notification = AIMessageChunkNotification(
-                sessionId=self.session_id,
-                chunk="",
-                isFinal=True
-            )
-            await self.websocket.send_json({
-                "jsonrpc": "2.0",
-                "method": "AIMessageChunkNotification",
-                "params": final_notification.model_dump()
-            })
+            # Send final notification if WebSocket is still connected
+            if self.websocket is not None:
+                try:
+                    final_notification = AIMessageChunkNotification(
+                        sessionId=self.session_id,
+                        chunk="",
+                        isFinal=True
+                    )
+                    await self.websocket.send_json({
+                        "jsonrpc": "2.0",
+                        "method": "AIMessageChunkNotification",
+                        "params": final_notification.model_dump()
+                    })
+                except Exception as e:
+                    logger.error(f"Error sending final notification: {e}")
+                    if "closed" in str(e).lower():
+                        self.websocket = None
             
             # Debug logging to understand the result type
             logger.debug(f"Result type: {type(result)}, value: {result}")
@@ -470,9 +544,13 @@ class StatelessInteractiveSession:
                 self._continuation_depth = 0
                 logger.debug("Reset continuation depth to 0")
             
+            # Note: Assistant message is already stored by the AI loop, no need to store again
+            
             # Check if continuation is needed (like old delegate system)
             try:
+                logger.info(f"🔄 CHECKING CONTINUATION: result has {len(result.get('tool_calls', []))} tool calls")
                 should_continue = await self._should_continue_after_tools(result, message)
+                logger.info(f"🔄 CONTINUATION DECISION: {should_continue}")
             except Exception as e:
                 logger.error(f"Error in _should_continue_after_tools: {e}", exc_info=True)
                 should_continue = False
@@ -504,8 +582,10 @@ class StatelessInteractiveSession:
                     else:
                         continuation_msg = "Please continue with the next step."
                     
-                    logger.info(f"Sending continuation message: {continuation_msg}")
+                    logger.info(f"🔄 SENDING CONTINUATION MESSAGE: {continuation_msg}")
+                    logger.debug(f"🔄 BEFORE CONTINUATION - Agent context has {len(self.agents[self.active_agent].context._messages)} messages")
                     continuation_result = await self.send_user_message(continuation_msg, is_continuation=True)
+                    logger.debug(f"🔄 AFTER CONTINUATION - Agent context has {len(self.agents[self.active_agent].context._messages)} messages")
                     
                     # Ensure continuation_result is also a dict
                     if not isinstance(continuation_result, dict):
@@ -591,17 +671,23 @@ class StatelessInteractiveSession:
                 store_messages=False  # Don't store introduction in context
             )
             
-            # Send final notification
-            final_notification = AIMessageChunkNotification(
-                sessionId=self.session_id,
-                chunk="",
-                isFinal=True
-            )
-            await self.websocket.send_json({
-                "jsonrpc": "2.0",
-                "method": "AIMessageChunkNotification",
-                "params": final_notification.model_dump()
-            })
+            # Send final notification if WebSocket is still connected
+            if self.websocket is not None:
+                try:
+                    final_notification = AIMessageChunkNotification(
+                        sessionId=self.session_id,
+                        chunk="",
+                        isFinal=True
+                    )
+                    await self.websocket.send_json({
+                        "jsonrpc": "2.0",
+                        "method": "AIMessageChunkNotification",
+                        "params": final_notification.model_dump()
+                    })
+                except Exception as e:
+                    logger.error(f"Error sending final notification: {e}")
+                    if "closed" in str(e).lower():
+                        self.websocket = None
             
             logger.info(f"Agent '{self.active_agent}' introduced itself")
             
@@ -708,10 +794,11 @@ class StatelessInteractiveSession:
             model_name = self.config.get('openrouter', {}).get('model', 'google/gemini-2.5-flash-preview')
         
         model_supports_multi_tool = supports_multi_tool(model_name)
-        logger.debug(f"Model {model_name} multi-tool support: {model_supports_multi_tool}")
+        logger.info(f"🔄 MODEL CAPABILITY CHECK: {model_name} multi-tool support: {model_supports_multi_tool}")
         
-        if model_supports_multi_tool:
-            # Multi-tool models handle everything in one go
+        if not model_supports_multi_tool:
+            # Single-tool models should NOT continue after using their one tool
+            logger.info(f"🔄 SINGLE-TOOL MODEL: {model_name} - no continuation after tool use")
             return False
         
         # Single-tool model continuation logic
@@ -728,13 +815,16 @@ class StatelessInteractiveSession:
             if hasattr(agent, 'should_continue_after_tools'):
                 return agent.should_continue_after_tools(result, original_message)
         
+        # Get the AI's response text from the result
+        response_text = result.get('response', '').lower() if result.get('response') else ''
+        
         continuation_phrases = [
             'let me', 'now i', "i'll", 'next', 'then i',
             'following that', 'after that'
         ]
         
         # If the AI's response suggests it plans to do more
-        if any(phrase in response_text for phrase in continuation_phrases):
+        if response_text and any(phrase in response_text for phrase in continuation_phrases):
             # But it only did one tool call, it probably needs continuation
             if len(tool_calls) == 1:
                 return True
@@ -930,6 +1020,34 @@ class StatelessSessionManager:
         
         tool_registry.register_tool(WebSearchTool())
         tool_registry.register_tool(FetchURLTool())
+        
+        # Register Debbie's debugging and monitoring tools
+        try:
+            from ai_whisperer.tools.session_health_tool import SessionHealthTool
+            from ai_whisperer.tools.session_analysis_tool import SessionAnalysisTool
+            from ai_whisperer.tools.monitoring_control_tool import MonitoringControlTool
+            from ai_whisperer.tools.session_inspector_tool import SessionInspectorTool
+            from ai_whisperer.tools.message_injector_tool import MessageInjectorTool
+            from ai_whisperer.tools.workspace_validator_tool import WorkspaceValidatorTool
+            from ai_whisperer.tools.python_executor_tool import PythonExecutorTool
+            from ai_whisperer.tools.script_parser_tool import ScriptParserTool
+            from ai_whisperer.tools.batch_command_tool import BatchCommandTool
+            
+            tool_registry.register_tool(SessionHealthTool())
+            tool_registry.register_tool(SessionAnalysisTool())
+            tool_registry.register_tool(MonitoringControlTool())
+            tool_registry.register_tool(SessionInspectorTool())
+            tool_registry.register_tool(MessageInjectorTool())
+            tool_registry.register_tool(WorkspaceValidatorTool())
+            tool_registry.register_tool(PythonExecutorTool())
+            tool_registry.register_tool(ScriptParserTool())
+            tool_registry.register_tool(BatchCommandTool())
+            
+            logger.info("Successfully registered Debbie's debugging and batch processing tools")
+        except ImportError as e:
+            logger.warning(f"Some debugging/batch tools not available: {e}")
+        except Exception as e:
+            logger.error(f"Failed to register debugging/batch tools: {e}")
         
         logger.info(f"Registered {len(tool_registry.get_all_tools())} tools with ToolRegistry")
         

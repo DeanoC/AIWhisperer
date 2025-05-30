@@ -30,6 +30,7 @@ class AgentContext(ContextProvider):
             raise ValueError(f"Message must be a string or dict, got {type(message)}")
         
         self._messages.append(message)
+        logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: Total stored messages now: {len(self._messages)}")
 
     def retrieve_messages(self):
         """Retrieve all messages including the system prompt as the first message."""
@@ -37,6 +38,15 @@ class AgentContext(ContextProvider):
         
         # Include system prompt as first message if available
         system_prompt = self.get_system_prompt()
+        
+        # ENHANCED LOGGING
+        logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: Retrieving messages")
+        logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: System prompt exists: {system_prompt is not None}")
+        if system_prompt:
+            logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: System prompt type: {type(system_prompt)}")
+            logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: System prompt length: {len(str(system_prompt))}")
+            logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: System prompt preview: {str(system_prompt)[:100]}...")
+        
         if system_prompt:
             # Ensure system prompt is always returned as a dict
             if isinstance(system_prompt, str):
@@ -55,6 +65,12 @@ class AgentContext(ContextProvider):
         
         # Add all stored messages
         messages.extend(self._messages)
+        
+        # ENHANCED LOGGING
+        logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: Total messages: {len(messages)}")
+        logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: Stored messages: {len(self._messages)}")
+        if messages:
+            logger.info(f"🔍 CONTEXT TRACE [{self.agent_id}]: First message role: {messages[0].get('role', 'unknown')}")
         
         return messages
 
