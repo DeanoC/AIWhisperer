@@ -311,9 +311,21 @@ class StatelessInteractiveSession:
                             system_prompt = prompt
                             logger.info(f"Successfully loaded prompt for {agent_id}")
                         except Exception as e1:
-                            logger.warning(f"Failed to load prompt: {e1}")
-                            # Keep the fallback prompt
-                            logger.info(f"Using fallback prompt for {agent_info.name}")
+                            logger.warning(f"Failed to load prompt via PromptSystem: {e1}")
+                            # Try direct file read as fallback
+                            try:
+                                from pathlib import Path
+                                prompt_file = Path("prompts") / "agents" / agent_info.prompt_file
+                                if prompt_file.exists():
+                                    with open(prompt_file, 'r', encoding='utf-8') as f:
+                                        system_prompt = f.read()
+                                    logger.info(f"Successfully loaded prompt via direct file read for {agent_id}")
+                                else:
+                                    logger.warning(f"Prompt file not found: {prompt_file}")
+                            except Exception as e2:
+                                logger.warning(f"Direct file read also failed: {e2}")
+                                # Keep the fallback prompt
+                                logger.info(f"Using fallback prompt for {agent_info.name}")
                     except Exception as e:
                         logger.error(f"Failed to load prompt for agent {agent_id}: {e}")
                         logger.error(f"Using fallback prompt for {agent_info.name}")
