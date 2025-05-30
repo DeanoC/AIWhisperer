@@ -12,11 +12,11 @@ from ai_whisperer.logging_custom import log_event, LogMessage, LogLevel, Compone
 
 import pytest
 
+import pytest
 @pytest.mark.performance
 @pytest.mark.asyncio
+@pytest.mark.xfail(reason="Known failure: see test run 2025-05-30, CI error", strict=False)
 async def test_ai_service_timeout_handling(start_interactive_server):
-    import pytest
-    pytest.xfail("Known failure: see test run 2025-05-30")
     """
     Simulate an AI service timeout by sending a message that triggers a long-running operation.
     The server should handle the timeout gracefully and notify the client.

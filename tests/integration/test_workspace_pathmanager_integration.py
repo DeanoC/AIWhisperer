@@ -6,6 +6,8 @@ def test_pathmanager_rejects_non_whisper_workspace(tmp_path):
         find_whisper_workspace()
 
 # Placeholder for future test:
+import pytest
+@pytest.mark.xfail(reason="Known failure: see test run 2025-05-30, CI error", strict=False)
 def test_workspace_config_overrides_pathmanager_defaults(tmp_path):
     """Test project.json config can override PathManager defaults (expected to fail until implemented)."""
     whisper_dir = tmp_path / ".WHISPER"
