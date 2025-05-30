@@ -120,12 +120,12 @@ class StatelessAILoop:
             # Create the streaming coroutine
             async def run_stream():
                 # LOG EXACTLY WHAT MESSAGES WE'RE SENDING TO THE AI
-                logger.error(f"🚨 SENDING TO AI: {len(working_messages)} messages")
+                logger.debug(f"🚨 SENDING TO AI: {len(working_messages)} messages")
                 for i, msg in enumerate(working_messages):
                     role = msg.get('role', 'unknown')
                     content = msg.get('content', '')
                     preview = content[:100] + '...' if len(content) > 100 else content
-                    logger.error(f"🚨 MSG[{i}] role={role} content={preview}")
+                    logger.debug(f"🚨 MSG[{i}] role={role} content={preview}")
                 
                 # Merge config with generation params (generation params take precedence)
                 params = {**self.config.__dict__, **generation_params}
