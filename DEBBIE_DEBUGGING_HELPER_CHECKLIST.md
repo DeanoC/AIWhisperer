@@ -178,10 +178,15 @@
 ## NEXT PRIORITIES (Not Yet Started)
 
 ### Batch Mode Phase 2: Debbie the Batcher (4 days)
-- [ ] Update Debbie for dual-role (debugger + batcher)
-- [ ] Create ScriptParserTool for multi-format scripts
-- [ ] Create BatchCommandTool for command interpretation
-- [ ] Comprehensive TDD implementation
+- [x] Update Debbie for dual-role (debugger + batcher) ✅ Day 1 Morning Complete
+  - [x] Updated agents.yaml with batch_processor role
+  - [x] Added batch_tools to tool_sets configuration
+  - [x] Updated prompt to include batch processing instructions
+  - [x] Added batch-specific configuration and continuation rules
+  - [x] All tests passing (config, prompt, integration)
+- [ ] Create ScriptParserTool for multi-format scripts (Day 2)
+- [ ] Create BatchCommandTool for command interpretation (Day 3)
+- [ ] Comprehensive TDD implementation (Day 4)
 - [ ] API documentation for Phase 3
 
 ### Phase 3: Interactive Mode Monitoring (3-5 days)

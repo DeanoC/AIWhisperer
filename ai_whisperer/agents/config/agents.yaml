@@ -41,20 +41,23 @@ agents:
     
   d:
     name: "Debbie the Debugger"
-    role: "debugging_assistant"
-    description: "Intelligent debugging companion for AIWhisperer development"
-    tool_tags: ["debugging", "monitoring", "testing", "analysis", "filesystem", "command"]
+    role: "debugging_assistant, batch_processor"
+    description: "Intelligent debugging companion and batch script processor for AIWhisperer"
+    tool_tags: ["debugging", "monitoring", "testing", "analysis", "filesystem", "command", "batch"]
     prompt_file: "debbie_debugger.prompt.md"
-    context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure"]
+    context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure", "batch_scripts"]
     color: "#FF5722"
     icon: "🐛"
-    tool_sets: ["debugging_tools", "filesystem", "command", "analysis"]
+    tool_sets: ["debugging_tools", "batch_tools", "filesystem", "command", "analysis"]
     capabilities:
       - session_monitoring
       - error_detection
       - performance_analysis
       - automated_recovery
       - script_execution
+      - batch_script_processing
+      - multi_format_parsing
+      - automated_user_simulation
     configuration:
       monitoring:
         continuation_timeout: 30  # seconds
@@ -64,6 +67,12 @@ agents:
         auto_continue: true
         max_retries: 3
         recovery_strategies: ["prompt", "restart", "escalate"]
+      batch:
+        supported_formats: ["json", "yaml", "txt"]
+        max_script_size: 1048576  # 1MB
+        execution_timeout: 3600   # 1 hour
+        auto_continue: true
+        error_handling: "continue_on_error"
     continuation_config:
       rules:
         - trigger_tools: ["session_inspector", "log_analyzer"]
@@ -72,4 +81,10 @@ agents:
         - trigger_tools: ["python_executor"]
           keywords: ["analyze", "debug", "investigate", "examine"]
           continuation_message: "I've executed the debugging script. Let me analyze the results and provide recommendations."
-      default_message: "Continue with the debugging investigation."
+        - trigger_tools: ["script_parser"]
+          keywords: ["parse", "read", "load", "process"]
+          continuation_message: "I've parsed the script. Now let me execute the commands in sequence."
+        - trigger_tools: ["batch_command"]
+          keywords: ["execute", "run", "process", "command"]
+          continuation_message: "Command executed. Proceeding to the next command in the script."
+      default_message: "Continue with the current task."
