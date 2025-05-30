@@ -84,7 +84,16 @@ For now, I'm available for general debugging assistance!"""
             # Status for specific session
             monitor = observer.monitors.get(session_id)
             if not monitor:
-                return f"❌ Session {session_id} not found or not monitored"
+                # Session not being monitored, but provide helpful info
+                return f"""ℹ️ Session {session_id[:8]}... is not currently monitored
+
+📊 Global Monitoring Status: {'Enabled' if observer._enabled else 'Disabled'}
+📈 Active Monitored Sessions: {len(observer.monitors)}
+
+To monitor this session, restart the server with:
+  python -m interactive_server.main --debbie-monitor
+
+Or use `/debbie status` without arguments for global information."""
             
             health_score = monitor._calculate_health_score()
             status_emoji = "🟢" if health_score >= 80 else "🟡" if health_score >= 60 else "🔴"
@@ -118,7 +127,13 @@ For now, I'm available for general debugging assistance!"""
 
 📈 Global Stats:
   • Active Sessions: {active_sessions}
-  • Check Interval: {observer._pattern_check_interval}s"""
+  • Check Interval: {observer._pattern_check_interval}s
+
+💡 Available Commands:
+  • `/debbie status` - Show this global status
+  • `/debbie suggest` - General debugging suggestions
+  • `/debbie analyze <session_id>` - Deep session analysis (requires monitoring)
+  • `/debbie report <session_id>` - Comprehensive report (requires monitoring)"""
             
             if detailed and active_sessions > 0:
                 result += f"\n\n📋 Session Summary:"
@@ -126,6 +141,8 @@ For now, I'm available for general debugging assistance!"""
                     health = monitor._calculate_health_score()
                     emoji = "🟢" if health >= 80 else "🟡" if health >= 60 else "🔴"
                     result += f"\n  {emoji} {sid[:8]}... Health: {health}/100"
+            elif active_sessions == 0:
+                result += f"\n\n💡 To enable session monitoring:\n  python -m interactive_server.main --debbie-monitor"
             
             return result
 
@@ -214,7 +231,23 @@ For session-specific suggestions, enable monitoring with:
   python -m interactive_server.main --debbie-monitor"""
         
         if not session_id:
-            return "❌ Session ID required for specific suggestions"
+            # No session ID provided, show general suggestions
+            return """💡 General Debugging Suggestions:
+
+1. 🔍 Check server logs for error messages
+2. 🔄 Try refreshing the browser if UI is unresponsive  
+3. 🔌 Verify WebSocket connection to backend
+4. 🐛 Look for JavaScript console errors (F12)
+5. 📊 Monitor memory usage and performance
+6. 🚀 Restart server if issues persist
+7. 🔑 Check API keys and configuration files
+8. 🌐 Verify network connectivity
+
+💡 For session-specific suggestions, use:
+  `/debbie suggest <session_id>`
+
+📊 For monitoring status, use:
+  `/debbie status`"""
         
         monitor = observer.monitors.get(session_id)
         if not monitor:

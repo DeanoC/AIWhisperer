@@ -92,8 +92,36 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   // Fetch command list for autocomplete
   const fetchCommandList = async (): Promise<string[]> => {
-    // This would be implemented to fetch from AIService
-    return ['help', 'session.info', 'agent.list', 'agent.switch'];
+    try {
+      if (!jsonRpcService) {
+        // Fallback when service not ready
+        return ['help', 'status', 'debbie', 'agent.inspect', 'session.switch_agent'];
+      }
+      
+      // Try to get command list via backend /help command through JSON-RPC
+      const response = await jsonRpcService.call('dispatchCommand', {
+        command: '/help'
+      });
+      
+      if (response?.output && typeof response.output === 'string') {
+        // Parse commands from help output: "/commandname: description"
+        const lines = response.output.split('\n');
+        const commands: string[] = [];
+        for (const line of lines) {
+          const match = line.match(/^\/([^:]+):/);
+          if (match) {
+            commands.push(match[1]);
+          }
+        }
+        return commands.length > 0 ? commands : ['help', 'status', 'debbie'];
+      }
+      
+      // Fallback
+      return ['help', 'status', 'debbie', 'agent.inspect', 'session.switch_agent'];
+    } catch (error) {
+      console.warn('Failed to fetch command list:', error);
+      return ['help', 'status', 'debbie', 'agent.inspect', 'session.switch_agent'];
+    }
   };
 
   // Use data prop if no messages provided (for ViewRouter compatibility)
