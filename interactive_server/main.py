@@ -1,5 +1,6 @@
 import os
 import logging
+import argparse
 
 # Set up logging early
 logging.basicConfig(level=logging.INFO)
@@ -187,13 +188,78 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load config and initialize session manager at startup
-CONFIG_PATH = os.environ.get("AIWHISPERER_CONFIG", "config.yaml")
+# Parse command line arguments for Debbie monitoring
+def parse_args():
+    parser = argparse.ArgumentParser(description="AIWhisperer Interactive Server")
+    parser.add_argument("--debbie-monitor", action="store_true", 
+                       help="Enable Debbie monitoring for session debugging")
+    parser.add_argument("--monitor-level", choices=["passive", "active"], default="passive",
+                       help="Monitoring level: passive (observe only) or active (can intervene)")
+    parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "config.yaml"),
+                       help="Configuration file path")
+    return parser.parse_args()
+
+def initialize_server(cli_args=None):
+    """Initialize the server with optional CLI arguments"""
+    global app_config, debbie_observer, session_manager
+    
+    # Use provided args or parse them
+    if cli_args is None:
+        cli_args = parse_args()
+    
+    # Load config and initialize session manager at startup
+    CONFIG_PATH = cli_args.config
+    try:
+        app_config = load_config(CONFIG_PATH)
+    except Exception as e:
+        logging.error(f"Failed to load configuration: {e}")
+        app_config = {}
+
+    # Initialize Debbie observer if monitoring is enabled
+    debbie_observer = None
+    if cli_args.debbie_monitor:
+        try:
+            from .debbie_observer import get_observer
+            debbie_observer = get_observer()
+            debbie_observer.enable()
+            logger.info(f"Debbie monitoring enabled in {cli_args.monitor_level} mode")
+            
+            # Configure monitoring level
+            if cli_args.monitor_level == "active":
+                # TODO: Set active monitoring flags when available
+                logger.info("Active monitoring mode: Debbie can intervene in sessions")
+            else:
+                logger.info("Passive monitoring mode: Debbie will observe only")
+                
+        except Exception as e:
+            logger.error(f"Failed to initialize Debbie observer: {e}")
+            debbie_observer = None
+    
+    return cli_args, app_config, debbie_observer
+
+# Initialize with default args when imported as module
 try:
-    app_config = load_config(CONFIG_PATH)
+    # Only parse args if running as main module
+    if __name__ == "__main__":
+        cli_args, app_config, debbie_observer = initialize_server()
+    else:
+        # When imported, use defaults
+        class DefaultArgs:
+            debbie_monitor = False
+            monitor_level = "passive"
+            config = os.environ.get("AIWHISPERER_CONFIG", "config.yaml")
+        
+        cli_args, app_config, debbie_observer = initialize_server(DefaultArgs())
 except Exception as e:
-    logging.error(f"Failed to load configuration: {e}")
+    logger.error(f"Failed to initialize server: {e}")
+    # Fallback to basic config
     app_config = {}
+    debbie_observer = None
+    class DefaultArgs:
+        debbie_monitor = False
+        monitor_level = "passive"
+        config = "config.yaml"
+    cli_args = DefaultArgs()
 
 # Initialize PathManager
 path_manager = None
@@ -236,14 +302,14 @@ except Exception as e:
     # Continue without prompt system
 
 try:
-    session_manager = StatelessSessionManager(app_config, agent_registry, prompt_system)
+    session_manager = StatelessSessionManager(app_config, agent_registry, prompt_system, observer=debbie_observer)
     logger.info("StatelessSessionManager initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize StatelessSessionManager: {e}")
     import traceback
     traceback.print_exc()
     # Create a basic session manager without extras
-    session_manager = StatelessSessionManager(app_config, None, None)
+    session_manager = StatelessSessionManager(app_config, None, None, observer=debbie_observer)
     logger.info("Created basic StatelessSessionManager without agent registry")
 
 
@@ -330,6 +396,74 @@ async def echo_handler(params, websocket=None):
         return params["message"]
     return params
 
+# Debbie monitoring handlers
+async def debbie_get_status_handler(params, websocket=None):
+    """Get Debbie monitoring status"""
+    if not debbie_observer:
+        return {"enabled": False, "message": "Debbie monitoring not initialized"}
+    
+    return {
+        "enabled": debbie_observer._enabled,
+        "monitoring_level": cli_args.monitor_level if cli_args.debbie_monitor else None,
+        "active_sessions": len(debbie_observer.monitors),
+        "session_ids": list(debbie_observer.monitors.keys())
+    }
+
+async def debbie_get_alerts_handler(params, websocket=None):
+    """Get current monitoring alerts"""
+    session_id = params.get("session_id")
+    
+    if not debbie_observer:
+        return {"alerts": [], "message": "Debbie monitoring not initialized"}
+    
+    alerts = []
+    if session_id:
+        # Get alerts for specific session
+        monitor = debbie_observer.monitors.get(session_id)
+        if monitor:
+            alerts = [
+                {
+                    "timestamp": alert.timestamp.isoformat(),
+                    "pattern": alert.pattern.value,
+                    "severity": alert.severity.value,
+                    "message": alert.message,
+                    "suggestion": alert.suggestion,
+                    "session_id": session_id
+                }
+                for alert in monitor.alerts
+            ]
+    else:
+        # Get alerts from all sessions
+        for sid, monitor in debbie_observer.monitors.items():
+            for alert in monitor.alerts:
+                alerts.append({
+                    "timestamp": alert.timestamp.isoformat(),
+                    "pattern": alert.pattern.value,
+                    "severity": alert.severity.value,
+                    "message": alert.message,
+                    "suggestion": alert.suggestion,
+                    "session_id": sid
+                })
+    
+    return {"alerts": alerts}
+
+async def debbie_send_alert_notification(websocket, alert_data):
+    """Send alert notification to WebSocket client"""
+    if not websocket:
+        return
+        
+    notification = {
+        "jsonrpc": "2.0",
+        "method": "debbie.alert",
+        "params": alert_data
+    }
+    
+    try:
+        await websocket.send_text(json.dumps(notification))
+        logger.debug(f"Sent Debbie alert notification: {alert_data['pattern']}")
+    except Exception as e:
+        logger.error(f"Failed to send Debbie alert notification: {e}")
+
 
 # Handler registry
 from ai_whisperer.commands.registry import CommandRegistry
@@ -368,6 +502,9 @@ HANDLERS = {
     "session.switch_agent": session_switch_agent_handler,
     "session.current_agent": session_current_agent_handler,
     "session.handoff": session_handoff_handler,
+    # Debbie monitoring handlers
+    "debbie.status": debbie_get_status_handler,
+    "debbie.alerts": debbie_get_alerts_handler,
     # Project management handlers
     **PROJECT_HANDLERS
 }
@@ -510,4 +647,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 if __name__ == "__main__":
     import uvicorn
+    # CLI args are already parsed in the initialization above
+    logger.info(f"Starting server with Debbie monitoring: {cli_args.debbie_monitor}")
     uvicorn.run(app, host="127.0.0.1", port=8000)

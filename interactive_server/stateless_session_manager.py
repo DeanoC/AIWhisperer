@@ -34,7 +34,7 @@ class StatelessInteractiveSession:
     Supports direct streaming without delegates.
     """
     
-    def __init__(self, session_id: str, websocket: WebSocket, config: dict, agent_registry=None, prompt_system=None, project_path: Optional[str] = None):
+    def __init__(self, session_id: str, websocket: WebSocket, config: dict, agent_registry=None, prompt_system=None, project_path: Optional[str] = None, observer=None):
         """
         Initialize a stateless interactive session.
         
@@ -45,10 +45,12 @@ class StatelessInteractiveSession:
             agent_registry: Optional AgentRegistry instance
             prompt_system: Optional PromptSystem instance
             project_path: Optional path to the project workspace
+            observer: Optional Debbie observer for monitoring
         """
         self.session_id = session_id
         self.websocket = websocket
         self.config = config
+        self.observer = observer
         self.agent_registry = agent_registry
         self.prompt_system = prompt_system
         self.project_path = project_path
@@ -74,10 +76,12 @@ class StatelessInteractiveSession:
             path_manager.initialize(config_values={'workspace_path': project_path})
         self.context_manager = AgentContextManager(session_id, path_manager)
         
-        # Initialize Debbie observer for this session
-        self.observer = get_observer()
-        self.observer.observe_session(session_id)
-        logger.info(f"Debbie observer initialized for session {session_id}")
+        # Initialize Debbie observer for this session if provided
+        if self.observer:
+            self.observer.observe_session(session_id)
+            logger.info(f"Debbie observer initialized for session {session_id}")
+        else:
+            logger.debug(f"No observer provided for session {session_id}")
         
         # Register tools for interactive sessions
         self._register_tools()
@@ -364,7 +368,8 @@ class StatelessInteractiveSession:
             agent = self.agents[self.active_agent]
             
             # Notify observer that message processing is starting
-            self.observer.on_message_start(self.session_id, message)
+            if self.observer:
+                self.observer.on_message_start(self.session_id, message)
             
             # Process @ references in the message
             context_items = self.context_manager.process_message_references(
@@ -510,7 +515,8 @@ class StatelessInteractiveSession:
                 self._continuation_depth = 0
             
             # Notify observer that message processing completed
-            self.observer.on_message_complete(self.session_id, result)
+            if self.observer:
+                self.observer.on_message_complete(self.session_id, result)
             
             return result
             
@@ -518,7 +524,8 @@ class StatelessInteractiveSession:
             logger.error(f"Failed to send message to agent '{self.active_agent}' in session {self.session_id}: {e}", exc_info=True)
             
             # Notify observer about the error
-            self.observer.on_error(self.session_id, e)
+            if self.observer:
+                self.observer.on_error(self.session_id, e)
             
             # Reset continuation depth on error
             if self._continuation_depth > 0:
@@ -821,7 +828,7 @@ class StatelessSessionManager:
     Manages multiple stateless interactive sessions for WebSocket connections.
     """
     
-    def __init__(self, config: dict, agent_registry=None, prompt_system=None):
+    def __init__(self, config: dict, agent_registry=None, prompt_system=None, observer=None):
         """
         Initialize the session manager.
         
@@ -829,10 +836,12 @@ class StatelessSessionManager:
             config: Global configuration dictionary
             agent_registry: Optional AgentRegistry instance
             prompt_system: Optional PromptSystem instance
+            observer: Optional Debbie observer for monitoring
         """
         self.config = config
         self.agent_registry = agent_registry
         self.prompt_system = prompt_system
+        self.observer = observer
         self.sessions: Dict[str, StatelessInteractiveSession] = {}
         self.websocket_sessions: Dict[WebSocket, str] = {}
         self._lock = asyncio.Lock()
@@ -949,7 +958,8 @@ class StatelessSessionManager:
                 self.config, 
                 self.agent_registry, 
                 self.prompt_system,
-                project_path=project_path
+                project_path=project_path,
+                observer=self.observer
             )
             
             self.sessions[session_id] = session

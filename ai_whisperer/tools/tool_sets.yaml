@@ -172,4 +172,17 @@ specialized_sets:
       - batch
       - scripting
       - automation
-      - parsing
+  
+  # Interactive monitoring tools for Debbie
+  monitoring_tools:
+    description: "Real-time monitoring and analysis tools for interactive sessions"
+    tools:
+      - session_health
+      - session_analysis
+      - monitoring_control
+    tags:
+      - monitoring
+      - health
+      - analysis
+      - real_time
+      - interactive

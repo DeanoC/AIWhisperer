@@ -211,10 +211,12 @@
   - [x] Real-time pattern detection
   - [x] Live commentary generation
   - [x] Performance impact analysis
-- [ ] Extend `interactive_server/main.py`
-  - [ ] Add optional Debbie integration flag
-  - [ ] Configure monitoring levels (passive/active)
-  - [ ] Set up WebSocket message routing
+- [x] Extend `interactive_server/main.py` ✅ Day 3 Complete
+  - [x] Add optional Debbie integration flag (--debbie-monitor CLI argument)
+  - [x] Configure monitoring levels (passive/active with --monitor-level)
+  - [x] Set up WebSocket message routing (debbie.status, debbie.alerts handlers)
+  - [x] Integrate observer with session manager and individual sessions
+  - [x] Add proper argument parsing for both direct execution and module import
 - [x] Update `interactive_server/stateless_session_manager.py` ✅ Day 1 Complete
   - [x] Add Debbie observer hooks (message start/complete, errors, agent switch)
   - [x] Enable session metadata collection
@@ -332,10 +334,9 @@
 - **Documentation**: Implementation guides, demos, and usage examples
 
 ### In Progress 🔄
-- None - ready for next phase
+- **Phase 3**: Interactive Mode Monitoring - Day 1 Complete, Day 2 Starting
 
 ### Upcoming 📋
-- **Phase 3**: Interactive Mode Monitoring - Live debugging assistance (recommended next)
 - **Phase 4**: Advanced capabilities (recorders, analyzers, collectors)
 - **Phase 5**: Script language enhancements
 

@@ -48,7 +48,7 @@ agents:
     context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure", "batch_scripts"]
     color: "#FF5722"
     icon: "🐛"
-    tool_sets: ["debugging_tools", "batch_tools", "filesystem", "command", "analysis"]
+    tool_sets: ["debugging_tools", "batch_tools", "monitoring_tools", "filesystem", "command", "analysis"]
     capabilities:
       - session_monitoring
       - error_detection
@@ -87,4 +87,13 @@ agents:
         - trigger_tools: ["batch_command"]
           keywords: ["execute", "run", "process", "command"]
           continuation_message: "Command executed. Proceeding to the next command in the script."
+        - trigger_tools: ["session_health"]
+          keywords: ["health", "status", "check", "monitor"]
+          continuation_message: "I've checked the session health. Let me analyze the results and provide insights."
+        - trigger_tools: ["session_analysis"]
+          keywords: ["analyze", "investigate", "diagnose", "troubleshoot"]
+          continuation_message: "Based on my analysis, here are my findings and recommendations."
+        - trigger_tools: ["monitoring_control"]
+          keywords: ["enable", "disable", "configure", "adjust", "threshold"]
+          continuation_message: "Monitoring settings have been updated. The changes are now active."
       default_message: "Continue with the current task."

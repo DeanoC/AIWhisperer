@@ -110,6 +110,15 @@ class PlanRunner:
         batch_command_tool = BatchCommandTool()
         batch_command_tool.set_tool_registry(tool_registry)
         tool_registry.register_tool(batch_command_tool)
+        
+        # Register monitoring tools (for Debbie)
+        from ai_whisperer.tools.session_health_tool import SessionHealthTool
+        from ai_whisperer.tools.session_analysis_tool import SessionAnalysisTool
+        from ai_whisperer.tools.monitoring_control_tool import MonitoringControlTool
+        
+        tool_registry.register_tool(SessionHealthTool())
+        tool_registry.register_tool(SessionAnalysisTool())
+        tool_registry.register_tool(MonitoringControlTool())
 
         logger.debug("Tools registered with ToolRegistry.")
 
