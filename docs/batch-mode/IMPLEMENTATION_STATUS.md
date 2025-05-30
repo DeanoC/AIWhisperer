@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Phase 1 (Workspace Detection) has been **successfully completed** using Test-Driven Development methodology. All workspace detection functionality is implemented, tested, and documented. Phase 2 (Billy the Batcher Agent) has been comprehensively planned with detailed TDD-focused task breakdowns and is **ready for immediate implementation**.
+Phase 1 (Workspace Detection) has been **successfully completed** using Test-Driven Development methodology. All workspace detection functionality is implemented, tested, and documented. Phase 2 (Debbie the Batcher Agent) has been comprehensively planned with detailed TDD-focused task breakdowns and is **ready for immediate implementation**.
 
 ## Phase 1: Workspace Detection ✅ COMPLETE
 
@@ -38,7 +38,7 @@ validate_workspace_for_batch_mode(start_path: Optional[str] = None) -> str
 - ✅ 1 API documentation file created
 - ✅ Tech debt and task tracking updated
 
-## Phase 2: Billy the Batcher Agent 🔄 READY
+## Phase 2: Debbie the Batcher Agent 🔄 READY
 
 ### Comprehensive Planning Complete
 - **Detailed Task Breakdown**: 6 tasks over 4 days with TDD emphasis
@@ -53,7 +53,7 @@ validate_workspace_for_batch_mode(start_path: Optional[str] = None) -> str
 - **Continuous Integration**: All tests must pass before progression
 
 ### Implementation Scope
-1. **Agent Configuration** (Day 1 AM): Billy agent setup and registration
+1. **Agent Configuration** (Day 1 AM): Debbie agent setup and registration
 2. **Prompt System** (Day 1 PM): Specialized batch script interpretation prompts
 3. **Script Parser Tool** (Day 2): Multi-format script parsing and validation
 4. **Batch Command Tool** (Day 3): Command interpretation and action mapping
@@ -61,7 +61,7 @@ validate_workspace_for_batch_mode(start_path: Optional[str] = None) -> str
 6. **Documentation** (Day 4 PM): API documentation for Phase 3 handoff
 
 ### Expected Deliverables
-- ✅ Billy agent with specialized batch processing capabilities
+- ✅ Debbie agent with specialized batch processing capabilities
 - ✅ Script parser supporting JSON, YAML, and text formats
 - ✅ Batch command tool for action conversion
 - ✅ Comprehensive test suite (17+ test files planned)
@@ -116,12 +116,12 @@ For each Phase 2 task:
 ### Immediate Actions
 1. **Review Phase 2 Plans**: Confirm TDD approach and task breakdown
 2. **Setup Development Environment**: Ensure all tools and dependencies ready
-3. **Begin Task 2.1**: Billy agent configuration with test-first approach
+3. **Begin Task 2.1**: Debbie agent configuration with test-first approach
 4. **Establish Metrics**: Set up coverage monitoring and quality tracking
 
 ### Success Metrics for Phase 2
 - [ ] All 17+ planned test files created and passing
-- [ ] Billy agent processes batch scripts end-to-end
+- [ ] Debbie agent processes batch scripts end-to-end
 - [ ] Performance benchmarks established and met
 - [ ] API documentation ready for Phase 3 handoff
 - [ ] Zero regressions in existing functionality
@@ -129,7 +129,7 @@ For each Phase 2 task:
 ## Long-term Vision
 
 ### Phases 3-5 Preparation
-- **Phase 3**: Interactive mode integration (Billy → AIWhisperer commands)
+- **Phase 3**: Interactive mode integration (Debbie → AIWhisperer commands)
 - **Phase 4**: End-to-end testing and validation
 - **Phase 5**: Documentation, optimization, and release preparation
 

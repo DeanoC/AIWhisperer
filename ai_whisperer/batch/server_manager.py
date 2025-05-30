@@ -1,6 +1,6 @@
 """
 Server lifecycle management for batch mode.
-Handles starting, stopping, and monitoring the interactive server for Billy's batch client.
+Handles starting, stopping, and monitoring the interactive server for Debbie's batch client.
 """
 
 

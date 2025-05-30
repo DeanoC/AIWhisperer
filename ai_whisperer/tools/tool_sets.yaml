@@ -142,3 +142,49 @@ specialized_sets:
       - read_file
     tags:
       - automation
+  
+  # Debugging tools for Debbie
+  debugging_tools:
+    description: "Advanced debugging and monitoring tools for system analysis"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - session_inspector
+      - message_injector
+      - workspace_validator
+      - python_executor
+      - system_health_check
+    tags:
+      - debugging
+      - monitoring
+      - intervention
+      - analysis
+      - python
+      - health_check
+  
+  # Batch processing tools for Debbie's batch mode
+  batch_tools:
+    description: "Tools for batch script processing and execution"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - script_parser
+      - batch_command
+    tags:
+      - batch
+      - scripting
+      - automation
+  
+  # Interactive monitoring tools for Debbie
+  monitoring_tools:
+    description: "Real-time monitoring and analysis tools for interactive sessions"
+    tools:
+      - session_health
+      - session_analysis
+      - monitoring_control
+    tags:
+      - monitoring
+      - health
+      - analysis
+      - real_time
+      - interactive

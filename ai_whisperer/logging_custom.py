@@ -2,7 +2,7 @@ import logging
 import logging.config
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 import yaml
 import os
@@ -23,6 +23,22 @@ class ComponentType(Enum):
     STATE_MANAGEMENT = "state_management"  # Changes to the runner's internal state.
     USER_INTERACTION = "user_interaction"  # Actions initiated directly by the user (pause, cancel, etc.).
     MONITOR = "monitor" # Terminal monitor display updates.
+
+
+class LogSource(Enum):
+    """Identifies the source of log messages for multi-source debugging."""
+    DEBBIE = "debbie"              # Debbie's own operations
+    DEBBIE_COMMENT = "debbie_comment"  # Debbie's debugging insights and commentary
+    SERVER = "server"            # Interactive server
+    AGENT = "agent"              # Agent operations
+    AI_SERVICE = "ai_service"    # AI model interactions
+    TOOL = "tool"                # Tool executions
+    SESSION = "session"          # Session management
+    WEBSOCKET = "websocket"      # WebSocket messages
+    USER_SCRIPT = "user_script"  # User's batch script
+    PYTHON_EXEC = "python_exec"  # Python script execution
+    BATCH = "batch"              # Batch mode operations
+    TEST = "test"                # Test execution
 
 
 @dataclass
@@ -56,6 +72,42 @@ class LogMessage:
         }
         # Filter out None values
         return {k: v for k, v in data.items() if v is not None}
+
+
+@dataclass
+class EnhancedLogMessage(LogMessage):
+    """Extended log message with debugging context for Debbie's multi-source logging."""
+    source: Optional[LogSource] = None  # Source of the log message
+    session_id: Optional[str] = None    # Associated session ID
+    agent_id: Optional[str] = None      # Associated agent ID
+    correlation_id: Optional[str] = None  # Links related events across components
+    parent_id: Optional[str] = None     # For nested operations
+    tags: List[str] = field(default_factory=list)  # Searchable tags
+    performance_metrics: Optional[Dict[str, float]] = None  # Performance data
+    stack_trace: Optional[str] = None   # Stack trace for errors
+    context_snapshot: Optional[Dict[str, Any]] = None  # State snapshot for debugging
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Converts the EnhancedLogMessage to a dictionary."""
+        # Get base dictionary from parent
+        data = super().to_dict()
+        
+        # Add enhanced fields
+        enhanced_fields = {
+            "source": self.source.value if self.source else None,
+            "session_id": self.session_id,
+            "agent_id": self.agent_id,
+            "correlation_id": self.correlation_id,
+            "parent_id": self.parent_id,
+            "tags": self.tags if self.tags else None,
+            "performance_metrics": self.performance_metrics,
+            "stack_trace": self.stack_trace,
+            "context_snapshot": self.context_snapshot,
+        }
+        
+        # Merge and filter out None values
+        data.update({k: v for k, v in enhanced_fields.items() if v is not None})
+        return data
 
 
 def setup_logging(config_path: Optional[str] = None):

@@ -1,0 +1,32 @@
+# Test Debbie Tool Usage Script
+# This script tests whether Debbie can properly use her debugging tools
+
+# Step 1: Switch to Debbie
+@switch_agent d
+
+# Step 2: Test global monitoring status
+whats the global status?
+
+# Step 3: Test session health check  
+what the session status?
+
+# Step 4: Test session analysis
+can you analyze the current session performance?
+
+# Step 5: Direct health check request
+run a health check on this session
+
+# Step 6: Tool awareness check
+what tools do you have available?
+
+# Step 7: Test specific tool usage
+use the session_health tool to check this session
+
+# Step 8: Test monitoring control
+check the monitoring configuration
+
+# Expected: Debbie should use appropriate tools for each request
+# - monitoring_control for global status
+# - session_health for session status/health checks
+# - session_analysis for performance analysis
+# - Should demonstrate knowledge of her debugging capabilities

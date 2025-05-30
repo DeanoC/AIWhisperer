@@ -234,12 +234,12 @@ Tests created in `tests/unit/test_workspace_detection.py`.
 ### Team Coordination
 - [ ] No conflicts with existing PathManager usage
 - [ ] No breaking changes to current functionality
-- [ ] Clean integration points for Phase 2 (Billy agent)
+- [ ] Clean integration points for Phase 2 (Debbie agent)
 
 ## Next Phase Preparation
-- [ ] Document workspace detection API for Billy agent integration
+- [ ] Document workspace detection API for Debbie agent integration
 - [ ] Identify any PathManager enhancements needed for Phase 2
-- [ ] Plan Billy agent's workspace context requirements
+- [ ] Plan Debbie agent's workspace context requirements
 
 ---
 

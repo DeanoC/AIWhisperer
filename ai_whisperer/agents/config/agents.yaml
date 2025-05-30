@@ -9,15 +9,6 @@ agents:
     color: "#9C27B0"
     icon: "📝"
     tool_sets: ["rfc_management", "codebase_analysis", "web_research"]
-    continuation_config:
-      rules:
-        - trigger_tools: ["list_rfcs"]
-          keywords: ["create", "new", "add", "make", "generate", "write", "draft", "test"]
-          continuation_message: "Now create the RFC as requested. Use any details mentioned in the conversation, or use reasonable defaults for title, author, and body."
-        - trigger_tools: ["list_rfcs"]
-          keywords: ["rfc for", "rfc about"]
-          continuation_message: "Now create the RFC for the topic mentioned."
-      default_message: "Continue with the RFC refinement process."
   
   a:
     name: "Alice the AI Assistant"
@@ -38,3 +29,38 @@ agents:
     context_sources: ["existing_tests", "code_coverage", "test_patterns"]
     color: "#4CAF50"
     icon: "🧪"
+    
+  d:
+    name: "Debbie the Debugger"
+    role: "debugging_assistant, batch_processor"
+    description: "Intelligent debugging companion and batch script processor for AIWhisperer"
+    tool_tags: ["debugging", "monitoring", "testing", "analysis", "filesystem", "command", "batch"]
+    prompt_file: "debbie_debugger.prompt.md"
+    context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure", "batch_scripts"]
+    color: "#FF5722"
+    icon: "🐛"
+    tool_sets: ["debugging_tools", "batch_tools", "monitoring_tools", "filesystem", "command", "analysis"]
+    capabilities:
+      - session_monitoring
+      - error_detection
+      - performance_analysis
+      - automated_recovery
+      - script_execution
+      - batch_script_processing
+      - multi_format_parsing
+      - automated_user_simulation
+    configuration:
+      monitoring:
+        continuation_timeout: 30  # seconds
+        memory_threshold: 512    # MB
+        response_time_alert: 10  # seconds
+      intervention:
+        auto_continue: true
+        max_retries: 3
+        recovery_strategies: ["prompt", "restart", "escalate"]
+      batch:
+        supported_formats: ["json", "yaml", "txt"]
+        max_script_size: 1048576  # 1MB
+        execution_timeout: 3600   # 1 hour
+        auto_continue: true
+        error_handling: "continue_on_error"

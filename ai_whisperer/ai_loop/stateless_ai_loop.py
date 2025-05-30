@@ -13,6 +13,7 @@ from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.ai_service.ai_service import AIService
 from ai_whisperer.context.provider import ContextProvider
 from ai_whisperer.tools.tool_registry import get_tool_registry
+from ai_whisperer.ai_loop.tool_call_accumulator import ToolCallAccumulator
 
 logger = logging.getLogger(__name__)
 
@@ -71,13 +72,22 @@ class StatelessAILoop:
         }
         
         try:
-            # Store user message if requested
-            if store_messages:
-                user_message = {"role": "user", "content": message}
-                context_provider.store_message(user_message)
+            # ATOMIC MESSAGE HANDLING: Don't store user message yet
+            # We'll only store it if we get a successful response
             
             # Get message history
             messages = context_provider.retrieve_messages()
+            logger.debug(f"🔍 RETRIEVED MESSAGES COUNT: {len(messages)}")
+            for i, msg in enumerate(messages):
+                if isinstance(msg, dict):
+                    content = msg.get('content', '')
+                    if isinstance(content, str):
+                        content_preview = content[:50] + '...' if len(content) > 50 else content
+                    else:
+                        content_preview = str(content)[:50] + '...'
+                    logger.debug(f"🔍 MESSAGE {i}: role={msg.get('role', 'unknown')} content={content_preview}")
+                else:
+                    logger.debug(f"🔍 MESSAGE {i}: {type(msg)} {str(msg)[:50]}...")
             
             # Ensure all messages are dicts (defensive programming)
             validated_messages = []
@@ -99,15 +109,9 @@ class StatelessAILoop:
                 first_role = 'N/A'
             logger.debug(f"Processing with {len(messages)} messages, first message role: {first_role}")
             
-            # If no messages were stored, add the current message
-            if not store_messages:
-                # Check if current message already exists in messages
-                message_exists = any(
-                    isinstance(msg, dict) and msg.get('content') == message 
-                    for msg in messages
-                )
-                if not message_exists:
-                    messages = messages + [{"role": "user", "content": message}]
+            # Always add the current message to the messages we send to AI
+            # (but don't store it in context yet - that's atomic)
+            working_messages = messages + [{"role": "user", "content": message}]
             
             # Get tools if not provided
             if tools is None:
@@ -115,58 +119,143 @@ class StatelessAILoop:
             
             # Create the streaming coroutine
             async def run_stream():
+                # LOG EXACTLY WHAT MESSAGES WE'RE SENDING TO THE AI
+                logger.debug(f"🚨 SENDING TO AI: {len(working_messages)} messages")
+                for i, msg in enumerate(working_messages):
+                    role = msg.get('role', 'unknown')
+                    content = msg.get('content', '')
+                    preview = content[:100] + '...' if len(content) > 100 else content
+                    logger.debug(f"🚨 MSG[{i}] role={role} content={preview}")
+                
                 # Merge config with generation params (generation params take precedence)
                 params = {**self.config.__dict__, **generation_params}
                 stream = self.ai_service.stream_chat_completion(
-                    messages=messages,
+                    messages=working_messages,
                     tools=tools,
                     **params
                 )
                 return await self._process_stream(stream, on_stream_chunk)
             
-            # Run with timeout if specified
-            if timeout:
-                response_data = await asyncio.wait_for(run_stream(), timeout=timeout)
-            else:
-                response_data = await run_stream()
+            # Run with timeout if specified, with retry logic for empty responses
+            max_retries = 3
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                if timeout:
+                    response_data = await asyncio.wait_for(run_stream(), timeout=timeout)
+                else:
+                    response_data = await run_stream()
+                
+                # Check if we got an empty response (no error but no content or reasoning)
+                if (not response_data.get('error') and 
+                    not response_data.get('response') and 
+                    not response_data.get('reasoning') and
+                    not response_data.get('tool_calls') and
+                    response_data.get('finish_reason') == 'stop'):
+                    
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        logger.warning(f"Empty response received (no content or reasoning), retrying ({retry_count}/{max_retries})...")
+                        await asyncio.sleep(1.0 * retry_count)  # Exponential backoff
+                        continue
+                    else:
+                        logger.error(f"Empty response persists after {max_retries} retries")
+                
+                # If we have reasoning but no content, that's valid - don't retry
+                if (not response_data.get('error') and 
+                    not response_data.get('response') and 
+                    response_data.get('reasoning')):
+                    logger.info(f"Got reasoning-only response: {len(response_data.get('reasoning', ''))} chars")
+                    # Combine reasoning with response for backward compatibility
+                    if response_data.get('reasoning'):
+                        response_data['response'] = response_data['reasoning']
+                
+                # Got a valid response or an error, break out of retry loop
+                break
             
             # Update result
             result.update(response_data)
             
-            # Handle error from stream processing
-            if response_data.get('error'):
-                error_msg = f"Error processing message: {str(response_data['error'])}"
-                if store_messages:
-                    error_message = {"role": "assistant", "content": error_msg}
-                    context_provider.store_message(error_message)
-            # Store assistant message if requested and we have content
-            elif store_messages and (response_data.get('response') or response_data.get('tool_calls')):
-                assistant_message = {"role": "assistant"}
-                if response_data.get('response'):
-                    assistant_message['content'] = response_data['response']
-                if response_data.get('tool_calls'):
-                    assistant_message['tool_calls'] = response_data['tool_calls']
-                context_provider.store_message(assistant_message)
+            # ATOMIC MESSAGE HANDLING: Only store messages if we got a successful response
+            if store_messages:
+                # Check if we have a valid response (not empty and no error)
+                has_valid_response = (
+                    not response_data.get('error') and
+                    (response_data.get('response') or 
+                     response_data.get('reasoning') or 
+                     response_data.get('tool_calls'))
+                )
+                
+                if has_valid_response:
+                    # SUCCESS: Store both user and assistant messages atomically
+                    logger.info(f"✅ ATOMIC: Storing user message and assistant response")
+                    
+                    # Store user message
+                    user_message = {"role": "user", "content": message}
+                    context_provider.store_message(user_message)
+                    
+                    # Store assistant message
+                    assistant_message = {"role": "assistant"}
+                    
+                    # Handle content and reasoning
+                    if response_data.get('response'):
+                        assistant_message['content'] = response_data['response']
+                    elif response_data.get('reasoning'):
+                        # If we only have reasoning, use it as content for now
+                        assistant_message['content'] = response_data['reasoning']
+                    elif response_data.get('tool_calls'):
+                        # If only tool calls, no content needed
+                        pass
+                    
+                    # Store reasoning separately if available (for models that support it)
+                    if response_data.get('reasoning'):
+                        assistant_message['reasoning'] = response_data['reasoning']
+                    
+                    if response_data.get('tool_calls'):
+                        assistant_message['tool_calls'] = response_data['tool_calls']
+                        
+                    context_provider.store_message(assistant_message)
+                else:
+                    # FAILURE: Don't store anything - maintain atomic consistency
+                    logger.warning(f"❌ ATOMIC: Not storing messages due to empty/error response")
+                    if response_data.get('error'):
+                        logger.error(f"   Error: {response_data['error']}")
+                    else:
+                        logger.error(f"   Empty response after {max_retries} retries")
+                
+                # If there were tool calls, we need to store the tool results too
+                if response_data.get('tool_calls') and response_data.get('response'):
+                    # Extract tool results from the response
+                    tool_results_text = response_data['response']
+                    for tool_call in response_data['tool_calls']:
+                        tool_name = tool_call.get('function', {}).get('name', 'unknown')
+                        # Store tool result message in OpenRouter format
+                        tool_message = {
+                            "role": "tool",
+                            "tool_call_id": tool_call.get('id'),
+                            "name": tool_name,
+                            "content": tool_results_text  # The actual tool execution results
+                        }
+                        context_provider.store_message(tool_message)
+                        logger.info(f"🔄 STORED TOOL RESULT for {tool_name} (ID: {tool_call.get('id')})")
                 
         except asyncio.TimeoutError:
             error_msg = "AI service timeout: The AI did not respond in time."
             result['error'] = error_msg
             logger.error(error_msg)
             
-            # Store error message in context
+            # ATOMIC: Don't store anything on timeout
             if store_messages:
-                error_message = {"role": "assistant", "content": error_msg}
-                context_provider.store_message(error_message)
+                logger.warning(f"❌ ATOMIC: Not storing messages due to timeout")
                 
         except Exception as e:
             error_msg = f"Error processing message: {str(e)}"
             result['error'] = e
             logger.exception(error_msg)
             
-            # Store error message in context
+            # ATOMIC: Don't store anything on error
             if store_messages:
-                error_message = {"role": "assistant", "content": error_msg}
-                context_provider.store_message(error_message)
+                logger.warning(f"❌ ATOMIC: Not storing messages due to exception: {type(e).__name__}")
         
         return result
     
@@ -205,10 +294,18 @@ class StatelessAILoop:
             
             # Create the streaming coroutine
             async def run_stream():
+                # LOG EXACTLY WHAT MESSAGES WE'RE SENDING TO THE AI
+                logger.error(f"🚨 SENDING TO AI: {len(working_messages)} messages")
+                for i, msg in enumerate(working_messages):
+                    role = msg.get('role', 'unknown')
+                    content = msg.get('content', '')
+                    preview = content[:100] + '...' if len(content) > 100 else content
+                    logger.error(f"🚨 MSG[{i}] role={role} content={preview}")
+                
                 # Merge config with generation params (generation params take precedence)
                 params = {**self.config.__dict__, **generation_params}
                 stream = self.ai_service.stream_chat_completion(
-                    messages=messages,
+                    messages=working_messages,
                     tools=tools,
                     **params
                 )
@@ -234,6 +331,38 @@ class StatelessAILoop:
         
         return result
     
+    def _determine_tool_strategy(self, tool_calls: List[Dict[str, Any]]) -> str:
+        """Determine tool execution strategy based on model capabilities and tool count"""
+        try:
+            model_id = getattr(self.config, 'model_id', 'unknown')
+            num_tools = len(tool_calls)
+            
+            # Use the model capabilities configuration
+            from ai_whisperer.model_capabilities import get_model_capabilities
+            capabilities = get_model_capabilities(model_id)
+            
+            supports_multi_tool = capabilities.get('multi_tool', False)
+            supports_parallel = capabilities.get('parallel_tools', False)
+            max_tools = capabilities.get('max_tools_per_turn', 1)
+            
+            if num_tools == 0:
+                return f"NO_TOOLS ({model_id})"
+            elif num_tools == 1:
+                if supports_multi_tool:
+                    return f"MULTI_TOOL_MODEL_SINGLE_CALL ({model_id})"
+                else:
+                    return f"SINGLE_TOOL_MODEL_SINGLE_CALL ({model_id})"
+            else:  # num_tools > 1
+                if supports_multi_tool and supports_parallel:
+                    return f"MULTI_TOOL_MODEL_PARALLEL ({model_id}) - {num_tools} tools"
+                elif supports_multi_tool and not supports_parallel:
+                    return f"MULTI_TOOL_MODEL_SEQUENTIAL ({model_id}) - {num_tools} tools"
+                else:
+                    return f"SINGLE_TOOL_MODEL_ERROR ({model_id}) - {num_tools} tools requested but max is {max_tools}"
+                
+        except Exception as e:
+            return f"STRATEGY_ERROR: {str(e)}"
+    
     async def _process_stream(
         self,
         stream: AsyncIterator,
@@ -250,7 +379,8 @@ class StatelessAILoop:
             Dict with response data
         """
         full_response = ""
-        accumulated_tool_calls = ""
+        full_reasoning = ""  # Accumulate reasoning tokens separately
+        tool_accumulator = ToolCallAccumulator()
         finish_reason = None
         last_chunk = None
         
@@ -268,51 +398,73 @@ class StatelessAILoop:
                     if on_stream_chunk:
                         await on_stream_chunk(chunk.delta_content)
                 
+                # Process reasoning tokens
+                if hasattr(chunk, 'delta_reasoning') and chunk.delta_reasoning:
+                    full_reasoning += chunk.delta_reasoning
+                    # For now, also stream reasoning as content to maintain compatibility
+                    if on_stream_chunk:
+                        await on_stream_chunk(chunk.delta_reasoning)
+                
                 # Accumulate tool calls
                 if chunk.delta_tool_call_part:
                     if isinstance(chunk.delta_tool_call_part, list):
-                        # Convert list to JSON string and append
-                        accumulated_tool_calls += json.dumps(chunk.delta_tool_call_part)
-                    elif isinstance(chunk.delta_tool_call_part, str):
-                        accumulated_tool_calls += chunk.delta_tool_call_part
+                        # Add tool call chunks to accumulator
+                        tool_accumulator.add_chunk(chunk.delta_tool_call_part)
                     else:
-                        # Convert other types to JSON string
-                        accumulated_tool_calls += json.dumps(chunk.delta_tool_call_part)
+                        # Log unexpected format
+                        logger.warning(f"Unexpected tool call format: {type(chunk.delta_tool_call_part)}")
                 
                 # Track finish reason
                 if chunk.finish_reason:
                     finish_reason = chunk.finish_reason
             
+            logger.info(f"🔄 STREAM FINISHED: finish_reason={finish_reason}, response_length={len(full_response)}, reasoning_length={len(full_reasoning)}")
+            
+            # DEBUG: Log if we got an empty response but have reasoning
+            if len(full_response) == 0 and len(full_reasoning) == 0:
+                logger.error(f"🚨 EMPTY RESPONSE AND REASONING! finish_reason={finish_reason}, last_chunk={last_chunk}")
+            elif len(full_response) == 0 and len(full_reasoning) > 0:
+                logger.warning(f"⚠️ Empty response but got {len(full_reasoning)} chars of reasoning")
+            
             # Send final chunk notification
             if on_stream_chunk:
                 final_content = last_chunk.delta_content if last_chunk and last_chunk.delta_content else ""
+                logger.info(f"🔄 SENDING FINAL CHUNK: length={len(final_content)}")
                 await on_stream_chunk(final_content)
             
-            # Parse tool calls if present
+            # Get tool calls if present
             tool_calls = None
-            if finish_reason == "tool_calls" and accumulated_tool_calls:
-                try:
-                    parsed_data = json.loads(accumulated_tool_calls)
-                    if isinstance(parsed_data, dict) and "tool_calls" in parsed_data:
-                        tool_calls = parsed_data["tool_calls"]
-                    else:
-                        tool_calls = parsed_data
-                    if not isinstance(tool_calls, list):
-                        tool_calls = [tool_calls]
-                except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse tool calls: {e}")
+            if finish_reason == "tool_calls":
+                tool_calls = tool_accumulator.get_tool_calls()
+                if tool_calls:
+                    logger.info(f"Accumulated {len(tool_calls)} tool calls")
             
             # Execute tool calls if present
             if tool_calls:
+                logger.info(f"🔧 EXECUTING TOOLS: Found {len(tool_calls)} tool calls")
+                for i, tool_call in enumerate(tool_calls):
+                    logger.info(f"   Tool {i+1}: {tool_call.get('function', {}).get('name', 'unknown')}")
+                
+                # Determine tool execution strategy
+                tool_strategy = self._determine_tool_strategy(tool_calls)
+                logger.info(f"🔧 TOOL STRATEGY: {tool_strategy}")
+                
                 tool_results = await self._execute_tool_calls(tool_calls)
+                logger.info(f"🔧 TOOL EXECUTION COMPLETE: result_length={len(str(tool_results))}")
+                
                 full_response += tool_results
                 
                 # Stream the tool results if callback is provided
                 if on_stream_chunk and tool_results:
+                    logger.info(f"🔄 STREAMING TOOL RESULTS: length={len(str(tool_results))}")
                     await on_stream_chunk(tool_results)
+                    logger.info(f"🔄 TOOL RESULTS STREAMED")
+                
             
+            logger.info(f"🔄 RETURNING RESULT: response_length={len(full_response)}, reasoning_length={len(full_reasoning)}, tool_calls={len(tool_calls) if tool_calls else 0}")
             return {
                 'response': full_response,
+                'reasoning': full_reasoning if full_reasoning else None,
                 'finish_reason': finish_reason,
                 'tool_calls': tool_calls,
                 'error': None
@@ -322,6 +474,7 @@ class StatelessAILoop:
             logger.exception("Error processing stream")
             return {
                 'response': full_response if full_response else None,
+                'reasoning': full_reasoning if full_reasoning else None,
                 'finish_reason': 'error',
                 'tool_calls': None,
                 'error': e
@@ -340,13 +493,15 @@ class StatelessAILoop:
         tool_registry = get_tool_registry()
         results = []
         
-        for tool_call in tool_calls:
+        for i, tool_call in enumerate(tool_calls):
             try:
                 # Extract tool call information
                 tool_id = tool_call.get('id', 'unknown')
                 function_info = tool_call.get('function', {})
                 tool_name = function_info.get('name')
                 tool_args_str = function_info.get('arguments', '{}')
+                
+                logger.info(f"🔧 EXECUTING TOOL {i+1}/{len(tool_calls)}: {tool_name} (ID: {tool_id})")
                 
                 if not tool_name:
                     logger.error(f"Tool call {tool_id} missing function name")
@@ -356,6 +511,7 @@ class StatelessAILoop:
                 # Parse arguments
                 try:
                     tool_args = json.loads(tool_args_str) if tool_args_str else {}
+                    logger.info(f"   Args: {tool_args}")
                 except json.JSONDecodeError as e:
                     logger.error(f"Failed to parse arguments for tool {tool_name}: {e}")
                     results.append(f"\n\n🔧 Tool Error: Invalid arguments for {tool_name}: {e}")
@@ -369,7 +525,8 @@ class StatelessAILoop:
                     continue
                 
                 # Execute tool
-                logger.info(f"Executing tool: {tool_name} with args: {tool_args}")
+                start_time = asyncio.get_event_loop().time()
+                logger.info(f"   🔄 Starting execution...")
                 
                 # Check if execute method is async
                 if asyncio.iscoroutinefunction(tool_instance.execute):
@@ -388,6 +545,9 @@ class StatelessAILoop:
                     except TypeError:
                         # Fallback to **kwargs pattern (base_tool, execute_command_tool, write_file_tool)
                         tool_result = tool_instance.execute(**tool_args)
+                
+                execution_time = asyncio.get_event_loop().time() - start_time
+                logger.info(f"   ✅ Tool {tool_name} completed in {execution_time:.3f}s")
                 
                 # Format result
                 formatted_result = f"\n\n🔧 **{tool_name}** executed:\n{str(tool_result)}"

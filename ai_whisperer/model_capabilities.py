@@ -40,6 +40,16 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "parallel_tools": True,
         "max_tools_per_turn": 10
     },
+    "anthropic/claude-3.5-sonnet": {
+        "multi_tool": False,  # Claude 3.5 Sonnet is single-tool per turn
+        "parallel_tools": False,
+        "max_tools_per_turn": 1
+    },
+    "anthropic/claude-sonnet-4": {
+        "multi_tool": True,  # Claude 4 Sonnet supports multiple tools per turn
+        "parallel_tools": True,
+        "max_tools_per_turn": 10
+    },
     "anthropic/claude-2.1": {
         "multi_tool": True,
         "parallel_tools": True,

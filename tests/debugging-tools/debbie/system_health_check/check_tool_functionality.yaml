@@ -1,0 +1,75 @@
+name: Tool Functionality Health Check
+description: Test core AIWhisperer tool operations 
+steps:
+  - command: message
+    content: "Testing core tool functionality..."
+    
+  # Test file write operation
+  - command: use_tool
+    tool: write_file
+    params:
+      path: health_check_test.txt
+      content: |
+        Health check test file
+        Created by tool functionality test
+        Timestamp: {{timestamp}}
+        Line 4 test
+    expect_success: true
+    
+  # Test file read operation
+  - command: use_tool  
+    tool: read_file
+    params:
+      path: health_check_test.txt
+    expect_output: ["Health check test file", "tool functionality test"]
+    
+  # Test directory listing
+  - command: use_tool
+    tool: list_directory
+    params:
+      path: .
+      recursive: false
+    expect_output: ["files", "directories"]
+    
+  # Test workspace statistics
+  - command: use_tool
+    tool: workspace_stats
+    params:
+      path: .
+      max_depth: 2
+    expect_output: ["files", "size", "total"]
+    
+  # Test search functionality  
+  - command: use_tool
+    tool: search_files
+    params:
+      path: .
+      pattern: "*.py"
+      max_results: 5
+    expect_output: ["matches", "files"]
+    
+  # Test command execution (safe command)
+  - command: use_tool
+    tool: execute_command
+    params:
+      command: echo "Tool test successful"
+      timeout: 5
+    expect_output: ["Tool test successful"]
+    
+  # Test pattern finding
+  - command: use_tool
+    tool: find_pattern
+    params:
+      path: health_check_test.txt
+      pattern: "Health check"
+    expect_output: ["match", "found"]
+    
+  - command: message
+    content: "✅ All core tools tested successfully!"
+    
+cleanup:
+  - command: use_tool
+    tool: execute_command
+    params:
+      command: rm -f health_check_test.txt .output/health_check_test.txt
+      timeout: 5

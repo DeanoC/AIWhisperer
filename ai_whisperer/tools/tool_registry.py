@@ -41,6 +41,14 @@ class ToolRegistry:
 
         self._registered_tools[tool.name] = tool
         logger.info(f"Tool '{tool.name}' registered successfully.")
+    
+    def unregister_tool(self, tool_name: str):
+        """Unregisters a tool by name."""
+        if tool_name in self._registered_tools:
+            del self._registered_tools[tool_name]
+            logger.info(f"Tool '{tool_name}' unregistered successfully.")
+        else:
+            logger.warning(f"Tool '{tool_name}' not found in registry.")
 
     def reset_tools(self):
         """Clears all registered tools."""

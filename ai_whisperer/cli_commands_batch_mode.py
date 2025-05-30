@@ -1,6 +1,9 @@
 import asyncio
+import logging
 from ai_whisperer.batch.batch_client import BatchClient
 from .cli_commands import BaseCliCommand
+
+logger = logging.getLogger(__name__)
 
 
 

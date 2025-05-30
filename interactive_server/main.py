@@ -1,16 +1,28 @@
 import os
+import sys
 import logging
+import argparse
+
+# Ensure we're using modules from the current worktree directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+    print(f"Added {project_root} to Python path to ensure correct module loading")
 
 # Set up logging early
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.info("Starting AIWhisperer interactive server...")
+logger.info(f"Python executable: {sys.executable}")
+logger.info(f"Project root: {project_root}")
 
 import ai_whisperer.commands.echo
 import ai_whisperer.commands.status
 import ai_whisperer.commands.help
 import ai_whisperer.commands.agent
 import ai_whisperer.commands.session
+import ai_whisperer.commands.debbie
 import json
 import inspect
 import asyncio
@@ -65,10 +77,11 @@ async def agent_list_handler(params, websocket=None):
         all_agents = agent_registry.list_agents()
         logger.info(f"All agents from registry: {[a.agent_id for a in all_agents]}")
         
-        # If no workspace is active, only show Alice (agent 'a')
+        # If no workspace is active, only show Alice (agent 'a') and Debbie (agent 'd')
+        # Debbie should always be available for debugging regardless of workspace status
         if not has_active_workspace:
-            all_agents = [agent for agent in all_agents if agent.agent_id.lower() == 'a']
-            logger.info(f"Filtered to Alice only: {[a.agent_id for a in all_agents]}")
+            all_agents = [agent for agent in all_agents if agent.agent_id.lower() in ['a', 'd']]
+            logger.info(f"Filtered to Alice and Debbie: {[a.agent_id for a in all_agents]}")
         
         agents = [
             {
@@ -92,8 +105,9 @@ async def session_switch_agent_handler(params, websocket=None):
     agent_id = params.get("agent_id")
     logger.info(f"session_switch_agent_handler called with agent_id: {agent_id}")
     
-    # Check if trying to switch to non-Alice agent without workspace
-    if agent_id and agent_id.lower() != 'a':
+    # Check if trying to switch to non-Alice/non-Debbie agent without workspace
+    # Debbie should always be available for debugging regardless of workspace status
+    if agent_id and agent_id.lower() not in ['a', 'd']:
         has_active_workspace = False
         from .handlers.project_handlers import get_project_manager
         try:
@@ -187,13 +201,80 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load config and initialize session manager at startup
-CONFIG_PATH = os.environ.get("AIWHISPERER_CONFIG", "config.yaml")
+# Parse command line arguments for Debbie monitoring
+def parse_args():
+    parser = argparse.ArgumentParser(description="AIWhisperer Interactive Server")
+    parser.add_argument("--debbie-monitor", action="store_true", 
+                       help="Enable Debbie monitoring for session debugging")
+    parser.add_argument("--monitor-level", choices=["passive", "active"], default="passive",
+                       help="Monitoring level: passive (observe only) or active (can intervene)")
+    parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "config.yaml"),
+                       help="Configuration file path")
+    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
+    return parser.parse_args()
+
+def initialize_server(cli_args=None):
+    """Initialize the server with optional CLI arguments"""
+    global app_config, debbie_observer, session_manager
+    
+    # Use provided args or parse them
+    if cli_args is None:
+        cli_args = parse_args()
+    
+    # Load config and initialize session manager at startup
+    CONFIG_PATH = cli_args.config
+    try:
+        app_config = load_config(CONFIG_PATH)
+    except Exception as e:
+        logging.error(f"Failed to load configuration: {e}")
+        app_config = {}
+
+    # Initialize Debbie observer if monitoring is enabled
+    debbie_observer = None
+    if cli_args.debbie_monitor:
+        try:
+            from .debbie_observer import get_observer
+            debbie_observer = get_observer()
+            debbie_observer.enable()
+            logger.info(f"Debbie monitoring enabled in {cli_args.monitor_level} mode")
+            
+            # Configure monitoring level
+            if cli_args.monitor_level == "active":
+                # TODO: Set active monitoring flags when available
+                logger.info("Active monitoring mode: Debbie can intervene in sessions")
+            else:
+                logger.info("Passive monitoring mode: Debbie will observe only")
+                
+        except Exception as e:
+            logger.error(f"Failed to initialize Debbie observer: {e}")
+            debbie_observer = None
+    
+    return cli_args, app_config, debbie_observer
+
+# Initialize with default args when imported as module
 try:
-    app_config = load_config(CONFIG_PATH)
+    # Only parse args if running as main module
+    if __name__ == "__main__":
+        cli_args, app_config, debbie_observer = initialize_server()
+    else:
+        # When imported, use defaults
+        class DefaultArgs:
+            debbie_monitor = False
+            monitor_level = "passive"
+            config = os.environ.get("AIWHISPERER_CONFIG", "config.yaml")
+        
+        cli_args, app_config, debbie_observer = initialize_server(DefaultArgs())
 except Exception as e:
-    logging.error(f"Failed to load configuration: {e}")
+    logger.error(f"Failed to initialize server: {e}")
+    # Fallback to basic config
     app_config = {}
+    debbie_observer = None
+    class DefaultArgs:
+        debbie_monitor = False
+        monitor_level = "passive"
+        config = "config.yaml"
+    cli_args = DefaultArgs()
 
 # Initialize PathManager
 path_manager = None
@@ -201,6 +282,22 @@ try:
     path_manager = PathManager.get_instance()
     path_manager.initialize(config_values=app_config)
     logging.info("PathManager initialized successfully")
+    logging.info(f"  - app_path: {path_manager.app_path}")
+    logging.info(f"  - prompt_path: {path_manager.prompt_path}")
+    logging.info(f"  - workspace_path: {path_manager.workspace_path}")
+    logging.info(f"  - project_path: {path_manager.project_path}")
+    
+    # Verify prompts directory exists
+    prompts_dir = path_manager.app_path / "prompts" / "agents"
+    if prompts_dir.exists():
+        agent_prompts = list(prompts_dir.glob("*.md"))
+        logging.info(f"  - Found {len(agent_prompts)} agent prompts in {prompts_dir}")
+        if any("debbie" in p.name.lower() for p in agent_prompts):
+            logging.info("  - ✓ Debbie's prompt file found")
+        else:
+            logging.warning("  - ⚠️ Debbie's prompt file NOT found in agent prompts!")
+    else:
+        logging.warning(f"  - ⚠️ Prompts directory not found at {prompts_dir}")
 except Exception as e:
     logging.error(f"Failed to initialize PathManager: {e}")
     # Continue without PathManager
@@ -228,22 +325,24 @@ if path_manager:
 # Initialize prompt system
 prompt_system = None
 try:
+    from ai_whisperer.tools.tool_registry import get_tool_registry
     prompt_config = PromptConfiguration(app_config)
-    prompt_system = PromptSystem(prompt_config)
-    logging.info("PromptSystem initialized successfully")
+    tool_registry = get_tool_registry()
+    prompt_system = PromptSystem(prompt_config, tool_registry)
+    logging.info("PromptSystem initialized successfully with tool registry")
 except Exception as e:
     logging.error(f"Failed to initialize PromptSystem: {e}")
     # Continue without prompt system
 
 try:
-    session_manager = StatelessSessionManager(app_config, agent_registry, prompt_system)
+    session_manager = StatelessSessionManager(app_config, agent_registry, prompt_system, observer=debbie_observer)
     logger.info("StatelessSessionManager initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize StatelessSessionManager: {e}")
     import traceback
     traceback.print_exc()
     # Create a basic session manager without extras
-    session_manager = StatelessSessionManager(app_config, None, None)
+    session_manager = StatelessSessionManager(app_config, None, None, observer=debbie_observer)
     logger.info("Created basic StatelessSessionManager without agent registry")
 
 
@@ -330,6 +429,74 @@ async def echo_handler(params, websocket=None):
         return params["message"]
     return params
 
+# Debbie monitoring handlers
+async def debbie_get_status_handler(params, websocket=None):
+    """Get Debbie monitoring status"""
+    if not debbie_observer:
+        return {"enabled": False, "message": "Debbie monitoring not initialized"}
+    
+    return {
+        "enabled": debbie_observer._enabled,
+        "monitoring_level": cli_args.monitor_level if cli_args.debbie_monitor else None,
+        "active_sessions": len(debbie_observer.monitors),
+        "session_ids": list(debbie_observer.monitors.keys())
+    }
+
+async def debbie_get_alerts_handler(params, websocket=None):
+    """Get current monitoring alerts"""
+    session_id = params.get("session_id")
+    
+    if not debbie_observer:
+        return {"alerts": [], "message": "Debbie monitoring not initialized"}
+    
+    alerts = []
+    if session_id:
+        # Get alerts for specific session
+        monitor = debbie_observer.monitors.get(session_id)
+        if monitor:
+            alerts = [
+                {
+                    "timestamp": alert.timestamp.isoformat(),
+                    "pattern": alert.pattern.value,
+                    "severity": alert.severity.value,
+                    "message": alert.message,
+                    "suggestion": alert.suggestion,
+                    "session_id": session_id
+                }
+                for alert in monitor.alerts
+            ]
+    else:
+        # Get alerts from all sessions
+        for sid, monitor in debbie_observer.monitors.items():
+            for alert in monitor.alerts:
+                alerts.append({
+                    "timestamp": alert.timestamp.isoformat(),
+                    "pattern": alert.pattern.value,
+                    "severity": alert.severity.value,
+                    "message": alert.message,
+                    "suggestion": alert.suggestion,
+                    "session_id": sid
+                })
+    
+    return {"alerts": alerts}
+
+async def debbie_send_alert_notification(websocket, alert_data):
+    """Send alert notification to WebSocket client"""
+    if not websocket:
+        return
+        
+    notification = {
+        "jsonrpc": "2.0",
+        "method": "debbie.alert",
+        "params": alert_data
+    }
+    
+    try:
+        await websocket.send_text(json.dumps(notification))
+        logger.debug(f"Sent Debbie alert notification: {alert_data['pattern']}")
+    except Exception as e:
+        logger.error(f"Failed to send Debbie alert notification: {e}")
+
 
 # Handler registry
 from ai_whisperer.commands.registry import CommandRegistry
@@ -368,6 +535,9 @@ HANDLERS = {
     "session.switch_agent": session_switch_agent_handler,
     "session.current_agent": session_current_agent_handler,
     "session.handoff": session_handoff_handler,
+    # Debbie monitoring handlers
+    "debbie.status": debbie_get_status_handler,
+    "debbie.alerts": debbie_get_alerts_handler,
     # Project management handlers
     **PROJECT_HANDLERS
 }
@@ -467,8 +637,24 @@ async def handle_websocket_message(websocket, data):
                 "error": {"code": -32603, "message": "Internal error"}
             }
     else:
-        # Notification - do nothing
-        return None
+        # Notification - still process certain critical methods
+        method = msg.get("method", "")
+        if method in ["sendUserMessage", "provideToolResult"]:
+            # These methods should be processed even as notifications
+            # to prevent message buffering issues
+            logging.warning(f"[handle_websocket_message] Processing critical notification: {method}")
+            try:
+                # Create a fake ID for internal processing
+                msg["id"] = f"notification_{method}_{id(msg)}"
+                response = await process_json_rpc_request(msg, websocket)
+                # Don't return the response for notifications
+                return None
+            except Exception as e:
+                logging.error(f"[handle_websocket_message] Error processing notification: {e}")
+                return None
+        else:
+            # Other notifications - do nothing
+            return None
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -481,6 +667,14 @@ async def websocket_endpoint(websocket: WebSocket):
             logging.debug("[websocket_endpoint] Waiting for message...")
             data = await websocket.receive_text()
             logging.error(f"[websocket_endpoint] CRITICAL: Received message: {data}")
+            
+            # Debug: Check if this is a notification
+            try:
+                parsed_data = json.loads(data)
+                if isinstance(parsed_data, dict) and "method" in parsed_data and "id" not in parsed_data:
+                    logging.warning(f"[websocket_endpoint] WARNING: Received notification for method: {parsed_data.get('method')}")
+            except:
+                pass
             
             response = await handle_websocket_message(websocket, data)
             logging.error(f"[websocket_endpoint] CRITICAL: Generated response: {response}")
@@ -499,6 +693,24 @@ async def websocket_endpoint(websocket: WebSocket):
             websocket_closed = True
             break
     
+    # Cleanup session when WebSocket closes
+    try:
+        if websocket in session_manager.websocket_sessions:
+            session_id = session_manager.websocket_sessions[websocket]
+            logging.info(f"[websocket_endpoint] Cleaning up session {session_id} for closed WebSocket")
+            
+            # Remove the WebSocket association
+            del session_manager.websocket_sessions[websocket]
+            
+            # Note: We don't remove the session itself - it may be reconnected
+            # But we should mark it as disconnected
+            if session_id in session_manager.sessions:
+                session = session_manager.sessions[session_id]
+                session.websocket = None  # Clear the WebSocket reference
+                logging.info(f"[websocket_endpoint] Cleared WebSocket reference for session {session_id}")
+    except Exception as cleanup_error:
+        logging.error(f"[websocket_endpoint] Error during session cleanup: {cleanup_error}")
+    
     logging.debug("[websocket_endpoint] WebSocket endpoint exiting, closing websocket.")
     if not websocket_closed:
         try:
@@ -510,4 +722,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # CLI args are already parsed in the initialization above
+    logger.info(f"Starting server on {cli_args.host}:{cli_args.port} with Debbie monitoring: {cli_args.debbie_monitor}")
+    uvicorn.run(app, host=cli_args.host, port=cli_args.port)

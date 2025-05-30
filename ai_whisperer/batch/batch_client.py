@@ -1,14 +1,17 @@
 """
-Batch client core integration for Billy the Batcher.
+Batch client core integration for Debbie the Debugger.
 Coordinates server, websocket, and script processing for batch execution.
 """
 
 import sys
 import os
 import json
+import logging
 from .server_manager import ServerManager
 from .websocket_client import WebSocketClient
-from .script_processor import ScriptProcessor
+from .script_processor import ScriptProcessor, ScriptFileNotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 class BatchClient:

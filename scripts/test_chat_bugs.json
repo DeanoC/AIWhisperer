@@ -1,0 +1,71 @@
+{
+  "name": "Chat Message Bug Reproduction Test",
+  "description": "Test script to reproduce the chat message buffering and persona loss bugs",
+  "steps": [
+    {
+      "command": "message",
+      "content": "Test 1: Starting fresh session with default Alice agent"
+    },
+    {
+      "command": "message", 
+      "content": "Hi I'm working on this app, with the ai chat a central part can you send me a message of around 500 characters so I can test how we receive it?",
+      "expect_response": ["AIWhisperer", "500 characters", "Alice"],
+      "timeout": 15
+    },
+    {
+      "command": "message",
+      "content": "So what things will ai whisperer help with?",
+      "expect_response": ["AIWhisperer", "multi-agent", "capabilities"],
+      "timeout": 15
+    },
+    {
+      "command": "message",
+      "content": "FLUSH MESSAGE - THIS SHOULD NOT BE NEEDED",
+      "timeout": 5
+    },
+    {
+      "command": "message",
+      "content": "Are you not Alice the assistant?",
+      "expect_response": ["Alice", "assistant", "AIWhisperer"],
+      "timeout": 15
+    },
+    {
+      "command": "message",
+      "content": "ANOTHER FLUSH - CHECKING IF BUG PERSISTS",
+      "timeout": 5
+    },
+    {
+      "command": "message",
+      "content": "Test 2: Checking if Alice persona is still active"
+    },
+    {
+      "command": "message",
+      "content": "Can you remind me who you are and what system you're part of?",
+      "expect_response": ["Alice", "AIWhisperer", "assistant"],
+      "timeout": 15
+    },
+    {
+      "command": "message",
+      "content": "Test 3: Multiple messages in sequence"
+    },
+    {
+      "command": "message",
+      "content": "First message",
+      "timeout": 10
+    },
+    {
+      "command": "message",
+      "content": "Second message - does this appear without flush?",
+      "timeout": 10
+    },
+    {
+      "command": "message",
+      "content": "Third message - checking consistency",
+      "timeout": 10
+    },
+    {
+      "command": "message",
+      "content": "✅ Test complete - check results for buffering issues and persona loss"
+    }
+  ]
+}
