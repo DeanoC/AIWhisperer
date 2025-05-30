@@ -23,6 +23,7 @@ from ai_whisperer.context_management import ContextManager
 from ai_whisperer.context.context_manager import AgentContextManager
 from ai_whisperer.path_management import PathManager
 from .message_models import AIMessageChunkNotification
+from .debbie_observer import get_observer
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,11 @@ class StatelessInteractiveSession:
         if project_path:
             path_manager.initialize(config_values={'workspace_path': project_path})
         self.context_manager = AgentContextManager(session_id, path_manager)
+        
+        # Initialize Debbie observer for this session
+        self.observer = get_observer()
+        self.observer.observe_session(session_id)
+        logger.info(f"Debbie observer initialized for session {session_id}")
         
         # Register tools for interactive sessions
         self._register_tools()
@@ -326,6 +332,10 @@ class StatelessInteractiveSession:
                 "to": agent_id
             })
             
+            # Notify observer about agent switch
+            if old_agent:
+                self.observer.on_agent_switch(self.session_id, old_agent, agent_id)
+            
             logger.info(f"Switched active agent from '{old_agent}' to '{agent_id}' in session {self.session_id}")
             
             # Have the agent introduce itself if not already introduced
@@ -352,6 +362,9 @@ class StatelessInteractiveSession:
                 raise RuntimeError(f"Active agent '{self.active_agent}' not found")
                 
             agent = self.agents[self.active_agent]
+            
+            # Notify observer that message processing is starting
+            self.observer.on_message_start(self.session_id, message)
             
             # Process @ references in the message
             context_items = self.context_manager.process_message_references(
@@ -496,10 +509,17 @@ class StatelessInteractiveSession:
                 logger.debug(f"Resetting continuation depth from {self._continuation_depth} to 0")
                 self._continuation_depth = 0
             
+            # Notify observer that message processing completed
+            self.observer.on_message_complete(self.session_id, result)
+            
             return result
             
         except Exception as e:
             logger.error(f"Failed to send message to agent '{self.active_agent}' in session {self.session_id}: {e}", exc_info=True)
+            
+            # Notify observer about the error
+            self.observer.on_error(self.session_id, e)
+            
             # Reset continuation depth on error
             if self._continuation_depth > 0:
                 logger.debug("Resetting continuation depth due to error")
@@ -718,6 +738,10 @@ class StatelessInteractiveSession:
         # Clear agents
         self.agents.clear()
         self.active_agent = None
+        
+        # Stop observing this session
+        self.observer.stop_observing(self.session_id)
+        logger.info(f"Stopped Debbie observer for session {self.session_id}")
         
         logger.info(f"Session {self.session_id} cleaned up")
     
