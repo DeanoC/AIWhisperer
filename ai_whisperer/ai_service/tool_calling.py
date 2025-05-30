@@ -253,7 +253,7 @@ class ToolCallHandler:
         
         # Tool choice
         if tool_choice is not None:
-            if isinstance(tool_choice, str) and tool_choice in ["auto", "required", "none"]:
+            if isinstance(tool_choice, str) and tool_choice in {choice.value for choice in ToolChoice}:
                 params["tool_choice"] = tool_choice
             elif isinstance(tool_choice, dict):
                 params["tool_choice"] = tool_choice
