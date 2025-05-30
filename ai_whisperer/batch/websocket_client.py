@@ -8,7 +8,12 @@ import json
 import logging
 import websockets
 from typing import Optional, Dict, Any, Callable
-from websockets.client import WebSocketClientProtocol
+# Use the new import path for websockets 11+
+try:
+    from websockets.client import ClientConnection as WebSocketClientProtocol
+except ImportError:
+    # Fall back to old import for older versions
+    from websockets.legacy.client import WebSocketClientProtocol
 
 logger = logging.getLogger(__name__)
 
