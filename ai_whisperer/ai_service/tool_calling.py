@@ -137,19 +137,21 @@ class StreamAccumulator:
                     "type": tc.get("type", "function"),
                     "function": {
                         "name": tc.get("function", {}).get("name"),
-                        "arguments": ""
+                        "arguments": []
                     }
                 }
             
             # Accumulate arguments
             if "function" in tc and "arguments" in tc["function"]:
-                self.tool_calls[index]["function"]["arguments"] += tc["function"]["arguments"]
+                self.tool_calls[index]["function"]["arguments"].append(tc["function"]["arguments"])
     
     def get_tool_calls(self) -> List[ToolCall]:
         """Get accumulated tool calls"""
         result = []
         for tc_data in self.tool_calls.values():
             if tc_data.get("id") and tc_data.get("function", {}).get("name"):
+                # Join the arguments fragments into a single string
+                tc_data["function"]["arguments"] = ''.join(tc_data["function"]["arguments"])
                 result.append(ToolCall.from_api_response(tc_data))
         return result
 
