@@ -229,16 +229,23 @@
   - [x] User interaction pattern analysis
   - [x] Agent response time monitoring
   - [x] Tool usage analytics
+- [x] Create monitoring tools for Debbie agent ✅ Day 2 Complete
+  - [x] SessionHealthTool - Real-time health scoring and metrics
+  - [x] SessionAnalysisTool - Deep session analysis with recommendations
+  - [x] MonitoringControlTool - Control monitoring settings and thresholds
+  - [x] Integrated into tool registry and agent configuration
+- [x] Add interactive debugging commands ✅ Day 4 Complete
+  - [x] `/debbie status` - Current session health (17 tests passing)
+  - [x] `/debbie analyze` - Deep dive into recent activity (uses SessionAnalysisTool)
+  - [x] `/debbie suggest` - Get recommendations (pattern-based suggestions)
+  - [x] `/debbie report` - Generate comprehensive session report
+  - [x] Comprehensive test coverage (17/17 tests passing)
+  - [x] Integration with command registry and interactive server
 - [ ] Implement live insights dashboard
   - [ ] Session health indicators
   - [ ] Performance metrics display
   - [ ] Active issue alerts
   - [ ] Recommendation engine
-- [ ] Add interactive debugging commands
-  - [ ] `/debbie status` - Current session health
-  - [ ] `/debbie analyze` - Deep dive into recent activity
-  - [ ] `/debbie suggest` - Get recommendations
-  - [ ] `/debbie report` - Generate session report
 
 #### Enhanced Detection for Interactive Mode
 - [ ] User behavior patterns

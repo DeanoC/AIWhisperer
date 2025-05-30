@@ -12,6 +12,7 @@ import ai_whisperer.commands.status
 import ai_whisperer.commands.help
 import ai_whisperer.commands.agent
 import ai_whisperer.commands.session
+import ai_whisperer.commands.debbie
 import json
 import inspect
 import asyncio
