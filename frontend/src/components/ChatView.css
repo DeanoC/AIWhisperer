@@ -19,6 +19,14 @@
 
 .status-indicators {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.status-indicators-row {
+  display: flex;
   gap: 16px;
   align-items: center;
 }
@@ -55,6 +63,22 @@
 
 .status-error {
   color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-weight: 500;
+  font-size: 13px;
+  display: block;
+  margin-top: 4px;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.theme-dark .status-error {
+  color: #fca5a5;
+  background: #451a1a;
+  border-color: #7f1d1d;
 }
 
 /* Theme toggle styles moved to MainLayout.css */

@@ -105,16 +105,18 @@ export const ChatView: React.FC<ChatViewProps> = ({
       {(wsStatus !== 'connected' || sessionStatus !== SessionStatus.Active || sessionError) && (
         <div className="chat-status-bar compact">
           <div className="status-indicators">
-            {wsStatus !== 'connected' && (
-              <span className={`status-indicator ${wsStatus === 'connected' ? 'connected' : 'disconnected'}`}>
-                WebSocket: {wsStatus}
-              </span>
-            )}
-            {sessionStatus !== SessionStatus.Active && (
-              <span className="status-indicator inactive">
-                Session: {sessionStatus}
-              </span>
-            )}
+            <div className="status-indicators-row">
+              {wsStatus !== 'connected' && (
+                <span className={`status-indicator ${wsStatus === 'connected' ? 'connected' : 'disconnected'}`}>
+                  WebSocket: {wsStatus}
+                </span>
+              )}
+              {sessionStatus !== SessionStatus.Active && (
+                <span className="status-indicator inactive">
+                  Session: {sessionStatus}
+                </span>
+              )}
+            </div>
             {sessionError && (
               <span className="status-error">Error: {sessionError}</span>
             )}
