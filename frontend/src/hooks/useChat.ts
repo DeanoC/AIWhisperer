@@ -18,7 +18,6 @@ export function useChat(options?: ChatOptions) {
   const [currentAIMessage, setCurrentAIMessage] = useState<string>('');
   // Track a unique ID for the current streaming AI message
   const currentAIMessageId = useRef<string | null>(null);
-  const currentAgentId = options?.currentAgentId;
   const currentAgent = options?.currentAgent;
 
   // Add a user message

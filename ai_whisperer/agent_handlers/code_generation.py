@@ -6,8 +6,7 @@ from ai_whisperer.logging_custom import LogMessage, LogLevel, ComponentType, get
 from pathlib import Path
 import os
 import json
-from ai_whisperer import PromptSystem # Import PromptSystem
-from ai_whisperer.prompt_system import PromptNotFoundError
+from ai_whisperer.prompt_system import PromptSystem, PromptNotFoundError # Import PromptSystem
 import traceback
 from datetime import datetime, timezone
 

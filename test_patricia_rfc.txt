@@ -1,0 +1,5 @@
+# Test script for Patricia's RFC creation
+# Switch to Patricia
+@a p
+# Ask her to create an RFC
+Can you create a test RFC for the RFC system? Title: "Test RFC Creation Flow", Author: "AIWhisperer Team", Body: "This is a test RFC to verify the automatic continuation system works correctly."

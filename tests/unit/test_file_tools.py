@@ -223,7 +223,7 @@ def test_read_file_tool_execute_unsupported_file_type(temp_project_dir):
 def test_write_file_tool_name():
     """Tests the name property of WriteFileTool."""
     tool = WriteFileTool()
-    assert tool.name == 'write_to_file'
+    assert tool.name == 'write_file'
 
 def test_write_file_tool_description():
     """Tests the description property of WriteFileTool."""
@@ -253,7 +253,7 @@ def test_write_file_tool_openrouter_api_definition():
     definition = tool.get_openrouter_tool_definition()
 
     assert isinstance(definition, dict)
-    assert definition['function']['name'] == 'write_to_file'
+    assert definition['function']['name'] == 'write_file'
     assert 'description' in definition['function']
     assert 'parameters' in definition['function']
     assert definition['function']['parameters'] == tool.parameters_schema
@@ -265,7 +265,7 @@ def test_write_file_tool_ai_prompt_instructions():
 
     assert isinstance(instructions, str)
     assert len(instructions) > 0
-    assert 'write_to_file' in instructions
+    assert 'write_file' in instructions
     assert 'path' in instructions
     assert 'content' in instructions
 

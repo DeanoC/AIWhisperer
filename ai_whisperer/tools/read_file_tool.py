@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
@@ -37,6 +37,14 @@ class ReadFileTool(AITool):
             },
             'required': ['path']
         }
+
+    @property
+    def category(self) -> Optional[str]:
+        return "File System"
+
+    @property
+    def tags(self) -> List[str]:
+        return ["filesystem", "file_read", "analysis"]
 
     def get_ai_prompt_instructions(self) -> str:
         return """

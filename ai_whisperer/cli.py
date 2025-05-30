@@ -1,7 +1,5 @@
-if __name__ == "__main__":
-    import sys
-    from ai_whisperer.cli import cli
-    cli(sys.argv[1:])
+
+
 
 import argparse
 import sys
@@ -15,8 +13,10 @@ from ai_whisperer.path_management import PathManager
 
 logger = None
 
+
 def cli(args=None):
     """Main entry point for the AI Whisperer CLI application (batch mode only)."""
+
     parser = argparse.ArgumentParser(
         description="AI Whisperer CLI application (batch mode only)",
         prog="ai-whisperer",
@@ -26,6 +26,7 @@ def cli(args=None):
         "script",
         metavar="SCRIPT",
         type=str,
+        nargs="?",
         help="Path to the batch script to execute."
     )
     parser.add_argument(
@@ -41,37 +42,34 @@ def cli(args=None):
         help="Echo commands only, do not start server or connect."
     )
 
+
+    if args is not None:
+        parsed_args = parser.parse_args(args)
+    else:
+        parsed_args = parser.parse_args()
+
+    # If script is not provided, print help and exit
+    if not parsed_args.script:
+        parser.print_help()
+        sys.exit(0)
+
+    # Setup logging (no config file required for batch mode)
+    logging_custom.setup_logging()
+    global logger
+    logger = logging_custom.get_logger(__name__)
+
+    script_path = getattr(parsed_args, "script")
+    config_path = getattr(parsed_args, "config")
+    dry_run = getattr(parsed_args, "dry_run", False)
+
+    # Load config and .env (enforces API key and config validation)
     try:
-        if args is not None:
-            parsed_args = parser.parse_args(args)
-        else:
-            parsed_args = parser.parse_args()
+        config = load_config(config_path)
+    except Exception as e:
+        print(f"Error loading config: {e}", file=sys.stderr)
+        sys.exit(2)
 
-        # Setup logging (no config file required for batch mode)
-        logging_custom.setup_logging()
-        global logger
-        logger = logging_custom.get_logger(__name__)
-
-
-        script_path = getattr(parsed_args, "script")
-        config_path = getattr(parsed_args, "config")
-        dry_run = getattr(parsed_args, "dry_run", False)
-
-        # Load config and .env (enforces API key and config validation)
-        try:
-            config = load_config(config_path)
-        except Exception as e:
-            print(f"Error loading config: {e}", file=sys.stderr)
-            sys.exit(2)
-
-        command = BatchModeCliCommand(script_path=script_path, config=config, dry_run=dry_run)
-        # Actually execute the command and exit with its code
-        exit_code = command.execute()
-        sys.exit(exit_code)
-
-    except SystemExit as e:
-        raise e
-
-
-# Removed execute_commands_and_capture_output and all references to DelegateManager for batch-mode isolation
+    command = BatchModeCliCommand(script_path=script_path)
+    exit_code = command.execute()
+    sys.exit(exit_code)
 

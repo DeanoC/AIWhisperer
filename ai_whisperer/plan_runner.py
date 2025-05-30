@@ -7,16 +7,20 @@ import traceback
 import threading # Import threading
 from typing import Dict, Any, Optional # Import Optional
 
-from .delegate_manager import DelegateManager # Import DelegateManager
+# Delegate system removed
 from .config import load_config
 from .tools.tool_registry import get_tool_registry
 from .tools.read_file_tool import ReadFileTool
 from .tools.write_file_tool import WriteFileTool
 from .tools.execute_command_tool import ExecuteCommandTool
+from .tools.list_directory_tool import ListDirectoryTool
+from .tools.search_files_tool import SearchFilesTool
+from .tools.get_file_content_tool import GetFileContentTool
 from .exceptions import OrchestratorError, PlanNotLoadedError
 from .plan_parser import ParserPlan
 from .state_management import StateManager
 from .execution_engine import ExecutionEngine
+from .path_management import PathManager
 from .logging_custom import (
     setup_logging,
     get_logger,
@@ -33,7 +37,7 @@ class PlanRunner:
     """
     Executes a project plan from a parsed plan object.
     """
-    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False, delegate_manager: Optional[DelegateManager] = None): # Add delegate_manager parameter
+    def __init__(self, config: Dict[str, Any], shutdown_event: threading.Event, monitor: bool = False, delegate_manager: Optional[Any] = None): # delegate_manager kept for compatibility
         """
         Initializes the PlanRunner with application configuration.
 
@@ -50,10 +54,53 @@ class PlanRunner:
     def _register_tools(self):
         """Registers the necessary tools with the ToolRegistry."""
         tool_registry = get_tool_registry()
-        # Register main tool instances only (no legacy aliases)
+        # Register file operation tools
         tool_registry.register_tool(ReadFileTool())
         tool_registry.register_tool(WriteFileTool())
         tool_registry.register_tool(ExecuteCommandTool())
+        
+        # Register workspace browsing tools
+        tool_registry.register_tool(ListDirectoryTool())
+        tool_registry.register_tool(SearchFilesTool())
+        tool_registry.register_tool(GetFileContentTool())
+        
+        # Register advanced analysis tools
+        from ai_whisperer.tools.find_pattern_tool import FindPatternTool
+        from ai_whisperer.tools.workspace_stats_tool import WorkspaceStatsTool
+        
+        # These tools need PathManager instance
+        path_manager = PathManager()
+        tool_registry.register_tool(FindPatternTool(path_manager))
+        tool_registry.register_tool(WorkspaceStatsTool(path_manager))
+        
+        # Register RFC management tools
+        from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
+        from ai_whisperer.tools.read_rfc_tool import ReadRFCTool
+        from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
+        from ai_whisperer.tools.update_rfc_tool import UpdateRFCTool
+        from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
+        
+        tool_registry.register_tool(CreateRFCTool())
+        tool_registry.register_tool(ReadRFCTool())
+        tool_registry.register_tool(ListRFCsTool())
+        tool_registry.register_tool(UpdateRFCTool())
+        tool_registry.register_tool(MoveRFCTool())
+        
+        # Register codebase analysis tools
+        from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool
+        from ai_whisperer.tools.find_similar_code_tool import FindSimilarCodeTool
+        from ai_whisperer.tools.get_project_structure_tool import GetProjectStructureTool
+        
+        tool_registry.register_tool(AnalyzeLanguagesTool())
+        tool_registry.register_tool(FindSimilarCodeTool())
+        tool_registry.register_tool(GetProjectStructureTool())
+        
+        # Register web research tools
+        from ai_whisperer.tools.web_search_tool import WebSearchTool
+        from ai_whisperer.tools.fetch_url_tool import FetchURLTool
+        
+        tool_registry.register_tool(WebSearchTool())
+        tool_registry.register_tool(FetchURLTool())
 
         logger.debug("Tools registered with ToolRegistry.")
 

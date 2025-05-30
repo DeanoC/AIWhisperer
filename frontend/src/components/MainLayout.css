@@ -225,6 +225,27 @@
   opacity: 0.5;
 }
 
+/* Connection Status */
+.connection-status {
+  font-weight: 500;
+}
+
+.connection-status.status-connected {
+  color: #4caf50;
+}
+
+.connection-status.status-connecting {
+  color: #ff9800;
+}
+
+.connection-status.status-disconnected {
+  color: #f44336;
+}
+
+.connection-status.status-error {
+  color: #f44336;
+}
+
 /* Loading Overlay */
 .loading-overlay {
   position: absolute;

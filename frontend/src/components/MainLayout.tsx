@@ -13,6 +13,7 @@ interface MainLayoutProps {
   currentAgent?: any;
   currentPlan?: any;
   onThemeToggle?: () => void;
+  connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'error';
 }
 
 interface PanelState {
@@ -64,7 +65,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   theme = 'light',
   currentAgent,
   currentPlan,
-  onThemeToggle
+  onThemeToggle,
+  connectionStatus = 'disconnected'
 }) => {
   const [panelState, setPanelState] = useState<PanelState>(() => {
     // Initialize from localStorage
@@ -112,31 +114,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!e.ctrlKey || isLoading) return;
-
-      switch (e.key.toLowerCase()) {
-        case 'b':
-          e.preventDefault();
-          toggleSidebar();
-          break;
-        case 'i':
-          e.preventDefault();
-          toggleContext();
-          break;
-        case 'm':
-          e.preventDefault();
-          mainRef.current?.focus();
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isLoading]);
-
   // Toggle functions
   const toggleSidebar = useCallback(() => {
     setPanelState(prev => {
@@ -162,6 +139,31 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       return { ...prev, contextCollapsed: collapsed };
     });
   }, []);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!e.ctrlKey || isLoading) return;
+
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          toggleSidebar();
+          break;
+        case 'i':
+          e.preventDefault();
+          toggleContext();
+          break;
+        case 'm':
+          e.preventDefault();
+          mainRef.current?.focus();
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isLoading, toggleSidebar, toggleContext]);
 
   // Resize handlers
   const handleResizeStart = useCallback((panel: 'sidebar' | 'context', e: React.MouseEvent) => {
@@ -300,7 +302,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <aside 
           className={`layout-context ${panelState.contextCollapsed ? 'collapsed' : ''}`}
           style={{ width: panelState.contextCollapsed ? '60px' : `${panelState.contextWidth}px` }}
-          role="complementary"
           data-testid="context-panel"
         >
           {!panelState.contextCollapsed && (
@@ -323,9 +324,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* Footer */}
       <footer className="main-footer" role="contentinfo">
         <div className="status-bar" data-testid="status-bar">
-          <span>Ready</span>
+          <span>WebSocket</span>
           <span className="separator">•</span>
-          <span>Connected</span>
+          <span className={`connection-status status-${connectionStatus}`}>
+            {connectionStatus === 'connected' && '✓ Connected'}
+            {connectionStatus === 'connecting' && '⟳ Connecting...'}
+            {connectionStatus === 'disconnected' && '✗ Disconnected'}
+            {connectionStatus === 'error' && '⚠ Error'}
+          </span>
         </div>
       </footer>
 

@@ -6,6 +6,7 @@ import { AgentSelector } from './AgentSelector';
 import { AgentTransition } from './AgentTransition';
 import { AgentMessageBubble } from './AgentMessageBubble';
 import MessageInput from '../MessageInput';
+import { FilePicker } from './FilePicker';
 import './ChatView.css';
 
 export interface ChatViewProps {
@@ -21,6 +22,7 @@ export interface ChatViewProps {
   onThemeToggle?: () => void;
   theme?: 'light' | 'dark';
   data?: any; // For compatibility with ViewRouter
+  jsonRpcService?: any; // For file picker
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -35,11 +37,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
   sessionError,
   onThemeToggle,
   theme = 'light',
-  data
+  data,
+  jsonRpcService
 }) => {
   const [showTransition, setShowTransition] = useState(false);
   const [transitionAgents, setTransitionAgents] = useState<{ from: string; to: string } | null>(null);
   const [isAgentSelectorCompact, setIsAgentSelectorCompact] = useState(false);
+  const [showFilePicker, setShowFilePicker] = useState(false);
+  const [filePickerCallback, setFilePickerCallback] = useState<((filePath: string) => void) | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -190,8 +195,28 @@ export const ChatView: React.FC<ChatViewProps> = ({
           fetchCommandList={fetchCommandList}
           sessionStatus={sessionStatus}
           disabled={sessionStatus !== SessionStatus.Active}
+          onFilePickerRequest={(callback) => {
+            setFilePickerCallback(() => callback);
+            setShowFilePicker(true);
+          }}
         />
       </div>
+
+      {/* File Picker Modal */}
+      <FilePicker
+        jsonRpcService={jsonRpcService}
+        isOpen={showFilePicker}
+        onSelect={(filePath) => {
+          if (filePickerCallback) {
+            filePickerCallback(filePath);
+            setFilePickerCallback(null);
+          }
+        }}
+        onClose={() => {
+          setShowFilePicker(false);
+          setFilePickerCallback(null);
+        }}
+      />
 
       {/* Quick Actions */}
       <div className="chat-quick-actions">
