@@ -19,7 +19,6 @@ from .config import load_config
 from .logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import logging components for log_event
 from .model_info_provider import ModelInfoProvider
 from .plan_runner import PlanRunner
-from .initial_plan_generator import InitialPlanGenerator
 from .project_plan_generator import OverviewPlanGenerator
 from .plan_parser import ParserPlan
 

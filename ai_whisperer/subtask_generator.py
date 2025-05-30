@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.delegate_manager import DelegateManager
 
 from .json_validator import validate_against_schema
 from postprocessing.pipeline import PostprocessingPipeline  # Import the pipeline
@@ -43,7 +42,7 @@ class SubtaskGenerator:
         workspace_context: str = "",
         output_dir: str = "output",
         openrouter_client=None,
-        delegate_manager: Optional[DelegateManager] = None # Add delegate_manager parameter
+        delegate_manager: Optional[object] = None # Remove DelegateManager type annotation (or remove param if not used)
     ):
         """
         Initializes the SubtaskGenerator.

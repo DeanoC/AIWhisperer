@@ -1,5 +1,6 @@
 
 
+
 import argparse
 import sys
 import logging
@@ -15,6 +16,7 @@ logger = None
 
 def cli(args=None):
     """Main entry point for the AI Whisperer CLI application (batch mode only)."""
+
     parser = argparse.ArgumentParser(
         description="AI Whisperer CLI application (batch mode only)",
         prog="ai-whisperer",
@@ -24,6 +26,7 @@ def cli(args=None):
         "script",
         metavar="SCRIPT",
         type=str,
+        nargs="?",
         help="Path to the batch script to execute."
     )
     parser.add_argument(
@@ -39,10 +42,16 @@ def cli(args=None):
         help="Echo commands only, do not start server or connect."
     )
 
+
     if args is not None:
         parsed_args = parser.parse_args(args)
     else:
         parsed_args = parser.parse_args()
+
+    # If script is not provided, print help and exit
+    if not parsed_args.script:
+        parser.print_help()
+        sys.exit(0)
 
     # Setup logging (no config file required for batch mode)
     logging_custom.setup_logging()
@@ -60,7 +69,7 @@ def cli(args=None):
         print(f"Error loading config: {e}", file=sys.stderr)
         sys.exit(2)
 
-    command = BatchModeCliCommand(script_path=script_path, config=config, dry_run=dry_run)
+    command = BatchModeCliCommand(script_path=script_path)
     exit_code = command.execute()
     sys.exit(exit_code)
 

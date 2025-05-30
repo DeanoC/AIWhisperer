@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 import copy
 
-from .delegate_manager import DelegateManager # Import DelegateManager
 from .config import load_config
 from .exceptions import OrchestratorError, ProcessingError
 from .subtask_generator import SubtaskGenerator # Will likely still need SubtaskGenerator
@@ -22,7 +21,7 @@ class OverviewPlanGenerator:
     """
     Generates a complete project plan including an overview file and detailed subtask files.
     """
-    def __init__(self, config: Dict[str, Any], output_dir="output", delegate_manager: Optional[DelegateManager] = None): # Add delegate_manager parameter
+    def __init__(self, config: Dict[str, Any], output_dir="output"):
         """
         Initializes the ProjectPlanGenerator with application configuration.
 
@@ -32,7 +31,6 @@ class OverviewPlanGenerator:
         """
         self.config = config
         self.output_dir = output_dir
-        self.delegate_manager = delegate_manager # Store delegate_manager
         logger.info(f"ProjectPlanGenerator initialized. Output directory: {self.output_dir}")
 
     def generate_full_plan(self, initial_plan_path: Path, config_path_str: str = "") -> Dict[str, Any]:
@@ -56,7 +54,6 @@ class OverviewPlanGenerator:
             initial_plan_path = Path(initial_plan_path)
 
         logger.info(f"Starting full project plan generation from initial plan: {initial_plan_path}")
-        logger.debug(f"DelegateManager in OverviewPlanGenerator: {self.delegate_manager}") # Add logging for delegate_manager
         if not initial_plan_path.is_file():
             logger.error(f"Initial plan file not found: {initial_plan_path}")
             raise FileNotFoundError(f"Initial plan file not found: {initial_plan_path}")
@@ -79,10 +76,8 @@ class OverviewPlanGenerator:
                 config=self.config,
                 overall_context=overall_context,
                 workspace_context=workspace_context,
-                output_dir=self.output_dir,
-                delegate_manager=self.delegate_manager # Pass delegate_manager
+                output_dir=self.output_dir
             )
-            logger.debug(f"SubtaskGenerator initialized with delegate_manager: {subtask_generator.delegate_manager}") # Add logging for delegate_manager in SubtaskGenerator
             logger.info("Initialized subtask generator with overall context.")
             # Generate subtask for each step
             subtask_paths = []
