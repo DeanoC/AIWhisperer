@@ -185,12 +185,16 @@ See [Configuration Examples](docs/config_examples.md) for more detailed examples
 
 ## Usage
 
+
 ### Interactive Mode (Recommended)
 
 Start the interactive web interface:
 
 ```bash
-# Start the backend server
+# Start the backend server (recommended)
+ai-whisperer-interactive
+
+# Or, start manually:
 python -m interactive_server.main
 
 # In a separate terminal, start the frontend (requires Node.js)
@@ -200,10 +204,17 @@ npm start
 
 Then open http://localhost:3000 in your browser to access the AI Whisperer interface.
 
-### Command-Line Interface
+
+### Command-Line Interface (Batch Mode)
 
 For batch processing and automation:
 
+```bash
+# Run a batch script
+ai-whisperer my_batch_script.txt --config config.yaml
+```
+
+Legacy commands (to be removed):
 ```bash
 # Generate initial plan from requirements
 python -m ai_whisperer.main generate initial-plan requirements.md --config config.yaml
