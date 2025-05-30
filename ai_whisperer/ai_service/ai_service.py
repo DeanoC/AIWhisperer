@@ -15,10 +15,21 @@ class AIStreamChunk:
         if not isinstance(other, AIStreamChunk):
             return False
         return (self.delta_content == other.delta_content and 
-                self.delta_reasoning == other.delta_reasoning)
+                self.delta_reasoning == other.delta_reasoning and
+                self.delta_tool_call_part == other.delta_tool_call_part and
+                self.finish_reason == other.finish_reason)
 
     def __repr__(self):
-        return f"AIStreamChunk(delta_content={self.delta_content!r})"
+        parts = []
+        if self.delta_content:
+            parts.append(f"content={self.delta_content!r}")
+        if self.delta_reasoning:
+            parts.append(f"reasoning={self.delta_reasoning!r}")
+        if self.delta_tool_call_part:
+            parts.append("tool_call=...")
+        if self.finish_reason:
+            parts.append(f"finish={self.finish_reason!r}")
+        return f"AIStreamChunk({', '.join(parts)})"
 
 class AIService(ABC):
     @abstractmethod
