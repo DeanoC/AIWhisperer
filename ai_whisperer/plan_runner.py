@@ -101,6 +101,15 @@ class PlanRunner:
         
         tool_registry.register_tool(WebSearchTool())
         tool_registry.register_tool(FetchURLTool())
+        
+        # Register batch processing tools
+        from ai_whisperer.tools.script_parser_tool import ScriptParserTool
+        from ai_whisperer.tools.batch_command_tool import BatchCommandTool
+        
+        tool_registry.register_tool(ScriptParserTool())
+        batch_command_tool = BatchCommandTool()
+        batch_command_tool.set_tool_registry(tool_registry)
+        tool_registry.register_tool(batch_command_tool)
 
         logger.debug("Tools registered with ToolRegistry.")
 

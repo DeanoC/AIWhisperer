@@ -36,8 +36,8 @@ class TestBatchScriptIntegration:
             'create_rfc': self._create_mock_tool('create_rfc', {'id': 'RFC-001'}),
         }
         
-        registry.get_tool.side_effect = lambda name: tools.get(name)
-        registry.list_tools.return_value = list(tools.keys())
+        registry.get_tool_by_name.side_effect = lambda name: tools.get(name)
+        registry.get_all_tools.return_value = list(tools.values())
         
         return registry
     
@@ -188,7 +188,7 @@ list all rfcs
     def test_execution_error_handling(self, parser_tool, command_tool, tool_registry, sample_workspace):
         """Test handling of execution errors"""
         # Make one tool fail
-        tool_registry.get_tool('read_file').execute.side_effect = Exception("File not found")
+        tool_registry.get_tool_by_name('read_file').execute.side_effect = Exception("File not found")
         
         script_data = {
             "name": "Error Test",
@@ -217,7 +217,7 @@ list all rfcs
     def test_stop_on_error_mode(self, parser_tool, command_tool, tool_registry, sample_workspace):
         """Test stop-on-error execution mode"""
         # Make second tool fail
-        tool_registry.get_tool('read_file').execute.side_effect = Exception("Read failed")
+        tool_registry.get_tool_by_name('read_file').execute.side_effect = Exception("Read failed")
         
         script_data = {
             "name": "Stop on Error Test",
@@ -239,7 +239,7 @@ list all rfcs
         assert result['results'][1]['success'] == False
         
         # Verify third step was not attempted
-        create_tool = tool_registry.get_tool('create_file')
+        create_tool = tool_registry.get_tool_by_name('create_file')
         create_tool.execute.assert_not_called()
     
     # Context passing tests
@@ -257,8 +257,8 @@ list all rfcs
             file_count = context.get('file_count', 0)
             return {'success': True, 'message': f'Created file {file_count + 1}'}
         
-        tool_registry.get_tool('list_files').execute.side_effect = list_with_context
-        tool_registry.get_tool('create_file').execute.side_effect = create_with_context
+        tool_registry.get_tool_by_name('list_files').execute.side_effect = list_with_context
+        tool_registry.get_tool_by_name('create_file').execute.side_effect = create_with_context
         
         script_data = {
             "name": "Context Test",
@@ -355,8 +355,7 @@ list all rfcs
         assert len(result['results']) == 2
         
         # Verify no tools were actually called
-        for tool_name in tool_registry.list_tools():
-            tool = tool_registry.get_tool(tool_name)
+        for tool in tool_registry.get_all_tools():
             tool.execute.assert_not_called()
     
     # Parameter interpolation tests
@@ -364,7 +363,7 @@ list all rfcs
     def test_parameter_interpolation(self, parser_tool, command_tool, tool_registry, sample_workspace):
         """Test parameter interpolation from previous results"""
         # First tool returns filename
-        tool_registry.get_tool('list_files').execute.return_value = {
+        tool_registry.get_tool_by_name('list_files').execute.return_value = {
             'files': ['data.txt', 'config.json'],
             'first_file': 'data.txt'
         }
@@ -387,8 +386,8 @@ list all rfcs
         assert result['success'] == True
         
         # Verify interpolated values were used
-        read_tool = tool_registry.get_tool('read_file')
+        read_tool = tool_registry.get_tool_by_name('read_file')
         read_tool.execute.assert_called_with(path='data.txt')
         
-        create_tool = tool_registry.get_tool('create_file')
+        create_tool = tool_registry.get_tool_by_name('create_file')
         create_tool.execute.assert_called_with(path='/tmp/config.json', content='Config copy')

@@ -23,6 +23,7 @@ class CommandInterpreter:
     PATTERNS = OrderedDict([
         ('execute_command', [
             r'run\s+command\s+["\'](.+?)["\']',
+            r'execute\s+command\s+["\'](.+?)["\']',
             r'execute\s+["\'](.+?)["\']',
             r'exec\s+["\'](.+?)["\']',
             r'run\s+["\'](.+?)["\']',
@@ -426,7 +427,7 @@ Features:
         
         # Get the tool
         if not dry_run:
-            tool = self.tool_registry.get_tool(action)
+            tool = self.tool_registry.get_tool_by_name(action)
             if not tool:
                 return {
                     'success': False,
