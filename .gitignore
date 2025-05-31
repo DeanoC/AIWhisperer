@@ -132,3 +132,4 @@ test.txt
 models.csv
 temp_output/
 sessions.jsonsessions.json
+node_modules
