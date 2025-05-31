@@ -8,5 +8,13 @@
   "updated": "2025-05-31 08:54:46",
   "author": "User",
   "last_updated_section": "acceptance_criteria",
-  "last_updated_by": "Agent P"
+  "last_updated_by": "Agent P",
+  "derived_plans": [
+    {
+      "plan_name": "chat-icons-plan-2025-05-31",
+      "status": "in_progress",
+      "location": ".WHISPER/plans/in_progress/chat-icons-plan-2025-05-31",
+      "created": "2025-05-31 09:52:06"
+    }
+  ]
 }
