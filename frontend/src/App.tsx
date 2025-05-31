@@ -21,6 +21,7 @@ import { FileBrowser } from './components/FileBrowser';
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 const USER_ID = 'demo-user';
 
+
 function App() {
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>(
@@ -36,7 +37,8 @@ function App() {
   // Current agent state
   const [agents, setAgents] = useState<Agent[]>([]);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // for general loading (agent switch, etc.)
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // for very first app load only
 
   // JSON-RPC service for reuse
   const [jsonRpcService, setJsonRpcService] = useState<JsonRpcService | undefined>(undefined);
@@ -70,6 +72,7 @@ function App() {
   const {
     messages,
     loading,
+    currentAIMessage,
     addUserMessage,
     startAIMessage,
     appendAIChunk,
@@ -134,7 +137,6 @@ function App() {
   // Handle agent switch
   const handleAgentSelect = useCallback(async (agentId: string) => {
     if (!aiService || sessionStatus !== SessionStatus.Active) return;
-    
     setIsLoading(true);
     try {
       await aiService.switchAgent(agentId.toLowerCase());
@@ -151,10 +153,9 @@ function App() {
   useEffect(() => {
     const initializeSession = async () => {
       if (aiService && sessionStatus !== SessionStatus.Active) {
-        setIsLoading(true);
+        setIsInitialLoading(true);
         try {
           await startSession();
-          
           // Load agents from backend
           const loadedAgents = await aiService.listAgents();
           // Map backend format to frontend format
@@ -169,7 +170,6 @@ function App() {
             shortcut: agent.shortcut
           }));
           setAgents(mappedAgents);
-          
           // Get current agent from backend
           const currentAgentId = await aiService.getCurrentAgent();
           if (currentAgentId) {
@@ -185,11 +185,10 @@ function App() {
         } catch (error) {
           console.error('Failed to start session:', error);
         } finally {
-          setIsLoading(false);
+          setIsInitialLoading(false);
         }
       }
     };
-
     initializeSession();
   }, [aiService, sessionStatus, startSession, handleAgentSelect]);
 
@@ -418,7 +417,7 @@ function App() {
         <ViewProvider>
           <MainLayout 
             theme={theme} 
-            isLoading={isLoading}
+            isLoading={isInitialLoading}
             currentAgent={agentContext}
             onThemeToggle={toggleTheme}
             connectionStatus={wsStatus}
@@ -439,6 +438,8 @@ function App() {
                 onThemeToggle={toggleTheme}
                 theme={theme}
                 jsonRpcService={jsonRpcService}
+                currentAIMessage={currentAIMessage}
+                loading={loading}
               />
             } />
             

@@ -19,14 +19,14 @@ class TestUpdateRFCTool:
         """Create workspace with sample RFC."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create RFC structure
-            rfc_dir = Path(tmpdir) / "rfc"
-            (rfc_dir / "new").mkdir(parents=True)
+            rfc_dir = Path(tmpdir) / ".WHISPER" / "rfc"
+            (rfc_dir / "in_progress").mkdir(parents=True)
             
             # Create sample RFC
             rfc_content = """# RFC: Test Feature
 
 **RFC ID**: RFC-2025-05-29-0001
-**Status**: new
+**Status**: in_progress
 **Created**: 2025-05-29 10:00:00
 **Last Updated**: 2025-05-29 10:00:00
 **Author**: Test User
@@ -52,14 +52,14 @@ This is a test summary.
 ---
 *This RFC was created by AIWhisperer's Agent P (Patricia)*"""
             
-            rfc_path = rfc_dir / "new" / "RFC-2025-05-29-0001.md"
+            rfc_path = rfc_dir / "in_progress" / "RFC-2025-05-29-0001.md"
             rfc_path.write_text(rfc_content)
             
             # Create metadata file
             metadata = {
                 "rfc_id": "RFC-2025-05-29-0001",
                 "title": "Test Feature",
-                "status": "new",
+                "status": "in_progress",
                 "created": "2025-05-29 10:00:00",
                 "updated": "2025-05-29 10:00:00",
                 "author": "Test User"
@@ -101,7 +101,7 @@ This is a test summary.
         assert "Background" in result
         
         # Verify file was updated
-        rfc_path = Path(temp_workspace_with_rfc) / "rfc" / "new" / "RFC-2025-05-29-0001.md"
+        rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
         content = rfc_path.read_text()
         assert "Users need a caching mechanism" in content
         # Check that the background section specifically was updated
@@ -120,7 +120,7 @@ This is a test summary.
         assert "Appended to" in result
         
         # Verify content was appended
-        rfc_path = Path(temp_workspace_with_rfc) / "rfc" / "new" / "RFC-2025-05-29-0001.md"
+        rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
         content = rfc_path.read_text()
         assert "- [ ] Requirement 1" in content  # Original
         assert "- [ ] Requirement 2" in content  # Appended
@@ -137,7 +137,7 @@ This is a test summary.
         assert "RFC updated successfully!" in result
         
         # Verify title was updated
-        rfc_path = Path(temp_workspace_with_rfc) / "rfc" / "new" / "RFC-2025-05-29-0001.md"
+        rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
         content = rfc_path.read_text()
         assert "# RFC: Enhanced Caching Feature" in content
     
@@ -152,7 +152,7 @@ This is a test summary.
         assert "RFC updated successfully!" in result
         
         # Verify section was added
-        rfc_path = Path(temp_workspace_with_rfc) / "rfc" / "new" / "RFC-2025-05-29-0001.md"
+        rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
         content = rfc_path.read_text()
         assert "## Implementation Approach" in content
         assert "Use Redis for distributed caching" in content
@@ -167,7 +167,7 @@ This is a test summary.
         })
         
         # Check history
-        rfc_path = Path(temp_workspace_with_rfc) / "rfc" / "new" / "RFC-2025-05-29-0001.md"
+        rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
         content = rfc_path.read_text()
         assert "Added performance requirements" in content
         assert "## Refinement History" in content
@@ -181,7 +181,7 @@ This is a test summary.
         })
         
         # Check metadata
-        metadata_path = Path(temp_workspace_with_rfc) / "rfc" / "new" / "RFC-2025-05-29-0001.json"
+        metadata_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.json"
         with open(metadata_path, 'r') as f:
             metadata = json.load(f)
         
@@ -208,16 +208,15 @@ class TestMoveRFCTool:
         """Create workspace with RFCs in different states."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create RFC structure
-            rfc_dir = Path(tmpdir) / "rfc"
-            (rfc_dir / "new").mkdir(parents=True)
+            rfc_dir = Path(tmpdir) / ".WHISPER" / "rfc"
             (rfc_dir / "in_progress").mkdir(parents=True)
             (rfc_dir / "archived").mkdir(parents=True)
             
-            # Create RFC in new status
+            # Create RFC in in_progress status
             rfc_content = """# RFC: Test Feature
 
 **RFC ID**: RFC-2025-05-29-0001
-**Status**: new
+**Status**: in_progress
 **Created**: 2025-05-29 10:00:00
 **Last Updated**: 2025-05-29 10:00:00
 **Author**: Test User
@@ -228,14 +227,14 @@ Test summary.
 ## Refinement History
 - 2025-05-29 10:00:00: RFC created"""
             
-            rfc_path = rfc_dir / "new" / "RFC-2025-05-29-0001.md"
+            rfc_path = rfc_dir / "in_progress" / "RFC-2025-05-29-0001.md"
             rfc_path.write_text(rfc_content)
             
             # Create metadata
             metadata = {
                 "rfc_id": "RFC-2025-05-29-0001",
                 "title": "Test Feature",
-                "status": "new",
+                "status": "in_progress",
                 "created": "2025-05-29 10:00:00",
                 "updated": "2025-05-29 10:00:00"
             }
@@ -263,40 +262,40 @@ Test summary.
         assert move_tool.category == "RFC Management"
         assert "workflow" in move_tool.tags
     
-    def test_move_new_to_in_progress(self, move_tool, temp_workspace_with_rfcs):
-        """Test moving RFC from new to in_progress."""
+    def test_move_in_progress_to_archived(self, move_tool, temp_workspace_with_rfcs):
+        """Test moving RFC from in_progress to archived."""
         result = move_tool.execute({
             "rfc_id": "RFC-2025-05-29-0001",
-            "target_status": "in_progress",
-            "reason": "Starting refinement"
+            "target_status": "archived",
+            "reason": "Refinement complete"
         })
         
         assert "RFC moved successfully!" in result
-        assert "new" in result
         assert "in_progress" in result
-        assert "Starting refinement" in result
+        assert "archived" in result
+        assert "Refinement complete" in result
         
         # Verify file was moved
-        old_path = Path(temp_workspace_with_rfcs) / "rfc" / "new" / "RFC-2025-05-29-0001.md"
-        new_path = Path(temp_workspace_with_rfcs) / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
+        old_path = Path(temp_workspace_with_rfcs) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
+        new_path = Path(temp_workspace_with_rfcs) / ".WHISPER" / "rfc" / "archived" / "RFC-2025-05-29-0001.md"
         
         assert not old_path.exists()
         assert new_path.exists()
         
         # Verify status was updated in content
         content = new_path.read_text()
-        assert "**Status**: in_progress" in content
+        assert "**Status**: archived" in content
     
     def test_move_with_metadata(self, move_tool, temp_workspace_with_rfcs):
         """Test that metadata is moved and updated."""
         move_tool.execute({
             "rfc_id": "RFC-2025-05-29-0001",
-            "target_status": "in_progress"
+            "target_status": "archived"
         })
         
         # Check metadata was moved
-        old_meta = Path(temp_workspace_with_rfcs) / "rfc" / "new" / "RFC-2025-05-29-0001.json"
-        new_meta = Path(temp_workspace_with_rfcs) / "rfc" / "in_progress" / "RFC-2025-05-29-0001.json"
+        old_meta = Path(temp_workspace_with_rfcs) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.json"
+        new_meta = Path(temp_workspace_with_rfcs) / ".WHISPER" / "rfc" / "archived" / "RFC-2025-05-29-0001.json"
         
         assert not old_meta.exists()
         assert new_meta.exists()
@@ -305,35 +304,35 @@ Test summary.
         with open(new_meta, 'r') as f:
             metadata = json.load(f)
         
-        assert metadata['status'] == "in_progress"
+        assert metadata['status'] == "archived"
         assert 'status_history' in metadata
         assert len(metadata['status_history']) == 1
-        assert metadata['status_history'][0]['from'] == "new"
-        assert metadata['status_history'][0]['to'] == "in_progress"
+        assert metadata['status_history'][0]['from'] == "in_progress"
+        assert metadata['status_history'][0]['to'] == "archived"
     
     def test_history_tracking(self, move_tool, temp_workspace_with_rfcs):
         """Test that moves are tracked in refinement history."""
         move_tool.execute({
             "rfc_id": "RFC-2025-05-29-0001",
-            "target_status": "in_progress",
+            "target_status": "archived",
             "reason": "Requirements gathered"
         })
         
         # Check history
-        rfc_path = Path(temp_workspace_with_rfcs) / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
+        rfc_path = Path(temp_workspace_with_rfcs) / ".WHISPER" / "rfc" / "archived" / "RFC-2025-05-29-0001.md"
         content = rfc_path.read_text()
         
-        assert "Status changed from 'new' to 'in_progress'" in content
+        assert "Status changed from 'in_progress' to 'archived'" in content
         assert "Requirements gathered" in content
     
     def test_already_in_target_status(self, move_tool, temp_workspace_with_rfcs):
         """Test moving to same status."""
         result = move_tool.execute({
             "rfc_id": "RFC-2025-05-29-0001",
-            "target_status": "new"
+            "target_status": "in_progress"
         })
         
-        assert "already in 'new' status" in result
+        assert "already in 'in_progress' status" in result
     
     def test_rfc_not_found(self, move_tool):
         """Test moving non-existent RFC."""
@@ -346,24 +345,9 @@ Test summary.
     
     def test_transition_messages(self, move_tool, temp_workspace_with_rfcs):
         """Test appropriate messages for different transitions."""
-        # New to in_progress
-        result = move_tool.execute({
-            "rfc_id": "RFC-2025-05-29-0001",
-            "target_status": "in_progress"
-        })
-        assert "now in active refinement" in result
-        
-        # Create RFC in in_progress for next test
-        rfc_path = Path(temp_workspace_with_rfcs) / "rfc" / "in_progress" / "RFC-2025-05-29-0002.md"
-        rfc_path.write_text("""# RFC: Another Test
-**RFC ID**: RFC-2025-05-29-0002
-**Status**: in_progress
-**Created**: 2025-05-29 11:00:00
-**Last Updated**: 2025-05-29 11:00:00""")
-        
         # In_progress to archived
         result = move_tool.execute({
-            "rfc_id": "RFC-2025-05-29-0002",
+            "rfc_id": "RFC-2025-05-29-0001",
             "target_status": "archived"
         })
         assert "refinement is complete" in result

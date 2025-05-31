@@ -335,8 +335,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       </footer>
 
-      {/* Loading Overlay */}
-      {isLoading && (
+      {/* Loading Overlay: Only show for initial app load, not agent switch */}
+      {isLoading && window.location.pathname !== '/chat' && (
         <div className="loading-overlay" data-testid="loading-overlay">
           <div className="loading-spinner">
             <div className="spinner"></div>

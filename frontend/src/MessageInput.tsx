@@ -19,10 +19,11 @@ interface MessageInputProps {
   sessionStatus?: any;
   disabled?: boolean;
   onFilePickerRequest?: (callback: (filePath: string) => void) => void;
+  loading?: boolean;
 }
 
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, sessionStatus, disabled, onFilePickerRequest }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, sessionStatus, disabled, onFilePickerRequest, loading }) => {
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const [commandList, setCommandList] = useState<string[]>([]);
@@ -162,7 +163,6 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
           onChange={e => {
             const newValue = e.target.value;
             const oldValue = input;
-            
             // Check if @ was just typed
             if (newValue.length > oldValue.length) {
               const lastChar = newValue[newValue.length - 1];
@@ -172,10 +172,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
                 if (!prevChar || prevChar === ' ') {
                   setShowingAtSymbol(true);
                   setAtSymbolPosition(newValue.length - 1);
-                  
                   // Store the @ position for the callback
                   const currentAtPos = newValue.length - 1;
-                  
                   // Request file picker
                   onFilePickerRequest((filePath: string) => {
                     // Get the current input value at callback time
@@ -188,14 +186,12 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
                     });
                     setShowingAtSymbol(false);
                     setAtSymbolPosition(-1);
-                    
                     // Focus back on input
                     setTimeout(() => inputRef.current?.focus(), 0);
                   });
                 }
               }
             }
-            
             setInput(newValue);
           }}
           onKeyDown={handleKeyDown}
@@ -203,6 +199,12 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
           autoFocus
           disabled={disabled}
         />
+        {/* Spinner for loading state */}
+        {typeof loading !== 'undefined' && loading && (
+          <span className="input-spinner" aria-label="Waiting for AI response">
+            <span className="spinner small"></span>
+          </span>
+        )}
       </div>
       <button
         className="send-btn"

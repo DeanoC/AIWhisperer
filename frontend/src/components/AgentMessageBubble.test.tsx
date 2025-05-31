@@ -157,7 +157,7 @@ describe('AgentMessageBubble', () => {
       
       render(<AgentMessageBubble message={longMessage} agent={agent} />);
       
-      expect(screen.getByRole('button', { name: 'Show more' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Show less' })).toBeInTheDocument();
     });
 
     it('does not show expand button for short messages', () => {

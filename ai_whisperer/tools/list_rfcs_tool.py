@@ -33,8 +33,8 @@ class ListRFCsTool(AITool):
                 "status": {
                     "type": "string",
                     "description": "Filter by RFC status",
-                    "enum": ["new", "in_progress", "archived", "all"],
-                    "nullable": True
+                    "enum": ["in_progress", "archived", "all"],
+                    "default": "in_progress"
                 },
                 "sort_by": {
                     "type": "string",
@@ -64,7 +64,7 @@ class ListRFCsTool(AITool):
         return """
         Use the 'list_rfcs' tool to list RFC documents with filtering options.
         Parameters:
-        - status (string, optional): Filter by status ("new", "in_progress", "archived", "all")
+        - status (string, optional): Filter by status ("in_progress", "archived", "all") - defaults to "in_progress"
         - sort_by (string, optional): Sort by "created", "updated", "title", or "id"
         - limit (integer, optional): Maximum RFCs to return (default: 20)
         
@@ -81,6 +81,7 @@ class ListRFCsTool(AITool):
         """Extract metadata from RFC file or metadata JSON."""
         metadata = {
             "rfc_id": rfc_path.stem,
+            "filename": rfc_path.name,
             "title": "Unknown",
             "status": rfc_path.parent.name,
             "created": "Unknown",
@@ -162,17 +163,17 @@ class ListRFCsTool(AITool):
     
     def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute RFC listing."""
-        status_filter = arguments.get('status', 'all')
+        status_filter = arguments.get('status', 'in_progress')
         sort_by = arguments.get('sort_by', 'created')
         limit = arguments.get('limit', 20)
         
         try:
             path_manager = PathManager.get_instance()
-            rfc_base_path = Path(path_manager.workspace_path) / "rfc"
+            rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
             
             # Determine which folders to search
             if status_filter == 'all':
-                folders = ['new', 'in_progress', 'archived']
+                folders = ['in_progress', 'archived']
             else:
                 folders = [status_filter]
             
@@ -181,7 +182,7 @@ class ListRFCsTool(AITool):
             for folder in folders:
                 folder_path = rfc_base_path / folder
                 if folder_path.exists():
-                    for rfc_file in folder_path.glob("RFC-*.md"):
+                    for rfc_file in folder_path.glob("*.md"):
                         metadata = self._get_rfc_metadata(rfc_file)
                         rfcs.append(metadata)
             
@@ -214,17 +215,19 @@ class ListRFCsTool(AITool):
                 status_groups[status].append(rfc)
             
             # Display by status group
-            for status in ['new', 'in_progress', 'archived']:
+            for status in ['in_progress', 'archived']:
                 if status in status_groups:
                     response += f"\n## {status.replace('_', ' ').title()}\n\n"
                     for rfc in status_groups[status]:
-                        response += f"**{rfc['rfc_id']}**: {rfc['title']}\n"
+                        response += f"**{rfc['filename']}**\n"
+                        response += f"  - Title: {rfc['title']}\n"
+                        response += f"  - RFC ID: {rfc['rfc_id']}\n"
                         response += f"  - Author: {rfc['author']}\n"
                         response += f"  - Created: {rfc['created']}\n"
                         response += f"  - Updated: {rfc['updated']}\n\n"
             
             response += "\n" + "-" * 50 + "\n"
-            response += "Use `read_rfc(rfc_id=\"RFC-XXXX-XX-XX-XXXX\")` to view details"
+            response += "Use `read_rfc(rfc_id=\"filename\" or rfc_id=\"RFC-XXXX-XX-XX-XXXX\")` to view details"
             
             return response
             
