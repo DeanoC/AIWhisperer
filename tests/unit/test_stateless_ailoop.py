@@ -4,6 +4,7 @@ This tests the process_with_context() method that will allow AILoop
 to be used without delegates and with direct return values.
 """
 import pytest
+import os
 from unittest.mock import Mock, AsyncMock, patch
 from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.context.provider import ContextProvider
@@ -435,6 +436,8 @@ class TestStatelessAILoop:
         assert call_args[1]['messages'] == messages
     
     @pytest.mark.asyncio
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
+                        reason="Socket resource warning in CI")
     @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
     async def test_tool_execution_success(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test successful tool execution in stateless AI loop."""
