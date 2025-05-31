@@ -377,13 +377,14 @@ class TaskDecomposer:
                 'estimated_complexity': getattr(task, 'estimated_complexity', 'moderate')
             }
         else:
-            # Mock object - use getattr
+            # Mock object - use getattr with defaults
+            context = getattr(task, 'context', {})
             return {
                 'description': getattr(task, 'description', ''),
-                'context': getattr(task, 'context', {}),
+                'context': context if isinstance(context, dict) else {},
                 'parent_task_name': getattr(task, 'parent_task_name', ''),
-                'acceptance_criteria': getattr(task, 'acceptance_criteria', []),
-                'execution_strategy': getattr(task, 'execution_strategy', {}),
+                'acceptance_criteria': [],  # Don't try to access Mock acceptance_criteria
+                'execution_strategy': {},   # Default strategy for Mocks
                 'estimated_complexity': getattr(task, 'estimated_complexity', 'moderate')
             }
     
@@ -419,9 +420,10 @@ class TaskDecomposer:
             prompt_parts.append("\nUse Test-Driven Development (TDD) approach - write tests first!")
         
         # Add acceptance criteria
-        if attrs['acceptance_criteria']:
+        criteria = attrs.get('acceptance_criteria', [])
+        if criteria and isinstance(criteria, list):
             prompt_parts.append("\nAcceptance criteria:")
-            for criterion in attrs['acceptance_criteria']:
+            for criterion in criteria:
                 if isinstance(criterion, dict):
                     prompt_parts.append(f"- {criterion['criterion']}")
                 else:
@@ -518,6 +520,18 @@ class TaskDecomposer:
         tech_stack = attrs['context'].get('technology_stack', {})
         if tech_stack:
             prompt_parts.append(f"\nTechnology stack: {', '.join(tech_stack.values())}")
+        
+        # Add files to modify
+        files_to_modify = attrs['context'].get('files_to_modify', [])
+        if files_to_modify:
+            prompt_parts.append(f"\nFiles to modify: {', '.join(files_to_modify)}")
+        
+        # Add constraints
+        constraints = attrs['context'].get('constraints', [])
+        if constraints:
+            prompt_parts.append("\nConstraints:")
+            for constraint in constraints:
+                prompt_parts.append(f"- {constraint}")
         
         # Assess suitability
         suitable = True
@@ -624,7 +638,7 @@ class TaskDecomposer:
     def assess_agent_suitability(self, task) -> Dict[str, Dict[str, Any]]:
         """Assess which agents are suitable for a task."""
         # Handle both DecomposedTask and Mock objects for testing
-        if hasattr(task, 'external_agent_prompts'):
+        if hasattr(task, 'external_agent_prompts') and not callable(task.external_agent_prompts):
             # Real DecomposedTask
             return {
                 'claude_code': task.external_agent_prompts.get('claude_code', {}),
