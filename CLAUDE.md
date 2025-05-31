@@ -297,3 +297,12 @@ pytest tests/integration/test_rfc_plan_bidirectional.py
 python -m ai_whisperer.batch.batch_client scripts/test_plan_generation_quality.json
 python -m ai_whisperer.batch.batch_client scripts/test_rfc_plan_lifecycle.json
 ```
+
+## Development Best Practices
+
+### Execution Logs for Complex Tasks
+When implementing complex features or debugging issues, create execution logs to maintain context:
+- Create logs in `docs/` directory with descriptive names
+- Include: Overview, Implementation Steps, Key Decisions, Issues Faced, Solutions
+- Example: `docs/agent-e-implementation-execution-log.md`
+- Helps maintain context across sessions and provides documentation
