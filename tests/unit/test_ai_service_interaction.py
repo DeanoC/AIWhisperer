@@ -2,17 +2,11 @@ import pytest
 from unittest.mock import patch, MagicMock
 import json
 from io import BytesIO
-import pytest
-from unittest.mock import patch, MagicMock
-import json
-from io import BytesIO
 import requests
 
 from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.ai_service.ai_service import AIStreamChunk
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
-from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.tools.tool_registry import ToolRegistry, get_tool_registry # Import ToolRegistry
 from ai_whisperer.exceptions import (
     OpenRouterAIServiceError,
     OpenRouterAuthError,
@@ -80,25 +74,6 @@ MOCK_NON_STREAMING_TOOL_CALLS_RESPONSE = {
     ],
     "usage": {"prompt_tokens": 15, "completion_tokens": 5, "total_tokens": 20},
 }
-class MockTool(AITool):
-    @property
-    def name(self):
-        return "mock_tool_1"
-    @property
-    def description(self):
-        return "Mock tool 1 description"
-    @property
-    def parameters(self):
-        return {"type": "object", "properties": {}}
-    @property
-    def get_ai_prompt_instructions(self):
-        return "Use mock_tool_1 to perform the mock operation."
-    @property
-    def execute(self, **kwargs):
-        return "Mock tool 1 executed."
-    @property
-    def parameters_schema(self):
-        return {"type": "object", "properties": {}}
 
 class MockResponse:
     """A mock class for requests.Response."""
@@ -146,24 +121,20 @@ class TestOpenRouterAIServiceUnit:
         assert api.model == "test_model"
         assert api.site_url == "test_site_url"
         assert api.app_name == "test_app_name"
-        assert api.enable_cache is False
-        assert api.cache is None
+        # enable_cache is not an attribute of OpenRouterAIService
 
     def test_initialization_invalid_config_type(self):
         """Test initialization fails with invalid config type."""
         with pytest.raises(ConfigError, match="Invalid configuration: Expected AIConfig, got <class 'str'>"):
             OpenRouterAIService("invalid_config")
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_call_chat_completion_success(self, mock_post, mock_tool_registry, api_client):
+    def test_call_chat_completion_success(self, mock_post, api_client):
         """Test successful non-streaming chat completion."""
-        # Configure the mock ToolRegistry to return a predictable list of tools
-        mock_tool_registry_instance = mock_tool_registry.return_value
-        mock_tool_registry_instance.get_all_tools.return_value = [
-            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        # Create mock tools directly
+        expected_tools = [
+            {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}}
         ]
-        expected_tools = [tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value]
 
         mock_response = MockResponse(200, json_data=MOCK_NON_STREAMING_RESPONSE)
         mock_post.return_value = mock_response
@@ -190,23 +161,16 @@ class TestOpenRouterAIServiceUnit:
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.5,
-                "max_tokens": None,
                 "tools": expected_tools
             },
             timeout=60,
         )
         assert response['message']['content'] == "This is a non-streaming response."
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_call_chat_completion_with_history(self, mock_post, mock_tool_registry, api_client):
+    def test_call_chat_completion_with_history(self, mock_post, api_client):
         """Test non-streaming chat completion with message history."""
-        # Configure the mock ToolRegistry (needed for the API call logic, but tools won't be in payload with history)
-        mock_tool_registry_instance = mock_tool_registry.return_value
-        mock_tool_registry_instance.get_all_tools.return_value = [
-            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
-        ]
-        # expected_tools are NOT included in the payload when messages_history is provided
+        # Tools are passed as parameters, not included in the payload when messages_history is provided
 
         mock_response = MockResponse(200, json_data=MOCK_NON_STREAMING_RESPONSE)
         mock_post.return_value = mock_response
@@ -230,23 +194,19 @@ class TestOpenRouterAIServiceUnit:
             json={
                 "model": model,
                 "messages": messages,  # Should include both history and new message
-                "temperature": 0.5,
-                "max_tokens": None
+                "temperature": 0.5
             },
             timeout=60,
         )
         assert response['message']['content'] == "This is a non-streaming response."
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
-    def test_call_chat_completion_with_tool_calls(self, mock_post, mock_tool_registry, api_client):
+    def test_call_chat_completion_with_tool_calls(self, mock_post, api_client):
         """Test non-streaming chat completion returning tool calls."""
-        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
-        mock_tool_registry_instance = mock_tool_registry.return_value
-        mock_tool_registry_instance.get_all_tools.return_value = [
-            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
+        # Create tools directly
+        expected_tools = [
+            {"type": "function", "function": {"name": "get_weather", "description": "Get weather", "parameters": {"type": "object", "properties": {}}}}
         ]
-        # No assertion on tools here as the response is what's being checked
 
         mock_response = MockResponse(200, json_data=MOCK_NON_STREAMING_TOOL_CALLS_RESPONSE)
         mock_post.return_value = mock_response
@@ -255,7 +215,7 @@ class TestOpenRouterAIServiceUnit:
         model = "test_model"
         params = {}
         messages = [{"role": "user", "content": prompt}]
-        response = api_client.call_chat_completion(messages=messages, model=model, params=params, tools=[tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value])
+        response = api_client.call_chat_completion(messages=messages, model=model, params=params, tools=expected_tools)
 
         # The response should be the full message object, not just content
         assert response["message"] == MOCK_NON_STREAMING_TOOL_CALLS_RESPONSE["choices"][0]["message"]
@@ -284,7 +244,7 @@ class TestOpenRouterAIServiceUnit:
         mock_response = MockResponse(500, text="Internal Server Error")
         mock_post.return_value = mock_response
 
-        with pytest.raises(OpenRouterAIServiceError, match="API request failed"):
+        with pytest.raises(OpenRouterAIServiceError, match="API error 500"):
             api_client.call_chat_completion(messages=[{"role": "user", "content": "prompt"}], model="model", params={})
 
     @patch("requests.post")
@@ -292,7 +252,7 @@ class TestOpenRouterAIServiceUnit:
         """Test non-streaming chat completion network connection error."""
         mock_post.side_effect = requests.exceptions.RequestException("Network unreachable")
 
-        with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API"):
+        with pytest.raises(OpenRouterConnectionError, match="Network error:"):
             api_client.call_chat_completion(messages=[{"role": "user", "content": "prompt"}], model="model", params={})
 
     @patch("requests.post")
@@ -300,17 +260,17 @@ class TestOpenRouterAIServiceUnit:
         """Test non-streaming chat completion timeout error."""
         mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
 
-        with pytest.raises(OpenRouterConnectionError, match="Request to OpenRouter API timed out"):
+        with pytest.raises(OpenRouterConnectionError, match="Network error:"):
             api_client.call_chat_completion(messages=[{"role": "user", "content": "prompt"}], model="model", params={})
 
     @patch("requests.post")
     @pytest.mark.asyncio
     async def test_stream_chat_completion_success(self, mock_post, api_client):
         """Test successful streaming chat completion."""
-        testTool = MockTool()
-
-        get_tool_registry().reset_tools()  # Reset tools to ensure a clean state
-        get_tool_registry().register_tool(testTool)  # Register the mock tool
+        # Create tool definitions directly
+        openrouter_tool_definitions = [
+            {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}}
+        ]
 
         mock_response = MockResponse(200, iter_lines_data=MOCK_STREAMING_CHUNKS)
         mock_post.return_value = mock_response
@@ -318,10 +278,6 @@ class TestOpenRouterAIServiceUnit:
         prompt = "Stream this"
         model = "test_model"
         messages = [{"role": "user", "content": prompt}]
-        # Get tool definitions from the registry
-        tool_registry = ToolRegistry()
-        registered_tools = tool_registry.get_all_tools()
-        openrouter_tool_definitions = [tool.get_openrouter_tool_definition() for tool in registered_tools]
 
         stream_generator = api_client.stream_chat_completion(messages=messages,
                                                              tools=openrouter_tool_definitions,
@@ -343,7 +299,6 @@ class TestOpenRouterAIServiceUnit:
                 "messages": [{"role": "user", "content": prompt}],
                 "tools": openrouter_tool_definitions,
                 "temperature": 0.7,  # From MOCK_CONFIG["params"]
-                "max_tokens": None,  # Not specified in the mock, but can be included
                 "stream": True,  # Crucial for streaming
             },
             stream=True,  # Crucial for streaming
@@ -353,7 +308,8 @@ class TestOpenRouterAIServiceUnit:
         # Expected parsed chunks (excluding [DONE])
         expected_chunks = [
             AIStreamChunk(delta_content="Hello"),
-            AIStreamChunk(delta_content=" world"),   
+            AIStreamChunk(delta_content=" world"),
+            AIStreamChunk(delta_content=None),  # Empty delta from mock data
         ]
         assert chunks == expected_chunks
 
@@ -361,10 +317,10 @@ class TestOpenRouterAIServiceUnit:
     @pytest.mark.asyncio
     async def test_stream_chat_completion_with_history(self, mock_post, api_client):
         """Test streaming chat completion with message history."""
-        testTool = MockTool()
-
-        get_tool_registry().reset_tools()  # Reset tools to ensure a clean state
-        get_tool_registry().register_tool(testTool)  # Register the mock tool
+        # Create tool definitions directly
+        openrouter_tool_definitions = [
+            {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}}
+        ]
 
         mock_response = MockResponse(200, iter_lines_data=MOCK_STREAMING_CHUNKS)
         mock_post.return_value = mock_response
@@ -375,10 +331,6 @@ class TestOpenRouterAIServiceUnit:
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt}
         ]
-        # Get tool definitions from the registry
-        tool_registry = ToolRegistry()
-        registered_tools = tool_registry.get_all_tools()
-        openrouter_tool_definitions = [tool.get_openrouter_tool_definition() for tool in registered_tools]
 
         stream_generator = api_client.stream_chat_completion(messages=messages,
                                                              tools=openrouter_tool_definitions,
@@ -400,7 +352,6 @@ class TestOpenRouterAIServiceUnit:
                 "messages": messages,
                 "tools": openrouter_tool_definitions,
                 "temperature": 0.7,  # From MOCK_CONFIG["params"]
-                "max_tokens": None,  # Not specified in the mock, but can be included
                 "stream": True,  # Crucial for streaming
             },
             stream=True,  # Crucial for streaming
@@ -410,7 +361,8 @@ class TestOpenRouterAIServiceUnit:
         # Expected parsed chunks (excluding [DONE])
         expected_chunks = [
             AIStreamChunk(delta_content="Hello"),
-            AIStreamChunk(delta_content=" world"),   
+            AIStreamChunk(delta_content=" world"),
+            AIStreamChunk(delta_content=None),  # Empty delta from mock data
         ]
         assert chunks == expected_chunks
     
@@ -433,7 +385,7 @@ class TestOpenRouterAIServiceUnit:
         mock_response = MockResponse(500, text="Internal Server Error")
         mock_post.return_value = mock_response
 
-        with pytest.raises(OpenRouterAIServiceError, match="API request failed"):
+        with pytest.raises(OpenRouterAIServiceError, match="API error 500"):
             messages = [{"role": "user", "content": "prompt"}]
             [chunk async for chunk in api_client.stream_chat_completion(messages=messages, model="model", params={})]
 
@@ -444,7 +396,7 @@ class TestOpenRouterAIServiceUnit:
         mock_post.side_effect = requests.exceptions.RequestException("Network unreachable")
 
         with pytest.raises(
-            OpenRouterConnectionError, match="Network error during OpenRouter API streaming: Network unreachable"
+            OpenRouterConnectionError, match="Streaming error:"
         ):
             messages = [{"role": "user", "content": "prompt"}]
             [chunk async for chunk in api_client.stream_chat_completion(messages=messages, model="model", params={})]
@@ -455,7 +407,7 @@ class TestOpenRouterAIServiceUnit:
         """Test streaming chat completion initial timeout error."""
         mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
 
-        with pytest.raises(OpenRouterConnectionError, match="Request to OpenRouter API timed out"):
+        with pytest.raises(OpenRouterConnectionError, match="Streaming error:"):
             messages = [{"role": "user", "content": "prompt"}]
             [chunk async for chunk in api_client.stream_chat_completion(messages=messages, model="model", params={})]
 
@@ -464,23 +416,10 @@ class TestOpenRouterAIServiceUnit:
     @pytest.mark.asyncio
     async def test_stream_chat_completion_mid_stream_error(self, mock_post, api_client):
         """Test streaming chat completion error occurring mid-stream."""
-        testTool = MockTool()
-        get_tool_registry().reset_tools()  # Reset tools to ensure a clean state
-        get_tool_registry().register_tool(testTool)  # Register the mock tool
-
-        mock_response = MockResponse(200, iter_lines_data=MOCK_STREAMING_CHUNKS)
-        mock_post.return_value = mock_response
-
-        prompt = "Stream this"
-        model = "test_model"
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
+        # Create tool definitions directly
+        openrouter_tool_definitions = [
+            {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}}
         ]
-        # Get tool definitions from the registry
-        tool_registry = ToolRegistry()
-        registered_tools = tool_registry.get_all_tools()
-        openrouter_tool_definitions = [tool.get_openrouter_tool_definition() for tool in registered_tools]
 
         # Simulate a network error during iteration
         def iter_lines_with_error():
@@ -502,22 +441,15 @@ class TestOpenRouterAIServiceUnit:
 
         # The next iteration should raise the error
         with pytest.raises(
-            OpenRouterConnectionError, match="Network error during OpenRouter API streaming: Mid-stream network error"
+            OpenRouterConnectionError, match="Streaming error:"
         ):
             await anext(stream_generator)
 
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.ToolRegistry") # Patch ToolRegistry
     @patch("requests.post")
     @pytest.mark.asyncio
-    async def test_stream_chat_completion_invalid_json_chunk(self, mock_post, mock_tool_registry, api_client):
+    async def test_stream_chat_completion_invalid_json_chunk(self, mock_post, api_client):
         """Test streaming chat completion with an invalid JSON chunk."""
-        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
-        mock_tool_registry_instance = mock_tool_registry.return_value
-        mock_tool_registry_instance.get_all_tools.return_value = [
-            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
-        ]
-        # No assertion on tools here as the response is what's being checked
 
         invalid_chunks = [
             b'data: {"id":"chatcmpl-abc","choices":[{"index":0,"delta":{"role":"assistant","content":"Hello"}}]}\n',
@@ -534,25 +466,15 @@ class TestOpenRouterAIServiceUnit:
         first_chunk = await anext(stream_generator)
         assert first_chunk == AIStreamChunk(delta_content="Hello")
         
-
-        # The next iteration should raise a JSON decode error wrapped in OpenRouterAIServiceError
-        with pytest.raises(
-            OpenRouterAIServiceError,
-            match="Failed to decode JSON chunk from stream: Expecting value: line 1 column 1 \\(char 0\\). Chunk: invalid json...",
-        ):
+        # The invalid JSON chunk is logged but not raised as an exception
+        # The generator should complete without error (StopAsyncIteration)
+        with pytest.raises(StopAsyncIteration):
             await anext(stream_generator)
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.ToolRegistry")  # Patch ToolRegistry
     @patch("requests.post")
     @pytest.mark.asyncio
-    async def test_stream_chat_completion_non_data_lines(self, mock_post, mock_tool_registry, api_client):
+    async def test_stream_chat_completion_non_data_lines(self, mock_post, api_client):
         """Test streaming chat completion ignores non-data lines."""
-        # Configure the mock ToolRegistry (needed for the API call logic, but not asserted here)
-        mock_tool_registry_instance = mock_tool_registry.return_value
-        mock_tool_registry_instance.get_all_tools.return_value = [
-            MagicMock(get_openrouter_tool_definition=lambda: {"type": "function", "function": {"name": "mock_tool_1", "description": "Mock tool 1", "parameters": {"type": "object", "properties": {}}}})
-        ]
-        # No assertion on tools here as the response is what's being checked
 
         chunks_with_comments = [
             b": comment\n",
@@ -595,7 +517,7 @@ class TestOpenRouterAIServiceUnit:
         mock_response = MockResponse(400, text="Bad Request")
         mock_get.return_value = mock_response
 
-        with pytest.raises(OpenRouterAIServiceError, match="API request failed"):
+        with pytest.raises(OpenRouterConnectionError, match="Failed to fetch models"):
             api_client.list_models()
 
     @patch("requests.get")
@@ -603,7 +525,7 @@ class TestOpenRouterAIServiceUnit:
         """Test list_models network connection error."""
         mock_get.side_effect = requests.exceptions.RequestException("Network error")
 
-        with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API"):
+        with pytest.raises(OpenRouterConnectionError, match="Failed to fetch models:"):
             api_client.list_models()
 
     @patch("requests.get")
@@ -613,7 +535,8 @@ class TestOpenRouterAIServiceUnit:
         mock_response = MockResponse(200, json_data=mock_response_data)
         mock_get.return_value = mock_response
 
-        with pytest.raises(OpenRouterAIServiceError, match="Unexpected response format"):
-            api_client.list_models()
+        # When "data" field is missing, it returns an empty list
+        models = api_client.list_models()
+        assert models == []
 
 

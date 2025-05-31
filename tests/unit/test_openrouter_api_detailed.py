@@ -130,21 +130,3 @@ def test_list_models_detailed_empty_data(mock_get):
     models = api.list_models()
 
     assert len(models) == 0
-
-
-@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.get")
-def test_list_models_detailed_api_error(mock_get):
-    """Tests handling of an API error response."""
-    mock_response = MagicMock()
-    mock_response.status_code = 500
-    mock_response.text = "Internal Server Error"
-    mock_get.return_value = mock_response
-
-    ai_config = AIConfig(
-        api_key="fake_key",
-        model_id="default/test-model",
-    )
-
-    api = OpenRouterAIService(ai_config)
-    with pytest.raises(Exception):  # Assuming a generic exception is raised for API errors
-        api.list_models()

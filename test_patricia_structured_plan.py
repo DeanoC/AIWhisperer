@@ -6,7 +6,9 @@ Test script to validate Patricia's RFC-to-plan conversion with structured output
 import asyncio
 import json
 from pathlib import Path
+import pytest
 
+@pytest.mark.asyncio
 async def test_patricia_rfc_to_plan():
     """Test Patricia's ability to generate structured plans from RFCs."""
     

@@ -120,24 +120,32 @@ class DeletePlanTool(AITool):
             rfc_base = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
             
             for status in ["in_progress", "archived"]:
-                rfc_json_path = rfc_base / status / f"{rfc_id}.json"
-                if rfc_json_path.exists():
-                    # Read RFC metadata
-                    with open(rfc_json_path, 'r', encoding='utf-8') as f:
-                        rfc_metadata = json.load(f)
-                    
-                    # Remove plan reference
-                    if "derived_plans" in rfc_metadata:
-                        rfc_metadata["derived_plans"] = [
-                            p for p in rfc_metadata["derived_plans"]
-                            if p.get("plan_name") != plan_name
-                        ]
-                    
-                    # Save updated metadata
-                    with open(rfc_json_path, 'w', encoding='utf-8') as f:
-                        json.dump(rfc_metadata, f, indent=2)
-                    
-                    return rfc_id
+                status_dir = rfc_base / status
+                if not status_dir.exists():
+                    continue
+                
+                # Look for RFC metadata file by checking all JSON files
+                for json_file in status_dir.glob("*.json"):
+                    try:
+                        with open(json_file, 'r', encoding='utf-8') as f:
+                            rfc_metadata = json.load(f)
+                        
+                        # Check if this is the right RFC
+                        if rfc_metadata.get("rfc_id") == rfc_id:
+                            # Remove plan reference
+                            if "derived_plans" in rfc_metadata:
+                                rfc_metadata["derived_plans"] = [
+                                    p for p in rfc_metadata["derived_plans"]
+                                    if p.get("plan_name") != plan_name
+                                ]
+                            
+                            # Save updated metadata
+                            with open(json_file, 'w', encoding='utf-8') as f:
+                                json.dump(rfc_metadata, f, indent=2)
+                            
+                            return rfc_id
+                    except Exception:
+                        continue
         except Exception as e:
             logger.error(f"Error updating RFC reference: {e}")
         
