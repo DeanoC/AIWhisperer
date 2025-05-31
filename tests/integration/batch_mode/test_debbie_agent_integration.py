@@ -18,7 +18,15 @@ class TestDebbieAgentIntegration:
     @pytest.fixture
     def agent_registry(self):
         """Provide an initialized AgentRegistry"""
-        prompts_dir = Path("prompts")
+        from ai_whisperer.path_management import PathManager
+        # Initialize PathManager with proper paths
+        PathManager._instance = None
+        PathManager._initialized = False
+        path_manager = PathManager.get_instance()
+        path_manager.initialize()  # Initialize with defaults
+        
+        # Use the app_path for consistent prompt location
+        prompts_dir = path_manager.app_path / "prompts"
         return AgentRegistry(prompts_dir)
     
     def test_debbie_loads_with_all_configurations(self, agent_registry):
@@ -40,8 +48,10 @@ class TestDebbieAgentIntegration:
         assert 'batch_tools' in agent.tool_sets
         assert 'filesystem' in agent.tool_sets
         
-        # Prompt file exists
-        prompt_path = Path("prompts/agents") / agent.prompt_file
+        # Prompt file exists - use PathManager to get correct path
+        from ai_whisperer.path_management import PathManager
+        path_manager = PathManager.get_instance()
+        prompt_path = path_manager.app_path / "prompts" / "agents" / agent.prompt_file
         assert prompt_path.exists()
         
         # Context sources include batch scripts
