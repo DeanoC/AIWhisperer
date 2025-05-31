@@ -43,6 +43,32 @@ This document tracks known technical debt and areas that need refactoring.
 
 ## Other Technical Debt
 
+### Socket Resource Warnings in CI Tests
+
+**Status**: Tests skipped in CI but pass locally
+**Priority**: Medium
+**Impact**: Some unit tests cause socket resource warnings in CI environment
+
+### Current State:
+- Multiple tests in `test_stateless_ailoop.py` are marked with `@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true")`
+- Tests pass locally but fail in CI with "ResourceWarning: unclosed <socket.socket>"
+- Affected tests include tool execution tests, async tool tests, and streaming tests
+
+### Root Cause:
+- ToolRegistry singleton not properly cleaned up between tests
+- Mock objects may be creating real sockets despite patching attempts
+- CI environment has stricter resource cleanup requirements than local dev
+
+### Proposed Solution:
+1. Add proper cleanup fixtures to `conftest.py` for singleton reset
+2. Implement `reset_instance()` method on all singleton classes (partially done for ToolRegistry)
+3. Use higher-level mocking to avoid socket creation entirely
+4. Consider using `pytest-socket` to disable socket creation in unit tests
+
+### Temporary Workaround:
+- Tests are skipped in CI but still run locally for full coverage
+- See commit 9743e63 for list of affected tests
+
 ### 4. Fully Neutralized/Commented-Out Test Files (Batch Mode Refactor)
 
 The following test files were fully neutralized (replaced with `pass` or removed all code) to ensure pytest collection passes after the batch-mode refactor. These files previously depended on legacy/interactive/delegate/ExecutionEngine code and may need to be revisited or restored if batch-mode coverage is expanded or legacy support is reintroduced.
