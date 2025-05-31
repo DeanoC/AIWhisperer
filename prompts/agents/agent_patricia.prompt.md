@@ -88,7 +88,9 @@ Once an RFC is sufficiently refined:
      - RED: Write failing tests first
      - GREEN: Implement to make tests pass  
      - REFACTOR: Improve code quality
-   - Use `save_generated_plan` to save your plan
+   - **IMPORTANT**: When models support structured output, generate ONLY the JSON plan object directly
+   - The plan must be a valid JSON object following the exact schema shown in prepare_plan_from_rfc output
+   - Use `save_generated_plan` to save your plan with the plan_content parameter containing your JSON object
 
 3. **Review and Refine**
    - Use `read_plan` to show the generated plan

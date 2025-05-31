@@ -7,6 +7,7 @@ import asyncio
 import logging
 import uuid
 import json
+import re
 from typing import Dict, Optional, Any
 from pathlib import Path
 from datetime import datetime
@@ -517,8 +518,14 @@ class StatelessInteractiveSession:
                     if "closed" in str(e).lower():
                         self.websocket = None
             
+            # Check if we should use structured output for plan generation
+            kwargs = {}
+            if self._should_use_structured_output_for_plan(agent, message):
+                kwargs['response_format'] = self._get_plan_generation_schema()
+                logger.info("Enabling structured output for plan generation")
+            
             # Process message with streaming
-            result = await agent.process_message(message, on_stream_chunk=send_chunk)
+            result = await agent.process_message(message, on_stream_chunk=send_chunk, **kwargs)
             
             # Defensive: ensure result is a dict
             if not isinstance(result, dict):
@@ -946,6 +953,72 @@ class StatelessInteractiveSession:
             "refreshed": len(refreshed_items),
             "items": [item.to_dict() for item in refreshed_items]
         }
+
+
+    def _should_use_structured_output_for_plan(self, agent: Any, message: str) -> bool:
+        """
+        Determine if we should enable structured output for plan generation.
+        
+        Args:
+            agent: The active agent
+            message: The user message
+            
+        Returns:
+            True if we should use structured output
+        """
+        # Check if this is Patricia agent
+        if not hasattr(agent, 'config') or agent.config.name != 'patricia':
+            return False
+            
+        # Check if the model supports structured output
+        from ai_whisperer.model_capabilities import supports_structured_output
+        if not supports_structured_output(agent.config.model_name):
+            return False
+            
+        # Check if the message is likely asking for plan generation
+        plan_indicators = [
+            "generate a structured json plan",
+            "generate a plan",
+            "create a plan",
+            "convert.*to.*plan",
+            "plan structure required",
+            "structured output enabled"
+        ]
+        
+        message_lower = message.lower()
+        return any(indicator in message_lower or re.search(indicator, message_lower) for indicator in plan_indicators)
+    
+    def _get_plan_generation_schema(self) -> Dict[str, Any]:
+        """
+        Get the plan generation schema for structured output.
+        
+        Returns:
+            The response_format dict for plan generation
+        """
+        import json
+        from pathlib import Path
+        
+        # Load the plan generation schema
+        schema_path = Path(__file__).parent.parent / "schemas" / "plan_generation_schema.json"
+        try:
+            with open(schema_path) as f:
+                plan_schema = json.load(f)
+            
+            # Remove the $schema field if present
+            if "$schema" in plan_schema:
+                del plan_schema["$schema"]
+            
+            return {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "rfc_plan_generation",
+                    "strict": False,  # Use False for complex schemas
+                    "schema": plan_schema
+                }
+            }
+        except Exception as e:
+            logger.error(f"Failed to load plan generation schema: {e}")
+            return None
 
 
 class StatelessSessionManager:

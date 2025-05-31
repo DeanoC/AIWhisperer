@@ -207,6 +207,14 @@ class PreparePlanFromRFCTool(AITool):
                 "guidelines": guidelines
             }
             
+            # Create metadata for the agent to use when saving
+            save_metadata = {
+                "plan_name": plan_name,
+                "rfc_id": rfc_metadata.get('rfc_id'),
+                "rfc_hash": rfc_hash,
+                "plan_type": plan_type
+            }
+            
             # Return formatted information for the agent
             return f"""RFC prepared for plan generation:
 
@@ -228,8 +236,37 @@ class PreparePlanFromRFCTool(AITool):
 
 Generate a structured JSON plan based on the RFC content above. The plan should follow TDD methodology with clear Red-Green-Refactor phases.
 
-After generating the plan JSON, use the 'save_generated_plan' tool to save it with these parameters:
+**STRUCTURED OUTPUT ENABLED**: If your model supports structured output, the system will automatically enforce the plan generation schema for you. Just generate the JSON plan content directly.
+
+**Plan Structure Required**:
+```json
+{{
+  "plan_type": "{plan_type}",
+  "title": "Your plan title here",
+  "description": "Brief description of what this plan accomplishes",
+  "agent_type": "planning",
+  "tdd_phases": {{
+    "red": ["test task 1", "test task 2"],
+    "green": ["implementation task 1", "implementation task 2"],
+    "refactor": ["improvement task 1", "improvement task 2"]
+  }},
+  "tasks": [
+    {{
+      "name": "Task name",
+      "description": "What this task does",
+      "agent_type": "test_generation|code_generation|file_edit|validation|documentation|analysis",
+      "dependencies": [],
+      "tdd_phase": "red|green|refactor",
+      "validation_criteria": ["criterion 1", "criterion 2"]
+    }}
+  ],
+  "validation_criteria": ["Overall success criterion 1", "Overall success criterion 2"]
+}}
+```
+
+After generating the plan, use the 'save_generated_plan' tool with these parameters:
 - plan_name: "{plan_name}"
+- plan_content: <your generated plan object>
 - rfc_id: "{rfc_metadata.get('rfc_id')}"
 - rfc_hash: "{rfc_hash}"
 """
