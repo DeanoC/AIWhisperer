@@ -82,6 +82,161 @@ class AILoop:
         
         # Subscribe to control delegates
         self.delegate_manager.register_control("ai_loop.control.start", self._handle_start_session)
+
+    async def _handle_wait_for_input_state(self) -> SessionState:
+        shutdown_requested = await self._process_input_queues()
+        if shutdown_requested or self.shutdown_event.is_set():
+            logger.debug("_handle_wait_for_input_state: Shutdown requested, transitioning to SHUTDOWN")
+            return SessionState.SHUTDOWN
+        else:
+            logger.debug("_handle_wait_for_input_state: Input processed, transitioning to ASSEMBLE_AI_STREAM")
+            return SessionState.ASSEMBLE_AI_STREAM
+
+    async def _handle_assemble_ai_stream_state(self) -> tuple[SessionState, str]:
+        # This method calls _handle_ai_stream_assembly and then determines the
+        # next state and the finish_reason to be used by _run_session.
+        # _handle_ai_stream_assembly itself will set self._state based on its internal logic.
+
+        finish_reason = await self._handle_ai_stream_assembly()
+        self._last_ai_finish_reason = finish_reason # Store for _run_session's finally block
+
+        # Determine next_state based on the finish_reason from stream assembly
+        if finish_reason == "tool_calls":
+            next_state = SessionState.PROCESS_TOOL_RESULT
+        elif finish_reason in ["error", "timeout_error", "stream_exception", "cancelled", "stopped"]:
+            next_state = SessionState.SHUTDOWN
+        else: # "stop" from AI, or other normal completion
+            next_state = SessionState.WAIT_FOR_INPUT
+
+        return next_state # Only return next_state, finish_reason is on self
+
+
+    async def _handle_process_tool_result_state(self) -> SessionState:
+        tool_result_item = await self._tool_result_queue.get()
+        # _handle_queued_item returns True if item is None (shutdown signal)
+        is_shutdown_signal = await self._handle_queued_item(tool_result_item, "tool_result_queue (from _run_session state handler)")
+
+        if is_shutdown_signal or self.shutdown_event.is_set():
+            logger.debug("_handle_process_tool_result_state: Shutdown signal or event, transitioning to SHUTDOWN")
+            return SessionState.SHUTDOWN
+        else:
+            logger.debug("_handle_process_tool_result_state: Tool result processed, transitioning to ASSEMBLE_AI_STREAM")
+            return SessionState.ASSEMBLE_AI_STREAM
+
+    async def _handle_queued_item(self, item: any, item_origin: str) -> bool:
+        """
+        Handles a single item retrieved from a queue (user message or tool result).
+        Returns True if the item is a shutdown signal (None), False otherwise.
+        """
+        if item is None:
+            logger.debug(f"_handle_queued_item: Shutdown signal received from {item_origin}.")
+            return True # Shutdown signal
+
+        agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+
+        if item_origin == "user_message_queue":
+            if not isinstance(item, str):
+                error_msg = f"Invalid item type in {item_origin}: Expected str, got {type(item)}."
+                logger.error(error_msg)
+                await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
+                return False # Not a shutdown, but an error handled.
+            logger.debug(f"_handle_queued_item: Got user_message: {item}")
+            self.context_manager.add_message({"role": "user", "content": item}, agent_id=agent_id)
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=item)
+
+        elif item_origin == "tool_result_queue":
+            if not isinstance(item, dict):
+                error_msg = f"Invalid item type in {item_origin}: Expected dict, got {type(item)}."
+                logger.error(error_msg)
+                await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
+                return False # Not a shutdown, but an error handled.
+            logger.debug(f"_handle_queued_item: Got tool_result: {item}")
+            self.context_manager.add_message(item, agent_id=agent_id)
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=item)
+
+        return False # Item processed, not a shutdown signal
+
+    async def _process_input_queues(self):
+        """Checks and processes user messages and tool results from their respective queues.
+        Returns True if a shutdown signal (None) is received from any queue.
+        """
+        # Try nowait first
+        try:
+            user_message = self._user_message_queue.get_nowait()
+            if await self._handle_queued_item(user_message, "user_message_queue"):
+                return True # Shutdown signal
+            return False # Item processed
+        except asyncio.QueueEmpty:
+            pass
+
+        try:
+            tool_result = self._tool_result_queue.get_nowait()
+            if await self._handle_queued_item(tool_result, "tool_result_queue"):
+                return True # Shutdown signal
+            return False # Item processed
+        except asyncio.QueueEmpty:
+            pass
+
+        # If no immediate items, wait for the first available item
+        logger.debug("_process_input_queues: Waiting for input from user_message_queue or tool_result_queue.")
+        user_task = asyncio.create_task(self._user_message_queue.get())
+        tool_task = asyncio.create_task(self._tool_result_queue.get())
+        done, pending = await asyncio.wait([user_task, tool_task], return_when=asyncio.FIRST_COMPLETED)
+
+        for task in pending:
+            task.cancel()
+
+        result_task = done.pop()
+        if result_task is user_task:
+            return await self._handle_queued_item(user_task.result(), "user_message_queue (await)")
+        else: # result_task is tool_task
+            return await self._handle_queued_item(tool_task.result(), "tool_result_queue (await)")
+
+    async def _handle_ai_stream_assembly(self):
+        """Handles the AI stream assembly and processes its outcome.
+        Returns the finish_reason from the AI stream.
+        """
+        messages = self.context_manager.get_history()
+        tools_for_model = get_tool_registry().get_all_tool_definitions()
+        logger.debug(f"_handle_ai_stream_assembly: Calling ai_service.stream_chat_completion with messages={len(messages)} tools")
+
+        current_finish_reason = "unknown"
+        try:
+            async def run_stream():
+                ai_response_stream = self.ai_service.stream_chat_completion(
+                    messages=messages,
+                    tools=tools_for_model,
+                    **self.config.__dict__
+                )
+                try:
+                    # Pass self.get_agent_id to _assemble_ai_stream if needed, or handle agent_id differently
+                    return await self._assemble_ai_stream(ai_response_stream)
+                except asyncio.CancelledError:
+                    logger.error("run_stream: CancelledError caught, closing ai_response_stream")
+                    if hasattr(ai_response_stream, 'aclose'):
+                        await ai_response_stream.aclose()
+                    raise
+
+            # TODO: Make timeout configurable via self.config
+            current_finish_reason = await asyncio.wait_for(run_stream(), timeout=self.config.get("ai_call_timeout", 10.0))
+            logger.debug(f"_handle_ai_stream_assembly: Finished _assemble_ai_stream with finish_reason={current_finish_reason}")
+            return current_finish_reason
+        except asyncio.TimeoutError:
+            logger.error("_handle_ai_stream_assembly: AI service call timed out.")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data="AI service timeout")
+            error_msg_content = "AI service timeout: The AI did not respond in time."
+            error_msg = {"role": "assistant", "content": error_msg_content}
+            agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+            self.context_manager.add_message(error_msg, agent_id=agent_id)
+            return "timeout_error" # Indicate a specific type of error
+        except Exception as e:
+            logger.exception("_handle_ai_stream_assembly: Error calling ai_service.stream_chat_completion:")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
+            error_msg_content = f"An error occurred while processing the AI response: {e}"
+            error_msg = {"role": "assistant", "content": error_msg_content}
+            agent_id = self.get_agent_id() if self.get_agent_id else 'default'
+            self.context_manager.add_message(error_msg, agent_id=agent_id)
+            return "stream_exception" # Indicate a specific type of error
         self.delegate_manager.register_control("ai_loop.control.stop", self._handle_stop_session)
         self.delegate_manager.register_control("ai_loop.control.pause", self._handle_pause_session)
         self.delegate_manager.register_control("ai_loop.control.resume", self._handle_resume_session)
@@ -151,349 +306,225 @@ class AILoop:
             await wait_loop()
             
     async def _run_session(self):
-        finish_reason = "unknown" # Track the finish reason of the last AI call
+        self._last_ai_finish_reason = "unknown"
         logger.debug("_run_session: Session started.")
-        print("[AILoop _run_session] Session started.")
-        max_iterations = 1000 # Set a high limit to prevent infinite loops during debugging
+        max_iterations = 1000
         iteration_count = 0
         
-        # Initial state validation - these should ideally not happen if start_session is called correctly,
-        # but adding graceful handling instead of crashing.
         if self._session_task is None:
-            error_msg = "AILoop session task is None at the start of _run_session."
-            logger.error(error_msg)
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=RuntimeError(error_msg))
-            return # Exit the session task
+            logger.error("AILoop session task is None at the start of _run_session.")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=RuntimeError("Session task is None."))
+            return
         if self._state != SessionState.NOT_STARTED:
-            error_msg = f"AILoop session state is {self._state}, expected NOT_STARTED at the start of _run_session."
-            logger.error(error_msg)
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=RuntimeError(error_msg))
-            return # Exit the session task
+            logger.error(f"AILoop session state is {self._state}, expected NOT_STARTED.")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=RuntimeError(f"Invalid initial state: {self._state}"))
+            return
 
         self._state = SessionState.WAIT_FOR_INPUT
-        logger.debug(f"_run_session: State set to WAIT_FOR_INPUT")
+        logger.debug(f"_run_session: Initial state set to {self._state}")
+
+        state_handlers = {
+            SessionState.WAIT_FOR_INPUT: self._handle_wait_for_input_state,
+            SessionState.ASSEMBLE_AI_STREAM: self._handle_assemble_ai_stream_state,
+            SessionState.PROCESS_TOOL_RESULT: self._handle_process_tool_result_state,
+        }
 
         try:
-            while iteration_count < max_iterations: # Use a counter to prevent infinite loops
+            while iteration_count < max_iterations and self._state != SessionState.SHUTDOWN:
                 iteration_count += 1
-                logger.debug(f"_run_session: Iteration {iteration_count}, State: {self._state}")
-                print(f"[AILoop _run_session] Iteration {iteration_count}, State: {self._state}")
-
+                logger.debug(f"_run_session: Iteration {iteration_count}, Current State: {self._state}")
                 await self.pause_event.wait()
 
-                logger.debug(f"_run_session: Top of loop, state={self._state}, shutdown_event={self.shutdown_event.is_set()}, user_queue_empty={self._user_message_queue.empty()}, tool_queue_empty={self._tool_result_queue.empty()}")
-
-                if self._state == SessionState.WAIT_FOR_INPUT:
-                    # Check queues for user or tool input
-                    processed_queue_item = False
-                    try:
-                        user_message = self._user_message_queue.get_nowait()
-                        if user_message is not None: # Handle potential None from stop_session
-                            if not isinstance(user_message, str):
-                                error_msg = f"Invalid item type received from user_message_queue: Expected str, got {type(user_message)}. Discarding."
-                                logger.error(error_msg)
-                                await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
-                            else:
-                                logger.debug(f"_run_session: Got user_message from queue: {user_message}")
-                                agent_id = self.get_agent_id() if self.get_agent_id else 'default'
-                                self.context_manager.add_message({"role": "user", "content": user_message}, agent_id=agent_id) # type: ignore
-                                await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
-                                processed_queue_item = True
-                        else:
-                             processed_queue_item = True # Treat None as processed for shutdown
-                    except asyncio.QueueEmpty:
-                        logger.debug("_run_session: No user_message in queue.")
-                        pass
-
-                    if not processed_queue_item:
-                        try:
-                            tool_result = self._tool_result_queue.get_nowait()
-                            if tool_result is not None: # Handle potential None from stop_session
-                                if not isinstance(tool_result, dict):
-                                    error_msg = f"Invalid item type received from tool_result_queue: Expected dict, got {type(tool_result)}. Discarding."
-                                    logger.error(error_msg)
-                                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
-                                else:
-                                    logger.debug(f"_run_session: Got tool_result from queue: {tool_result}")
-                                    agent_id = self.get_agent_id() if self.get_agent_id else 'default'
-                                    self.context_manager.add_message(tool_result, agent_id=agent_id) # type: ignore
-                                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
-                                    processed_queue_item = True
-                            else:
-                                processed_queue_item = True # Treat None as processed for shutdown
-                        except asyncio.QueueEmpty:
-                            logger.debug("_run_session: No tool_result in queue.")
-                            pass
-
-                    if not processed_queue_item:
-                        logger.debug("_run_session: Waiting for input from user_message_queue or tool_result_queue.")
-                        user_task = asyncio.create_task(self._user_message_queue.get())
-                        tool_task = asyncio.create_task(self._tool_result_queue.get())
-                        done, pending = await asyncio.wait(
-                            [user_task, tool_task],
-                            return_when=asyncio.FIRST_COMPLETED
-                        )
-                        for task in pending:
-                            task.cancel()
-                        result_task = done.pop()
-                        if result_task is user_task:
-                            user_message = user_task.result()
-                            if user_message is not None: # Handle potential None from stop_session
-                                if not isinstance(user_message, str):
-                                    error_msg = f"Invalid item type received from awaited user_message_queue: Expected str, got {type(user_message)}. Discarding."
-                                    logger.error(error_msg)
-                                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
-                                else:
-                                    logger.debug(f"_run_session: Got user_message from awaited queue: {user_message}")
-                                    agent_id = self.get_agent_id() if self.get_agent_id else 'default'
-                                    self.context_manager.add_message({"role": "user", "content": user_message}, agent_id=agent_id) # type: ignore
-                                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.user_processed", event_data=user_message)
-                            # If None, it's a shutdown signal, handled by the main loop condition
-                        else: # result_task is tool_task
-                            tool_result = tool_task.result()
-                            if tool_result is not None: # Handle potential None from stop_session
-                                if not isinstance(tool_result, dict):
-                                    error_msg = f"Invalid item type received from awaited tool_result_queue: Expected dict, got {type(tool_result)}. Discarding."
-                                    logger.error(error_msg)
-                                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=TypeError(error_msg))
-                                else:
-                                    logger.debug(f"_run_session: Got tool_result from awaited queue: {tool_result}")
-                                    agent_id = self.get_agent_id() if self.get_agent_id else 'default'
-                                    self.context_manager.add_message(tool_result, agent_id=agent_id) # type: ignore
-                                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
-                            # If None, it's a shutdown signal, handled by the main loop condition
-                    # After processing input, move to AI stream state if not shutting down
-                    logger.debug(f"_run_session: After input processing, shutdown_event={self.shutdown_event.is_set()}")
-                    if not self.shutdown_event.is_set():
-                        logger.debug("_run_session: Transitioning to ASSEMBLE_AI_STREAM")
-                        self._state = SessionState.ASSEMBLE_AI_STREAM
-                    else:
-                        logger.debug("_run_session: Transitioning to SHUTDOWN")
-                        self._state = SessionState.SHUTDOWN
-
-                elif self._state == SessionState.ASSEMBLE_AI_STREAM:
-                    # Prepare AI call arguments
-                    messages = self.context_manager.get_history()
-                    tools_for_model = get_tool_registry().get_all_tool_definitions()
-
-                    logger.debug(f"_run_session: Calling ai_service.stream_chat_completion with messages={messages} tools={tools_for_model}")
-                    try:
-                        # Set a timeout for the entire AI service streaming process (e.g., 10 seconds)
-
-                        async def run_stream():
-                            ai_response_stream = self.ai_service.stream_chat_completion(
-                                messages=messages,
-                                tools=tools_for_model,
-                                **self.config.__dict__
-                            )
-                            try:
-                                return await self._assemble_ai_stream(ai_response_stream)
-                            except asyncio.CancelledError:
-                                logger.error("run_stream: CancelledError caught, closing ai_response_stream")
-                                if hasattr(ai_response_stream, 'aclose'):
-                                    await ai_response_stream.aclose()
-                                raise
-
-                        logger.error("_run_session: About to call asyncio.wait_for(run_stream(), timeout=10.0)")
-                        finish_reason = await asyncio.wait_for(run_stream(), timeout=10.0)
-                        logger.error(f"_run_session: Finished asyncio.wait_for, finish_reason={{finish_reason}}")
-                        logger.debug(f"_run_session: Finished _assemble_ai_stream with finish_reason={{finish_reason}}")
-                        if finish_reason == "tool_calls":
-                            self._state = SessionState.PROCESS_TOOL_RESULT
-                        elif finish_reason == "error":
-                            self._state = SessionState.SHUTDOWN # Error during stream processing leads to shutdown
-                        else:
-                            self._state = SessionState.WAIT_FOR_INPUT
-                    except asyncio.TimeoutError:
-                        logger.error("_run_session: AI service call timed out.")
-                        logger.error("_run_session: About to invoke error notification for timeout.")
-                        await self.delegate_manager.invoke_notification(
-                            sender=self,
-                            event_type="ai_loop.error",
-                            event_data="AI service timeout"
-                        )
-                        logger.error("_run_session: Finished invoke_notification for timeout.")
-                        # Add a user-friendly error message to the context history
-                        error_msg = {"role": "assistant", "content": "AI service timeout: The AI did not respond in time."}
-                        agent_id = self.get_agent_id() if self.get_agent_id else 'default'
-                        self.context_manager.add_message(error_msg, agent_id=agent_id)
-                        logger.debug(f"_run_session: Added timeout error message to context: {{error_msg}}")
-                        self._state = SessionState.WAIT_FOR_INPUT
-                    except Exception as e:
-                        logger.exception("_run_session: Error calling ai_service.stream_chat_completion:")
-                        await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
-                        # Add a user-friendly error message to the context history
-                        error_msg = {"role": "assistant", "content": f"An error occurred while processing the AI response: {e}"}
-                        agent_id = self.get_agent_id() if self.get_agent_id else 'default'
-                        self.context_manager.add_message(error_msg, agent_id=agent_id)
-                        logger.debug(f"_run_session: Added error message to context: {{error_msg}}")
-                        self._state = SessionState.WAIT_FOR_INPUT # Return to waiting for input after AI service error
- 
-                elif self._state == SessionState.PROCESS_TOOL_RESULT:
-                    # Wait for tool result to be provided
-                    tool_result = await self._tool_result_queue.get()
-                    if tool_result is None:
-                        self._state = SessionState.SHUTDOWN
-                    else:
-                        agent_id = self.get_agent_id() if self.get_agent_id else 'default'
-                        self.context_manager.add_message(tool_result, agent_id=agent_id) # type: ignore
-                        await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.result_processed", event_data=tool_result)
-                        self._state = SessionState.ASSEMBLE_AI_STREAM
-
-                elif self._state == SessionState.SHUTDOWN:
-                    logger.debug("_run_session: Shutdown requested or finished. Stopping loop.")
+                handler = state_handlers.get(self._state)
+                if not handler:
+                    logger.error(f"No handler for state {self._state}. Shutting down.")
+                    self._state = SessionState.SHUTDOWN
+                    self._last_ai_finish_reason = "error_unknown_state"
                     break
-            else:
-                logger.debug(f"_run_session: Exited loop after reaching max_iterations={max_iterations}.")
-        except asyncio.CancelledError:
-            logger.debug("_run_session: CancelledError caught, coroutine was cancelled externally.")
-            finish_reason = "cancelled"
-            raise  # Re-raise so cancellation propagates
-        except Exception as e:
-            logger.exception("AILoop encountered an error:")
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
-            finish_reason = "error"
-        finally:
-            logger.debug(f"_run_session: Loop finished. Checking shutdown_event.")
-            # Determine the final finish reason based on shutdown state and last AI interaction
-            if self.shutdown_event.is_set():
-                final_finish_reason = "stopped"
-            elif finish_reason == "error":
-                 final_finish_reason = "error"
-            else:
-                 final_finish_reason = "unknown"
 
-            logger.debug(f"AILoop session ended with reason: {final_finish_reason}")
-            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.session_ended", event_data=final_finish_reason)
+                # _handle_assemble_ai_stream_state updates self._last_ai_finish_reason via _handle_ai_stream_assembly
+                # and returns the next state. Other handlers just return the next state.
+                self._state = await handler()
+
+            if iteration_count >= max_iterations:
+                logger.warning(f"_run_session: Exited loop due to max_iterations ({max_iterations}).")
+                self._last_ai_finish_reason = "max_iterations_reached"
+
+        except asyncio.CancelledError:
+            logger.info("_run_session: Main loop cancelled.")
+            self._last_ai_finish_reason = "cancelled"
+            # No re-raise here, finally block will handle notifications
+        except Exception as e:
+            logger.exception("AILoop _run_session encountered an unhandled error:")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
+            self._last_ai_finish_reason = "error"
+        finally:
+            logger.debug(f"_run_session: Loop finished. Final self._state: {self._state}, Shutdown event: {self.shutdown_event.is_set()}")
+
+            final_session_end_reason = "unknown"
+            if self.shutdown_event.is_set():
+                final_session_end_reason = "stopped"
+            elif self._last_ai_finish_reason == "cancelled":
+                final_session_end_reason = "cancelled"
+            elif self._last_ai_finish_reason == "error" or (isinstance(self._last_ai_finish_reason, str) and "error" in self._last_ai_finish_reason) :
+                final_session_end_reason = "error"
+            elif self._last_ai_finish_reason == "max_iterations_reached":
+                final_session_end_reason = "max_iterations_reached"
+            # Add other specific finish reasons if needed
+
+            logger.info(f"AILoop session ended. Reason: {final_session_end_reason}. Last AI finish_reason: {self._last_ai_finish_reason}")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.session_ended", event_data=final_session_end_reason)
             self._session_task = None
+            self._state = SessionState.NOT_STARTED
 
     import types
+
+    async def _iterate_ai_stream(self, ai_response_stream: AsyncIterator):
+        full_response_content = ""
+        accumulated_tool_calls_part = ""
+        finish_reason_from_stream = None
+        last_chunk_delta_content = ""
+        saw_any_chunk = False
+
+        async for chunk in ai_response_stream:
+            saw_any_chunk = True
+            last_chunk_delta_content = chunk.delta_content if chunk.delta_content is not None else ""
+
+            if self.shutdown_event.is_set():
+                logger.debug("_iterate_ai_stream: Shutdown event set, stopping stream iteration.")
+                finish_reason_from_stream = "stopped"
+                break
+            await self.pause_event.wait()
+
+            logger.debug(f"_iterate_ai_stream: Received chunk: {chunk}")
+            if chunk.delta_content:
+                full_response_content += chunk.delta_content
+                await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.ai_chunk_received", event_data=chunk.delta_content)
+
+            if chunk.delta_tool_call_part:
+                accumulated_tool_calls_part += chunk.delta_tool_call_part
+
+            if chunk.finish_reason:
+                finish_reason_from_stream = chunk.finish_reason
+                logger.debug(f"_iterate_ai_stream: Received finish_reason: {finish_reason_from_stream}")
+
+            await asyncio.sleep(0.05) # Yield control
+
+        return full_response_content, accumulated_tool_calls_part, finish_reason_from_stream, last_chunk_delta_content, saw_any_chunk
+
+    async def _send_final_chunk_notification(self, last_chunk_delta_content: str = ""):
+        """Sends the final AI message chunk notification."""
+        logger.debug(f"[DEBUG] Sending final chunk notification: event_data='{last_chunk_delta_content}', is_final_chunk=True")
+        await self.delegate_manager.invoke_notification(
+            sender=self,
+            event_type="ai_loop.message.ai_chunk_received",
+            event_data=last_chunk_delta_content,
+            is_final_chunk=True
+        )
+
+    async def _execute_single_tool_call(self, tc: dict):
+        """Executes a single tool call and queues its result."""
+        name = tc.get("function", {}).get("name")
+        args_str = tc.get("function", {}).get("arguments")
+        tool_id = tc.get("id")
+
+        if not (name and args_str and tool_id):
+            logger.warning(f"Malformed tool call data received: {tc}")
+            await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id or "unknown_id", "name": name or "unknown_name", "content": "Error: Malformed tool call data."})
+            return
+
+        tool_instance = get_tool_registry().get_tool_by_name(name)
+        if not tool_instance:
+            logger.error(f"_execute_single_tool_call: Tool {name} not found.")
+            await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error: Tool {name} not found."})
+            return
+
+        try:
+            tool_args_dict = json.loads(args_str)
+            # TODO: Consider if tool_instance.execute should be async
+            tool_result_content = tool_instance.execute(arguments=tool_args_dict)
+            tool_result_msg = {"role": "tool", "tool_call_id": tool_id, "name": name, "content": str(tool_result_content)}
+            await self._tool_result_queue.put(tool_result_msg)
+        except json.JSONDecodeError as e_args:
+            logger.error(f"_execute_single_tool_call: Failed to parse args for {name}: {e_args}. Args: {args_str}")
+            await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error: Invalid arguments for tool {name}."})
+        except Exception as e_exec:
+            logger.error(f"_execute_single_tool_call: Error executing tool {name}: {e_exec}", exc_info=True)
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e_exec)
+            await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error executing tool {name}: {str(e_exec)}"})
+
+    async def _process_tool_calls_from_stream(self, accumulated_tool_calls_part: str, assistant_message_to_add: dict):
+        """Parses and executes tool calls identified in the AI stream."""
+        try:
+            logger.debug(f"_process_tool_calls_from_stream: Attempting to parse: '{accumulated_tool_calls_part}'")
+            parsed_tool_calls = json.loads(accumulated_tool_calls_part)
+
+            if isinstance(parsed_tool_calls, dict) and "tool_calls" in parsed_tool_calls:
+                tool_calls = parsed_tool_calls["tool_calls"]
+            else:
+                tool_calls = parsed_tool_calls
+
+            if not isinstance(tool_calls, list):
+                tool_calls = [tool_calls]
+
+            assistant_message_to_add["tool_calls"] = tool_calls
+            logger.debug(f"_process_tool_calls_from_stream: Found tool_calls: {tool_calls}")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.identified", event_data=tool_calls)
+
+            for tc in tool_calls:
+                await self._execute_single_tool_call(tc)
+
+        except json.JSONDecodeError as e:
+            logger.error(f"_process_tool_calls_from_stream: Failed to parse tool calls JSON: {e}")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
+        except TypeError as e:
+            logger.error(f"_process_tool_calls_from_stream: TypeError during tool call processing: {e}")
+            await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
+
+
     async def _assemble_ai_stream(self, ai_response_stream):
         """
         Assemble the AI stream, add messages to context, emit events, and return finish_reason.
         """
-        full_response_content = ""
-        accumulated_tool_calls_part = ""
-        finish_reason = None
-        assistant_message_to_add = {"role": "assistant"} # Initialize the message to be added
+        final_finish_reason = "unknown" # More descriptive name for the variable returned by this func
+        assistant_message_to_add = {"role": "assistant"}
 
         try:
-
-            # If ai_response_stream is a coroutine (from AsyncMock), await it to get the async generator
             if isinstance(ai_response_stream, types.CoroutineType):
                 ai_response_stream = await ai_response_stream
-            logger.debug("_run_session: Processing AI stream.")
-            last_chunk = None
-            saw_any_chunk = False
-            async for chunk in ai_response_stream:
-                saw_any_chunk = True
-                last_chunk = chunk
-                # Check for shutdown or pause requests frequently
-                if self.shutdown_event.is_set():
-                    logger.debug("_assemble_ai_stream: Shutdown event set, stopping stream processing.")
-                    finish_reason = "stopped" # Indicate that streaming was stopped externally
-                    break # Exit the streaming loop
-                await self.pause_event.wait() # Wait if paused
 
-                logger.debug(f"_run_session: Received chunk: {chunk}")
-                if chunk.delta_content:
-                    full_response_content += chunk.delta_content
-                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.message.ai_chunk_received", event_data=chunk.delta_content)
-                await asyncio.sleep(0.05) # Yield control to allow other tasks to run
+            (full_response_content,
+             accumulated_tool_calls_part,
+             stream_finish_reason,  # This is the finish_reason from iterating the stream
+             last_chunk_delta_content,
+             saw_any_chunk) = await self._iterate_ai_stream(ai_response_stream)
 
-                if chunk.delta_tool_call_part:
-                    accumulated_tool_calls_part += chunk.delta_tool_call_part
+            final_finish_reason = stream_finish_reason # Default to what the stream reported
 
-                if chunk.finish_reason:
-                    finish_reason = chunk.finish_reason
-                    logger.debug(f"_run_session: Received finish_reason: {finish_reason}")
+            await self._send_final_chunk_notification(last_chunk_delta_content if saw_any_chunk else "")
 
-            # Always send a final chunk notification for the last chunk, even if empty
-            if saw_any_chunk and last_chunk is not None:
-                logger.debug(f"[DEBUG] Sending final chunk notification: event_data='{last_chunk.delta_content}', is_final_chunk=True")
-                await self.delegate_manager.invoke_notification(
-                    sender=self,
-                    event_type="ai_loop.message.ai_chunk_received",
-                    event_data=last_chunk.delta_content if last_chunk.delta_content is not None else "",
-                    is_final_chunk=True
-                )
-            else:
-                # If no chunks at all, send empty final chunk
-                logger.debug(f"[DEBUG] Sending final chunk notification: event_data='', is_final_chunk=True (no chunks at all)")
-                await self.delegate_manager.invoke_notification(
-                    sender=self,
-                    event_type="ai_loop.message.ai_chunk_received",
-                    event_data="",
-                    is_final_chunk=True
-                )
-
-            # After streaming, process the full response and identified tool calls
-            logger.debug(f"_run_session: full_response_content after stream: '{full_response_content}'")
+            logger.debug(f"_assemble_ai_stream: full_response_content after stream: '{full_response_content}'")
             if full_response_content:
                 assistant_message_to_add["content"] = full_response_content
-                logger.debug("_run_session: Assistant message content added to assistant_message_to_add.")
 
-            # Only process tool calls if the stream finished naturally with "tool_calls"
-            # If shutdown was requested during streaming, we don't process tool calls from incomplete data.
-            if finish_reason == "tool_calls" and not self.shutdown_event.is_set():
-                # Attempt to parse accumulated tool call parts into ToolCall objects
-                try:
-                    logger.debug(f"_run_session: Attempting to parse accumulated_tool_calls_part: '{accumulated_tool_calls_part}'")
-                    parsed_tool_calls = json.loads(accumulated_tool_calls_part) # This should be a list or dict
-                    # If it's a list, treat as tool_calls; if dict with 'tool_calls', extract
-                    if isinstance(parsed_tool_calls, dict) and "tool_calls" in parsed_tool_calls:
-                        tool_calls = parsed_tool_calls["tool_calls"]
-                    else:
-                        tool_calls = parsed_tool_calls
-                    if not isinstance(tool_calls, list):
-                        tool_calls = [tool_calls]
-                    assistant_message_to_add["tool_calls"] = tool_calls
-                    logger.debug(f"_run_session: Found tool_calls: {tool_calls}")
-                    # Notify delegate with full tool call dicts (for websocket notification)
-                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.tool_call.identified", event_data=tool_calls)
-                    # Continue with tool execution as before
-                    for tc in tool_calls:
-                        name = tc.get("function", {}).get("name")
-                        args_str = tc.get("function", {}).get("arguments")
-                        tool_id = tc.get("id")
-                        if name and args_str and tool_id:
-                            tool_instance = get_tool_registry().get_tool_by_name(name)
-                            if tool_instance:
-                                try:
-                                    tool_args_dict = json.loads(args_str) # Parse arguments string into dict
-                                    tool_result_content = tool_instance.execute(arguments=tool_args_dict)
-                                    tool_result_msg = {"role": "tool", "tool_call_id": tool_id, "name": name, "content": str(tool_result_content)}
-                                    await self._tool_result_queue.put(tool_result_msg)
-                                except json.JSONDecodeError as e_args:
-                                    logger.error(f"_run_session: Failed to parse arguments for tool {name}: {e_args}. Arguments: {args_str}")
-                                    await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error: Invalid arguments for tool {name}."})
-                                except Exception as e_exec:
-                                    logger.error(f"_run_session: Error executing tool {name}: {e_exec}", exc_info=True)
-                                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e_exec)
-                                    await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error executing tool {name}: {str(e_exec)}"})
-                            else:
-                                logger.error(f"_run_session: Tool {name} not found in registry.")
-                                await self._tool_result_queue.put({"role": "tool", "tool_call_id": tool_id, "name": name, "content": f"Error: Tool {name} not found."})
-                        else:
-                            logger.warning(f"Malformed tool call data received: {tc}")
-                except json.JSONDecodeError as e:
-                    logger.error(f"_run_session: Failed to parse tool calls JSON: {e}")
-                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
-                except TypeError as e:
-                    logger.error(f"_run_session: TypeError during ToolCall instantiation or processing: {e}")
-                    await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)
+            if stream_finish_reason == "tool_calls" and not self.shutdown_event.is_set() and accumulated_tool_calls_part:
+                await self._process_tool_calls_from_stream(accumulated_tool_calls_part, assistant_message_to_add)
+                # If tool calls were processed, the loop should continue to get their results,
+                # so the finish_reason for this step is effectively "tool_calls".
+                final_finish_reason = "tool_calls"
+            elif stream_finish_reason == "stopped": # stream was stopped by shutdown_event
+                 logger.info("_assemble_ai_stream: Stream iteration was stopped by shutdown event.")
+                 final_finish_reason = "stopped"
 
-            # Add the assembled assistant message to context if it has content or tool_calls
+
             if "content" in assistant_message_to_add or "tool_calls" in assistant_message_to_add:
                 agent_id = self.get_agent_id() if self.get_agent_id else 'default'
                 self.context_manager.add_message(assistant_message_to_add, agent_id=agent_id)
-                logger.debug(f"_run_session: Added assistant message to context: {assistant_message_to_add}")
+                logger.debug(f"_assemble_ai_stream: Added assistant message to context: {assistant_message_to_add}")
 
-            # If finish_reason is "stop" or "error", the loop should now break if queues are empty
-            # If finish_reason is not "stop", "error", or "tool_calls", the loop continues.
-            logger.debug(f"_run_session: AI call finished with reason: {finish_reason}. Checking queues for pending messages.")
+            logger.debug(f"_assemble_ai_stream: AI call finished with reason: {final_finish_reason}.")
 
-        except TypeError as e:
+        except TypeError as e: # This specifically catches if ai_response_stream is not an async iterable
             logger.error(f"_assemble_ai_stream: Expected ai_response_stream to be an async iterable, got error: {e}")
             # Notify about the TypeError related to the stream type
             await self.delegate_manager.invoke_notification(sender=self, event_type="ai_loop.error", event_data=e)

@@ -216,7 +216,7 @@ def parse_args():
 
 def initialize_server(cli_args=None):
     """Initialize the server with optional CLI arguments"""
-    global app_config, debbie_observer, session_manager
+    global app_config, debbie_observer
     
     # Use provided args or parse them
     if cli_args is None:

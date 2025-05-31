@@ -44,13 +44,12 @@ class AgentConfig:
 
         self._validate()
 
-    def _validate(self):
-        # Required fields
+    def _validate_required_fields(self):
         for field in self.REQUIRED_FIELDS:
             if getattr(self, field, None) is None:
                 raise AgentConfigError(f"Missing required field: {field}")
 
-        # Types
+    def _validate_field_types(self):
         if not isinstance(self.name, str):
             raise AgentConfigError("name must be a string")
         if not isinstance(self.description, str):
@@ -72,7 +71,7 @@ class AgentConfig:
         if not isinstance(self.context_settings, dict):
             raise AgentConfigError("context_settings must be a dict")
 
-        # Generation parameter validation
+    def _validate_generation_params(self):
         for param, (min_val, max_val) in self.GENERATION_PARAM_RANGES.items():
             if param in self.generation_params:
                 value = self.generation_params[param]
@@ -82,24 +81,22 @@ class AgentConfig:
                     raise AgentConfigError(
                         f"{param} must be between {min_val} and {max_val}"
                     )
-        # max_tokens must be int
         if "max_tokens" in self.generation_params:
             if not isinstance(self.generation_params["max_tokens"], int):
                 raise AgentConfigError("max_tokens must be an integer")
             if self.generation_params["max_tokens"] < 1:
                 raise AgentConfigError("max_tokens must be >= 1")
 
-        # tool_permissions must be list of str
+    def _validate_tool_settings(self):
         if self.tool_permissions:
             if not all(isinstance(t, str) for t in self.tool_permissions):
                 raise AgentConfigError("tool_permissions must be a list of strings")
-        # tool_limits must be dict of str:int
         if self.tool_limits:
             for k, v in self.tool_limits.items():
                 if not isinstance(k, str) or not isinstance(v, int):
                     raise AgentConfigError("tool_limits must be dict of str:int")
 
-        # context_settings
+    def _validate_context_settings(self):
         if self.context_settings:
             if "max_context_messages" in self.context_settings:
                 v = self.context_settings["max_context_messages"]
@@ -109,6 +106,13 @@ class AgentConfig:
                 v = self.context_settings["max_context_tokens"]
                 if not isinstance(v, int) or v < 1:
                     raise AgentConfigError("max_context_tokens must be int >= 1")
+
+    def _validate(self):
+        self._validate_required_fields()
+        self._validate_field_types()
+        self._validate_generation_params()
+        self._validate_tool_settings()
+        self._validate_context_settings()
 
     def to_dict(self) -> Dict[str, Any]:
         return {

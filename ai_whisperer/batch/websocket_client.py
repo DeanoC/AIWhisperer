@@ -145,38 +145,45 @@ class WebSocketClient:
         """
         self._notification_handler = handler
         
+    async def _route_message(self, data: Dict[str, Any]):
+        """Routes a received message data to either response or notification handler."""
+        if "id" in data:
+            request_id = data["id"]
+            if request_id in self._response_handlers:
+                self._response_handlers[request_id].set_result(data)
+            else:
+                logger.warning(f"Received response for unknown request_id: {request_id}")
+        else:
+            if self._notification_handler:
+                # Schedule as a task to avoid blocking the receive loop if handler is slow
+                asyncio.create_task(self._notification_handler(data))
+            else:
+                logger.debug(f"Unhandled notification: {data.get('method', 'unknown')}")
+
     async def _receive_messages(self) -> None:
         """Background task to receive and route messages."""
+        if not self.connection: # Should not happen if called after connect()
+            logger.error("_receive_messages called with no active connection.")
+            return
+
         try:
             async for message in self.connection:
                 try:
                     data = json.loads(message)
-                    
-                    # Route based on message type
-                    if "id" in data:
-                        # Response to a request
-                        request_id = data["id"]
-                        if request_id in self._response_handlers:
-                            self._response_handlers[request_id].set_result(data)
-                    else:
-                        # Notification (no id)
-                        if self._notification_handler:
-                            asyncio.create_task(self._notification_handler(data))
-                        else:
-                            logger.debug(f"Unhandled notification: {data.get('method', 'unknown')}")
-                            
+                    await self._route_message(data)
                 except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse message: {e}")
-                except Exception as e:
-                    logger.error(f"Error handling message: {e}")
+                    logger.error(f"Failed to parse incoming JSON message: {e}. Message: '{message}'")
+                except Exception as e: # Catch errors from _route_message or other processing
+                    logger.error(f"Error handling received message: {e}")
                     
         except websockets.ConnectionClosed:
-            logger.info("WebSocket connection closed by server")
+            logger.info("WebSocket connection closed by server.")
         except asyncio.CancelledError:
-            # Normal shutdown
-            raise
-        except Exception as e:
-            logger.error(f"Receive loop error: {e}")
+            logger.info("Receive loop cancelled.")
+            raise # Propagate cancellation
+        except Exception as e: # Catch other unexpected errors from the connection itself
+            logger.error(f"Receive loop encountered an error: {e}", exc_info=True)
+            # Depending on the error, may need to signal connection loss to the client object
             
     async def wait_for_notification(self, method: str, timeout: Optional[float] = None) -> Dict[str, Any]:
         """

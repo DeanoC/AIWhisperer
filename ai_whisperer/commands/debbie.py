@@ -297,89 +297,115 @@ For session-specific suggestions, enable monitoring with:
         
         return result.strip()
 
-    def _report_command(self, session_id: Optional[str], options: Dict[str, Any]) -> str:
-        """Generate comprehensive session report"""
-        observer = self._get_observer()
-        
-        if not observer:
-            return "❌ Session reports require active monitoring. Use `/debbie status` for setup instructions."
-        
-        if not session_id:
-            return "❌ Session ID required for report generation"
-        
-        monitor = observer.monitors.get(session_id)
-        if not monitor:
-            return f"❌ Session {session_id} not found or not monitored"
-        
-        # Generate comprehensive report
-        uptime = (datetime.now() - monitor.metrics.start_time).total_seconds()
-        health_score = monitor._calculate_health_score()
-        
-        report = f"""📋 Debbie Session Report
-Session ID: {session_id}
+    def _generate_report_overview(self, monitor: Any, health_score: float, uptime: float) -> str:
+        """Generates the overview section of the report."""
+        return f"""📋 Debbie Session Report
+Session ID: {monitor.session_id}
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ═══════════════════════════════════════
 
 📊 SESSION OVERVIEW
   Health Score: {health_score}/100
-  Session Uptime: {uptime:.0f} seconds ({uptime/60:.1f} minutes)
-  
+  Session Uptime: {uptime:.0f} seconds ({uptime/60:.1f} minutes)"""
+
+    def _generate_report_activity_metrics(self, monitor: Any) -> str:
+        """Generates the activity metrics section of the report."""
+        error_rate = (monitor.metrics.error_count / max(monitor.metrics.message_count, 1)) * 100
+        return f"""
 📈 ACTIVITY METRICS
   Total Messages: {monitor.metrics.message_count}
   Error Count: {monitor.metrics.error_count}
-  Error Rate: {(monitor.metrics.error_count / max(monitor.metrics.message_count, 1)) * 100:.1f}%
-  Average Response Time: {monitor.metrics.avg_response_time:.2f}s
+  Error Rate: {error_rate:.1f}%
+  Average Response Time: {monitor.metrics.avg_response_time:.2f}s"""
 
-🔍 PATTERN DETECTION
-  Detected Patterns: {len(monitor.metrics.detected_patterns)}"""
-        
+    def _generate_report_pattern_detection(self, monitor: Any) -> str:
+        """Generates the pattern detection section of the report."""
+        report_str = f"\n\n🔍 PATTERN DETECTION\n  Detected Patterns: {len(monitor.metrics.detected_patterns)}"
         if monitor.metrics.detected_patterns:
             for pattern in monitor.metrics.detected_patterns:
-                report += f"\n    • {pattern.value}"
+                report_str += f"\n    • {pattern.value}"
         else:
-            report += "\n    • No problematic patterns detected"
-        
-        report += f"\n\n🚨 ALERTS SUMMARY\n  Total Alerts: {len(monitor.alerts)}"
-        
+            report_str += "\n    • No problematic patterns detected"
+        return report_str
+
+    def _generate_report_alerts_summary(self, monitor: Any) -> str:
+        """Generates the alerts summary section of the report."""
+        report_str = f"\n\n🚨 ALERTS SUMMARY\n  Total Alerts: {len(monitor.alerts)}"
         if monitor.alerts:
-            # Group alerts by severity
             from collections import defaultdict
             alerts_by_severity = defaultdict(list)
             for alert in monitor.alerts:
                 alerts_by_severity[alert.severity.value].append(alert)
             
-            for severity, alerts in alerts_by_severity.items():
-                report += f"\n    • {severity}: {len(alerts)} alerts"
-        
-        # Recent activity (last 5 alerts)
+            for severity, alerts_list in alerts_by_severity.items():
+                report_str += f"\n    • {severity}: {len(alerts_list)} alerts"
+        return report_str
+
+    def _generate_report_recent_alerts(self, monitor: Any) -> str:
+        """Generates the recent alerts section of the report."""
+        report_str = ""
         if monitor.alerts:
-            report += f"\n\n📅 RECENT ALERTS (Last 5):"
+            report_str += f"\n\n📅 RECENT ALERTS (Last 5):"
             for alert in monitor.alerts[-5:]:
                 timestamp = alert.timestamp.strftime('%H:%M:%S')
-                report += f"\n  [{timestamp}] {alert.severity.value}: {alert.message}"
-        
-        # Health assessment
-        report += f"\n\n🏥 HEALTH ASSESSMENT"
+                report_str += f"\n  [{timestamp}] {alert.severity.value}: {alert.message}"
+        return report_str
+
+    def _generate_report_health_assessment(self, health_score: float) -> str:
+        """Generates the health assessment section of the report."""
+        report_str = f"\n\n🏥 HEALTH ASSESSMENT"
         if health_score >= 80:
-            report += f"\n  Status: Excellent - Session is performing well"
+            report_str += f"\n  Status: Excellent - Session is performing well"
         elif health_score >= 60:
-            report += f"\n  Status: Good - Minor issues may be present"
+            report_str += f"\n  Status: Good - Minor issues may be present"
         else:
-            report += f"\n  Status: Poor - Significant issues detected"
-        
-        # Recommendations section
-        report += f"\n\n💡 RECOMMENDATIONS"
+            report_str += f"\n  Status: Poor - Significant issues detected"
+        return report_str
+
+    def _generate_report_recommendations(self, monitor: Any, health_score: float) -> str:
+        """Generates the recommendations section of the report."""
+        report_str = f"\n\n💡 RECOMMENDATIONS"
         if health_score < 70:
-            report += f"\n  • Consider session restart or intervention"
-        if monitor.metrics.avg_response_time > 5:
-            report += f"\n  • Investigate performance bottlenecks"
-        if len(monitor.alerts) > 10:
-            report += f"\n  • Review alert patterns for recurring issues"
+            report_str += f"\n  • Consider session restart or intervention"
+        if monitor.metrics.avg_response_time > 5: # Example threshold
+            report_str += f"\n  • Investigate performance bottlenecks"
+        if len(monitor.alerts) > 10: # Example threshold
+            report_str += f"\n  • Review alert patterns for recurring issues"
+        if not (health_score < 70 or monitor.metrics.avg_response_time > 5 or len(monitor.alerts) > 10):
+             report_str += f"\n  • Session appears stable. Continue monitoring."
+        return report_str
+
+    def _report_command(self, session_id: Optional[str], options: Dict[str, Any]) -> str:
+        """Generate comprehensive session report"""
+        observer = self._get_observer()
+
+        if not observer:
+            return "❌ Session reports require active monitoring. Use `/debbie status` for setup instructions."
+
+        if not session_id:
+            return "❌ Session ID required for report generation"
+
+        monitor = observer.monitors.get(session_id)
+        if not monitor:
+            return f"❌ Session {session_id} not found or not monitored"
+
+        # Generate comprehensive report
+        uptime = (datetime.now() - monitor.metrics.start_time).total_seconds()
+        health_score = monitor._calculate_health_score()
+
+        report_parts = []
+        report_parts.append(self._generate_report_overview(monitor, health_score, uptime))
+        report_parts.append(self._generate_report_activity_metrics(monitor))
+        report_parts.append(self._generate_report_pattern_detection(monitor))
+        report_parts.append(self._generate_report_alerts_summary(monitor))
+        report_parts.append(self._generate_report_recent_alerts(monitor))
+        report_parts.append(self._generate_report_health_assessment(health_score))
+        report_parts.append(self._generate_report_recommendations(monitor, health_score))
         
-        report += f"\n\n═══════════════════════════════════════\nEnd of Report"
+        report_parts.append(f"\n\n═══════════════════════════════════════\nEnd of Report")
         
-        return report
+        return "".join(report_parts)
 
 
 # Register the command

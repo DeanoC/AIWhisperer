@@ -16,27 +16,32 @@ class AgentContextManager(ContextManager):
         self.prompt_system = prompt_system
         self._initialize_agent_context()
 
+    def _load_system_prompt(self) -> str:
+        """Loads and returns the system prompt text for the agent."""
+        if not self.prompt_system:
+            return f"[ERROR: No prompt system available for agent {self.agent.agent_id}]"
+
+        prompt_name = self.agent.prompt_file
+        if prompt_name.startswith("agent_"):
+            prompt_name = prompt_name[len("agent_"):]
+        if prompt_name.endswith(".md"):
+            prompt_name = prompt_name[:-3]
+
+        try:
+            prompt = self.prompt_system.get_prompt("agents", prompt_name)
+            return prompt.content.strip()
+        except PromptNotFoundError as e:
+            return f"[ERROR: Could not load system prompt for agent {self.agent.agent_id}: {e}]"
+        except Exception as e:
+            return f"[ERROR: Unexpected error loading system prompt for agent {self.agent.agent_id}: {e}]"
+
     def _initialize_agent_context(self):
         """Load system prompt and context based on agent's context_sources"""
-        # 1. Load and prepend the agent's system prompt using PromptSystem
-        prompt_text = None
-        if self.prompt_system:
-            # Remove extension and 'agent_' prefix for prompt name
-            prompt_name = self.agent.prompt_file
-            if prompt_name.startswith("agent_"):
-                prompt_name = prompt_name[len("agent_"):]
-            if prompt_name.endswith(".md"):
-                prompt_name = prompt_name[:-3]
-            try:
-                prompt = self.prompt_system.get_prompt("agents", prompt_name)
-                prompt_text = prompt.content.strip()
-            except PromptNotFoundError as e:
-                prompt_text = f"[ERROR: Could not load system prompt for agent {self.agent.agent_id}: {e}]"
-        if not prompt_text:
-            prompt_text = f"[ERROR: No prompt system or prompt not found for agent {self.agent.agent_id}]"
+        # 1. Load and prepend the agent's system prompt
+        system_prompt_text = self._load_system_prompt()
         self.context.append({
             "role": "system",
-            "content": prompt_text
+            "content": system_prompt_text
         })
 
         # 2. Load additional context sources
