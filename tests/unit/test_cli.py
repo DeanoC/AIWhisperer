@@ -1,6 +1,7 @@
 
 import subprocess
 import sys
+import os
 import pytest
 import pathlib
 PACKAGE_ROOT = pathlib.Path(__file__).parent.parent.parent.resolve()
