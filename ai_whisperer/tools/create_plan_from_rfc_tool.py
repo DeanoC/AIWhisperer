@@ -83,6 +83,13 @@ class CreatePlanFromRFCTool(AITool):
         path_manager = PathManager.get_instance()
         rfc_base = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
+        # Strip common file extensions if present
+        rfc_id_clean = rfc_id
+        if rfc_id.endswith('.md'):
+            rfc_id_clean = rfc_id[:-3]
+        elif rfc_id.endswith('.json'):
+            rfc_id_clean = rfc_id[:-5]
+        
         for status in ["in_progress", "archived"]:
             status_dir = rfc_base / status
             if not status_dir.exists():
@@ -97,9 +104,13 @@ class CreatePlanFromRFCTool(AITool):
                     # Check if RFC ID, short name, or filename matches
                     filename_without_ext = json_file.stem
                     if (metadata.get("rfc_id") == rfc_id or 
+                        metadata.get("rfc_id") == rfc_id_clean or
                         metadata.get("short_name") == rfc_id or
+                        metadata.get("short_name") == rfc_id_clean or
                         filename_without_ext == rfc_id or
-                        metadata.get("filename", "").replace(".md", "") == rfc_id):
+                        filename_without_ext == rfc_id_clean or
+                        metadata.get("filename", "").replace(".md", "") == rfc_id or
+                        metadata.get("filename", "").replace(".md", "") == rfc_id_clean):
                         
                         # Find corresponding markdown file
                         md_file = json_file.with_suffix('.md')
