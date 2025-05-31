@@ -154,6 +154,7 @@ class TestStatelessAILoop:
         
         mock_registry = Mock()
         mock_registry.get_tool_by_name.return_value = mock_tool
+        mock_registry.get_all_tool_definitions.return_value = []
         mock_get_registry.return_value = mock_registry
         
         # Setup AI service to return tool calls
