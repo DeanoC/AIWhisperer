@@ -158,6 +158,7 @@ class StatelessInteractiveSession:
         from ai_whisperer.tools.read_plan_tool import ReadPlanTool
         from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
         from ai_whisperer.tools.move_plan_tool import MovePlanTool
+        from ai_whisperer.tools.delete_plan_tool import DeletePlanTool
         
         tool_registry.register_tool(PreparePlanFromRFCTool())
         tool_registry.register_tool(SaveGeneratedPlanTool())
@@ -165,6 +166,7 @@ class StatelessInteractiveSession:
         tool_registry.register_tool(ReadPlanTool())
         tool_registry.register_tool(UpdatePlanFromRFCTool())
         tool_registry.register_tool(MovePlanTool())
+        tool_registry.register_tool(DeletePlanTool())
         
         # Register Debbie's debugging and monitoring tools
         try:
@@ -1120,6 +1122,7 @@ class StatelessSessionManager:
         from ai_whisperer.tools.read_plan_tool import ReadPlanTool
         from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
         from ai_whisperer.tools.move_plan_tool import MovePlanTool
+        from ai_whisperer.tools.delete_plan_tool import DeletePlanTool
         
         tool_registry.register_tool(PreparePlanFromRFCTool())
         tool_registry.register_tool(SaveGeneratedPlanTool())
@@ -1127,6 +1130,7 @@ class StatelessSessionManager:
         tool_registry.register_tool(ReadPlanTool())
         tool_registry.register_tool(UpdatePlanFromRFCTool())
         tool_registry.register_tool(MovePlanTool())
+        tool_registry.register_tool(DeletePlanTool())
         
         # Register Debbie's debugging and monitoring tools
         try:

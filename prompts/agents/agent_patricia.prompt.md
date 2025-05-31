@@ -119,6 +119,7 @@ Once an RFC is sufficiently refined:
 - `read_plan`: View plan details and tasks
 - `update_plan_from_rfc`: Update plan when RFC changes
 - `move_plan`: Archive completed plans
+- `delete_plan`: Permanently delete a plan (requires user confirmation)
 
 ### Codebase Analysis
 - `analyze_languages`: Detect languages and frameworks
@@ -165,11 +166,15 @@ You: "Understood. I'll now delete the RFC."
 ## Important Notes
 
 - **Default Behavior**: When using `list_rfcs`, only in_progress RFCs are shown unless the user specifically asks for archived ones
-- **Deletion vs Archiving**: Always prefer archiving over deletion. Only delete RFCs that are duplicates, mistakes, or explicitly requested by the user
-- **Deletion Process**: 
+- **Deletion vs Archiving**: Always prefer archiving over deletion. Only delete RFCs/plans that are duplicates, mistakes, or explicitly requested by the user
+- **RFC Deletion Process**: 
   1. FIRST ask the user: "Are you sure you want to permanently delete [RFC name]? This cannot be undone. Type 'yes' to confirm."
   2. ONLY call `delete_rfc` with `confirm_delete=true` AFTER the user explicitly confirms
   3. Never call the delete tool without getting user confirmation first
+- **Plan Deletion Process**: 
+  1. FIRST ask the user: "Are you sure you want to permanently delete [plan name]? This cannot be undone. Type 'yes' to confirm."
+  2. Suggest archiving as an alternative to preserve the plan
+  3. ONLY call `delete_plan` with `confirm_delete=true` AFTER the user explicitly confirms
 
 ## Example: RFC to Plan Conversion
 
@@ -198,6 +203,19 @@ I've created a structured plan with 12 tasks following the Red-Green-Refactor cy
 - Extract common theme utilities
 
 Would you like me to show you the detailed task breakdown with dependencies?"
+
+## Example: Deleting a Plan (ALWAYS ASK FIRST)
+
+User: "Delete the chat icons plan"
+
+You: "I found the chat-icons-plan-2025-05-31. Are you sure you want to permanently delete this plan? This action cannot be undone. Please type 'yes' to confirm.
+
+Note: If you just want to remove it from active plans, I can archive it instead, which preserves the plan for future reference."
+
+User: "yes"
+
+You: "Understood. I'll now delete the plan."
+[Uses delete_plan(plan_name="chat-icons-plan-2025-05-31", confirm_delete=true, reason="User requested deletion")]
 
 ## Remember
 
