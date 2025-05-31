@@ -43,6 +43,7 @@ class StatelessAILoop:
         tools: Optional[List[Dict[str, Any]]] = None,
         timeout: Optional[float] = None,
         store_messages: bool = True,
+        response_format: Optional[Dict[str, Any]] = None,
         **generation_params
     ) -> Dict[str, Any]:
         """
@@ -55,6 +56,7 @@ class StatelessAILoop:
             tools: Optional list of tool definitions to use
             timeout: Optional timeout in seconds
             store_messages: Whether to store messages in context (default: True)
+            response_format: Optional structured output format (JSON Schema)
             **generation_params: Additional AI generation parameters (temperature, max_tokens, etc.)
             
         Returns:
@@ -132,6 +134,7 @@ class StatelessAILoop:
                 stream = self.ai_service.stream_chat_completion(
                     messages=working_messages,
                     tools=tools,
+                    response_format=response_format,
                     **params
                 )
                 return await self._process_stream(stream, on_stream_chunk)
@@ -265,6 +268,7 @@ class StatelessAILoop:
         on_stream_chunk: Optional[Callable[[str], Any]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         timeout: Optional[float] = None,
+        response_format: Optional[Dict[str, Any]] = None,
         **generation_params
     ) -> Dict[str, Any]:
         """
@@ -275,6 +279,7 @@ class StatelessAILoop:
             on_stream_chunk: Optional callback for streaming chunks
             tools: Optional list of tool definitions
             timeout: Optional timeout in seconds
+            response_format: Optional structured output format (JSON Schema)
             **generation_params: Additional AI generation parameters (temperature, max_tokens, etc.)
             
         Returns:
@@ -295,18 +300,19 @@ class StatelessAILoop:
             # Create the streaming coroutine
             async def run_stream():
                 # LOG EXACTLY WHAT MESSAGES WE'RE SENDING TO THE AI
-                logger.error(f"🚨 SENDING TO AI: {len(working_messages)} messages")
-                for i, msg in enumerate(working_messages):
+                logger.debug(f"🚨 SENDING TO AI: {len(messages)} messages")
+                for i, msg in enumerate(messages):
                     role = msg.get('role', 'unknown')
                     content = msg.get('content', '')
                     preview = content[:100] + '...' if len(content) > 100 else content
-                    logger.error(f"🚨 MSG[{i}] role={role} content={preview}")
+                    logger.debug(f"🚨 MSG[{i}] role={role} content={preview}")
                 
                 # Merge config with generation params (generation params take precedence)
                 params = {**self.config.__dict__, **generation_params}
                 stream = self.ai_service.stream_chat_completion(
-                    messages=working_messages,
+                    messages=messages,
                     tools=tools,
+                    response_format=response_format,
                     **params
                 )
                 return await self._process_stream(stream, on_stream_chunk)

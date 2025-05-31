@@ -8,7 +8,7 @@ agents:
     context_sources: ["rfc_templates", "existing_rfcs", "codebase_structure"]
     color: "#9C27B0"
     icon: "📝"
-    tool_sets: ["rfc_management", "codebase_analysis", "web_research"]
+    tool_sets: ["rfc_specialist"]
   
   a:
     name: "Alice the AI Assistant"
@@ -49,6 +49,20 @@ agents:
       - batch_script_processing
       - multi_format_parsing
       - automated_user_simulation
+    continuation_config:
+      rules:
+        - trigger_tools: ["script_parser"]
+          description: "Continue after parsing batch scripts"
+          auto_continue: true
+          max_depth: 3
+        - trigger_tools: ["batch_command"]
+          description: "Continue after executing batch commands"
+          auto_continue: true
+          max_depth: 5
+        - trigger_tools: ["session_health", "session_analysis"]
+          description: "Continue after diagnostic tools"
+          auto_continue: false
+          requires_user_confirmation: true
     configuration:
       monitoring:
         continuation_timeout: 30  # seconds

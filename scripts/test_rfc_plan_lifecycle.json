@@ -1,0 +1,81 @@
+{
+  "name": "test_rfc_plan_lifecycle",
+  "description": "Test the complete lifecycle of RFC to plan conversion, updates, and archival",
+  "setup": {
+    "agent": "patricia",
+    "initial_context": "Testing complete RFC-to-plan lifecycle including updates and archival"
+  },
+  "steps": [
+    {
+      "step": 1,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Create an RFC for implementing a REST API rate limiter",
+      "expected_response": "Creates RFC for rate limiter",
+      "validation": {
+        "check_tool_calls": ["create_rfc"],
+        "verify_output_contains": ["rate limiter", "RFC created"]
+      }
+    },
+    {
+      "step": 2,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Convert the rate limiter RFC to a plan",
+      "expected_response": "Generates plan from RFC",
+      "validation": {
+        "check_tool_calls": ["prepare_plan_from_rfc", "save_generated_plan"],
+        "verify_output_contains": ["plan", "generated", "TDD"]
+      }
+    },
+    {
+      "step": 3,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Update the RFC to include Redis as the backend for rate limiting",
+      "expected_response": "Updates RFC with Redis requirement",
+      "validation": {
+        "check_tool_calls": ["update_rfc"],
+        "verify_output_contains": ["Redis", "updated"]
+      }
+    },
+    {
+      "step": 4,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Update the plan to reflect the RFC changes",
+      "expected_response": "Updates plan based on RFC changes",
+      "validation": {
+        "check_tool_calls": ["update_plan_from_rfc"],
+        "verify_output_contains": ["plan updated", "RFC changes"]
+      }
+    },
+    {
+      "step": 5,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Archive both the RFC and its plan",
+      "expected_response": "Archives RFC and plan",
+      "validation": {
+        "check_tool_calls": ["move_rfc", "move_plan"],
+        "verify_output_contains": ["archived", "moved"]
+      }
+    },
+    {
+      "step": 6,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "List archived RFCs and plans",
+      "expected_response": "Shows archived items",
+      "validation": {
+        "check_tool_calls": ["list_rfcs", "list_plans"],
+        "verify_output_contains": ["archived", "rate limiter"]
+      }
+    }
+  ],
+  "success_criteria": {
+    "all_steps_pass": true,
+    "bidirectional_sync_works": true,
+    "archival_maintains_linkage": true
+  }
+}

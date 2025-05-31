@@ -52,7 +52,8 @@ class TestCreateRFCTool:
         """Test creating a basic RFC."""
         arguments = {
             "title": "Test RFC",
-            "summary": "This is a test RFC"
+            "summary": "This is a test RFC",
+            "short_name": "test-rfc"
         }
         
         result = create_tool.execute(arguments)
@@ -61,8 +62,8 @@ class TestCreateRFCTool:
         assert "RFC created successfully!" in result
         assert "RFC-" in result
         
-        # Verify file was created
-        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("RFC-*.md"))
+        # Verify file was created - look for files with the short name pattern
+        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("test-rfc-*.md"))
         assert len(rfc_files) == 1
         
         # Verify content
@@ -77,6 +78,7 @@ class TestCreateRFCTool:
         arguments = {
             "title": "Feature RFC",
             "summary": "Add new feature",
+            "short_name": "feature-rfc",
             "background": "Users need this feature",
             "initial_requirements": ["Requirement 1", "Requirement 2"],
             "author": "Test User"
@@ -85,7 +87,7 @@ class TestCreateRFCTool:
         result = create_tool.execute(arguments)
         
         # Find created file
-        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("RFC-*.md"))
+        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("feature-rfc-*.md"))
         assert len(rfc_files) == 1
         
         with open(rfc_files[0], 'r') as f:
@@ -97,11 +99,11 @@ class TestCreateRFCTool:
     
     def test_generate_unique_rfc_id(self, create_tool, temp_workspace):
         """Test RFC ID generation is unique."""
-        # Create first RFC
-        result1 = create_tool.execute({"title": "RFC 1", "summary": "First"})
+        # Create first RFC with same short name to force counter increment
+        result1 = create_tool.execute({"title": "RFC 1", "summary": "First", "short_name": "test-rfc"})
         
-        # Create second RFC
-        result2 = create_tool.execute({"title": "RFC 2", "summary": "Second"})
+        # Create second RFC with same short name - should get different ID
+        result2 = create_tool.execute({"title": "RFC 2", "summary": "Second", "short_name": "test-rfc"})
         
         # Extract IDs
         import re
@@ -115,13 +117,14 @@ class TestCreateRFCTool:
         arguments = {
             "title": "Test RFC",
             "summary": "Test summary",
+            "short_name": "test-metadata",
             "author": "Tester"
         }
         
         create_tool.execute(arguments)
         
         # Check for JSON metadata file
-        json_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("RFC-*.json"))
+        json_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("test-metadata-*.json"))
         assert len(json_files) == 1
         
         # Verify metadata content
@@ -298,7 +301,7 @@ Summary for {title}"""
     
     def test_list_all_rfcs(self, list_tool):
         """Test listing all RFCs."""
-        result = list_tool.execute({})
+        result = list_tool.execute({"status": "all"})
         
         assert "Found 4 RFC(s)" in result
         assert "RFC-2025-05-29-0001" in result

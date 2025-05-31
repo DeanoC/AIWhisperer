@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import os
+import pytest
 
 # Assuming the refine logic is in src/ai_whisperer/main.py and uses OpenRouterAIService
 # We will need to mock the relevant parts of main.py and openrouter_api.py
@@ -86,6 +87,8 @@ class TestRefineAIInteraction(unittest.TestCase):
             mock_call_chat_completion.assert_called_once_with(expected_prompt, "mock-model", {})
             mock_file_open_inner.assert_any_call(os.path.join(".", "test_requirements_v1.md"), "w")
 
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
+                        reason="Socket resource warning in Windows CI with mock patches")
     @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
     @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")

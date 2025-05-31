@@ -1,0 +1,84 @@
+{
+  "name": "test_plan_generation_quality",
+  "description": "Test the quality and completeness of generated plans from RFCs",
+  "setup": {
+    "agent": "patricia",
+    "initial_context": "Test plan generation quality across different RFC complexities"
+  },
+  "steps": [
+    {
+      "step": 1,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Create an RFC for adding a user notification system with email and SMS support",
+      "expected_response": "RFC created with notification requirements",
+      "validation": {
+        "check_tool_calls": ["create_rfc"],
+        "verify_output_contains": ["notification", "email", "SMS"]
+      }
+    },
+    {
+      "step": 2,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Please refine the RFC with these additional requirements: webhook support, rate limiting, and template management",
+      "expected_response": "RFC updated with additional requirements",
+      "validation": {
+        "check_tool_calls": ["update_rfc"],
+        "verify_output_contains": ["webhook", "rate limiting", "template"]
+      }
+    },
+    {
+      "step": 3,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Now convert this RFC into a structured plan following TDD principles",
+      "expected_response": "Generates a comprehensive plan with RED-GREEN-REFACTOR phases",
+      "validation": {
+        "check_tool_calls": ["prepare_plan_from_rfc", "save_generated_plan"],
+        "verify_plan_structure": {
+          "has_tdd_phases": true,
+          "minimum_tasks": 6,
+          "all_tasks_have_dependencies": true,
+          "validation_criteria_present": true
+        }
+      }
+    },
+    {
+      "step": 4,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Show me the generated plan",
+      "expected_response": "Displays the plan with all TDD phases",
+      "validation": {
+        "check_tool_calls": ["read_plan"],
+        "verify_output_contains": ["red", "green", "refactor", "test", "implement"]
+      }
+    },
+    {
+      "step": 5,
+      "agent": "debbie",
+      "action": "send_message",
+      "message": "analyze session quality",
+      "expected_response": "Analyzes the plan generation quality",
+      "validation": {
+        "check_tool_calls": ["session_analysis"],
+        "verify_output_contains": ["plan quality", "TDD adherence"]
+      }
+    }
+  ],
+  "cleanup": {
+    "agent": "patricia",
+    "action": "send_message",
+    "message": "Please delete the notification system RFC and plan",
+    "validation": {
+      "check_tool_calls": ["delete_rfc", "delete_plan"]
+    }
+  },
+  "success_criteria": {
+    "all_steps_pass": true,
+    "plan_follows_tdd": true,
+    "plan_has_proper_dependencies": true,
+    "plan_includes_validation_criteria": true
+  }
+}

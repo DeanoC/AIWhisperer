@@ -35,7 +35,7 @@ class TestBatchCommandTool:
         create_file_tool.execute.return_value = {"created": True}
         
         # Registry returns tools
-        registry.get_tool.side_effect = lambda name: {
+        registry.get_tool_by_name.side_effect = lambda name: {
             "list_files": list_files_tool,
             "read_file": read_file_tool,
             "create_file": create_file_tool,
@@ -199,7 +199,7 @@ class TestBatchCommandTool:
     def test_execute_with_failed_step(self, command_tool, mock_tool_registry):
         """Test execution when a step fails"""
         # Make read_file fail
-        mock_tool_registry.get_tool('read_file').execute.side_effect = Exception("File not found")
+        mock_tool_registry.get_tool_by_name('read_file').execute.side_effect = Exception("File not found")
         
         script = ParsedScript(
             format=ScriptFormat.JSON,
@@ -222,7 +222,7 @@ class TestBatchCommandTool:
     
     def test_execute_with_stop_on_error(self, command_tool, mock_tool_registry):
         """Test execution stops on error when configured"""
-        mock_tool_registry.get_tool('read_file').execute.side_effect = Exception("File not found")
+        mock_tool_registry.get_tool_by_name('read_file').execute.side_effect = Exception("File not found")
         
         script = ParsedScript(
             format=ScriptFormat.JSON,
@@ -286,7 +286,7 @@ class TestBatchCommandTool:
         }
         
         # Override the side_effect to return our context tool
-        mock_tool_registry.get_tool.side_effect = lambda name: context_tool
+        mock_tool_registry.get_tool_by_name.side_effect = lambda name: context_tool
         
         script = ParsedScript(
             format=ScriptFormat.JSON,
@@ -310,7 +310,7 @@ class TestBatchCommandTool:
     def test_parameter_interpolation(self, command_tool, mock_tool_registry):
         """Test parameter interpolation from previous results"""
         # First tool returns a value
-        mock_tool_registry.get_tool('list_files').execute.return_value = {
+        mock_tool_registry.get_tool_by_name('list_files').execute.return_value = {
             "files": ["data.txt"],
             "first_file": "data.txt"
         }
@@ -328,7 +328,7 @@ class TestBatchCommandTool:
         result = command_tool.execute_script(script)
         
         # Verify second step used result from first
-        read_call = mock_tool_registry.get_tool('read_file').execute.call_args
+        read_call = mock_tool_registry.get_tool_by_name('read_file').execute.call_args
         assert read_call[1]['path'] == 'data.txt'
     
     # Progress tracking tests
@@ -368,9 +368,9 @@ class TestBatchCommandTool:
         assert len(result['results']) == 3
         
         # Verify tools were not actually called
-        mock_tool_registry.get_tool('list_files').execute.assert_not_called()
-        mock_tool_registry.get_tool('read_file').execute.assert_not_called()
-        mock_tool_registry.get_tool('create_file').execute.assert_not_called()
+        mock_tool_registry.get_tool_by_name('list_files').execute.assert_not_called()
+        mock_tool_registry.get_tool_by_name('read_file').execute.assert_not_called()
+        mock_tool_registry.get_tool_by_name('create_file').execute.assert_not_called()
     
     # Validation tests
     

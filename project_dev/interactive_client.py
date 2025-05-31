@@ -85,7 +85,7 @@ async def interactive_client(script_path=None, log_path=None):
         log(f"Session started: {session_id}")
 
     async def send_stop_session():
-        nonlocal session_id, msg_id
+        nonlocal msg_id
         if not session_id:
             print("[WARN] No session active.")
             return
@@ -100,7 +100,7 @@ async def interactive_client(script_path=None, log_path=None):
         print("Sent stopSession request.")
 
     async def send_user_message(message=None):
-        nonlocal session_id, msg_id
+        nonlocal msg_id
         if not session_id:
             print("[WARN] No session active.")
             return
@@ -153,7 +153,7 @@ async def interactive_client(script_path=None, log_path=None):
                 break
 
     async def send_tool_result():
-        nonlocal session_id, msg_id
+        nonlocal msg_id
         if not session_id:
             print("[WARN] No session active.")
             return

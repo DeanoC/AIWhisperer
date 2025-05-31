@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RFC-based Plan Schema",
+  "description": "Schema for plans generated from RFCs",
+  "type": "object",
+  "required": ["plan_type", "title", "source_rfc", "tasks", "validation_criteria", "created", "updated"],
+  "properties": {
+    "plan_type": {
+      "type": "string",
+      "enum": ["initial", "overview"],
+      "description": "Type of plan - initial for single file, overview for multi-file with subtasks"
+    },
+    "title": {
+      "type": "string",
+      "description": "Plan title derived from RFC"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of what the plan accomplishes"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["in_progress", "archived", "completed", "failed"],
+      "default": "in_progress"
+    },
+    "source_rfc": {
+      "type": "object",
+      "required": ["rfc_id", "title", "filename", "version_hash"],
+      "properties": {
+        "rfc_id": {
+          "type": "string",
+          "pattern": "^RFC-\\d{4}-\\d{2}-\\d{2}-\\d{4}$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "version_hash": {
+          "type": "string",
+          "description": "SHA256 hash of RFC content for change detection"
+        }
+      }
+    },
+    "agent_type": {
+      "type": "string",
+      "enum": ["planning", "test_generation", "code_generation", "file_edit", "validation", "documentation", "file_io", "analysis", "ai_interaction"],
+      "description": "Primary agent type for this plan"
+    },
+    "tasks": {
+      "type": "array",
+      "description": "List of tasks to execute",
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "agent_type"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "agent_type": {
+            "type": "string",
+            "enum": ["planning", "test_generation", "code_generation", "file_edit", "validation", "documentation", "file_io", "analysis", "ai_interaction"]
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "validation_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tdd_phase": {
+            "type": "string",
+            "enum": ["red", "green", "refactor"],
+            "description": "TDD phase this task belongs to"
+          }
+        }
+      }
+    },
+    "validation_criteria": {
+      "type": "array",
+      "description": "Overall plan validation criteria",
+      "items": {
+        "type": "string"
+      }
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "refinement_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

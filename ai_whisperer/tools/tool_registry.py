@@ -28,6 +28,14 @@ class ToolRegistry:
             # Tool discovery/loading will be implemented later
             # cls._instance._load_tools()
         return cls._instance
+    
+    @classmethod
+    def reset_instance(cls):
+        """Reset the singleton instance for testing."""
+        if cls._instance is not None:
+            cls._instance._registered_tools.clear()
+            cls._instance._tool_set_manager = None
+        cls._instance = None
 
     def register_tool(self, tool: AITool):
         """Registers a single tool instance."""

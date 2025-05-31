@@ -88,6 +88,9 @@ class StatelessAgent:
             # Extract store_messages parameter if provided
             store_messages = kwargs.get('store_messages', True)
             
+            # Extract response_format if provided
+            response_format = kwargs.get('response_format', None)
+            
             # Get filtered tools for this agent
             tools = self._get_agent_tools()
             
@@ -98,6 +101,7 @@ class StatelessAgent:
                 on_stream_chunk=on_stream_chunk,
                 tools=tools,  # Pass filtered tools
                 store_messages=store_messages,
+                response_format=response_format,
                 **generation_params
             )
             

@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RFC Reference Schema",
+  "description": "Schema for RFC reference file in plan directories",
+  "type": "object",
+  "required": ["rfc_id", "rfc_path", "rfc_content_hash", "last_sync"],
+  "properties": {
+    "rfc_id": {
+      "type": "string",
+      "pattern": "^RFC-\\d{4}-\\d{2}-\\d{2}-\\d{4}$"
+    },
+    "rfc_path": {
+      "type": "string",
+      "description": "Relative path to RFC file from workspace root"
+    },
+    "rfc_content_hash": {
+      "type": "string",
+      "description": "SHA256 hash of RFC content"
+    },
+    "last_sync": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time plan was synchronized with RFC"
+    },
+    "sync_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previous_hash": {
+            "type": "string"
+          },
+          "new_hash": {
+            "type": "string"
+          },
+          "changes_detected": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

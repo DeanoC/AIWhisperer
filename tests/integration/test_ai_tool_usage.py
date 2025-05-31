@@ -138,11 +138,10 @@ def test_ai_read_file_tool_call(openrouter_api: OpenRouterAIService, tool_regist
     try:
         # Use call_chat_completion which is designed to handle tool calls
         response_obj = openrouter_api.call_chat_completion(
-            prompt_text=prompt,
+            messages=messages,
             model=openrouter_api.model, # Use the configured model
             params={}, # Use default or minimal params
-            tools=tools,
-            messages_history=messages # Pass messages history for context
+            tools=tools
         )
 
         # Assert that the response contains tool calls in the 'message' key
@@ -203,11 +202,10 @@ def test_ai_write_file_tool_call(openrouter_api: OpenRouterAIService, tool_regis
 
     try:
         response_obj = openrouter_api.call_chat_completion(
-            prompt_text=prompt,
+            messages=messages,
             model=openrouter_api.model,
             params={},
-            tools=tools,
-            messages_history=messages
+            tools=tools
         )
 
         assert isinstance(response_obj, dict)
@@ -272,11 +270,10 @@ def test_ai_execute_command_tool_call(openrouter_api: OpenRouterAIService, tool_
 
     try:
         response_obj = openrouter_api.call_chat_completion(
-            prompt_text=prompt,
+            messages=messages,
             model=openrouter_api.model,
             params={},
-            tools=tools,
-            messages_history=messages
+            tools=tools
         )
 
         assert isinstance(response_obj, dict)
@@ -336,11 +333,10 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAIService, too
             mock_abspath.return_value = str(temp_test_file[0]).rsplit(os.sep, 1)[0] # Get the directory of the temp file
             # Simulate AI call for reading
             read_response_obj = openrouter_api.call_chat_completion(
-                prompt_text=read_prompt,
+                messages=messages_read,
                 model=openrouter_api.model,
                 params={},
-                tools=tools,
-                messages_history=messages_read
+                tools=tools
             )
 
         assert isinstance(read_response_obj, dict) and "message" in read_response_obj and "tool_calls" in read_response_obj["message"], "AI did not generate tool call for reading"
@@ -377,11 +373,10 @@ def test_ai_tool_valid_params_execution(openrouter_api: OpenRouterAIService, too
 
         # Simulate AI call for writing
         write_response_obj = openrouter_api.call_chat_completion(
-            prompt_text=write_prompt,
+            messages=messages_write,
             model=openrouter_api.model,
             params={},
-            tools=tools,
-            messages_history=messages_write
+            tools=tools
         )
 
         assert isinstance(write_response_obj, dict) and "message" in write_response_obj and "tool_calls" in write_response_obj["message"], "AI did not generate tool call for writing"

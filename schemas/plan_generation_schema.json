@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "RFC Plan Generation Schema",
+  "description": "Schema for generating structured plans from RFCs following TDD principles",
+  "properties": {
+    "plan_type": {
+      "type": "string",
+      "enum": ["initial", "overview"],
+      "description": "Type of plan being generated"
+    },
+    "title": {
+      "type": "string",
+      "description": "Clear, action-oriented title for the plan"
+    },
+    "description": {
+      "type": "string", 
+      "description": "Brief description of what this plan accomplishes"
+    },
+    "agent_type": {
+      "type": "string",
+      "enum": ["planning", "test_generation", "code_generation", "file_edit", "validation", "documentation", "analysis"],
+      "description": "Primary agent type for the overall plan"
+    },
+    "tdd_phases": {
+      "type": "object",
+      "description": "Tasks organized by TDD phase",
+      "properties": {
+        "red": {
+          "type": "array",
+          "description": "Test writing tasks (should fail initially)",
+          "items": {
+            "type": "string",
+            "description": "Task name"
+          }
+        },
+        "green": {
+          "type": "array",
+          "description": "Implementation tasks (make tests pass)",
+          "items": {
+            "type": "string",
+            "description": "Task name"
+          }
+        },
+        "refactor": {
+          "type": "array",
+          "description": "Code improvement tasks",
+          "items": {
+            "type": "string",
+            "description": "Task name"
+          }
+        }
+      },
+      "required": ["red", "green", "refactor"],
+      "additionalProperties": false
+    },
+    "tasks": {
+      "type": "array",
+      "description": "All tasks with full details and dependencies",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Descriptive task name"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this task accomplishes and how"
+          },
+          "agent_type": {
+            "type": "string",
+            "enum": ["planning", "test_generation", "code_generation", "file_edit", "validation", "documentation", "analysis"],
+            "description": "Agent type for this specific task"
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "List of task names that must complete before this one",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tdd_phase": {
+            "type": "string",
+            "enum": ["red", "green", "refactor"],
+            "description": "Which TDD phase this task belongs to"
+          },
+          "validation_criteria": {
+            "type": "array",
+            "description": "Specific criteria for task completion",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["name", "description", "agent_type", "dependencies", "tdd_phase"],
+        "additionalProperties": false
+      }
+    },
+    "validation_criteria": {
+      "type": "array",
+      "description": "Overall plan success criteria",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["plan_type", "title", "description", "agent_type", "tdd_phases", "tasks", "validation_criteria"],
+  "additionalProperties": false
+}

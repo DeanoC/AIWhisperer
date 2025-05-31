@@ -12,7 +12,6 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from enum import Enum
 import websockets
-from websockets.client import WebSocketClientProtocol
 
 from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 from ..logging.debbie_logger import DebbieLogger
@@ -445,7 +444,7 @@ class WebSocketInterceptor:
         
         return stats
     
-    def create_intercepting_connection(self, original_connection: WebSocketClientProtocol) -> 'InterceptingWebSocket':
+    def create_intercepting_connection(self, original_connection: Any) -> 'InterceptingWebSocket':
         """
         Create an intercepting wrapper around a WebSocket connection.
         
@@ -461,10 +460,10 @@ class WebSocketInterceptor:
 class InterceptingWebSocket:
     """
     WebSocket wrapper that intercepts messages.
-    Mimics the WebSocketClientProtocol interface.
+    Mimics the WebSocket client interface.
     """
     
-    def __init__(self, connection: WebSocketClientProtocol, interceptor: WebSocketInterceptor):
+    def __init__(self, connection: Any, interceptor: WebSocketInterceptor):
         self._connection = connection
         self._interceptor = interceptor
         self._connection_id = f"conn_{id(self)}"
