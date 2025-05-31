@@ -289,8 +289,14 @@ class TestStatelessAILoop:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="Timeout parameter not yet implemented")
-    async def test_process_with_context_timeout(self, mock_config, mock_ai_service, mock_context_provider):
+    @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
+    async def test_process_with_context_timeout(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test timeout handling in process_with_context."""
+        # Mock tool registry to avoid socket warnings
+        mock_registry = Mock()
+        mock_registry.get_all_tool_definitions.return_value = []
+        mock_get_registry.return_value = mock_registry
+        
         import asyncio
         
         # Make AI service hang
@@ -325,8 +331,14 @@ class TestStatelessAILoop:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="Custom tools parameter not yet implemented")
-    async def test_process_with_context_custom_tools(self, mock_config, mock_ai_service, mock_context_provider):
+    @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
+    async def test_process_with_context_custom_tools(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context with custom tool definitions."""
+        # Mock tool registry to avoid socket warnings
+        mock_registry = Mock()
+        mock_registry.get_all_tool_definitions.return_value = []
+        mock_get_registry.return_value = mock_registry
+        
         from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
         
         ai_loop = StatelessAILoop(
@@ -360,8 +372,14 @@ class TestStatelessAILoop:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="store_messages parameter not yet implemented")
-    async def test_process_with_context_without_storing(self, mock_config, mock_ai_service, mock_context_provider):
+    @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
+    async def test_process_with_context_without_storing(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context can skip storing messages."""
+        # Mock tool registry to avoid socket warnings
+        mock_registry = Mock()
+        mock_registry.get_all_tool_definitions.return_value = []
+        mock_get_registry.return_value = mock_registry
+        
         from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
         
         ai_loop = StatelessAILoop(
@@ -384,8 +402,14 @@ class TestStatelessAILoop:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="process_messages method not yet implemented")
-    async def test_direct_process_without_context(self, mock_config, mock_ai_service):
+    @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
+    async def test_direct_process_without_context(self, mock_get_registry, mock_config, mock_ai_service):
         """Test direct processing without context provider."""
+        # Mock tool registry to avoid socket warnings
+        mock_registry = Mock()
+        mock_registry.get_all_tool_definitions.return_value = []
+        mock_get_registry.return_value = mock_registry
+        
         from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
         
         ai_loop = StatelessAILoop(
