@@ -62,54 +62,63 @@ class AgentEHandler:
             logger.error(f"Error processing plan: {e}")
             raise AgentEException(f"Failed to process plan: {e}")
     
-    async def request_clarification(self, task: Dict[str, Any], questions: List[str]) -> ClarificationRequest:
-        """Request clarification from Agent P.
+    async def request_clarification(self, task: Dict[str, Any], questions: List[str]) -> str:
+        """Request clarification from Agent P using the mailbox.
         
         Args:
             task: The task dictionary needing clarification
             questions: List of clarification questions
             
         Returns:
-            ClarificationRequest object
+            Message ID of the clarification request
         """
-        task_name = task.get('name', 'Unknown Task')
-        task_id = str(uuid.uuid4())
+        from ..agents.mailbox import Mail, MessagePriority, get_mailbox
         
-        # Create context from task
-        context = {
-            'original_description': task.get('description', ''),
-            'validation_criteria': task.get('validation_criteria', [])
+        task_name = task.get('name', 'Unknown Task')
+        
+        # Format questions as a numbered list
+        questions_body = "\n".join(f"{i+1}. {q}" for i, q in enumerate(questions))
+        
+        # Create mail body with context
+        body = f"""I need clarification on the task: {task_name}
+
+Original Description: {task.get('description', 'No description provided')}
+
+Questions:
+{questions_body}
+
+Validation Criteria:
+{chr(10).join('- ' + vc for vc in task.get('validation_criteria', ['None specified']))}
+
+Please provide guidance on these questions to help me decompose this task effectively.
+"""
+        
+        # Create mail
+        mail = Mail(
+            from_agent="agent_e",
+            to_agent="agent_p",
+            subject=f"Clarification needed: {task_name}",
+            body=body,
+            priority=MessagePriority.HIGH,
+            metadata={
+                'task_name': task_name,
+                'questions': questions,
+                'original_task': task
+            }
+        )
+        
+        # Send via mailbox
+        mailbox = get_mailbox()
+        message_id = mailbox.send_mail(mail)
+        
+        # Store for tracking
+        self.pending_clarifications[message_id] = {
+            'task': task,
+            'questions': questions,
+            'timestamp': datetime.now(timezone.utc)
         }
         
-        # Create clarification request - note the test expects 'questions' not 'question'
-        request = ClarificationRequest(
-            task_id=task_id,
-            task_name=task_name,
-            question="\n".join(questions),  # Join questions for now
-            context=context,
-            options=[]
-        )
-        
-        # Add questions attribute for test compatibility
-        request.questions = questions
-        
-        # Generate message
-        message_id = str(uuid.uuid4())
-        message = request.to_message(
-            sender="agent_e",
-            recipient="agent_p",
-            message_id=message_id
-        )
-        
-        # Store pending clarification
-        self.pending_clarifications[message_id] = request
-        
-        # Send to Agent P if we have a session manager
-        if self.session_manager:
-            await self.session_manager.switch_agent("agent_p")
-            await self.session_manager.send_message(message.to_dict())
-        
-        return request
+        return message_id
     
     async def handle_clarification_response(self, response: ClarificationResponse):
         """Handle clarification response from Agent P.
