@@ -119,12 +119,12 @@ class SaveGeneratedPlanTool(AITool):
         
         return None
     
-    def execute(self, **kwargs: Any) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Save the generated plan."""
-        plan_name = kwargs.get('plan_name')
-        plan_content = kwargs.get('plan_content')
-        rfc_id = kwargs.get('rfc_id')
-        rfc_hash = kwargs.get('rfc_hash')
+        plan_name = arguments.get('plan_name')
+        plan_content = arguments.get('plan_content')
+        rfc_id = arguments.get('rfc_id')
+        rfc_hash = arguments.get('rfc_hash')
         
         if not all([plan_name, plan_content, rfc_id]):
             return "Error: 'plan_name', 'plan_content', and 'rfc_id' are required."

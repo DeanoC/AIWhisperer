@@ -88,8 +88,10 @@ class PreparePlanFromRFCTool(AITool):
     
     def _find_rfc(self, rfc_id: str) -> Optional[tuple[Path, Dict[str, Any]]]:
         """Find RFC by ID, short name, or filename."""
+        logger.info(f"_find_rfc called with rfc_id: '{rfc_id}'")
         path_manager = PathManager.get_instance()
         rfc_base = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
+        logger.info(f"RFC base path: {rfc_base}")
         
         # Strip common file extensions if present
         rfc_id_clean = rfc_id
@@ -97,6 +99,7 @@ class PreparePlanFromRFCTool(AITool):
             rfc_id_clean = rfc_id[:-3]
         elif rfc_id.endswith('.json'):
             rfc_id_clean = rfc_id[:-5]
+        logger.info(f"Cleaned RFC ID: '{rfc_id_clean}'")
         
         for status in ["in_progress", "archived"]:
             status_dir = rfc_base / status
@@ -160,17 +163,22 @@ class PreparePlanFromRFCTool(AITool):
 5. **Testing First**: Always start with test tasks before implementation
 """
     
-    def execute(self, **kwargs: Any) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Prepare RFC content for plan generation."""
-        rfc_id = kwargs.get('rfc_id')
-        plan_type = kwargs.get('plan_type', 'initial')
+        logger.info(f"prepare_plan_from_rfc called with arguments: {arguments}")
+        rfc_id = arguments.get('rfc_id')
+        plan_type = arguments.get('plan_type', 'initial')
+        logger.info(f"Extracted rfc_id: '{rfc_id}', plan_type: '{plan_type}'")
         
         if not rfc_id:
+            logger.error(f"RFC ID validation failed. rfc_id value: '{rfc_id}', type: {type(rfc_id)}")
             return "Error: 'rfc_id' is required."
         
         try:
             # Find RFC
+            logger.info(f"Calling _find_rfc with rfc_id: '{rfc_id}'")
             rfc_result = self._find_rfc(rfc_id)
+            logger.info(f"_find_rfc returned: {rfc_result}")
             if not rfc_result:
                 return f"Error: RFC '{rfc_id}' not found."
             
@@ -227,5 +235,5 @@ After generating the plan JSON, use the 'save_generated_plan' tool to save it wi
 """
             
         except Exception as e:
-            logger.error(f"Error preparing RFC for plan generation: {e}")
+            logger.error(f"Error preparing RFC for plan generation: {e}", exc_info=True)
             return f"Error preparing RFC: {str(e)}"
