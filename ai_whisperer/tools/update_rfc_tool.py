@@ -93,15 +93,43 @@ class UpdateRFCTool(AITool):
         """
     
     def _find_rfc_file(self, rfc_id: str) -> Optional[Path]:
-        """Find RFC file in any of the RFC folders."""
+        """Find RFC file in any of the RFC folders.
+        
+        Supports:
+        1. Direct filename (e.g., RFC-2025-05-31-0001.md)
+        2. RFC ID without extension (e.g., RFC-2025-05-31-0001)
+        3. Search by rfc_id in JSON metadata files
+        """
         path_manager = PathManager.get_instance()
         rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         # Check each folder
-        for folder in ["in_progress", "archived"]:
-            rfc_path = rfc_base_path / folder / f"{rfc_id}.md"
+        for folder in ["new", "in_progress", "archived"]:
+            folder_path = rfc_base_path / folder
+            if not folder_path.exists():
+                continue
+                
+            # Method 1: Direct filename or with .md extension
+            if rfc_id.endswith('.md'):
+                rfc_path = folder_path / rfc_id
+            else:
+                rfc_path = folder_path / f"{rfc_id}.md"
+            
             if rfc_path.exists():
                 return rfc_path
+            
+            # Method 2: Search through JSON metadata files
+            for json_file in folder_path.glob("*.json"):
+                try:
+                    with open(json_file, 'r') as f:
+                        metadata = json.load(f)
+                        if metadata.get('rfc_id') == rfc_id:
+                            # Found matching RFC ID in metadata
+                            md_file = json_file.with_suffix('.md')
+                            if md_file.exists():
+                                return md_file
+                except (json.JSONDecodeError, KeyError):
+                    continue
         
         return None
     

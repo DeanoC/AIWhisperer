@@ -40,6 +40,11 @@ class CreateRFCTool(AITool):
                     "type": "string",
                     "description": "Brief overview of the feature/idea"
                 },
+                "short_name": {
+                    "type": "string",
+                    "description": "Short descriptive name for the RFC filename (e.g., 'dark-mode', 'api-auth', 'user-profiles'). Should be lowercase with hyphens, 2-4 words max.",
+                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
                 "background": {
                     "type": "string",
                     "description": "Context and motivation for this feature",
@@ -57,7 +62,7 @@ class CreateRFCTool(AITool):
                     "default": "User"
                 }
             },
-            "required": ["title", "summary"]
+            "required": ["title", "summary", "short_name"]
         }
     
     @property
@@ -84,33 +89,50 @@ class CreateRFCTool(AITool):
         create_rfc(
             title="Add Code Formatting Feature",
             summary="Automatically format code files on save",
+            short_name="code-formatting",
             background="Developers want consistent code style",
             initial_requirements=["Support Python", "Support JavaScript", "Configurable"]
         )
         </tool_code>
         """
     
-    def _generate_rfc_id(self) -> str:
-        """Generate unique RFC ID with format RFC-YYYY-MM-DD-XXXX."""
+    def _generate_rfc_filename(self, short_name: str) -> tuple[str, str]:
+        """Generate unique RFC filename and ID.
+        
+        Returns:
+            tuple: (filename, rfc_id) where filename is like 'dark-mode-2025-05-31.md'
+                   and rfc_id is like 'RFC-2025-05-31-0001'
+        """
         now = datetime.now()
         date_part = now.strftime("%Y-%m-%d")
         
-        # Find next available ID for today
+        # Clean the short name
+        short_name = short_name.lower().strip()
+        short_name = re.sub(r'[^a-z0-9-]', '-', short_name)
+        short_name = re.sub(r'-+', '-', short_name).strip('-')
+        
+        # Find next available filename
         path_manager = PathManager.get_instance()
         rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         counter = 1
         while True:
+            if counter == 1:
+                filename = f"{short_name}-{date_part}.md"
+            else:
+                filename = f"{short_name}-{date_part}-{counter}.md"
+            
             rfc_id = f"RFC-{date_part}-{counter:04d}"
-            # Check if this ID exists in any RFC folder
+            
+            # Check if this filename exists in any RFC folder
             exists = False
             for folder in ["in_progress", "archived"]:
-                if (rfc_base_path / folder / f"{rfc_id}.md").exists():
+                if (rfc_base_path / folder / filename).exists():
                     exists = True
                     break
             
             if not exists:
-                return rfc_id
+                return filename, rfc_id
             counter += 1
     
     def _format_requirements(self, requirements: List[str]) -> str:
@@ -172,6 +194,7 @@ class CreateRFCTool(AITool):
         """Execute RFC creation."""
         title = arguments.get('title')
         summary = arguments.get('summary')
+        short_name = arguments.get('short_name')
         background = arguments.get('background', '*To be defined during refinement*')
         initial_requirements = arguments.get('initial_requirements', [])
         author = arguments.get('author', 'User')
@@ -182,9 +205,12 @@ class CreateRFCTool(AITool):
         if not summary:
             return "Error: 'summary' is required."
         
+        if not short_name:
+            return "Error: 'short_name' is required."
+        
         try:
-            # Generate RFC ID
-            rfc_id = self._generate_rfc_id()
+            # Generate RFC filename and ID
+            filename, rfc_id = self._generate_rfc_filename(short_name)
             
             # Create timestamps
             now = datetime.now()
@@ -223,7 +249,7 @@ class CreateRFCTool(AITool):
             
             # Save RFC file
             path_manager = PathManager.get_instance()
-            rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "in_progress" / f"{rfc_id}.md"
+            rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "in_progress" / filename
             
             # Ensure directory exists
             rfc_path.parent.mkdir(parents=True, exist_ok=True)
@@ -235,6 +261,8 @@ class CreateRFCTool(AITool):
             # Create metadata file for easier querying
             metadata = {
                 "rfc_id": rfc_id,
+                "filename": filename,
+                "short_name": short_name,
                 "title": title,
                 "status": "in_progress",
                 "created": created_date,
@@ -253,13 +281,14 @@ class CreateRFCTool(AITool):
 **RFC ID**: {rfc_id}
 **Title**: {title}
 **Status**: in_progress
-**Location**: .WHISPER/rfc/in_progress/{rfc_id}.md
+**Filename**: {filename}
+**Location**: .WHISPER/rfc/in_progress/{filename}
 
 The RFC has been created and is ready for refinement. You can now:
 1. Add more requirements through discussion
 2. Answer clarifying questions to improve the RFC
 3. Research technical approaches
-4. Move to 'in_progress' when refinement begins
+4. Archive with 'move_rfc' when refinement is complete
 
 Next step: Use Agent P to refine this RFC through conversation."""
             

@@ -81,6 +81,7 @@ class ListRFCsTool(AITool):
         """Extract metadata from RFC file or metadata JSON."""
         metadata = {
             "rfc_id": rfc_path.stem,
+            "filename": rfc_path.name,
             "title": "Unknown",
             "status": rfc_path.parent.name,
             "created": "Unknown",
@@ -181,7 +182,7 @@ class ListRFCsTool(AITool):
             for folder in folders:
                 folder_path = rfc_base_path / folder
                 if folder_path.exists():
-                    for rfc_file in folder_path.glob("RFC-*.md"):
+                    for rfc_file in folder_path.glob("*.md"):
                         metadata = self._get_rfc_metadata(rfc_file)
                         rfcs.append(metadata)
             
@@ -214,17 +215,19 @@ class ListRFCsTool(AITool):
                 status_groups[status].append(rfc)
             
             # Display by status group
-            for status in ['new', 'in_progress', 'archived']:
+            for status in ['in_progress', 'archived']:
                 if status in status_groups:
                     response += f"\n## {status.replace('_', ' ').title()}\n\n"
                     for rfc in status_groups[status]:
-                        response += f"**{rfc['rfc_id']}**: {rfc['title']}\n"
+                        response += f"**{rfc['filename']}**\n"
+                        response += f"  - Title: {rfc['title']}\n"
+                        response += f"  - RFC ID: {rfc['rfc_id']}\n"
                         response += f"  - Author: {rfc['author']}\n"
                         response += f"  - Created: {rfc['created']}\n"
                         response += f"  - Updated: {rfc['updated']}\n\n"
             
             response += "\n" + "-" * 50 + "\n"
-            response += "Use `read_rfc(rfc_id=\"RFC-XXXX-XX-XX-XXXX\")` to view details"
+            response += "Use `read_rfc(rfc_id=\"filename\" or rfc_id=\"RFC-XXXX-XX-XX-XXXX\")` to view details"
             
             return response
             

@@ -16,7 +16,9 @@ When a user presents an idea:
 1. **Assess & Create**
    - Use `list_rfcs` to check for existing related RFCs (shows in_progress RFCs by default)
    - Create a new RFC with `create_rfc` for new ideas (creates directly in in_progress)
-   - Read existing RFCs with `read_rfc` if enhancing existing functionality
+     - Choose a descriptive `short_name` (2-4 words, lowercase, hyphenated)
+     - Examples: "dark-mode", "api-authentication", "user-profiles", "batch-processing"
+   - Read existing RFCs with `read_rfc` using filename or RFC ID
    - Note: Only list archived RFCs when specifically asked
 
 2. **Research & Analyze**
@@ -100,10 +102,10 @@ User: "I want to add a dark mode feature"
 You: "I'll help you create an RFC for the dark mode feature. Let me start by checking existing RFCs and understanding the project structure.
 
 [Uses list_rfcs to check existing RFCs]
-[Uses create_rfc to create new RFC]
+[Uses create_rfc with short_name="dark-mode" to create new RFC]
 [Uses analyze_languages to understand tech stack]
 
-Great! I've created RFC-2025-05-30-0001 in progress for the dark mode feature. Based on the project analysis, I see you're using React with TypeScript. 
+Great! I've created dark-mode-2025-05-30.md (RFC-2025-05-30-0001) for the dark mode feature. Based on the project analysis, I see you're using React with TypeScript. 
 
 To refine this RFC, I'd like to understand:
 1. Should dark mode be user-toggleable or follow system preferences?
@@ -112,11 +114,25 @@ To refine this RFC, I'd like to understand:
 
 These details will help shape the technical requirements."
 
+## Example: Deleting an RFC (ALWAYS ASK FIRST)
+
+User: "Delete the test RFC"
+
+You: "I found test-rfc-2025-05-30.md. Are you sure you want to permanently delete this RFC? This action cannot be undone. Please type 'yes' to confirm."
+
+User: "yes"
+
+You: "Understood. I'll now delete the RFC."
+[Uses delete_rfc(rfc_id="test-rfc-2025-05-30.md", confirm_delete=true, reason="User requested deletion")]
+
 ## Important Notes
 
 - **Default Behavior**: When using `list_rfcs`, only in_progress RFCs are shown unless the user specifically asks for archived ones
 - **Deletion vs Archiving**: Always prefer archiving over deletion. Only delete RFCs that are duplicates, mistakes, or explicitly requested by the user
-- **Confirmation Required**: Never delete an RFC without explicit user confirmation
+- **Deletion Process**: 
+  1. FIRST ask the user: "Are you sure you want to permanently delete [RFC name]? This cannot be undone. Type 'yes' to confirm."
+  2. ONLY call `delete_rfc` with `confirm_delete=true` AFTER the user explicitly confirms
+  3. Never call the delete tool without getting user confirmation first
 
 ## Remember
 

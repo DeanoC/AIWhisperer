@@ -69,15 +69,36 @@ class ReadRFCTool(AITool):
         """
     
     def _find_rfc_file(self, rfc_id: str) -> Optional[Path]:
-        """Find RFC file in any of the RFC folders."""
+        """Find RFC file by RFC ID or filename."""
         path_manager = PathManager.get_instance()
         rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         # Check each folder
         for folder in ["in_progress", "archived"]:
-            rfc_path = rfc_base_path / folder / f"{rfc_id}.md"
-            if rfc_path.exists():
-                return rfc_path
+            folder_path = rfc_base_path / folder
+            if not folder_path.exists():
+                continue
+                
+            # First try direct filename match
+            if rfc_id.endswith('.md'):
+                rfc_path = folder_path / rfc_id
+                if rfc_path.exists():
+                    return rfc_path
+            else:
+                # Try with .md extension
+                rfc_path = folder_path / f"{rfc_id}.md"
+                if rfc_path.exists():
+                    return rfc_path
+            
+            # Search for files containing the RFC ID in metadata
+            for file_path in folder_path.glob("*.json"):
+                try:
+                    with open(file_path, 'r') as f:
+                        metadata = json.load(f)
+                        if metadata.get('rfc_id') == rfc_id:
+                            return file_path.with_suffix('.md')
+                except:
+                    continue
         
         return None
     
