@@ -479,7 +479,11 @@ class TestExternalAgentPromptGeneration:
             ]
         )
         
-        prompt = decomposer.generate_claude_code_prompt(task)
+        prompt_data = decomposer.generate_claude_code_prompt(task)
+        
+        assert isinstance(prompt_data, dict)
+        assert 'prompt' in prompt_data
+        prompt = prompt_data['prompt']
         
         assert "pytest" in prompt
         assert "FastAPI" in prompt
@@ -499,7 +503,11 @@ class TestExternalAgentPromptGeneration:
             }
         )
         
-        prompt = decomposer.generate_github_copilot_prompt(task)
+        prompt_data = decomposer.generate_github_copilot_prompt(task)
+        
+        assert isinstance(prompt_data, dict)
+        assert 'prompt' in prompt_data
+        prompt = prompt_data['prompt']
         
         assert "agent mode" in prompt.lower()  # Should specify agent mode
         assert "SQLAlchemy" in prompt
