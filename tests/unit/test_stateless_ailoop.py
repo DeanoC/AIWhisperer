@@ -146,8 +146,11 @@ class TestStatelessAILoop:
                 finish_reason=None
             )
             
-            tool_calls = [{
+            # Tool calls should be provided as a list, not JSON
+            tool_call_chunk = [{
+                "index": 0,
                 "id": "call_123",
+                "type": "function",
                 "function": {
                     "name": "get_weather",
                     "arguments": '{"location": "London"}'
@@ -156,7 +159,7 @@ class TestStatelessAILoop:
             
             yield SimpleNamespace(
                 delta_content="",
-                delta_tool_call_part=json.dumps({"tool_calls": tool_calls}),
+                delta_tool_call_part=tool_call_chunk,
                 finish_reason="tool_calls"
             )
         

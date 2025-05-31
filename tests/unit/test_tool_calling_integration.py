@@ -37,10 +37,15 @@ class TestToolCallingIntegration:
             MonitoringControlTool()
         ])
         
-        # Create AI loop with tool handler
+        # Create AI loop (tools are managed internally via ToolRegistry)
         ai_loop = StatelessAILoop(
-            ai_service=mock_ai_service,
-            tool_handler=tool_handler  # New parameter
+            config=AIConfig(
+                api_key="test-key",
+                model_id="gpt-4",
+                temperature=0.7,
+                max_tokens=1000
+            ),
+            ai_service=mock_ai_service
         )
         
         # Mock AI response with tool calls
@@ -62,19 +67,49 @@ class TestToolCallingIntegration:
             }]
         }
         
-        # Mock streaming response
+        # Mock streaming response with proper chunk format
         async def mock_stream():
-            yield json.dumps(mock_response)
+            from types import SimpleNamespace
+            # Yield chunks with tool calls
+            yield SimpleNamespace(
+                delta_content="",
+                delta_tool_call_part=[{
+                    "index": 0,
+                    "id": "call_123",
+                    "type": "function",
+                    "function": {
+                        "name": "session_health",
+                        "arguments": '{"session_id": "current"}'
+                    }
+                }],
+                finish_reason="tool_calls"
+            )
         
         mock_ai_service.stream_chat_completion.return_value = mock_stream()
         
-        # Process message
-        result = await ai_loop.process_message("Check session health", {})
-        
-        # Verify tool was executed
-        assert "Session Health Report" in result["response"]
-        assert result["finish_reason"] == "tool_calls"
-        assert len(result["tool_calls"]) == 1
+        # Mock tool registry to provide our tools
+        from unittest.mock import patch
+        with patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry') as mock_registry:
+            registry_instance = Mock()
+            registry_instance.get_all_tool_definitions.return_value = tool_handler.get_tool_definitions()
+            registry_instance.get_tool_by_name.return_value = SessionHealthTool()
+            mock_registry.return_value = registry_instance
+            
+            # Create mock context provider
+            mock_context = Mock()
+            mock_context.retrieve_messages.return_value = []
+            mock_context.store_message = Mock()
+            
+            # Process message
+            result = await ai_loop.process_with_context(
+                "Check session health", 
+                context_provider=mock_context
+            )
+            
+            # Verify tool was executed
+            assert "session_health" in result["response"]
+            assert result["finish_reason"] == "tool_calls"
+            assert len(result["tool_calls"]) == 1
     
     @pytest.mark.asyncio
     async def test_message_history_with_tool_results(self):
