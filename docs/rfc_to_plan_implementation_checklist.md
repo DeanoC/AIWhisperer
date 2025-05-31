@@ -30,78 +30,78 @@ This document outlines the implementation plan for extending Agent Patricia's fu
 
 ### Phase 1: Infrastructure Setup
 
-- [ ] **1.1 Create Plan Directory Structure**
-  - [ ] Add `.WHISPER/plans/` directory creation to workspace initialization
-  - [ ] Create `in_progress/` and `archived/` subdirectories
-  - [ ] Update `.gitignore` to exclude `.WHISPER/` if needed
+- [x] **1.1 Create Plan Directory Structure**
+  - [x] Add `.WHISPER/plans/` directory creation to workspace initialization
+  - [x] Create `in_progress/` and `archived/` subdirectories
+  - [x] Update `.gitignore` to exclude `.WHISPER/` if needed
 
-- [ ] **1.2 Design New Plan Schemas (No Backwards Compatibility Required)**
-  - [ ] Create optimized schema specifically for RFC-based plans
-  - [ ] Add `source_rfc` field to plan schemas
-  - [ ] Add `rfc_version_hash` for change detection
-  - [ ] Create `rfc_reference.json` schema
-  - [ ] Consider improvements over existing plan format:
+- [x] **1.2 Design New Plan Schemas (No Backwards Compatibility Required)**
+  - [x] Create optimized schema specifically for RFC-based plans
+  - [x] Add `source_rfc` field to plan schemas
+  - [x] Add `rfc_version_hash` for change detection
+  - [x] Create `rfc_reference.json` schema
+  - [x] Consider improvements over existing plan format:
     - Better agent type definitions
     - Clearer dependency tracking
     - Enhanced validation rules
     - RFC-specific metadata fields
 
-- [ ] **1.3 Update RFC Schema**
-  - [ ] Add `derived_plans` array field to RFC metadata
-  - [ ] Include plan status and location information
+- [x] **1.3 Update RFC Schema**
+  - [x] Add `derived_plans` array field to RFC metadata
+  - [x] Include plan status and location information
 
 ### Phase 2: Core Tools Development
 
-- [ ] **2.1 Create `convert_rfc_to_plan` Tool**
-  - [ ] Input: RFC ID or short name
-  - [ ] Parse RFC content to extract:
+- [x] **2.1 Create `convert_rfc_to_plan` Tool** (Named: `create_plan_from_rfc`)
+  - [x] Input: RFC ID or short name
+  - [x] Parse RFC content to extract:
     - Requirements section
     - Technical considerations
     - Implementation approach
     - Acceptance criteria
-  - [ ] Generate structured prompt for plan creation
-  - [ ] Use OpenRouter structured output API
-  - [ ] Validate against plan schema
-  - [ ] Save plan with natural naming
-  - [ ] Update RFC metadata with plan reference
+  - [x] Generate structured prompt for plan creation
+  - [x] Use OpenRouter structured output API
+  - [x] Validate against plan schema
+  - [x] Save plan with natural naming
+  - [x] Update RFC metadata with plan reference
 
-- [ ] **2.2 Create `list_plans` Tool**
-  - [ ] Similar to `list_rfcs` functionality
-  - [ ] Support filtering by status (in_progress, archived)
-  - [ ] Show RFC linkage information
-  - [ ] Include plan creation date and last modified
+- [x] **2.2 Create `list_plans` Tool**
+  - [x] Similar to `list_rfcs` functionality
+  - [x] Support filtering by status (in_progress, archived)
+  - [x] Show RFC linkage information
+  - [x] Include plan creation date and last modified
 
-- [ ] **2.3 Create `read_plan` Tool**
-  - [ ] Load plan JSON and format for display
-  - [ ] Show RFC reference information
-  - [ ] Support both initial and overview plan formats
-  - [ ] Include subtask summary if overview plan
+- [x] **2.3 Create `read_plan` Tool**
+  - [x] Load plan JSON and format for display
+  - [x] Show RFC reference information
+  - [x] Support both initial and overview plan formats
+  - [x] Include subtask summary if overview plan
 
-- [ ] **2.4 Create `update_plan_from_rfc` Tool**
-  - [ ] Detect RFC changes via hash comparison
-  - [ ] Regenerate affected plan sections
-  - [ ] Preserve manual plan modifications where possible
-  - [ ] Log update history
+- [x] **2.4 Create `update_plan_from_rfc` Tool**
+  - [x] Detect RFC changes via hash comparison
+  - [x] Regenerate affected plan sections
+  - [x] Preserve manual plan modifications where possible
+  - [x] Log update history
 
-- [ ] **2.5 Create `move_plan` Tool**
-  - [ ] Move plans between in_progress and archived
-  - [ ] Update RFC metadata references
-  - [ ] Maintain directory structure
+- [x] **2.5 Create `move_plan` Tool**
+  - [x] Move plans between in_progress and archived
+  - [x] Update RFC metadata references
+  - [x] Maintain directory structure
 
 ### Phase 3: Plan Generation Prompts
 
-- [ ] **3.1 Create RFC-to-Plan Conversion Prompt**
-  - [ ] Location: `prompts/agents/rfc_to_plan.prompt.md`
-  - [ ] Include instructions for:
+- [x] **3.1 Create RFC-to-Plan Conversion Prompt**
+  - [x] Location: `prompts/agents/rfc_to_plan.prompt.md`
+  - [x] Include instructions for:
     - Extracting requirements from RFC format
     - Mapping to appropriate agent types
     - Generating dependencies based on TDD approach
     - Creating validation criteria from acceptance criteria
 
-- [ ] **3.2 Create Plan Refinement Prompt**
-  - [ ] For breaking initial plans into detailed subtasks
-  - [ ] Include RFC context awareness
-  - [ ] Maintain traceability to RFC sections
+- [x] **3.2 Create Plan Refinement Prompt**
+  - [x] For breaking initial plans into detailed subtasks
+  - [x] Include RFC context awareness
+  - [x] Maintain traceability to RFC sections
 
 ### Phase 4: OpenRouter Integration
 

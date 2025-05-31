@@ -117,43 +117,36 @@ class CreatePlanFromRFCTool(AITool):
         date = datetime.now().strftime("%Y-%m-%d")
         return f"{short_name}-plan-{date}"
     
+    def _load_prompt_template(self) -> str:
+        """Load the RFC-to-plan conversion prompt template."""
+        try:
+            prompt_path = Path(__file__).parent.parent.parent / "prompts" / "agents" / "rfc_to_plan.prompt.md"
+            if prompt_path.exists():
+                with open(prompt_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            else:
+                # Fallback to basic prompt if file not found
+                return "Convert the RFC into a structured plan following TDD principles."
+        except Exception as e:
+            logger.warning(f"Could not load prompt template: {e}")
+            return "Convert the RFC into a structured plan following TDD principles."
+    
     def _create_plan_prompt(self, rfc_content: str, rfc_metadata: Dict[str, Any], plan_type: str) -> str:
         """Create prompt for AI to generate plan from RFC."""
-        return f"""Convert the following RFC into a structured {plan_type} plan following TDD principles.
+        template = self._load_prompt_template()
+        
+        return f"""{template}
 
-RFC Content:
+## RFC Information
+**RFC ID**: {rfc_metadata.get('rfc_id', 'Unknown')}
+**Title**: {rfc_metadata.get('title', 'Unknown')}
+**Plan Type**: {plan_type}
+
+## RFC Content
 {rfc_content}
 
-Requirements:
-1. Extract all requirements from the RFC
-2. Create tasks that follow Red-Green-Refactor TDD cycle
-3. For each feature:
-   - First create test writing tasks (RED phase)
-   - Then implementation tasks (GREEN phase)
-   - Finally refactoring tasks if needed (REFACTOR phase)
-4. Set appropriate agent types for each task
-5. Define clear validation criteria
-6. Establish task dependencies
-
-Generate a JSON plan with this structure:
-{{
-  "plan_type": "{plan_type}",
-  "title": "Implementation plan title",
-  "description": "Brief description",
-  "agent_type": "primary agent type",
-  "tasks": [
-    {{
-      "name": "Task name",
-      "description": "Task description",
-      "agent_type": "agent_type",
-      "dependencies": ["dependency1"],
-      "tdd_phase": "red|green|refactor"
-    }}
-  ],
-  "validation_criteria": ["criteria1", "criteria2"]
-}}
-
-Ensure all tasks follow TDD methodology with tests written before implementation."""
+## Instructions
+Generate a structured JSON plan based on the above RFC content and the guidelines provided. Ensure the plan follows TDD methodology with proper Red-Green-Refactor cycles."""
     
     def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute plan creation from RFC."""
