@@ -66,8 +66,14 @@ class TestStatelessAILoop:
         )
     
     @pytest.mark.asyncio
-    async def test_process_with_context_simple_response(self, mock_config, mock_ai_service, mock_context_provider):
+    @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
+    async def test_process_with_context_simple_response(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context returns AI response directly."""
+        # Mock tool registry to avoid socket warnings
+        mock_registry = Mock()
+        mock_registry.get_all_tool_definitions.return_value = []
+        mock_get_registry.return_value = mock_registry
+        
         # Import will fail since we haven't created the new interface yet
         # This is TDD - we write the test first
         from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
@@ -102,8 +108,14 @@ class TestStatelessAILoop:
         assert stored_calls[1][0][0]['content'] == 'Hello there!'
     
     @pytest.mark.asyncio
-    async def test_process_with_context_streaming(self, mock_config, mock_ai_service, mock_context_provider):
+    @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
+    async def test_process_with_context_streaming(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context with streaming callback."""
+        # Mock tool registry to avoid socket warnings
+        mock_registry = Mock()
+        mock_registry.get_all_tool_definitions.return_value = []
+        mock_get_registry.return_value = mock_registry
+        
         from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
         
         ai_loop = StatelessAILoop(
@@ -213,8 +225,14 @@ class TestStatelessAILoop:
         assert tool_message['name'] == 'get_weather'
     
     @pytest.mark.asyncio
-    async def test_process_with_context_no_delegates(self, mock_config, mock_ai_service, mock_context_provider):
+    @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
+    async def test_process_with_context_no_delegates(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test that process_with_context works without any delegate manager."""
+        # Mock tool registry to avoid socket warnings
+        mock_registry = Mock()
+        mock_registry.get_all_tool_definitions.return_value = []
+        mock_get_registry.return_value = mock_registry
+        
         from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
         
         # Create AILoop without delegate manager
