@@ -151,13 +151,15 @@ class StatelessInteractiveSession:
         tool_registry.register_tool(FetchURLTool())
         
         # Register plan management tools
-        from ai_whisperer.tools.create_plan_from_rfc_tool import CreatePlanFromRFCTool
+        from ai_whisperer.tools.prepare_plan_from_rfc_tool import PreparePlanFromRFCTool
+        from ai_whisperer.tools.save_generated_plan_tool import SaveGeneratedPlanTool
         from ai_whisperer.tools.list_plans_tool import ListPlansTool
         from ai_whisperer.tools.read_plan_tool import ReadPlanTool
         from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
         from ai_whisperer.tools.move_plan_tool import MovePlanTool
         
-        tool_registry.register_tool(CreatePlanFromRFCTool())
+        tool_registry.register_tool(PreparePlanFromRFCTool())
+        tool_registry.register_tool(SaveGeneratedPlanTool())
         tool_registry.register_tool(ListPlansTool())
         tool_registry.register_tool(ReadPlanTool())
         tool_registry.register_tool(UpdatePlanFromRFCTool())
@@ -1039,13 +1041,15 @@ class StatelessSessionManager:
         tool_registry.register_tool(FetchURLTool())
         
         # Register plan management tools
-        from ai_whisperer.tools.create_plan_from_rfc_tool import CreatePlanFromRFCTool
+        from ai_whisperer.tools.prepare_plan_from_rfc_tool import PreparePlanFromRFCTool
+        from ai_whisperer.tools.save_generated_plan_tool import SaveGeneratedPlanTool
         from ai_whisperer.tools.list_plans_tool import ListPlansTool
         from ai_whisperer.tools.read_plan_tool import ReadPlanTool
         from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
         from ai_whisperer.tools.move_plan_tool import MovePlanTool
         
-        tool_registry.register_tool(CreatePlanFromRFCTool())
+        tool_registry.register_tool(PreparePlanFromRFCTool())
+        tool_registry.register_tool(SaveGeneratedPlanTool())
         tool_registry.register_tool(ListPlansTool())
         tool_registry.register_tool(ReadPlanTool())
         tool_registry.register_tool(UpdatePlanFromRFCTool())

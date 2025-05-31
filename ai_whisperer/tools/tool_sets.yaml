@@ -71,7 +71,8 @@ agent_sets:
       - update_rfc
       - move_rfc
       - list_rfcs
-      - create_plan_from_rfc
+      - prepare_plan_from_rfc
+      - save_generated_plan
       - list_plans
       - read_plan
       - update_plan_from_rfc

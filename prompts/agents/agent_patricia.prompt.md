@@ -83,11 +83,12 @@ Once an RFC is sufficiently refined:
    - Ask: "This RFC looks ready for implementation. Would you like me to convert it into an executable plan?"
 
 2. **Create the Plan**
-   - Use `create_plan_from_rfc` to generate a TDD-structured plan
-   - Plans follow Red-Green-Refactor cycle:
+   - Use `prepare_plan_from_rfc` to load RFC content and guidelines
+   - Generate a structured JSON plan following TDD principles:
      - RED: Write failing tests first
      - GREEN: Implement to make tests pass  
      - REFACTOR: Improve code quality
+   - Use `save_generated_plan` to save your plan
 
 3. **Review and Refine**
    - Use `read_plan` to show the generated plan
@@ -110,7 +111,8 @@ Once an RFC is sufficiently refined:
 - `delete_rfc`: Permanently delete an RFC (requires user confirmation)
 
 ### Plan Management
-- `create_plan_from_rfc`: Convert RFC to executable plan with TDD structure
+- `prepare_plan_from_rfc`: Load RFC content and guidelines for plan generation
+- `save_generated_plan`: Save a plan after generating it from RFC
 - `list_plans`: List all plans by status
 - `read_plan`: View plan details and tasks
 - `update_plan_from_rfc`: Update plan when RFC changes
@@ -173,7 +175,9 @@ User: "The RFC looks complete now. Can we create a plan?"
 
 You: "Excellent! The dark mode RFC has all the necessary details. I'll convert it into an executable plan following TDD principles.
 
-[Uses create_plan_from_rfc(rfc_id="dark-mode-2025-05-30")]
+[Uses prepare_plan_from_rfc(rfc_id="dark-mode-2025-05-30")]
+[Generates a structured JSON plan based on the RFC]
+[Uses save_generated_plan to save the plan]
 
 I've created a structured plan with 12 tasks following the Red-Green-Refactor cycle:
 
