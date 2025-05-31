@@ -1,0 +1,187 @@
+"""
+Tool for recommending the best external agent for a task.
+"""
+import json
+import logging
+from typing import Dict, Any
+
+from .base_tool import AITool
+from ..agents.external_adapters import AdapterRegistry
+from ..agents.decomposed_task import DecomposedTask
+
+logger = logging.getLogger(__name__)
+
+
+class RecommendExternalAgentTool(AITool):
+    """Tool for recommending external agents based on task characteristics."""
+    
+    def __init__(self):
+        super().__init__(
+            name="recommend_external_agent", 
+            description="Recommend the best external AI agent for a specific task",
+            parameters={
+                "task": {
+                    "type": "string",
+                    "description": "JSON representation of the task to get recommendations for",
+                    "required": True
+                },
+                "only_available": {
+                    "type": "boolean",
+                    "description": "Only recommend agents that are currently available (default: true)",
+                    "required": False
+                }
+            },
+            tags=["external_agents", "recommendation", "analysis"]
+        )
+        self._registry = AdapterRegistry()
+    
+    def execute(self, **kwargs) -> str:
+        """Execute the recommend external agent tool."""
+        task_json = kwargs.get("task")
+        only_available = kwargs.get("only_available", True)
+        
+        if not task_json:
+            return "Error: task parameter is required"
+        
+        try:
+            # Parse the task
+            if isinstance(task_json, str):
+                task_data = json.loads(task_json)
+            else:
+                task_data = task_json
+            
+            # Convert to DecomposedTask object for scoring
+            task = DecomposedTask(
+                task_id=task_data.get("id", task_data.get("task_id", "unknown")),
+                title=task_data.get("title", ""),
+                description=task_data.get("description", ""),
+                parent_task_id=task_data.get("parent", task_data.get("parent_task_id")),
+                parent_task_name=task_data.get("parent_task_name", ""),
+                dependencies=task_data.get("dependencies", []),
+                estimated_complexity=task_data.get("complexity", task_data.get("estimated_complexity", "moderate")),
+                tdd_phase=task_data.get("tdd_phase", "RED"),
+                acceptance_criteria=task_data.get("acceptance_criteria", []),
+                external_agent_prompts=task_data.get("external_agent_prompts", {}),
+                context=task_data.get("context", {})
+            )
+            
+            # Get recommendations
+            all_recommendations = self._registry.recommend_adapters(task)
+            
+            # Build detailed recommendations
+            detailed_recommendations = []
+            
+            for agent_name, score in all_recommendations:
+                adapter = self._registry.get_adapter(agent_name)
+                is_valid, validation_msg = adapter.validate_environment()
+                
+                # Skip unavailable agents if requested
+                if only_available and not is_valid:
+                    continue
+                
+                recommendation = {
+                    "agent": agent_name,
+                    "score": round(score, 3),
+                    "available": is_valid,
+                    "validation_message": validation_msg,
+                    "reasons": []
+                }
+                
+                # Add specific reasons for the score
+                task_name_lower = task.parent_task_name.lower()
+                context = task.context
+                
+                if agent_name == "claude_code":
+                    if score >= 0.8:
+                        recommendation["reasons"].append("Excellent for TDD and test-driven development")
+                    if len(context.get("files_to_modify", [])) <= 2:
+                        recommendation["reasons"].append("Well-suited for focused, single-file tasks")
+                    if "test" in task_name_lower:
+                        recommendation["reasons"].append("Strong testing capabilities")
+                
+                elif agent_name == "roocode":
+                    if len(context.get("files_to_modify", [])) > 2:
+                        recommendation["reasons"].append("Excels at multi-file edits")
+                    if "refactor" in task_name_lower:
+                        recommendation["reasons"].append("Powerful refactoring capabilities")
+                    if task.estimated_complexity in ["complex", "very_complex"]:
+                        recommendation["reasons"].append("Handles complex tasks well")
+                
+                elif agent_name == "github_copilot":
+                    if task.estimated_complexity in ["complex", "very_complex"]:
+                        recommendation["reasons"].append("Agent mode great for iterative refinement")
+                    if "optimize" in task_name_lower or "performance" in task_name_lower:
+                        recommendation["reasons"].append("Good at optimization tasks")
+                    if "iterate" in task.description.lower():
+                        recommendation["reasons"].append("Excels at iterative development")
+                
+                # Add general suitability
+                if score >= 0.8:
+                    recommendation["suitability"] = "Highly Recommended"
+                elif score >= 0.6:
+                    recommendation["suitability"] = "Recommended"
+                elif score >= 0.4:
+                    recommendation["suitability"] = "Suitable"
+                else:
+                    recommendation["suitability"] = "Not Recommended"
+                
+                detailed_recommendations.append(recommendation)
+            
+            # Build response
+            response = {
+                "task_summary": {
+                    "title": task.title,
+                    "complexity": task.estimated_complexity,
+                    "files_to_modify": len(task.context.get("files_to_modify", [])),
+                    "tdd_phase": task.tdd_phase
+                },
+                "recommendations": detailed_recommendations
+            }
+            
+            # Add overall recommendation
+            if detailed_recommendations:
+                best_agent = detailed_recommendations[0]
+                response["best_choice"] = {
+                    "agent": best_agent["agent"],
+                    "confidence": "high" if best_agent["score"] >= 0.8 else "medium",
+                    "primary_reason": best_agent["reasons"][0] if best_agent["reasons"] else "Good general fit"
+                }
+            else:
+                response["best_choice"] = {
+                    "agent": None,
+                    "confidence": "none",
+                    "primary_reason": "No available agents found"
+                }
+            
+            return json.dumps(response, indent=2)
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse task JSON: {e}")
+            return f"Error: Invalid JSON format - {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in recommend_external_agent: {e}", exc_info=True)
+            return f"Error: Unexpected error - {str(e)}"
+    
+    def get_openrouter_tool_definition(self) -> Dict[str, Any]:
+        """Get the OpenRouter tool definition."""
+        return {
+            "type": "function",
+            "function": {
+                "name": self.name,
+                "description": self.description,
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": self.parameters["task"]["description"]
+                        },
+                        "only_available": {
+                            "type": "boolean",
+                            "description": self.parameters["only_available"]["description"]
+                        }
+                    },
+                    "required": ["task"]
+                }
+            }
+        }
