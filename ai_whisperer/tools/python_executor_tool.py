@@ -16,8 +16,15 @@ from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from contextlib import redirect_stdout, redirect_stderr
-import resource
 import signal
+
+# Platform-specific imports
+try:
+    import resource
+    HAS_RESOURCE = True
+except ImportError:
+    # resource module is not available on Windows
+    HAS_RESOURCE = False
 
 from .base_tool import AITool
 from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
@@ -103,13 +110,14 @@ class DebugSandbox:
             # Cancel timeout
             signal.alarm(0)
             
-            # Get memory usage (Linux only)
+            # Get memory usage (Unix/Linux only)
             memory_used = None
-            try:
-                usage = resource.getrusage(resource.RUSAGE_SELF)
-                memory_used = usage.ru_maxrss / 1024  # Convert to MB
-            except:
-                pass
+            if HAS_RESOURCE:
+                try:
+                    usage = resource.getrusage(resource.RUSAGE_SELF)
+                    memory_used = usage.ru_maxrss / 1024  # Convert to MB
+                except:
+                    pass
             
             # Capture variables (filter out built-ins and large objects)
             captured_vars = self._capture_variables(exec_locals)
