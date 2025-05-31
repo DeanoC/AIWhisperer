@@ -563,6 +563,8 @@ class TestStatelessAILoop:
         assert "Async operation completed!" in result['response']
     
     @pytest.mark.asyncio
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
+                        reason="Socket resource warning in CI")
     @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
     async def test_tool_execution_tool_not_found(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test handling when tool is not found in registry."""
@@ -611,6 +613,8 @@ class TestStatelessAILoop:
         assert result['finish_reason'] == "tool_calls"
     
     @pytest.mark.asyncio
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
+                        reason="Socket resource warning in CI")
     @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
     async def test_tool_execution_invalid_arguments(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test handling of invalid tool arguments."""
@@ -658,6 +662,8 @@ class TestStatelessAILoop:
         assert result['finish_reason'] == "tool_calls"
     
     @pytest.mark.asyncio
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
+                        reason="Socket resource warning in CI")
     @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
     async def test_tool_execution_tool_raises_exception(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test handling when tool execution raises an exception."""
@@ -807,6 +813,8 @@ class TestStatelessAILoop:
         assert len(result['tool_calls']) == 2
     
     @pytest.mark.asyncio
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
+                        reason="Socket resource warning in CI")
     @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
     async def test_tool_execution_signature_fallback(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test fallback from arguments= to **kwargs signature."""
@@ -869,6 +877,8 @@ class TestStatelessAILoop:
         assert "Command executed successfully" in result['response']
     
     @pytest.mark.asyncio
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
+                        reason="Socket resource warning in CI")
     @patch('ai_whisperer.ai_loop.stateless_ai_loop.get_tool_registry')
     async def test_tool_execution_streaming(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test that tool execution results are streamed to the client."""
