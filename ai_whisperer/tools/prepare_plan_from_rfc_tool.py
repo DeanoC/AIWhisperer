@@ -23,14 +23,16 @@ class PreparePlanFromRFCTool(AITool):
     Returns structured information that the agent can use to generate a plan.
     """
     
-    def __init__(self):
-        super().__init__(
-            name="prepare_plan_from_rfc",
-            description="Prepare RFC content and context for plan generation"
-        )
+    @property
+    def name(self) -> str:
+        return "prepare_plan_from_rfc"
     
     @property
-    def schema(self) -> Dict[str, Any]:
+    def description(self) -> str:
+        return "Prepare RFC content and context for plan generation"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
         return {
             "type": "object",
             "properties": {
@@ -147,10 +149,10 @@ class PreparePlanFromRFCTool(AITool):
 5. **Testing First**: Always start with test tasks before implementation
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, **kwargs: Any) -> str:
         """Prepare RFC content for plan generation."""
-        rfc_id = arguments.get('rfc_id')
-        plan_type = arguments.get('plan_type', 'initial')
+        rfc_id = kwargs.get('rfc_id')
+        plan_type = kwargs.get('plan_type', 'initial')
         
         if not rfc_id:
             return "Error: 'rfc_id' is required."

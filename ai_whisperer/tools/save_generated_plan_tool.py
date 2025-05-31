@@ -22,14 +22,16 @@ class SaveGeneratedPlanTool(AITool):
     Handles validation, directory creation, and RFC linkage.
     """
     
-    def __init__(self):
-        super().__init__(
-            name="save_generated_plan",
-            description="Save a generated plan to the filesystem with proper structure"
-        )
+    @property
+    def name(self) -> str:
+        return "save_generated_plan"
     
     @property
-    def schema(self) -> Dict[str, Any]:
+    def description(self) -> str:
+        return "Save a generated plan to the filesystem with proper structure"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
         return {
             "type": "object",
             "properties": {
@@ -117,12 +119,12 @@ class SaveGeneratedPlanTool(AITool):
         
         return None
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, **kwargs: Any) -> str:
         """Save the generated plan."""
-        plan_name = arguments.get('plan_name')
-        plan_content = arguments.get('plan_content')
-        rfc_id = arguments.get('rfc_id')
-        rfc_hash = arguments.get('rfc_hash')
+        plan_name = kwargs.get('plan_name')
+        plan_content = kwargs.get('plan_content')
+        rfc_id = kwargs.get('rfc_id')
+        rfc_hash = kwargs.get('rfc_hash')
         
         if not all([plan_name, plan_content, rfc_id]):
             return "Error: 'plan_name', 'plan_content', and 'rfc_id' are required."
