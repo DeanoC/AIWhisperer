@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Agent } from '../types/agent';
-import { ChatMessage, MessageSender } from '../types/chat';
+import { ChatMessage } from '../types/chat';
 import { MessageStatus } from '../types/ai';
 import { AgentAvatar } from './AgentAvatar';
 import './AgentMessageBubble.css';
@@ -19,59 +21,11 @@ const formatTimestamp = (timestamp: string): string => {
   });
 };
 
-const renderCodeBlock = (code: string, language: string) => (
-  <div className="code-block-wrapper" data-testid="code-block">
-    <div className="code-block-header">{language}</div>
-    <pre className="code-block">
-      <code>{code}</code>
-    </pre>
-  </div>
-);
-
-const parseContent = (content: string) => {
-  const parts: Array<{ type: 'text' | 'code' | 'link'; content: string; lang?: string; href?: string }> = [];
-  let remaining = content;
-  
-  // Extract code blocks first
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-  let lastIndex = 0;
-  let match;
-  
-  while ((match = codeBlockRegex.exec(content)) !== null) {
-    // Add text before code block
-    if (match.index > lastIndex) {
-      parts.push({ 
-        type: 'text', 
-        content: content.substring(lastIndex, match.index) 
-      });
-    }
-    
-    // Add code block
-    parts.push({
-      type: 'code',
-      content: match[2].trim(),
-      lang: match[1] || 'text'
-    });
-    
-    lastIndex = match.index + match[0].length;
-  }
-  
-  // Add remaining text
-  if (lastIndex < content.length) {
-    parts.push({ 
-      type: 'text', 
-      content: content.substring(lastIndex) 
-    });
-  }
-  
-  return parts.length > 0 ? parts : [{ type: 'text' as const, content }];
-};
-
 export const AgentMessageBubble: React.FC<AgentMessageBubbleProps> = ({ 
   message, 
   agent 
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const isUser = message.sender === 'user';
   const isLongMessage = message.content.length > 300;
   const shouldCollapse = isLongMessage && !isExpanded;
@@ -95,24 +49,6 @@ export const AgentMessageBubble: React.FC<AgentMessageBubbleProps> = ({
   const ariaLabel = isUser 
     ? `Your message at ${formatTimestamp(message.timestamp)}`
     : `Message from ${agent?.name || 'Agent'} at ${formatTimestamp(message.timestamp)}`;
-    
-  // Parse content into parts
-  const contentParts = parseContent(displayContent);
-  
-  const renderTextWithLinks = (text: string) => {
-    // Convert links
-    const linkified = text.replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-    );
-    
-    // Convert lists
-    let processed = linkified;
-    processed = processed.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-    processed = processed.replace(/(<li>.*<\/li>\n?)+/g, '<ol>$&</ol>');
-    
-    return <div dangerouslySetInnerHTML={{ __html: processed }} />;
-  };
   
   return (
     <div 
@@ -138,20 +74,41 @@ export const AgentMessageBubble: React.FC<AgentMessageBubbleProps> = ({
             </div>
           )}
           
-          <div className="message-text">
-            {contentParts.map((part, index) => {
-              if (part.type === 'code') {
-                return (
-                  <div key={index} className="code-block-wrapper" data-testid="code-block">
-                    <div className="code-block-header">{part.lang}</div>
-                    <pre className="code-block">
-                      <code>{part.content}</code>
-                    </pre>
-                  </div>
-                );
-              }
-              return <React.Fragment key={index}>{renderTextWithLinks(part.content)}</React.Fragment>;
-            })}
+          <div className="message-text markdown-content">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                // Custom code block rendering
+                code({ node, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const language = match ? match[1] : 'text';
+                  const isInline = !className;
+                  
+                  if (isInline) {
+                    return <code className="inline-code" {...props}>{children}</code>;
+                  }
+                  
+                  return (
+                    <div className="code-block-wrapper" data-testid="code-block">
+                      <div className="code-block-header">{language}</div>
+                      <pre className="code-block">
+                        <code {...props}>{children}</code>
+                      </pre>
+                    </div>
+                  );
+                },
+                // Open links in new tab
+                a({ node, children, ...props }) {
+                  return (
+                    <a target="_blank" rel="noopener noreferrer" {...props}>
+                      {children}
+                    </a>
+                  );
+                }
+              }}
+            >
+              {displayContent}
+            </ReactMarkdown>
           </div>
           
           {message.status === 'error' && (
@@ -182,15 +139,4 @@ export const AgentMessageBubble: React.FC<AgentMessageBubbleProps> = ({
       )}
     </div>
   );
-};
-
-// Post-process to replace code placeholders with actual code blocks
-export const postProcessMessage = (element: HTMLElement) => {
-  const codePlaceholders = element.querySelectorAll('.code-placeholder');
-  codePlaceholders.forEach(placeholder => {
-    const lang = placeholder.getAttribute('data-lang') || 'text';
-    const code = decodeURIComponent(placeholder.getAttribute('data-code') || '');
-    const codeBlock = renderCodeBlock(code, lang);
-    // In a real implementation, we'd properly replace the placeholder
-  });
 };

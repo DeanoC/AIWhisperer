@@ -71,7 +71,7 @@ class ReadRFCTool(AITool):
     def _find_rfc_file(self, rfc_id: str) -> Optional[Path]:
         """Find RFC file in any of the RFC folders."""
         path_manager = PathManager.get_instance()
-        rfc_base_path = Path(path_manager.workspace_path) / "rfc"
+        rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         # Check each folder
         for folder in ["new", "in_progress", "archived"]:
@@ -199,7 +199,7 @@ class ReadRFCTool(AITool):
             
             # Build response
             response = f"**RFC Found**: {rfc_id}\n"
-            response += f"**Location**: rfc/{folder}/{rfc_id}.md\n"
+            response += f"**Location**: .WHISPER/rfc/{folder}/{rfc_id}.md\n"
             response += f"**Title**: {metadata.get('title', 'Unknown')}\n"
             response += f"**Status**: {metadata.get('status', 'Unknown')}\n"
             response += f"**Author**: {metadata.get('author', 'Unknown')}\n"

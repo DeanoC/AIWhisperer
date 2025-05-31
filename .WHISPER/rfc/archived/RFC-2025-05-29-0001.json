@@ -1,0 +1,16 @@
+{
+  "rfc_id": "RFC-2025-05-29-0001",
+  "title": "Add Caching Layer to File Operations",
+  "status": "archived",
+  "created": "2025-05-29 16:21:16",
+  "updated": "2025-05-31 05:09:10",
+  "author": "Developer",
+  "status_history": [
+    {
+      "from": "new",
+      "to": "archived",
+      "timestamp": "2025-05-31 05:09:10",
+      "reason": "User requested archival of existing RFCs"
+    }
+  ]
+}

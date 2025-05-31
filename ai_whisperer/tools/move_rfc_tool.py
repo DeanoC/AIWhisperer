@@ -76,7 +76,7 @@ class MoveRFCTool(AITool):
     def _find_rfc_file(self, rfc_id: str) -> Optional[tuple[Path, str]]:
         """Find RFC file and return path and current status."""
         path_manager = PathManager.get_instance()
-        rfc_base_path = Path(path_manager.workspace_path) / "rfc"
+        rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         # Check each folder
         for folder in ["new", "in_progress", "archived"]:
@@ -170,7 +170,7 @@ class MoveRFCTool(AITool):
             
             # Determine target path
             path_manager = PathManager.get_instance()
-            target_dir = Path(path_manager.workspace_path) / "rfc" / target_status
+            target_dir = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / target_status
             target_path = target_dir / f"{rfc_id}.md"
             
             # Ensure target directory exists
@@ -229,7 +229,7 @@ class MoveRFCTool(AITool):
 **RFC ID**: {rfc_id}
 **Previous Status**: {current_status}
 **New Status**: {target_status}
-**New Location**: rfc/{target_status}/{rfc_id}.md
+**New Location**: .WHISPER/rfc/{target_status}/{rfc_id}.md
 {f'**Reason**: {reason}' if reason else ''}
 
 {transition_msg}"""

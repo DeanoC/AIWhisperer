@@ -20,7 +20,7 @@ class TestCreateRFCTool:
         """Create a temporary workspace for testing."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create RFC structure
-            rfc_dir = Path(tmpdir) / "rfc"
+            rfc_dir = Path(tmpdir) / ".WHISPER" / "rfc"
             (rfc_dir / "new").mkdir(parents=True)
             (rfc_dir / "in_progress").mkdir(parents=True)
             (rfc_dir / "archived").mkdir(parents=True)
@@ -63,7 +63,7 @@ class TestCreateRFCTool:
         assert "RFC-" in result
         
         # Verify file was created
-        rfc_files = list(Path(temp_workspace, "rfc", "new").glob("RFC-*.md"))
+        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "new").glob("RFC-*.md"))
         assert len(rfc_files) == 1
         
         # Verify content
@@ -86,7 +86,7 @@ class TestCreateRFCTool:
         result = create_tool.execute(arguments)
         
         # Find created file
-        rfc_files = list(Path(temp_workspace, "rfc", "new").glob("RFC-*.md"))
+        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "new").glob("RFC-*.md"))
         assert len(rfc_files) == 1
         
         with open(rfc_files[0], 'r') as f:
@@ -122,7 +122,7 @@ class TestCreateRFCTool:
         create_tool.execute(arguments)
         
         # Check for JSON metadata file
-        json_files = list(Path(temp_workspace, "rfc", "new").glob("RFC-*.json"))
+        json_files = list(Path(temp_workspace, ".WHISPER", "rfc", "new").glob("RFC-*.json"))
         assert len(json_files) == 1
         
         # Verify metadata content
@@ -141,7 +141,7 @@ class TestReadRFCTool:
         """Create workspace with sample RFC."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create RFC structure
-            rfc_dir = Path(tmpdir) / "rfc"
+            rfc_dir = Path(tmpdir) / ".WHISPER" / "rfc"
             (rfc_dir / "new").mkdir(parents=True)
             
             # Create sample RFC
@@ -241,7 +241,7 @@ class TestListRFCsTool:
         """Create workspace with multiple RFCs."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create RFC structure
-            rfc_dir = Path(tmpdir) / "rfc"
+            rfc_dir = Path(tmpdir) / ".WHISPER" / "rfc"
             (rfc_dir / "new").mkdir(parents=True)
             (rfc_dir / "in_progress").mkdir(parents=True)
             (rfc_dir / "archived").mkdir(parents=True)
@@ -335,7 +335,7 @@ Summary for {title}"""
     def test_empty_status(self, list_tool, temp_workspace_with_rfcs):
         """Test listing empty status folder."""
         # Remove all archived RFCs
-        archived_dir = Path(temp_workspace_with_rfcs) / "rfc" / "archived"
+        archived_dir = Path(temp_workspace_with_rfcs) / ".WHISPER" / "rfc" / "archived"
         for f in archived_dir.glob("*.md"):
             f.unlink()
         for f in archived_dir.glob("*.json"):

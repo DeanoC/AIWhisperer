@@ -1,0 +1,16 @@
+{
+  "rfc_id": "RFC-2025-05-29-0002",
+  "title": "Test RFC for Terminal Feature",
+  "status": "archived",
+  "created": "2025-05-29 18:43:24",
+  "updated": "2025-05-31 05:08:50",
+  "author": "Debug Test",
+  "status_history": [
+    {
+      "from": "new",
+      "to": "archived",
+      "timestamp": "2025-05-31 05:08:50",
+      "reason": "User requested archival of existing RFCs"
+    }
+  ]
+}

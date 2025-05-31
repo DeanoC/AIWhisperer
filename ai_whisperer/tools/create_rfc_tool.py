@@ -96,7 +96,7 @@ class CreateRFCTool(AITool):
         
         # Find next available ID for today
         path_manager = PathManager.get_instance()
-        rfc_base_path = Path(path_manager.workspace_path) / "rfc"
+        rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         counter = 1
         while True:
@@ -217,7 +217,7 @@ class CreateRFCTool(AITool):
             
             # Save RFC file
             path_manager = PathManager.get_instance()
-            rfc_path = Path(path_manager.workspace_path) / "rfc" / "new" / f"{rfc_id}.md"
+            rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "new" / f"{rfc_id}.md"
             
             # Ensure directory exists
             rfc_path.parent.mkdir(parents=True, exist_ok=True)
@@ -247,7 +247,7 @@ class CreateRFCTool(AITool):
 **RFC ID**: {rfc_id}
 **Title**: {title}
 **Status**: new
-**Location**: rfc/new/{rfc_id}.md
+**Location**: .WHISPER/rfc/new/{rfc_id}.md
 
 The RFC has been created and is ready for refinement. You can now:
 1. Add more requirements through discussion

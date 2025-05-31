@@ -95,7 +95,7 @@ class UpdateRFCTool(AITool):
     def _find_rfc_file(self, rfc_id: str) -> Optional[Path]:
         """Find RFC file in any of the RFC folders."""
         path_manager = PathManager.get_instance()
-        rfc_base_path = Path(path_manager.workspace_path) / "rfc"
+        rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         # Check each folder
         for folder in ["new", "in_progress", "archived"]:

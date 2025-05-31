@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChatMessage } from '../types/chat';
+import { ChatMessage, MessageSender } from '../types/chat';
 import { Agent } from '../types/agent';
 import { SessionStatus } from '../types/ai';
 import { AgentSelector } from './AgentSelector';
@@ -184,21 +184,11 @@ export const ChatView: React.FC<ChatViewProps> = ({
             );
           }
           
-          if (message.sender === 'user') {
-            return (
-              <div key={index} className="message-wrapper user">
-                <div className="user-message">
-                  {message.content}
-                </div>
-              </div>
-            );
-          }
-          
           return (
-            <div key={index} className="message-wrapper ai">
+            <div key={index} className="message-wrapper">
               <AgentMessageBubble
                 message={message}
-                agent={agent}
+                agent={message.sender === MessageSender.AI ? agent : undefined}
               />
             </div>
           );

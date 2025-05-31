@@ -168,7 +168,7 @@ class ListRFCsTool(AITool):
         
         try:
             path_manager = PathManager.get_instance()
-            rfc_base_path = Path(path_manager.workspace_path) / "rfc"
+            rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
             
             # Determine which folders to search
             if status_filter == 'all':
