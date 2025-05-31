@@ -1,3 +1,26 @@
+.input-spinner {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+}
+
+.spinner.small {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-top-color: var(--accent-color, #3b82f6);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 /* Command suggestions dropdown */
 .command-suggestions {
   position: absolute;
