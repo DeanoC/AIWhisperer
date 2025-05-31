@@ -13,12 +13,14 @@ Key findings:
 import asyncio
 import json
 import os
+import pytest
 from pathlib import Path
 from ai_whisperer.config import load_config
 from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.model_capabilities import supports_structured_output
 
+@pytest.mark.asyncio
 async def test_simple_schema():
     """Test structured output with a simple schema."""
     
@@ -106,6 +108,7 @@ async def test_simple_schema():
     except Exception as e:
         print(f"\nError: {e}")
 
+@pytest.mark.asyncio
 async def test_rfc_to_plan_schema():
     """Test structured output with the RFC-to-plan schema."""
     
@@ -223,6 +226,7 @@ async def test_rfc_to_plan_schema():
         import traceback
         traceback.print_exc()
 
+@pytest.mark.asyncio
 async def test_minimal_rfc_schema():
     """Test with a minimal version of the RFC schema."""
     
@@ -309,17 +313,7 @@ async def test_minimal_rfc_schema():
     except Exception as e:
         print(f"\nError: {e}")
 
-async def main():
-    """Run all tests."""
-    # Test simple schema first
-    await test_simple_schema()
-    
-    # Test minimal RFC schema
-    await test_minimal_rfc_schema()
-    
-    # Test full RFC-to-plan schema
-    await test_rfc_to_plan_schema()
-
+@pytest.mark.asyncio
 async def test_patricia_with_structured_output():
     """Test Patricia agent with structured output for RFC-to-plan conversion."""
     from ai_whisperer.agents.stateless_agent import StatelessAgent
