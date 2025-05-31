@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "description": "Test bidirectional synchronization between RFCs and plans",
+    "created": "2025-05-31",
+    "agent": "p"
+  },
+  "conversation": [
+    {
+      "user": "@list_rfcs"
+    },
+    {
+      "wait_for": "RFC|in_progress",
+      "timeout": 20
+    },
+    {
+      "user": "Let's work with the chat-icons RFC. Can you read it for me?"
+    },
+    {
+      "wait_for": "avatar|icon",
+      "timeout": 20
+    },
+    {
+      "user": "I need to update the requirements. Actually, we need to support custom avatar images too, not just initials. Users should be able to upload a profile picture."
+    },
+    {
+      "wait_for": "update.*RFC|RFC.*updated",
+      "timeout": 30
+    },
+    {
+      "user": "Since we changed the RFC, please update the plan to reflect these new requirements."
+    },
+    {
+      "wait_for": "plan.*updated|update.*plan|changes.*detected",
+      "timeout": 60
+    },
+    {
+      "user": "Show me the updated plan to confirm it includes the image upload functionality."
+    },
+    {
+      "wait_for": "upload|image|picture",
+      "timeout": 30
+    }
+  ],
+  "validation": {
+    "expect_tools": [
+      "list_rfcs",
+      "read_rfc", 
+      "update_rfc",
+      "update_plan_from_rfc",
+      "read_plan"
+    ],
+    "expect_patterns": [
+      "RFC.*updated",
+      "plan.*updated",
+      "image.*upload"
+    ]
+  }
+}
