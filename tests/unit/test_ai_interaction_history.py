@@ -66,9 +66,10 @@ def test_chat_completion_with_history(mock_post):
             current_prompt = "How are you?"
 
             # Call the chat completion method with history
+            # Combine history with current prompt
+            messages = messages_history + [{"role": "user", "content": current_prompt}]
             response = api.call_chat_completion(
-                prompt_text=current_prompt,
-                messages_history=messages_history,
+                messages=messages,
                 model=mock_config["openrouter"]["model"],
                 params=mock_config["openrouter"]["params"],
             )
@@ -85,7 +86,7 @@ def test_chat_completion_with_history(mock_post):
                 },
                 json={
                     "model": "test-model",
-                    "messages": messages_history,  # Only history should be sent as messages
+                    "messages": messages,  # Should include full conversation including current prompt
                     "temperature": 0.7,  # Default temperature
                     "max_tokens": 50000,  # Default max_tokens
                 },
@@ -144,9 +145,9 @@ def test_chat_completion_with_multi_turn_history(mock_post):
             api = OpenRouterAIService(ai_config)
 
             # First turn: Ask for a country
+            messages = [{"role": "user", "content": "Name a country in Europe"}]
             response1 = api.call_chat_completion(
-                prompt_text="Name a country in Europe",
-                messages_history=None,
+                messages=messages,
                 model=mock_config["openrouter"]["model"],
                 params=mock_config["openrouter"]["params"],
             )
@@ -160,9 +161,9 @@ def test_chat_completion_with_multi_turn_history(mock_post):
             ]
 
             # Second turn: Ask for the capital
+            messages_with_prompt = messages_history + [{"role": "user", "content": "What is the capital of that country?"}]
             response2 = api.call_chat_completion(
-                prompt_text="What is the capital of that country?",
-                messages_history=messages_history,
+                messages=messages_with_prompt,
                 model=mock_config["openrouter"]["model"],
                 params=mock_config["openrouter"]["params"],
             )
@@ -178,9 +179,9 @@ def test_chat_completion_with_multi_turn_history(mock_post):
             ]
 
             # Third turn: Ask for a landmark
+            messages_with_prompt = messages_history + [{"role": "user", "content": "Name a famous landmark in that capital"}]
             response3 = api.call_chat_completion(
-                prompt_text="Name a famous landmark in that capital",
-                messages_history=messages_history,
+                messages=messages_with_prompt,
                 model=mock_config["openrouter"]["model"],
                 params=mock_config["openrouter"]["params"],
             )
@@ -196,9 +197,10 @@ def test_chat_completion_with_multi_turn_history(mock_post):
             assert "json" in last_call_kwargs
             assert "messages" in last_call_kwargs["json"]
 
-            # The messages should include the full conversation history (prompt_text is ignored when messages_history is provided)
-            assert len(last_call_kwargs["json"]["messages"]) == 4  # Only the provided history is sent
+            # The messages should include the full conversation history including current prompt
+            assert len(last_call_kwargs["json"]["messages"]) == 5  # History + current prompt
             assert last_call_kwargs["json"]["messages"][0]["content"] == "Name a country in Europe"
             assert last_call_kwargs["json"]["messages"][1]["content"] == "France"
             assert last_call_kwargs["json"]["messages"][2]["content"] == "What is the capital of that country?"
             assert last_call_kwargs["json"]["messages"][3]["content"] == "Paris"
+            assert last_call_kwargs["json"]["messages"][4]["content"] == "Name a famous landmark in that capital"

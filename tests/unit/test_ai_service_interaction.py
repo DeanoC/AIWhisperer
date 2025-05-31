@@ -171,9 +171,10 @@ class TestOpenRouterAIServiceUnit:
         prompt = "Hello AI"
         model = "test_model"
         params = {"temperature": 0.5}
+        messages = [{"role": "user", "content": prompt}]
         response = api_client.call_chat_completion(
+            messages=messages,
             model=model, 
-            prompt_text=prompt, 
             params=params, 
             tools=expected_tools)
 
@@ -214,7 +215,9 @@ class TestOpenRouterAIServiceUnit:
         prompt = "New message"
         model = "test_model"
         params = {"temperature": 0.5}
-        response = api_client.call_chat_completion(model=model, prompt_text=prompt, params=params, messages_history=history)
+        # Combine history with new message
+        messages = history + [{"role": "user", "content": prompt}]
+        response = api_client.call_chat_completion(messages=messages, model=model, params=params)
 
         mock_post.assert_called_once_with(
             API_URL,
@@ -226,10 +229,9 @@ class TestOpenRouterAIServiceUnit:
             },
             json={
                 "model": model,
-                "messages": history,  # Only history should be sent as messages
+                "messages": messages,  # Should include both history and new message
                 "temperature": 0.5,
                 "max_tokens": None
-                # tools are NOT included in the payload when messages_history is provided
             },
             timeout=60,
         )
@@ -252,7 +254,8 @@ class TestOpenRouterAIServiceUnit:
         prompt = "What's the weather in London?"
         model = "test_model"
         params = {}
-        response = api_client.call_chat_completion(model=model, prompt_text=prompt, params=params, tools=[tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value])
+        messages = [{"role": "user", "content": prompt}]
+        response = api_client.call_chat_completion(messages=messages, model=model, params=params, tools=[tool.get_openrouter_tool_definition() for tool in mock_tool_registry_instance.get_all_tools.return_value])
 
         # The response should be the full message object, not just content
         assert response["message"] == MOCK_NON_STREAMING_TOOL_CALLS_RESPONSE["choices"][0]["message"]
@@ -264,7 +267,7 @@ class TestOpenRouterAIServiceUnit:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterAuthError, match="Authentication failed"):
-            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
+            api_client.call_chat_completion(messages=[{"role": "user", "content": "prompt"}], model="model", params={})
 
     @patch("requests.post")
     def test_call_chat_completion_rate_limit_error(self, mock_post, api_client):
@@ -273,7 +276,7 @@ class TestOpenRouterAIServiceUnit:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterRateLimitError, match="Rate limit exceeded"):
-            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
+            api_client.call_chat_completion(messages=[{"role": "user", "content": "prompt"}], model="model", params={})
 
     @patch("requests.post")
     def test_call_chat_completion_api_error(self, mock_post, api_client):
@@ -282,7 +285,7 @@ class TestOpenRouterAIServiceUnit:
         mock_post.return_value = mock_response
 
         with pytest.raises(OpenRouterAIServiceError, match="API request failed"):
-            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
+            api_client.call_chat_completion(messages=[{"role": "user", "content": "prompt"}], model="model", params={})
 
     @patch("requests.post")
     def test_call_chat_completion_connection_error(self, mock_post, api_client):
@@ -290,7 +293,7 @@ class TestOpenRouterAIServiceUnit:
         mock_post.side_effect = requests.exceptions.RequestException("Network unreachable")
 
         with pytest.raises(OpenRouterConnectionError, match="Network error connecting to OpenRouter API"):
-            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
+            api_client.call_chat_completion(messages=[{"role": "user", "content": "prompt"}], model="model", params={})
 
     @patch("requests.post")
     def test_call_chat_completion_timeout_error(self, mock_post, api_client):
@@ -298,7 +301,7 @@ class TestOpenRouterAIServiceUnit:
         mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
 
         with pytest.raises(OpenRouterConnectionError, match="Request to OpenRouter API timed out"):
-            api_client.call_chat_completion(model="model", prompt_text="prompt", params={})
+            api_client.call_chat_completion(messages=[{"role": "user", "content": "prompt"}], model="model", params={})
 
     @patch("requests.post")
     @pytest.mark.asyncio
@@ -421,7 +424,7 @@ class TestOpenRouterAIServiceUnit:
         with pytest.raises(OpenRouterAuthError, match="Authentication failed"):
             # Need to iterate or call next() to trigger the request
             messages = [{"role": "user", "content": "prompt"}]
-            [chunk async for chunk in api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}, messages=messages)]
+            [chunk async for chunk in api_client.stream_chat_completion(messages=messages, model="model", params={})]
 
     @patch("requests.post")
     @pytest.mark.asyncio
@@ -432,7 +435,7 @@ class TestOpenRouterAIServiceUnit:
 
         with pytest.raises(OpenRouterAIServiceError, match="API request failed"):
             messages = [{"role": "user", "content": "prompt"}]
-            [chunk async for chunk in api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}, messages=messages)]
+            [chunk async for chunk in api_client.stream_chat_completion(messages=messages, model="model", params={})]
 
     @patch("requests.post")
     @pytest.mark.asyncio
@@ -444,7 +447,7 @@ class TestOpenRouterAIServiceUnit:
             OpenRouterConnectionError, match="Network error during OpenRouter API streaming: Network unreachable"
         ):
             messages = [{"role": "user", "content": "prompt"}]
-            [chunk async for chunk in api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}, messages=messages)]
+            [chunk async for chunk in api_client.stream_chat_completion(messages=messages, model="model", params={})]
 
     @patch("requests.post")
     @pytest.mark.asyncio
@@ -454,7 +457,7 @@ class TestOpenRouterAIServiceUnit:
 
         with pytest.raises(OpenRouterConnectionError, match="Request to OpenRouter API timed out"):
             messages = [{"role": "user", "content": "prompt"}]
-            [chunk async for chunk in api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}, messages=messages)]
+            [chunk async for chunk in api_client.stream_chat_completion(messages=messages, model="model", params={})]
 
 
     @patch("requests.post")
@@ -525,7 +528,7 @@ class TestOpenRouterAIServiceUnit:
         mock_post.return_value = mock_response
 
         messages = [{"role": "user", "content": "prompt"}]
-        stream_generator = api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}, messages=messages)
+        stream_generator = api_client.stream_chat_completion(messages=messages, model="model", params={})
 
         # The first chunk should be yielded successfully
         first_chunk = await anext(stream_generator)
@@ -562,7 +565,7 @@ class TestOpenRouterAIServiceUnit:
         mock_post.return_value = mock_response
 
         messages = [{"role": "user", "content": "prompt"}]
-        stream_generator = api_client.stream_chat_completion(model="model", prompt_text="prompt", params={}, messages=messages)
+        stream_generator = api_client.stream_chat_completion(messages=messages, model="model", params={})
 
         # Only the data line should be processed and yielded
         chunks = [chunk async for chunk in stream_generator]
@@ -666,7 +669,8 @@ class TestOpenRouterAIServiceUnit:
         mock_response = MockResponse(200, json_data={"choices": [{"message": {"content": "Cached response"}}]})
         mock_post.return_value = mock_response
 
-        response = api.call_chat_completion(model="test_model", prompt_text="Cached prompt", params={}, tools=expected_tools)
+        messages = [{"role": "user", "content": "Cached prompt"}]
+        response = api.call_chat_completion(messages=messages, model="test_model", params={}, tools=expected_tools)
 
         # requests.post should NOT have been called
         mock_post.assert_not_called()
@@ -702,7 +706,8 @@ class TestOpenRouterAIServiceUnit:
         prompt = "Uncached prompt"
         model = "test_model"
         params = {}
-        response = api.call_chat_completion(model=model, prompt_text=prompt, params=params, tools=expected_tools)
+        messages = [{"role": "user", "content": prompt}]
+        response = api.call_chat_completion(messages=messages, model=model, params=params, tools=expected_tools)
 
 
         # requests.post should have been called
@@ -790,7 +795,7 @@ class TestOpenRouterAIServiceUnit:
         model = "test_model"
         params = {}
         messages = [{"role": "user", "content": prompt}]
-        stream_generator = api.stream_chat_completion(model=model, prompt_text=prompt, params=params, messages=messages)
+        stream_generator = api.stream_chat_completion(messages=messages, model=model, params=params)
 
         [chunk async for chunk in stream_generator]  # Consume the generator
 
