@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 import json
+import re
 
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.path_management import PathManager
@@ -103,7 +104,7 @@ class CreateRFCTool(AITool):
             rfc_id = f"RFC-{date_part}-{counter:04d}"
             # Check if this ID exists in any RFC folder
             exists = False
-            for folder in ["new", "in_progress", "archived"]:
+            for folder in ["in_progress", "archived"]:
                 if (rfc_base_path / folder / f"{rfc_id}.md").exists():
                     exists = True
                     break
@@ -200,7 +201,7 @@ class CreateRFCTool(AITool):
             rfc_content = template.format(
                 title=title,
                 rfc_id=rfc_id,
-                status="new",
+                status="in_progress",
                 created_date=created_date,
                 updated_date=created_date,
                 author=author,
@@ -215,9 +216,14 @@ class CreateRFCTool(AITool):
                 refinement_history=refinement_history
             )
             
+            # Remove HTML comments from the content
+            rfc_content = re.sub(r'<!--.*?-->', '', rfc_content, flags=re.DOTALL)
+            # Clean up any extra blank lines left by comment removal
+            rfc_content = re.sub(r'\n{3,}', '\n\n', rfc_content)
+            
             # Save RFC file
             path_manager = PathManager.get_instance()
-            rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "new" / f"{rfc_id}.md"
+            rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "in_progress" / f"{rfc_id}.md"
             
             # Ensure directory exists
             rfc_path.parent.mkdir(parents=True, exist_ok=True)
@@ -230,7 +236,7 @@ class CreateRFCTool(AITool):
             metadata = {
                 "rfc_id": rfc_id,
                 "title": title,
-                "status": "new",
+                "status": "in_progress",
                 "created": created_date,
                 "updated": created_date,
                 "author": author
@@ -246,8 +252,8 @@ class CreateRFCTool(AITool):
 
 **RFC ID**: {rfc_id}
 **Title**: {title}
-**Status**: new
-**Location**: .WHISPER/rfc/new/{rfc_id}.md
+**Status**: in_progress
+**Location**: .WHISPER/rfc/in_progress/{rfc_id}.md
 
 The RFC has been created and is ready for refinement. You can now:
 1. Add more requirements through discussion

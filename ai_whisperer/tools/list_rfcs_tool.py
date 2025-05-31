@@ -33,8 +33,8 @@ class ListRFCsTool(AITool):
                 "status": {
                     "type": "string",
                     "description": "Filter by RFC status",
-                    "enum": ["new", "in_progress", "archived", "all"],
-                    "nullable": True
+                    "enum": ["in_progress", "archived", "all"],
+                    "default": "in_progress"
                 },
                 "sort_by": {
                     "type": "string",
@@ -64,7 +64,7 @@ class ListRFCsTool(AITool):
         return """
         Use the 'list_rfcs' tool to list RFC documents with filtering options.
         Parameters:
-        - status (string, optional): Filter by status ("new", "in_progress", "archived", "all")
+        - status (string, optional): Filter by status ("in_progress", "archived", "all") - defaults to "in_progress"
         - sort_by (string, optional): Sort by "created", "updated", "title", or "id"
         - limit (integer, optional): Maximum RFCs to return (default: 20)
         
@@ -162,7 +162,7 @@ class ListRFCsTool(AITool):
     
     def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute RFC listing."""
-        status_filter = arguments.get('status', 'all')
+        status_filter = arguments.get('status', 'in_progress')
         sort_by = arguments.get('sort_by', 'created')
         limit = arguments.get('limit', 20)
         
@@ -172,7 +172,7 @@ class ListRFCsTool(AITool):
             
             # Determine which folders to search
             if status_filter == 'all':
-                folders = ['new', 'in_progress', 'archived']
+                folders = ['in_progress', 'archived']
             else:
                 folders = [status_filter]
             

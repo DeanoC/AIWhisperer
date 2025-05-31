@@ -38,7 +38,7 @@ class MoveRFCTool(AITool):
                 "target_status": {
                     "type": "string",
                     "description": "Target status folder",
-                    "enum": ["new", "in_progress", "archived"]
+                    "enum": ["in_progress", "archived"]
                 },
                 "reason": {
                     "type": "string",
@@ -62,7 +62,7 @@ class MoveRFCTool(AITool):
         Use the 'move_rfc' tool to move RFC documents between status folders.
         Parameters:
         - rfc_id (string, required): RFC identifier
-        - target_status (string, required): "new", "in_progress", or "archived"
+        - target_status (string, required): "in_progress" or "archived"
         - reason (string, optional): Reason for the move
         
         This tool manages RFC workflow transitions.
@@ -79,7 +79,7 @@ class MoveRFCTool(AITool):
         rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         # Check each folder
-        for folder in ["new", "in_progress", "archived"]:
+        for folder in ["in_progress", "archived"]:
             rfc_path = rfc_base_path / folder / f"{rfc_id}.md"
             if rfc_path.exists():
                 return rfc_path, folder

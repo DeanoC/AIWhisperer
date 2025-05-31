@@ -125,12 +125,14 @@ class StatelessInteractiveSession:
         from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
         from ai_whisperer.tools.update_rfc_tool import UpdateRFCTool
         from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
+        from ai_whisperer.tools.delete_rfc_tool import DeleteRFCTool
         
         tool_registry.register_tool(CreateRFCTool())
         tool_registry.register_tool(ReadRFCTool())
         tool_registry.register_tool(ListRFCsTool())
         tool_registry.register_tool(UpdateRFCTool())
         tool_registry.register_tool(MoveRFCTool())
+        tool_registry.register_tool(DeleteRFCTool())
         
         # Register codebase analysis tools
         from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool
@@ -998,12 +1000,14 @@ class StatelessSessionManager:
         from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
         from ai_whisperer.tools.update_rfc_tool import UpdateRFCTool
         from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
+        from ai_whisperer.tools.delete_rfc_tool import DeleteRFCTool
         
         tool_registry.register_tool(CreateRFCTool())
         tool_registry.register_tool(ReadRFCTool())
         tool_registry.register_tool(ListRFCsTool())
         tool_registry.register_tool(UpdateRFCTool())
         tool_registry.register_tool(MoveRFCTool())
+        tool_registry.register_tool(DeleteRFCTool())
         
         # Register codebase analysis tools
         from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool

@@ -98,7 +98,7 @@ class UpdateRFCTool(AITool):
         rfc_base_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc"
         
         # Check each folder
-        for folder in ["new", "in_progress", "archived"]:
+        for folder in ["in_progress", "archived"]:
             rfc_path = rfc_base_path / folder / f"{rfc_id}.md"
             if rfc_path.exists():
                 return rfc_path

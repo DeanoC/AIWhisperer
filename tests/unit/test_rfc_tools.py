@@ -21,7 +21,6 @@ class TestCreateRFCTool:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create RFC structure
             rfc_dir = Path(tmpdir) / ".WHISPER" / "rfc"
-            (rfc_dir / "new").mkdir(parents=True)
             (rfc_dir / "in_progress").mkdir(parents=True)
             (rfc_dir / "archived").mkdir(parents=True)
             
@@ -63,7 +62,7 @@ class TestCreateRFCTool:
         assert "RFC-" in result
         
         # Verify file was created
-        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "new").glob("RFC-*.md"))
+        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("RFC-*.md"))
         assert len(rfc_files) == 1
         
         # Verify content
@@ -71,7 +70,7 @@ class TestCreateRFCTool:
             content = f.read()
             assert "# RFC: Test RFC" in content
             assert "This is a test RFC" in content
-            assert "**Status**: new" in content
+            assert "**Status**: in_progress" in content
     
     def test_create_rfc_with_requirements(self, create_tool, temp_workspace):
         """Test creating RFC with initial requirements."""
@@ -86,7 +85,7 @@ class TestCreateRFCTool:
         result = create_tool.execute(arguments)
         
         # Find created file
-        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "new").glob("RFC-*.md"))
+        rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("RFC-*.md"))
         assert len(rfc_files) == 1
         
         with open(rfc_files[0], 'r') as f:
@@ -122,14 +121,14 @@ class TestCreateRFCTool:
         create_tool.execute(arguments)
         
         # Check for JSON metadata file
-        json_files = list(Path(temp_workspace, ".WHISPER", "rfc", "new").glob("RFC-*.json"))
+        json_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("RFC-*.json"))
         assert len(json_files) == 1
         
         # Verify metadata content
         with open(json_files[0], 'r') as f:
             metadata = json.load(f)
             assert metadata["title"] == "Test RFC"
-            assert metadata["status"] == "new"
+            assert metadata["status"] == "in_progress"
             assert metadata["author"] == "Tester"
 
 
@@ -142,13 +141,13 @@ class TestReadRFCTool:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create RFC structure
             rfc_dir = Path(tmpdir) / ".WHISPER" / "rfc"
-            (rfc_dir / "new").mkdir(parents=True)
+            (rfc_dir / "in_progress").mkdir(parents=True)
             
             # Create sample RFC
             rfc_content = """# RFC: Test Feature
 
 **RFC ID**: RFC-2025-05-29-0001
-**Status**: new
+**Status**: in_progress
 **Created**: 2025-05-29 10:00:00
 **Last Updated**: 2025-05-29 10:00:00
 **Author**: Test User
@@ -173,7 +172,7 @@ Technical details here.
 ---
 *This RFC was created by AIWhisperer's Agent P (Patricia)*"""
             
-            rfc_path = rfc_dir / "new" / "RFC-2025-05-29-0001.md"
+            rfc_path = rfc_dir / "in_progress" / "RFC-2025-05-29-0001.md"
             with open(rfc_path, 'w') as f:
                 f.write(rfc_content)
             
@@ -181,7 +180,7 @@ Technical details here.
             metadata = {
                 "rfc_id": "RFC-2025-05-29-0001",
                 "title": "Test Feature",
-                "status": "new",
+                "status": "in_progress",
                 "created": "2025-05-29 10:00:00",
                 "updated": "2025-05-29 10:00:00",
                 "author": "Test User"
@@ -210,7 +209,7 @@ Technical details here.
         
         assert "**RFC Found**: RFC-2025-05-29-0001" in result
         assert "**Title**: Test Feature" in result
-        assert "**Status**: new" in result
+        assert "**Status**: in_progress" in result
         assert "This is a test summary" in result
         assert "Technical details here" in result
     
@@ -242,14 +241,13 @@ class TestListRFCsTool:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create RFC structure
             rfc_dir = Path(tmpdir) / ".WHISPER" / "rfc"
-            (rfc_dir / "new").mkdir(parents=True)
             (rfc_dir / "in_progress").mkdir(parents=True)
             (rfc_dir / "archived").mkdir(parents=True)
             
             # Create RFCs in different states
             rfcs = [
-                ("new", "RFC-2025-05-29-0001", "Feature A", "2025-05-29 10:00:00"),
-                ("new", "RFC-2025-05-29-0002", "Feature B", "2025-05-29 11:00:00"),
+                ("in_progress", "RFC-2025-05-29-0001", "Feature A", "2025-05-29 10:00:00"),
+                ("in_progress", "RFC-2025-05-29-0002", "Feature B", "2025-05-29 11:00:00"),
                 ("in_progress", "RFC-2025-05-28-0001", "Feature C", "2025-05-28 10:00:00"),
                 ("archived", "RFC-2025-05-27-0001", "Feature D", "2025-05-27 10:00:00"),
             ]
@@ -312,12 +310,12 @@ Summary for {title}"""
     
     def test_list_by_status(self, list_tool):
         """Test filtering by status."""
-        result = list_tool.execute({"status": "new"})
+        result = list_tool.execute({"status": "in_progress"})
         
-        assert "Found 2 RFC(s)" in result
+        assert "Found 3 RFC(s)" in result
         assert "RFC-2025-05-29-0001" in result
         assert "RFC-2025-05-29-0002" in result
-        assert "RFC-2025-05-28-0001" not in result  # in_progress
+        assert "RFC-2025-05-28-0001" in result  # in_progress
         assert "RFC-2025-05-27-0001" not in result  # archived
     
     def test_sort_by_created(self, list_tool):
@@ -330,7 +328,7 @@ Summary for {title}"""
         
         # Should be sorted by created date (newest first)
         # Just verify the structure is present
-        assert "## New" in result or "## In Progress" in result
+        assert "## In Progress" in result or "## Archived" in result
     
     def test_empty_status(self, list_tool, temp_workspace_with_rfcs):
         """Test listing empty status folder."""
