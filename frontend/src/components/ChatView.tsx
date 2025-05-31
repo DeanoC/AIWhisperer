@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { ChatMessage, MessageSender } from '../types/chat';
 import { Agent } from '../types/agent';
-import { SessionStatus } from '../types/ai';
+import { SessionStatus, MessageStatus } from '../types/ai';
 import { AgentSelector } from './AgentSelector';
 import { AgentTransition } from './AgentTransition';
 import { AgentMessageBubble } from './AgentMessageBubble';
@@ -23,6 +23,8 @@ export interface ChatViewProps {
   theme?: 'light' | 'dark';
   data?: any; // For compatibility with ViewRouter
   jsonRpcService?: any; // For file picker
+  currentAIMessage?: string;
+  loading?: boolean;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -38,7 +40,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onThemeToggle,
   theme = 'light',
   data,
-  jsonRpcService
+  jsonRpcService,
+  currentAIMessage = '',
+  loading = false
 }) => {
   const [showTransition, setShowTransition] = useState(false);
   const [transitionAgents, setTransitionAgents] = useState<{ from: string; to: string } | null>(null);
@@ -47,11 +51,43 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [filePickerCallback, setFilePickerCallback] = useState<((filePath: string) => void) | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Ref to track if user was at bottom before messages update
+  const wasAtBottomRef = useRef(true);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Helper: get last message
+  const lastMessage = messages[messages.length - 1];
+  // Helper: get last message content (for streaming)
+  const lastMessageContent = lastMessage?.content || '';
+
+
+  // Track if user is at bottom in real time (on scroll)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const container = chatContainerRef.current;
+    if (!container) return;
+    const threshold = 120; // Increased tolerance for 'near bottom'
+    const handleScroll = () => {
+      wasAtBottomRef.current = (container.scrollHeight - container.scrollTop - container.clientHeight < threshold);
+    };
+    container.addEventListener('scroll', handleScroll);
+    // Set initial value
+    handleScroll();
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // After messages or last message content update, scroll if user was at bottom
+  useEffect(() => {
+    // Always scroll to bottom if the last message is from the user (user just sent a message)
+    if (lastMessage && lastMessage.sender === 'user') {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    // If AI is streaming and user was at bottom, follow the stream
+    if (lastMessage && lastMessage.sender === 'ai' && wasAtBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length, lastMessageContent]);
 
   // Handle agent transitions
   const handleAgentChange = async (agentId: string) => {
@@ -127,6 +163,12 @@ export const ChatView: React.FC<ChatViewProps> = ({
   // Use data prop if no messages provided (for ViewRouter compatibility)
   const displayMessages = messages || data?.messages || [];
 
+  // --- Streaming AI message support ---
+  // If loading is true, show a streaming bubble at the end using currentAIMessage
+  const streamingMessage = currentAIMessage;
+  const streamingAgent = currentAgent;
+  const isStreaming = loading;
+
   return (
     <div className="chat-view" data-testid="chat-view">
       {/* Status Bar - Compact */}
@@ -175,7 +217,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
         
         {displayMessages.map((message: ChatMessage, index: number) => {
           const agent = getAgentForMessage(message);
-          
           if (message.sender === 'system') {
             return (
               <div key={index} className="system-message">
@@ -183,7 +224,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
               </div>
             );
           }
-          
           return (
             <div key={index} className="message-wrapper">
               <AgentMessageBubble
@@ -193,7 +233,23 @@ export const ChatView: React.FC<ChatViewProps> = ({
             </div>
           );
         })}
-        
+
+        {/* Streaming AI message bubble (shows as response is building) */}
+        {isStreaming && (
+          <div className="message-wrapper">
+            <AgentMessageBubble
+              message={{
+                id: 'streaming',
+                sender: MessageSender.AI,
+                content: streamingMessage,
+                timestamp: new Date().toISOString(),
+                status: MessageStatus.Pending,
+                isStreaming: true,
+              }}
+              agent={streamingAgent || currentAgent || undefined}
+            />
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
