@@ -7,6 +7,7 @@ import pytest
 import json
 import time
 import tempfile
+import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -16,6 +17,8 @@ from ai_whisperer.tools.tool_registry import ToolRegistry
 
 
 @pytest.mark.performance
+@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
+                    reason="Performance tests with socket issues in CI")
 class TestBatchModePerformance:
     """Performance tests for batch processing"""
     
@@ -202,7 +205,11 @@ class TestBatchModePerformance:
         
         # Context passing should have minimal overhead
         overhead = time_ctx - time_no_ctx
-        overhead_pct = (overhead / time_no_ctx) * 100
+        # Avoid division by zero if test runs too fast
+        if time_no_ctx > 0:
+            overhead_pct = (overhead / time_no_ctx) * 100
+        else:
+            overhead_pct = 0.0
         
         print(f"No context: {time_no_ctx:.3f}s, With context: {time_ctx:.3f}s")
         print(f"Context overhead: {overhead:.3f}s ({overhead_pct:.1f}%)")

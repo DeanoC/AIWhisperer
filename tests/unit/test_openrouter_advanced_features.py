@@ -485,7 +485,7 @@ class TestOpenRouterAdvancedFeatures:
             api.call_chat_completion(messages=messages, model=DEFAULT_MODEL, params=DEFAULT_PARAMS)
 
     @pytest.mark.flaky
-    @pytest.mark.skipif(os.environ.get('CI') == 'true', reason="Test isolation issues in CI - passes individually but fails in full suite")
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="Test isolation issues in CI - passes individually but fails in full suite")
     @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
     def test_api_error_handling_non_json_response(self, mock_post):
         """Test that OpenRouterAIServiceError is raised for API errors with non-JSON response."""

@@ -11,7 +11,7 @@ from ai_whisperer.agents.registry import AgentRegistry
 
 
 @pytest.mark.flaky
-@pytest.mark.skipif(os.environ.get('CI') == 'true', reason="Test isolation issues in CI - passes individually but fails in full suite")
+@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="Test isolation issues in CI - passes individually but fails in full suite")
 class TestDebbieAgentIntegration:
     """Integration tests for Debbie's dual-mode configuration"""
     
