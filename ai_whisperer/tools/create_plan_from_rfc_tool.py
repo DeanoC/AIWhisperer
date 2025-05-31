@@ -94,9 +94,12 @@ class CreatePlanFromRFCTool(AITool):
                     with open(json_file, 'r') as f:
                         metadata = json.load(f)
                         
-                    # Check if RFC ID or short name matches
+                    # Check if RFC ID, short name, or filename matches
+                    filename_without_ext = json_file.stem
                     if (metadata.get("rfc_id") == rfc_id or 
-                        metadata.get("short_name") == rfc_id):
+                        metadata.get("short_name") == rfc_id or
+                        filename_without_ext == rfc_id or
+                        metadata.get("filename", "").replace(".md", "") == rfc_id):
                         
                         # Find corresponding markdown file
                         md_file = json_file.with_suffix('.md')
