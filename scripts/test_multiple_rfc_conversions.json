@@ -1,0 +1,102 @@
+{
+  "name": "test_multiple_rfc_conversions",
+  "description": "Test converting multiple RFCs to plans in sequence",
+  "setup": {
+    "agent": "patricia",
+    "initial_context": "Testing batch conversion of multiple RFCs to plans"
+  },
+  "steps": [
+    {
+      "step": 1,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Create three RFCs: 1) Add user profiles, 2) Add search functionality, 3) Add data export feature",
+      "expected_response": "Creates three separate RFCs",
+      "validation": {
+        "check_tool_calls": ["create_rfc"],
+        "tool_call_count": 3,
+        "verify_output_contains": ["user profiles", "search", "data export"]
+      }
+    },
+    {
+      "step": 2,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "List all in-progress RFCs",
+      "expected_response": "Shows all three RFCs",
+      "validation": {
+        "check_tool_calls": ["list_rfcs"],
+        "verify_output_contains": ["user-profiles", "search", "data-export"]
+      }
+    },
+    {
+      "step": 3,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Convert the user profiles RFC to a plan",
+      "expected_response": "Generates plan for user profiles",
+      "validation": {
+        "check_tool_calls": ["prepare_plan_from_rfc", "save_generated_plan"],
+        "verify_output_contains": ["user profiles", "plan"]
+      }
+    },
+    {
+      "step": 4,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Convert the search functionality RFC to a plan",
+      "expected_response": "Generates plan for search",
+      "validation": {
+        "check_tool_calls": ["prepare_plan_from_rfc", "save_generated_plan"],
+        "verify_output_contains": ["search", "plan"]
+      }
+    },
+    {
+      "step": 5,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "Convert the data export RFC to a plan",
+      "expected_response": "Generates plan for data export",
+      "validation": {
+        "check_tool_calls": ["prepare_plan_from_rfc", "save_generated_plan"],
+        "verify_output_contains": ["data export", "plan"]
+      }
+    },
+    {
+      "step": 6,
+      "agent": "patricia",
+      "action": "send_message",
+      "message": "List all in-progress plans",
+      "expected_response": "Shows all three generated plans",
+      "validation": {
+        "check_tool_calls": ["list_plans"],
+        "verify_output_contains": ["user-profiles-plan", "search-plan", "data-export-plan"]
+      }
+    },
+    {
+      "step": 7,
+      "agent": "debbie",
+      "action": "send_message",
+      "message": "analyze the plan generation consistency across all three plans",
+      "expected_response": "Analyzes consistency of generated plans",
+      "validation": {
+        "check_tool_calls": ["session_analysis"],
+        "verify_output_contains": ["consistency", "TDD", "quality"]
+      }
+    }
+  ],
+  "cleanup": {
+    "agent": "patricia",
+    "action": "send_message",
+    "message": "Archive all three RFCs and their plans",
+    "validation": {
+      "check_tool_calls": ["move_rfc", "move_plan"],
+      "tool_call_count": 6
+    }
+  },
+  "success_criteria": {
+    "all_steps_pass": true,
+    "all_plans_generated": true,
+    "consistent_plan_quality": true
+  }
+}

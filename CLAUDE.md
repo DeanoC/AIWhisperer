@@ -185,6 +185,7 @@ Interactive mode uses JSON-RPC 2.0 over WebSocket:
 - Agent system enhancements
 - Interactive mode improvements
 - Performance optimization for WebSocket streaming
+- RFC-to-Plan conversion with structured output support
 
 ### Agent Architecture and Tool Integration
 
@@ -198,3 +199,61 @@ The stateless session manager implements automatic continuation for multi-step t
 - **Smart detection**: Only continues when the AI indicates more steps are needed
 
 This ensures that agents like Patricia can perform complex multi-step operations (e.g., creating RFCs after listing them) regardless of the underlying model's capabilities.
+
+## Plan Management (RFC-to-Plan Conversion)
+
+### Overview
+AIWhisperer supports converting RFC documents into structured execution plans through Agent Patricia. Plans are stored in `.WHISPER/plans/` with bidirectional linkage to their source RFCs.
+
+### Key Features
+- **Structured Output Support**: Automatically uses OpenAI's structured output for compatible models
+- **TDD Enforcement**: All generated plans follow Red-Green-Refactor methodology
+- **Bidirectional Sync**: RFC updates can trigger plan regeneration
+- **Natural Naming**: Plans use descriptive names like `feature-name-plan-YYYY-MM-DD`
+
+### Workflow Example
+```python
+# Interactive conversation with Patricia
+User: "Create an RFC for adding dark mode"
+Patricia: [Creates RFC with create_rfc tool]
+
+User: "The RFC looks good, can you convert it to a plan?"
+Patricia: [Uses prepare_plan_from_rfc and save_generated_plan tools]
+# If using GPT-4o/GPT-4o-mini, structured output ensures valid JSON
+
+User: "Update the RFC to include system preference detection"
+Patricia: [Updates RFC with update_rfc tool]
+
+User: "Update the plan to reflect the RFC changes"
+Patricia: [Uses update_plan_from_rfc tool to sync changes]
+```
+
+### Plan Storage Structure
+```
+.WHISPER/
+└── plans/
+    ├── in_progress/
+    │   └── dark-mode-plan-2025-05-31/
+    │       ├── plan.json          # Main plan file
+    │       └── rfc_reference.json # Link to source RFC
+    └── archived/
+```
+
+### Available Plan Tools
+- `prepare_plan_from_rfc` - Load RFC content for plan generation
+- `save_generated_plan` - Save generated plan with validation
+- `list_plans` - List plans by status
+- `read_plan` - View plan details
+- `update_plan_from_rfc` - Sync plan with RFC changes
+- `move_plan` - Archive/unarchive plans
+- `delete_plan` - Permanently delete plans (requires confirmation)
+
+### Testing Plan Generation
+```bash
+# Run integration tests
+pytest tests/integration/test_rfc_plan_bidirectional.py
+
+# Run batch mode tests
+python -m ai_whisperer.batch.batch_client scripts/test_plan_generation_quality.json
+python -m ai_whisperer.batch.batch_client scripts/test_rfc_plan_lifecycle.json
+```
