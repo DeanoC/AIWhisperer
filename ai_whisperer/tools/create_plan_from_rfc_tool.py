@@ -211,7 +211,18 @@ Generate a structured JSON plan based on the above RFC content and the guideline
                         chunks.append(chunk.delta_content)
                 return ''.join(chunks)
             
-            response_content = asyncio.run(get_completion())
+            # Handle both cases: event loop already running or not
+            try:
+                # Check if an event loop is already running
+                loop = asyncio.get_running_loop()
+                # Create a task and run it in the existing loop
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, get_completion())
+                    response_content = future.result()
+            except RuntimeError:
+                # No running event loop, create a new one
+                response_content = asyncio.run(get_completion())
             
             # Parse AI response
             plan_data = json.loads(response_content)
