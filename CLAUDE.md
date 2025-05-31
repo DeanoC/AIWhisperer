@@ -116,6 +116,46 @@ Prompts are loaded from files, never inlined:
 
 ## Key Development Patterns
 
+### Execution Logs for Large Tasks
+
+When performing larger-sized jobs or complex investigations, create an execution log to track progress and maintain context:
+
+1. **Create a dedicated log file**: `docs/[task-name]-execution-log.md`
+2. **Document each tool use**: Record what tool was used, why, and what was found
+3. **Track context preservation**: Note strategies for maintaining context across potential context compaction
+4. **List tools wished for**: Document any tools that would have been helpful but weren't available
+5. **Summarize key findings**: Build progressive summaries as you work
+
+This practice helps with:
+- Recovery from context loss or compaction
+- Knowledge transfer to other team members
+- Creating reusable patterns for similar tasks
+- Identifying tooling gaps for future improvements
+
+Example structure:
+```markdown
+# [Task Name] Execution Log
+## Task: [Description]
+**Started**: [Date]
+**Status**: In Progress/Complete
+
+### Tool Usage Log
+#### 1. [Tool Name]
+**Target**: [file/pattern]
+**Purpose**: [why using this tool]
+**Status**: COMPLETE
+**Key Findings**: [what was discovered]
+
+### Tools I Wished I Had
+- [Tool description and use case]
+
+### Context Preservation Strategy
+- [How you're maintaining context]
+
+### Summary of Findings
+[Progressive summary of discoveries]
+```
+
 ### Agent Architecture and Tool Integration
 
 **IMPORTANT ARCHITECTURAL PRINCIPLE**: Agents should work **through the normal AI tool system**, not through separate handlers that bypass the AI loop.
