@@ -176,16 +176,15 @@ Generate a structured JSON plan based on the above RFC content and the guideline
             rfc_hash = self._calculate_rfc_hash(rfc_content)
             
             # Generate plan using AI
-            # In production, config would be loaded from file
-            # For now, using minimal config for the tool
-            ai_config = {
-                "api_key": os.environ.get("OPENROUTER_API_KEY", "dummy_key"),
-                "base_url": "https://openrouter.ai/api/v1",
-                "model": model_override or "anthropic/claude-3-5-sonnet",
-                "temperature": 0.7,
-                "max_tokens": 4000
-            }
-            ai_service = OpenRouterAIService(ai_config)
+            # Create proper AIConfig object
+            from ai_whisperer.ai_loop.ai_config import AIConfig
+            ai_config = AIConfig(
+                api_key=os.environ.get("OPENROUTER_API_KEY", "dummy_key"),
+                model_id=model_override or "anthropic/claude-3-5-sonnet",
+                temperature=0.7,
+                max_tokens=4000
+            )
+            ai_service = OpenRouterAIService(config=ai_config)
             
             prompt = self._create_plan_prompt(rfc_content, rfc_metadata, plan_type)
             

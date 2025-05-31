@@ -181,14 +181,14 @@ Ensure all changes follow TDD methodology."""
                         task_progress[task['name']] = task['status']
             
             # Generate updated plan using AI
-            ai_config = {
-                "api_key": os.environ.get("OPENROUTER_API_KEY", "dummy_key"),
-                "base_url": "https://openrouter.ai/api/v1",
-                "model": "anthropic/claude-3-5-sonnet",
-                "temperature": 0.7,
-                "max_tokens": 4000
-            }
-            ai_service = OpenRouterAIService(ai_config)
+            from ai_whisperer.ai_loop.ai_config import AIConfig
+            ai_config = AIConfig(
+                api_key=os.environ.get("OPENROUTER_API_KEY", "dummy_key"),
+                model_id="anthropic/claude-3-5-sonnet",
+                temperature=0.7,
+                max_tokens=4000
+            )
+            ai_service = OpenRouterAIService(config=ai_config)
             
             prompt = self._create_update_prompt(current_plan, rfc_content)
             

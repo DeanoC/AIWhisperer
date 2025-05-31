@@ -258,7 +258,8 @@ Start with in-memory implementation, then add Redis support.
             assert "Plan created successfully!" in result
             
             # Verify model was passed to AI service constructor
-            assert mock_ai_class.call_args[0][0]['model'] == "gpt-4"
+            # Now using config parameter instead of positional dict
+            assert mock_ai_class.call_args.kwargs['config'].model_id == "gpt-4"
 
 
 class TestListPlansTool:
