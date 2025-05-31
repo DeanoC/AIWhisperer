@@ -6,6 +6,8 @@ NOTE: This test file is meant for manual testing and demonstration.
 It is skipped in CI due to async fixture compatibility issues.
 """
 
+import pytest
+
 pytestmark = pytest.mark.skip(reason="Manual test file - async fixture issues in CI")
 
 import asyncio
