@@ -150,6 +150,19 @@ class StatelessInteractiveSession:
         tool_registry.register_tool(WebSearchTool())
         tool_registry.register_tool(FetchURLTool())
         
+        # Register plan management tools
+        from ai_whisperer.tools.create_plan_from_rfc_tool import CreatePlanFromRFCTool
+        from ai_whisperer.tools.list_plans_tool import ListPlansTool
+        from ai_whisperer.tools.read_plan_tool import ReadPlanTool
+        from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
+        from ai_whisperer.tools.move_plan_tool import MovePlanTool
+        
+        tool_registry.register_tool(CreatePlanFromRFCTool())
+        tool_registry.register_tool(ListPlansTool())
+        tool_registry.register_tool(ReadPlanTool())
+        tool_registry.register_tool(UpdatePlanFromRFCTool())
+        tool_registry.register_tool(MovePlanTool())
+        
         # Register Debbie's debugging and monitoring tools
         try:
             from ai_whisperer.tools.session_health_tool import SessionHealthTool
@@ -1024,6 +1037,19 @@ class StatelessSessionManager:
         
         tool_registry.register_tool(WebSearchTool())
         tool_registry.register_tool(FetchURLTool())
+        
+        # Register plan management tools
+        from ai_whisperer.tools.create_plan_from_rfc_tool import CreatePlanFromRFCTool
+        from ai_whisperer.tools.list_plans_tool import ListPlansTool
+        from ai_whisperer.tools.read_plan_tool import ReadPlanTool
+        from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
+        from ai_whisperer.tools.move_plan_tool import MovePlanTool
+        
+        tool_registry.register_tool(CreatePlanFromRFCTool())
+        tool_registry.register_tool(ListPlansTool())
+        tool_registry.register_tool(ReadPlanTool())
+        tool_registry.register_tool(UpdatePlanFromRFCTool())
+        tool_registry.register_tool(MovePlanTool())
         
         # Register Debbie's debugging and monitoring tools
         try:

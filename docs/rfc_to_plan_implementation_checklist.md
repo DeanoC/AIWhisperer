@@ -116,14 +116,16 @@ This document outlines the implementation plan for extending Agent Patricia's fu
 
 ### Phase 5: Patricia Agent Enhancement
 
-- [ ] **5.1 Update Patricia's System Prompt**
-  - [ ] Add plan conversion workflow instructions
-  - [ ] Include examples of when to suggest plan creation
-  - [ ] Add guidance for plan refinement dialogue
+- [x] **5.1 Update Patricia's System Prompt**
+  - [x] Add plan conversion workflow instructions
+  - [x] Include examples of when to suggest plan creation
+  - [x] Add guidance for plan refinement dialogue
 
-- [ ] **5.2 Update Patricia's Tool Set**
-  - [ ] Add new plan-related tools to her available tools
-  - [ ] Ensure proper tool descriptions for AI understanding
+- [x] **5.2 Update Patricia's Tool Set**
+  - [x] Add new plan-related tools to her available tools
+  - [x] Register tools in stateless_session_manager.py
+  - [x] Update tool_sets.yaml and agents.yaml configuration
+  - [x] Fix Patricia's tool set reference from "rfc_management" to "rfc_specialist"
 
 ### Phase 6: Testing and Validation (Red/Green/Refactor TDD)
 

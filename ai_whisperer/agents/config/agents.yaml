@@ -8,7 +8,7 @@ agents:
     context_sources: ["rfc_templates", "existing_rfcs", "codebase_structure"]
     color: "#9C27B0"
     icon: "📝"
-    tool_sets: ["rfc_management", "codebase_analysis", "web_research"]
+    tool_sets: ["rfc_specialist"]
   
   a:
     name: "Alice the AI Assistant"

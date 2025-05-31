@@ -71,6 +71,11 @@ agent_sets:
       - update_rfc
       - move_rfc
       - list_rfcs
+      - create_plan_from_rfc
+      - list_plans
+      - read_plan
+      - update_plan_from_rfc
+      - move_plan
       - analyze_languages
       - find_similar_code
       - get_project_structure
@@ -78,6 +83,7 @@ agent_sets:
       - fetch_url
     tags:
       - rfc
+      - plan
       - project_management
       - planning
       - analysis
