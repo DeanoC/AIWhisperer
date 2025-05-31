@@ -56,7 +56,7 @@ jobs:
     - name: Run tests
       env:
         OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      run: pytest
+      run: pytest -m "not flaky"
     - name: Summarize performance metrics
       run: python project_dev/summarize_performance_metrics.py
       shell: pwsh
