@@ -96,16 +96,16 @@ def test_parse_relative_file_path(self):
             source_type="file"
         )
     
-def test_parse_file_preserves_line_numbers(self, tmp_path):
-    """Test that parsing preserves line number information."""
-    test_file = tmp_path / "multiline.py"
-    test_file.write_text("""# Line 1
-x = 1  # Line 2
-y = 2  # Line 3
-def func():  # Line 5
-    pass  # Line 6
-""")
-        
+    def test_parse_file_preserves_line_numbers(self, tmp_path):
+        """Test that parsing preserves line number information."""
+        test_file = tmp_path / "multiline.py"
+        test_file.write_text("""# Line 1
+    x = 1  # Line 2
+    y = 2  # Line 3
+    def func():  # Line 5
+        pass  # Line 6
+    """)
+            
         tool = PythonASTJSONTool()
         result = tool.execute(
             action="to_json",
@@ -217,59 +217,59 @@ class TestASTParsingInvalidSyntax:
             source_type="code"
         )
     
-def test_parse_syntax_error_invalid_indentation(self):
-    """Test parsing code with invalid indentation."""
-    code = "def func():\nprint('bad indent')"
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
-    
-def test_parse_syntax_error_unclosed_string(self):
-    """Test parsing code with unclosed string."""
-    code = 'text = "unclosed string'
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
-    
-def test_parse_syntax_error_invalid_assignment(self):
-    """Test parsing code with invalid assignment."""
-    code = "1 = x"
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
-    
-def test_parse_file_with_syntax_error(self, tmp_path):
-    """Test parsing a file containing syntax errors."""
-    test_file = tmp_path / "syntax_error.py"
-    test_file.write_text("def func(\n    pass")
+    def test_parse_syntax_error_invalid_indentation(self):
+        """Test parsing code with invalid indentation."""
+        code = "def func():\nprint('bad indent')"
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
         
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=str(test_file),
-            source_type="file"
-        )
-    
-def test_parse_non_python_file(self, tmp_path):
-    """Test parsing a non-Python file."""
-    test_file = tmp_path / "data.json"
-    test_file.write_text('{"key": "value"}')
+    def test_parse_syntax_error_unclosed_string(self):
+        """Test parsing code with unclosed string."""
+        code = 'text = "unclosed string'
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
         
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=str(test_file),
-            source_type="file"
-        )
+    def test_parse_syntax_error_invalid_assignment(self):
+        """Test parsing code with invalid assignment."""
+        code = "1 = x"
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
+        
+    def test_parse_file_with_syntax_error(self, tmp_path):
+        """Test parsing a file containing syntax errors."""
+        test_file = tmp_path / "syntax_error.py"
+        test_file.write_text("def func(\n    pass")
+            
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=str(test_file),
+                source_type="file"
+            )
+        
+    def test_parse_non_python_file(self, tmp_path):
+        """Test parsing a non-Python file."""
+        test_file = tmp_path / "data.json"
+        test_file.write_text('{"key": "value"}')
+            
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=str(test_file),
+                source_type="file"
+            )
 
 class TestASTNodeStructureVerification:
     """Tests for verifying AST node structure correctness."""
@@ -324,36 +324,36 @@ def test_verify_comprehension_node_structure(self):
         # - node_type is "ListComp"
         # - has elt and generators
     
-def test_verify_import_node_structure(self):
-    """Test that import nodes have correct structure."""
-    code = """
-import os
-from pathlib import Path
-from typing import List, Dict as DictType
-"""
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
-        # When implemented, should verify import structures
+    def test_verify_import_node_structure(self):
+        """Test that import nodes have correct structure."""
+        code = """
+    import os
+    from pathlib import Path
+    from typing import List, Dict as DictType
+    """
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
+            # When implemented, should verify import structures
     
-def test_verify_decorator_preservation(self):
-    """Test that decorators are preserved in AST."""
-    code = """
-@property
-@lru_cache(maxsize=128)
-def cached_property(self):
-return expensive_computation()
-"""
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
-        # When implemented, should verify decorator_list
+    def test_verify_decorator_preservation(self):
+        """Test that decorators are preserved in AST."""
+        code = """
+    @property
+    @lru_cache(maxsize=128)
+    def cached_property(self):
+    return expensive_computation()
+    """
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
+            # When implemented, should verify decorator_list
 
 class TestPython38PlusFeatures:
     """Tests for Python 3.8+ specific syntax features."""
@@ -371,39 +371,39 @@ if (n := len(data)) > 10:
             source_type="code"
         )
     
-def test_parse_positional_only_params(self):
-    """Test parsing positional-only parameters (Python 3.8+)."""
-    code = """
-def func(a, b, /, c, d):
-return a + b + c + d
-"""
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
+    def test_parse_positional_only_params(self):
+        """Test parsing positional-only parameters (Python 3.8+)."""
+        code = """
+    def func(a, b, /, c, d):
+    return a + b + c + d
+    """
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
     
-def test_parse_f_string_equals(self):
-    """Test parsing f-string = specifier (Python 3.8+)."""
-    code = """
-x = 42
-debug = f"{x=}"
-"""
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
+    def test_parse_f_string_equals(self):
+        """Test parsing f-string = specifier (Python 3.8+)."""
+        code = """
+    x = 42
+    debug = f"{x=}"
+    """
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
     
-def test_parse_type_hint_literals(self):
-    """Test parsing Literal type hints (Python 3.8+)."""
-    code = """
-from typing import Literal
-def process(mode: Literal['read', 'write']) -> None:
-    pass
-"""
+    def test_parse_type_hint_literals(self):
+        """Test parsing Literal type hints (Python 3.8+)."""
+        code = """
+    from typing import Literal
+    def process(mode: Literal['read', 'write']) -> None:
+        pass
+    """
         tool = PythonASTJSONTool()
         result = tool.execute(
             action="to_json",
@@ -411,63 +411,63 @@ def process(mode: Literal['read', 'write']) -> None:
             source_type="code"
         )
     
-def test_parse_match_statement(self):
-    """Test parsing match statement (Python 3.10+)."""
-    code = """
-def process_command(command):
-match command:
-    case ['move', x, y]:
-        return f"Moving to {x}, {y}"
-    case ['rotate', angle]:
-        return f"Rotating {angle} degrees"
-    case _:
-        return "Unknown command"
-"""
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
+    def test_parse_match_statement(self):
+        """Test parsing match statement (Python 3.10+)."""
+        code = """
+    def process_command(command):
+    match command:
+        case ['move', x, y]:
+            return f"Moving to {x}, {y}"
+        case ['rotate', angle]:
+            return f"Rotating {angle} degrees"
+        case _:
+            return "Unknown command"
+    """
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
     
-def test_parse_union_types(self):
-    """Test parsing union types with | operator (Python 3.10+)."""
-    code = """
-def process(value: int | str | None) -> str | None:
-if value is None:
-    return None
-return str(value)
-"""
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
+    def test_parse_union_types(self):
+        """Test parsing union types with | operator (Python 3.10+)."""
+        code = """
+    def process(value: int | str | None) -> str | None:
+    if value is None:
+        return None
+    return str(value)
+    """
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
     
-def test_parse_async_comprehensions(self):
-    """Test parsing async comprehensions."""
-    code = """
-async def process():
-result = [x async for x in async_generator()]
-return result
-"""
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
-    
-def test_parse_type_params(self):
-    """Test parsing generic type parameters (Python 3.12+)."""
-    code = """
-def first[T](items: list[T]) -> T:
-return items[0]
-class Stack[T]:
-    def __init__(self):
-        self.items: list[T] = []
-"""
+    def test_parse_async_comprehensions(self):
+        """Test parsing async comprehensions."""
+        code = """
+    async def process():
+    result = [x async for x in async_generator()]
+    return result
+    """
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
+        
+    def test_parse_type_params(self):
+        """Test parsing generic type parameters (Python 3.12+)."""
+        code = """
+    def first[T](items: list[T]) -> T:
+    return items[0]
+    class Stack[T]:
+        def __init__(self):
+            self.items: list[T] = []
+    """
         tool = PythonASTJSONTool()
         result = tool.execute(
             action="to_json",

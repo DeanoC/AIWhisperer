@@ -45,14 +45,14 @@ code = True
         ]
         
         for code in test_cases:
-                        result = self._convert_and_verify_docstring(code, 'module')
+            result = self._convert_and_verify_docstring(code, 'module')
             assert result['docstring_preserved']
             assert result['docstring_exact_match']
             assert result['location_preserved']
     
-def test_function_docstring_preservation(self):
-    """Test that function docstrings are preserved."""
-    test_cases = [
+    def test_function_docstring_preservation(self):
+        """Test that function docstrings are preserved."""
+        test_cases = [
         # Simple function docstring
         '''
 def simple():
@@ -86,8 +86,8 @@ return True
 def outer():
 """Outer function."""
 def inner():
-    """Inner function."""
-    pass
+        """Inner function."""
+        pass
 return inner
 ''',
         # Async function with docstring
@@ -101,16 +101,16 @@ await something()
 # This lambda doubles the input
 doubler = lambda x: x * 2
 ''',
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._convert_and_verify_docstring(code, 'function')
-            assert result['docstring_preserved']
-            assert result['indentation_preserved']
+        for code in test_cases:
+                result = self._convert_and_verify_docstring(code, 'function')
+                assert result['docstring_preserved']
+                assert result['indentation_preserved']
     
-def test_class_docstring_preservation(self):
-    """Test that class and method docstrings are preserved."""
-    test_cases = [
+    def test_class_docstring_preservation(self):
+        """Test that class and method docstrings are preserved."""
+        test_cases = [
         # Class with docstring
         '''
 class Simple:
@@ -123,26 +123,26 @@ class Complex:
 """Main class docstring."""
     
 def __init__(self):
-    """Constructor docstring."""
-    pass
+        """Constructor docstring."""
+        pass
     
 def method(self):
-    """Method docstring."""
-    pass
+        """Method docstring."""
+        pass
     
 @property
 def prop(self):
-    """Property docstring."""
-    return self._prop
+        """Property docstring."""
+        return self._prop
     
 @staticmethod
 def static():
-    """Static method docstring."""
-    pass
+        """Static method docstring."""
+        pass
     
 class Inner:
-    """Nested class docstring."""
-    pass
+        """Nested class docstring."""
+        pass
 ''',
         # Dataclass with field documentation
         '''
@@ -156,16 +156,16 @@ name: str
 value: int = 0
 """The value field with default."""
 ''',
-    ]
+     ]
         
-    for code in test_cases:
-        result = self._convert_and_verify_docstring(code, 'class')
+        for code in test_cases:
+            result = self._convert_and_verify_docstring(code, 'class')
             assert result['all_docstrings_preserved']
             assert result['hierarchy_maintained']
     
-def test_docstring_special_cases(self):
-    """Test special docstring cases and edge conditions."""
-    test_cases = [
+    def test_docstring_special_cases(self):
+        """Test special docstring cases and edge conditions."""
+        test_cases = [
         # Unicode in docstring
         '''
 def unicode_doc():
@@ -201,20 +201,20 @@ pass
 def code_like():
 """
 def example():
-    return 42
+        return 42
 """
 pass
 ''',
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._convert_and_verify_docstring(code, 'special')
+        for code in test_cases:
+            result = self._convert_and_verify_docstring(code, 'special')
             assert result['special_chars_preserved']
             assert result['format_preserved']
     
-def _convert_and_verify_docstring(self, code: str, context: str) -> Dict[str, Any]:
-    """Convert code and verify docstring preservation."""
-    raise NotImplementedError("Docstring verification not implemented")
+    def _convert_and_verify_docstring(self, code: str, context: str) -> Dict[str, Any]:
+        """Convert code and verify docstring preservation."""
+        raise NotImplementedError("Docstring verification not implemented")
 
 class TestSourceLocationMetadata:
     """Test preservation of source location information."""
@@ -226,10 +226,10 @@ x = 1
 y = 2
 
 def func():
-    return x + y
+        return x + y
 
 class MyClass:
-    pass
+        pass
 '''
         
         result = self._convert_and_verify_locations(code)
@@ -237,9 +237,9 @@ class MyClass:
         assert result['all_column_offsets_preserved']
         assert result['end_positions_preserved']
     
-def test_complex_location_preservation(self):
-    """Test location preservation in complex structures."""
-    code = '''
+    def test_complex_location_preservation(self):
+        """Test location preservation in complex structures."""
+        code = '''
 # Line 1
 def complex_function(
 param1: int,  # Line 3
@@ -261,14 +261,14 @@ else:
     return None
 '''
         
-    result = self._convert_and_verify_locations(code)
+        result = self._convert_and_verify_locations(code)
         assert result['multiline_preserved']
         assert result['nested_locations_correct']
         assert result['comment_line_numbers_noted']
     
-def test_location_with_decorators(self):
-    """Test location preservation with decorators."""
-    code = '''
+    def test_location_with_decorators(self):
+        """Test location preservation with decorators."""
+        code = '''
 @decorator1
 @decorator2(arg=value)
 @decorator3(
@@ -282,13 +282,13 @@ class DecoratedClass:
 field: int
 '''
         
-    result = self._convert_and_verify_locations(code)
+        result = self._convert_and_verify_locations(code)
         assert result['decorator_locations_preserved']
         assert result['decorated_item_location_correct']
     
-def test_location_in_comprehensions(self):
-    """Test location preservation in comprehensions."""
-    code = '''
+    def test_location_in_comprehensions(self):
+        """Test location preservation in comprehensions."""
+        code = '''
 # List comprehension
 result = [
 x * 2
@@ -313,13 +313,13 @@ if value > threshold
 }
 '''
         
-    result = self._convert_and_verify_locations(code)
+        result = self._convert_and_verify_locations(code)
         assert result['comprehension_parts_located']
         assert result['nested_comprehension_locations']
     
-def test_location_edge_cases(self):
-    """Test location preservation in edge cases."""
-    test_cases = [
+    def test_location_edge_cases(self):
+        """Test location preservation in edge cases."""
+        test_cases = [
         # Single line with multiple statements
         "x = 1; y = 2; z = 3",
             
@@ -345,13 +345,13 @@ y = 2
         ]
         
         for code in test_cases:
-                        result = self._convert_and_verify_locations(code)
+            result = self._convert_and_verify_locations(code)
             assert result['continuation_handled']
             assert result['whitespace_positions_noted']
     
-def _convert_and_verify_locations(self, code: str) -> Dict[str, Any]:
-    """Convert code and verify location preservation."""
-    raise NotImplementedError("Location verification not implemented")
+    def _convert_and_verify_locations(self, code: str) -> Dict[str, Any]:
+        """Convert code and verify location preservation."""
+        raise NotImplementedError("Location verification not implemented")
 
 class TestCommentPreservation:
     """Test preservation of comments where possible."""
@@ -386,18 +386,18 @@ class MyClass:  # inline class comment
         assert result['inline_comments_separate']
         assert result['comment_associations_mapped']
     
-def test_multiline_comment_blocks(self):
-    """Test preservation of multi-line comment blocks."""
-    code = '''
+    def test_multiline_comment_blocks(self):
+        """Test preservation of multi-line comment blocks."""
+        code = '''
 # This is a multi-line
 # comment block that should
 # be treated as a unit
 def func():
-    """Docstring."""
-    # Another multi-line
-    # comment inside function
-    # with multiple lines
-    pass
+        """Docstring."""
+        # Another multi-line
+        # comment inside function
+        # with multiple lines
+        pass
 
 ###############################################
 # Section separator comment
@@ -413,9 +413,9 @@ def func():
         assert result['special_comments_marked']
         assert result['separator_comments_noted']
     
-def test_comment_preservation_strategies(self):
-    """Test different strategies for preserving comments."""
-    code = '''
+    def test_comment_preservation_strategies(self):
+        """Test different strategies for preserving comments."""
+        code = '''
 def calculate(x, y):
 # Step 1: Validate inputs
 if x < 0 or y < 0:
@@ -433,14 +433,14 @@ if result > 100:
 return result  # Return final result
 '''
         
-    result = self._test_comment_preservation_strategy(code)
+        result = self._test_comment_preservation_strategy(code)
         assert result['comment_metadata_stored']
         assert result['comment_reconstruction_possible']
         assert result['relative_positions_maintained']
     
-def test_comment_unicode_and_special_chars(self):
-    """Test comments with unicode and special characters."""
-    code = '''
+    def test_comment_unicode_and_special_chars(self):
+        """Test comments with unicode and special characters."""
+        code = '''
 # Comment with unicode: αβγ 中文 🎉
 def func():
 # Comment with special chars: @#$%^&*()
@@ -453,14 +453,14 @@ x = 1  # λ expression would go here
 return x
 '''
         
-    result = self._convert_and_extract_comments(code)
+        result = self._convert_and_extract_comments(code)
         assert result['unicode_preserved']
         assert result['special_chars_intact']
         assert result['urls_not_corrupted']
     
-def test_comment_reconstruction_accuracy(self):
-    """Test accuracy of comment reconstruction after round-trip."""
-    test_cases = [
+    def test_comment_reconstruction_accuracy(self):
+        """Test accuracy of comment reconstruction after round-trip."""
+        test_cases = [
         # Comments at different positions
         '''
 # Before class
@@ -483,25 +483,25 @@ if True:
             # Level 4
             pass
 ''',
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._test_comment_reconstruction(code)
+        for code in test_cases:
+            result = self._test_comment_reconstruction(code)
             assert result['position_accuracy'] > 0.9
             assert result['indentation_preserved']
             assert result['association_maintained']
     
-def _convert_and_extract_comments(self, code: str) -> Dict[str, Any]:
-    """Convert code and extract comment information."""
-    raise NotImplementedError("Comment extraction not implemented")
+    def _convert_and_extract_comments(self, code: str) -> Dict[str, Any]:
+        """Convert code and extract comment information."""
+        raise NotImplementedError("Comment extraction not implemented")
     
-def _test_comment_preservation_strategy(self, code: str) -> Dict[str, Any]:
-    """Test comment preservation strategy."""
-    raise NotImplementedError("Comment strategy testing not implemented")
+    def _test_comment_preservation_strategy(self, code: str) -> Dict[str, Any]:
+        """Test comment preservation strategy."""
+        raise NotImplementedError("Comment strategy testing not implemented")
     
-def _test_comment_reconstruction(self, code: str) -> Dict[str, Any]:
-    """Test comment reconstruction accuracy."""
-    raise NotImplementedError("Comment reconstruction not implemented")
+    def _test_comment_reconstruction(self, code: str) -> Dict[str, Any]:
+        """Test comment reconstruction accuracy."""
+        raise NotImplementedError("Comment reconstruction not implemented")
 
 class TestFormattingPreservation:
     """Test preservation of formatting preferences and whitespace."""
@@ -512,7 +512,7 @@ class TestFormattingPreservation:
             # 4-space indentation (PEP 8 standard)
             '''
 def four_spaces():
-    if True:
+        if True:
         x = 1
         return x
 ''',
@@ -520,8 +520,8 @@ def four_spaces():
             '''
 def two_spaces():
   if True:
-    x = 1
-    return x
+        x = 1
+        return x
 ''',
             # Tab indentation
             '''
@@ -533,21 +533,21 @@ def tabs():
             # Mixed (bad practice but should handle)
             '''
 def mixed():
-    if True:
+        if True:
 \t\tx = 1  # This is mixed
         return x
 ''',
         ]
         
         for code in test_cases:
-                        result = self._analyze_formatting(code)
+            result = self._analyze_formatting(code)
             assert result['indentation_style_detected']
             assert result['indentation_consistency_checked']
             assert result['indentation_metadata_stored']
     
-def test_line_length_preferences(self):
-    """Test detection of line length preferences."""
-    test_cases = [
+    def test_line_length_preferences(self):
+        """Test detection of line length preferences."""
+        test_cases = [
         # Short lines (< 80 chars)
         '''
 def short_lines():
@@ -572,16 +572,16 @@ long_result = (
 )
 return long_result
 ''',
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._analyze_formatting(code)
+        for code in test_cases:
+            result = self._analyze_formatting(code)
             assert result['line_length_stats_calculated']
             assert result['break_preferences_noted']
     
-def test_blank_line_patterns(self):
-    """Test preservation of blank line patterns."""
-    code = '''
+    def test_blank_line_patterns(self):
+        """Test preservation of blank line patterns."""
+        code = '''
 import os
 import sys
 
@@ -591,24 +591,24 @@ class FirstClass:
     """First class."""
     
     def method1(self):
-        pass
+            pass
     
     def method2(self):
-        pass
+            pass
 
 
 class SecondClass:
-    """Second class."""
+        """Second class."""
     
     def __init__(self):
-        self.value = 1
+            self.value = 1
         
         self.computed = self.value * 2
 
 
 def standalone_function():
-    """Standalone function."""
-    pass
+        """Standalone function."""
+        pass
 
 
 # Constants
@@ -625,9 +625,9 @@ if __name__ == "__main__":
         assert result['pep8_compliance_checked']
         assert result['section_separation_noted']
     
-def test_string_quote_preferences(self):
-    """Test detection of string quote preferences."""
-    test_cases = [
+    def test_string_quote_preferences(self):
+        """Test detection of string quote preferences."""
+        test_cases = [
         # Single quotes preferred
         '''
 name = 'single'
@@ -647,16 +647,16 @@ message = "double"
 sql = """triple double"""
 raw = r'raw single'
 ''',
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._analyze_formatting(code)
+        for code in test_cases:
+            result = self._analyze_formatting(code)
             assert result['quote_preference_detected']
             assert result['quote_consistency_measured']
     
-def test_operator_spacing_preferences(self):
-    """Test detection of operator spacing preferences."""
-    test_cases = [
+    def test_operator_spacing_preferences(self):
+        """Test detection of operator spacing preferences."""
+        test_cases = [
         # Spaces around operators (PEP 8)
         '''
 x = 1 + 2
@@ -677,16 +677,16 @@ x = 1+2  # Mixed
 y = x * 3
 z=y / 4
 ''',
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._analyze_formatting(code)
+        for code in test_cases:
+            result = self._analyze_formatting(code)
             assert result['operator_spacing_analyzed']
             assert result['consistency_score_calculated']
     
-def test_import_organization_style(self):
-    """Test detection of import organization style."""
-    test_cases = [
+    def test_import_organization_style(self):
+        """Test detection of import organization style."""
+        test_cases = [
         # PEP 8 style grouping
         '''
 import os
@@ -712,16 +712,16 @@ from mypackage import module2
 from typing import Dict, List, Optional, Tuple
 from collections import defaultdict, namedtuple
 ''',
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._analyze_formatting(code)
+        for code in test_cases:
+            result = self._analyze_formatting(code)
             assert result['import_style_detected']
             assert result['import_grouping_analyzed']
     
-def _analyze_formatting(self, code: str) -> Dict[str, Any]:
-    """Analyze formatting preferences in code."""
-    raise NotImplementedError("Formatting analysis not implemented")
+    def _analyze_formatting(self, code: str) -> Dict[str, Any]:
+        """Analyze formatting preferences in code."""
+        raise NotImplementedError("Formatting analysis not implemented")
 
 class TestMetadataRoundTrip:
     """Test complete round-trip with all metadata preserved."""
@@ -753,7 +753,7 @@ class DataProcessor:
     """Process data with various methods."""
     
     def __init__(self, config: dict):
-        """
+            """
         Initialize processor.
         
         Args:
@@ -795,10 +795,10 @@ class DataProcessor:
 
 
 def main():
-    """Main entry point."""
-    processor = DataProcessor({"debug": True})
-    result = processor.process(["Hello", "World"])
-    print(result)
+        """Main entry point."""
+        processor = DataProcessor({"debug": True})
+        result = processor.process(["Hello", "World"])
+        print(result)
 
 
 if __name__ == "__main__":
@@ -813,16 +813,16 @@ if __name__ == "__main__":
         assert result['semantic_equivalence']
         assert result['metadata_fidelity_score'] > 0.95
     
-def test_metadata_in_json_structure(self):
-    """Test the structure of metadata in JSON representation."""
-    code = '''
+    def test_metadata_in_json_structure(self):
+        """Test the structure of metadata in JSON representation."""
+        code = '''
 def example(x: int) -> int:
 """Double the input."""
 # Multiply by 2
 return x * 2
 '''
         
-    json_result = self._convert_to_json_with_metadata(code)
+        json_result = self._convert_to_json_with_metadata(code)
             
         # Check JSON structure
         assert 'ast' in json_result
@@ -847,9 +847,9 @@ return x * 2
         assert 'line_endings' in formatting
         assert 'quote_style' in formatting
     
-def test_metadata_reconstruction_options(self):
-    """Test different options for reconstructing code with metadata."""
-    code = '''
+    def test_metadata_reconstruction_options(self):
+        """Test different options for reconstructing code with metadata."""
+        code = '''
 # Important function
 def calculate(x, y):
 """Calculate result."""
@@ -870,15 +870,15 @@ return x + y  # Add them
             assert result['mode_applied'] == mode
             assert result['reconstruction_valid']
     
-def test_metadata_compatibility(self):
-    """Test metadata compatibility across versions."""
-    code = '''
+    def test_metadata_compatibility(self):
+        """Test metadata compatibility across versions."""
+        code = '''
 def simple():
 """Simple function."""
 pass
 '''
         
-    # Convert with current version
+        # Convert with current version
         json_v1 = self._convert_to_json_with_metadata(code)
             
         # Simulate version change
@@ -889,48 +889,48 @@ pass
         assert result['backward_compatible']
         assert result['forward_compatible']
     
-def test_large_file_metadata_performance(self):
-    """Test metadata handling performance with large files."""
-    # Generate large code
-    lines = []
-    for i in range(1000):
-        lines.append(f"# Comment for function {i}")
-        lines.append(f"def func_{i}():")
-        lines.append(f'    """Docstring for function {i}."""')
-        lines.append(f"    value = {i}  # Process value")
-        lines.append(f"    return value * 2")
-        lines.append("")
+    def test_large_file_metadata_performance(self):
+        """Test metadata handling performance with large files."""
+        # Generate large code
+        lines = []
+        for i in range(1000):
+            lines.append(f"# Comment for function {i}")
+            lines.append(f"def func_{i}():")
+            lines.append(f'    """Docstring for function {i}."""')
+            lines.append(f"    value = {i}  # Process value")
+            lines.append(f"    return value * 2")
+            lines.append("")
         
-    large_code = "\n".join(lines)
+        large_code = "\n".join(lines)
         
-    result = self._test_metadata_performance(large_code)
+        result = self._test_metadata_performance(large_code)
         assert result['processing_time_ms'] < 1000
         assert result['memory_overhead_percent'] < 50
         assert result['metadata_size_ratio'] < 2.0
     
-def _test_complete_round_trip(self, code: str) -> Dict[str, Any]:
-    """Test complete round-trip with metadata."""
-    raise NotImplementedError("Complete round-trip not implemented")
+    def _test_complete_round_trip(self, code: str) -> Dict[str, Any]:
+        """Test complete round-trip with metadata."""
+        raise NotImplementedError("Complete round-trip not implemented")
     
-def _convert_to_json_with_metadata(self, code: str) -> Dict[str, Any]:
-    """Convert code to JSON with all metadata."""
-    raise NotImplementedError("Metadata conversion not implemented")
+    def _convert_to_json_with_metadata(self, code: str) -> Dict[str, Any]:
+        """Convert code to JSON with all metadata."""
+        raise NotImplementedError("Metadata conversion not implemented")
     
-def _reconstruct_with_mode(self, code: str, mode: str) -> Dict[str, Any]:
-    """Reconstruct code with specific metadata mode."""
-    raise NotImplementedError("Mode reconstruction not implemented")
+    def _reconstruct_with_mode(self, code: str, mode: str) -> Dict[str, Any]:
+        """Reconstruct code with specific metadata mode."""
+        raise NotImplementedError("Mode reconstruction not implemented")
     
-def _migrate_metadata_format(self, json_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Migrate metadata format for compatibility testing."""
-    raise NotImplementedError("Metadata migration not implemented")
+    def _migrate_metadata_format(self, json_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Migrate metadata format for compatibility testing."""
+        raise NotImplementedError("Metadata migration not implemented")
     
-def _reconstruct_from_json(self, json_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Reconstruct code from JSON with metadata."""
-    raise NotImplementedError("JSON reconstruction not implemented")
+    def _reconstruct_from_json(self, json_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Reconstruct code from JSON with metadata."""
+        raise NotImplementedError("JSON reconstruction not implemented")
     
-def _test_metadata_performance(self, code: str) -> Dict[str, Any]:
-    """Test metadata handling performance."""
-    raise NotImplementedError("Performance testing not implemented")
+    def _test_metadata_performance(self, code: str) -> Dict[str, Any]:
+        """Test metadata handling performance."""
+        raise NotImplementedError("Performance testing not implemented")
 
 class TestEdgeCasesAndErrors:
     """Test edge cases and error conditions for metadata preservation."""
@@ -941,33 +941,33 @@ class TestEdgeCasesAndErrors:
             # Docstring not on first line
             '''
 def bad():
-    x = 1
-    """This docstring is not first."""
-    return x
+        x = 1
+        """This docstring is not first."""
+        return x
 ''',
             # Multiple string literals
             '''
 def multiple():
-    """First string."""
-    """Second string."""
-    pass
+        """First string."""
+        """Second string."""
+        pass
 ''',
             # Docstring with triple quotes inside
             '''
 def nested_quotes():
-    """This has """ inside it."""
-    pass
+        """This has """ inside it."""
+        pass
 ''',
         ]
         
         for code in test_cases:
-                        result = self._test_edge_case_handling(code)
+            result = self._test_edge_case_handling(code)
             assert result['handled_gracefully']
             assert result['no_data_loss']
     
-def test_extreme_formatting(self):
-    """Test handling of extreme formatting cases."""
-    test_cases = [
+    def test_extreme_formatting(self):
+        """Test handling of extreme formatting cases."""
+        test_cases = [
         # Single line with semicolons
         "def f(): x = 1; y = 2; return x + y",
             
@@ -984,16 +984,16 @@ def 函数():
 变量 = 42
 return 变量
 """,
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._test_edge_case_handling(code)
+        for code in test_cases:
+            result = self._test_edge_case_handling(code)
             assert result['parsing_successful']
             assert result['metadata_extracted']
     
-def test_comment_edge_cases(self):
-    """Test edge cases in comment handling."""
-    test_cases = [
+    def test_comment_edge_cases(self):
+        """Test edge cases in comment handling."""
+        test_cases = [
         # Comment-like strings
         '''
 x = "# This is not a comment"
@@ -1015,16 +1015,16 @@ WHERE id = 1  # Not a Python comment
 # vim: set fileencoding=utf-8 :
 x = 1
 ''',
-    ]
+        ]
         
-    for code in test_cases:
-        result = self._test_edge_case_handling(code)
+        for code in test_cases:
+            result = self._test_edge_case_handling(code)
             assert result['comments_correctly_identified']
             assert result['string_content_preserved']
     
-def test_error_recovery(self):
-    """Test recovery from errors during metadata extraction."""
-    test_cases = [
+    def test_error_recovery(self):
+        """Test recovery from errors during metadata extraction."""
+        test_cases = [
         # Syntax error but salvage metadata
         ("def func(\n    '''Docstring.'''\n    pass", "syntax_error"),
             
@@ -1033,39 +1033,39 @@ def test_error_recovery(self):
             
         # Invalid encoding in comment
         ("# \udcff Invalid encoding\nx = 1", "encoding_error"),
-    ]
+        ]
         
-    for code, error_type in test_cases:
-        result = self._test_error_recovery(code, error_type)
+        for code, error_type in test_cases:
+            result = self._test_error_recovery(code, error_type)
             assert result['partial_metadata_extracted']
             assert result['error_reported']
             assert result['graceful_degradation']
     
-def _test_edge_case_handling(self, code: str) -> Dict[str, Any]:
-    """Test handling of edge cases."""
-    raise NotImplementedError("Edge case handling not implemented")
+    def _test_edge_case_handling(self, code: str) -> Dict[str, Any]:
+        """Test handling of edge cases."""
+        raise NotImplementedError("Edge case handling not implemented")
     
-def _test_error_recovery(self, code: str, error_type: str) -> Dict[str, Any]:
-    """Test error recovery mechanisms."""
-    raise NotImplementedError("Error recovery not implemented")
+    def _test_error_recovery(self, code: str, error_type: str) -> Dict[str, Any]:
+        """Test error recovery mechanisms."""
+        raise NotImplementedError("Error recovery not implemented")
 
 # Utility functions for testing metadata preservation
 
 def extract_comments_from_source(source: str) -> List[Dict[str, Any]]:
-    """Extract comments from source code."""
-    raise NotImplementedError("Comment extraction not implemented")
+        """Extract comments from source code."""
+        raise NotImplementedError("Comment extraction not implemented")
 
 
 def calculate_formatting_metrics(source: str) -> Dict[str, Any]:
-    """Calculate formatting metrics for source code."""
-    raise NotImplementedError("Formatting metrics not implemented")
+        """Calculate formatting metrics for source code."""
+        raise NotImplementedError("Formatting metrics not implemented")
 
 
 def compare_metadata(original: Dict[str, Any], reconstructed: Dict[str, Any]) -> float:
-    """Compare metadata between original and reconstructed versions."""
-    raise NotImplementedError("Metadata comparison not implemented")
+        """Compare metadata between original and reconstructed versions."""
+        raise NotImplementedError("Metadata comparison not implemented")
 
 
 def measure_docstring_fidelity(original: str, reconstructed: str) -> float:
-    """Measure fidelity of docstring preservation."""
-    raise NotImplementedError("Docstring fidelity measurement not implemented")
+        """Measure fidelity of docstring preservation."""
+        raise NotImplementedError("Docstring fidelity measurement not implemented")

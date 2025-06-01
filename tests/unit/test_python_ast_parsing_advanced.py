@@ -24,9 +24,9 @@ with open('file1.txt') as f1, open('file2.txt') as f2:
             source_type="code"
         )
     
-def test_parse_exception_handling_complex(self):
-    """Test parsing complex exception handling."""
-    code = """
+    def test_parse_exception_handling_complex(self):
+        """Test parsing complex exception handling."""
+        code = """
 try:
 risky_operation()
 except (ValueError, TypeError) as e:
@@ -39,16 +39,16 @@ success()
 finally:
 cleanup()
 """
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
     
-def test_parse_generator_expressions(self):
-    """Test parsing various generator expressions."""
-    code = """
+    def test_parse_generator_expressions(self):
+        """Test parsing various generator expressions."""
+        code = """
 # Simple generator
 gen1 = (x * 2 for x in range(10))
 
@@ -58,16 +58,16 @@ gen2 = ((x, y) for x in range(3) for y in range(3) if x != y)
 # Generator with complex condition
 gen3 = (item for item in data if item.is_valid() and item.value > 0)
 """
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
     
-def test_parse_starred_expressions(self):
-    """Test parsing starred expressions in various contexts."""
-    code = """
+    def test_parse_starred_expressions(self):
+        """Test parsing starred expressions in various contexts."""
+        code = """
 # Unpacking
 a, *rest, b = [1, 2, 3, 4, 5]
 
@@ -77,16 +77,16 @@ print(*args, **kwargs)
 # List/tuple construction
 items = [*list1, *list2, 'extra']
 """
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
     
-def test_parse_annotations_complex(self):
-    """Test parsing complex type annotations."""
-    code = """
+    def test_parse_annotations_complex(self):
+        """Test parsing complex type annotations."""
+        code = """
 from typing import Union, Optional, Callable, TypeVar, Generic
 
 T = TypeVar('T')
@@ -101,17 +101,17 @@ class Container(Generic[T]):
     ) -> T:
         result = func(self.value)
         return result if result is not None else default
-"""
+        """
         tool = PythonASTJSONTool()
         result = tool.execute(
-        action="to_json",
-        source=code,
-        source_type="code"
+            action="to_json",
+            source=code,
+            source_type="code"
         )
     
-def test_parse_async_await_comprehensive(self):
-    """Test comprehensive async/await patterns."""
-    code = """
+    def test_parse_async_await_comprehensive(self):
+        """Test comprehensive async/await patterns."""
+        code = """
 import asyncio
 
 async def fetch_data(url: str) -> bytes:
@@ -126,17 +126,17 @@ results = await asyncio.gather(*tasks)
 async for item in async_generator():
     await process_item(item)
 """
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
-    
-def test_parse_dataclasses(self):
-    """Test parsing dataclass definitions."""
-    code = """
-from dataclasses import dataclass, field
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
+        
+    def test_parse_dataclasses(self):
+        """Test parsing dataclass definitions."""
+        code = """
+    from dataclasses import dataclass, field
 from typing import List
 
 @dataclass
@@ -152,16 +152,16 @@ class Shape:
 points: List[Point] = field(default_factory=list)
 name: str = "unnamed"
 """
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-            action="to_json",
-            source=code,
-            source_type="code"
-        )
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+                action="to_json",
+                source=code,
+                source_type="code"
+            )
     
-def test_parse_metaclasses(self):
-    """Test parsing metaclass definitions."""
-    code = """
+    def test_parse_metaclasses(self):
+        """Test parsing metaclass definitions."""
+        code = """
 class Meta(type):
 def __new__(mcs, name, bases, attrs):
     # Metaclass logic
@@ -207,9 +207,9 @@ def test_parse_circular_import_handling(self, tmp_path):
             source_type="file"
         )
     
-def test_parse_incomplete_code(self):
-    """Test parsing incomplete code structures."""
-    code = """
+    def test_parse_incomplete_code(self):
+        """Test parsing incomplete code structures."""
+        code = """
 def incomplete_function():
 # Function body not implemented yet
 ...
