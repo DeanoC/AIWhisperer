@@ -65,14 +65,14 @@ class ClarificationRequest:
     context: Dict[str, Any]
     options: List[str] = field(default_factory=list)
     
-    def to_message(self, sender: str, recipient: str, message_id: str) -> AgentMessage:
+    def to_message(self, from_agent: str, to_agent: str, message_id: str) -> AgentMessage:
         """Convert to agent message."""
         return AgentMessage(
             message_id=message_id,
-            sender=sender,
-            recipient=recipient,
+            from_agent=from_agent,
+            to_agent=to_agent,
             message_type=MessageType.CLARIFICATION_REQUEST,
-            content={
+            payload={
                 'task_id': self.task_id,
                 'task_name': self.task_name,
                 'question': self.question,
