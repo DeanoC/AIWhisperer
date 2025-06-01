@@ -3,7 +3,7 @@ Tool for validating external agent availability.
 """
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from .base_tool import AITool
 from ..agents.external_adapters import AdapterRegistry
@@ -15,23 +15,53 @@ class ValidateExternalAgentTool(AITool):
     """Tool for validating external agent environments."""
     
     def __init__(self):
-        super().__init__(
-            name="validate_external_agent",
-            description="Validate that external AI agents are available and properly configured",
-            parameters={
-                "agents": {
-                    "type": "string",
-                    "description": "Comma-separated list of agents to validate (or 'all' for all agents)",
-                    "required": False
-                }
-            },
-            tags=["external_agents", "validation", "environment"]
-        )
+        super().__init__()
         self._registry = AdapterRegistry()
     
-    def execute(self, **kwargs) -> str:
+    @property
+    def name(self) -> str:
+        return "validate_external_agent"
+    
+    @property
+    def description(self) -> str:
+        return "Validate that external AI agents are available and properly configured"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "agents": {
+                    "type": "string",
+                    "description": "Comma-separated list of agents to validate (or 'all' for all agents)"
+                }
+            },
+            "required": []
+        }
+    
+    @property
+    def tags(self) -> List[str]:
+        return ["external_agents", "validation", "environment"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        return """
+Use this tool to validate that external AI agents are available and properly configured.
+The tool checks if the agents are installed and accessible in the current environment.
+
+Parameters:
+- agents: Comma-separated list of agents to validate, or 'all' for all agents (optional, default: 'all')
+
+Returns:
+A JSON object containing:
+- summary: Overview of validation results
+- validations: Detailed validation for each agent
+- recommendation: Suggested actions based on results
+- installation_links: Links to install missing agents (if any)
+"""
+    
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the validate external agent tool."""
-        agents_param = kwargs.get("agents", "all")
+        agents_param = arguments.get("agents", "all")
         
         try:
             # Determine which agents to validate
@@ -100,23 +130,3 @@ class ValidateExternalAgentTool(AITool):
         except Exception as e:
             logger.error(f"Unexpected error in validate_external_agent: {e}", exc_info=True)
             return f"Error: Unexpected error - {str(e)}"
-    
-    def get_openrouter_tool_definition(self) -> Dict[str, Any]:
-        """Get the OpenRouter tool definition."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "agents": {
-                            "type": "string",
-                            "description": self.parameters["agents"]["description"]
-                        }
-                    },
-                    "required": []
-                }
-            }
-        }

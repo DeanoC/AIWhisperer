@@ -7,6 +7,17 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field, asdict
+from enum import Enum
+
+
+class TaskStatus(Enum):
+    """Status of a decomposed task."""
+    PENDING = "pending"
+    ASSIGNED = "assigned"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    BLOCKED = "blocked"
 
 
 @dataclass
@@ -50,7 +61,7 @@ class DecomposedTask:
             raise ValueError(f"estimated_complexity must be one of {valid_complexities}")
         
         # Validate status
-        valid_statuses = ["pending", "assigned", "in_progress", "completed", "failed", "blocked"]
+        valid_statuses = [s.value for s in TaskStatus]
         if self.status not in valid_statuses:
             raise ValueError(f"status must be one of {valid_statuses}")
         
@@ -80,7 +91,7 @@ class DecomposedTask:
     
     def update_status(self, new_status: str):
         """Update task status with validation."""
-        valid_statuses = ["pending", "assigned", "in_progress", "completed", "failed", "blocked"]
+        valid_statuses = [s.value for s in TaskStatus]
         if new_status not in valid_statuses:
             raise ValueError(f"Invalid status: {new_status}")
         

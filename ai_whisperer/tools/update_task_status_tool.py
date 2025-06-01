@@ -16,48 +16,80 @@ class UpdateTaskStatusTool(AITool):
     """Tool for updating task execution status."""
     
     def __init__(self):
-        super().__init__(
-            name="update_task_status",
-            description="Update the status of a decomposed task after external agent execution",
-            parameters={
+        super().__init__()
+        # In a real implementation, this would connect to a task storage system
+        self._task_store = {}
+    
+    @property
+    def name(self) -> str:
+        return "update_task_status"
+    
+    @property
+    def description(self) -> str:
+        return "Update the status of a decomposed task after external agent execution"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
                 "task_id": {
                     "type": "string",
-                    "description": "The ID of the task to update",
-                    "required": True
+                    "description": "The ID of the task to update"
                 },
                 "status": {
                     "type": "string",
                     "description": "New status: 'pending', 'assigned', 'in_progress', 'completed', 'failed', 'blocked'",
-                    "required": True
+                    "enum": ["pending", "assigned", "in_progress", "completed", "failed", "blocked"]
                 },
                 "assigned_agent": {
                     "type": "string",
-                    "description": "The external agent assigned to this task",
-                    "required": False
+                    "description": "The external agent assigned to this task"
                 },
                 "execution_result": {
                     "type": "string",
-                    "description": "Result from external agent execution (JSON)",
-                    "required": False
+                    "description": "Result from external agent execution (JSON)"
                 },
                 "notes": {
                     "type": "string",
-                    "description": "Additional notes or comments about the status update",
-                    "required": False
+                    "description": "Additional notes or comments about the status update"
                 }
             },
-            tags=["task_management", "status", "tracking"]
-        )
-        # In a real implementation, this would connect to a task storage system
-        self._task_store = {}
+            "required": ["task_id", "status"]
+        }
     
-    def execute(self, **kwargs) -> str:
+    @property
+    def tags(self) -> List[str]:
+        return ["task_management", "status", "tracking"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        return """
+Use this tool to update the status of a decomposed task after external agent execution.
+The tool tracks task history, execution results, and provides guidance on next steps.
+
+Parameters:
+- task_id: The ID of the task to update (required)
+- status: New status - must be one of: 'pending', 'assigned', 'in_progress', 'completed', 'failed', 'blocked' (required)
+- assigned_agent: The external agent assigned to this task (optional)
+- execution_result: Result from external agent execution as JSON (optional)
+- notes: Additional notes or comments about the status update (optional)
+
+Returns:
+A JSON object containing:
+- task_id: The updated task ID
+- updated_status: The new status
+- previous_status: The previous status (if any)
+- warnings: Any warnings about the status transition
+- next_steps: Suggested next actions
+"""
+    
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the update task status tool."""
-        task_id = kwargs.get("task_id")
-        status_str = kwargs.get("status")
-        assigned_agent = kwargs.get("assigned_agent")
-        execution_result = kwargs.get("execution_result")
-        notes = kwargs.get("notes")
+        task_id = arguments.get("task_id")
+        status_str = arguments.get("status")
+        assigned_agent = arguments.get("assigned_agent")
+        execution_result = arguments.get("execution_result")
+        notes = arguments.get("notes")
         
         if not task_id:
             return "Error: task_id is required"
@@ -67,9 +99,9 @@ class UpdateTaskStatusTool(AITool):
         try:
             # Validate status
             try:
-                status = TaskStatus(status_str.upper())
+                status = TaskStatus(status_str)
             except ValueError:
-                valid_statuses = [s.value.lower() for s in TaskStatus]
+                valid_statuses = [s.value for s in TaskStatus]
                 return f"Error: Invalid status '{status_str}'. Valid statuses: {', '.join(valid_statuses)}"
             
             # Get or create task record
@@ -173,40 +205,3 @@ class UpdateTaskStatusTool(AITool):
     def get_all_tasks(self) -> Dict[str, Dict[str, Any]]:
         """Get all task records (for internal use)."""
         return self._task_store.copy()
-    
-    def get_openrouter_tool_definition(self) -> Dict[str, Any]:
-        """Get the OpenRouter tool definition."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "task_id": {
-                            "type": "string",
-                            "description": self.parameters["task_id"]["description"]
-                        },
-                        "status": {
-                            "type": "string",
-                            "description": self.parameters["status"]["description"],
-                            "enum": ["pending", "assigned", "in_progress", "completed", "failed", "blocked"]
-                        },
-                        "assigned_agent": {
-                            "type": "string",
-                            "description": self.parameters["assigned_agent"]["description"]
-                        },
-                        "execution_result": {
-                            "type": "string",
-                            "description": self.parameters["execution_result"]["description"]
-                        },
-                        "notes": {
-                            "type": "string",
-                            "description": self.parameters["notes"]["description"]
-                        }
-                    },
-                    "required": ["task_id", "status"]
-                }
-            }
-        }

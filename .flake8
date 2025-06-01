@@ -1,0 +1,36 @@
+[flake8]
+# E999: IndentationError
+# F63: Line break occurred before a binary operator (enforced by black)
+# F7: Syntax error (F701-F706)
+# F82: Undefined names (F821-F823)
+select = E9,F63,F7,F82
+
+# Maximum line length (matching GitHub's editor width)
+max-line-length = 127
+
+# Maximum complexity
+max-complexity = 10
+
+# Directories to exclude
+exclude = 
+    .venv,
+    venv,
+    __pycache__,
+    .git,
+    build,
+    dist,
+    .eggs,
+    *.egg-info,
+    frontend,
+    node_modules,
+    .pytest_cache,
+    .mypy_cache
+
+# Show source code for errors
+show-source = True
+
+# Count errors
+count = True
+
+# Show statistics
+statistics = True

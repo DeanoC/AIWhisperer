@@ -133,13 +133,15 @@ Please provide guidance on these questions to help me decompose this task effect
             return
             
         # Update task context with clarification
-        task = self.current_tasks.get(request.task_id)
+        task_dict = request['task']  # request is a dict from pending_clarifications
+        task_id = task_dict.get('id') or task_dict.get('task_id')
+        task = self.current_tasks.get(task_id) if task_id else None
         if task:
             if 'clarifications' not in task.context:
                 task.context['clarifications'] = []
             
             task.context['clarifications'].append({
-                'question': request.question,
+                'question': request['questions'],
                 'answer': response.answer,
                 'confidence': response.confidence,
                 'timestamp': datetime.now(timezone.utc).isoformat()

@@ -87,6 +87,13 @@ class MailNotificationMixin:
         return "\n".join(summary_parts)
 
 
+def get_mail_notification(agent_name: str) -> Optional[str]:
+    """Helper function to generate mail notification string."""
+    mailbox = get_mailbox()
+    if mailbox.has_unread_mail(agent_name):
+        count = mailbox.get_unread_count(agent_name)
+        return f"📬 You have {count} unread message{'s' if count > 1 else ''} in your mailbox."
+    return None
 def inject_mail_notification(agent_method):
     """Decorator to inject mail notifications into agent responses.
     
