@@ -38,12 +38,12 @@ def add(a, b):
     return a + b
 """)
         
-        tool = PythonASTJSONTool()
-        result = tool.execute(
-            action="to_json",
-            source=str(test_file),
-            source_type="file"
-        )
+    tool = PythonASTJSONTool()
+    result = tool.execute(
+    action="to_json",
+    source=str(test_file),
+    source_type="file"
+    )
     
 def test_parse_file_with_classes(self, tmp_path):
     """Test parsing a file with class definitions."""

@@ -21,7 +21,7 @@ def greet(name: str, greeting: str = "Hello") -> str:
 """
     tree = ast.parse(code)
         
-        result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
         # When implemented, should verify:
         # - Function node has correct structure
         # - Arguments are properly represented

@@ -46,7 +46,7 @@ code = True
         
         for code in test_cases:
                         result = self._convert_and_verify_docstring(code, 'module')
-    assert result['docstring_preserved']
+            assert result['docstring_preserved']
             assert result['docstring_exact_match']
             assert result['location_preserved']
     

@@ -57,6 +57,10 @@ pytest -k "test_agent"  # Run tests matching pattern
 # Format code (project standard)
 black . --line-length 120 --skip-magic-trailing-comma
 
+# Check for syntax errors and undefined names before committing
+# This command MUST pass before creating PRs
+flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
 # The project uses pytest.ini with -W error to treat warnings as errors
 ```
 

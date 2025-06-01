@@ -23,7 +23,7 @@ y = [1, ..., 3]
 """
     tree = ast.parse(code)
         
-        result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
 def test_convert_pass_statement(self):
     """Test converting pass statements in various contexts."""
