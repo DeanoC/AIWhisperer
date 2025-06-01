@@ -314,9 +314,11 @@ class TestPlanErrorRecovery:
         })
         
         # Extract the RFC ID from the result
-        # The CreateRFCTool logs "Created RFC RFC-2025-05-31-0001: Large Plan Test"
-        # so we know it generates RFC-2025-05-31-0001 format
-        rfc_id = "RFC-2025-05-31-0001"  # First RFC created in this test workspace
+        # The result format includes "**RFC ID**: RFC-2025-06-01-0001"
+        import re
+        match = re.search(r'\*\*RFC ID\*\*: (RFC-\d{4}-\d{2}-\d{2}-\d{4})', rfc_result)
+        assert match, f"Could not extract RFC ID from result: {rfc_result}"
+        rfc_id = match.group(1)
         
         # Create a very large plan
         large_tasks = []

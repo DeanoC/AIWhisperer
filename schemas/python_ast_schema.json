@@ -1,0 +1,711 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Python AST JSON Schema",
+  "description": "Schema for representing Python Abstract Syntax Tree nodes in JSON format",
+  "definitions": {
+    "sourceLocation": {
+      "type": "object",
+      "properties": {
+        "lineno": {"type": "integer", "minimum": 1},
+        "col_offset": {"type": "integer", "minimum": 0},
+        "end_lineno": {"type": ["integer", "null"], "minimum": 1},
+        "end_col_offset": {"type": ["integer", "null"], "minimum": 0}
+      },
+      "required": ["lineno", "col_offset"]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "source_file": {"type": ["string", "null"]},
+        "module_name": {"type": ["string", "null"]},
+        "python_version": {"type": "string"},
+        "encoding": {"type": "string", "default": "utf-8"},
+        "conversion_timestamp": {"type": "string", "format": "date-time"}
+      },
+      "required": ["python_version", "conversion_timestamp"]
+    },
+    "baseNode": {
+      "type": "object",
+      "properties": {
+        "node_type": {"type": "string"},
+        "location": {"$ref": "#/definitions/sourceLocation"},
+        "docstring": {"type": ["string", "null"]}
+      },
+      "required": ["node_type"]
+    },
+    "identifier": {
+      "type": "object",
+      "properties": {
+        "node_type": {"const": "Identifier"},
+        "name": {"type": "string"}
+      },
+      "required": ["node_type", "name"]
+    },
+    "constant": {
+      "type": "object",
+      "properties": {
+        "node_type": {"const": "Constant"},
+        "value": {},
+        "kind": {"type": ["string", "null"]}
+      },
+      "required": ["node_type", "value"]
+    },
+    "expr": {
+      "anyOf": [
+        {"$ref": "#/definitions/identifier"},
+        {"$ref": "#/definitions/constant"},
+        {"$ref": "#/definitions/binOp"},
+        {"$ref": "#/definitions/unaryOp"},
+        {"$ref": "#/definitions/call"},
+        {"$ref": "#/definitions/attribute"},
+        {"$ref": "#/definitions/subscript"},
+        {"$ref": "#/definitions/list"},
+        {"$ref": "#/definitions/dict"},
+        {"$ref": "#/definitions/tuple"},
+        {"$ref": "#/definitions/set"},
+        {"$ref": "#/definitions/comprehension"}
+      ]
+    },
+    "stmt": {
+      "anyOf": [
+        {"$ref": "#/definitions/functionDef"},
+        {"$ref": "#/definitions/classDef"},
+        {"$ref": "#/definitions/assign"},
+        {"$ref": "#/definitions/augAssign"},
+        {"$ref": "#/definitions/annAssign"},
+        {"$ref": "#/definitions/for"},
+        {"$ref": "#/definitions/while"},
+        {"$ref": "#/definitions/if"},
+        {"$ref": "#/definitions/with"},
+        {"$ref": "#/definitions/return"},
+        {"$ref": "#/definitions/delete"},
+        {"$ref": "#/definitions/import"},
+        {"$ref": "#/definitions/importFrom"},
+        {"$ref": "#/definitions/global"},
+        {"$ref": "#/definitions/nonlocal"},
+        {"$ref": "#/definitions/expr_stmt"},
+        {"$ref": "#/definitions/pass"},
+        {"$ref": "#/definitions/break"},
+        {"$ref": "#/definitions/continue"},
+        {"$ref": "#/definitions/raise"},
+        {"$ref": "#/definitions/try"},
+        {"$ref": "#/definitions/assert"},
+        {"$ref": "#/definitions/match"}
+      ]
+    },
+    "binOp": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "BinOp"},
+            "left": {"$ref": "#/definitions/expr"},
+            "op": {"type": "string", "enum": ["Add", "Sub", "Mult", "MatMult", "Div", "Mod", "Pow", "LShift", "RShift", "BitOr", "BitXor", "BitAnd", "FloorDiv"]},
+            "right": {"$ref": "#/definitions/expr"}
+          },
+          "required": ["left", "op", "right"]
+        }
+      ]
+    },
+    "unaryOp": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "UnaryOp"},
+            "op": {"type": "string", "enum": ["Invert", "Not", "UAdd", "USub"]},
+            "operand": {"$ref": "#/definitions/expr"}
+          },
+          "required": ["op", "operand"]
+        }
+      ]
+    },
+    "functionDef": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "FunctionDef"},
+            "name": {"type": "string"},
+            "args": {"$ref": "#/definitions/arguments"},
+            "body": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "decorator_list": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            },
+            "returns": {"$ref": "#/definitions/expr"},
+            "type_comment": {"type": ["string", "null"]},
+            "type_params": {"type": "array"}
+          },
+          "required": ["name", "args", "body"]
+        }
+      ]
+    },
+    "classDef": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "ClassDef"},
+            "name": {"type": "string"},
+            "bases": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            },
+            "keywords": {"type": "array"},
+            "body": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "decorator_list": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            },
+            "type_params": {"type": "array"}
+          },
+          "required": ["name", "body"]
+        }
+      ]
+    },
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "posonlyargs": {"type": "array"},
+        "args": {"type": "array"},
+        "vararg": {"type": ["object", "null"]},
+        "kwonlyargs": {"type": "array"},
+        "kw_defaults": {"type": "array"},
+        "kwarg": {"type": ["object", "null"]},
+        "defaults": {"type": "array"}
+      }
+    },
+    "call": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Call"},
+            "func": {"$ref": "#/definitions/expr"},
+            "args": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            },
+            "keywords": {"type": "array"}
+          },
+          "required": ["func", "args"]
+        }
+      ]
+    },
+    "attribute": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Attribute"},
+            "value": {"$ref": "#/definitions/expr"},
+            "attr": {"type": "string"},
+            "ctx": {"type": "string", "enum": ["Load", "Store", "Del"]}
+          },
+          "required": ["value", "attr", "ctx"]
+        }
+      ]
+    },
+    "subscript": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Subscript"},
+            "value": {"$ref": "#/definitions/expr"},
+            "slice": {"$ref": "#/definitions/expr"},
+            "ctx": {"type": "string", "enum": ["Load", "Store", "Del"]}
+          },
+          "required": ["value", "slice", "ctx"]
+        }
+      ]
+    },
+    "assign": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Assign"},
+            "targets": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            },
+            "value": {"$ref": "#/definitions/expr"},
+            "type_comment": {"type": ["string", "null"]}
+          },
+          "required": ["targets", "value"]
+        }
+      ]
+    },
+    "augAssign": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "AugAssign"},
+            "target": {"$ref": "#/definitions/expr"},
+            "op": {"type": "string"},
+            "value": {"$ref": "#/definitions/expr"}
+          },
+          "required": ["target", "op", "value"]
+        }
+      ]
+    },
+    "annAssign": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "AnnAssign"},
+            "target": {"$ref": "#/definitions/expr"},
+            "annotation": {"$ref": "#/definitions/expr"},
+            "value": {"$ref": "#/definitions/expr"},
+            "simple": {"type": "boolean"}
+          },
+          "required": ["target", "annotation"]
+        }
+      ]
+    },
+    "for": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "For"},
+            "target": {"$ref": "#/definitions/expr"},
+            "iter": {"$ref": "#/definitions/expr"},
+            "body": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "orelse": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "type_comment": {"type": ["string", "null"]}
+          },
+          "required": ["target", "iter", "body"]
+        }
+      ]
+    },
+    "while": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "While"},
+            "test": {"$ref": "#/definitions/expr"},
+            "body": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "orelse": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            }
+          },
+          "required": ["test", "body"]
+        }
+      ]
+    },
+    "if": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "If"},
+            "test": {"$ref": "#/definitions/expr"},
+            "body": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "orelse": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            }
+          },
+          "required": ["test", "body"]
+        }
+      ]
+    },
+    "with": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "With"},
+            "items": {"type": "array"},
+            "body": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "type_comment": {"type": ["string", "null"]}
+          },
+          "required": ["items", "body"]
+        }
+      ]
+    },
+    "return": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Return"},
+            "value": {"$ref": "#/definitions/expr"}
+          }
+        }
+      ]
+    },
+    "delete": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Delete"},
+            "targets": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            }
+          },
+          "required": ["targets"]
+        }
+      ]
+    },
+    "import": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Import"},
+            "names": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "asname": {"type": ["string", "null"]}
+                },
+                "required": ["name"]
+              }
+            }
+          },
+          "required": ["names"]
+        }
+      ]
+    },
+    "importFrom": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "ImportFrom"},
+            "module": {"type": ["string", "null"]},
+            "names": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "asname": {"type": ["string", "null"]}
+                },
+                "required": ["name"]
+              }
+            },
+            "level": {"type": "integer", "minimum": 0}
+          },
+          "required": ["names"]
+        }
+      ]
+    },
+    "global": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Global"},
+            "names": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          },
+          "required": ["names"]
+        }
+      ]
+    },
+    "nonlocal": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Nonlocal"},
+            "names": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          },
+          "required": ["names"]
+        }
+      ]
+    },
+    "expr_stmt": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Expr"},
+            "value": {"$ref": "#/definitions/expr"}
+          },
+          "required": ["value"]
+        }
+      ]
+    },
+    "pass": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Pass"}
+          }
+        }
+      ]
+    },
+    "break": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Break"}
+          }
+        }
+      ]
+    },
+    "continue": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Continue"}
+          }
+        }
+      ]
+    },
+    "raise": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Raise"},
+            "exc": {"$ref": "#/definitions/expr"},
+            "cause": {"$ref": "#/definitions/expr"}
+          }
+        }
+      ]
+    },
+    "try": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Try"},
+            "body": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "handlers": {"type": "array"},
+            "orelse": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "finalbody": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            }
+          },
+          "required": ["body"]
+        }
+      ]
+    },
+    "assert": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Assert"},
+            "test": {"$ref": "#/definitions/expr"},
+            "msg": {"$ref": "#/definitions/expr"}
+          },
+          "required": ["test"]
+        }
+      ]
+    },
+    "match": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Match"},
+            "subject": {"$ref": "#/definitions/expr"},
+            "cases": {"type": "array"}
+          },
+          "required": ["subject", "cases"]
+        }
+      ]
+    },
+    "list": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "List"},
+            "elts": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            },
+            "ctx": {"type": "string", "enum": ["Load", "Store", "Del"]}
+          },
+          "required": ["elts", "ctx"]
+        }
+      ]
+    },
+    "dict": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Dict"},
+            "keys": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            },
+            "values": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            }
+          },
+          "required": ["keys", "values"]
+        }
+      ]
+    },
+    "tuple": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Tuple"},
+            "elts": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            },
+            "ctx": {"type": "string", "enum": ["Load", "Store", "Del"]}
+          },
+          "required": ["elts", "ctx"]
+        }
+      ]
+    },
+    "set": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Set"},
+            "elts": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/expr"}
+            }
+          },
+          "required": ["elts"]
+        }
+      ]
+    },
+    "comprehension": {
+      "anyOf": [
+        {"$ref": "#/definitions/listComp"},
+        {"$ref": "#/definitions/dictComp"},
+        {"$ref": "#/definitions/setComp"},
+        {"$ref": "#/definitions/generatorExp"}
+      ]
+    },
+    "listComp": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "ListComp"},
+            "elt": {"$ref": "#/definitions/expr"},
+            "generators": {"type": "array"}
+          },
+          "required": ["elt", "generators"]
+        }
+      ]
+    },
+    "dictComp": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "DictComp"},
+            "key": {"$ref": "#/definitions/expr"},
+            "value": {"$ref": "#/definitions/expr"},
+            "generators": {"type": "array"}
+          },
+          "required": ["key", "value", "generators"]
+        }
+      ]
+    },
+    "setComp": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "SetComp"},
+            "elt": {"$ref": "#/definitions/expr"},
+            "generators": {"type": "array"}
+          },
+          "required": ["elt", "generators"]
+        }
+      ]
+    },
+    "generatorExp": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "GeneratorExp"},
+            "elt": {"$ref": "#/definitions/expr"},
+            "generators": {"type": "array"}
+          },
+          "required": ["elt", "generators"]
+        }
+      ]
+    },
+    "module": {
+      "allOf": [
+        {"$ref": "#/definitions/baseNode"},
+        {
+          "properties": {
+            "node_type": {"const": "Module"},
+            "body": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/stmt"}
+            },
+            "type_ignores": {"type": "array"}
+          },
+          "required": ["body"]
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "ast": {"$ref": "#/definitions/module"},
+    "metadata": {"$ref": "#/definitions/metadata"}
+  },
+  "required": ["ast", "metadata"]
+}

@@ -201,6 +201,26 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 - Vim/Neovim plugin
 - Emacs package
 
+### Claude SDK Integration
+- Implement Claude CLI SDK as a proper AIService
+  - Handle --verbose and --output-format stream-json for real-time output
+  - Manage tool permissions with --allowedTools and --disallowedTools
+  - Integrate MCP (Model Context Protocol) tools
+  - Handle permission granting for tools
+  - Implement timeout and error recovery
+  - Stream response handling for better UX
+- Benefits over cut-and-paste approach:
+  - Automated execution without manual intervention
+  - Better error handling and recovery
+  - Structured output parsing
+  - Tool usage capabilities
+  - Session management
+- Challenges to address:
+  - Tool execution hanging issues
+  - Permission management complexity
+  - MCP tool discovery and integration
+  - Different behavior with/without streaming
+
 ## Developer Experience
 
 ### Testing Improvements
@@ -312,3 +332,4 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 ---
 
 *Last Updated: 2025-06-01*
+

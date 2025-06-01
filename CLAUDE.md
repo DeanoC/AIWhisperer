@@ -57,6 +57,10 @@ pytest -k "test_agent"  # Run tests matching pattern
 # Format code (project standard)
 black . --line-length 120 --skip-magic-trailing-comma
 
+# Check for syntax errors and undefined names before committing
+# This command MUST pass before creating PRs
+flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
 # The project uses pytest.ini with -W error to treat warnings as errors
 ```
 
@@ -115,6 +119,46 @@ Prompts are loaded from files, never inlined:
 3. Configure models and parameters as needed
 
 ## Key Development Patterns
+
+### Execution Logs for Large Tasks
+
+When performing larger-sized jobs or complex investigations, create an execution log to track progress and maintain context:
+
+1. **Create a dedicated log file**: `docs/[task-name]-execution-log.md`
+2. **Document each tool use**: Record what tool was used, why, and what was found
+3. **Track context preservation**: Note strategies for maintaining context across potential context compaction
+4. **List tools wished for**: Document any tools that would have been helpful but weren't available
+5. **Summarize key findings**: Build progressive summaries as you work
+
+This practice helps with:
+- Recovery from context loss or compaction
+- Knowledge transfer to other team members
+- Creating reusable patterns for similar tasks
+- Identifying tooling gaps for future improvements
+
+Example structure:
+```markdown
+# [Task Name] Execution Log
+## Task: [Description]
+**Started**: [Date]
+**Status**: In Progress/Complete
+
+### Tool Usage Log
+#### 1. [Tool Name]
+**Target**: [file/pattern]
+**Purpose**: [why using this tool]
+**Status**: COMPLETE
+**Key Findings**: [what was discovered]
+
+### Tools I Wished I Had
+- [Tool description and use case]
+
+### Context Preservation Strategy
+- [How you're maintaining context]
+
+### Summary of Findings
+[Progressive summary of discoveries]
+```
 
 ### Agent Architecture and Tool Integration
 
@@ -257,3 +301,12 @@ pytest tests/integration/test_rfc_plan_bidirectional.py
 python -m ai_whisperer.batch.batch_client scripts/test_plan_generation_quality.json
 python -m ai_whisperer.batch.batch_client scripts/test_rfc_plan_lifecycle.json
 ```
+
+## Development Best Practices
+
+### Execution Logs for Complex Tasks
+When implementing complex features or debugging issues, create execution logs to maintain context:
+- Create logs in `docs/` directory with descriptive names
+- Include: Overview, Implementation Steps, Key Decisions, Issues Faced, Solutions
+- Example: `docs/agent-e-implementation-execution-log.md`
+- Helps maintain context across sessions and provides documentation

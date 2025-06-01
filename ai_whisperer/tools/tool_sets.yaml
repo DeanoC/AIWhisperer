@@ -195,3 +195,45 @@ specialized_sets:
       - analysis
       - real_time
       - interactive
+  
+  # Task decomposition tools for Agent E
+  task_decomposition:
+    description: "Tools for breaking down plans into executable tasks"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - list_plans
+      - read_plan
+      - decompose_plan
+      - analyze_dependencies
+      - format_for_external_agent
+      - update_task_status
+    tags:
+      - planning
+      - task_management
+      - decomposition
+      - analysis
+  
+  # Mailbox communication tools
+  mailbox_tools:
+    description: "Universal mailbox system for agent communication"
+    tools:
+      - send_mail
+      - check_mail
+      - reply_mail
+    tags:
+      - communication
+      - messaging
+      - mailbox
+  
+  # External agent integration tools
+  external_agent_tools:
+    description: "Tools for working with external AI coding assistants"
+    tools:
+      - validate_external_agent
+      - recommend_external_agent
+      - parse_external_result
+    tags:
+      - external_agents
+      - integration
+      - validation

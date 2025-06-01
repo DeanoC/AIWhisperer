@@ -78,3 +78,35 @@ agents:
         execution_timeout: 3600   # 1 hour
         auto_continue: true
         error_handling: "continue_on_error"
+  
+  e:
+    name: "Eamonn the Executioner"
+    role: "task_decomposer"
+    description: "Breaks down plans into executable tasks for external AI coding assistants"
+    tool_tags: ["task_decomposition", "external_agents", "mailbox", "analysis"]
+    prompt_file: "agent_eamonn.prompt.md"
+    context_sources: ["agent_p_plans", "task_dependencies", "technology_stack", "external_agent_capabilities"]
+    color: "#7C3AED"
+    icon: "⚔️"
+    tool_sets: ["task_decomposition", "mailbox_tools", "external_agent_tools"]
+    capabilities:
+      - plan_decomposition
+      - dependency_resolution
+      - technology_detection
+      - external_agent_formatting
+      - task_complexity_estimation
+      - clarification_requests
+      - progress_tracking
+    configuration:
+      decomposition:
+        max_task_depth: 3
+        min_task_size: "simple"
+        dependency_check: true
+      external_agents:
+        supported: ["claude_code", "roocode", "github_copilot"]
+        default: "claude_code"
+        validation_required: true
+      communication:
+        use_mailbox: true
+        clarification_timeout: 300  # 5 minutes
+        priority_default: "normal"

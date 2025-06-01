@@ -92,109 +92,15 @@ class StatelessInteractiveSession:
     
     def _register_tools(self):
         """Register all tools needed for interactive sessions."""
-        from ai_whisperer.tools.tool_registry import get_tool_registry
+        from ai_whisperer.tools.tool_registration import register_all_tools
         
-        tool_registry = get_tool_registry()
-        
-        # Register basic file operation tools
-        from ai_whisperer.tools.read_file_tool import ReadFileTool
-        from ai_whisperer.tools.write_file_tool import WriteFileTool
-        from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
-        from ai_whisperer.tools.list_directory_tool import ListDirectoryTool
-        from ai_whisperer.tools.search_files_tool import SearchFilesTool
-        from ai_whisperer.tools.get_file_content_tool import GetFileContentTool
-        
-        tool_registry.register_tool(ReadFileTool())
-        tool_registry.register_tool(WriteFileTool())
-        tool_registry.register_tool(ExecuteCommandTool())
-        tool_registry.register_tool(ListDirectoryTool())
-        tool_registry.register_tool(SearchFilesTool())
-        tool_registry.register_tool(GetFileContentTool())
-        
-        # Register advanced analysis tools
-        from ai_whisperer.tools.find_pattern_tool import FindPatternTool
-        from ai_whisperer.tools.workspace_stats_tool import WorkspaceStatsTool
-        
-        # These tools need PathManager instance
+        # Get PathManager instance for tools that need it
         path_manager = PathManager()
-        tool_registry.register_tool(FindPatternTool(path_manager))
-        tool_registry.register_tool(WorkspaceStatsTool(path_manager))
+        if self.project_path:
+            path_manager.initialize(config_values={'workspace_path': self.project_path})
         
-        # Register RFC management tools
-        from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
-        from ai_whisperer.tools.read_rfc_tool import ReadRFCTool
-        from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
-        from ai_whisperer.tools.update_rfc_tool import UpdateRFCTool
-        from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
-        from ai_whisperer.tools.delete_rfc_tool import DeleteRFCTool
-        
-        tool_registry.register_tool(CreateRFCTool())
-        tool_registry.register_tool(ReadRFCTool())
-        tool_registry.register_tool(ListRFCsTool())
-        tool_registry.register_tool(UpdateRFCTool())
-        tool_registry.register_tool(MoveRFCTool())
-        tool_registry.register_tool(DeleteRFCTool())
-        
-        # Register codebase analysis tools
-        from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool
-        from ai_whisperer.tools.find_similar_code_tool import FindSimilarCodeTool
-        from ai_whisperer.tools.get_project_structure_tool import GetProjectStructureTool
-        
-        tool_registry.register_tool(AnalyzeLanguagesTool())
-        tool_registry.register_tool(FindSimilarCodeTool())
-        tool_registry.register_tool(GetProjectStructureTool())
-        
-        # Register web research tools
-        from ai_whisperer.tools.web_search_tool import WebSearchTool
-        from ai_whisperer.tools.fetch_url_tool import FetchURLTool
-        
-        tool_registry.register_tool(WebSearchTool())
-        tool_registry.register_tool(FetchURLTool())
-        
-        # Register plan management tools
-        from ai_whisperer.tools.prepare_plan_from_rfc_tool import PreparePlanFromRFCTool
-        from ai_whisperer.tools.save_generated_plan_tool import SaveGeneratedPlanTool
-        from ai_whisperer.tools.list_plans_tool import ListPlansTool
-        from ai_whisperer.tools.read_plan_tool import ReadPlanTool
-        from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
-        from ai_whisperer.tools.move_plan_tool import MovePlanTool
-        from ai_whisperer.tools.delete_plan_tool import DeletePlanTool
-        
-        tool_registry.register_tool(PreparePlanFromRFCTool())
-        tool_registry.register_tool(SaveGeneratedPlanTool())
-        tool_registry.register_tool(ListPlansTool())
-        tool_registry.register_tool(ReadPlanTool())
-        tool_registry.register_tool(UpdatePlanFromRFCTool())
-        tool_registry.register_tool(MovePlanTool())
-        tool_registry.register_tool(DeletePlanTool())
-        
-        # Register Debbie's debugging and monitoring tools
-        try:
-            from ai_whisperer.tools.session_health_tool import SessionHealthTool
-            from ai_whisperer.tools.session_analysis_tool import SessionAnalysisTool
-            from ai_whisperer.tools.monitoring_control_tool import MonitoringControlTool
-            from ai_whisperer.tools.session_inspector_tool import SessionInspectorTool
-            from ai_whisperer.tools.message_injector_tool import MessageInjectorTool
-            from ai_whisperer.tools.workspace_validator_tool import WorkspaceValidatorTool
-            from ai_whisperer.tools.python_executor_tool import PythonExecutorTool
-            from ai_whisperer.tools.script_parser_tool import ScriptParserTool
-            from ai_whisperer.tools.batch_command_tool import BatchCommandTool
-            
-            tool_registry.register_tool(SessionHealthTool())
-            tool_registry.register_tool(SessionAnalysisTool())
-            tool_registry.register_tool(MonitoringControlTool())
-            tool_registry.register_tool(SessionInspectorTool())
-            tool_registry.register_tool(MessageInjectorTool())
-            tool_registry.register_tool(WorkspaceValidatorTool())
-            tool_registry.register_tool(PythonExecutorTool())
-            tool_registry.register_tool(ScriptParserTool())
-            tool_registry.register_tool(BatchCommandTool())
-            
-            logger.info("Successfully registered Debbie's debugging and batch processing tools")
-        except ImportError as e:
-            logger.warning(f"Some debugging/batch tools not available: {e}")
-        except Exception as e:
-            logger.error(f"Failed to register debugging/batch tools: {e}")
+        # Register all tools
+        register_all_tools(path_manager)
         
         logger.info("Registered all tools for interactive session")
     
