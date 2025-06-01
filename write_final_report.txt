@@ -1,0 +1,15 @@
+write a comprehensive debugging report for the plan UI display issue investigation. Include:
+
+1. Executive Summary of the root cause found
+2. Technical Analysis section with:
+   - Data flow diagram description
+   - Code snippets showing the mismatch
+   - Specific file locations and line numbers
+3. Recommended Solutions with:
+   - Option 1: Modify ListPlansTool to return JSON
+   - Option 2: Update plan_handler to parse text format
+   - Pros/cons of each approach
+4. Implementation Steps for the recommended solution
+5. Testing Strategy to verify the fix
+
+Format this as a professional debugging report that could be shared with the development team. Make it detailed but clear and actionable.
