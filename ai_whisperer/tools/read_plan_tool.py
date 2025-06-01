@@ -37,6 +37,12 @@ class ReadPlanTool(AITool):
                     "type": "boolean",
                     "description": "Include detailed task list",
                     "default": True
+                },
+                "format": {
+                    "type": "string",
+                    "description": "Output format: 'markdown' (default) or 'json'",
+                    "enum": ["markdown", "json"],
+                    "default": "markdown"
                 }
             },
             "required": ["plan_name"]
@@ -56,12 +62,16 @@ class ReadPlanTool(AITool):
         Parameters:
         - plan_name (string, required): Plan directory name
         - include_tasks (boolean, optional): Show task details (default: true)
+        - format (string, optional): Output format - 'markdown' (default) or 'json'
         
         Example usage:
         <tool_code>
         read_plan(plan_name="add-caching-plan-2025-05-31")
         read_plan(plan_name="feature-x-plan-2025-05-30", include_tasks=false)
+        read_plan(plan_name="dark-mode-plan-2025-05-31", format="json")
         </tool_code>
+        
+        Use format="json" when you need to pass the plan to another tool like decompose_plan.
         """
     
     def _find_plan(self, plan_name: str) -> Optional[Path]:
@@ -100,6 +110,7 @@ class ReadPlanTool(AITool):
         """Execute plan reading."""
         plan_name = arguments.get('plan_name')
         include_tasks = arguments.get('include_tasks', True)
+        output_format = arguments.get('format', 'markdown')
         
         if not plan_name:
             return "Error: 'plan_name' is required."
@@ -122,7 +133,11 @@ class ReadPlanTool(AITool):
                 with open(ref_file, 'r') as f:
                     ref_data = json.load(f)
             
-            # Format response
+            # Return JSON format if requested
+            if output_format == 'json':
+                return json.dumps(plan_data, indent=2)
+            
+            # Format response as markdown
             response = f"**Plan Found**: {plan_name}\n\n"
             
             # Basic information
