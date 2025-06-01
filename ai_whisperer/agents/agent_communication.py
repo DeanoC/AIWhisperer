@@ -115,14 +115,14 @@ class PlanRefinementRequest:
     suggested_refinements: List[Dict[str, Any]]
     decomposition_insights: Dict[str, Any]
     
-    def to_message(self, sender: str, recipient: str, message_id: str) -> AgentMessage:
+    def to_message(self, from_agent: str, to_agent: str, message_id: str) -> AgentMessage:
         """Convert to agent message."""
         return AgentMessage(
             message_id=message_id,
-            sender=sender,
-            recipient=recipient,
+            from_agent=from_agent,
+            to_agent=to_agent,
             message_type=MessageType.PLAN_REFINEMENT_REQUEST,
-            content={
+            payload={
                 'task_id': self.task_id,
                 'task_name': self.task_name,
                 'issue_description': self.issue_description,
