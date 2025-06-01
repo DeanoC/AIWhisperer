@@ -18,7 +18,7 @@ with open('file1.txt') as f1, open('file2.txt') as f2:
     data2 = f2.read()
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -103,7 +103,7 @@ class Container(Generic[T]):
         return result if result is not None else default
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -170,7 +170,7 @@ class MyClass(metaclass=Meta):
     pass
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -185,7 +185,7 @@ class TestASTParsingErrorHandling:
         binary_file.write_bytes(b'\x00\x01\x02\x03\x04')
         
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=str(binary_file),
             source_type="file"
@@ -217,7 +217,7 @@ class IncompleteClass:
     ...
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -269,7 +269,7 @@ from .. import module2
 from ...package import module3
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"

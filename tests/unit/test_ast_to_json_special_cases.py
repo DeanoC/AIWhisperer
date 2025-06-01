@@ -21,7 +21,7 @@ def func():
 x = ...
 y = [1, ..., 3]
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -49,7 +49,7 @@ try:
 except:
     pass
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -166,7 +166,7 @@ def func(a, b, /, c, d):
 def func2(x, /, *, y):
     return x + y
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -181,7 +181,7 @@ def func2(*, x, y, z=None):
 def func3(*args, kw_only):
     pass
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -220,7 +220,7 @@ def func(
 ) -> Optional[Dict[str, Union[int, str]]]:
     pass
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
 
@@ -242,7 +242,7 @@ x > y >= z > w
 # Mixed operators
 i < j == k != l
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -306,7 +306,7 @@ match value:
     case None:
         return "none"
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -412,7 +412,7 @@ async def process():
     async for i in range_async(10):
         results.append(await compute(i))
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -468,7 +468,7 @@ UserData: TypeAlias = Dict[str, Union[str, int, List[str]]]
 type Point[T] = tuple[T, T]
 type Matrix[T] = list[list[T]]
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     

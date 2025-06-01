@@ -477,7 +477,7 @@ class TestMalformedJSONHandling:
     
     def test_handle_non_dict_input(self):
         """Test handling non-dictionary JSON input."""
-                result = PythonASTJSONTool.json_to_ast("not a dict")
+        result = PythonASTJSONTool.json_to_ast("not a dict")
         # Should raise appropriate error
         
     result = PythonASTJSONTool.json_to_ast(42)

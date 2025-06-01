@@ -21,7 +21,7 @@ class TestASTParsingFilePaths:
         test_file.write_text("x = 42\nprint(x)")
         
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=str(test_file),
             source_type="file"
@@ -39,7 +39,7 @@ def add(a, b):
 """)
         
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=str(test_file),
             source_type="file"
@@ -107,7 +107,7 @@ def func():  # Line 5
 """)
         
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=str(test_file),
             source_type="file"
@@ -120,7 +120,7 @@ class TestASTParsingModules:
     def test_parse_builtin_module(self):
         """Test parsing a built-in module like 'os'."""
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source="os",
             source_type="module"
@@ -172,7 +172,7 @@ class TestASTParsingCodeStrings:
     def test_parse_simple_code_string(self):
         """Test parsing a simple code string."""
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source="x = 42",
             source_type="code"
@@ -211,7 +211,7 @@ class TestASTParsingInvalidSyntax:
         """Test parsing code with missing colon."""
         code = "if True\n    print('missing colon')"
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -282,7 +282,7 @@ def add(a: int, b: int) -> int:
     return a + b
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -365,7 +365,7 @@ if (n := len(data)) > 10:
     print(f"List has {n} elements")
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -405,7 +405,7 @@ def process(mode: Literal['read', 'write']) -> None:
     pass
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -469,7 +469,7 @@ class Stack[T]:
         self.items: list[T] = []
 """
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=code,
             source_type="code"
@@ -486,7 +486,7 @@ class TestASTParsingEdgeCases:
         test_file.write_text("\n".join(lines))
         
         tool = PythonASTJSONTool()
-                result = tool.execute(
+        result = tool.execute(
             action="to_json",
             source=str(test_file),
             source_type="file"

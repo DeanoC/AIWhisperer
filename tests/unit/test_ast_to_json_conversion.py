@@ -19,7 +19,7 @@ def greet(name: str, greeting: str = "Hello") -> str:
     '''Greet someone with a custom greeting.'''
     return f"{greeting}, {name}!"
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
         # When implemented, should verify:
@@ -245,7 +245,7 @@ a | b
 c ^ d
 p @ q
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -494,7 +494,7 @@ def outer(x):
         return inner
     return middle
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -543,7 +543,7 @@ def complex_func(
 ) -> Optional[Dict[str, T]]:
     pass
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
     
@@ -599,7 +599,7 @@ y = 2  # Line 2
 def func():  # Line 4
     pass  # Line 5
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
         # Should verify each node has correct lineno
@@ -661,7 +661,7 @@ y = []  # type: List[str]
 def func(a, b):  # type: (int, str) -> bool
     pass
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
         result = PythonASTJSONTool.ast_to_json(tree)
 

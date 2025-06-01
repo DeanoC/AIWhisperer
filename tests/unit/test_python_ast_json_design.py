@@ -16,7 +16,7 @@ class TestPythonASTJSONDesignRequirements:
         tool = PythonASTJSONTool()
         
         # Test with execute method
-                tool.execute(
+        tool.execute(
             action="to_json",
             source="/path/to/file.py",
             source_type="file"
