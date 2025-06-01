@@ -1,4 +1,5 @@
 # AI Whisperer
+[![Python application](https://github.com/DeanoC/AIWhisperer/actions/workflows/python-app.yml/badge.svg)](https://github.com/DeanoC/AIWhisperer/actions/workflows/python-app.yml)
 
 AI Whisperer is a Python-based AI development assistant that transforms project requirements written in Markdown into structured task definitions in JSON format. It features both command-line and interactive web interfaces for AI-powered software development workflows.
 
