@@ -171,7 +171,7 @@ Start with in-memory implementation, then add Redis support.
             
             # Check success message
             assert "Plan created successfully!" in result
-            assert "add-caching-plan-2025-05-31" in result
+            assert "add-caching-plan-" in result  # Don't hardcode the date
             
             # Verify plan directory was created
             plan_dirs = list(Path(temp_workspace, ".WHISPER", "plans", "in_progress").iterdir())
