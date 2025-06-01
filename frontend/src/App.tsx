@@ -5,7 +5,7 @@ import { MainLayout } from './components/MainLayout';
 import { ViewProvider } from './contexts/ViewContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { ChatView } from './components/ChatView';
-import { JSONPlanView } from './components/JSONPlanView';
+import JSONPlanView from './components/JSONPlanView';
 import { CodeChangesView } from './components/CodeChangesView';
 import { TestResultsView } from './components/TestResultsView';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -445,7 +445,7 @@ function App() {
             
             {/* Plans Route */}
             <Route path="/plans" element={
-              <JSONPlanView data={mockPlanData} />
+              <JSONPlanView jsonRpcService={jsonRpcService} />
             } />
             
             {/* Code Route */}

@@ -1,0 +1,4 @@
+Hello Debbie, can you help me test the batch mode?
+list_plans_tool = ListPlansTool()
+result = list_plans_tool.execute({})
+print("Plans found:", result)

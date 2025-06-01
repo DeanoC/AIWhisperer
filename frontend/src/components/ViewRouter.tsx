@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useViewContext } from '../contexts/ViewContext';
 import { ChatView } from './ChatView';
-import { JSONPlanView } from './JSONPlanView';
+import JSONPlanView from './JSONPlanView';
 import { CodeChangesView } from './CodeChangesView';
 import { TestResultsView } from './TestResultsView';
 import './ViewRouter.css';
@@ -9,6 +9,7 @@ import './ViewRouter.css';
 export interface ViewRouterProps {
   initialData?: any;
   isLoading?: boolean;
+  jsonRpcService?: any;
 }
 
 type ViewType = 'chat' | 'json' | 'code' | 'test';
@@ -30,7 +31,8 @@ const viewConfigs: ViewConfig[] = [
 
 export const ViewRouter: React.FC<ViewRouterProps> = ({ 
   initialData, 
-  isLoading = false 
+  isLoading = false,
+  jsonRpcService
 }) => {
   const { currentView, setView, viewData, resetView } = useViewContext();
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -128,7 +130,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     
     switch (currentView) {
       case 'json':
-        return <JSONPlanView {...props} />;
+        return <JSONPlanView jsonRpcService={jsonRpcService} />;
       case 'code':
         return <CodeChangesView {...props} />;
       case 'test':

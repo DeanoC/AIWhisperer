@@ -539,7 +539,10 @@ HANDLERS = {
     "debbie.status": debbie_get_status_handler,
     "debbie.alerts": debbie_get_alerts_handler,
     # Project management handlers
-    **PROJECT_HANDLERS
+    **PROJECT_HANDLERS,
+    # Plan management handlers
+    "plan.list": __import__("interactive_server.handlers.plan_handler").handlers.plan_handler.list_plans_handler,
+    "plan.read": __import__("interactive_server.handlers.plan_handler").handlers.plan_handler.read_plan_handler,
 }
 
 # Add workspace handlers if available

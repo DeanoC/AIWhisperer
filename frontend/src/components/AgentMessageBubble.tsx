@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { Agent } from '../types/agent';
 import { ChatMessage } from '../types/chat';
 import { MessageStatus } from '../types/ai';
@@ -76,18 +77,16 @@ export const AgentMessageBubble: React.FC<AgentMessageBubbleProps> = ({
           
           <div className="message-text markdown-content">
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
+              remarkPlugins={[remarkGfm, remarkBreaks]}
               components={{
                 // Custom code block rendering
                 code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const language = match ? match[1] : 'text';
                   const isInline = !className;
-                  
                   if (isInline) {
                     return <code className="inline-code" {...props}>{children}</code>;
                   }
-                  
                   return (
                     <div className="code-block-wrapper" data-testid="code-block">
                       <div className="code-block-header">{language}</div>
