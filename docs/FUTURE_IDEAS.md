@@ -288,7 +288,7 @@ This document tracks ideas, nice-to-have features, and improvements that we want
   - Important for full file management capabilities
 
 
-## Random unstructureed ideas
+## Random unstructured ideas
 - Asynchronous sleeper agents, able to wake up at intervals and check on things including other agents
 - MCP server
 - MCP client
@@ -310,4 +310,4 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 
 ---
 
-*Last Updated: 2025-05-29*
+*Last Updated: 2025-06-01*
