@@ -115,7 +115,8 @@ class ListPlansTool(AITool):
             # Handle potential None workspace_path
             workspace_path = path_manager.workspace_path
             if workspace_path is None:
-                return "Error: Workspace path not initialized."
+                error_response = {"error": "Workspace path not initialized."}
+                return json.dumps(error_response) if output_format == 'json' else "Error: Workspace path not initialized."
             
             plans_base = Path(workspace_path) / ".WHISPER" / "plans"
             
@@ -173,7 +174,7 @@ class ListPlansTool(AITool):
             
             # Format response as markdown (default behavior)
             if not all_plans:
-                return "No plans found."
+                return "[]" if output_format == 'json' else "No plans found."
             
             response = f"Found {len(all_plans)} plan(s):\n\n"
             
@@ -206,4 +207,5 @@ class ListPlansTool(AITool):
             
         except Exception as e:
             logger.error(f"Error listing plans: {e}")
-            return f"Error listing plans: {str(e)}"
+            error_response = {"error": f"Error listing plans: {str(e)}"}
+            return json.dumps(error_response) if output_format == 'json' else f"Error listing plans: {str(e)}"

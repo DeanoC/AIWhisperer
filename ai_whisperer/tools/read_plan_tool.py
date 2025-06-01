@@ -113,13 +113,15 @@ class ReadPlanTool(AITool):
         output_format = arguments.get('format', 'markdown')
         
         if not plan_name:
-            return "Error: 'plan_name' is required."
+            error_response = {"error": "'plan_name' is required."}
+            return json.dumps(error_response) if output_format == 'json' else "Error: 'plan_name' is required."
         
         try:
             # Find plan directory
             plan_dir = self._find_plan(plan_name)
             if not plan_dir:
-                return f"Error: Plan '{plan_name}' not found."
+                error_response = {"error": f"Plan '{plan_name}' not found."}
+                return json.dumps(error_response) if output_format == 'json' else f"Error: Plan '{plan_name}' not found."
             
             # Load plan data
             plan_file = plan_dir / "plan.json"
@@ -204,4 +206,5 @@ class ReadPlanTool(AITool):
             
         except Exception as e:
             logger.error(f"Error reading plan: {e}")
-            return f"Error reading plan: {str(e)}"
+            error_response = {"error": f"Error reading plan: {str(e)}"}
+            return json.dumps(error_response) if output_format == 'json' else f"Error reading plan: {str(e)}"
