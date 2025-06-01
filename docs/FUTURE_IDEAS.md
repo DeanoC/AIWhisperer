@@ -306,7 +306,7 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 - Think on the idea of 'agents as tools' specialist intelligent tools that other agents can use.
 - Prompt development refinement / agentic approach? https://manus.im/share/WZHngJw4Woo44W0IxgcYbh?replay=1 https://github.com/dontriskit/awesome-ai-system-prompts
 - AI useable debuggers https://manus.im/share/file/18d10fa9-12ea-475c-8ac8-5f66a371420c
-- 
+- Add options to be less 'friendly' for experienced use. i.e. AI introductions can be short/missing, agent E always tells you how to use claude
 
 ---
 
