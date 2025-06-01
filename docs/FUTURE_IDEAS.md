@@ -201,6 +201,26 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 - Vim/Neovim plugin
 - Emacs package
 
+### Claude SDK Integration
+- Implement Claude CLI SDK as a proper AIService
+  - Handle --verbose and --output-format stream-json for real-time output
+  - Manage tool permissions with --allowedTools and --disallowedTools
+  - Integrate MCP (Model Context Protocol) tools
+  - Handle permission granting for tools
+  - Implement timeout and error recovery
+  - Stream response handling for better UX
+- Benefits over cut-and-paste approach:
+  - Automated execution without manual intervention
+  - Better error handling and recovery
+  - Structured output parsing
+  - Tool usage capabilities
+  - Session management
+- Challenges to address:
+  - Tool execution hanging issues
+  - Permission management complexity
+  - MCP tool discovery and integration
+  - Different behavior with/without streaming
+
 ## Developer Experience
 
 ### Testing Improvements
@@ -287,6 +307,29 @@ This document tracks ideas, nice-to-have features, and improvements that we want
   - Deferred to focus on read-only operations first
   - Important for full file management capabilities
 
+
+## Random unstructured ideas
+- Asynchronous sleeper agents, able to wake up at intervals and check on things including other agents
+- MCP server
+- MCP client
+- Alice to get a new project setup feature (can talk to agent P by mail for ideas on languages etc.)
+- Agent C - Colin the Coder specialist coder. To coding tasks in Agent E plans
+- Our workspace project file only support 1 git worktree at a time, would be good to allow multiple worktree so multi plans can be run at the some time in isolation
+- Base git integration on the right view and provided to agents
+- Agent E should commit after each successful task
+- https://manus.im/share/file/5c80a565-2a61-449a-8f2b-350e2c41333a Manus.im for continuation for AI (High priority)
+- Idea notepad that the quick ideas can be added to and agent P can select one for a new efc and plan if the user asks it
+- Github integration for an agent or as an Agent? Agent R Roger the Repo Man
+- Massive doc cleanup
+- PDF and image support
+- drag and drop in the frontend
+- Think on the idea of 'agents as tools' specialist intelligent tools that other agents can use.
+- Prompt development refinement / agentic approach? https://manus.im/share/WZHngJw4Woo44W0IxgcYbh?replay=1 https://github.com/dontriskit/awesome-ai-system-prompts
+- AI useable debuggers https://manus.im/share/file/18d10fa9-12ea-475c-8ac8-5f66a371420c
+- Add options to be less 'friendly' for experienced use. i.e. AI introductions can be short/missing, agent E always tells you how to use claude
+- Integrate AI dynamic buttons in the message bubbles, allow agents to create buttons using the output markdown for easy user interaction
+
 ---
 
-*Last Updated: 2025-05-29*
+*Last Updated: 2025-06-01*
+

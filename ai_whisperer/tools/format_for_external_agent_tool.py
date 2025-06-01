@@ -17,35 +17,68 @@ class FormatForExternalAgentTool(AITool):
     """Tool for formatting tasks for specific external agents."""
     
     def __init__(self):
-        super().__init__(
-            name="format_for_external_agent",
-            description="Format a task for a specific external AI agent (Claude Code, RooCode, or GitHub Copilot)",
-            parameters={
+        super().__init__()
+        self._registry = AdapterRegistry()
+    
+    @property
+    def name(self) -> str:
+        return "format_for_external_agent"
+    
+    @property
+    def description(self) -> str:
+        return "Format a task for a specific external AI agent (Claude Code, RooCode, or GitHub Copilot)"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
                 "task": {
                     "type": "string",
-                    "description": "JSON representation of the task to format",
-                    "required": True
+                    "description": "JSON representation of the task to format"
                 },
                 "agent": {
                     "type": "string",
                     "description": "Target agent: 'claude_code', 'roocode', or 'github_copilot'",
-                    "required": True
+                    "enum": ["claude_code", "roocode", "github_copilot"]
                 },
                 "include_instructions": {
                     "type": "boolean",
-                    "description": "Include human-readable execution instructions (default: true)",
-                    "required": False
+                    "description": "Include human-readable execution instructions (default: true)"
                 }
             },
-            tags=["external_agents", "formatting", "integration"]
-        )
-        self._registry = AdapterRegistry()
+            "required": ["task", "agent"]
+        }
     
-    def execute(self, **kwargs) -> str:
+    @property
+    def tags(self) -> List[str]:
+        return ["external_agents", "formatting", "integration"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        return """
+Use this tool to format a decomposed task for a specific external AI agent.
+The tool will optimize the task presentation for the chosen agent's strengths.
+
+Parameters:
+- task: JSON representation of the task to format (required)
+- agent: Target agent - must be 'claude_code', 'roocode', or 'github_copilot' (required)
+- include_instructions: Include human-readable execution instructions (optional, default: true)
+
+Returns:
+A JSON object containing:
+- agent: The target agent name
+- environment_valid: Whether the agent is available
+- validation_message: Environment validation details
+- formatted_task: Agent-specific task formatting
+- execution_instructions: Human-readable instructions (if requested)
+- alternatives: Alternative agents if the target is unavailable
+"""
+    
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the format for external agent tool."""
-        task_json = kwargs.get("task")
-        agent_name = kwargs.get("agent")
-        include_instructions = kwargs.get("include_instructions", True)
+        task_json = arguments.get("task")
+        agent_name = arguments.get("agent")
+        include_instructions = arguments.get("include_instructions", True)
         
         if not task_json:
             return "Error: task parameter is required"
@@ -64,14 +97,12 @@ class FormatForExternalAgentTool(AITool):
                 task_id=task_data.get("id", task_data.get("task_id", "unknown")),
                 title=task_data.get("title", ""),
                 description=task_data.get("description", ""),
-                parent_task_id=task_data.get("parent", task_data.get("parent_task_id")),
                 parent_task_name=task_data.get("parent_task_name", ""),
-                dependencies=task_data.get("dependencies", []),
-                estimated_complexity=task_data.get("complexity", task_data.get("estimated_complexity", "moderate")),
-                tdd_phase=task_data.get("tdd_phase", "RED"),
+                context=task_data.get("context", {}),
                 acceptance_criteria=task_data.get("acceptance_criteria", []),
-                external_agent_prompts=task_data.get("external_agent_prompts", {}),
-                context=task_data.get("context", {})
+                estimated_complexity=task_data.get("complexity", task_data.get("estimated_complexity", "moderate")),
+                status=task_data.get("status", "pending"),
+                external_agent_prompts=task_data.get("external_agent_prompts", {})
             )
             
             # Get the adapter
@@ -128,32 +159,3 @@ class FormatForExternalAgentTool(AITool):
         except Exception as e:
             logger.error(f"Unexpected error in format_for_external_agent: {e}", exc_info=True)
             return f"Error: Unexpected error - {str(e)}"
-    
-    def get_openrouter_tool_definition(self) -> Dict[str, Any]:
-        """Get the OpenRouter tool definition."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "task": {
-                            "type": "string",
-                            "description": self.parameters["task"]["description"]
-                        },
-                        "agent": {
-                            "type": "string",
-                            "description": self.parameters["agent"]["description"],
-                            "enum": ["claude_code", "roocode", "github_copilot"]
-                        },
-                        "include_instructions": {
-                            "type": "boolean",
-                            "description": self.parameters["include_instructions"]["description"]
-                        }
-                    },
-                    "required": ["task", "agent"]
-                }
-            }
-        }

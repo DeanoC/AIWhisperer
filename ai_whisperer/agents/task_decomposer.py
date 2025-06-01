@@ -4,11 +4,14 @@ Breaks down Agent P plans into executable tasks for external agents.
 """
 import re
 import uuid
+import logging
 from typing import List, Dict, Any, Set, Tuple
 from collections import defaultdict, deque
 
 from .decomposed_task import DecomposedTask
 from .agent_e_exceptions import InvalidPlanError, DependencyCycleError, TaskDecompositionError
+
+logger = logging.getLogger(__name__)
 
 
 class TaskDecomposer:
@@ -27,6 +30,58 @@ class TaskDecomposer:
             deps = context.get('dependencies', [])
             return deps if isinstance(deps, list) else []
         return []
+    
+    def _topological_sort(self, dependency_graph: Dict[str, List[str]]) -> List[str]:
+        """
+        Perform topological sort on dependency graph.
+        
+        Args:
+            dependency_graph: Dict mapping task_id to list of dependency task_ids
+            
+        Returns:
+            List of task_ids in execution order
+            
+        Raises:
+            DependencyCycleError: If circular dependencies are detected
+        """
+        # Calculate in-degrees
+        in_degree = defaultdict(int)
+        all_nodes = set(dependency_graph.keys())
+        
+        # Add all dependencies to the node set
+        for deps in dependency_graph.values():
+            all_nodes.update(deps)
+        
+        # Calculate in-degrees for all nodes
+        for node in all_nodes:
+            if node not in in_degree:
+                in_degree[node] = 0
+        
+        for deps in dependency_graph.values():
+            for dep in deps:
+                in_degree[dep] += 1
+        
+        # Find nodes with no dependencies
+        queue = deque([node for node in all_nodes if in_degree[node] == 0])
+        result = []
+        
+        while queue:
+            node = queue.popleft()
+            result.append(node)
+            
+            # Reduce in-degree for dependent nodes
+            for dependent in dependency_graph.get(node, []):
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    queue.append(dependent)
+        
+        # Check for cycles
+        if len(result) != len(all_nodes):
+            # Find nodes involved in cycle
+            remaining = [node for node in all_nodes if node not in result]
+            raise DependencyCycleError(f"Circular dependency detected involving tasks: {remaining}")
+        
+        return result
     
     def __init__(self):
         """Initialize the TaskDecomposer."""
@@ -65,11 +120,30 @@ class TaskDecomposer:
         if not plan_tasks:
             raise InvalidPlanError("Plan must contain at least one task")
         
-        # Create decomposed tasks
+        # First pass: Create all tasks and build name-to-id mapping
         decomposed_tasks = []
+        name_to_task_map = {}  # Map task names to decomposed tasks
+        
         for task_data in plan_tasks:
             decomposed = self._decompose_single_task(task_data, plan)
             decomposed_tasks.append(decomposed)
+            # Store mapping from original task name to the new task
+            name_to_task_map[task_data.get('name', '')] = decomposed
+        
+        # Second pass: Update dependencies from names to IDs
+        for task in decomposed_tasks:
+            # Get the original dependencies (which are task names)
+            original_deps = task.context.get('dependencies', [])
+            # Convert names to IDs
+            id_deps = []
+            for dep_name in original_deps:
+                if dep_name in name_to_task_map:
+                    id_deps.append(name_to_task_map[dep_name].task_id)
+                else:
+                    # Log warning but continue - graceful degradation
+                    logger.warning(f"Dependency '{dep_name}' not found for task {task.parent_task_name}")
+            # Update the context with ID-based dependencies
+            task.context['dependencies'] = id_deps
         
         # Validate dependencies
         self._validate_dependencies(decomposed_tasks)
@@ -93,6 +167,15 @@ class TaskDecomposer:
             if phase not in tdd_phases:
                 raise InvalidPlanError(f"Plan missing TDD phase: {phase}")
     
+    def _generate_task_title(self, task_name: str, description: str) -> str:
+        """Generate a concise task title."""
+        # If task name is already concise, use it
+        if len(task_name) <= 50:
+            return task_name
+        
+        # Otherwise, truncate and add ellipsis
+        return task_name[:47] + "..."
+    
     def _decompose_single_task(self, task_data: Dict[str, Any], plan: Dict[str, Any]) -> DecomposedTask:
         """Decompose a single task from the plan."""
         # Generate unique task ID
@@ -108,8 +191,12 @@ class TaskDecomposer:
         # Detect technology stack
         tech_stack = self._detect_technology_stack(task_name, description, plan)
         
-        # Build context
+        # Build context with plan information
         context = self._build_task_context(task_data, dependencies, tech_stack)
+        # Add plan context
+        context['plan_description'] = plan.get('description', '')
+        context['plan_title'] = plan.get('title', '')
+        context['tdd_phase'] = tdd_phase
         
         # Generate acceptance criteria
         acceptance_criteria = self._generate_acceptance_criteria(validation_criteria, tdd_phase)
@@ -396,8 +483,28 @@ class TaskDecomposer:
         # Build Claude-optimized prompt
         prompt_parts = []
         
-        # Add task description
-        prompt_parts.append(f"{attrs['description']}")
+        # Get TDD phase first to determine prompt structure
+        tdd_phase = attrs['context'].get('tdd_phase', '').lower()
+        task_name_lower = attrs['parent_task_name'].lower()
+        
+        # For RED phase or design tasks, keep context minimal
+        if tdd_phase == 'red' and 'design' in task_name_lower:
+            # Minimal context for design tasks
+            prompt_parts.append(f"Task: {attrs['parent_task_name']}")
+            prompt_parts.append(f"\nObjective: {attrs['description']}")
+        else:
+            # Add project context for implementation tasks
+            context = attrs.get('context', {})
+            if context.get('plan_title'):
+                prompt_parts.append(f"Project: {context['plan_title']}")
+            # Only add full description for non-design tasks
+            if tdd_phase != 'red' or 'design' not in task_name_lower:
+                if context.get('plan_description'):
+                    prompt_parts.append(f"Context: {context['plan_description']}")
+                    prompt_parts.append("")  # Empty line for separation
+            
+            # Add focused task description
+            prompt_parts.append(f"Task: {attrs['description']}")
         
         # Add technology context
         tech_stack = attrs['context'].get('technology_stack', {})
@@ -405,19 +512,63 @@ class TaskDecomposer:
             tech_str = ", ".join(f"{k}: {v}" for k, v in tech_stack.items())
             prompt_parts.append(f"\nTechnology: {tech_str}")
         
-        # Add file context
+        # Add file context only if files exist
         if attrs['context'].get('files_to_read'):
             prompt_parts.append(f"\nFiles to read first: {', '.join(attrs['context']['files_to_read'])}")
         if attrs['context'].get('files_to_modify'):
             prompt_parts.append(f"\nFiles to modify: {', '.join(attrs['context']['files_to_modify'])}")
         
+        # Add file structure ONLY for implementation tasks, not design tasks
+        # Check for GREEN phase implementation tasks that need structure
+        if (tdd_phase == 'green' and 
+            ('implement' in task_name_lower or 'create' in task_name_lower) and
+            not attrs['context'].get('files_to_modify')):  # Only if creating new files
+            prompt_parts.append("\n## Expected File Structure:")
+            prompt_parts.append("- `ast_to_json/` - Main package directory")
+            prompt_parts.append("  - `__init__.py` - Package initialization")
+            prompt_parts.append("  - `parser.py` - AST parsing functionality")
+            prompt_parts.append("  - `converter.py` - AST to JSON conversion")
+            prompt_parts.append("  - `schemas.py` - JSON schema definitions")
+            prompt_parts.append("- `tests/` - Test directory")
+            prompt_parts.append("  - `test_parser.py` - Parser tests")
+            prompt_parts.append("  - `test_converter.py` - Converter tests")
+            prompt_parts.append("- `docs/` - Documentation")
+            prompt_parts.append("  - `api.md` - API documentation")
+            prompt_parts.append("- `examples/` - Usage examples")
+        
         # Add constraints
         if attrs['context'].get('constraints'):
             prompt_parts.append(f"\nConstraints:\n" + "\n".join(f"- {c}" for c in attrs['context']['constraints']))
         
-        # Add TDD emphasis for test tasks
-        if 'test' in attrs['parent_task_name'].lower() or attrs['execution_strategy'].get('approach') == 'tdd':
-            prompt_parts.append("\nUse Test-Driven Development (TDD) approach - write tests first!")
+        # Add TDD phase-specific instructions with task-focused guidance
+        if tdd_phase == 'red':
+            prompt_parts.append("\n## TDD RED Phase Instructions:")
+            if 'design' in task_name_lower:
+                prompt_parts.append("1. Focus ONLY on design and specification")
+                prompt_parts.append("2. Define interfaces, schemas, or API contracts")
+                prompt_parts.append("3. Create stub implementations with NotImplementedError")
+                prompt_parts.append("4. Write tests that verify the design (will fail)")
+                prompt_parts.append("5. Do NOT implement working functionality")
+            elif 'test' in task_name_lower:
+                prompt_parts.append("1. Write comprehensive tests that will initially FAIL")
+                prompt_parts.append("2. Tests should cover all acceptance criteria")
+                prompt_parts.append("3. Do NOT implement the functionality being tested")
+                prompt_parts.append("4. Use pytest framework for Python tests")
+                prompt_parts.append("5. Include edge cases and error conditions")
+        elif tdd_phase == 'green':
+            prompt_parts.append("\n## TDD GREEN Phase Instructions:")
+            prompt_parts.append("1. Implement ONLY enough code to make existing tests pass")
+            prompt_parts.append("2. Focus on correctness, not optimization")
+            prompt_parts.append("3. All related tests must pass after implementation")
+            prompt_parts.append("4. Do not add features beyond test requirements")
+            prompt_parts.append("5. Keep implementation simple and direct")
+        elif tdd_phase == 'refactor':
+            prompt_parts.append("\n## TDD REFACTOR Phase Instructions:")
+            prompt_parts.append("1. Optimize and clean up the code")
+            prompt_parts.append("2. Maintain all passing tests")
+            prompt_parts.append("3. Improve code organization and readability")
+            prompt_parts.append("4. Extract common patterns and reduce duplication")
+            prompt_parts.append("5. Ensure no regression in functionality")
         
         # Add acceptance criteria
         criteria = attrs.get('acceptance_criteria', [])
@@ -429,10 +580,19 @@ class TaskDecomposer:
                 else:
                     prompt_parts.append(f"- {criterion}")
         
+        # Add task scope clarification
+        prompt_parts.append("\n## Task Scope:")
+        prompt_parts.append("Focus ONLY on this specific task. Do not:")
+        prompt_parts.append("- Implement features from other tasks in the plan")
+        prompt_parts.append("- Create infrastructure beyond what this task requires")
+        prompt_parts.append("- Add features not mentioned in the acceptance criteria")
+        if tdd_phase == 'red':
+            prompt_parts.append("- Implement working functionality (only stubs/interfaces)")
+        
         prompt = "\n".join(prompt_parts)
         
         # Build command
-        command = f'claude -p "{prompt}" --json'
+        command = f'claude -p "{prompt}" --output-format json'
         
         # Assess suitability
         suitable = True
@@ -551,26 +711,26 @@ class TaskDecomposer:
     
     def resolve_dependencies(self, tasks: List[DecomposedTask]) -> List[DecomposedTask]:
         """Resolve task dependencies and return sorted order."""
-        # Build task map
-        task_map = {task.parent_task_name: task for task in tasks}
+        # Build task map using task IDs
+        task_map = {task.task_id: task for task in tasks}
         
         # Build dependency graph
         graph = defaultdict(list)
         in_degree = defaultdict(int)
         
         for task in tasks:
-            task_name = task.parent_task_name
-            if task_name not in in_degree:
-                in_degree[task_name] = 0
+            task_id = task.task_id
+            if task_id not in in_degree:
+                in_degree[task_id] = 0
             
-            # Get dependencies using helper method
-            dependencies = self._get_task_dependencies(task)
+            # Get dependencies from context (already converted to IDs)
+            dependencies = task.context.get('dependencies', [])
             
-            for dep in dependencies:
-                if dep not in task_map:
-                    raise TaskDecompositionError(f"Missing dependency: {dep}")
-                graph[dep].append(task_name)
-                in_degree[task_name] += 1
+            for dep_id in dependencies:
+                if dep_id not in task_map:
+                    raise TaskDecompositionError(f"Missing dependency: {dep_id}")
+                graph[dep_id].append(task_id)
+                in_degree[task_id] += 1
         
         # Detect cycles using DFS
         self._detect_cycles(graph, list(task_map.keys()))
@@ -618,16 +778,16 @@ class TaskDecomposer:
     
     def _validate_dependencies(self, tasks: List[DecomposedTask]):
         """Validate that all dependencies exist."""
-        task_names = {task.parent_task_name for task in tasks}
+        task_ids = {task.task_id for task in tasks}
         
         for task in tasks:
-            # Get dependencies using helper method
-            dependencies = self._get_task_dependencies(task)
+            # Get dependencies from context (already converted to IDs)
+            dependencies = task.context.get('dependencies', [])
             
-            for dep in dependencies:
-                if dep not in task_names:
+            for dep_id in dependencies:
+                if dep_id not in task_ids:
                     raise TaskDecompositionError(
-                        f"Task '{task.parent_task_name}' depends on non-existent task '{dep}'"
+                        f"Task '{task.parent_task_name}' depends on non-existent task ID '{dep_id}'"
                     )
     
     def validate_dependencies(self, tasks: List[DecomposedTask]) -> bool:

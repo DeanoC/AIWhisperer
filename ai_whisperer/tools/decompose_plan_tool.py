@@ -20,29 +20,59 @@ class DecomposePlanTool(AITool):
     """Tool for decomposing plans into executable tasks."""
     
     def __init__(self):
-        super().__init__(
-            name="decompose_plan",
-            description="Decompose an Agent P plan into executable tasks for external agents",
-            parameters={
-                "plan_content": {
-                    "type": "string",
-                    "description": "The JSON plan content to decompose",
-                    "required": True
-                },
-                "max_depth": {
-                    "type": "integer", 
-                    "description": "Maximum depth for task decomposition (default: 3)",
-                    "required": False
-                }
-            },
-            tags=["planning", "task_management", "decomposition"]
-        )
+        super().__init__()
         self._decomposer = TaskDecomposer()
     
-    def execute(self, **kwargs) -> str:
+    @property
+    def name(self) -> str:
+        return "decompose_plan"
+    
+    @property
+    def description(self) -> str:
+        return "Decompose an Agent P plan into executable tasks for external agents"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "plan_content": {
+                    "type": "string",
+                    "description": "The JSON plan content to decompose"
+                },
+                "max_depth": {
+                    "type": "integer",
+                    "description": "Maximum depth for task decomposition (default: 3)"
+                }
+            },
+            "required": ["plan_content"]
+        }
+    
+    @property
+    def tags(self) -> List[str]:
+        return ["planning", "task_management", "decomposition"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        return """
+Use this tool to decompose an Agent P plan into executable tasks for external agents.
+The tool will analyze the plan structure, detect the technology stack, and create
+tasks with proper dependencies and complexity estimates.
+
+Parameters:
+- plan_content: The JSON plan content to decompose (required)
+- max_depth: Maximum depth for task decomposition (optional, default: 3)
+
+Returns:
+A JSON object containing:
+- total_tasks: Number of tasks created
+- technology_stack: Detected languages, frameworks, and tools
+- tasks: Array of decomposed tasks with dependencies and metadata
+"""
+    
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the decompose plan tool."""
-        plan_content = kwargs.get("plan_content")
-        max_depth = kwargs.get("max_depth", 3)
+        plan_content = arguments.get("plan_content")
+        max_depth = arguments.get("max_depth", 3)
         
         if not plan_content:
             return "Error: plan_content is required"
@@ -55,12 +85,12 @@ class DecomposePlanTool(AITool):
                 plan_data = plan_content
             
             # Decompose the plan
-            tasks = self._decomposer.decompose_plan(plan_data, max_depth=max_depth)
+            tasks = self._decomposer.decompose_plan(plan_data)
             
             # Format the output
             result = {
                 "total_tasks": len(tasks),
-                "technology_stack": self._decomposer._detect_technology_stack(plan_data),
+                "technology_stack": {},  # Technology stack is detected per task
                 "tasks": []
             }
             
@@ -69,10 +99,10 @@ class DecomposePlanTool(AITool):
                     "id": task.task_id,
                     "title": task.title,
                     "description": task.description,
-                    "parent": task.parent_task_id,
-                    "dependencies": task.dependencies,
+                    "parent_task_name": task.parent_task_name,
+                    "dependencies": task.get_dependencies(),
                     "complexity": task.estimated_complexity,
-                    "tdd_phase": task.tdd_phase,
+                    "status": task.status,
                     "acceptance_criteria": task.acceptance_criteria,
                     "context": task.context
                 }
@@ -92,27 +122,3 @@ class DecomposePlanTool(AITool):
         except Exception as e:
             logger.error(f"Unexpected error in decompose_plan: {e}", exc_info=True)
             return f"Error: Unexpected error - {str(e)}"
-    
-    def get_openrouter_tool_definition(self) -> Dict[str, Any]:
-        """Get the OpenRouter tool definition."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "plan_content": {
-                            "type": "string",
-                            "description": self.parameters["plan_content"]["description"]
-                        },
-                        "max_depth": {
-                            "type": "integer",
-                            "description": self.parameters["max_depth"]["description"]
-                        }
-                    },
-                    "required": ["plan_content"]
-                }
-            }
-        }

@@ -1,0 +1,20 @@
+{
+  "rfc_id": "RFC-2025-06-01-0001",
+  "filename": "python-ast-json-2025-06-01.md",
+  "short_name": "python-ast-json",
+  "title": "Python AST to JSON Converter for Agent Processing",
+  "status": "in_progress",
+  "created": "2025-06-01 06:00:48",
+  "updated": "2025-06-01 06:02:30",
+  "author": "User",
+  "last_updated_section": "requirements",
+  "last_updated_by": "Agent P",
+  "derived_plans": [
+    {
+      "plan_name": "python-ast-json-plan-2025-06-01",
+      "status": "in_progress",
+      "location": ".WHISPER/plans/in_progress/python-ast-json-plan-2025-06-01",
+      "created": "2025-06-01 06:03:52"
+    }
+  ]
+}

@@ -31,6 +31,9 @@ Agent E is a task decomposition specialist that breaks down Agent P's plans into
 
 ### 4. External Agent Adapters 🚧 (1/22 tests passing)
 - **ClaudeCodeAdapter**: Formats tasks for Claude CLI
+  - Now writes prompts to temporary files to handle long/complex prompts
+  - Uses `claude -p "read @file.md as your prompt file"` syntax
+  - Temp files are preserved until task completion
 - **RooCodeAdapter**: Optimizes for VS Code multi-file editing
 - **GitHubCopilotAdapter**: Leverages agent mode for iteration
 - **AdapterRegistry**: Recommends best adapter based on task characteristics

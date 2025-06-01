@@ -21,3 +21,6 @@ debugpy
 fastapi
 uvicorn
 httpx
+
+# Code quality tools
+flake8>=7.0,<8.0  # Linting for Python code quality
