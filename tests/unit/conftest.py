@@ -11,7 +11,7 @@ from ai_whisperer.tools.python_ast_json_tool import PythonASTJSONTool
 
 
 # Override NotImplementedError for round-trip tests
-pytest_plugins = []
+# Note: pytest_plugins should only be defined in top-level conftest
 
 
 def fix_missing_locations(node, lineno=1, col_offset=0):
