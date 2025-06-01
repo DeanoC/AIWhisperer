@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 from ai_whisperer.tools.python_ast_json_tool import PythonASTJSONTool
 
 # Mark all tests in this module as skipped - TDD tests for future implementation
-pytestmark = pytest.mark.skip(reason="TDD tests - implementation in progress")
+pytest.skip(reason="TDD tests - implementation in progress", allow_module_level=True)
 
 
 class TestPythonASTJSONToolSchema:

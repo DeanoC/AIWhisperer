@@ -111,8 +111,11 @@ class TestRFCPlanBidirectional:
         # Verify RFC metadata was updated
         path_manager = PathManager.get_instance()
         rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "in_progress"
-        # CreateRFCTool creates files with date suffix
-        rfc_metadata_path = rfc_path / "auth-system-2025-05-31.json"
+        # CreateRFCTool creates files with date suffix - use glob to find it
+        import glob
+        metadata_files = glob.glob(str(rfc_path / "auth-system-*.json"))
+        assert len(metadata_files) == 1, f"Expected 1 metadata file, found {len(metadata_files)}"
+        rfc_metadata_path = metadata_files[0]
         
         with open(rfc_metadata_path) as f:
             rfc_metadata = json.load(f)
@@ -125,16 +128,22 @@ class TestRFCPlanBidirectional:
         """Test that RFC updates can trigger plan updates."""
         # Create RFC and plan first
         create_tool = CreateRFCTool()
-        create_tool.execute({
+        rfc_result = create_tool.execute({
             "title": "Add Caching Layer",
             "short_name": "caching",
             "summary": "Implement Redis caching"
         })
         
+        # Extract RFC ID from the result
+        import re
+        match = re.search(r'(RFC-\d{4}-\d{2}-\d{2}-\d{4})', rfc_result)
+        assert match, f"Could not extract RFC ID from result: {rfc_result}"
+        rfc_id = match.group(1)
+        
         # Prepare and save a plan
         prepare_tool = PreparePlanFromRFCTool()
         prepare_result = prepare_tool.execute({
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "plan_type": "initial"
         })
         
@@ -152,14 +161,14 @@ class TestRFCPlanBidirectional:
                 "tasks": [],
                 "validation_criteria": []
             },
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "rfc_hash": rfc_hash
         })
         
         # Update the RFC
         update_tool = UpdateRFCTool()
         update_result = update_tool.execute({
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "section": "requirements",
             "content": "- Use Redis for caching\n- Support TTL configuration\n- Add cache invalidation"
         })
@@ -206,15 +215,18 @@ class TestRFCPlanBidirectional:
         """Test moving plans between in_progress and archived."""
         # Create RFC and plan
         create_tool = CreateRFCTool()
-        create_tool.execute({
+        rfc_result = create_tool.execute({
             "title": "Add Logging System",
             "short_name": "logging",
             "summary": "Centralized logging"
         })
         
+        # Extract RFC ID from the result
+        rfc_id = self._extract_rfc_id(rfc_result)
+        
         prepare_tool = PreparePlanFromRFCTool()
         prepare_result = prepare_tool.execute({
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "plan_type": "initial"
         })
         
@@ -232,7 +244,7 @@ class TestRFCPlanBidirectional:
                 "tasks": [],
                 "validation_criteria": []
             },
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "rfc_hash": rfc_hash
         })
         
@@ -251,7 +263,11 @@ class TestRFCPlanBidirectional:
         
         # Verify RFC metadata was updated
         rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "in_progress"
-        rfc_metadata_path = rfc_path / "logging-2025-05-31.json"
+        # Use glob to find the metadata file since date is dynamic
+        import glob
+        metadata_files = glob.glob(str(rfc_path / "logging-*.json"))
+        assert len(metadata_files) == 1, f"Expected 1 metadata file, found {len(metadata_files)}"
+        rfc_metadata_path = metadata_files[0]
         
         with open(rfc_metadata_path) as f:
             rfc_metadata = json.load(f)
@@ -263,15 +279,18 @@ class TestRFCPlanBidirectional:
         """Test that deleting a plan removes its reference from the RFC."""
         # Create RFC and plan
         create_tool = CreateRFCTool()
-        create_tool.execute({
+        rfc_result = create_tool.execute({
             "title": "Add Metrics Collection",
             "short_name": "metrics",
             "summary": "Application metrics"
         })
         
+        # Extract RFC ID from the result
+        rfc_id = self._extract_rfc_id(rfc_result)
+        
         prepare_tool = PreparePlanFromRFCTool()
         prepare_result = prepare_tool.execute({
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "plan_type": "initial"
         })
         
@@ -289,7 +308,7 @@ class TestRFCPlanBidirectional:
                 "tasks": [],
                 "validation_criteria": []
             },
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "rfc_hash": rfc_hash
         })
         
@@ -305,7 +324,11 @@ class TestRFCPlanBidirectional:
         # Verify RFC metadata was updated
         path_manager = PathManager.get_instance()
         rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "in_progress"
-        rfc_metadata_path = rfc_path / "metrics-2025-05-31.json"
+        # Use glob to find the metadata file since date is dynamic
+        import glob
+        metadata_files = glob.glob(str(rfc_path / "metrics-*.json"))
+        assert len(metadata_files) == 1, f"Expected 1 metadata file, found {len(metadata_files)}"
+        rfc_metadata_path = metadata_files[0]
         
         with open(rfc_metadata_path) as f:
             rfc_metadata = json.load(f)
@@ -327,17 +350,20 @@ class TestRFCPlanBidirectional:
         """Test error handling for invalid plan content."""
         # Create an RFC first
         create_tool = CreateRFCTool()
-        create_tool.execute({
+        rfc_result = create_tool.execute({
             "title": "Test RFC",
             "short_name": "test",
             "summary": "Test"
         })
         
+        # Extract RFC ID from the result
+        rfc_id = self._extract_rfc_id(rfc_result)
+        
         save_tool = SaveGeneratedPlanTool()
         result = save_tool.execute({
             "plan_name": "test-plan",
             "plan_content": {"invalid": "structure"},  # Missing required fields
-            "rfc_id": "RFC-2025-05-31-0001"
+            "rfc_id": rfc_id
         })
         assert "Error" in result or "validation" in result.lower()
     
@@ -345,18 +371,21 @@ class TestRFCPlanBidirectional:
         """Test creating multiple plans from a single RFC."""
         # Create RFC
         create_tool = CreateRFCTool()
-        create_tool.execute({
+        rfc_result = create_tool.execute({
             "title": "Complex Feature",
             "short_name": "complex",
             "summary": "Multi-phase implementation"
         })
+        
+        # Extract RFC ID from the result
+        rfc_id = self._extract_rfc_id(rfc_result)
         
         prepare_tool = PreparePlanFromRFCTool()
         save_tool = SaveGeneratedPlanTool()
         
         # Create first plan (initial)
         prepare_result = prepare_tool.execute({
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "plan_type": "initial"
         })
         rfc_hash = prepare_result.split('rfc_hash: "')[1].split('"')[0]
@@ -372,7 +401,7 @@ class TestRFCPlanBidirectional:
                 "tasks": [],
                 "validation_criteria": []
             },
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "rfc_hash": rfc_hash
         })
         
@@ -388,14 +417,18 @@ class TestRFCPlanBidirectional:
                 "tasks": [],
                 "validation_criteria": []
             },
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "rfc_hash": rfc_hash
         })
         
         # Verify RFC has both plans
         path_manager = PathManager.get_instance()
         rfc_path = Path(path_manager.workspace_path) / ".WHISPER" / "rfc" / "in_progress"
-        rfc_metadata_path = rfc_path / "complex-2025-05-31.json"
+        # Use glob to find the metadata file since date is dynamic
+        import glob
+        metadata_files = glob.glob(str(rfc_path / "complex-*.json"))
+        assert len(metadata_files) == 1, f"Expected 1 metadata file, found {len(metadata_files)}"
+        rfc_metadata_path = metadata_files[0]
         
         with open(rfc_metadata_path) as f:
             rfc_metadata = json.load(f)

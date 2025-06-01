@@ -33,9 +33,9 @@ class TestJSONToASTModernPythonFeatures:
         result = PythonASTJSONTool.json_to_ast(json_data)
         # Should create ast.NamedExpr for n := len(data)
     
-def test_positional_only_args_reconstruction(self):
-    """Test reconstructing positional-only arguments (Python 3.8+)."""
-    json_data = {
+    def test_positional_only_args_reconstruction(self):
+        """Test reconstructing positional-only arguments (Python 3.8+)."""
+        json_data = {
         "node_type": "FunctionDef",
         "name": "func",
         "args": {
