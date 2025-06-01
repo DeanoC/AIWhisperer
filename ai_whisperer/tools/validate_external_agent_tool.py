@@ -59,9 +59,9 @@ A JSON object containing:
 - installation_links: Links to install missing agents (if any)
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the validate external agent tool."""
-        agents_param = kwargs.get("agents", "all")
+        agents_param = arguments.get("agents", "all")
         
         try:
             # Determine which agents to validate

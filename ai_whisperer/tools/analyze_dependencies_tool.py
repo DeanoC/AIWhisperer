@@ -63,9 +63,9 @@ A JSON object containing:
 - recommendations: Suggestions for optimization
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the analyze dependencies tool."""
-        tasks_json = kwargs.get("tasks")
+        tasks_json = arguments.get("tasks")
         
         if not tasks_json:
             return "Error: tasks parameter is required"

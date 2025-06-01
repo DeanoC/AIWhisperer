@@ -77,12 +77,12 @@ A JSON object containing:
 - agent_insights: Agent-specific observations
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the parse external result tool."""
-        agent_name = kwargs.get("agent")
-        output = kwargs.get("output", "")
-        error = kwargs.get("error", "")
-        task_id = kwargs.get("task_id")
+        agent_name = arguments.get("agent")
+        output = arguments.get("output", "")
+        error = arguments.get("error", "")
+        task_id = arguments.get("task_id")
         
         if not agent_name:
             return "Error: agent parameter is required"

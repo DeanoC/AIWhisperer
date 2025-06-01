@@ -64,10 +64,10 @@ A JSON object containing:
 - best_choice: The top recommendation with confidence level
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the recommend external agent tool."""
-        task_json = kwargs.get("task")
-        only_available = kwargs.get("only_available", True)
+        task_json = arguments.get("task")
+        only_available = arguments.get("only_available", True)
         
         if not task_json:
             return "Error: task parameter is required"
@@ -84,15 +84,12 @@ A JSON object containing:
                 task_id=task_data.get("id", task_data.get("task_id", "unknown")),
                 title=task_data.get("title", ""),
                 description=task_data.get("description", ""),
-                parent_task_id=task_data.get("parent", task_data.get("parent_task_id")),
                 parent_task_name=task_data.get("parent_task_name", ""),
-                dependencies=task_data.get("dependencies", []),
-                estimated_complexity=task_data.get("complexity", task_data.get("estimated_complexity", "moderate")),
-                tdd_phase=task_data.get("tdd_phase", "RED"),
-                acceptance_criteria=task_data.get("acceptance_criteria", []),
-                external_agent_prompts=task_data.get("external_agent_prompts", {}),
                 context=task_data.get("context", {}),
-                status=task_data.get("status", "pending")
+                acceptance_criteria=task_data.get("acceptance_criteria", []),
+                estimated_complexity=task_data.get("complexity", task_data.get("estimated_complexity", "moderate")),
+                status=task_data.get("status", "pending"),
+                external_agent_prompts=task_data.get("external_agent_prompts", {})
             )
             
             # Get recommendations
@@ -163,7 +160,7 @@ A JSON object containing:
                     "title": task.title,
                     "complexity": task.estimated_complexity,
                     "files_to_modify": len(task.context.get("files_to_modify", [])),
-                    "tdd_phase": task.tdd_phase
+                    "status": task.status
                 },
                 "recommendations": detailed_recommendations
             }

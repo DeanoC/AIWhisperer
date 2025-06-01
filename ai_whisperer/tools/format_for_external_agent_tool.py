@@ -74,11 +74,11 @@ A JSON object containing:
 - alternatives: Alternative agents if the target is unavailable
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the format for external agent tool."""
-        task_json = kwargs.get("task")
-        agent_name = kwargs.get("agent")
-        include_instructions = kwargs.get("include_instructions", True)
+        task_json = arguments.get("task")
+        agent_name = arguments.get("agent")
+        include_instructions = arguments.get("include_instructions", True)
         
         if not task_json:
             return "Error: task parameter is required"
@@ -97,14 +97,12 @@ A JSON object containing:
                 task_id=task_data.get("id", task_data.get("task_id", "unknown")),
                 title=task_data.get("title", ""),
                 description=task_data.get("description", ""),
-                parent_task_id=task_data.get("parent", task_data.get("parent_task_id")),
                 parent_task_name=task_data.get("parent_task_name", ""),
-                dependencies=task_data.get("dependencies", []),
-                estimated_complexity=task_data.get("complexity", task_data.get("estimated_complexity", "moderate")),
-                tdd_phase=task_data.get("tdd_phase", "RED"),
+                context=task_data.get("context", {}),
                 acceptance_criteria=task_data.get("acceptance_criteria", []),
-                external_agent_prompts=task_data.get("external_agent_prompts", {}),
-                context=task_data.get("context", {})
+                estimated_complexity=task_data.get("complexity", task_data.get("estimated_complexity", "moderate")),
+                status=task_data.get("status", "pending"),
+                external_agent_prompts=task_data.get("external_agent_prompts", {})
             )
             
             # Get the adapter

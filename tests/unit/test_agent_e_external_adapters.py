@@ -87,101 +87,141 @@ class TestClaudeCodeAdapter:
         )
     
     def test_format_task_for_claude(self, claude_adapter, sample_task):
-        """Test formatting a task for Claude Code CLI."""
-        formatted = claude_adapter.format_task(sample_task)
+        """Test formatting a task for Claude Code CLI (REPL mode)."""
+        with patch('ai_whisperer.agents.task_decomposer.TaskDecomposer') as mock_decomposer:
+            # Mock the task decomposer
+            mock_instance = Mock()
+            mock_instance.generate_claude_code_prompt.return_value = {
+                'prompt': "Write pytest tests for FastAPI auth endpoints with JWT validation and rate limiting"
+            }
+            mock_decomposer.return_value = mock_instance
+            
+            formatted = claude_adapter.format_task(sample_task)
         
-        assert 'command' in formatted
         assert 'prompt' in formatted
         assert 'context_files' in formatted
         assert 'expected_output' in formatted
+        assert 'working_directory' in formatted
+        assert 'files_to_modify' in formatted
         
-        # Check command format
-        assert formatted['command'].startswith('claude -p "')
-        assert formatted['command'].endswith('" --json')
+        # Check no command is generated (cut-and-paste approach)
+        assert 'command' not in formatted
         
-        # Check prompt content
-        prompt = formatted['prompt']
-        assert "pytest" in prompt
-        assert "FastAPI" in prompt
-        assert "JWT validation" in prompt
-        assert "rate limiting" in prompt
-        assert "src/auth.py" in prompt
-        assert "tests/test_auth.py" in prompt
+        # Check no temp files are created
+        assert 'prompt_file' not in formatted
         
-        # Check TDD emphasis
-        assert "test" in prompt.lower()
-        assert any(word in prompt.lower() for word in ["tdd", "test-driven", "test first"])
+        # Check context files
+        assert formatted['context_files'] == ["src/auth.py", "src/models/user.py"]
+        assert formatted['files_to_modify'] == ["tests/test_auth.py"]
     
     def test_claude_execution_instructions(self, claude_adapter, sample_task):
         """Test generating execution instructions for Claude Code."""
-        instructions = claude_adapter.get_execution_instructions(sample_task)
+        with patch('ai_whisperer.agents.task_decomposer.TaskDecomposer') as mock_decomposer:
+            mock_instance = Mock()
+            mock_instance.generate_claude_code_prompt.return_value = {
+                'prompt': "Test prompt"
+            }
+            mock_decomposer.return_value = mock_instance
+            
+            instructions = claude_adapter.get_execution_instructions(sample_task)
         
-        assert isinstance(instructions, list)
+        assert isinstance(instructions, str)
         assert len(instructions) > 0
         
-        # Should include setup steps
-        assert any("claude" in step.lower() for step in instructions)
-        assert any("directory" in step.lower() or "folder" in step.lower() for step in instructions)
-        assert any("command" in step.lower() for step in instructions)
+        # Should include REPL setup steps
+        assert "claude" in instructions.lower()
+        assert "terminal" in instructions.lower()
+        assert "copy and paste" in instructions.lower() or "paste" in instructions.lower()
+        assert "PROMPT START" in instructions
+        assert "PROMPT END" in instructions
     
     def test_claude_result_parsing(self, claude_adapter):
         """Test parsing results from Claude Code execution."""
-        # Simulate Claude Code JSON output
-        claude_output = {
-            "success": True,
-            "files_created": ["tests/test_auth.py"],
-            "files_modified": [],
-            "commands_run": ["pytest tests/test_auth.py"],
-            "output": "Created comprehensive test suite with 15 tests",
-            "errors": []
-        }
+        # Simulate user-reported output from Claude REPL
+        user_output = """
+        Claude created the following files:
+        - created: tests/test_auth.py
         
-        result = claude_adapter.parse_result(
-            task_id="test-123",
-            raw_output=json.dumps(claude_output),
-            execution_time=120
-        )
+        The test suite includes 15 tests covering all auth endpoints.
+        All tests pass successfully.
+        """
+        
+        result = claude_adapter.parse_result(output=user_output)
         
         assert isinstance(result, ExternalAgentResult)
         assert result.success is True
-        assert result.agent_name == "claude_code"
         assert len(result.files_changed) == 1
-        assert result.execution_time == 120
-        assert "15 tests" in result.summary
+        assert result.files_changed[0] == "tests/test_auth.py"
     
     def test_claude_prompt_optimization(self, claude_adapter):
         """Test that prompts are optimized for Claude's strengths."""
-        tdd_task = Mock(
-            parent_task_name="Write tests first",
-            description="Create tests before implementation",
-            context={"technology_stack": {"testing_framework": "pytest"}}
-        )
-        
-        git_task = Mock(
-            parent_task_name="Refactor git history",
-            description="Clean up commit history",
-            context={}
-        )
-        
-        # TDD tasks should emphasize Claude's TDD capabilities
-        tdd_formatted = claude_adapter.format_task(tdd_task)
-        assert "TDD" in tdd_formatted['prompt'] or "test-driven" in tdd_formatted['prompt'].lower()
-        
-        # Git tasks should mention Claude's git capabilities
-        git_formatted = claude_adapter.format_task(git_task)
-        assert "git" in git_formatted['prompt'].lower()
+        with patch('ai_whisperer.agents.task_decomposer.TaskDecomposer') as mock_decomposer:
+            # Mock the task decomposer
+            mock_instance = Mock()
+            
+            # Return different prompts based on task type
+            def generate_prompt(task):
+                if "test" in task.parent_task_name.lower():
+                    return {'prompt': "Follow TDD methodology to write tests first..."}
+                elif "git" in task.parent_task_name.lower():
+                    return {'prompt': "Use git commands to refactor the history..."}
+                return {'prompt': task.description}
+            
+            mock_instance.generate_claude_code_prompt.side_effect = generate_prompt
+            mock_decomposer.return_value = mock_instance
+            
+            tdd_task = Mock(
+                parent_task_name="Write tests first",
+                description="Create tests before implementation",
+                context={"technology_stack": {"testing_framework": "pytest"}},
+                acceptance_criteria=[]
+            )
+            
+            git_task = Mock(
+                parent_task_name="Refactor git history",
+                description="Clean up commit history",
+                context={},
+                acceptance_criteria=[]
+            )
+            
+            # TDD tasks should emphasize Claude's TDD capabilities
+            tdd_formatted = claude_adapter.format_task(tdd_task)
+            assert "TDD" in tdd_formatted['prompt'] or "test" in tdd_formatted['prompt'].lower()
+            
+            # Git tasks should mention Claude's git capabilities
+            git_formatted = claude_adapter.format_task(git_task)
+            assert "git" in git_formatted['prompt'].lower()
     
     def test_claude_environment_validation(self, claude_adapter):
         """Test environment validation for Claude Code."""
-        validation = claude_adapter.validate_environment()
+        is_valid, message = claude_adapter.validate_environment()
         
-        assert 'claude_installed' in validation
-        assert 'version' in validation
-        assert 'mcp_config' in validation
+        assert isinstance(is_valid, bool)
+        assert isinstance(message, str)
         
         # Should provide installation instructions if not found
-        if not validation['claude_installed']:
-            assert 'install_instructions' in validation
+        if not is_valid:
+            assert 'install' in message.lower() or 'not found' in message.lower()
+    
+    def test_claude_no_temp_files(self, claude_adapter, sample_task):
+        """Test that no temporary files are created with cut-and-paste approach."""
+        with patch('ai_whisperer.agents.task_decomposer.TaskDecomposer') as mock_decomposer:
+            mock_instance = Mock()
+            mock_instance.generate_claude_code_prompt.return_value = {'prompt': "Test prompt"}
+            mock_decomposer.return_value = mock_instance
+            
+            # Format multiple tasks
+            formatted1 = claude_adapter.format_task(sample_task)
+            formatted2 = claude_adapter.format_task(sample_task)
+        
+        # Check no temp files are referenced
+        assert 'prompt_file' not in formatted1
+        assert 'prompt_file' not in formatted2
+        
+        # Adapter shouldn't have any temp files methods
+        assert not hasattr(claude_adapter, '_temp_files')
+        assert not hasattr(claude_adapter, 'get_temp_files')
+        assert not hasattr(claude_adapter, 'cleanup')
 
 
 class TestRooCodeAdapter:

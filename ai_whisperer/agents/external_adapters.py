@@ -64,25 +64,20 @@ class ExternalAgentAdapter(ABC):
 
 
 class ClaudeCodeAdapter(ExternalAgentAdapter):
-    """Adapter for Claude Code CLI."""
+    """Adapter for Claude Code CLI (REPL mode)."""
     
     def format_task(self, task: DecomposedTask) -> Dict[str, Any]:
-        """Format task for Claude Code CLI."""
-        # Get prompt from task's external_agent_prompts
-        claude_prompt_data = task.external_agent_prompts.get('claude_code', {})
+        """Format task for Claude (cut-and-paste approach)."""
+        # Import here to avoid circular imports
+        from .task_decomposer import TaskDecomposer
+        
+        # Generate enhanced prompt using TaskDecomposer
+        decomposer = TaskDecomposer()
+        claude_prompt_data = decomposer.generate_claude_code_prompt(task)
         prompt = claude_prompt_data.get('prompt', task.description)
         
-        # Build command
-        command_parts = ['claude', '-p', f'"{prompt}"']
-        
-        # Add context files
-        context_files = []
-        for file in task.context.get('files_to_read', []):
-            context_files.append(file)
-            command_parts.extend(['-c', file])
-        
-        # Add JSON output flag for structured responses
-        command_parts.append('--json')
+        # Get context files
+        context_files = task.context.get('files_to_read', [])
         
         # Expected output based on acceptance criteria
         expected_output = []
@@ -93,12 +88,11 @@ class ClaudeCodeAdapter(ExternalAgentAdapter):
                 expected_output.append(str(criterion))
         
         return {
-            'command': ' '.join(command_parts),
             'prompt': prompt,
             'context_files': context_files,
             'expected_output': expected_output,
             'working_directory': os.getcwd(),
-            'timeout': 300  # 5 minutes default
+            'files_to_modify': task.context.get('files_to_modify', [])
         }
     
     def parse_result(self, output: str, error: str = "") -> ExternalAgentResult:
@@ -141,29 +135,37 @@ class ClaudeCodeAdapter(ExternalAgentAdapter):
         )
     
     def get_execution_instructions(self, task: DecomposedTask) -> str:
-        """Get instructions for running Claude Code."""
+        """Get instructions for using Claude Code CLI in REPL mode."""
         formatted = self.format_task(task)
         
         instructions = [
-            "=== Claude Code Execution Instructions ===",
+            "=== Claude Code CLI Instructions (REPL Mode) ===",
             f"Task: {task.title}",
             "",
-            "1. Open a terminal in the project directory",
-            f"2. Run the following command:",
-            f"   {formatted['command']}",
+            "1. Open a terminal in the project directory:",
+            f"   cd {formatted['working_directory']}",
             "",
-            "3. Claude will:",
+            "2. Start Claude Code CLI in REPL mode:",
+            "   claude",
+            "",
+            "3. Copy and paste the following prompt into the Claude REPL:",
+            "",
+            "--- PROMPT START ---",
+            formatted['prompt'],
+            "--- PROMPT END ---",
+            "",
+            "4. Claude should:",
         ]
         
         # Add specific expectations
         if task.context.get('files_to_read'):
             instructions.append(f"   - Read: {', '.join(task.context['files_to_read'])}")
-        if task.context.get('files_to_modify'):
-            instructions.append(f"   - Modify: {', '.join(task.context['files_to_modify'])}")
+        if formatted['files_to_modify']:
+            instructions.append(f"   - Modify: {', '.join(formatted['files_to_modify'])}")
         
         instructions.extend([
             "",
-            "4. Expected outcomes:",
+            "5. Expected outcomes:",
         ])
         
         for outcome in formatted['expected_output']:
@@ -171,10 +173,18 @@ class ClaudeCodeAdapter(ExternalAgentAdapter):
         
         instructions.extend([
             "",
-            "5. After completion, verify:",
-            "   - All tests pass",
-            "   - Code changes are correct",
-            "   - No unintended modifications"
+            "6. After Claude completes the task:",
+            "   - Review the generated code in the output",
+            "   - Claude will have made the changes to your local files",
+            "   - Verify all tests pass",
+            "   - Check code changes are correct",
+            "",
+            "7. Report results back to Agent E:",
+            "   - List which files were modified",
+            "   - Confirm if tests pass",
+            "   - Note any issues or deviations",
+            "",
+            "Note: Claude Code CLI has full access to your project files in the current directory."
         ])
         
         return '\n'.join(instructions)
@@ -499,6 +509,12 @@ class AdapterRegistry:
         self.register('claude_code', ClaudeCodeAdapter())
         self.register('roocode', RooCodeAdapter())
         self.register('github_copilot', GitHubCopilotAdapter())
+    
+    def cleanup_all(self):
+        """Clean up all adapters that have cleanup methods."""
+        for adapter in self._adapters.values():
+            if hasattr(adapter, 'cleanup'):
+                adapter.cleanup()
     
     def register(self, name: str, adapter: ExternalAgentAdapter):
         """Register an adapter.

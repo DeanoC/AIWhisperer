@@ -83,13 +83,13 @@ A JSON object containing:
 - next_steps: Suggested next actions
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the update task status tool."""
-        task_id = kwargs.get("task_id")
-        status_str = kwargs.get("status")
-        assigned_agent = kwargs.get("assigned_agent")
-        execution_result = kwargs.get("execution_result")
-        notes = kwargs.get("notes")
+        task_id = arguments.get("task_id")
+        status_str = arguments.get("status")
+        assigned_agent = arguments.get("assigned_agent")
+        execution_result = arguments.get("execution_result")
+        notes = arguments.get("notes")
         
         if not task_id:
             return "Error: task_id is required"
@@ -99,9 +99,9 @@ A JSON object containing:
         try:
             # Validate status
             try:
-                status = TaskStatus(status_str.upper())
+                status = TaskStatus(status_str)
             except ValueError:
-                valid_statuses = [s.value.lower() for s in TaskStatus]
+                valid_statuses = [s.value for s in TaskStatus]
                 return f"Error: Invalid status '{status_str}'. Valid statuses: {', '.join(valid_statuses)}"
             
             # Get or create task record

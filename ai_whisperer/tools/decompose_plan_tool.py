@@ -69,10 +69,10 @@ A JSON object containing:
 - tasks: Array of decomposed tasks with dependencies and metadata
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> str:
         """Execute the decompose plan tool."""
-        plan_content = kwargs.get("plan_content")
-        max_depth = kwargs.get("max_depth", 3)
+        plan_content = arguments.get("plan_content")
+        max_depth = arguments.get("max_depth", 3)
         
         if not plan_content:
             return "Error: plan_content is required"
@@ -85,12 +85,12 @@ A JSON object containing:
                 plan_data = plan_content
             
             # Decompose the plan
-            tasks = self._decomposer.decompose_plan(plan_data, max_depth=max_depth)
+            tasks = self._decomposer.decompose_plan(plan_data)
             
             # Format the output
             result = {
                 "total_tasks": len(tasks),
-                "technology_stack": self._decomposer._detect_technology_stack(plan_data),
+                "technology_stack": {},  # Technology stack is detected per task
                 "tasks": []
             }
             
@@ -99,10 +99,10 @@ A JSON object containing:
                     "id": task.task_id,
                     "title": task.title,
                     "description": task.description,
-                    "parent": task.parent_task_id,
-                    "dependencies": task.dependencies,
+                    "parent_task_name": task.parent_task_name,
+                    "dependencies": task.get_dependencies(),
                     "complexity": task.estimated_complexity,
-                    "tdd_phase": task.tdd_phase,
+                    "status": task.status,
                     "acceptance_criteria": task.acceptance_criteria,
                     "context": task.context
                 }
