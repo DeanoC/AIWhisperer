@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Optional
 
 from .base_tool import AITool
 from ..agents.task_decomposer import TaskDecomposer
-from ..agents.agent_e_exceptions import CircularDependencyError
+from ..agents.agent_e_exceptions import DependencyCycleError
 
 logger = logging.getLogger(__name__)
 
@@ -16,19 +16,52 @@ class AnalyzeDependenciesTool(AITool):
     """Tool for analyzing and resolving task dependencies."""
     
     def __init__(self):
-        super().__init__(
-            name="analyze_dependencies",
-            description="Analyze task dependencies and create an optimal execution order",
-            parameters={
+        super().__init__()
+        self._decomposer = TaskDecomposer()
+    
+    @property
+    def name(self) -> str:
+        return "analyze_dependencies"
+    
+    @property
+    def description(self) -> str:
+        return "Analyze task dependencies and create an optimal execution order"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
                 "tasks": {
                     "type": "string",
-                    "description": "JSON array of tasks with id and dependencies fields",
-                    "required": True
+                    "description": "JSON array of tasks with id and dependencies fields"
                 }
             },
-            tags=["planning", "task_management", "analysis", "dependencies"]
-        )
-        self._decomposer = TaskDecomposer()
+            "required": ["tasks"]
+        }
+    
+    @property
+    def tags(self) -> List[str]:
+        return ["planning", "task_management", "analysis", "dependencies"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        return """
+Use this tool to analyze task dependencies and create an optimal execution order.
+The tool performs topological sorting to determine which tasks can run in parallel
+and which must wait for dependencies.
+
+Parameters:
+- tasks: JSON array of tasks with 'id' and 'dependencies' fields (required)
+
+Returns:
+A JSON object containing:
+- total_tasks: Number of tasks analyzed
+- execution_phases: Number of sequential phases needed
+- max_parallel_tasks: Maximum tasks that can run in parallel
+- execution_order: Ordered list of task IDs
+- phases: Detailed breakdown of tasks by phase
+- recommendations: Suggestions for optimization
+"""
     
     def execute(self, **kwargs) -> str:
         """Execute the analyze dependencies tool."""
@@ -61,7 +94,7 @@ class AnalyzeDependenciesTool(AITool):
             # Resolve dependencies using topological sort
             try:
                 execution_order = self._decomposer._topological_sort(dependency_graph)
-            except CircularDependencyError as e:
+            except DependencyCycleError as e:
                 return f"Error: Circular dependency detected - {str(e)}"
             
             # Build execution phases
@@ -129,23 +162,3 @@ class AnalyzeDependenciesTool(AITool):
         except Exception as e:
             logger.error(f"Unexpected error in analyze_dependencies: {e}", exc_info=True)
             return f"Error: Unexpected error - {str(e)}"
-    
-    def get_openrouter_tool_definition(self) -> Dict[str, Any]:
-        """Get the OpenRouter tool definition."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "tasks": {
-                            "type": "string",
-                            "description": self.parameters["tasks"]["description"]
-                        }
-                    },
-                    "required": ["tasks"]
-                }
-            }
-        }

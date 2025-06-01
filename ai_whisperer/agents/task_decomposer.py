@@ -28,6 +28,58 @@ class TaskDecomposer:
             return deps if isinstance(deps, list) else []
         return []
     
+    def _topological_sort(self, dependency_graph: Dict[str, List[str]]) -> List[str]:
+        """
+        Perform topological sort on dependency graph.
+        
+        Args:
+            dependency_graph: Dict mapping task_id to list of dependency task_ids
+            
+        Returns:
+            List of task_ids in execution order
+            
+        Raises:
+            DependencyCycleError: If circular dependencies are detected
+        """
+        # Calculate in-degrees
+        in_degree = defaultdict(int)
+        all_nodes = set(dependency_graph.keys())
+        
+        # Add all dependencies to the node set
+        for deps in dependency_graph.values():
+            all_nodes.update(deps)
+        
+        # Calculate in-degrees for all nodes
+        for node in all_nodes:
+            if node not in in_degree:
+                in_degree[node] = 0
+        
+        for deps in dependency_graph.values():
+            for dep in deps:
+                in_degree[dep] += 1
+        
+        # Find nodes with no dependencies
+        queue = deque([node for node in all_nodes if in_degree[node] == 0])
+        result = []
+        
+        while queue:
+            node = queue.popleft()
+            result.append(node)
+            
+            # Reduce in-degree for dependent nodes
+            for dependent in dependency_graph.get(node, []):
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    queue.append(dependent)
+        
+        # Check for cycles
+        if len(result) != len(all_nodes):
+            # Find nodes involved in cycle
+            remaining = [node for node in all_nodes if node not in result]
+            raise DependencyCycleError(f"Circular dependency detected involving tasks: {remaining}")
+        
+        return result
+    
     def __init__(self):
         """Initialize the TaskDecomposer."""
         self.technology_patterns = {

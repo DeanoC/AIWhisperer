@@ -3,7 +3,7 @@ Tool for recommending the best external agent for a task.
 """
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from .base_tool import AITool
 from ..agents.external_adapters import AdapterRegistry
@@ -16,24 +16,53 @@ class RecommendExternalAgentTool(AITool):
     """Tool for recommending external agents based on task characteristics."""
     
     def __init__(self):
-        super().__init__(
-            name="recommend_external_agent", 
-            description="Recommend the best external AI agent for a specific task",
-            parameters={
+        super().__init__()
+        self._registry = AdapterRegistry()
+    
+    @property
+    def name(self) -> str:
+        return "recommend_external_agent"
+    
+    @property
+    def description(self) -> str:
+        return "Recommend the best external AI agent for a specific task"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
                 "task": {
                     "type": "string",
-                    "description": "JSON representation of the task to get recommendations for",
-                    "required": True
+                    "description": "JSON representation of the task to get recommendations for"
                 },
                 "only_available": {
                     "type": "boolean",
-                    "description": "Only recommend agents that are currently available (default: true)",
-                    "required": False
+                    "description": "Only recommend agents that are currently available (default: true)"
                 }
             },
-            tags=["external_agents", "recommendation", "analysis"]
-        )
-        self._registry = AdapterRegistry()
+            "required": ["task"]
+        }
+    
+    @property
+    def tags(self) -> List[str]:
+        return ["external_agents", "recommendation", "analysis"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        return """
+Use this tool to recommend the best external AI agent for a specific task.
+The tool analyzes task characteristics and matches them with agent strengths.
+
+Parameters:
+- task: JSON representation of the task to get recommendations for (required)
+- only_available: Only recommend agents that are currently available (optional, default: true)
+
+Returns:
+A JSON object containing:
+- task_summary: Overview of the task characteristics
+- recommendations: Ranked list of agents with scores and reasons
+- best_choice: The top recommendation with confidence level
+"""
     
     def execute(self, **kwargs) -> str:
         """Execute the recommend external agent tool."""
@@ -62,7 +91,8 @@ class RecommendExternalAgentTool(AITool):
                 tdd_phase=task_data.get("tdd_phase", "RED"),
                 acceptance_criteria=task_data.get("acceptance_criteria", []),
                 external_agent_prompts=task_data.get("external_agent_prompts", {}),
-                context=task_data.get("context", {})
+                context=task_data.get("context", {}),
+                status=task_data.get("status", "pending")
             )
             
             # Get recommendations
@@ -161,27 +191,3 @@ class RecommendExternalAgentTool(AITool):
         except Exception as e:
             logger.error(f"Unexpected error in recommend_external_agent: {e}", exc_info=True)
             return f"Error: Unexpected error - {str(e)}"
-    
-    def get_openrouter_tool_definition(self) -> Dict[str, Any]:
-        """Get the OpenRouter tool definition."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "task": {
-                            "type": "string",
-                            "description": self.parameters["task"]["description"]
-                        },
-                        "only_available": {
-                            "type": "boolean",
-                            "description": self.parameters["only_available"]["description"]
-                        }
-                    },
-                    "required": ["task"]
-                }
-            }
-        }

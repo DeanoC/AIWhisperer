@@ -3,7 +3,7 @@ Tool for parsing results from external agent execution.
 """
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from .base_tool import AITool
 from ..agents.external_adapters import AdapterRegistry
@@ -15,34 +15,67 @@ class ParseExternalResultTool(AITool):
     """Tool for parsing execution results from external agents."""
     
     def __init__(self):
-        super().__init__(
-            name="parse_external_result",
-            description="Parse and interpret results from external AI agent execution",
-            parameters={
+        super().__init__()
+        self._registry = AdapterRegistry()
+    
+    @property
+    def name(self) -> str:
+        return "parse_external_result"
+    
+    @property
+    def description(self) -> str:
+        return "Parse and interpret results from external AI agent execution"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
                 "agent": {
                     "type": "string",
                     "description": "The external agent that produced the result",
-                    "required": True
+                    "enum": ["claude_code", "roocode", "github_copilot"]
                 },
                 "output": {
                     "type": "string",
-                    "description": "The standard output from the agent execution",
-                    "required": True
+                    "description": "The standard output from the agent execution"
                 },
                 "error": {
                     "type": "string",
-                    "description": "Any error output from the agent execution",
-                    "required": False
+                    "description": "Any error output from the agent execution"
                 },
                 "task_id": {
                     "type": "string",
-                    "description": "The ID of the task that was executed",
-                    "required": False
+                    "description": "The ID of the task that was executed"
                 }
             },
-            tags=["external_agents", "parsing", "results"]
-        )
-        self._registry = AdapterRegistry()
+            "required": ["agent", "output"]
+        }
+    
+    @property
+    def tags(self) -> List[str]:
+        return ["external_agents", "parsing", "results"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        return """
+Use this tool to parse and interpret results from external AI agent execution.
+The tool extracts success status, files changed, and provides recommendations.
+
+Parameters:
+- agent: The external agent that produced the result (required)
+- output: The standard output from the agent execution (required)
+- error: Any error output from the agent execution (optional)
+- task_id: The ID of the task that was executed (optional)
+
+Returns:
+A JSON object containing:
+- agent: The agent name
+- success: Whether execution succeeded
+- files_changed: List of modified files
+- summary: Brief summary of the result
+- recommendations: Suggested next actions
+- agent_insights: Agent-specific observations
+"""
     
     def execute(self, **kwargs) -> str:
         """Execute the parse external result tool."""
@@ -143,36 +176,3 @@ class ParseExternalResultTool(AITool):
         except Exception as e:
             logger.error(f"Unexpected error in parse_external_result: {e}", exc_info=True)
             return f"Error: Unexpected error - {str(e)}"
-    
-    def get_openrouter_tool_definition(self) -> Dict[str, Any]:
-        """Get the OpenRouter tool definition."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "agent": {
-                            "type": "string",
-                            "description": self.parameters["agent"]["description"],
-                            "enum": ["claude_code", "roocode", "github_copilot"]
-                        },
-                        "output": {
-                            "type": "string",
-                            "description": self.parameters["output"]["description"]
-                        },
-                        "error": {
-                            "type": "string",
-                            "description": self.parameters["error"]["description"]
-                        },
-                        "task_id": {
-                            "type": "string",
-                            "description": self.parameters["task_id"]["description"]
-                        }
-                    },
-                    "required": ["agent", "output"]
-                }
-            }
-        }
