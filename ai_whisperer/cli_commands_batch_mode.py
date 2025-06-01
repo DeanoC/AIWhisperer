@@ -19,18 +19,22 @@ class BatchModeCliCommand(BaseCliCommand):
 
     def execute(self) -> int:
         # Validate workspace before running batch script
+        print(f"🔍 Validating workspace...")
         try:
             from ai_whisperer.workspace_detection import find_whisper_workspace, WorkspaceNotFoundError
             workspace = find_whisper_workspace()
-            self.logger.info(f"Workspace detected: {workspace}")
+            print(f"   ✅ Workspace detected: {workspace}")
         except Exception as e:
-            self.logger.error(f"Error: {e}")
+            print(f"   ❌ Workspace error: {e}")
             return 1
+        
         # Run the batch client
+        print(f"🎭 Starting Debbie batch mode...")
         try:
             # Pass config if needed in future
             asyncio.run(BatchClient(self.script_path, dry_run=self.dry_run).run())
             return 0
         except Exception as e:
-            print(f"Batch execution failed: {e}")
+            print(f"💥 Batch execution failed: {e}")
+            self.logger.error(f"Batch execution failed: {e}")
             return 2

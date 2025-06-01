@@ -1,0 +1,15 @@
+{
+  "name": "Project Settings End-to-End Flow",
+  "description": "Test that project settings persist from UI to backend and disk, and survive reloads.",
+  "steps": [
+    { "command": "open_settings_ui" },
+    { "command": "set_project_setting", "field": "default_agent", "value": "alice" },
+    { "command": "set_project_setting", "field": "auto_save", "value": false },
+    { "command": "set_project_setting", "field": "external_agent_type", "value": "openai" },
+    { "command": "save_settings" },
+    { "command": "reload_ui" },
+    { "command": "assert_project_setting", "field": "default_agent", "expected": "alice" },
+    { "command": "assert_project_setting", "field": "auto_save", "expected": false },
+    { "command": "assert_project_setting", "field": "external_agent_type", "expected": "openai" }
+  ]
+}

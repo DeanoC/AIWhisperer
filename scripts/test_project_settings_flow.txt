@@ -1,0 +1,6 @@
+# Project Settings End-to-End Flow Test
+# Test that project settings persist from UI to backend and disk, and survive reloads.
+
+Hi Debbie! Please help me test the project settings flow. Use your script_parser tool to parse the JSON test script at /home/deano/projects/feature-settings/scripts/test_project_settings_flow.json and execute each step.
+
+Parse and execute the test script located at: /home/deano/projects/feature-settings/scripts/test_project_settings_flow.json

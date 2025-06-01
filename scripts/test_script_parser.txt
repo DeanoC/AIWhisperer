@@ -1,0 +1,2 @@
+# Test script for script_parser tool
+use script_parser with file_path: scripts/test_project_settings_flow.json

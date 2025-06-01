@@ -161,21 +161,29 @@ def setup_basic_logging():
         # Main server log file (only logs from 'aiwhisperer.server')
         log_dir = "logs"
         os.makedirs(log_dir, exist_ok=True)
-        server_log_path = os.path.join(log_dir, "aiwhisperer_server.log")
+        
+        # Check if this is a batch mode server (port-specific logging)
+        batch_port = os.environ.get('AIWHISPERER_BATCH_PORT')
+        if batch_port:
+            log_suffix = f"_batch_{batch_port}"
+        else:
+            log_suffix = ""
+        
+        server_log_path = os.path.join(log_dir, f"aiwhisperer_server{log_suffix}.log")
         server_file_handler = logging.FileHandler(server_log_path, mode='w')
         server_file_handler.setLevel(logging.DEBUG)
         server_file_handler.setFormatter(formatter)
         server_file_handler.addFilter(lambda record: record.name.startswith('aiwhisperer.server'))
 
         # Test log file (only logs from 'aiwhisperer.test')
-        test_log_path = os.path.join(log_dir, "aiwhisperer_test.log")
+        test_log_path = os.path.join(log_dir, f"aiwhisperer_test{log_suffix}.log")
         test_file_handler = logging.FileHandler(test_log_path, mode='w')
         test_file_handler.setLevel(logging.DEBUG)
         test_file_handler.setFormatter(formatter)
         test_file_handler.addFilter(lambda record: record.name.startswith('aiwhisperer.test'))
 
         # Debug log file (all debug info, legacy, logs everything)
-        debug_log_path = os.path.join(log_dir, "aiwhisperer_debug.log")
+        debug_log_path = os.path.join(log_dir, f"aiwhisperer_debug{log_suffix}.log")
         debug_file_handler = logging.FileHandler(debug_log_path, mode='w')
         debug_file_handler.setLevel(logging.DEBUG)
         debug_file_handler.setFormatter(formatter)
@@ -186,9 +194,10 @@ def setup_basic_logging():
         root_logger.handlers = [console_handler, debug_file_handler, server_file_handler, test_file_handler]
 
         # Add a log message to confirm logging setup and file paths
-        logging.getLogger('aiwhisperer.server').info(f"Server logging configured. Log file: {os.path.abspath(server_log_path)}")
-        logging.getLogger('aiwhisperer.test').info(f"Test logging configured. Log file: {os.path.abspath(test_log_path)}")
-        logging.getLogger().info(f"Debug logging configured. Log file: {os.path.abspath(debug_log_path)}")
+        batch_mode_info = f" (batch mode port {batch_port})" if batch_port else ""
+        logging.getLogger('aiwhisperer.server').info(f"Server logging configured{batch_mode_info}. Log file: {os.path.abspath(server_log_path)}")
+        logging.getLogger('aiwhisperer.test').info(f"Test logging configured{batch_mode_info}. Log file: {os.path.abspath(test_log_path)}")
+        logging.getLogger().info(f"Debug logging configured{batch_mode_info}. Log file: {os.path.abspath(debug_log_path)}")
 
     except Exception as e:
         # If basic logging setup fails, print an error to stderr as a fallback
