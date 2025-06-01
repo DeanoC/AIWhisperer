@@ -23,15 +23,13 @@ y = [1, ..., 3]
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+        result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_pass_statement(self):
-        """Test converting pass statements in various contexts."""
-        code = """
+def test_convert_pass_statement(self):
+    """Test converting pass statements in various contexts."""
+    code = """
 def empty_func():
-    pass
-
+pass
 class EmptyClass:
     pass
 
@@ -53,12 +51,11 @@ except:
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+        result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_slice_expressions(self):
-        """Test converting various slice expressions."""
-        code = """
+def test_convert_slice_expressions(self):
+    """Test converting various slice expressions."""
+    code = """
 # Simple slices
 a[1:5]
 b[:10]
@@ -78,14 +75,13 @@ i[::step]
 matrix[1:3, 2:4]
 tensor[::2, 1::3, :5]
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_extended_slices(self):
-        """Test converting extended slice syntax."""
-        code = """
+def test_convert_extended_slices(self):
+    """Test converting extended slice syntax."""
+    code = """
 # Tuple of slices
 arr[1:3, 5:7]
 
@@ -96,14 +92,13 @@ arr[0, 1:3, :, ::2]
 arr[..., 0]
 arr[0, ..., -1]
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_formatted_strings(self):
-        """Test converting f-strings with various features."""
-        code = '''
+def test_convert_formatted_strings(self):
+    """Test converting f-strings with various features."""
+    code = '''
 # Simple f-string
 name = "World"
 greeting = f"Hello, {name}!"
@@ -129,14 +124,13 @@ Line 1: {var1}
 Line 2: {var2}
 """
 '''
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_bytes_and_raw_strings(self):
-        """Test converting bytes and raw string literals."""
-        code = r'''
+def test_convert_bytes_and_raw_strings(self):
+    """Test converting bytes and raw string literals."""
+    code = r'''
 # Bytes literals
 b1 = b"bytes"
 b2 = b'more bytes'
@@ -156,11 +150,9 @@ rb1 = rb"also raw bytes"
 u1 = "Unicode string 🐍"
 u2 = "UTF-8: café"
 '''
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
-
+    result = PythonASTJSONTool.ast_to_json(tree)
 
 class TestASTToJSONArgumentVariations:
     """Tests for various argument patterns in functions."""
@@ -176,15 +168,13 @@ def func2(x, /, *, y):
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+        result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_keyword_only_args(self):
-        """Test converting keyword-only arguments."""
-        code = """
+def test_convert_keyword_only_args(self):
+    """Test converting keyword-only arguments."""
+    code = """
 def func(a, b, *, c, d=10):
-    return a + b + c + d
-
+return a + b + c + d
 def func2(*, x, y, z=None):
     pass
 
@@ -193,34 +183,31 @@ def func3(*args, kw_only):
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+        result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_complex_default_values(self):
-        """Test converting complex default argument values."""
-        code = """
+def test_convert_complex_default_values(self):
+    """Test converting complex default argument values."""
+    code = """
 def func(
-    a=None,
-    b=[],
-    c={},
-    d=lambda x: x * 2,
-    e=(1, 2, 3),
-    f={"key": "value"},
-    g=SomeClass(),
-    h=module.function()
+a=None,
+b=[],
+c={},
+d=lambda x: x * 2,
+e=(1, 2, 3),
+f={"key": "value"},
+g=SomeClass(),
+h=module.function()
 ):
-    pass
+pass
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_args_with_annotations(self):
-        """Test converting arguments with complex annotations."""
-        code = """
+def test_convert_args_with_annotations(self):
+    """Test converting arguments with complex annotations."""
+    code = """
 from typing import List, Dict, Optional, Union, Callable
-
 def func(
     a: int,
     b: List[str],
@@ -235,9 +222,7 @@ def func(
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
-
+        result = PythonASTJSONTool.ast_to_json(tree)
 
 class TestASTToJSONOperatorVariations:
     """Tests for various operator combinations."""
@@ -259,12 +244,11 @@ i < j == k != l
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+        result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_augmented_assignments(self):
-        """Test converting augmented assignment operators."""
-        code = """
+def test_convert_augmented_assignments(self):
+    """Test converting augmented assignment operators."""
+    code = """
 x += 1
 y -= 2
 z *= 3
@@ -279,14 +263,13 @@ h <<= 2
 i >>= 1
 j @= matrix
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_operator_precedence(self):
-        """Test complex expressions with operator precedence."""
-        code = """
+def test_convert_operator_precedence(self):
+    """Test complex expressions with operator precedence."""
+    code = """
 # Arithmetic precedence
 result1 = a + b * c - d / e
 result2 = (a + b) * (c - d) / e
@@ -301,11 +284,9 @@ result7 = (a or b) and (c or d)
 # Comparison and boolean
 result8 = a < b and c > d or e == f
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
-
+    result = PythonASTJSONTool.ast_to_json(tree)
 
 class TestASTToJSONPatternMatching:
     """Tests for pattern matching constructs (Python 3.10+)."""
@@ -327,103 +308,96 @@ match value:
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+        result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_capture_patterns(self):
-        """Test converting capture patterns."""
-        code = """
+def test_convert_capture_patterns(self):
+    """Test converting capture patterns."""
+    code = """
 match point:
-    case (0, 0):
-        return "origin"
-    case (x, 0):
-        return f"x-axis at {x}"
-    case (0, y):
-        return f"y-axis at {y}"
-    case (x, y):
-        return f"point at {x}, {y}"
+case (0, 0):
+    return "origin"
+case (x, 0):
+    return f"x-axis at {x}"
+case (0, y):
+    return f"y-axis at {y}"
+case (x, y):
+    return f"point at {x}, {y}"
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_sequence_patterns(self):
-        """Test converting sequence patterns."""
-        code = """
+def test_convert_sequence_patterns(self):
+    """Test converting sequence patterns."""
+    code = """
 match command:
-    case []:
-        return "empty"
-    case [cmd]:
-        return f"single: {cmd}"
-    case [cmd, arg]:
-        return f"{cmd} with {arg}"
-    case [cmd, *args]:
-        return f"{cmd} with {len(args)} args"
-    case [first, *middle, last]:
-        return f"from {first} to {last}"
+case []:
+    return "empty"
+case [cmd]:
+    return f"single: {cmd}"
+case [cmd, arg]:
+    return f"{cmd} with {arg}"
+case [cmd, *args]:
+    return f"{cmd} with {len(args)} args"
+case [first, *middle, last]:
+    return f"from {first} to {last}"
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_mapping_patterns(self):
-        """Test converting mapping patterns."""
-        code = """
+def test_convert_mapping_patterns(self):
+    """Test converting mapping patterns."""
+    code = """
 match data:
-    case {}:
-        return "empty dict"
-    case {"type": "user"}:
-        return "user type"
-    case {"type": "admin", "name": name}:
-        return f"admin: {name}"
-    case {"x": x, "y": y, **rest}:
-        return f"point at {x},{y} with extras"
+case {}:
+    return "empty dict"
+case {"type": "user"}:
+    return "user type"
+case {"type": "admin", "name": name}:
+    return f"admin: {name}"
+case {"x": x, "y": y, **rest}:
+    return f"point at {x},{y} with extras"
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_class_patterns(self):
-        """Test converting class patterns."""
-        code = """
+def test_convert_class_patterns(self):
+    """Test converting class patterns."""
+    code = """
 match obj:
-    case Point():
-        return "empty point"
-    case Point(x=0, y=0):
-        return "origin"
-    case Point(x=x, y=y):
-        return f"point at {x}, {y}"
-    case Rectangle(Point(x1, y1), Point(x2, y2)):
-        return f"rect from {x1},{y1} to {x2},{y2}"
+case Point():
+    return "empty point"
+case Point(x=0, y=0):
+    return "origin"
+case Point(x=x, y=y):
+    return f"point at {x}, {y}"
+case Rectangle(Point(x1, y1), Point(x2, y2)):
+    return f"rect from {x1},{y1} to {x2},{y2}"
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_guard_patterns(self):
-        """Test converting patterns with guards."""
-        code = """
+def test_convert_guard_patterns(self):
+    """Test converting patterns with guards."""
+    code = """
 match value:
-    case n if n < 0:
-        return "negative"
-    case n if n == 0:
-        return "zero"
-    case n if n > 0 and n < 100:
-        return "small positive"
-    case [x, y] if x == y:
-        return "equal pair"
-    case _:
-        return "other"
+case n if n < 0:
+    return "negative"
+case n if n == 0:
+    return "zero"
+case n if n > 0 and n < 100:
+    return "small positive"
+case [x, y] if x == y:
+    return "equal pair"
+case _:
+    return "other"
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
-
+    result = PythonASTJSONTool.ast_to_json(tree)
 
 class TestASTToJSONAsyncPatterns:
     """Tests for async/await patterns."""
@@ -440,45 +414,41 @@ async def process():
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+        result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_async_with(self):
-        """Test converting async with statements."""
-        code = """
+def test_convert_async_with(self):
+    """Test converting async with statements."""
+    code = """
 async def fetch():
-    async with session() as s:
-        data = await s.get(url)
+async with session() as s:
+    data = await s.get(url)
     
-    async with lock:
-        shared_resource += 1
+async with lock:
+    shared_resource += 1
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_async_comprehensions(self):
-        """Test converting async comprehensions."""
-        code = """
+def test_convert_async_comprehensions(self):
+    """Test converting async comprehensions."""
+    code = """
 async def gather():
-    # Async list comprehension
-    results = [x async for x in async_gen()]
+# Async list comprehension
+results = [x async for x in async_gen()]
     
-    # Async dict comprehension
-    mapping = {k: v async for k, v in async_pairs()}
+# Async dict comprehension
+mapping = {k: v async for k, v in async_pairs()}
     
-    # Async set comprehension
-    unique = {x async for x in async_source() if x > 0}
+# Async set comprehension
+unique = {x async for x in async_source() if x > 0}
     
-    # Async generator expression
-    gen = (x * 2 async for x in async_range(10))
+# Async generator expression
+gen = (x * 2 async for x in async_range(10))
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
-
+    result = PythonASTJSONTool.ast_to_json(tree)
 
 class TestASTToJSONTypeFeatures:
     """Tests for type-related features."""
@@ -500,41 +470,39 @@ type Matrix[T] = list[list[T]]
 """
         tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+        result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_type_params(self):
-        """Test converting generic type parameters (Python 3.12+)."""
-        code = """
+def test_convert_type_params(self):
+    """Test converting generic type parameters (Python 3.12+)."""
+    code = """
 # Generic function
 def first[T](items: list[T]) -> T:
-    return items[0]
+return items[0]
 
 # Generic class
 class Stack[T]:
-    def __init__(self) -> None:
-        self.items: list[T] = []
+def __init__(self) -> None:
+    self.items: list[T] = []
     
-    def push(self, item: T) -> None:
-        self.items.append(item)
+def push(self, item: T) -> None:
+    self.items.append(item)
 
 # Constrained type var
 def process[T: (int, str)](value: T) -> T:
-    return value
+return value
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
+    result = PythonASTJSONTool.ast_to_json(tree)
     
-    def test_convert_union_type_syntax(self):
-        """Test converting union type syntax (Python 3.10+)."""
-        code = """
+def test_convert_union_type_syntax(self):
+    """Test converting union type syntax (Python 3.10+)."""
+    code = """
 # Union types with |
 def process(value: int | str | None) -> str | None:
-    if value is None:
-        return None
-    return str(value)
+if value is None:
+    return None
+return str(value)
 
 # Complex unions
 type_hint: List[int | str] | Dict[str, float | None]
@@ -542,11 +510,9 @@ type_hint: List[int | str] | Dict[str, float | None]
 # Optional equivalent
 maybe_int: int | None
 """
-        tree = ast.parse(code)
+    tree = ast.parse(code)
         
-        with pytest.raises(NotImplementedError):
-            result = PythonASTJSONTool.ast_to_json(tree)
-
+    result = PythonASTJSONTool.ast_to_json(tree)
 
 class TestASTToJSONExecuteMethod:
     """Tests for the execute method with various scenarios."""
@@ -557,8 +523,7 @@ class TestASTToJSONExecuteMethod:
         test_file.write_text("x = 42")
         
         tool = PythonASTJSONTool()
-        with pytest.raises(NotImplementedError):
-            result = tool.execute(
+        result = tool.execute(
                 action="to_json",
                 source=str(test_file),
                 source_type="file"
@@ -567,8 +532,7 @@ class TestASTToJSONExecuteMethod:
     def test_execute_with_module_source(self):
         """Test execute method with module source type."""
         tool = PythonASTJSONTool()
-        with pytest.raises(NotImplementedError):
-            result = tool.execute(
+        result = tool.execute(
                 action="to_json",
                 source="json",
                 source_type="module"
@@ -577,8 +541,7 @@ class TestASTToJSONExecuteMethod:
     def test_execute_with_code_source(self):
         """Test execute method with code source type."""
         tool = PythonASTJSONTool()
-        with pytest.raises(NotImplementedError):
-            result = tool.execute(
+        result = tool.execute(
                 action="to_json",
                 source="print('hello')",
                 source_type="code"
@@ -587,16 +550,14 @@ class TestASTToJSONExecuteMethod:
     def test_execute_with_metadata_options(self):
         """Test execute method with metadata options."""
         tool = PythonASTJSONTool()
-        with pytest.raises(NotImplementedError):
-            result = tool.execute(
+        result = tool.execute(
                 action="to_json",
                 source="x = 1",
                 source_type="code",
                 include_metadata=True
             )
         
-        with pytest.raises(NotImplementedError):
-            result = tool.execute(
+        result = tool.execute(
                 action="to_json",
                 source="x = 1",
                 source_type="code",
@@ -608,8 +569,7 @@ class TestASTToJSONExecuteMethod:
         tool = PythonASTJSONTool()
         
         # Formatted output (default)
-        with pytest.raises(NotImplementedError):
-            result = tool.execute(
+        result = tool.execute(
                 action="to_json",
                 source="x = 1",
                 source_type="code",
@@ -617,8 +577,7 @@ class TestASTToJSONExecuteMethod:
             )
         
         # Unformatted output
-        with pytest.raises(NotImplementedError):
-            result = tool.execute(
+        result = tool.execute(
                 action="to_json",
                 source="x = 1",
                 source_type="code",

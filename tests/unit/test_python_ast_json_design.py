@@ -16,146 +16,135 @@ class TestPythonASTJSONDesignRequirements:
         tool = PythonASTJSONTool()
         
         # Test with execute method
-        with pytest.raises(NotImplementedError):
-            tool.execute(
-                action="to_json",
-                source="/path/to/file.py",
-                source_type="file"
-            )
+                tool.execute(
+            action="to_json",
+            source="/path/to/file.py",
+            source_type="file"
+        )
         
-        # Test with static method
-        with pytest.raises(NotImplementedError):
-            PythonASTJSONTool.file_to_json("/path/to/file.py")
+    # Test with static method
+    PythonASTJSONTool.file_to_json("/path/to/file.py")
     
-    def test_api_supports_module_name_input(self):
-        """Test that API design supports module names as input."""
-        tool = PythonASTJSONTool()
+def test_api_supports_module_name_input(self):
+    """Test that API design supports module names as input."""
+    tool = PythonASTJSONTool()
         
-        # Test with execute method
-        with pytest.raises(NotImplementedError):
-            tool.execute(
-                action="to_json",
-                source="os.path",
-                source_type="module"
-            )
+    # Test with execute method
+    tool.execute(
+            action="to_json",
+            source="os.path",
+            source_type="module"
+        )
         
-        # Test with static method
-        with pytest.raises(NotImplementedError):
-            PythonASTJSONTool.module_to_json("os.path")
+    # Test with static method
+    PythonASTJSONTool.module_to_json("os.path")
     
-    def test_api_supports_code_string_input(self):
-        """Test that API design supports direct code strings."""
-        tool = PythonASTJSONTool()
+def test_api_supports_code_string_input(self):
+    """Test that API design supports direct code strings."""
+    tool = PythonASTJSONTool()
         
-        with pytest.raises(NotImplementedError):
-            tool.execute(
-                action="to_json",
-                source="x = 42\nprint(x)",
-                source_type="code"
-            )
+    tool.execute(
+            action="to_json",
+            source="x = 42\nprint(x)",
+            source_type="code"
+        )
     
-    def test_bidirectional_conversion_api(self):
-        """Test that API supports full bidirectional conversion."""
-        # Python → AST
-        with pytest.raises(NotImplementedError):
-            ast_json = PythonASTJSONTool.file_to_json("test.py")
+def test_bidirectional_conversion_api(self):
+    """Test that API supports full bidirectional conversion."""
+    # Python → AST
+    ast_json = PythonASTJSONTool.file_to_json("test.py")
         
-        # AST JSON → AST node
-        with pytest.raises(NotImplementedError):
-            ast_node = PythonASTJSONTool.json_to_ast({"node_type": "Module"})
+    # AST JSON → AST node
+    ast_node = PythonASTJSONTool.json_to_ast({"node_type": "Module"})
         
-        # AST JSON → Python code
-        with pytest.raises(NotImplementedError):
-            code = PythonASTJSONTool.json_to_code({"node_type": "Module"})
+    # AST JSON → Python code
+    code = PythonASTJSONTool.json_to_code({"node_type": "Module"})
     
-    def test_metadata_fields_in_schema(self):
-        """Test that schema includes all required metadata fields."""
-        tool = PythonASTJSONTool()
-        with open(tool._schema_path) as f:
-            schema = json.load(f)
+def test_metadata_fields_in_schema(self):
+    """Test that schema includes all required metadata fields."""
+    tool = PythonASTJSONTool()
+    with open(tool._schema_path) as f:
+        schema = json.load(f)
         
-        metadata = schema["definitions"]["metadata"]["properties"]
+    metadata = schema["definitions"]["metadata"]["properties"]
         
-        # Required metadata fields
-        assert "python_version" in metadata
-        assert "conversion_timestamp" in metadata
+    # Required metadata fields
+    assert "python_version" in metadata
+    assert "conversion_timestamp" in metadata
         
-        # Optional but important metadata fields
-        assert "source_file" in metadata
-        assert "module_name" in metadata
-        assert "encoding" in metadata
+    # Optional but important metadata fields
+    assert "source_file" in metadata
+    assert "module_name" in metadata
+    assert "encoding" in metadata
     
-    def test_source_location_preservation(self):
-        """Test that design preserves source location information."""
-        tool = PythonASTJSONTool()
-        with open(tool._schema_path) as f:
-            schema = json.load(f)
+def test_source_location_preservation(self):
+    """Test that design preserves source location information."""
+    tool = PythonASTJSONTool()
+    with open(tool._schema_path) as f:
+        schema = json.load(f)
         
-        location = schema["definitions"]["sourceLocation"]["properties"]
+    location = schema["definitions"]["sourceLocation"]["properties"]
         
-        # All AST location fields
-        assert "lineno" in location
-        assert "col_offset" in location
-        assert "end_lineno" in location
-        assert "end_col_offset" in location
+    # All AST location fields
+    assert "lineno" in location
+    assert "col_offset" in location
+    assert "end_lineno" in location
+    assert "end_col_offset" in location
     
-    def test_comprehensive_node_coverage(self):
-        """Test that schema covers comprehensive Python AST nodes."""
-        tool = PythonASTJSONTool()
-        with open(tool._schema_path) as f:
-            schema = json.load(f)
+def test_comprehensive_node_coverage(self):
+    """Test that schema covers comprehensive Python AST nodes."""
+    tool = PythonASTJSONTool()
+    with open(tool._schema_path) as f:
+        schema = json.load(f)
         
-        definitions = schema["definitions"]
+    definitions = schema["definitions"]
         
-        # Statement nodes
-        stmt_nodes = ["functionDef", "classDef", "assign", "for", "while", "if", 
-                      "with", "import", "importFrom", "return", "raise", "try"]
-        for node in stmt_nodes:
-            assert node in definitions, f"Missing statement node: {node}"
+    # Statement nodes
+    stmt_nodes = ["functionDef", "classDef", "assign", "for", "while", "if", 
+                  "with", "import", "importFrom", "return", "raise", "try"]
+    for node in stmt_nodes:
+        assert node in definitions, f"Missing statement node: {node}"
         
-        # Expression nodes
-        expr_nodes = ["binOp", "unaryOp", "call", "attribute", "subscript",
-                      "list", "dict", "tuple", "set"]
-        for node in expr_nodes:
-            assert node in definitions, f"Missing expression node: {node}"
+    # Expression nodes
+    expr_nodes = ["binOp", "unaryOp", "call", "attribute", "subscript",
+                  "list", "dict", "tuple", "set"]
+    for node in expr_nodes:
+        assert node in definitions, f"Missing expression node: {node}"
         
-        # Comprehension nodes
-        comp_nodes = ["listComp", "dictComp", "setComp", "generatorExp"]
-        for node in comp_nodes:
-            assert node in definitions, f"Missing comprehension node: {node}"
+    # Comprehension nodes
+    comp_nodes = ["listComp", "dictComp", "setComp", "generatorExp"]
+    for node in comp_nodes:
+        assert node in definitions, f"Missing comprehension node: {node}"
     
-    def test_validation_capability(self):
-        """Test that API includes validation capabilities."""
-        tool = PythonASTJSONTool()
+def test_validation_capability(self):
+    """Test that API includes validation capabilities."""
+    tool = PythonASTJSONTool()
         
-        # Via execute method
-        with pytest.raises(NotImplementedError):
-            tool.execute(
-                action="validate",
-                json_data={"node_type": "Module"}
-            )
+    # Via execute method
+    tool.execute(
+            action="validate",
+            json_data={"node_type": "Module"}
+        )
         
-        # Via static method
-        with pytest.raises(NotImplementedError):
-            PythonASTJSONTool.validate_ast_json({"node_type": "Module"})
+    # Via static method
+    PythonASTJSONTool.validate_ast_json({"node_type": "Module"})
     
-    def test_error_handling_design(self):
-        """Test that API design includes error handling."""
-        tool = PythonASTJSONTool()
+def test_error_handling_design(self):
+    """Test that API design includes error handling."""
+    tool = PythonASTJSONTool()
         
-        # Unknown action should return error dict
-        result = tool.execute(action="unknown_action")
-        assert isinstance(result, dict)
-        assert "error" in result
+    # Unknown action should return error dict
+    result = tool.execute(action="unknown_action")
+    assert isinstance(result, dict)
+    assert "error" in result
     
-    def test_formatting_options(self):
-        """Test that API includes formatting options."""
-        tool = PythonASTJSONTool()
-        schema = tool.parameters_schema
+def test_formatting_options(self):
+    """Test that API includes formatting options."""
+    tool = PythonASTJSONTool()
+    schema = tool.parameters_schema
         
-        assert "format_output" in schema["properties"]
-        assert schema["properties"]["format_output"]["default"] is True
-
+    assert "format_output" in schema["properties"]
+    assert schema["properties"]["format_output"]["default"] is True
 
 class TestPythonASTJSONSchemaCompleteness:
     """Tests to ensure schema completeness for all Python constructs."""

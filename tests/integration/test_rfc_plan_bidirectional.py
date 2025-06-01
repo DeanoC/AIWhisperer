@@ -26,6 +26,13 @@ from ai_whisperer.path_management import PathManager
 class TestRFCPlanBidirectional:
     """Test bidirectional updates between RFCs and Plans."""
     
+    def _extract_rfc_id(self, result):
+        """Extract RFC ID from create result."""
+        import re
+        match = re.search(r'\*\*RFC ID\*\*: (RFC-\d{4}-\d{2}-\d{2}-\d{4})', result)
+        assert match, f"Could not extract RFC ID from result: {result}"
+        return match.group(1)
+    
     @pytest.fixture
     def temp_workspace(self):
         """Create a temporary workspace for testing."""
@@ -56,10 +63,13 @@ class TestRFCPlanBidirectional:
         })
         assert "RFC created successfully" in result
         
+        # Extract the RFC ID from the result
+        rfc_id = self._extract_rfc_id(result)
+        
         # Simulate plan creation (prepare + save)
         prepare_tool = PreparePlanFromRFCTool()
         prepare_result = prepare_tool.execute({
-            "rfc_id": "RFC-2025-05-31-0001",
+            "rfc_id": rfc_id,
             "plan_type": "initial"
         })
         assert "RFC prepared for plan generation" in prepare_result
@@ -93,7 +103,7 @@ class TestRFCPlanBidirectional:
         save_result = save_tool.execute({
             "plan_name": "auth-system-plan-2024-01-01",
             "plan_content": sample_plan,
-            "rfc_id": "RFC-2025-05-31-0001",  # Use the actual RFC ID
+            "rfc_id": rfc_id,  # Use the actual RFC ID
             "rfc_hash": rfc_hash
         })
         assert "Plan saved successfully" in save_result
