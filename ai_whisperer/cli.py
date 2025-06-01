@@ -1,12 +1,10 @@
-
-
-
 import argparse
 import sys
 import logging
 from pathlib import Path
 from .exceptions import ConfigError
-from .cli_commands import BatchModeCliCommand, BaseCliCommand
+from .cli_commands_batch_mode import BatchModeCliCommand
+from .cli_commands import BaseCliCommand
 from . import logging_custom
 from .config import load_config
 from ai_whisperer.path_management import PathManager
@@ -69,7 +67,16 @@ def cli(args=None):
         print(f"Error loading config: {e}", file=sys.stderr)
         sys.exit(2)
 
-    command = BatchModeCliCommand(script_path=script_path)
+    command = BatchModeCliCommand(script_path=script_path, config=config, dry_run=dry_run)
     exit_code = command.execute()
     sys.exit(exit_code)
+
+
+def main():
+    """Standard Python main function entry point."""
+    cli()
+
+
+if __name__ == "__main__":
+    main()
 

@@ -90,14 +90,14 @@ class ClarificationResponse:
     additional_context: Dict[str, Any] = field(default_factory=dict)
     confidence: float = 1.0
     
-    def to_message(self, sender: str, recipient: str, message_id: str) -> AgentMessage:
+    def to_message(self, from_agent: str, to_agent: str, message_id: str) -> AgentMessage:
         """Convert to agent message."""
         return AgentMessage(
             message_id=message_id,
-            sender=sender,
-            recipient=recipient,
+            from_agent=from_agent,
+            to_agent=to_agent,
             message_type=MessageType.CLARIFICATION_RESPONSE,
-            content={
+            payload={
                 'request_id': self.request_id,
                 'answer': self.answer,
                 'additional_context': self.additional_context,
@@ -140,14 +140,14 @@ class PlanRefinementResponse:
     refined_plan: Optional[Dict[str, Any]] = None
     reasoning: str = ""
     
-    def to_message(self, sender: str, recipient: str, message_id: str) -> AgentMessage:
+    def to_message(self, from_agent: str, to_agent: str, message_id: str) -> AgentMessage:
         """Convert to agent message."""
         return AgentMessage(
             message_id=message_id,
-            sender=sender,
-            recipient=recipient,
+            from_agent=from_agent,
+            to_agent=to_agent,
             message_type=MessageType.PLAN_REFINEMENT_RESPONSE,
-            content={
+            payload={
                 'request_id': self.request_id,
                 'approved': self.approved,
                 'refined_plan': self.refined_plan,

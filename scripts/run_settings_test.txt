@@ -1,0 +1,1 @@
+use script_parser with file_path: scripts/test_project_settings_flow.json

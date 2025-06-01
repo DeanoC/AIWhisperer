@@ -1,0 +1,10 @@
+use script_parser with file_path: scripts/test_settings_persistence.py
+
+Check that project settings are being saved and loaded correctly by:
+1. Reading current settings from the backend
+2. Modifying some settings 
+3. Saving them
+4. Reloading to verify persistence
+5. Running the integration test we created
+
+Please use the python_executor tool to run the backend integration test and verify all settings operations work correctly.
