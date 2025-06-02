@@ -1,0 +1,112 @@
+{
+  "timestamp": "2025-06-02T15:47:20.696993",
+  "python_version": "3.12.3",
+  "startup_times": {
+    "help_command": 0.13003849983215332,
+    "version_command": 0.12107086181640625
+  },
+  "module_sizes": {
+    "ai_whisperer/core": {
+      "total_bytes": 34612,
+      "total_kb": 33.80078125,
+      "file_count": 4,
+      "avg_kb": 8.4501953125
+    },
+    "ai_whisperer/utils": {
+      "total_bytes": 26348,
+      "total_kb": 25.73046875,
+      "file_count": 5,
+      "avg_kb": 5.14609375
+    },
+    "ai_whisperer/services": {
+      "total_bytes": 102051,
+      "total_kb": 99.6591796875,
+      "file_count": 20,
+      "avg_kb": 4.982958984375
+    },
+    "ai_whisperer/interfaces": {
+      "total_bytes": 45489,
+      "total_kb": 44.4228515625,
+      "file_count": 16,
+      "avg_kb": 2.77642822265625
+    },
+    "ai_whisperer/extensions": {
+      "total_bytes": 225630,
+      "total_kb": 220.341796875,
+      "file_count": 25,
+      "avg_kb": 8.813671875
+    },
+    "ai_whisperer/tools": {
+      "total_bytes": 762296,
+      "total_kb": 744.4296875,
+      "file_count": 54,
+      "avg_kb": 13.785734953703704
+    },
+    "total_kb": 1168.384765625
+  },
+  "large_files": [
+    [
+      "ai_whisperer/tools/python_ast_json_tool.py",
+      188738
+    ]
+  ],
+  "import_analysis": {
+    "heavy_importers": [
+      [
+        "ai_whisperer/tools/python_ast_json_tool.py",
+        45
+      ],
+      [
+        "ai_whisperer/tools/python_executor_tool.py",
+        25
+      ]
+    ],
+    "third_party": [
+      "hashlib",
+      "numpy",
+      "concurrent",
+      "urllib",
+      "tempfile",
+      "dataclasses",
+      "statistics",
+      "types",
+      "time",
+      "traceback",
+      "hierarchical_config_loader",
+      "matplotlib",
+      "random",
+      "contextlib",
+      "dotenv",
+      "importlib",
+      "enum",
+      "ast",
+      "collections",
+      "pandas",
+      "websockets",
+      "interactive_server",
+      "requests",
+      "tokenize",
+      "uuid",
+      "csv",
+      "yaml",
+      "subprocess",
+      "signal",
+      "shlex",
+      "argparse",
+      "threading",
+      "re",
+      "queue",
+      "psutil",
+      "fnmatch",
+      "itertools",
+      "resource",
+      "socket",
+      "abc",
+      "inspect",
+      "shutil",
+      "astor",
+      "io",
+      "jsonschema"
+    ]
+  }
+}
