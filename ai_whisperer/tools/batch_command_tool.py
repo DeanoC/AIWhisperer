@@ -25,11 +25,14 @@ Related:
 
 """
 
+from typing import Any, Callable, Dict, List, Optional, Set
+
 import re
 import logging
 from collections import OrderedDict
 
-from ai_whisperer.services.agents.base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.tools.script_parser_tool import ParsedScript
 
 logger = logging.getLogger(__name__)
 

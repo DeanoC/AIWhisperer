@@ -27,7 +27,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
-from ai_whisperer.services.agents.base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ..agents.decomposed_task import TaskStatus
 
 logger = logging.getLogger(__name__)

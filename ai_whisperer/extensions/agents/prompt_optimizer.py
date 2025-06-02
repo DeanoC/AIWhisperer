@@ -19,6 +19,8 @@ Related:
 
 """
 
+from typing import Any, Dict, Optional
+
 import re
 from ai_whisperer.model_capabilities import get_model_capabilities
 from ai_whisperer.core.logging import get_logger

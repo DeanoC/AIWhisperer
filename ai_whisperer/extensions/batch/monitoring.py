@@ -3,6 +3,8 @@ Real-time monitoring system for Debbie the Debugger.
 Monitors AI sessions for anomalies, stalls, and performance issues.
 """
 
+from typing import Any, Callable, Dict, List, Optional, Set
+
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -11,7 +13,7 @@ from enum import Enum
 import statistics
 from collections import deque, defaultdict
 
-from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
+from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger, LogLevel, LogSource, ComponentType
 from ..logging.log_aggregator import LogAggregator
 from ..tools.session_inspector_tool import SessionInspectorTool
 from ..tools.message_injector_tool import MessageInjectorTool

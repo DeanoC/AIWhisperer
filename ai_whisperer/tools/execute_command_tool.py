@@ -25,7 +25,7 @@ import logging
 import sys
 from typing import Dict, Any, Optional, List
 
-from ai_whisperer.services.agents.base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 import threading # Import threading for Event
 
 logger = logging.getLogger(__name__)

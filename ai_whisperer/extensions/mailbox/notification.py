@@ -26,6 +26,8 @@ Related:
 
 """
 
+from typing import Optional
+
 import logging
 from ai_whisperer.extensions.mailbox.mailbox import get_mailbox
 

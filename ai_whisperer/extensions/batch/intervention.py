@@ -3,6 +3,9 @@ Automated intervention system for Debbie the Debugger.
 Implements recovery strategies and intervention policies.
 """
 
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import asyncio
 import time
 import logging
@@ -10,7 +13,7 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 import uuid
 
-from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
+from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger, LogLevel
 from ..tools.message_injector_tool import MessageInjectorTool, InjectionType
 from ..tools.session_inspector_tool import SessionInspectorTool
 from ..tools.python_executor_tool import PythonExecutorTool

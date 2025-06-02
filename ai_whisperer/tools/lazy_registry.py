@@ -2,6 +2,8 @@
 Lazy tool registry for performance optimization.
 Loads tools on-demand rather than at startup.
 """
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import importlib
 import logging

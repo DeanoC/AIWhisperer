@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ai_whisperer.tools.base_tool import AITool
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 

@@ -25,7 +25,7 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 from datetime import datetime
 
-from ai_whisperer.services.agents.base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 from ai_whisperer.utils.validation import validate_against_schema
 

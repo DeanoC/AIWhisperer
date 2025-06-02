@@ -16,6 +16,8 @@ Dependencies:
 - time
 
 """
+from typing import Any, Dict
+from datetime import timedelta
 
 import time
 from ai_whisperer.tools.base_tool import AITool

@@ -1,3 +1,4 @@
+from typing import Any, Optional
 """
 Module: ai_whisperer/ai_loop/ai_config.py
 Purpose: Configuration management and settings

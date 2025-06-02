@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional
 """
 Module: ai_whisperer/agents/config.py
 Purpose: AI agent implementation for specialized task handling

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 import logging
 from typing import Optional
+from ai_whisperer.utils.workspace import find_whisper_workspace
 
 # Delegate system removed
 

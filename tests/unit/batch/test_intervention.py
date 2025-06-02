@@ -17,7 +17,7 @@ from ai_whisperer.extensions.batch.intervention import (
     InterventionOrchestrator
 )
 from ai_whisperer.extensions.batch.monitoring import AnomalyAlert
-from ai_whisperer.core.logging import LogLevel
+from ai_whisperer.extensions.monitoring.debbie_logger import LogLevel
 
 
 class TestInterventionStrategy:

@@ -34,7 +34,8 @@ from enum import Enum
 from dataclasses import dataclass
 import re
 
-from ai_whisperer.services.agents.base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
+from typing import Any, Dict, List, Optional
 
 class ScriptFormat(Enum):
     """Supported script formats"""

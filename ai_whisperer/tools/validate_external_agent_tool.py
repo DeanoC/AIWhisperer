@@ -27,7 +27,7 @@ import json
 import logging
 from typing import Dict, Any, List
 
-from ai_whisperer.services.agents.base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ..agents.external_adapters import AdapterRegistry
 
 logger = logging.getLogger(__name__)

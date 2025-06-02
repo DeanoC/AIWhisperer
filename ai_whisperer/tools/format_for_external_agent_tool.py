@@ -23,9 +23,11 @@ Related:
 
 """
 
+from typing import Any, Dict, List
+
 import json
 import logging
-from ai_whisperer.services.agents.base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ..agents.decomposed_task import DecomposedTask
 from ..agents.external_adapters import AdapterRegistry
 from ..agents.agent_e_exceptions import ExternalAgentError

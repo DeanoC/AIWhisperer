@@ -3,6 +3,7 @@ import requests
 import json
 import threading
 import logging
+from typing import Any, Dict, List, Optional, AsyncIterator
 from ai_whisperer.services.ai.base import AIService, AIStreamChunk
 from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.core.exceptions import ( 

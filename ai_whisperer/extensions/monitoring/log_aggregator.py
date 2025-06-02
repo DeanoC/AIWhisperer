@@ -10,6 +10,7 @@ import threading
 import uuid
 
 from ai_whisperer.core.logging import EnhancedLogMessage, LogSource
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Type alias for log entries
 LogEntry = Dict[str, Any]

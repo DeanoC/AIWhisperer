@@ -1,5 +1,5 @@
 from typing import Dict, Type
-from ai_whisperer.services.agents.base import Command
+from ai_whisperer.interfaces.cli.commands.base import Command
 
 class CommandRegistry:
     """

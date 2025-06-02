@@ -3,6 +3,8 @@ WebSocket message interceptor for Debbie the Debugger.
 Provides non-invasive monitoring of WebSocket communications.
 """
 
+from typing import Any, Callable, Dict, List, Optional, Union
+
 import json
 import asyncio
 import logging

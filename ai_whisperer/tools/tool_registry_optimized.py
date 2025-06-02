@@ -2,6 +2,7 @@
 Optimized tool registry with lazy loading support.
 This version loads tools on-demand to improve startup performance.
 """
+from typing import Any, Dict, List, Optional, Set
 
 import logging
 import importlib

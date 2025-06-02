@@ -23,6 +23,8 @@ Related:
 
 """
 
+from typing import Any, Dict, List
+
 import logging
 from ai_whisperer.services.ai.tool_calling import ToolCall
 
