@@ -26,17 +26,11 @@ Related:
 
 """
 
-
-import os
-import sys
 import io
 import json
 import time
 import traceback
 import logging
-import subprocess
-import tempfile
-from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from contextlib import redirect_stdout, redirect_stderr
@@ -55,7 +49,6 @@ from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, C
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class ExecutionResult:
     """Result of Python script execution"""
@@ -69,7 +62,6 @@ class ExecutionResult:
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
-
 
 class DebugSandbox:
     """Sandboxed environment for executing Python scripts"""
@@ -209,7 +201,6 @@ class DebugSandbox:
                 captured[name] = f"<{type(value).__name__} - cannot serialize>"
         
         return captured
-
 
 class PythonExecutorTool(AITool):
     """

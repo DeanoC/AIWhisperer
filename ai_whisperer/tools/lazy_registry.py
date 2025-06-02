@@ -5,14 +5,11 @@ Loads tools on-demand rather than at startup.
 
 import importlib
 import logging
-from typing import Dict, Any, Optional, Set, Type, Callable
-from pathlib import Path
 import json
 
 from ai_whisperer.tools.base_tool import AITool
 
 logger = logging.getLogger(__name__)
-
 
 class LazyToolRegistry:
     """
@@ -211,10 +208,8 @@ class LazyToolRegistry:
         
         logger.info(f"Generated tool manifest at {output_path}")
 
-
 # Singleton instance
 _lazy_registry = None
-
 
 def get_lazy_registry() -> LazyToolRegistry:
     """Get the singleton lazy registry instance."""

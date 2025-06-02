@@ -35,8 +35,6 @@ from dotenv import load_dotenv
 from typing import Optional, Dict, Any
 import logging
 import sys
-from collections import ChainMap
-
 # Add scripts directory to path to import hierarchical_config_loader
 scripts_dir = Path(__file__).parent.parent.parent / "scripts"
 if str(scripts_dir) not in sys.path:
@@ -53,7 +51,6 @@ DEFAULT_SITE_URL = "http://localhost:8000"
 DEFAULT_APP_NAME = "AIWhisperer"
 DEFAULT_OUTPUT_DIR = "./output/"
 DEFAULT_TASKS = ["initial_plan", "subtask_generator", "refine_requirements"]
-
 
 def load_config(config_path: Optional[str] = None, 
                cli_args: Optional[Dict[str, Any]] = None,
@@ -87,7 +84,6 @@ def load_config(config_path: Optional[str] = None,
         return load_config_hierarchical(env, cli_args)
     else:
         raise ConfigError("Must specify either config_path OR environment, not both")
-
 
 def load_config_hierarchical(environment: str = 'development', 
                            cli_args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -123,7 +119,6 @@ def load_config_hierarchical(environment: str = 'development',
         
     except Exception as e:
         raise ConfigError(f"Failed to load hierarchical configuration: {e}") from e
-
 
 def load_config_legacy(config_path: str, cli_args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
@@ -175,7 +170,6 @@ def load_config_legacy(config_path: str, cli_args: Optional[Dict[str, Any]] = No
     
     logger.info(f"Successfully loaded legacy configuration from: {config_path}")
     return config
-
 
 def _validate_and_process_config(config: Dict[str, Any], 
                                 cli_args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -243,7 +237,6 @@ def _validate_and_process_config(config: Dict[str, Any],
     
     return config
 
-
 def _process_task_settings(config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Process task-specific model and prompt settings.
@@ -306,7 +299,6 @@ def _process_task_settings(config: Dict[str, Any]) -> Dict[str, Any]:
 
     return config
 
-
 def get_agent_config(agent_name: Optional[str] = None) -> Dict[str, Any]:
     """
     Load agent-specific configuration from the hierarchical structure.
@@ -337,7 +329,6 @@ def get_agent_config(agent_name: Optional[str] = None) -> Dict[str, Any]:
         logger.error(f"Failed to load agent configuration: {e}")
         return {}
 
-
 def get_tools_config() -> Dict[str, Any]:
     """
     Load tools configuration from the hierarchical structure.
@@ -361,7 +352,6 @@ def get_tools_config() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to load tools configuration: {e}")
         return {}
-
 
 def get_schema_path(schema_name: str) -> Path:
     """
@@ -390,10 +380,8 @@ def get_schema_path(schema_name: str) -> Path:
     
     return schema_path
 
-
 # Backward compatibility aliases
 load_config_from_file = load_config_legacy
-
 
 # Migration helper function
 def migrate_to_hierarchical_config(old_config_path: str, environment: str = 'development') -> None:

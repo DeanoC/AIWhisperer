@@ -4,24 +4,19 @@ Monitors AI sessions for anomalies, stalls, and performance issues.
 """
 
 import asyncio
-import time
-import json
 import logging
-from typing import Dict, Any, List, Optional, Callable, Set, Tuple
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 import statistics
 from collections import deque, defaultdict
 
-from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 from ..logging.log_aggregator import LogAggregator
 from ..tools.session_inspector_tool import SessionInspectorTool
 from ..tools.message_injector_tool import MessageInjectorTool
 
 logger = logging.getLogger(__name__)
-
 
 class MonitoringEvent(Enum):
     """Types of monitoring events"""
@@ -36,7 +31,6 @@ class MonitoringEvent(Enum):
     ERROR_DETECTED = "error_detected"
     ANOMALY_DETECTED = "anomaly_detected"
     INTERVENTION_TRIGGERED = "intervention_triggered"
-
 
 @dataclass
 class MonitoringMetrics:
@@ -71,7 +65,6 @@ class MonitoringMetrics:
         data['duration_seconds'] = (datetime.now() - self.start_time).total_seconds()
         return data
 
-
 @dataclass
 class AnomalyAlert:
     """Alert for detected anomaly"""
@@ -94,7 +87,6 @@ class AnomalyAlert:
             'timestamp': self.timestamp.isoformat(),
             'requires_intervention': self.requires_intervention
         }
-
 
 class AnomalyDetector:
     """Detects anomalies in session behavior"""
@@ -224,7 +216,6 @@ class AnomalyDetector:
             alpha = 0.1
             self.baseline_metrics[key] = (alpha * value + 
                                          (1 - alpha) * self.baseline_metrics[key])
-
 
 class DebbieMonitor:
     """Main monitoring system for Debbie"""
@@ -561,7 +552,6 @@ class DebbieMonitor:
         self.monitored_sessions.clear()
         
         self.debbie_logger.info("Monitoring system shut down")
-
 
 class MetricsCollector:
     """Collects and aggregates performance metrics"""

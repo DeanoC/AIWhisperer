@@ -9,6 +9,4 @@ This package contains specific command implementations:
 - debbie: Debbie debugger commands
 """
 
-from ai_whisperer.interfaces.cli.commands.base import BaseCliCommand
-
 __all__ = ['BaseCliCommand']

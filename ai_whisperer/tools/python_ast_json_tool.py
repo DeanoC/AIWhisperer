@@ -28,40 +28,26 @@ Related:
 
 """
 
-
 import ast
 import json
 import sys
 import os
 import re
-import tokenize
-import io
-import importlib.util
-import inspect
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List, Tuple
 from datetime import datetime, timezone
-from collections import defaultdict
-
 from ai_whisperer.tools.base_tool import AITool
 
 # Import extracted constants and helpers
-from ai_whisperer.tools.ast_constants import (
-    ERROR_TYPE_MAPPINGS, AST_NODE_TYPES, BUILTIN_TYPES,
-    OPERATORS, COMPARE_OPS, DEFAULT_LIMITS, RECONSTRUCTION_MODES
-)
+from ai_whisperer.tools.ast_constants import ERROR_TYPE_MAPPINGS
 from ai_whisperer.tools.ast_helpers import (
-    extract_comments_from_source, calculate_formatting_metrics,
-    extract_docstring_info, safe_ast_parse, get_node_type_name,
-    estimate_node_complexity, count_ast_nodes, get_ast_depth
+    extract_comments_from_source, calculate_formatting_metrics
 )
-
 
 class ProcessingTimeoutError(TimeoutError):
     """Custom timeout error for processing timeouts."""
     pass
-
 
 class PythonASTJSONTool(AITool):
     """Tool for converting Python code to AST JSON representation and back."""
@@ -169,7 +155,6 @@ class PythonASTJSONTool(AITool):
         # Note: Order matters! More specific exceptions must come before general ones
         error_type = 'unknown_error'  # Default
         
-        
         if isinstance(error, FileNotFoundError):
             # Check for deletion during processing first
             if 'deleted' in str(error).lower():
@@ -258,7 +243,6 @@ class PythonASTJSONTool(AITool):
             else:
                 error_type = 'syntax_error'
         
-        
         elif isinstance(error, AttributeError):
             # Check if it's related to AST structure
             error_msg = str(error).lower()
@@ -299,8 +283,6 @@ class PythonASTJSONTool(AITool):
                 error_type = 'processing_timeout'
             else:
                 error_type = 'network_timeout'
-        
-        
         
         # Fallback to generic mapping if no specific type was determined
         if error_type == 'unknown_error':
@@ -2293,7 +2275,6 @@ Example uses:
                 if "metadata" in result:
                     result["metadata"]["source_file"] = str(file_path)
                 
-                
                 # Calculate performance metrics
                 read_time_ms = (time.time() - start_time) * 1000
                 
@@ -3505,7 +3486,6 @@ Example uses:
         """
         import time
         import threading
-        import queue
         from concurrent.futures import ThreadPoolExecutor, as_completed
         from pathlib import Path
         

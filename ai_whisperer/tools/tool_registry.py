@@ -5,14 +5,11 @@ This replaces the original tool_registry.py with on-demand loading.
 
 import logging
 import importlib
-from typing import Dict, Any, List, Optional, Set, Type
-from pathlib import Path
-
+from typing import Dict, Any, List, Optional, Set
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.tools.tool_set import ToolSetManager
 
 logger = logging.getLogger(__name__)
-
 
 class LazyToolRegistry:
     """
@@ -627,10 +624,8 @@ class LazyToolRegistry:
         
         return list(all_tools)
 
-
 # Singleton accessor
 _lazy_registry = None
-
 
 def get_tool_registry() -> LazyToolRegistry:
     """Get the singleton tool registry instance."""
@@ -638,7 +633,6 @@ def get_tool_registry() -> LazyToolRegistry:
     if _lazy_registry is None:
         _lazy_registry = LazyToolRegistry()
     return _lazy_registry
-
 
 # Backward compatibility alias
 ToolRegistry = LazyToolRegistry

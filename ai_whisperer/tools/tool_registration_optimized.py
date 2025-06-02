@@ -3,10 +3,7 @@ Optimized tool registration that supports lazy loading.
 """
 
 import logging
-from typing import Optional
-
 logger = logging.getLogger(__name__)
-
 
 def register_all_tools(tool_registry, lazy: bool = True) -> None:
     """
@@ -28,7 +25,6 @@ def register_all_tools(tool_registry, lazy: bool = True) -> None:
     # This is handled by the registry itself when lazy_loading=False
     logger.info("Loading all tools (lazy loading disabled)")
     
-
 def register_category(tool_registry, category: str, lazy: bool = True) -> None:
     """
     Register all tools in a specific category.
@@ -45,7 +41,6 @@ def register_category(tool_registry, category: str, lazy: bool = True) -> None:
     # Force load tools in this category
     tools = tool_registry.get_tools_by_category(category)
     logger.info(f"Loaded {len(tools)} tools from category '{category}'")
-
 
 def preload_essential_tools(tool_registry) -> None:
     """

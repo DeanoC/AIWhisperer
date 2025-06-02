@@ -3,7 +3,6 @@ Log aggregator for multi-source log management and correlation.
 """
 
 import time
-from typing import Dict, Any, List, Optional, Set, Tuple, Union
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
@@ -14,7 +13,6 @@ from ai_whisperer.core.logging import EnhancedLogMessage, LogSource
 
 # Type alias for log entries
 LogEntry = Dict[str, Any]
-
 
 @dataclass
 class CorrelationGroup:
@@ -32,7 +30,6 @@ class CorrelationGroup:
     def get_timeline(self) -> List[LogEntry]:
         """Get entries sorted by timestamp"""
         return sorted(self.entries, key=lambda e: e.get('timestamp', ''))
-
 
 @dataclass 
 class Timeline:
@@ -76,7 +73,6 @@ class Timeline:
             'event_count': len(self.events)
         }
 
-
 class TimelineBuilder:
     """Builds timelines from log events"""
     
@@ -104,7 +100,6 @@ class TimelineBuilder:
     def get_all_timelines(self) -> List[Timeline]:
         """Get all timelines"""
         return list(self.timelines.values())
-
 
 class LogAggregator:
     """Aggregates logs from multiple sources with correlation"""

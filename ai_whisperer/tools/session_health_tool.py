@@ -17,13 +17,8 @@ Dependencies:
 
 """
 
-import json
 import time
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-
 from ai_whisperer.tools.base_tool import AITool
-
 
 class SessionHealthTool(AITool):
     """Check the health status of AI sessions"""

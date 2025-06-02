@@ -21,7 +21,6 @@ Related:
 
 """
 
-import os
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional, List
@@ -31,10 +30,7 @@ import re
 
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
-from ai_whisperer.core.exceptions import FileRestrictionError
-
 logger = logging.getLogger(__name__)
-
 
 class CreateRFCTool(AITool):
     """Tool for creating new RFC documents from ideas."""

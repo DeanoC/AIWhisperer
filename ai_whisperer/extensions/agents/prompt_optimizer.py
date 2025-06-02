@@ -19,14 +19,11 @@ Related:
 
 """
 
-
 import re
-from typing import Dict, List, Any
 from ai_whisperer.model_capabilities import get_model_capabilities
 from ai_whisperer.core.logging import get_logger
 
 logger = get_logger(__name__)
-
 
 class PromptOptimizer:
     """Optimizes prompts based on model capabilities for better continuation"""
@@ -188,7 +185,6 @@ class PromptOptimizer:
             analysis['estimated_improvement'] += 25
         
         return analysis
-
 
 def optimize_user_message(message: str, model_name: str, agent_type: str = None) -> str:
     """

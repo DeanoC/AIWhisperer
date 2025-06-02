@@ -22,9 +22,7 @@ Related:
 
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional, List, Tuple
 from pathlib import Path
 from collections import defaultdict
 
@@ -32,7 +30,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class GetProjectStructureTool(AITool):
     """Tool for analyzing and understanding project structure and organization."""

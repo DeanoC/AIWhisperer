@@ -27,12 +27,9 @@ Related:
 """
 
 import logging
-from typing import Dict, Any, Optional
-
 from ai_whisperer.extensions.mailbox.mailbox import get_mailbox
 
 logger = logging.getLogger(__name__)
-
 
 class MailNotificationMixin:
     """Mixin to add mail notification capabilities to agents."""
@@ -110,7 +107,6 @@ class MailNotificationMixin:
         summary_parts.append("\nUse check_mail tool to read messages.")
         
         return "\n".join(summary_parts)
-
 
 def get_mail_notification(agent_name: str) -> Optional[str]:
     """Helper function to generate mail notification string."""

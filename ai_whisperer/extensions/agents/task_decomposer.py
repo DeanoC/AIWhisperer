@@ -27,14 +27,12 @@ Related:
 import re
 import uuid
 import logging
-from typing import List, Dict, Any, Set, Tuple
 from collections import defaultdict, deque
 
 from ai_whisperer.extensions.agents.decomposed_task import DecomposedTask
 from .agent_e_exceptions import InvalidPlanError, DependencyCycleError, TaskDecompositionError
 
 logger = logging.getLogger(__name__)
-
 
 class TaskDecomposer:
     """Decomposes plans into executable tasks for external agents."""

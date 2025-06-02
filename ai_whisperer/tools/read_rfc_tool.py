@@ -21,7 +21,6 @@ Related:
 
 """
 
-import os
 import logging
 import re
 import json
@@ -32,7 +31,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class ReadRFCTool(AITool):
     """Tool for reading RFC documents and extracting structured information."""

@@ -23,13 +23,10 @@ Related:
 
 """
 
-import json
 import logging
-from typing import Dict, List, Any, Optional
 from ai_whisperer.services.ai.tool_calling import ToolCall
 
 logger = logging.getLogger(__name__)
-
 
 class ToolCallAccumulator:
     """

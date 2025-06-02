@@ -4,7 +4,6 @@ Provides proper tool call handling with message formatting following API standar
 """
 import json
 import logging
-from typing import List, Dict, Any, Optional, Union, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -12,13 +11,11 @@ from ai_whisperer.tools.base_tool import AITool
 
 logger = logging.getLogger(__name__)
 
-
 class ToolChoice(Enum):
     """Tool choice options"""
     AUTO = "auto"
     REQUIRED = "required"
     NONE = "none"
-
 
 @dataclass
 class ToolCall:
@@ -47,7 +44,6 @@ class ToolCall:
             }
         }
 
-
 @dataclass
 class ToolCallResult:
     """Result from executing a tool call"""
@@ -64,7 +60,6 @@ class ToolCallResult:
             "content": self.content
         }
 
-
 @dataclass
 class Message:
     """Base message class"""
@@ -78,13 +73,11 @@ class Message:
             data["content"] = self.content
         return data
 
-
 @dataclass
 class UserMessage(Message):
     """User message"""
     def __init__(self, content: str):
         super().__init__(role="user", content=content)
-
 
 @dataclass
 class AssistantMessage(Message):
@@ -101,7 +94,6 @@ class AssistantMessage(Message):
             data["tool_calls"] = self.tool_calls
         return data
 
-
 class ToolCallMessage(Message):
     """Tool call result message"""
     def __init__(self, tool_call_id: str, name: str, content: str):
@@ -116,7 +108,6 @@ class ToolCallMessage(Message):
             "name": self.name,
             "content": self.content
         }
-
 
 @dataclass
 class StreamAccumulator:
@@ -154,7 +145,6 @@ class StreamAccumulator:
                 tc_data["function"]["arguments"] = ''.join(tc_data["function"]["arguments"])
                 result.append(ToolCall.from_api_response(tc_data))
         return result
-
 
 class ToolCallHandler:
     """Handles tool calling following OpenAI/OpenRouter standards"""

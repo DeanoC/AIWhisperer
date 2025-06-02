@@ -22,10 +22,8 @@ Related:
 
 """
 
-import os
 import logging
 import json
-import shutil
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
@@ -34,7 +32,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class MoveRFCTool(AITool):
     """Tool for moving RFC documents between status folders."""

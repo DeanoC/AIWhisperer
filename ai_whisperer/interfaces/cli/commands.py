@@ -1,28 +1,13 @@
 from abc import ABC, abstractmethod
-import asyncio
 from pathlib import Path
 import logging
-import yaml
-import json
-from pathlib import Path
-import threading # Import threading
 from typing import Optional
 
-from ai_whisperer.services.execution.ai_config import AIConfig
-from ai_whisperer.services.execution.context import ContextManager
 # Delegate system removed
 
-from .user_message_level import UserMessageLevel
-from ai_whisperer.services.execution.state import StateManager # Import StateManager
-
-from ai_whisperer.core.config import load_config
-from ai_whisperer.core.logging import LogMessage, LogLevel, ComponentType, log_event # Import logging components for log_event
-from .model_info_provider import ModelInfoProvider
 # Legacy imports removed - using interactive/batch mode instead
 
 logger = logging.getLogger(__name__)
-
-
 
 class BaseCliCommand(ABC):
     """Base class for all CLI commands."""
@@ -44,7 +29,6 @@ class BatchModeCliCommand(BaseCliCommand):
     def execute(self) -> int:
         # Validate workspace before running batch script
         try:
-            from ai_whisperer.utils.workspace import find_whisper_workspace, WorkspaceNotFoundError
             workspace = find_whisper_workspace()
             print(f"Workspace detected: {workspace}")
         except Exception as e:
@@ -171,8 +155,6 @@ class BatchModeCliCommand(BaseCliCommand):
 #             # The main thread or the UI thread's shutdown process should handle the overall monitor shutdown.
 #             pass
 
-
-
 #     def execute(self):
 #         """Executes a project plan."""
 #         logger.info("Starting AI Whisperer run process...")
@@ -237,7 +219,6 @@ class BatchModeCliCommand(BaseCliCommand):
 #                  logger.debug("KeyboardInterrupt handler: Shutdown initiated by main thread.")
 #             else:
 #                  logger.debug("KeyboardInterrupt handler: Shutdown already initiated by main thread.")
-
 
 #         finally:
 #             # Ensure both threads are joined before exiting the main thread.

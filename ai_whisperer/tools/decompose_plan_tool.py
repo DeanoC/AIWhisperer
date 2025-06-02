@@ -25,18 +25,14 @@ Related:
 
 import json
 import logging
-from typing import Dict, Any, List, Optional
-
 from ai_whisperer.services.agents.base_tool import AITool
 from ..agents.task_decomposer import TaskDecomposer
-from ..agents.decomposed_task import DecomposedTask
 from ..agents.agent_e_exceptions import (
     InvalidPlanError,
     TaskDecompositionError
 )
 
 logger = logging.getLogger(__name__)
-
 
 class DecomposePlanTool(AITool):
     """Tool for decomposing plans into executable tasks."""

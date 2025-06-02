@@ -6,9 +6,7 @@ from ai_whisperer.services.agents.base import Command
 from ai_whisperer.services.agents.registry import CommandRegistry
 from ai_whisperer.interfaces.cli.commands.errors import CommandError
 from typing import Any, Dict, Optional
-import json
 from datetime import datetime
-
 
 class DebbieCommand(Command):
     """
@@ -380,7 +378,6 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         report += f"\n\n═══════════════════════════════════════\nEnd of Report"
         
         return report
-
 
 # Register the command
 CommandRegistry.register(DebbieCommand)

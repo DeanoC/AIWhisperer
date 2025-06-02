@@ -23,10 +23,8 @@ Related:
 
 """
 
-import os
 import logging
 import re
-import time
 import hashlib
 from typing import Dict, Any, Optional, List
 from pathlib import Path
@@ -38,7 +36,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class FetchURLTool(AITool):
     """Tool for fetching and processing web page content."""

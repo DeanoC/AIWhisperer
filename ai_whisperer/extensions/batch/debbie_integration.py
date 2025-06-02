@@ -3,9 +3,7 @@ Integration module for Debbie the Debugger.
 Ties together monitoring, intervention, and interception systems.
 """
 
-import asyncio
 import logging
-from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from ai_whisperer.extensions.batch.monitoring import DebbieMonitor, AnomalyAlert
@@ -15,7 +13,6 @@ from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 from ..logging.log_aggregator import LogAggregator
 
 logger = logging.getLogger(__name__)
-
 
 class DebbieDebugger:
     """
@@ -251,7 +248,6 @@ class DebbieDebugger:
         
         return report
 
-
 class DebbieFactory:
     """Factory for creating Debbie instances with different configurations"""
     
@@ -307,7 +303,6 @@ class DebbieFactory:
             }
         }
         return DebbieDebugger(session_manager, config)
-
 
 async def integrate_debbie_with_batch_client(batch_client, debbie: DebbieDebugger):
     """

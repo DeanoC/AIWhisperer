@@ -24,10 +24,7 @@ Related:
 
 """
 
-import os
-import json
 import asyncio
-import subprocess
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
@@ -36,7 +33,6 @@ import logging
 from ai_whisperer.tools.base_tool import AITool
 
 logger = logging.getLogger(__name__)
-
 
 class SystemHealthCheckTool(AITool):
     """

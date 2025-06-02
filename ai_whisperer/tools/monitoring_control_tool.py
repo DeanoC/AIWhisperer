@@ -18,12 +18,10 @@ Related:
 
 """
 
-import json
 from typing import Dict, Any, Optional
 from datetime import datetime
 
 from ai_whisperer.tools.base_tool import AITool
-
 
 class MonitoringControlTool(AITool):
     """Control monitoring settings for AI sessions"""

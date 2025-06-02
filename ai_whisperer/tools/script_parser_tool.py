@@ -26,18 +26,15 @@ Related:
 
 """
 
-
 import json
 import yaml
 import os
 from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass
-from typing import Dict, Any, List, Optional, Union
 import re
 
 from ai_whisperer.services.agents.base_tool import AITool
-
 
 class ScriptFormat(Enum):
     """Supported script formats"""
@@ -45,7 +42,6 @@ class ScriptFormat(Enum):
     YAML = "yaml"
     TEXT = "text"
     UNKNOWN = "unknown"
-
 
 @dataclass
 class ParsedScript:
@@ -59,7 +55,6 @@ class ParsedScript:
     def __post_init__(self):
         if self.steps is None:
             self.steps = []
-
 
 class ScriptParserTool(AITool):
     """

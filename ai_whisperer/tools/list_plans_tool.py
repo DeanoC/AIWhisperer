@@ -21,10 +21,8 @@ Related:
 
 """
 
-import os
 import logging
 import json
-from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
@@ -32,7 +30,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class ListPlansTool(AITool):
     """Tool for listing execution plans."""

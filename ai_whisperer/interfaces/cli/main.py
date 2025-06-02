@@ -1,16 +1,10 @@
 import argparse
 import sys
 import logging
-from pathlib import Path
-from ai_whisperer.core.exceptions import ConfigError
 from ai_whisperer.interfaces.cli.batch import BatchModeCliCommand
-from ai_whisperer.interfaces.cli.commands import BaseCliCommand
 from ai_whisperer.core import logging
 from ai_whisperer.core.config import load_config
-from ai_whisperer.utils.path import PathManager
-
 logger = None
-
 
 def cli(args=None):
     """Main entry point for the AI Whisperer CLI application."""
@@ -91,12 +85,9 @@ def cli(args=None):
         parser.print_help()
         sys.exit(1)
 
-
 def main():
     """Standard Python main function entry point."""
     cli()
 
-
 if __name__ == "__main__":
     main()
-

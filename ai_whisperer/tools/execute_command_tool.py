@@ -26,7 +26,6 @@ import sys
 from typing import Dict, Any, Optional, List
 
 from ai_whisperer.services.agents.base_tool import AITool
-import asyncio # Import asyncio for sleep
 import threading # Import threading for Event
 
 logger = logging.getLogger(__name__)
@@ -78,7 +77,6 @@ class ExecuteCommandTool(AITool):
         - cwd (string, optional): The working directory. Defaults to the current workspace directory.
         Returns: A dictionary with 'stdout', 'stderr', and 'returncode'.
         """
-
 
     def execute(self, command: str, cwd: str = ".", shutdown_event: Optional[threading.Event] = None) -> Dict[str, Any]:
         """
@@ -143,7 +141,6 @@ class ExecuteCommandTool(AITool):
                  # Read any remaining output after the process has finished
                  stdout_output += process.stdout.read()
                  stderr_output += process.stderr.read()
-
 
             logger.info(f"Command execution finished with return code: {returncode}")
             return {

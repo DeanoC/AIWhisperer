@@ -21,7 +21,6 @@ Related:
 
 """
 
-import os
 import logging
 import json
 from typing import Dict, Any, Optional, List
@@ -31,7 +30,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class ReadPlanTool(AITool):
     """Tool for reading execution plan details."""

@@ -29,8 +29,6 @@ import asyncio
 import json
 import logging
 from typing import Dict, List, Any, Optional, Callable, AsyncIterator
-from types import SimpleNamespace
-
 from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.services.ai.base import AIService
 from ai_whisperer.context.provider import ContextProvider
@@ -38,7 +36,6 @@ from ai_whisperer.tools.tool_registry import get_tool_registry
 from ai_whisperer.services.execution.tool_call_accumulator import ToolCallAccumulator
 
 logger = logging.getLogger(__name__)
-
 
 class StatelessAILoop:
     """
@@ -488,7 +485,6 @@ class StatelessAILoop:
                     await on_stream_chunk(tool_results)
                     logger.info(f"🔄 TOOL RESULTS STREAMED")
                 
-            
             logger.info(f"🔄 RETURNING RESULT: response_length={len(full_response)}, reasoning_length={len(full_reasoning)}, tool_calls={len(tool_calls) if tool_calls else 0}")
             return {
                 'response': full_response,

@@ -6,13 +6,9 @@ Provides non-invasive monitoring of WebSocket communications.
 import json
 import asyncio
 import logging
-import time
-from typing import Dict, Any, List, Optional, Callable, Set, Tuple, Union
 from datetime import datetime
 from dataclasses import dataclass, field
 from enum import Enum
-import websockets
-
 from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 from ..logging.log_aggregator import LogAggregator
@@ -20,12 +16,10 @@ from ai_whisperer.extensions.batch.monitoring import MonitoringEvent, DebbieMoni
 
 logger = logging.getLogger(__name__)
 
-
 class MessageDirection(Enum):
     """Direction of WebSocket messages"""
     INCOMING = "incoming"  # Server to client
     OUTGOING = "outgoing"  # Client to server
-
 
 class MessageType(Enum):
     """Types of JSON-RPC messages"""
@@ -34,7 +28,6 @@ class MessageType(Enum):
     NOTIFICATION = "notification"
     ERROR = "error"
     UNKNOWN = "unknown"
-
 
 @dataclass
 class InterceptedMessage:
@@ -60,7 +53,6 @@ class InterceptedMessage:
             'method': self.method,
             'correlation_id': self.correlation_id
         }
-
 
 class MessageInterceptor:
     """Base class for message interception"""
@@ -93,7 +85,6 @@ class MessageInterceptor:
                     handler(message)
             except Exception as e:
                 logger.error(f"Error in message handler: {e}")
-
 
 class WebSocketInterceptor:
     """
@@ -455,7 +446,6 @@ class WebSocketInterceptor:
             Wrapped connection with interception
         """
         return InterceptingWebSocket(original_connection, self)
-
 
 class InterceptingWebSocket:
     """

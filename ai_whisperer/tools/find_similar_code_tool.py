@@ -22,7 +22,6 @@ Related:
 
 """
 
-import os
 import logging
 import re
 from typing import Dict, Any, Optional, List, Tuple
@@ -33,7 +32,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class FindSimilarCodeTool(AITool):
     """Tool for finding code similar to proposed features or patterns."""

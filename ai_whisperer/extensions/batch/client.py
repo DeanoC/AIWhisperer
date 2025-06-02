@@ -5,7 +5,6 @@ Coordinates server, websocket, and script processing for batch execution.
 
 import sys
 import os
-import json
 import logging
 import asyncio
 from ai_whisperer.extensions.batch.server_manager import ServerManager
@@ -13,7 +12,6 @@ from ai_whisperer.extensions.batch.websocket_client import WebSocketClient
 from ai_whisperer.extensions.batch.script_processor import ScriptProcessor, ScriptFileNotFoundError
 
 logger = logging.getLogger(__name__)
-
 
 class BatchClient:
     def __init__(self, script_path, server_port=None, ws_uri=None, dry_run=False):

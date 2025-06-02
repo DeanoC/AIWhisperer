@@ -21,7 +21,6 @@ Related:
 
 """
 
-import os
 import logging
 import json
 from typing import Dict, Any, Optional, List
@@ -32,7 +31,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class ListRFCsTool(AITool):
     """Tool for listing RFC documents with filtering options."""

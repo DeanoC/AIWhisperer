@@ -4,8 +4,6 @@ from datetime import datetime, timezone
 from jsonschema import validate, ValidationError
 import os
 from typing import Optional
-from pathlib import Path
-
 # Default schema directory using new hierarchical config structure
 def get_default_schema_dir() -> str:
     """Get the default schema directory from the new config structure."""
@@ -23,17 +21,14 @@ DEFAULT_SCHEMA_DIR = get_default_schema_dir()
 # Global variable to hold the configured schema directory
 _schema_directory: Optional[str] = None
 
-
 def set_schema_directory(directory: str):
     """Sets the global schema directory."""
     global _schema_directory
     _schema_directory = directory
 
-
 def get_schema_directory() -> str:
     """Gets the current schema directory, defaulting to DEFAULT_SCHEMA_DIR."""
     return _schema_directory if _schema_directory is not None else DEFAULT_SCHEMA_DIR
-
 
 def load_schema(schema_path):
     """Loads a JSON schema from the given path."""
@@ -46,11 +41,9 @@ def load_schema(schema_path):
     except json.JSONDecodeError as e:
         raise RuntimeError(f"Error decoding schema file {schema_path}: {e}")
 
-
 def generate_uuid():
     """Generates a new UUID string."""
     return str(uuid.uuid4())
-
 
 def format_timestamp(dt_object=None):
     """
@@ -60,7 +53,6 @@ def format_timestamp(dt_object=None):
     if dt_object is None:
         dt_object = datetime.now(timezone.utc)
     return dt_object.isoformat()
-
 
 def parse_timestamp(timestamp_str):
     """
@@ -75,7 +67,6 @@ def parse_timestamp(timestamp_str):
         return dt_object
     except ValueError as e:
         raise ValueError(f"Invalid timestamp format: {timestamp_str}. Error: {e}")
-
 
 def validate_against_schema(data: dict, schema_name: str):
     """

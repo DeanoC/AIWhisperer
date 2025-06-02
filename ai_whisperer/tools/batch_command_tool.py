@@ -25,19 +25,13 @@ Related:
 
 """
 
-
 import re
-from typing import Dict, Any, List, Optional, Callable, Union
-from dataclasses import dataclass
 import logging
 from collections import OrderedDict
 
 from ai_whisperer.services.agents.base_tool import AITool
-from .script_parser_tool import ParsedScript, ScriptFormat
-
 
 logger = logging.getLogger(__name__)
-
 
 class CommandInterpreter:
     """Interprets natural language commands into structured actions"""
@@ -203,7 +197,6 @@ class CommandInterpreter:
                 return match.group(1)
         
         return None
-
 
 class BatchCommandTool(AITool):
     """

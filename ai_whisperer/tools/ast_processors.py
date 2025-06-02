@@ -4,13 +4,9 @@ These are complex processing functions that can be imported on demand.
 """
 
 import ast
-import json
 from typing import Dict, Any, List, Optional, Set
 from collections import defaultdict
 import time
-import os
-from pathlib import Path
-
 def process_batch_files(files: List[str], action: str, options: Dict[str, Any], 
                        progress_callback=None) -> Dict[str, Any]:
     """Process multiple files in batch with progress tracking."""

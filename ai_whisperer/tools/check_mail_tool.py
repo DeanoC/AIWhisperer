@@ -20,11 +20,8 @@ Related:
 
 """
 
-from typing import Dict, Any, List
-
 from ai_whisperer.tools.base_tool import BaseTool, ToolResult, ToolDefinition, ParameterDefinition
 from ai_whisperer.extensions.mailbox.mailbox import get_mailbox
-
 
 class CheckMailTool(BaseTool):
     """Tool for checking mailbox messages."""

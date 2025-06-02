@@ -19,7 +19,6 @@ Dependencies:
 
 """
 
-import os
 import json
 import logging
 import shutil
@@ -30,7 +29,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class DeletePlanTool(AITool):
     """Tool for deleting plan documents and their directories."""

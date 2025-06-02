@@ -26,12 +26,9 @@ Related:
 
 """
 
-
-import json
 import time
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
@@ -41,7 +38,6 @@ from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, C
 
 logger = logging.getLogger(__name__)
 
-
 class InjectionType(Enum):
     """Types of message injections"""
     CONTINUATION = "continuation"  # Continue with task
@@ -50,7 +46,6 @@ class InjectionType(Enum):
     ERROR_RECOVERY = "error_recovery"  # Recover from error
     RESET = "reset"  # Reset context
     
-
 @dataclass
 class InjectionResult:
     """Result of message injection"""
@@ -74,7 +69,6 @@ class InjectionResult:
             'response_time_ms': self.response_time_ms,
             'error': self.error
         }
-
 
 class MessageInjectorTool(AITool):
     """

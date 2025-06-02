@@ -21,18 +21,13 @@ Dependencies:
 """
 
 import logging
-from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 from collections import defaultdict
 import time
-from datetime import datetime, timedelta
-import os
-
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class WorkspaceStatsTool(AITool):
     """Tool for gathering statistics about the workspace."""

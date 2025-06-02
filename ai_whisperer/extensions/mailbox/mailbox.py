@@ -31,12 +31,10 @@ import uuid
 import logging
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Set
 from enum import Enum
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
-
 
 class MessagePriority(Enum):
     """Message priority levels."""
@@ -45,14 +43,12 @@ class MessagePriority(Enum):
     HIGH = "high"
     URGENT = "urgent"
 
-
 class MessageStatus(Enum):
     """Message delivery status."""
     UNREAD = "unread"
     READ = "read"
     REPLIED = "replied"
     ARCHIVED = "archived"
-
 
 @dataclass
 class Mail:
@@ -98,7 +94,6 @@ class Mail:
             reply_to=data.get('reply_to'),
             metadata=data.get('metadata', {})
         )
-
 
 class MailboxSystem:
     """Centralized mailbox system for all agents and users."""
@@ -303,10 +298,8 @@ class MailboxSystem:
         
         return thread
 
-
 # Global mailbox instance
 _mailbox_system = None
-
 
 def get_mailbox() -> MailboxSystem:
     """Get the global mailbox system instance."""
@@ -314,7 +307,6 @@ def get_mailbox() -> MailboxSystem:
     if _mailbox_system is None:
         _mailbox_system = MailboxSystem()
     return _mailbox_system
-
 
 def reset_mailbox():
     """Reset the mailbox system (mainly for testing)."""

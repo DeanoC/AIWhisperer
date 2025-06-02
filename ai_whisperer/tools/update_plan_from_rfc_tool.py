@@ -38,7 +38,6 @@ from ai_whisperer.utils.validation import validate_against_schema
 
 logger = logging.getLogger(__name__)
 
-
 class UpdatePlanFromRFCTool(AITool):
     """Tool for updating plans when source RFC changes."""
     
@@ -231,7 +230,6 @@ Ensure all changes follow TDD methodology."""
                 # Check if an event loop is already running
                 loop = asyncio.get_running_loop()
                 # Create a task and run it in the existing loop
-                import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(asyncio.run, get_completion())
                     response_content = future.result()

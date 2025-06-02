@@ -19,7 +19,6 @@ Dependencies:
 
 """
 
-import os
 import logging
 import json
 import shutil
@@ -31,7 +30,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class MovePlanTool(AITool):
     """Tool for moving plans between status directories."""

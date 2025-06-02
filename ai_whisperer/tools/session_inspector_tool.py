@@ -25,9 +25,6 @@ Related:
 
 """
 
-
-import json
-import time
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
@@ -37,7 +34,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class SessionAnalysis:
@@ -60,7 +56,6 @@ class SessionAnalysis:
         data = asdict(self)
         data['last_activity'] = self.last_activity.isoformat()
         return data
-
 
 class SessionInspectorTool(AITool):
     """

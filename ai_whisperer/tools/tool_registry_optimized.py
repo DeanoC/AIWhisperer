@@ -4,15 +4,10 @@ This version loads tools on-demand to improve startup performance.
 """
 
 import logging
-from typing import Dict, List, Optional, Set, Any, Callable
-from pathlib import Path
 import importlib
-import json
-
 from ai_whisperer.tools.base_tool import AITool
 
 logger = logging.getLogger(__name__)
-
 
 class OptimizedToolRegistry:
     """
@@ -246,10 +241,8 @@ class OptimizedToolRegistry:
         self._loaded_tools.clear()
         logger.info("Cleared tool cache")
 
-
 # Global registry instance
 _registry = None
-
 
 def get_tool_registry(lazy_loading: bool = True) -> OptimizedToolRegistry:
     """Get the global tool registry instance."""
@@ -257,7 +250,6 @@ def get_tool_registry(lazy_loading: bool = True) -> OptimizedToolRegistry:
     if _registry is None:
         _registry = OptimizedToolRegistry(lazy_loading=lazy_loading)
     return _registry
-
 
 # Compatibility layer
 class ToolRegistry:

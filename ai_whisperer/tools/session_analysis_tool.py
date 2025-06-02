@@ -18,14 +18,10 @@ Dependencies:
 
 """
 
-import json
 import time
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
 from collections import defaultdict
 
 from ai_whisperer.tools.base_tool import AITool
-
 
 class SessionAnalysisTool(AITool):
     """Analyze session patterns and performance"""

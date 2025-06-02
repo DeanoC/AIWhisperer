@@ -25,14 +25,11 @@ Related:
 
 import json
 import logging
-from typing import Dict, Any, List, Optional
-
 from ai_whisperer.services.agents.base_tool import AITool
 from ..agents.task_decomposer import TaskDecomposer
 from ..agents.agent_e_exceptions import DependencyCycleError
 
 logger = logging.getLogger(__name__)
-
 
 class AnalyzeDependenciesTool(AITool):
     """Tool for analyzing and resolving task dependencies."""

@@ -1,5 +1,4 @@
 import logging
-import logging.config
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Any, Optional, List
@@ -7,7 +6,6 @@ from datetime import datetime, timezone
 import yaml
 import os
 import sys
-
 
 class LogLevel(Enum):
     DEBUG = "DEBUG"  # Detailed information, typically of interest only when diagnosing problems.
@@ -24,7 +22,6 @@ class ComponentType(Enum):
     USER_INTERACTION = "user_interaction"  # Actions initiated directly by the user (pause, cancel, etc.).
     MONITOR = "monitor" # Terminal monitor display updates.
 
-
 class LogSource(Enum):
     """Identifies the source of log messages for multi-source debugging."""
     DEBBIE = "debbie"              # Debbie's own operations
@@ -39,7 +36,6 @@ class LogSource(Enum):
     PYTHON_EXEC = "python_exec"  # Python script execution
     BATCH = "batch"              # Batch mode operations
     TEST = "test"                # Test execution
-
 
 @dataclass
 class LogMessage:
@@ -72,7 +68,6 @@ class LogMessage:
         }
         # Filter out None values
         return {k: v for k, v in data.items() if v is not None}
-
 
 @dataclass
 class EnhancedLogMessage(LogMessage):
@@ -109,7 +104,6 @@ class EnhancedLogMessage(LogMessage):
         data.update({k: v for k, v in enhanced_fields.items() if v is not None})
         return data
 
-
 def setup_logging(config_path: Optional[str] = None, port: Optional[int] = None):
     """
     Configures the logging system.
@@ -141,7 +135,6 @@ def setup_logging(config_path: Optional[str] = None, port: Optional[int] = None)
             logging.warning(f"Logging configuration file not found at {config_path}. Using basic console logging.")
         setup_basic_logging(port=port)
 
-
 def setup_basic_logging(port=None):
     """Sets up a basic console logger.
     
@@ -156,7 +149,6 @@ def setup_basic_logging(port=None):
 
         # Use the same formatter for all handlers, without timestamp
         log_format = "%(asctime)s %(process)d %(threadName)s %(name)s - %(levelname)s - %(message)s"
-
 
         # Console handler (for server)
         console_handler = logging.StreamHandler()
@@ -224,7 +216,6 @@ def setup_basic_logging(port=None):
         import traceback
         traceback.print_exc(file=sys.stderr)
 
-
 def get_logger(name: str) -> logging.Logger:
     """
     Gets a logger instance by name.
@@ -242,7 +233,6 @@ def get_server_logger():
 
 def get_test_logger():
     return get_logger('aiwhisperer.test')
-
 
 def log_event(log_message: LogMessage, logger_name: str = "aiwhisperer"):
     """

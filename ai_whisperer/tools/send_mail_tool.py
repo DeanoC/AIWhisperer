@@ -21,11 +21,8 @@ Related:
 """
 
 import json
-from typing import Dict, Any, Optional
-
 from ai_whisperer.tools.base_tool import BaseTool, ToolResult, ToolDefinition, ParameterDefinition
 from ai_whisperer.extensions.mailbox.mailbox import Mail, MessagePriority, get_mailbox
-
 
 class SendMailTool(BaseTool):
     """Tool for sending mail messages to agents or users."""

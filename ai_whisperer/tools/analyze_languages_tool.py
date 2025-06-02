@@ -22,10 +22,8 @@ Related:
 
 """
 
-import os
 import logging
 import json
-from typing import Dict, Any, Optional, List, Set
 from pathlib import Path
 from collections import defaultdict
 
@@ -33,7 +31,6 @@ from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class AnalyzeLanguagesTool(AITool):
     """Tool for analyzing programming languages used in the project."""

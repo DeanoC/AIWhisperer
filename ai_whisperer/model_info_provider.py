@@ -10,7 +10,6 @@ from typing import Dict, Any
 
 from ai_whisperer.services.execution.ai_config import AIConfig
 
-from ai_whisperer.core.config import load_config
 from ai_whisperer.core.exceptions import ConfigError, OpenRouterAIServiceError, ProcessingError
 from ai_whisperer.services.ai.openrouter import OpenRouterAIService
 

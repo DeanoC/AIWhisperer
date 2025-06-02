@@ -6,14 +6,10 @@ Implements recovery strategies and intervention policies.
 import asyncio
 import time
 import logging
-from typing import Dict, Any, List, Optional, Callable, Union
-from datetime import datetime, timedelta
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-import json
 import uuid
 
-from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 from ..tools.message_injector_tool import MessageInjectorTool, InjectionType
 from ..tools.session_inspector_tool import SessionInspectorTool
@@ -21,7 +17,6 @@ from ..tools.python_executor_tool import PythonExecutorTool
 from ai_whisperer.extensions.batch.monitoring import AnomalyAlert
 
 logger = logging.getLogger(__name__)
-
 
 class InterventionStrategy(Enum):
     """Types of intervention strategies"""
@@ -33,7 +28,6 @@ class InterventionStrategy(Enum):
     PYTHON_SCRIPT = "python_script"
     CUSTOM = "custom"
 
-
 class InterventionResult(Enum):
     """Result of an intervention attempt"""
     SUCCESS = "success"
@@ -41,7 +35,6 @@ class InterventionResult(Enum):
     FAILURE = "failure"
     SKIPPED = "skipped"
     ESCALATED = "escalated"
-
 
 @dataclass
 class InterventionConfig:
@@ -92,7 +85,6 @@ class InterventionConfig:
         'memory_spike': [InterventionStrategy.STATE_RESET, InterventionStrategy.SESSION_RESTART]
     })
 
-
 @dataclass
 class InterventionRecord:
     """Record of an intervention attempt"""
@@ -115,7 +107,6 @@ class InterventionRecord:
         if self.alert:
             data['alert'] = self.alert.to_dict()
         return data
-
 
 class InterventionHistory:
     """Tracks intervention history and patterns"""
@@ -177,7 +168,6 @@ class InterventionHistory:
     def get_recent_interventions(self, limit: int = 10) -> List[InterventionRecord]:
         """Get recent intervention records"""
         return self.records[-limit:]
-
 
 class InterventionExecutor:
     """Executes intervention strategies"""
@@ -551,7 +541,6 @@ class InterventionExecutor:
             stats['overall_success_rate'] = success_count / total
         
         return stats
-
 
 class InterventionOrchestrator:
     """Orchestrates monitoring and intervention systems"""

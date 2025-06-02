@@ -3,13 +3,10 @@ Server lifecycle management for batch mode.
 Handles starting, stopping, and monitoring the interactive server for Debbie's batch client.
 """
 
-
 import random
 import subprocess
 import time
 import socket
-from typing import Optional
-
 class ServerManager:
     def __init__(self, port=None):
         self.port = port

@@ -20,11 +20,8 @@ Related:
 
 """
 
-from typing import Dict, Any
-
 from ai_whisperer.tools.base_tool import BaseTool, ToolResult, ToolDefinition, ParameterDefinition
 from ai_whisperer.extensions.mailbox.mailbox import Mail, MessagePriority, get_mailbox
-
 
 class ReplyMailTool(BaseTool):
     """Tool for replying to mail messages."""

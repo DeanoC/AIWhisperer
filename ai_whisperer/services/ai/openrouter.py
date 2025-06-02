@@ -1,6 +1,5 @@
 """OpenRouter AI Service implementation"""
 import requests
-from typing import Dict, Any, List, Generator, Optional, AsyncIterator
 import json
 import threading
 import logging

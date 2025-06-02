@@ -43,11 +43,8 @@ CommandRegistry.register(AgentInspectCommand)
 """
 Agent inspection commands for development/debugging.
 """
-from typing import Any, Dict
-
 # This would be replaced with actual agent/session/context lookup in the real system
 AGENT_CONTEXT_MANAGERS = {}
-
 
 # Real implementation: look up context manager from session manager
 def get_context_manager_for_agent(agent_id: str, session_id: str = None):
@@ -69,5 +66,3 @@ def get_context_manager_for_agent(agent_id: str, session_id: str = None):
     except Exception as e:
         logging.error(f"[get_context_manager_for_agent] Exception: {e}")
     return None
-
-

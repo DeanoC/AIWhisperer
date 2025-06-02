@@ -24,12 +24,10 @@ Related:
 """
 
 import json
-import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-
 
 class TaskStatus(Enum):
     """Status of a decomposed task."""
@@ -39,7 +37,6 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     BLOCKED = "blocked"
-
 
 @dataclass
 class DecomposedTask:

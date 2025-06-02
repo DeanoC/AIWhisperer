@@ -35,13 +35,10 @@ from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
-from ai_whisperer.core.exceptions import FileRestrictionError
 from ai_whisperer.services.ai.openrouter import OpenRouterAIService
-from ai_whisperer.core.config import load_config
 from ai_whisperer.utils.validation import validate_against_schema
 
 logger = logging.getLogger(__name__)
-
 
 class CreatePlanFromRFCTool(AITool):
     """Tool for converting RFCs into structured execution plans."""
@@ -240,7 +237,6 @@ Generate a structured JSON plan based on the above RFC content and the guideline
                 # Check if an event loop is already running
                 loop = asyncio.get_running_loop()
                 # Create a task and run it in the existing loop
-                import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(asyncio.run, get_completion())
                     response_content = future.result()

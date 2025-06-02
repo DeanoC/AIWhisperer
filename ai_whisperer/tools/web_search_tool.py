@@ -23,22 +23,18 @@ Related:
 
 """
 
-import os
 import logging
 import json
-import time
 import hashlib
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from datetime import datetime, timedelta
-import urllib.parse
 import requests
 
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class WebSearchTool(AITool):
     """Tool for searching the web for technical information and best practices."""
