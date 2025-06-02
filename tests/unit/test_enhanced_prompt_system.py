@@ -137,9 +137,9 @@ class TestEnhancedPromptSystem:
         # Check that enabled shared components are included
         assert "CORE INSTRUCTIONS" in formatted
         assert "Be helpful" in formatted
-        assert "CONTINUATION_PROTOCOL INSTRUCTIONS" in formatted
+        assert "CONTINUATION PROTOCOL INSTRUCTIONS" in formatted
         assert "Use CONTINUE or TERMINATE" in formatted
-        assert "MAILBOX_PROTOCOL INSTRUCTIONS" in formatted
+        assert "MAILBOX PROTOCOL INSTRUCTIONS" in formatted
         assert "Send messages to other agents" in formatted
         
         # Check that disabled features are not included
@@ -251,9 +251,8 @@ class TestEnhancedPromptSystem:
     
     def test_special_continuation_and_mailbox_handling(self, prompt_system):
         """Test special handling of continuation and mailbox protocols."""
-        # The special handling checks if 'continuation' is in enabled features
-        # and then looks for 'continuation_protocol' in shared components
-        prompt_system._enabled_features.add('continuation')  # Directly add to test special handling
+        # Enable the actual protocol names that exist in shared components
+        prompt_system.enable_feature('continuation_protocol')
         
         formatted = prompt_system.get_formatted_prompt(
             category='agents',
@@ -261,11 +260,11 @@ class TestEnhancedPromptSystem:
             include_shared=True
         )
         
-        # Should include continuation protocol through special handling
+        # Should include continuation protocol
         assert "CONTINUATION PROTOCOL" in formatted
         
         # Same for mailbox
-        prompt_system._enabled_features.add('mailbox')  # Directly add to test special handling
+        prompt_system.enable_feature('mailbox_protocol')
         formatted = prompt_system.get_formatted_prompt(
             category='agents',
             name='test_agent',
@@ -299,9 +298,9 @@ class TestEnhancedPromptSystem:
         
         # Check order (alphabetical for enabled features)
         core_pos = formatted1.find("CORE INSTRUCTIONS")
-        continuation_pos = formatted1.find("CONTINUATION_PROTOCOL INSTRUCTIONS")
-        mailbox_pos = formatted1.find("MAILBOX_PROTOCOL INSTRUCTIONS")
-        test_pos = formatted1.find("TEST_FEATURE INSTRUCTIONS")
+        continuation_pos = formatted1.find("CONTINUATION PROTOCOL INSTRUCTIONS")
+        mailbox_pos = formatted1.find("MAILBOX PROTOCOL INSTRUCTIONS")
+        test_pos = formatted1.find("TEST FEATURE INSTRUCTIONS")
         
         # All should be found
         assert core_pos > -1, "Core instructions not found"
