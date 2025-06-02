@@ -32,7 +32,17 @@ class TestContinuationProgressTracking:
         """Create a session manager with mock dependencies"""
         config = {"openrouter": {"model": "test-model", "api_key": "test-key"}}
         manager = StatelessSessionManager(config, None, None)
+        
+        # Mock the attributes we need for the test
+        manager.session_id = "test-session"
         manager.websocket = mock_websocket
+        manager.active_agent = None
+        manager.agents = {}
+        manager.is_started = True
+        manager.introduced_agents = set()
+        manager._continuation_depth = 0
+        manager._max_continuation_depth = 10  # default max
+        
         return manager
     
     @pytest.mark.asyncio
@@ -44,7 +54,9 @@ class TestContinuationProgressTracking:
             description="Test agent",
             system_prompt="Test prompt",
             model_name="test-model",
-            provider="openrouter"
+            provider="openrouter",
+            api_settings={},
+            generation_params={"temperature": 0.7, "max_tokens": 1000}
         )
         
         # Create continuation config
@@ -178,7 +190,9 @@ class TestContinuationProgressTracking:
             description="Test agent",
             system_prompt="You are a test agent",
             model_name="test-model",
-            provider="openrouter"
+            provider="openrouter",
+            api_settings={},
+            generation_params={"temperature": 0.7, "max_tokens": 1000}
         )
         
         # Create mock AI loop
