@@ -5,14 +5,14 @@ Generated: /home/deano/projects/AIWhisperer
 ## Summary
 
 - **Total Python modules**: 152
-- **Modules with tests**: 105
-- **Overall coverage**: 69.1%
+- **Modules with tests**: 107
+- **Overall coverage**: 70.4%
 - **Critical untested modules**: 0
-- **High priority untested**: 21
+- **High priority untested**: 19
 
 ## Coverage by System
 
-- **ai_whisperer**: 🟡 69.3%
+- **ai_whisperer**: 🟢 70.9%
 - **interactive_server**: 🟡 60.0%
 - **postprocessing**: 🟢 80.0%
 
@@ -23,22 +23,12 @@ Generated: /home/deano/projects/AIWhisperer
 - **Reason**: Complex module (score: 10) without tests
 - **Action**: Add tests in Phase 2
 
-### `ai_whisperer/tools/message_injector_tool.py`
-- **Complexity**: 10/10
-- **Reason**: Complex module (score: 10) without tests
-- **Action**: Add tests in Phase 2
-
 ### `ai_whisperer/tools/validate_external_agent_tool.py`
 - **Complexity**: 10/10
 - **Reason**: Complex module (score: 10) without tests
 - **Action**: Add tests in Phase 2
 
 ### `ai_whisperer/tools/analyze_dependencies_tool.py`
-- **Complexity**: 10/10
-- **Reason**: Complex module (score: 10) without tests
-- **Action**: Add tests in Phase 2
-
-### `ai_whisperer/tools/python_executor_tool.py`
 - **Complexity**: 10/10
 - **Reason**: Complex module (score: 10) without tests
 - **Action**: Add tests in Phase 2
@@ -137,13 +127,13 @@ Add integration tests and improve coverage of edge cases.
 ## 🎯 Immediate Actions
 
 1. **Create 0 critical module tests** (estimated 2-3 days)
-2. **Create 21 high priority tests** (estimated 3-4 days)
+2. **Create 19 high priority tests** (estimated 3-4 days)
 3. **Run coverage analysis** to measure improvement
 4. **Focus on integration tests** for end-to-end workflows
 
 ## Success Metrics
 
-- **Target overall coverage**: 90% (from 69.1%)
+- **Target overall coverage**: 90% (from 70.4%)
 - **All critical modules**: 100% test coverage
 - **High priority modules**: 80% test coverage
 - **Integration test suite**: Comprehensive workflow coverage
