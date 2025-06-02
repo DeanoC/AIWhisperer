@@ -1,7 +1,32 @@
 """
-Create Plan from RFC Tool - Converts RFCs into structured execution plans
+Module: ai_whisperer/tools/create_plan_from_rfc_tool.py
+Purpose: AI tool implementation for create plan from rfc
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- CreatePlanFromRFCTool: Tool for converting RFCs into structured execution plans.
+
+Usage:
+    tool = CreatePlanFromRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- asyncio
+- hashlib
+
+Related:
+- See docs/dependency-analysis-report.md
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+- See TEST_CONSOLIDATED_SUMMARY.md
+
 """
+
 import os
+import concurrent.futures
 import logging
 import json
 import hashlib
@@ -10,14 +35,11 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.exceptions import FileRestrictionError
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
-from ai_whisperer.config import load_config
-from ai_whisperer.json_validator import validate_against_schema
+from ai_whisperer.utils.path import PathManager
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService
+from ai_whisperer.utils.validation import validate_against_schema
 
 logger = logging.getLogger(__name__)
-
 
 class CreatePlanFromRFCTool(AITool):
     """Tool for converting RFCs into structured execution plans."""
@@ -188,7 +210,7 @@ Generate a structured JSON plan based on the above RFC content and the guideline
             
             # Generate plan using AI
             # Create proper AIConfig object
-            from ai_whisperer.ai_loop.ai_config import AIConfig
+            from ai_whisperer.services.execution.ai_config import AIConfig
             ai_config = AIConfig(
                 api_key=os.environ.get("OPENROUTER_API_KEY", "dummy_key"),
                 model_id=model_override or "anthropic/claude-3-5-sonnet",
@@ -216,7 +238,6 @@ Generate a structured JSON plan based on the above RFC content and the guideline
                 # Check if an event loop is already running
                 loop = asyncio.get_running_loop()
                 # Create a task and run it in the existing loop
-                import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(asyncio.run, get_completion())
                     response_content = future.result()

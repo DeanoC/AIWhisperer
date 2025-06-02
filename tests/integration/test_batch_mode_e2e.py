@@ -6,7 +6,7 @@ import os
 import subprocess
 import time
 import pytest
-from ai_whisperer.config import load_config
+from ai_whisperer.core.config import load_config
 
 
 BATCH_SCRIPT = "tests/data/example_batch_script.txt"

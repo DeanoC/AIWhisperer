@@ -5,15 +5,15 @@ import json
 import time
 from unittest.mock import patch
 
-from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.services.execution.ai_config import AIConfig
+from ai_whisperer.utils.path import PathManager
 
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService, MODELS_API_URL, API_URL
 from ai_whisperer.tools.tool_registry import ToolRegistry
 from ai_whisperer.tools.read_file_tool import ReadFileTool
 from ai_whisperer.tools.write_file_tool import WriteFileTool
 from ai_whisperer.tools.execute_command_tool import ExecuteCommandTool
-from ai_whisperer.exceptions import OpenRouterAIServiceError
+from ai_whisperer.core.exceptions import OpenRouterAIServiceError
 
 # Load environment variables from .env file
 dotenv.load_dotenv()
@@ -439,7 +439,7 @@ def test_ai_tool_invalid_params_handling(openrouter_api: OpenRouterAIService, to
     assert read_tool_instance is not None, "read_file tool not found in registry"
 
     # Expecting the tool's execute method to raise FileRestrictionError for out-of-workspace path
-    from ai_whisperer.exceptions import FileRestrictionError
+    from ai_whisperer.core.exceptions import FileRestrictionError
     with pytest.raises(FileRestrictionError):
         read_tool_instance.execute(read_call_args)
 

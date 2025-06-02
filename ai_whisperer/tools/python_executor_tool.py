@@ -1,18 +1,37 @@
 """
+Module: ai_whisperer/tools/python_executor_tool.py
+Purpose: AI tool implementation for python executor
+
 Python Executor Tool for Debbie the Debugger.
 Executes Python scripts for advanced debugging and analysis with sandboxed environment.
-"""
 
-import os
-import sys
+Key Components:
+- ExecutionResult: Result of Python script execution
+- DebugSandbox: Sandboxed environment for executing Python scripts
+- PythonExecutorTool: 
+
+Usage:
+    tool = ExecutionResult()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- numpy
+- tempfile
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See PHASE_CONSOLIDATED_SUMMARY.md
+- See TEST_CONSOLIDATED_SUMMARY.md
+
+"""
+from typing import Any, Dict, List, Optional, Set
+
 import io
 import json
 import time
 import traceback
 import logging
-import subprocess
-import tempfile
-from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from contextlib import redirect_stdout, redirect_stderr
@@ -26,11 +45,10 @@ except ImportError:
     # resource module is not available on Windows
     HAS_RESOURCE = False
 
-from .base_tool import AITool
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class ExecutionResult:
@@ -45,7 +63,6 @@ class ExecutionResult:
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
-
 
 class DebugSandbox:
     """Sandboxed environment for executing Python scripts"""
@@ -185,7 +202,6 @@ class DebugSandbox:
                 captured[name] = f"<{type(value).__name__} - cannot serialize>"
         
         return captured
-
 
 class PythonExecutorTool(AITool):
     """
@@ -487,7 +503,7 @@ if errors:
         """Get logs for debugging context"""
         # This would fetch actual logs from log aggregator
         # For now, return mock data
-        from ..logging_custom import LogMessage, LogLevel, ComponentType
+        from ai_whisperer.core.logging import LogMessage, LogLevel, ComponentType
         
         mock_logs = []
         for i in range(10):

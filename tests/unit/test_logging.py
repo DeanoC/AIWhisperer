@@ -8,10 +8,10 @@ from dataclasses import dataclass, field
 
 
 try:
-    from ai_whisperer.logging_custom import LogLevel, ComponentType, LogMessage
+    from ai_whisperer.core.logging import LogLevel, ComponentType, LogMessage
 
     # Assuming a logging function or class exists, e.g., setup_logging and a logger instance
-    from ai_whisperer.logging_custom import setup_logging, get_logger
+    from ai_whisperer.core.logging import setup_logging, get_logger
 except ImportError:
     # Provide dummy implementations for testing if the actual module doesn't exist yet
     # This allows the tests themselves to be generated and checked for structure/logic

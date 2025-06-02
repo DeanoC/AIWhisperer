@@ -1,10 +1,29 @@
-import os
+"""
+Module: ai_whisperer/tools/read_file_tool.py
+Purpose: AI tool implementation for read file
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ReadFileTool: Class implementation
+
+Usage:
+    tool = ReadFileTool()
+    result = await tool.execute(**parameters)
+
+Related:
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+
+"""
+
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.exceptions import FileRestrictionError
+from ai_whisperer.utils.path import PathManager
+from ai_whisperer.core.exceptions import FileRestrictionError
 
 class ReadFileTool(AITool):
     @property

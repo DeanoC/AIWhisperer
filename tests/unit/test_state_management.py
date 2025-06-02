@@ -8,7 +8,7 @@ from unittest.mock import patch, mock_open
 # Assuming the state management functions will be in a module,
 # let's say `ai_whisperer.state_management`
 # In a real scenario, these would be imported:
-from ai_whisperer.state_management import (
+from ai_whisperer.services.execution.state import (
     save_state,
     load_state,
     update_task_status,
@@ -17,13 +17,13 @@ from ai_whisperer.state_management import (
     update_global_state,
     get_global_state,
 )
-from ai_whisperer.state_management import StateManager
+from ai_whisperer.services.execution.state import StateManager
 
 
 class TestStateManagement(unittest.TestCase):
 
     def setUp(self):
-        from ai_whisperer.context_management import ContextManager
+        from ai_whisperer.services.execution.context import ContextManager
         self.temp_dir = tempfile.TemporaryDirectory()
         self.state_file_path = os.path.join(self.temp_dir.name, "test_state.json")
         self.state_manager = StateManager(self.state_file_path)

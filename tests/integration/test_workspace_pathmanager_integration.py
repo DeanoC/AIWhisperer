@@ -1,7 +1,7 @@
 def test_pathmanager_rejects_non_whisper_workspace(tmp_path):
     """Test PathManager (or detection) rejects workspace without .WHISPER."""
     os.chdir(tmp_path)
-    from ai_whisperer.workspace_detection import WorkspaceNotFoundError
+    from ai_whisperer.utils.workspace import WorkspaceNotFoundError
     with pytest.raises(WorkspaceNotFoundError):
         find_whisper_workspace()
 
@@ -27,8 +27,8 @@ def test_workspace_config_overrides_pathmanager_defaults(tmp_path):
 import pytest
 import os
 from pathlib import Path
-from ai_whisperer.workspace_detection import find_whisper_workspace, load_project_json
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.workspace import find_whisper_workspace, load_project_json
+from ai_whisperer.utils.path import PathManager
 
 def test_pathmanager_uses_whisper_workspace(tmp_path):
     import pytest

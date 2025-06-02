@@ -1,6 +1,6 @@
 import pytest
 import threading
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService
 
 @pytest.fixture(autouse=True)
 def patch_openrouter_shutdown(monkeypatch):

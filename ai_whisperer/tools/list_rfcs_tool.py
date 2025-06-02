@@ -1,7 +1,26 @@
 """
-List RFCs Tool - Lists RFC documents by status
+Module: ai_whisperer/tools/list_rfcs_tool.py
+Purpose: AI tool implementation for list rfcs
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ListRFCsTool: Tool for listing RFC documents with filtering options.
+
+Usage:
+    tool = ListRFCsTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
-import os
+
 import logging
 import json
 from typing import Dict, Any, Optional, List
@@ -9,10 +28,9 @@ from pathlib import Path
 from datetime import datetime
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class ListRFCsTool(AITool):
     """Tool for listing RFC documents with filtering options."""

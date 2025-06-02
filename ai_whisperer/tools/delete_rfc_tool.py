@@ -1,6 +1,23 @@
 """
-Delete RFC Tool - Removes RFC documents from the system
+Module: ai_whisperer/tools/delete_rfc_tool.py
+Purpose: AI tool implementation for delete rfc
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- DeleteRFCTool: Tool for deleting RFC documents.
+
+Usage:
+    tool = DeleteRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
 """
+
 import os
 import json
 import logging
@@ -8,7 +25,7 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
 

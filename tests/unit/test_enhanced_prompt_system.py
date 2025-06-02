@@ -8,7 +8,7 @@ import shutil
 import os
 
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration, PromptResolver
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestEnhancedPromptSystem:
@@ -48,7 +48,7 @@ class TestEnhancedPromptSystem:
     @pytest.fixture
     def mock_path_manager(self, temp_prompt_dir):
         """Mock PathManager to use temporary directory."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
             mock_instance = Mock()
             mock_instance.prompt_path = Path(temp_prompt_dir)
             mock_instance.app_path = Path(temp_prompt_dir)
@@ -137,9 +137,9 @@ class TestEnhancedPromptSystem:
         # Check that enabled shared components are included
         assert "CORE INSTRUCTIONS" in formatted
         assert "Be helpful" in formatted
-        assert "CONTINUATION_PROTOCOL INSTRUCTIONS" in formatted
+        assert "CONTINUATION PROTOCOL INSTRUCTIONS" in formatted
         assert "Use CONTINUE or TERMINATE" in formatted
-        assert "MAILBOX_PROTOCOL INSTRUCTIONS" in formatted
+        assert "MAILBOX PROTOCOL INSTRUCTIONS" in formatted
         assert "Send messages to other agents" in formatted
         
         # Check that disabled features are not included
@@ -215,7 +215,7 @@ class TestEnhancedPromptSystem:
             os.chmod(bad_file, 0o000)
             
             # Should not raise an exception during init
-            with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+            with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
                 mock_instance = Mock()
                 mock_instance.prompt_path = Path(temp_prompt_dir)
                 mock_instance.app_path = Path(temp_prompt_dir)
@@ -236,7 +236,7 @@ class TestEnhancedPromptSystem:
         shutil.rmtree(shared_dir)
         
         # Should not raise an exception
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
             mock_instance = Mock()
             mock_instance.prompt_path = Path(temp_prompt_dir)
             mock_instance.app_path = Path(temp_prompt_dir)
@@ -251,9 +251,8 @@ class TestEnhancedPromptSystem:
     
     def test_special_continuation_and_mailbox_handling(self, prompt_system):
         """Test special handling of continuation and mailbox protocols."""
-        # The special handling checks if 'continuation' is in enabled features
-        # and then looks for 'continuation_protocol' in shared components
-        prompt_system._enabled_features.add('continuation')  # Directly add to test special handling
+        # Enable the actual protocol names that exist in shared components
+        prompt_system.enable_feature('continuation_protocol')
         
         formatted = prompt_system.get_formatted_prompt(
             category='agents',
@@ -261,11 +260,11 @@ class TestEnhancedPromptSystem:
             include_shared=True
         )
         
-        # Should include continuation protocol through special handling
+        # Should include continuation protocol
         assert "CONTINUATION PROTOCOL" in formatted
         
         # Same for mailbox
-        prompt_system._enabled_features.add('mailbox')  # Directly add to test special handling
+        prompt_system.enable_feature('mailbox_protocol')
         formatted = prompt_system.get_formatted_prompt(
             category='agents',
             name='test_agent',
@@ -299,9 +298,9 @@ class TestEnhancedPromptSystem:
         
         # Check order (alphabetical for enabled features)
         core_pos = formatted1.find("CORE INSTRUCTIONS")
-        continuation_pos = formatted1.find("CONTINUATION_PROTOCOL INSTRUCTIONS")
-        mailbox_pos = formatted1.find("MAILBOX_PROTOCOL INSTRUCTIONS")
-        test_pos = formatted1.find("TEST_FEATURE INSTRUCTIONS")
+        continuation_pos = formatted1.find("CONTINUATION PROTOCOL INSTRUCTIONS")
+        mailbox_pos = formatted1.find("MAILBOX PROTOCOL INSTRUCTIONS")
+        test_pos = formatted1.find("TEST FEATURE INSTRUCTIONS")
         
         # All should be found
         assert core_pos > -1, "Core instructions not found"
@@ -322,11 +321,12 @@ class TestPromptSystemIntegration:
         """Test loading actual shared prompts from the project."""
         # This test uses the real project structure
         # Initialize PathManager first
+        project_root = Path(__file__).parent.parent.parent  # Go up to project root
         PathManager.get_instance().initialize(config_values={
-            'workspace_path': Path.cwd(),
-            'output_path': Path.cwd() / "output",
-            'project_path': Path.cwd(),
-            'prompt_path': Path.cwd()
+            'workspace_path': project_root,
+            'output_path': project_root / "output",
+            'project_path': project_root,
+            'prompt_path': project_root
         })
         
         config = PromptConfiguration({})

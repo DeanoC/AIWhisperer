@@ -5,13 +5,13 @@ import asyncio
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from pathlib import Path
 
-from ai_whisperer.agents.stateless_agent import StatelessAgent
-from ai_whisperer.agents.config import AgentConfig
-from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
+from ai_whisperer.services.agents.stateless import StatelessAgent
+from ai_whisperer.services.agents.config import AgentConfig
+from ai_whisperer.extensions.agents.continuation_strategy import ContinuationStrategy
 from ai_whisperer.context.agent_context import AgentContext
-from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 from interactive_server.stateless_session_manager import StatelessInteractiveSession
 
 
@@ -28,7 +28,7 @@ class TestAgentContinuationIntegration:
     @pytest.fixture
     def mock_path_manager(self):
         """Mock PathManager for testing."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
             mock_instance = Mock()
             mock_instance.prompt_path = Path(__file__).parent.parent.parent
             mock_instance.app_path = Path(__file__).parent.parent.parent
@@ -314,7 +314,7 @@ class TestAgentContinuationIntegration:
             )
             
             # Verify continuation protocol was included
-            # The actual format includes "CONTINUATION_PROTOCOL INSTRUCTIONS"
-            assert 'CONTINUATION_PROTOCOL INSTRUCTIONS' in formatted
+            # The actual format includes "CONTINUATION PROTOCOL INSTRUCTIONS" (with spaces)
+            assert 'CONTINUATION PROTOCOL INSTRUCTIONS' in formatted
             # Check for actual content from the continuation protocol
-            assert 'When responding, you MUST include a "continuation" field' in formatted
+            assert 'When to Signal Continuation' in formatted

@@ -11,7 +11,7 @@ if project_root not in sys.path:
     print(f"Added {project_root} to Python path to ensure correct module loading")
 
 # Import logging setup from ai_whisperer
-from ai_whisperer.logging_custom import setup_logging
+from ai_whisperer.core.logging import setup_logging
 
 # Parse args early to get port for logging
 parser = argparse.ArgumentParser(description="AIWhisperer Interactive Server")
@@ -54,19 +54,19 @@ logger.info(f"Python executable: {sys.executable}")
 logger.info(f"Project root: {project_root}")
 logger.info(f"Port for logging: {port_for_logging}")
 
-import ai_whisperer.commands.echo
-import ai_whisperer.commands.status
-import ai_whisperer.commands.help
-import ai_whisperer.commands.agent
-import ai_whisperer.commands.session
-import ai_whisperer.commands.debbie
+import ai_whisperer.interfaces.cli.commands.echo
+import ai_whisperer.interfaces.cli.commands.status
+import ai_whisperer.interfaces.cli.commands.help
+import ai_whisperer.interfaces.cli.commands.agent
+import ai_whisperer.interfaces.cli.commands.session
+import ai_whisperer.interfaces.cli.commands.debbie
 import json
 import inspect
 import asyncio
 import uuid
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from ai_whisperer.config import load_config
+from ai_whisperer.core.config import load_config
 from .stateless_session_manager import StatelessSessionManager
 from .message_models import (
     StartSessionRequest, StartSessionResponse, SendUserMessageRequest, SendUserMessageResponse,
@@ -74,9 +74,9 @@ from .message_models import (
     ProvideToolResultRequest, ProvideToolResultResponse, SessionParams,
     SessionStatus, MessageStatus, ToolResultStatus
 )
-from ai_whisperer.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.registry import AgentRegistry
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 from pathlib import Path
 from .handlers.project_handlers import init_project_handlers, PROJECT_HANDLERS
 from .handlers.workspace_handler import WorkspaceHandler
@@ -533,9 +533,9 @@ async def debbie_send_alert_notification(websocket, alert_data):
 
 
 # Handler registry
-from ai_whisperer.commands.registry import CommandRegistry
+from ai_whisperer.interfaces.cli.commands.registry import CommandRegistry
 
-from ai_whisperer.commands.errors import CommandError
+from ai_whisperer.interfaces.cli.commands.errors import CommandError
 
 async def dispatch_command_handler(params, websocket=None):
     session_id = params.get("sessionId")

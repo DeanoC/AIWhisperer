@@ -1,16 +1,37 @@
 """
-Tool for analyzing task dependencies and creating execution order.
+Module: ai_whisperer/tools/analyze_dependencies_tool.py
+Purpose: AI tool implementation for analyze dependencies
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- AnalyzeDependenciesTool: Tool for analyzing and resolving task dependencies.
+
+Usage:
+    tool = AnalyzeDependenciesTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- base_tool
+- agents.agent_e_exceptions
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
+from typing import Any, Dict, List
+
 import json
 import logging
-from typing import Dict, Any, List, Optional
-
-from .base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ..agents.task_decomposer import TaskDecomposer
 from ..agents.agent_e_exceptions import DependencyCycleError
 
 logger = logging.getLogger(__name__)
-
 
 class AnalyzeDependenciesTool(AITool):
     """Tool for analyzing and resolving task dependencies."""

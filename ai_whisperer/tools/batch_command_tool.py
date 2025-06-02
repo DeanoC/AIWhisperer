@@ -1,20 +1,40 @@
 """
+Module: ai_whisperer/tools/batch_command_tool.py
+Purpose: AI tool implementation for batch command
+
 BatchCommandTool - Interprets and executes batch script commands.
 Part of Debbie's batch processing capabilities.
+
+Key Components:
+- CommandInterpreter: Interprets natural language commands into structured actions
+- BatchCommandTool: 
+
+Usage:
+    tool = CommandInterpreter()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- base_tool
+- script_parser_tool
+
+Related:
+- See docs/batch-mode/PHASE2_TASKS.md
+- See docs/batch-mode/PHASE2_CHECKLIST.md
+- See docs/batch-mode/IMPLEMENTATION_PLAN.md
+
 """
 
+from typing import Any, Callable, Dict, List, Optional, Set
+
 import re
-from typing import Dict, Any, List, Optional, Callable, Union
-from dataclasses import dataclass
 import logging
 from collections import OrderedDict
 
-from .base_tool import AITool
-from .script_parser_tool import ParsedScript, ScriptFormat
-
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.tools.script_parser_tool import ParsedScript
 
 logger = logging.getLogger(__name__)
-
 
 class CommandInterpreter:
     """Interprets natural language commands into structured actions"""
@@ -180,7 +200,6 @@ class CommandInterpreter:
                 return match.group(1)
         
         return None
-
 
 class BatchCommandTool(AITool):
     """

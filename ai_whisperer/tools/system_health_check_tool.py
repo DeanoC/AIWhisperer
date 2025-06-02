@@ -1,19 +1,38 @@
 """
-System Health Check Tool - Runs automated health check scripts for AIWhisperer
+Module: ai_whisperer/tools/system_health_check_tool.py
+Purpose: AI tool implementation for system health check
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- SystemHealthCheckTool: 
+
+Usage:
+    tool = SystemHealthCheckTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- subprocess
+- asyncio
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+- See TEST_CONSOLIDATED_SUMMARY.md
+
 """
-import os
-import json
+
 import asyncio
-import subprocess
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
 
-from ai_whisperer.tools.base_tool import AITool, ToolResult
+from ai_whisperer.tools.base_tool import AITool
 
 logger = logging.getLogger(__name__)
-
 
 class SystemHealthCheckTool(AITool):
     """
@@ -28,6 +47,56 @@ class SystemHealthCheckTool(AITool):
     @property
     def description(self) -> str:
         return "Run comprehensive system health checks including agent verification, tool testing, and AI provider validation"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        """Schema for tool parameters."""
+        return {
+            "type": "object",
+            "properties": {
+                "check_category": {
+                    "type": "string",
+                    "description": "Category of checks to run (all, agents, tools, providers, custom)",
+                    "enum": ["all", "agents", "tools", "providers", "custom"],
+                    "default": "all"
+                },
+                "specific_checks": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Specific check scripts to run (if not running all)"
+                },
+                "timeout_per_check": {
+                    "type": "integer",
+                    "description": "Timeout in seconds for each check script",
+                    "default": 30
+                },
+                "verbose": {
+                    "type": "boolean",
+                    "description": "Include detailed output from each check",
+                    "default": False
+                }
+            },
+            "required": [],
+            "additionalProperties": False
+        }
+    
+    def get_ai_prompt_instructions(self) -> str:
+        """Instructions for AI on using this tool."""
+        return """
+        Use the system_health_check tool to verify AIWhisperer components are working correctly.
+        You can:
+        - Run all checks with default settings
+        - Filter by category: agents, tools, providers, or custom
+        - Run specific named checks
+        - Set a custom timeout per check (default 30s)
+        - Enable verbose output for detailed diagnostics
+        
+        Examples:
+        - Check everything: execute()
+        - Check only agents: execute(check_category="agents")
+        - Run specific checks: execute(specific_checks=["test_agent_alice", "test_openrouter"])
+        - Verbose output: execute(verbose=True)
+        """
         
     def get_openrouter_tool_definition(self) -> dict:
         return {
@@ -35,34 +104,7 @@ class SystemHealthCheckTool(AITool):
             "function": {
                 "name": self.name,
                 "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "check_category": {
-                            "type": "string",
-                            "description": "Category of checks to run (all, agents, tools, providers, custom)",
-                            "enum": ["all", "agents", "tools", "providers", "custom"],
-                            "default": "all"
-                        },
-                        "specific_checks": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "Specific check scripts to run (if not running all)"
-                        },
-                        "timeout_per_check": {
-                            "type": "integer",
-                            "description": "Timeout in seconds for each check script",
-                            "default": 30
-                        },
-                        "verbose": {
-                            "type": "boolean",
-                            "description": "Include detailed output from each check",
-                            "default": False
-                        }
-                    },
-                    "required": [],
-                    "additionalProperties": False
-                }
+                "parameters": self.parameters_schema
             }
         }
     
@@ -108,7 +150,7 @@ class SystemHealthCheckTool(AITool):
         
         # Also check from PathManager paths if available
         try:
-            from ai_whisperer.path_management import PathManager
+            from ai_whisperer.utils.path import PathManager
             pm = PathManager.get_instance()
             if pm._initialized:
                 possible_paths.extend([

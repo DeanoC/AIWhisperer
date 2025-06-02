@@ -1,12 +1,34 @@
 """
+Module: ai_whisperer/tools/tool_registration.py
+Purpose: Utility functions for tool registration
+
 Centralized tool registration for AIWhisperer.
 This module handles registering all available tools with the tool registry.
+
+Key Components:
+- register_all_tools(): 
+- register_tool_category(): 
+
+Usage:
+    tool = Tool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- execute_command_tool
+- move_rfc_tool
+
+Related:
+- See docs/dependency-analysis-report.md
+- See docs/archive/consolidated_phase2/CODEBASE_ANALYSIS_REPORT.md
+
 """
+
 import logging
 from typing import Optional
 
 from .tool_registry import get_tool_registry
-from ..path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
 

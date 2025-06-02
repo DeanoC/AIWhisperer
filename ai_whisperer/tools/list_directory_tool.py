@@ -1,14 +1,35 @@
 """
-List Directory Tool - Lists files and directories in workspace paths
+Module: ai_whisperer/tools/list_directory_tool.py
+Purpose: AI tool implementation for list directory
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ListDirectoryTool: Tool for listing files and directories within the workspace.
+
+Usage:
+    tool = ListDirectoryTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+Related:
+- See docs/file-browser-consolidated-implementation.md
+- See docs/archive/phase2_consolidation/file_browser_implementation_checklist.md
+
 """
+
 import os
 import logging
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.exceptions import FileRestrictionError
+from ai_whisperer.utils.path import PathManager
+from ai_whisperer.core.exceptions import FileRestrictionError
 
 logger = logging.getLogger(__name__)
 

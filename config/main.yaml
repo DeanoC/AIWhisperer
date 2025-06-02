@@ -1,0 +1,16 @@
+openrouter:
+  model: google/gemini-2.5-flash-preview-05-20:thinking
+  params:
+    temperature: 0.7
+    max_tokens: 8000
+    max_reasoning_tokens: 0
+  site_url: http://AIWhisperer:8000
+  app_name: AIWhisperer
+prompts: {}
+workspace_ignore_patterns:
+- .git
+- .venv
+- __pycache__
+- .idea
+- .vscode
+- project_dev/done

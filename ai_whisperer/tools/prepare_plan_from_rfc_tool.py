@@ -1,8 +1,25 @@
 """
+Module: ai_whisperer/tools/prepare_plan_from_rfc_tool.py
+Purpose: AI tool implementation for prepare plan from rfc
+
 Tool to prepare RFC content and context for plan generation.
 This tool doesn't generate the plan itself - it prepares the information
 for the agent to generate the plan through the normal AI loop.
+
+Key Components:
+- PreparePlanFromRFCTool: 
+
+Usage:
+    tool = PreparePlanFromRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- base_tool
+- hashlib
+
 """
+
 
 import json
 import logging
@@ -11,8 +28,8 @@ from pathlib import Path
 from datetime import datetime
 import hashlib
 
-from .base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
 

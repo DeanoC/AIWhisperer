@@ -1,17 +1,35 @@
-"""Tool for analyzing workspace statistics."""
+"""
+Module: ai_whisperer/tools/workspace_stats_tool.py
+Purpose: AI tool implementation for workspace stats
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- WorkspaceStatsTool: Tool for gathering statistics about the workspace.
+
+Usage:
+    tool = WorkspaceStatsTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- time
+- collections
+
+"""
+from datetime import datetime
+from typing import Any, Dict, List
+
 import logging
-from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 from collections import defaultdict
 import time
-from datetime import datetime, timedelta
-import os
-
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class WorkspaceStatsTool(AITool):
     """Tool for gathering statistics about the workspace."""

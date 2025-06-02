@@ -1,23 +1,43 @@
 """
+Module: ai_whisperer/tools/workspace_validator_tool.py
+Purpose: AI tool implementation for workspace validator
+
 Workspace Validator Tool for Debbie the Debugger.
 Validates AIWhisperer workspace health, configuration, and dependencies.
+
+Key Components:
+- ValidationStatus: Status levels for validation checks
+- CheckCategory: Categories of validation checks
+- ValidationCheck: Individual validation check result
+
+Usage:
+    tool = ValidationStatus()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- logging_custom
+- base_tool
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
+from typing import Any, Dict, List, Optional, Set
 
 import os
-import json
 import yaml
 import logging
-from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 
-from .base_tool import AITool
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
-
 
 class ValidationStatus(Enum):
     """Status levels for validation checks"""
@@ -26,7 +46,6 @@ class ValidationStatus(Enum):
     FAIL = "fail"
     INFO = "info"
 
-
 class CheckCategory(Enum):
     """Categories of validation checks"""
     STRUCTURE = "structure"
@@ -34,7 +53,6 @@ class CheckCategory(Enum):
     DEPENDENCIES = "dependencies"
     PERMISSIONS = "permissions"
     INTEGRATION = "integration"
-
 
 @dataclass
 class ValidationCheck:
@@ -51,7 +69,6 @@ class ValidationCheck:
         data['category'] = self.category.value
         data['status'] = self.status.value
         return data
-
 
 @dataclass
 class WorkspaceHealth:
@@ -114,7 +131,6 @@ class WorkspaceHealth:
             ValidationStatus.INFO: "ℹ️"
         }
         return icons.get(status, "•")
-
 
 class WorkspaceValidatorTool(AITool):
     """

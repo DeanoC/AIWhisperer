@@ -7,8 +7,8 @@ from threading import Lock
 import asyncio
 import logging
 
-from ai_whisperer.utils import build_ascii_directory_tree
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.helpers import build_ascii_directory_tree
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
 

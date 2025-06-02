@@ -6,7 +6,7 @@ from typing import List, Dict, Any
 
 from interactive_server.handlers.workspace_handler import WorkspaceHandler
 from interactive_server.services.file_service import FileService
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestWorkspaceHandler:

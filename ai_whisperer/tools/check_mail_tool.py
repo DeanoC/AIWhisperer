@@ -1,11 +1,27 @@
 """
-Check Mail Tool - Allows agents to check their mailbox for messages.
+Module: ai_whisperer/tools/check_mail_tool.py
+Purpose: AI tool implementation for check mail
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- CheckMailTool: Tool for checking mailbox messages.
+
+Usage:
+    tool = CheckMailTool()
+    result = await tool.execute(**parameters)
+
+Related:
+- See docs/agent-e-consolidated-implementation.md
+- See docs/dependency-analysis-report.md
+- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
+
 """
-from typing import Dict, Any, List
 
 from ai_whisperer.tools.base_tool import BaseTool, ToolResult, ToolDefinition, ParameterDefinition
-from ai_whisperer.agents.mailbox import get_mailbox
-
+from ai_whisperer.extensions.mailbox.mailbox import get_mailbox
 
 class CheckMailTool(BaseTool):
     """Tool for checking mailbox messages."""

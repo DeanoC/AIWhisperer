@@ -1,17 +1,35 @@
 """
-Read Plan Tool - Reads and displays execution plan details
+Module: ai_whisperer/tools/read_plan_tool.py
+Purpose: AI tool implementation for read plan
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ReadPlanTool: Tool for reading execution plan details.
+
+Usage:
+    tool = ReadPlanTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+Related:
+- See UI_IMPROVEMENT_IMPLEMENTATION_PLAN.md
+
 """
-import os
+
 import logging
 import json
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class ReadPlanTool(AITool):
     """Tool for reading execution plan details."""

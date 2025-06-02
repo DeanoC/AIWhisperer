@@ -3,7 +3,7 @@ Unit tests for prompt optimizer.
 """
 
 import pytest
-from ai_whisperer.agents.prompt_optimizer import PromptOptimizer, optimize_user_message
+from ai_whisperer.extensions.agents.prompt_optimizer import PromptOptimizer, optimize_user_message
 
 
 class TestPromptOptimizer:

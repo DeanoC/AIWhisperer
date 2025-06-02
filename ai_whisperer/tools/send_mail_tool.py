@@ -1,12 +1,28 @@
 """
-Send Mail Tool - Allows agents to send messages to other agents or users.
+Module: ai_whisperer/tools/send_mail_tool.py
+Purpose: AI tool implementation for send mail
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- SendMailTool: Tool for sending mail messages to agents or users.
+
+Usage:
+    tool = SendMailTool()
+    result = await tool.execute(**parameters)
+
+Related:
+- See docs/agent-e-consolidated-implementation.md
+- See docs/dependency-analysis-report.md
+- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
+
 """
+
 import json
-from typing import Dict, Any, Optional
-
 from ai_whisperer.tools.base_tool import BaseTool, ToolResult, ToolDefinition, ParameterDefinition
-from ai_whisperer.agents.mailbox import Mail, MessagePriority, get_mailbox
-
+from ai_whisperer.extensions.mailbox.mailbox import Mail, MessagePriority, get_mailbox
 
 class SendMailTool(BaseTool):
     """Tool for sending mail messages to agents or users."""

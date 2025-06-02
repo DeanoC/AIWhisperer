@@ -1,11 +1,33 @@
 """
-Tool for recommending the best external agent for a task.
+Module: ai_whisperer/tools/recommend_external_agent_tool.py
+Purpose: AI tool implementation for recommend external agent
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- RecommendExternalAgentTool: Tool for recommending external agents based on task characteristics.
+
+Usage:
+    tool = RecommendExternalAgentTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- base_tool
+- agents.external_adapters
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 import json
 import logging
 from typing import Dict, Any, List
 
-from .base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ..agents.external_adapters import AdapterRegistry
 from ..agents.decomposed_task import DecomposedTask
 

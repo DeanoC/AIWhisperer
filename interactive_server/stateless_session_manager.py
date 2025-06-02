@@ -13,16 +13,16 @@ from pathlib import Path
 from datetime import datetime
 
 from fastapi import WebSocket
-from ai_whisperer.agents.stateless_agent import StatelessAgent
-from ai_whisperer.agents.config import AgentConfig
-from ai_whisperer.agents.factory import AgentFactory
+from ai_whisperer.services.agents.stateless import StatelessAgent
+from ai_whisperer.services.agents.config import AgentConfig
+from ai_whisperer.services.agents.factory import AgentFactory
 from ai_whisperer.context.agent_context import AgentContext
-from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
-from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
-from ai_whisperer.context_management import ContextManager
+from ai_whisperer.services.execution.ai_loop import StatelessAILoop
+from ai_whisperer.services.execution.ai_config import AIConfig
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService
+from ai_whisperer.services.execution.context import ContextManager
 from ai_whisperer.context.context_manager import AgentContextManager
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 from .message_models import AIMessageChunkNotification, ContinuationProgressNotification
 from .debbie_observer import get_observer
 
@@ -409,7 +409,7 @@ class StatelessInteractiveSession:
                         self.config.get('openrouter', {}).get('model', '')
             
             if model_name:
-                from ai_whisperer.agents.prompt_optimizer import optimize_user_message
+                from ai_whisperer.extensions.agents.prompt_optimizer import optimize_user_message
                 optimized_message = optimize_user_message(message, model_name, self.active_agent)
                 if optimized_message != message:
                     logger.debug(f"Optimized user message for {model_name}")
@@ -1310,7 +1310,8 @@ class StatelessInteractiveSession:
         from pathlib import Path
         
         # Load the plan generation schema
-        schema_path = Path(__file__).parent.parent / "schemas" / "plan_generation_schema.json"
+        from ai_whisperer.core.config import get_schema_path
+        schema_path = get_schema_path("plan_generation_schema")
         try:
             with open(schema_path) as f:
                 plan_schema = json.load(f)
@@ -1370,7 +1371,7 @@ class StatelessSessionManager:
         from ai_whisperer.tools.list_directory_tool import ListDirectoryTool
         from ai_whisperer.tools.search_files_tool import SearchFilesTool
         from ai_whisperer.tools.get_file_content_tool import GetFileContentTool
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         
         tool_registry = get_tool_registry()
         

@@ -1,12 +1,33 @@
 """
-Tool for updating the status of decomposed tasks.
+Module: ai_whisperer/tools/update_task_status_tool.py
+Purpose: AI tool implementation for update task status
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- UpdateTaskStatusTool: Tool for updating task execution status.
+
+Usage:
+    tool = UpdateTaskStatusTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- base_tool
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 import json
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
-from .base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ..agents.decomposed_task import TaskStatus
 
 logger = logging.getLogger(__name__)

@@ -1,22 +1,43 @@
 """
+Module: ai_whisperer/tools/message_injector_tool.py
+Purpose: AI tool implementation for message injector
+
 Message Injector Tool for Debbie the Debugger.
 Injects messages into AI sessions to unstick agents or simulate user responses.
-"""
 
-import json
+Key Components:
+- InjectionType: Types of message injections
+- InjectionResult: Result of message injection
+- MessageInjectorTool: 
+
+Usage:
+    tool = InjectionType()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- logging_custom
+- time
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See PHASE_CONSOLIDATED_SUMMARY.md
+- See UNTESTED_MODULES_REPORT.md
+
+"""
+from typing import Any, Dict, List, Optional, Type
+
 import time
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
 
-from .base_tool import AITool
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
-
 
 class InjectionType(Enum):
     """Types of message injections"""
@@ -26,7 +47,6 @@ class InjectionType(Enum):
     ERROR_RECOVERY = "error_recovery"  # Recover from error
     RESET = "reset"  # Reset context
     
-
 @dataclass
 class InjectionResult:
     """Result of message injection"""
@@ -50,7 +70,6 @@ class InjectionResult:
             'response_time_ms': self.response_time_ms,
             'error': self.error
         }
-
 
 class MessageInjectorTool(AITool):
     """

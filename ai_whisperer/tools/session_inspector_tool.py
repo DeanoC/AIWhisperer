@@ -1,20 +1,39 @@
 """
+Module: ai_whisperer/tools/session_inspector_tool.py
+Purpose: AI tool implementation for session inspector
+
 Session Inspector Tool for Debbie the Debugger.
 Analyzes active session state, message history, and detects common issues like stalls.
+
+Key Components:
+- SessionAnalysis: Results of session analysis
+- SessionInspectorTool: 
+
+Usage:
+    tool = SessionAnalysis()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- logging_custom
+- time
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See PHASE_CONSOLIDATED_SUMMARY.md
+- See UNTESTED_MODULES_REPORT.md
+
 """
 
-import json
-import time
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 
-from .base_tool import AITool
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class SessionAnalysis:
@@ -37,7 +56,6 @@ class SessionAnalysis:
         data = asdict(self)
         data['last_activity'] = self.last_activity.isoformat()
         return data
-
 
 class SessionInspectorTool(AITool):
     """

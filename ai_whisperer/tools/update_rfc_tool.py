@@ -1,7 +1,26 @@
 """
-Update RFC Tool - Updates existing RFC documents
+Module: ai_whisperer/tools/update_rfc_tool.py
+Purpose: AI tool implementation for update rfc
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- UpdateRFCTool: Tool for updating existing RFC documents during refinement.
+
+Usage:
+    tool = UpdateRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
-import os
+
 import logging
 import json
 import re
@@ -10,10 +29,9 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class UpdateRFCTool(AITool):
     """Tool for updating existing RFC documents during refinement."""

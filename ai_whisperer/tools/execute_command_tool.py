@@ -1,10 +1,31 @@
+"""
+Module: ai_whisperer/tools/execute_command_tool.py
+Purpose: AI tool implementation for execute command
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ExecuteCommandTool: 
+
+Usage:
+    tool = ExecuteCommandTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- subprocess
+- base_tool
+
+"""
+
 import subprocess
 import logging
 import sys
 from typing import Dict, Any, Optional, List
 
-from .base_tool import AITool
-import asyncio # Import asyncio for sleep
+from ai_whisperer.tools.base_tool import AITool
 import threading # Import threading for Event
 
 logger = logging.getLogger(__name__)
@@ -56,7 +77,6 @@ class ExecuteCommandTool(AITool):
         - cwd (string, optional): The working directory. Defaults to the current workspace directory.
         Returns: A dictionary with 'stdout', 'stderr', and 'returncode'.
         """
-
 
     def execute(self, command: str, cwd: str = ".", shutdown_event: Optional[threading.Event] = None) -> Dict[str, Any]:
         """
@@ -121,7 +141,6 @@ class ExecuteCommandTool(AITool):
                  # Read any remaining output after the process has finished
                  stdout_output += process.stdout.read()
                  stderr_output += process.stderr.read()
-
 
             logger.info(f"Command execution finished with return code: {returncode}")
             return {

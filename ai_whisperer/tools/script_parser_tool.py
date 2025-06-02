@@ -1,19 +1,43 @@
 """
+Module: ai_whisperer/tools/script_parser_tool.py
+Purpose: AI tool implementation for script parser
+
 ScriptParserTool - Parses and validates batch scripts in multiple formats.
 Part of Debbie's batch processing capabilities.
+
+Key Components:
+- ScriptFormat: Supported script formats
+- ParsedScript: Represents a parsed batch script
+- ScriptParserTool: 
+
+Usage:
+    tool = ScriptFormat()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- base_tool
+- dataclasses
+- enum
+
+Related:
+- See docs/batch-mode/PHASE2_TASKS.md
+- See docs/batch-mode/PHASE2_CHECKLIST.md
+- See docs/batch-mode/IMPLEMENTATION_PLAN.md
+
 """
 
 import json
 import yaml
 import os
+import signal
+import threading
 from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass
-from typing import Dict, Any, List, Optional, Union
 import re
 
-from .base_tool import AITool
-
+from ai_whisperer.tools.base_tool import AITool
+from typing import Any, Dict, List, Optional
 
 class ScriptFormat(Enum):
     """Supported script formats"""
@@ -21,7 +45,6 @@ class ScriptFormat(Enum):
     YAML = "yaml"
     TEXT = "text"
     UNKNOWN = "unknown"
-
 
 @dataclass
 class ParsedScript:
@@ -35,7 +58,6 @@ class ParsedScript:
     def __post_init__(self):
         if self.steps is None:
             self.steps = []
-
 
 class ScriptParserTool(AITool):
     """
@@ -51,6 +73,9 @@ class ScriptParserTool(AITool):
     
     # Maximum nesting depth for JSON/YAML
     MAX_NESTING_DEPTH = 10
+    
+    # Maximum parsing time (seconds)
+    MAX_PARSING_TIME = 5
     
     # Allowed file extensions
     ALLOWED_EXTENSIONS = {'.json', '.yaml', '.yml', '.txt', '.script'}
@@ -282,13 +307,18 @@ The tool enforces security restrictions:
         return script
     
     def _parse_yaml(self, content: str, path: Path) -> ParsedScript:
-        """Parse YAML format script"""
+        """Parse YAML format script with timeout protection"""
         # Check for dangerous YAML tags
         if '!!' in content and 'python/' in content:
             raise ValueError(f"Unsafe YAML tags detected in {path}")
         
+        # Check for complexity patterns that could cause slow parsing
+        if content.count('&') > 100 or content.count('*') > 100:
+            raise ValueError(f"YAML too complex (too many anchors/references) in {path}")
+        
+        # Parse with timeout protection
         try:
-            data = yaml.safe_load(content)
+            data = self._parse_yaml_with_timeout(content, path)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML in {path}: {str(e)}")
         
@@ -305,6 +335,31 @@ The tool enforces security restrictions:
         self.validate_script(script)
         
         return script
+    
+    def _parse_yaml_with_timeout(self, content: str, path: Path):
+        """Parse YAML with timeout protection using threading"""
+        result = [None]
+        exception = [None]
+        
+        def parse_worker():
+            try:
+                result[0] = yaml.safe_load(content)
+            except Exception as e:
+                exception[0] = e
+        
+        thread = threading.Thread(target=parse_worker)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=self.MAX_PARSING_TIME)
+        
+        if thread.is_alive():
+            # Thread is still running, parsing took too long
+            raise ValueError(f"YAML parsing timeout ({self.MAX_PARSING_TIME}s) in {path}")
+        
+        if exception[0]:
+            raise exception[0]
+        
+        return result[0]
     
     def _parse_text(self, content: str, path: Path) -> ParsedScript:
         """Parse plain text format script"""

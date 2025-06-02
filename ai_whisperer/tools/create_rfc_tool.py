@@ -1,7 +1,26 @@
 """
-Create RFC Tool - Creates new RFC documents for feature refinement
+Module: ai_whisperer/tools/create_rfc_tool.py
+Purpose: AI tool implementation for create rfc
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- CreateRFCTool: Tool for creating new RFC documents from ideas.
+
+Usage:
+    tool = CreateRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
-import os
+
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional, List
@@ -10,11 +29,8 @@ import json
 import re
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.exceptions import FileRestrictionError
-
+from ai_whisperer.utils.path import PathManager
 logger = logging.getLogger(__name__)
-
 
 class CreateRFCTool(AITool):
     """Tool for creating new RFC documents from ideas."""

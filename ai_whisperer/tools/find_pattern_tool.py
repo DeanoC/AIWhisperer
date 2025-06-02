@@ -1,17 +1,38 @@
-"""Tool for finding patterns in files using regex, similar to grep."""
+"""
+Module: ai_whisperer/tools/find_pattern_tool.py
+Purpose: Tool for finding patterns in files using regex, similar to grep.
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- FindPatternTool: Tool for searching files for regex patterns with context lines.
+
+Usage:
+    tool = FindPatternTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- asyncio
+
+Related:
+- See docs/file-browser-consolidated-implementation.md
+- See docs/archive/phase2_consolidation/file_browser_implementation_checklist.md
+
+"""
+
+from typing import Any, Dict, List, Set
+
 import re
 import logging
-from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
-import os
-
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class FindPatternTool(AITool):
     """Tool for searching files for regex patterns with context lines."""

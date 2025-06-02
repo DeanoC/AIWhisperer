@@ -1,18 +1,38 @@
 """
-Analyze Languages Tool - Detects programming languages used in the project
+Module: ai_whisperer/tools/analyze_languages_tool.py
+Purpose: AI tool implementation for analyze languages
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- AnalyzeLanguagesTool: Tool for analyzing programming languages used in the project.
+
+Usage:
+    tool = AnalyzeLanguagesTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- collections
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
-import os
+
+from typing import Any, Dict, List, Optional
+
 import logging
 import json
-from typing import Dict, Any, Optional, List, Set
 from pathlib import Path
 from collections import defaultdict
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class AnalyzeLanguagesTool(AITool):
     """Tool for analyzing programming languages used in the project."""

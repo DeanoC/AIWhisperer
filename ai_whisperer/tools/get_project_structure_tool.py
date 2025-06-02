@@ -1,17 +1,37 @@
 """
-Get Project Structure Tool - Analyzes and describes project organization
+Module: ai_whisperer/tools/get_project_structure_tool.py
+Purpose: AI tool implementation for get project structure
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- GetProjectStructureTool: Tool for analyzing and understanding project structure and organization.
+
+Usage:
+    tool = GetProjectStructureTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- collections
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
-import os
+
+from typing import Any, Dict, List, Optional, Type
+
 import logging
-from typing import Dict, Any, Optional, List, Tuple
 from pathlib import Path
 from collections import defaultdict
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class GetProjectStructureTool(AITool):
     """Tool for analyzing and understanding project structure and organization."""

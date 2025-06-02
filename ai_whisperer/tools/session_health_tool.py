@@ -1,14 +1,26 @@
 """
+Module: ai_whisperer/tools/session_health_tool.py
+Purpose: AI tool implementation for session health
+
 Session health monitoring tool for Debbie the Debugger.
 Provides real-time health metrics for AI sessions.
+
+Key Components:
+- SessionHealthTool: Check the health status of AI sessions
+
+Usage:
+    tool = SessionHealthTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- time
+
 """
-import json
+from typing import Any, Dict
+from datetime import timedelta
+
 import time
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-
 from ai_whisperer.tools.base_tool import AITool
-
 
 class SessionHealthTool(AITool):
     """Check the health status of AI sessions"""

@@ -1,11 +1,33 @@
 """
-Tool for validating external agent availability.
+Module: ai_whisperer/tools/validate_external_agent_tool.py
+Purpose: AI tool implementation for validate external agent
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ValidateExternalAgentTool: Tool for validating external agent environments.
+
+Usage:
+    tool = ValidateExternalAgentTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- base_tool
+- agents.external_adapters
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 import json
 import logging
 from typing import Dict, Any, List
 
-from .base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ..agents.external_adapters import AdapterRegistry
 
 logger = logging.getLogger(__name__)

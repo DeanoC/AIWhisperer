@@ -7,7 +7,7 @@ import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 
-from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
+from ai_whisperer.extensions.agents.continuation_strategy import ContinuationStrategy
 from ai_whisperer.model_capabilities import get_model_capabilities
 
 
@@ -132,7 +132,7 @@ class TestContinuationSimple:
 @pytest.mark.asyncio
 async def test_continuation_in_session():
     """Test continuation in a mock session context"""
-    from interactive_server.stateless_session_manager import StatelessSessionManager
+    from interactive_server.stateless_session_manager import StatelessInteractiveSession
     
     # Create minimal config
     config = {
@@ -142,18 +142,24 @@ async def test_continuation_in_session():
         }
     }
     
-    # Create session manager
-    manager = StatelessSessionManager(config, None, None)
-    
     # Mock websocket
     mock_ws = AsyncMock()
     mock_ws.send_json = AsyncMock()
     
+    # Create session with minimal setup
+    session = StatelessInteractiveSession(
+        session_id="test-session",
+        websocket=mock_ws,
+        config=config,
+        agent_registry=None,
+        prompt_system=None,
+        project_path=None,
+        observer=None
+    )
+    
     # Set up minimal session state
-    manager.websocket = mock_ws
-    manager.session_id = "test-session"
-    manager._continuation_depth = 0
-    manager._max_continuation_depth = 3
+    session._continuation_depth = 0
+    session._max_continuation_depth = 3
     
     # Test sending progress notification
     progress = {
@@ -162,7 +168,7 @@ async def test_continuation_in_session():
         "steps_completed": ["Step 1"]
     }
     
-    await manager._send_progress_notification(progress, ["tool1"])
+    await session._send_progress_notification(progress, ["tool1"])
     
     # Verify notification was sent
     mock_ws.send_json.assert_called_once()

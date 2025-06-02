@@ -1,11 +1,33 @@
 """
-Tool for parsing results from external agent execution.
+Module: ai_whisperer/tools/parse_external_result_tool.py
+Purpose: AI tool implementation for parse external result
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ParseExternalResultTool: Tool for parsing execution results from external agents.
+
+Usage:
+    tool = ParseExternalResultTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- base_tool
+- agents.external_adapters
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 import json
 import logging
 from typing import Dict, Any, List
 
-from .base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ..agents.external_adapters import AdapterRegistry
 
 logger = logging.getLogger(__name__)

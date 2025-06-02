@@ -1,10 +1,30 @@
 """
-Fetch URL Tool - Fetches and processes web page content
+Module: ai_whisperer/tools/fetch_url_tool.py
+Purpose: AI tool implementation for fetch url
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- FetchURLTool: Tool for fetching and processing web page content.
+
+Usage:
+    tool = FetchURLTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- time
+- tempfile
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
-import os
+
 import logging
 import re
-import time
 import hashlib
 from typing import Dict, Any, Optional, List
 from pathlib import Path
@@ -13,10 +33,9 @@ import requests
 from urllib.parse import urlparse, urljoin
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class FetchURLTool(AITool):
     """Tool for fetching and processing web page content."""

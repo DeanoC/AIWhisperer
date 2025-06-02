@@ -1,21 +1,43 @@
 """
-Update Plan from RFC Tool - Updates plans when source RFC changes
+Module: ai_whisperer/tools/update_plan_from_rfc_tool.py
+Purpose: AI tool implementation for update plan from rfc
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- UpdatePlanFromRFCTool: Tool for updating plans when source RFC changes.
+
+Usage:
+    tool = UpdatePlanFromRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- asyncio
+- hashlib
+
+Related:
+- See TEST_CONSOLIDATED_SUMMARY.md
+
 """
+
 import os
 import logging
 import json
 import hashlib
+import concurrent.futures
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
-from ai_whisperer.json_validator import validate_against_schema
+from ai_whisperer.utils.path import PathManager
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService
+from ai_whisperer.utils.validation import validate_against_schema
 
 logger = logging.getLogger(__name__)
-
 
 class UpdatePlanFromRFCTool(AITool):
     """Tool for updating plans when source RFC changes."""
@@ -181,7 +203,7 @@ Ensure all changes follow TDD methodology."""
                         task_progress[task['name']] = task['status']
             
             # Generate updated plan using AI
-            from ai_whisperer.ai_loop.ai_config import AIConfig
+            from ai_whisperer.services.execution.ai_config import AIConfig
             ai_config = AIConfig(
                 api_key=os.environ.get("OPENROUTER_API_KEY", "dummy_key"),
                 model_id="anthropic/claude-3-5-sonnet",
@@ -209,7 +231,6 @@ Ensure all changes follow TDD methodology."""
                 # Check if an event loop is already running
                 loop = asyncio.get_running_loop()
                 # Create a task and run it in the existing loop
-                import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(asyncio.run, get_completion())
                     response_content = future.result()

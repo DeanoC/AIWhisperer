@@ -1,22 +1,41 @@
 """
-Web Search Tool - Basic web search functionality for Agent P
+Module: ai_whisperer/tools/web_search_tool.py
+Purpose: AI tool implementation for web search
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- WebSearchTool: Tool for searching the web for technical information and best practices.
+
+Usage:
+    tool = WebSearchTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- time
+- tempfile
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
-import os
+
 import logging
 import json
-import time
 import hashlib
+import urllib.parse
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from datetime import datetime, timedelta
-import urllib.parse
 import requests
 
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
-
 
 class WebSearchTool(AITool):
     """Tool for searching the web for technical information and best practices."""

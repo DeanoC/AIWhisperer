@@ -133,3 +133,8 @@ models.csv
 temp_output/
 sessions.json
 node_modules
+logs/
+
+# Configuration files
+config/development/local.yaml
+config_backup_*/

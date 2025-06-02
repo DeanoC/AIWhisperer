@@ -13,7 +13,7 @@ from ..models.project import (
     Project, ProjectCreate, ProjectUpdate, ProjectSummary,
     ProjectHistory, UISettings, ProjectSettings
 )
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 logger = logging.getLogger(__name__)

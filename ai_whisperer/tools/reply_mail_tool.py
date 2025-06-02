@@ -1,11 +1,27 @@
 """
-Reply Mail Tool - Allows agents to reply to messages in their mailbox.
+Module: ai_whisperer/tools/reply_mail_tool.py
+Purpose: AI tool implementation for reply mail
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ReplyMailTool: Tool for replying to mail messages.
+
+Usage:
+    tool = ReplyMailTool()
+    result = await tool.execute(**parameters)
+
+Related:
+- See docs/agent-e-consolidated-implementation.md
+- See docs/dependency-analysis-report.md
+- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
+
 """
-from typing import Dict, Any
 
 from ai_whisperer.tools.base_tool import BaseTool, ToolResult, ToolDefinition, ParameterDefinition
-from ai_whisperer.agents.mailbox import Mail, MessagePriority, get_mailbox
-
+from ai_whisperer.extensions.mailbox.mailbox import Mail, MessagePriority, get_mailbox
 
 class ReplyMailTool(BaseTool):
     """Tool for replying to mail messages."""

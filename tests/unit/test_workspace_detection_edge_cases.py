@@ -3,7 +3,7 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from ai_whisperer.workspace_detection import find_whisper_workspace, WorkspaceNotFoundError, load_project_json
+from ai_whisperer.utils.workspace import find_whisper_workspace, WorkspaceNotFoundError, load_project_json
 
 
 def test_symlink_handling(tmp_path):
