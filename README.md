@@ -80,8 +80,7 @@ For development setup, testing, and architecture details, see:
 pytest                          # All tests
 pytest -m "not performance"     # Skip slow tests
 
-# Code quality (required before PRs)
-black . --line-length 120 --skip-magic-trailing-comma
+# Code quality (required for CI)
 flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 ```
 

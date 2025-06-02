@@ -46,11 +46,11 @@ pytest tests/integration/                # Integration tests only
 
 ### Code Quality (MUST pass before PRs)
 ```bash
-# Format code
-black . --line-length 120 --skip-magic-trailing-comma
-
-# Check for critical errors
+# Check for critical errors (required for CI)
 flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+# Optional: Format code with black (not enforced in CI)
+black . --line-length 120 --skip-magic-trailing-comma
 ```
 
 ### Running the Application
