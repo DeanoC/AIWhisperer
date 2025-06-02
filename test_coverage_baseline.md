@@ -5,14 +5,14 @@ Generated: /home/deano/projects/AIWhisperer
 ## Summary
 
 - **Total Python modules**: 152
-- **Modules with tests**: 107
-- **Overall coverage**: 70.4%
+- **Modules with tests**: 110
+- **Overall coverage**: 72.4%
 - **Critical untested modules**: 0
-- **High priority untested**: 19
+- **High priority untested**: 16
 
 ## Coverage by System
 
-- **ai_whisperer**: 🟢 70.9%
+- **ai_whisperer**: 🟢 73.2%
 - **interactive_server**: 🟡 60.0%
 - **postprocessing**: 🟢 80.0%
 
@@ -68,27 +68,12 @@ Generated: /home/deano/projects/AIWhisperer
 - **Reason**: Complex module (score: 10) without tests
 - **Action**: Add tests in Phase 2
 
-### `ai_whisperer/batch/websocket_client.py`
-- **Complexity**: 10/10
-- **Reason**: Complex module (score: 10) without tests
-- **Action**: Add tests in Phase 2
-
-### `ai_whisperer/batch/intervention.py`
-- **Complexity**: 10/10
-- **Reason**: Complex module (score: 10) without tests
-- **Action**: Add tests in Phase 2
-
 ### `ai_whisperer/agents/mail_notification.py`
 - **Complexity**: 10/10
 - **Reason**: Complex module (score: 10) without tests
 - **Action**: Add tests in Phase 2
 
 ### `ai_whisperer/logging/log_aggregator.py`
-- **Complexity**: 10/10
-- **Reason**: Complex module (score: 10) without tests
-- **Action**: Add tests in Phase 2
-
-### `ai_whisperer/logging/debbie_logger.py`
 - **Complexity**: 10/10
 - **Reason**: Complex module (score: 10) without tests
 - **Action**: Add tests in Phase 2
@@ -127,13 +112,13 @@ Add integration tests and improve coverage of edge cases.
 ## 🎯 Immediate Actions
 
 1. **Create 0 critical module tests** (estimated 2-3 days)
-2. **Create 19 high priority tests** (estimated 3-4 days)
+2. **Create 16 high priority tests** (estimated 3-4 days)
 3. **Run coverage analysis** to measure improvement
 4. **Focus on integration tests** for end-to-end workflows
 
 ## Success Metrics
 
-- **Target overall coverage**: 90% (from 70.4%)
+- **Target overall coverage**: 90% (from 72.4%)
 - **All critical modules**: 100% test coverage
 - **High priority modules**: 80% test coverage
 - **Integration test suite**: Comprehensive workflow coverage
