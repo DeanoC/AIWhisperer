@@ -55,6 +55,15 @@ class ProvideToolResultRequest(BaseModel):
 class ProvideToolResultResponse(BaseModel):
     status: int  # Should be ToolResultStatus enum
 
+class ContinuationProgressNotification(BaseModel):
+    sessionId: str
+    agent_id: str
+    iteration: int
+    max_iterations: int
+    progress: Optional[Dict] = None
+    current_tools: Optional[list] = None
+    timestamp: Optional[str] = None
+
 # Enums as Python Enums for type safety
 from enum import IntEnum
 class SessionStatus(IntEnum):

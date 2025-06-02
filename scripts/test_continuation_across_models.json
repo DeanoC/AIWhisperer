@@ -1,0 +1,66 @@
+{
+  "name": "Cross-Model Continuation Test",
+  "description": "Test continuation behavior across different models",
+  "version": "1.0",
+  "models_to_test": [
+    "openai/gpt-4o",
+    "openai/gpt-4o-mini",
+    "anthropic/claude-3-5-sonnet-latest",
+    "google/gemini-2.0-flash-exp",
+    "google/gemini-1.5-flash"
+  ],
+  "test_scenario": {
+    "agent": "e",
+    "steps": [
+      {
+        "command": "switch_agent",
+        "agent": "e",
+        "description": "Switch to Agent Eamonn"
+      },
+      {
+        "command": "wait",
+        "duration": 2
+      },
+      {
+        "command": "user_message",
+        "message": "Execute the python-ast-json plan. First list all available plans, then read the python-ast-json plan with format='json', then decompose it into tasks, and finally analyze dependencies.",
+        "description": "Multi-step task requiring continuation",
+        "timeout": 60,
+        "expected_behaviors": {
+          "single_tool_models": {
+            "should_continue": true,
+            "expected_iterations": 3,
+            "pattern": "sequential tool calls with continuation"
+          },
+          "multi_tool_models": {
+            "should_continue": "optional",
+            "expected_iterations": 1,
+            "pattern": "may batch multiple tools in one call"
+          }
+        }
+      },
+      {
+        "command": "wait",
+        "duration": 5
+      },
+      {
+        "command": "analyze_response",
+        "check_for": [
+          "list_plans tool used",
+          "read_plan tool used", 
+          "decompose_plan tool used",
+          "all steps completed"
+        ]
+      }
+    ]
+  },
+  "result_aggregation": {
+    "save_to": "test_results/model_continuation_comparison.json",
+    "metrics": [
+      "total_time",
+      "continuation_count",
+      "tools_executed",
+      "success_rate"
+    ]
+  }
+}

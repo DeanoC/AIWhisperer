@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-06-02T07:36:02.674915",
+  "models": [
+    {
+      "model": "openai/gpt-4o-mini",
+      "info": {
+        "provider": "openai",
+        "supports_multi_tool": true,
+        "expected_behavior": "Can call multiple tools in one response"
+      },
+      "test_scenarios": [
+        {
+          "name": "Multi-step task",
+          "description": "List RFCs then create a new one",
+          "expected_continuation": false
+        },
+        {
+          "name": "Single tool call",
+          "description": "Just list files",
+          "expected_continuation": false
+        }
+      ]
+    },
+    {
+      "model": "anthropic/claude-3-5-haiku-latest",
+      "info": {
+        "provider": "anthropic",
+        "supports_multi_tool": true,
+        "expected_behavior": "Can call multiple tools in one response"
+      },
+      "test_scenarios": [
+        {
+          "name": "Multi-step task",
+          "description": "List RFCs then create a new one",
+          "expected_continuation": false
+        },
+        {
+          "name": "Single tool call",
+          "description": "Just list files",
+          "expected_continuation": false
+        }
+      ]
+    },
+    {
+      "model": "google/gemini-1.5-flash",
+      "info": {
+        "provider": "google",
+        "supports_multi_tool": false,
+        "expected_behavior": "Calls one tool per response, needs continuation"
+      },
+      "test_scenarios": [
+        {
+          "name": "Multi-step task",
+          "description": "List RFCs then create a new one",
+          "expected_continuation": true
+        },
+        {
+          "name": "Single tool call",
+          "description": "Just list files",
+          "expected_continuation": false
+        }
+      ]
+    }
+  ]
+}

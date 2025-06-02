@@ -9,6 +9,10 @@ agents:
     color: "#9C27B0"
     icon: "📝"
     tool_sets: ["rfc_specialist"]
+    continuation_config:
+      require_explicit_signal: true
+      max_iterations: 10
+      timeout: 600
   
   a:
     name: "Alice the AI Assistant"
@@ -19,6 +23,10 @@ agents:
     context_sources: ["conversation_history", "workspace_structure"]
     color: "#F97316"
     icon: "🤖"
+    continuation_config:
+      require_explicit_signal: true
+      max_iterations: 5
+      timeout: 300
     
   t:
     name: "Tessa the Tester"
@@ -29,6 +37,10 @@ agents:
     context_sources: ["existing_tests", "code_coverage", "test_patterns"]
     color: "#4CAF50"
     icon: "🧪"
+    continuation_config:
+      require_explicit_signal: true
+      max_iterations: 5
+      timeout: 300
     
   d:
     name: "Debbie the Debugger"
@@ -50,19 +62,9 @@ agents:
       - multi_format_parsing
       - automated_user_simulation
     continuation_config:
-      rules:
-        - trigger_tools: ["script_parser"]
-          description: "Continue after parsing batch scripts"
-          auto_continue: true
-          max_depth: 3
-        - trigger_tools: ["batch_command"]
-          description: "Continue after executing batch commands"
-          auto_continue: true
-          max_depth: 5
-        - trigger_tools: ["session_health", "session_analysis"]
-          description: "Continue after diagnostic tools"
-          auto_continue: false
-          requires_user_confirmation: true
+      require_explicit_signal: true
+      max_iterations: 10
+      timeout: 600
     configuration:
       monitoring:
         continuation_timeout: 30  # seconds
@@ -97,6 +99,23 @@ agents:
       - task_complexity_estimation
       - clarification_requests
       - progress_tracking
+    continuation_config:
+      require_explicit_signal: false  # Changed to false to allow pattern-based continuation
+      max_iterations: 10
+      timeout: 600
+      continuation_patterns:
+        - "now I'll"
+        - "next, I"
+        - "let me.*next"
+        - "proceeding to"
+        - "moving on to"
+        - "I'll continue with"
+      termination_patterns:
+        - "completed successfully"
+        - "task is complete"
+        - "finished.*all.*steps"
+        - "ready for execution"
+        - "all done"
     configuration:
       decomposition:
         max_task_depth: 3

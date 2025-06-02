@@ -62,7 +62,11 @@ class PromptResolver:
     """Determines the correct file path for a requested prompt based on a hierarchy."""
     def __init__(self, prompt_config: PromptConfiguration):
         self._prompt_config = prompt_config
-
+    
+    def _get_shared_prompts_dir(self) -> Path:
+        """Get the shared prompts directory path"""
+        prompt_path = PathManager.get_instance().prompt_path
+        return prompt_path / "prompts" / "shared"
 
     def resolve_prompt_path(self, category: str, name: str) -> Path:
         """
@@ -182,6 +186,44 @@ class PromptSystem:
         self._resolver = PromptResolver(prompt_config)
         self._loader = PromptLoader() # Use the actual loader for integration
         self._tool_registry = tool_registry # Store the optional ToolRegistry instance
+        self._shared_components = {}
+        self._enabled_features = set(['core'])  # Core is always enabled
+        self._load_shared_components()
+    
+    def _load_shared_components(self):
+        """Load shared prompt components from prompts/shared/"""
+        shared_dir = self._get_shared_prompts_dir()
+        if shared_dir.exists():
+            for component_file in shared_dir.glob("*.md"):
+                component_name = component_file.stem
+                try:
+                    with open(component_file, 'r', encoding='utf-8') as f:
+                        self._shared_components[component_name] = f.read()
+                    logger.info(f"Loaded shared component: {component_name}")
+                except Exception as e:
+                    logger.error(f"Failed to load shared component {component_name}: {e}")
+    
+    def _get_shared_prompts_dir(self) -> Path:
+        """Get the shared prompts directory path"""
+        return self._resolver._get_shared_prompts_dir()
+    
+    def enable_feature(self, feature: str):
+        """Enable a shared feature for all agents"""
+        if feature in self._shared_components:
+            self._enabled_features.add(feature)
+            logger.info(f"Enabled feature: {feature}")
+        else:
+            logger.warning(f"Feature {feature} not found in shared components")
+    
+    def disable_feature(self, feature: str):
+        """Disable a shared feature"""
+        if feature != 'core':  # Can't disable core
+            self._enabled_features.discard(feature)
+            logger.info(f"Disabled feature: {feature}")
+    
+    def get_enabled_features(self) -> set:
+        """Get the set of enabled features for debugging"""
+        return self._enabled_features.copy()
 
     def get_prompt(self, category: str, name: str) -> Prompt:
         """
@@ -196,33 +238,47 @@ class PromptSystem:
         except PromptNotFoundError:
             raise
 
-    def get_formatted_prompt(self, category: str, name: str, include_tools: bool = False, **kwargs) -> str:
+    def get_formatted_prompt(self, category: str, name: str, include_tools: bool = False, 
+                           include_shared: bool = True, **kwargs) -> str:
         """
-        Retrieves the processed and formatted content of a prompt, optionally including tool instructions.
+        Retrieves the processed and formatted content of a prompt, 
+        including shared components and optionally tool instructions.
         Handles parameter injection if templating is supported.
         Raises PromptNotFoundError.
         """
-        logger.info(f"get_formatted_prompt called: category={category}, name={name}, include_tools={include_tools}")
+        logger.info(f"get_formatted_prompt called: category={category}, name={name}, include_tools={include_tools}, include_shared={include_shared}")
         prompt = self.get_prompt(category, name)
         logger.info(f"Resolved prompt path: {prompt.path}")
         # Assuming Prompt.content handles lazy loading
-        content = prompt.content
-        logger.info(f"Loaded prompt content length: {len(content)}, first 100 chars: {content[:100]}")
-
+        content_parts = [prompt.content]
+        logger.info(f"Loaded prompt content length: {len(prompt.content)}, first 100 chars: {prompt.content[:100]}")
+        
+        # Add shared components if requested (default: True)
+        if include_shared:
+            logger.info(f"Including shared components. Enabled features: {self._enabled_features}")
+            logger.info(f"Available shared components: {list(self._shared_components.keys())}")
+            # Add enabled shared components
+            for feature in sorted(self._enabled_features):  # Sort for consistent ordering
+                if feature in self._shared_components:
+                    logger.info(f"Adding shared component: {feature}")
+                    content_parts.append(f"\n\n## {feature.upper().replace('_', ' ')} INSTRUCTIONS\n{self._shared_components[feature]}")
+        
         # Include tool instructions if requested and tool registry is available
         if include_tools and self._tool_registry:
             tool_instructions = self._tool_registry.get_all_ai_prompt_instructions()
             if tool_instructions:
-                content += "\n\n## AVAILABLE TOOLS\n" + tool_instructions
-
-        # Add simple placeholder for templating if kwargs are provided
-        # Only replace {{{key}}} to avoid accidental formatting of JSON/code blocks
+                content_parts.append("\n\n## AVAILABLE TOOLS\n" + tool_instructions)
+        
+        # Combine all parts
+        content = "\n".join(content_parts)
+        
+        # Handle template parameters
         if kwargs:
             import re
             for key, value in kwargs.items():
                 pattern = r"{{{" + re.escape(key) + r"}}}"
-                # Use a lambda to avoid interpreting backslashes in the replacement string
                 content = re.sub(pattern, lambda m: str(value), content)
+        
         return content
 
     def list_prompts(self, category: Optional[str] = None) -> List[Tuple[str, str]]:

@@ -52,6 +52,36 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "max_tools_per_turn": 10,
         "structured_output": False
     },
+    "anthropic/claude-3-5-sonnet": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
+        "structured_output": False
+    },
+    "anthropic/claude-3-5-sonnet-latest": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
+        "structured_output": False
+    },
+    "anthropic/claude-3-haiku": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
+        "structured_output": False
+    },
+    "anthropic/claude-3-5-haiku": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
+        "structured_output": False
+    },
+    "anthropic/claude-3-5-haiku-latest": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
+        "structured_output": False
+    },
     "anthropic/claude-3-haiku": {
         "multi_tool": True,
         "parallel_tools": True,
@@ -79,6 +109,24 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
     
     # Google models
     "google/gemini-pro": {
+        "multi_tool": False,  # Single tool per turn
+        "parallel_tools": False,
+        "max_tools_per_turn": 1,
+        "structured_output": False
+    },
+    "google/gemini-2.0-flash-exp": {
+        "multi_tool": False,  # Single tool per turn
+        "parallel_tools": False,
+        "max_tools_per_turn": 1,
+        "structured_output": False
+    },
+    "google/gemini-1.5-pro": {
+        "multi_tool": False,  # Single tool per turn
+        "parallel_tools": False,
+        "max_tools_per_turn": 1,
+        "structured_output": False
+    },
+    "google/gemini-1.5-flash": {
         "multi_tool": False,  # Single tool per turn
         "parallel_tools": False,
         "max_tools_per_turn": 1,

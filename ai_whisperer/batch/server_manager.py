@@ -25,11 +25,11 @@ class ServerManager:
                     self.port = random.randint(20000, 40000)
                 print(f"   📡 Attempting to start server on port {self.port}")
                 self._start_subprocess()
-                # Optionally wait for server to be up
-                time.sleep(0.05)
+                # Wait for server to initialize properly
+                time.sleep(2.0)  # Interactive server needs time to initialize
                 if self.is_running():
                     print(f"   ✅ Batch server started successfully on port {self.port}")
-                    print(f"   📁 Log files: logs/aiwhisperer_*_batch_{self.port}.log")
+                    print(f"   📁 Server logs: logs/aiwhisperer_server_batch_{self.port}.log")
                     print(f"   🌐 Server URL: http://127.0.0.1:{self.port}")
                     return
                 else:
@@ -48,9 +48,9 @@ class ServerManager:
         raise RuntimeError(f"Failed to start server after {max_retries} attempts")
 
     def _start_subprocess(self):
-        """Start the actual server subprocess for interactive_server.main using uvicorn."""
-        # Start the FastAPI server on the selected port
-        # Use the same Python interpreter and pass the port
+        """Start the actual server subprocess using interactive_server.main directly."""
+        # Start the interactive server using its main module
+        # This ensures proper initialization and argument parsing
         import sys
         import os
         
@@ -63,11 +63,9 @@ class ServerManager:
         
         server_cmd = [
             sys.executable,
-            "-m", "uvicorn",
-            "interactive_server.main:app",
+            "-m", "interactive_server.main",
             f"--host=127.0.0.1",
-            f"--port={self.port}",
-            "--log-level=info"
+            f"--port={self.port}"
         ]
         
         print(f"   🔧 Command: {' '.join(server_cmd)}")
