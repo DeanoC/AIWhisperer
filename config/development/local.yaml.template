@@ -1,0 +1,7 @@
+? ''
+: null
+'# Local Development Configuration': null
+'# This file is gitignored and can contain local overrides': null
+openrouter:
+  '# api_key': your-local-api-key-here
+  '# model': override-model-for-local-dev

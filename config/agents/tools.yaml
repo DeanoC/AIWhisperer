@@ -1,0 +1,239 @@
+# Tool Sets Configuration
+# Defines collections of tools that can be assigned to agents
+# Tool sets support inheritance via the 'inherits' field
+
+# Base tool sets that other sets can inherit from
+base_sets:
+  # Essential read-only tools for analysis
+  readonly_filesystem:
+    description: "Read-only file system access tools"
+    tools:
+      - read_file
+      - list_directory
+      - search_files
+      - get_file_content
+      - find_pattern
+      - workspace_stats
+    tags:
+      - filesystem
+      - file_read
+      - directory_browse
+      - file_search
+      - analysis
+      - pattern_matching
+      - statistics
+
+  # File modification tools
+  write_filesystem:
+    description: "File system write access tools"
+    tools:
+      - write_file
+    tags:
+      - file_write
+
+  # Code execution tools
+  code_execution:
+    description: "Tools for executing code and commands"
+    tools:
+      - execute_command
+    tags:
+      - code_execution
+      - utility
+
+# Agent-specific tool sets
+agent_sets:
+  # Default tool set for analysis agents
+  analyst:
+    description: "Tools for code analysis and exploration"
+    inherits:
+      - readonly_filesystem
+    # Additional tools specific to analysts
+    tools: []
+    # Additional tags
+    tags: []
+
+  # Tool set for planning agents
+  planner:
+    description: "Tools for project planning and requirements analysis"
+    inherits:
+      - readonly_filesystem
+    tools: []
+    tags: []
+  
+  # Tool set for RFC refinement (Agent Patricia)
+  rfc_specialist:
+    description: "Tools for RFC creation and refinement"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - create_rfc
+      - read_rfc
+      - update_rfc
+      - move_rfc
+      - list_rfcs
+      - prepare_plan_from_rfc
+      - save_generated_plan
+      - list_plans
+      - read_plan
+      - update_plan_from_rfc
+      - move_plan
+      - analyze_languages
+      - find_similar_code
+      - get_project_structure
+      - web_search
+      - fetch_url
+    tags:
+      - rfc
+      - plan
+      - project_management
+      - planning
+      - analysis
+      - codebase
+      - research
+
+  # Tool set for testing agents
+  tester:
+    description: "Tools for test development and execution"
+    inherits:
+      - readonly_filesystem
+      - code_execution
+    tools: []
+    tags: []
+
+  # Tool set for development agents
+  developer:
+    description: "Full development tools including write access"
+    inherits:
+      - readonly_filesystem
+      - write_filesystem
+      - code_execution
+    tools: []
+    tags: []
+
+  # Tool set for documentation agents
+  documenter:
+    description: "Tools for reading code and writing documentation"
+    inherits:
+      - readonly_filesystem
+      - write_filesystem
+    # Might want to restrict to only markdown/text files
+    tools: []
+    tags: []
+
+# Specialized tool sets for specific tasks
+specialized_sets:
+  # Minimal set for simple queries
+  minimal:
+    description: "Minimal tool set for basic file reading"
+    tools:
+      - read_file
+    tags: []
+
+  # Security-focused set with no execution
+  secure_readonly:
+    description: "Secure read-only access without any execution"
+    inherits:
+      - readonly_filesystem
+    # Explicitly exclude any execution-related tools
+    deny_tags:
+      - code_execution
+      - file_write
+
+  # CI/CD focused tools
+  ci_cd:
+    description: "Tools for CI/CD pipeline operations"
+    inherits:
+      - code_execution
+    tools:
+      - list_directory
+      - read_file
+    tags:
+      - automation
+  
+  # Debugging tools for Debbie
+  debugging_tools:
+    description: "Advanced debugging and monitoring tools for system analysis"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - session_inspector
+      - message_injector
+      - workspace_validator
+      - python_executor
+      - system_health_check
+    tags:
+      - debugging
+      - monitoring
+      - intervention
+      - analysis
+      - python
+      - health_check
+  
+  # Batch processing tools for Debbie's batch mode
+  batch_tools:
+    description: "Tools for batch script processing and execution"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - script_parser
+      - batch_command
+    tags:
+      - batch
+      - scripting
+      - automation
+  
+  # Interactive monitoring tools for Debbie
+  monitoring_tools:
+    description: "Real-time monitoring and analysis tools for interactive sessions"
+    tools:
+      - session_health
+      - session_analysis
+      - monitoring_control
+    tags:
+      - monitoring
+      - health
+      - analysis
+      - real_time
+      - interactive
+  
+  # Task decomposition tools for Agent E
+  task_decomposition:
+    description: "Tools for breaking down plans into executable tasks"
+    inherits:
+      - readonly_filesystem
+    tools:
+      - list_plans
+      - read_plan
+      - decompose_plan
+      - analyze_dependencies
+      - format_for_external_agent
+      - update_task_status
+    tags:
+      - planning
+      - task_management
+      - decomposition
+      - analysis
+  
+  # Mailbox communication tools
+  mailbox_tools:
+    description: "Universal mailbox system for agent communication"
+    tools:
+      - send_mail
+      - check_mail
+      - reply_mail
+    tags:
+      - communication
+      - messaging
+      - mailbox
+  
+  # External agent integration tools
+  external_agent_tools:
+    description: "Tools for working with external AI coding assistants"
+    tools:
+      - validate_external_agent
+      - recommend_external_agent
+      - parse_external_result
+    tags:
+      - external_agents
+      - integration
+      - validation
