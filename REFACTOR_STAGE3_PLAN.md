@@ -11,6 +11,31 @@ Having completed documentation consolidation, test reorganization, and configura
 
 ## Stage 3: Core Code Refactoring
 
+### Phase 0: Documentation Modernization (3-4 days)
+**Goal**: Make documentation LLM-friendly and eliminate stale docs
+
+1. **Documentation-to-Code Mapping**
+   - Build bidirectional mapping between docs and code
+   - Identify orphaned docs and undocumented code
+   - Create staleness indicators
+
+2. **API Documentation Migration**
+   - Move API docs from markdown to docstrings
+   - Standardize docstring format (Google style)
+   - Ensure code is self-documenting
+
+3. **File Header Descriptions**
+   - Add max 100-line headers to all Python files
+   - Include module purpose, key APIs, usage examples
+   - Make files instantly understandable to LLMs
+
+4. **Hierarchical Code Map**
+   - Create navigable CODE_MAP.md at project root
+   - Add code_map.md to each major directory
+   - Include test coverage and cross-references
+
+**See**: `REFACTOR_STAGE3_PHASE0_DOC_MODERNIZATION.md` for detailed plan
+
 ### Phase 1: Update Configuration System (1-2 days)
 **Goal**: Integrate the new hierarchical configuration structure
 
@@ -125,15 +150,16 @@ Having completed documentation consolidation, test reorganization, and configura
 5. **Communication**: Document all breaking changes
 
 ## Timeline
-- **Week 1**: Phases 1-2 (Config update + Priority 1 tests)
-- **Week 2**: Phases 2-3 (Remaining tests + Code quality)
-- **Week 3**: Phases 4-5 (Performance + Cleanup)
+- **Week 1**: Phases 0-1 (Doc modernization + Config update)
+- **Week 2**: Phase 2 (Test coverage improvement)
+- **Week 3**: Phases 3-4 (Code quality + Performance)
+- **Week 4**: Phase 5 (Final cleanup)
 
 ## Next Immediate Steps
 1. Create feature branch for Stage 3
-2. Update config.py to use new structure
-3. Fix any broken imports/paths
-4. Start with Priority 1 test coverage
-5. Document any issues found
+2. Start Phase 0: Documentation modernization
+3. Build doc-to-code mapping tool
+4. Begin API documentation migration
+5. Create file headers for core modules
 
 This plan provides a systematic approach to completing the prototype-to-production refactor with minimal risk and maximum benefit.
