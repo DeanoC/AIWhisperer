@@ -8,6 +8,7 @@ import os
 from unittest.mock import Mock, AsyncMock, patch
 from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.context.provider import ContextProvider
+from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 
 
 class TestStatelessAILoop:
@@ -67,7 +68,7 @@ class TestStatelessAILoop:
         )
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_process_with_context_simple_response(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context returns AI response directly."""
         # Mock tool registry to avoid socket warnings
@@ -109,7 +110,7 @@ class TestStatelessAILoop:
         assert stored_calls[1][0][0]['content'] == 'Hello there!'
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_process_with_context_streaming(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context with streaming callback."""
         # Mock tool registry to avoid socket warnings
@@ -146,7 +147,7 @@ class TestStatelessAILoop:
         assert result['response'] == "Hello there!"
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_process_with_context_tool_calls(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context with tool calls."""
         # Mock tool registry
@@ -227,7 +228,7 @@ class TestStatelessAILoop:
         assert tool_message['name'] == 'get_weather'
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_process_with_context_no_delegates(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test that process_with_context works without any delegate manager."""
         # Mock tool registry to avoid socket warnings
@@ -255,7 +256,7 @@ class TestStatelessAILoop:
         assert result['response'] == "Hello there!"
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_process_with_context_error_handling(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test error handling in process_with_context."""
         # Mock tool registry
@@ -291,7 +292,7 @@ class TestStatelessAILoop:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="Timeout parameter not yet implemented")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_process_with_context_timeout(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test timeout handling in process_with_context."""
         # Mock tool registry to avoid socket warnings
@@ -333,7 +334,7 @@ class TestStatelessAILoop:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="Custom tools parameter not yet implemented")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_process_with_context_custom_tools(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context with custom tool definitions."""
         # Mock tool registry to avoid socket warnings
@@ -374,7 +375,7 @@ class TestStatelessAILoop:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="store_messages parameter not yet implemented")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_process_with_context_without_storing(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test process_with_context can skip storing messages."""
         # Mock tool registry to avoid socket warnings
@@ -404,7 +405,7 @@ class TestStatelessAILoop:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="process_messages method not yet implemented")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_direct_process_without_context(self, mock_get_registry, mock_config, mock_ai_service):
         """Test direct processing without context provider."""
         # Mock tool registry to avoid socket warnings
@@ -438,7 +439,7 @@ class TestStatelessAILoop:
     @pytest.mark.asyncio
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_tool_execution_success(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test successful tool execution in stateless AI loop."""
         # Mock tool registry with a test tool
@@ -508,7 +509,7 @@ class TestStatelessAILoop:
     @pytest.mark.asyncio
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_tool_execution_async_tool(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test execution of async tools."""
         # Mock tool registry with an async tool
@@ -565,7 +566,7 @@ class TestStatelessAILoop:
     @pytest.mark.asyncio
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_tool_execution_tool_not_found(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test handling when tool is not found in registry."""
         # Mock tool registry that returns None for missing tool
@@ -615,7 +616,7 @@ class TestStatelessAILoop:
     @pytest.mark.asyncio
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_tool_execution_invalid_arguments(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test handling of invalid tool arguments."""
         # Mock tool registry
@@ -664,7 +665,7 @@ class TestStatelessAILoop:
     @pytest.mark.asyncio
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_tool_execution_tool_raises_exception(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test handling when tool execution raises an exception."""
         # Mock tool registry with a tool that raises an exception
@@ -721,7 +722,7 @@ class TestStatelessAILoop:
     @pytest.mark.asyncio
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_multiple_tool_execution(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test execution of multiple tools in one response."""
         # Mock tool registry with multiple tools
@@ -815,7 +816,7 @@ class TestStatelessAILoop:
     @pytest.mark.asyncio
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_tool_execution_signature_fallback(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test fallback from arguments= to **kwargs signature."""
         # Mock tool registry with a tool that only accepts **kwargs
@@ -879,7 +880,7 @@ class TestStatelessAILoop:
     @pytest.mark.asyncio
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
-    @patch('ai_whisperer.services.execution.stateless_ai_loop.get_tool_registry')
+    @patch('ai_whisperer.services.execution.ai_loop.get_tool_registry')
     async def test_tool_execution_streaming(self, mock_get_registry, mock_config, mock_ai_service, mock_context_provider):
         """Test that tool execution results are streamed to the client."""
         # Mock tool registry with a test tool

@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 def get_app():
     import importlib.util
-    main_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../interactive_server/main.py'))
+    main_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../interactive_server/main.py'))
     spec = importlib.util.spec_from_file_location('interactive_server.main', main_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
