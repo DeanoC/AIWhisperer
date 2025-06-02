@@ -21,9 +21,11 @@ class ServerManager:
                 if self.port is None:
                     self.port = random.randint(20000, 40000)
                 self._start_subprocess()
-                # Optionally wait for server to be up
-                time.sleep(0.05)
+                # Wait for server to initialize properly
+                time.sleep(2.0)  # Interactive server needs time to initialize
                 if self.is_running():
+                    # Give server a bit more time to be ready for connections
+                    time.sleep(1.0)
                     return
                 else:
                     # If not running, treat as failure and retry
@@ -39,17 +41,15 @@ class ServerManager:
         raise RuntimeError(f"Failed to start server after {max_retries} attempts")
 
     def _start_subprocess(self):
-        """Start the actual server subprocess for interactive_server.main using uvicorn."""
-        # Start the FastAPI server on the selected port
-        # Use the same Python interpreter and pass the port
+        """Start the actual server subprocess using interactive_server.main directly."""
+        # Start the interactive server using its main module
+        # This ensures proper initialization and argument parsing
         import sys
         server_cmd = [
             sys.executable,
-            "-m", "uvicorn",
-            "interactive_server.main:app",
+            "-m", "interactive_server.main",
             f"--host=127.0.0.1",
-            f"--port={self.port}",
-            "--log-level=info"
+            f"--port={self.port}"
         ]
         self.process = subprocess.Popen(server_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

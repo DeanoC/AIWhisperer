@@ -21,13 +21,22 @@ AIWhisperer is a Python CLI tool that uses AI models via OpenRouter to automate 
 - **Frontend** (`frontend/`): React TypeScript app providing chat interface
 - **Session Management**: Handles concurrent users with isolated sessions
 
+## CRITICAL: Configuration Requirements
+
+**ALL real AI invocations require a config file with OpenRouter API key:**
+- Copy `config.yaml.example` to `config.yaml`
+- Set `OPENROUTER_API_KEY` environment variable or add to config
+- All commands (CLI, batch mode, interactive) must use `load_config()`
+- Only unit tests with mocked AI can skip config requirements
+
 ## CRITICAL: Batch Mode Usage
 
 **IMPORTANT**: Before using batch mode, **ALWAYS** read the batch mode documentation:
 - See `docs/BATCH_MODE_USAGE_FOR_AI.md` for complete instructions
-- **Current Working Method**: `PYTHONPATH=/home/deano/projects/AIWhisperer python tests/debugging-tools/run_batch_test.py <script>`
+- **Correct Method**: `python -m ai_whisperer.cli --config config.yaml <script>`
+- **Config file is REQUIRED** - all real AI invocations need OpenRouter API key via `load_config()`
 - **DO NOT** start servers manually or specify ports
-- The batch client automatically starts its own server on a random port
+- The CLI automatically starts its own server on a random port and logs to port-specific files
 
 ## Common Development Commands
 

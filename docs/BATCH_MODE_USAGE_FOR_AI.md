@@ -18,23 +18,24 @@ AIWhisperer's batch mode is designed for automated testing and scripted interact
 ### ✅ CORRECT Way to Run Batch Mode:
 
 ```bash
-# Just run the batch client directly - it handles everything!
-python -m ai_whisperer.batch.batch_client scripts/your_test_script.json
+# Run batch mode through the CLI with required config
+python -m ai_whisperer.cli --config config.yaml scripts/your_test_script.json
 ```
+
+**IMPORTANT**: The config file is required for OpenRouter API key access. All real AI invocations must go through `load_config()`.
 
 ### ❌ INCORRECT Ways (DO NOT DO THESE):
 
 ```bash
 # WRONG - Don't start server first
 python -m interactive_server.main &
-python -m ai_whisperer.batch.batch_client scripts/test.json
+python -m ai_whisperer.cli --config config.yaml scripts/test.json
 
-# WRONG - Don't specify ports
-python -m interactive_server.main --port 8000 &
+# WRONG - Don't use the batch client directly (missing config/API key)
 python -m ai_whisperer.batch.batch_client scripts/test.json
 
 # WRONG - Don't use complex shell commands
-timeout 60 python -m ai_whisperer.batch.batch_client scripts/test.json
+timeout 60 python -m ai_whisperer.cli --config config.yaml scripts/test.json
 ```
 
 ## How It Works Internally
@@ -137,7 +138,7 @@ timeout 60 python -m ai_whisperer.batch.batch_client scripts/test.json
 
 When a user asks you to run batch mode tests:
 
-1. **ALWAYS** just run: `python -m ai_whisperer.batch.batch_client <script>`
+1. **ALWAYS** just run: `python -m ai_whisperer.cli --config config.yaml <script>`
 2. **NEVER** start a server first
 3. **NEVER** try to specify ports
 4. **NEVER** use complex shell commands or background processes
@@ -150,34 +151,19 @@ Remember: The batch client is self-contained and manages its own server lifecycl
 ```bash
 # User: "Run the batch test for conversation persistence"
 cd /home/deano/projects/AIWhisperer
-python -m ai_whisperer.batch.batch_client scripts/test_conversation_persistence.json
+python -m ai_whisperer.cli --config config.yaml scripts/test_conversation_persistence.json
 
 # That's it! Don't do anything else!
 ```
 
 ## Current Status & Known Issues
 
-⚠️ **IMPORTANT**: The batch mode implementation currently has some issues with server startup. The `python -m ai_whisperer.batch.batch_client` command exists but may not work reliably.
-
-### Working Alternative
-
-For now, use the test runner approach:
-
-```bash
-cd /home/deano/projects/AIWhisperer
-PYTHONPATH=/home/deano/projects/AIWhisperer python tests/debugging-tools/run_batch_test.py scripts/your_script.json
-```
-
-This uses the same BatchClient but with a working entry point.
-
-### Known Issues
-
-1. **Server Manager**: The batch mode server manager tries to start uvicorn directly, but the interactive server needs its own initialization
-2. **Module Loading**: The batch client module has import issues when run directly
-3. **Port Management**: Server port selection works but startup logic needs fixing
-
 ## Summary
 
-**Current Working Rule**: Use `PYTHONPATH=/home/deano/projects/AIWhisperer python tests/debugging-tools/run_batch_test.py <script>` until the main batch client is fixed.
+**Rule**: Use `python -m ai_whisperer.cli --config config.yaml <script>` for all batch mode operations.
 
-The batch mode concept is sound and the core functionality works, but the entry point needs some fixes.
+**Key Points**:
+- Config file is always required for OpenRouter API key
+- CLI entry point handles server startup and port assignment
+- Server logs go to port-specific files (e.g., `logs/aiwhisperer_server_port12345.log`)
+- No manual server management needed
