@@ -280,6 +280,23 @@ User provided game-changing information:
    - Can delete .WHISPER/ test artifacts
    - Total reduction: ~63% of all files!
 
+### 2.2 Testing After Cleanup
+**Status**: COMPLETE
+
+#### Discovered Still-Needed Files
+Through testing both entry points, found these files are still actively used:
+1. **context_management.py** - Used by CLI commands
+2. **json_validator.py** - Used by plan tools
+3. **state_management.py** - Used by CLI commands
+
+These were deleted as "obsolete" but are actually still imported by active code.
+Restored all three files from backup.
+
+#### Test Results
+- ✅ Interactive server starts successfully (35 tools registered)
+- ✅ CLI help command works properly
+- ✅ No import errors after restorations
+
 ## Tools I Wished I Had
 - Automated dependency graph generator
 - Import cycle detector
