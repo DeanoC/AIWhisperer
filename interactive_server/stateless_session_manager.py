@@ -23,7 +23,7 @@ from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.context.context_manager import AgentContextManager
 from ai_whisperer.path_management import PathManager
-from .message_models import AIMessageChunkNotification
+from .message_models import AIMessageChunkNotification, ContinuationProgressNotification
 from .debbie_observer import get_observer
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,8 @@ class StatelessInteractiveSession:
         
         # Continuation tracking
         self._continuation_depth = 0  # Track continuation depth to prevent loops
-        self._max_continuation_depth = 3  # Maximum continuation depth
+        self._max_continuation_depth = 3  # Default maximum continuation depth
+        self._agent_max_depths = {}  # Store per-agent max depths
         
         # Session state
         self.is_started = False
@@ -506,9 +507,17 @@ class StatelessInteractiveSession:
                 # Extract tool names for context-aware continuation
                 tool_calls = result.get('tool_calls', [])
                 tool_names = [tc.get('function', {}).get('name', '') for tc in tool_calls]
+                # Get max depth for this agent
+                agent_max_depth = self._max_continuation_depth  # Default
+                if self.active_agent and self.active_agent in self.agents:
+                    agent = self.agents[self.active_agent]
+                    if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
+                        # Use agent's configured max iterations
+                        agent_max_depth = agent.continuation_strategy.max_iterations
+                
                 # Check continuation depth to prevent infinite loops
-                if self._continuation_depth >= self._max_continuation_depth:
-                    logger.warning(f"Hit max continuation depth ({self._max_continuation_depth}), stopping continuation")
+                if self._continuation_depth >= agent_max_depth:
+                    logger.warning(f"Hit max continuation depth ({agent_max_depth}) for agent {self.active_agent}, stopping continuation")
                     # Reset for next interaction
                     self._continuation_depth = 0
                 else:
@@ -529,12 +538,8 @@ class StatelessInteractiveSession:
                             # Get progress information
                             progress = agent.continuation_strategy.get_progress(agent.context._context)
                             
-                            # Send progress notification
-                            await self.send_notification("continuation.progress", {
-                                "agent_id": self.active_agent,
-                                "iteration": self._continuation_depth,
-                                "progress": progress
-                            })
+                            # Send progress notification using the new method
+                            await self._send_progress_notification(progress, tool_names)
                             
                             # Use continuation strategy's message
                             continuation_msg = agent.continuation_strategy.get_continuation_message(tool_names, message)
@@ -723,6 +728,44 @@ class StatelessInteractiveSession:
         # Restore active agent
         if state.get("active_agent") and state["active_agent"] in self.agents:
             self.active_agent = state["active_agent"]
+    
+    async def _send_progress_notification(self, progress: dict, tool_names: list = None) -> None:
+        """
+        Send a progress notification via WebSocket.
+        
+        Args:
+            progress: Progress information from continuation strategy
+            tool_names: List of tool names being executed
+        """
+        try:
+            # Get agent-specific max depth
+            agent_max_depth = self._max_continuation_depth
+            if self.active_agent and self.active_agent in self.agents:
+                agent = self.agents[self.active_agent]
+                if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
+                    agent_max_depth = agent.continuation_strategy.max_iterations
+            
+            notification_data = {
+                "sessionId": self.session_id,
+                "agent_id": self.active_agent,
+                "iteration": self._continuation_depth,
+                "max_iterations": agent_max_depth,
+                "progress": progress
+            }
+            
+            if tool_names:
+                notification_data["current_tools"] = tool_names
+                
+            # Add timestamp
+            from datetime import datetime
+            notification_data["timestamp"] = datetime.now().isoformat()
+            
+            await self.send_notification("continuation.progress", notification_data)
+            logger.debug(f"Sent continuation progress notification: iteration {self._continuation_depth}/{self._max_continuation_depth}")
+            
+        except Exception as e:
+            logger.error(f"Failed to send progress notification: {e}")
+            # Don't fail the continuation on notification error
     
     async def _should_continue_after_tools(self, result: Any, original_message: str) -> bool:
         """
