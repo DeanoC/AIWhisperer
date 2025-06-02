@@ -226,41 +226,8 @@ class TestOpenRouterAdvancedFeatures:
         assert called_kwargs["json"] == expected_payload
         assert result["message"]["content"] == '{"name": "Test", "value": 123}'
 
-    @pytest.mark.skip(reason="Cache functionality not implemented in OpenRouterAIService")
-    def test_caching_initialization(self):
-        """Test OpenRouterAIService initialization with cache enabled/disabled."""
-        # This test is skipped because caching is not implemented in the current version
-        # Keep it as a placeholder for future implementation
-        pass
-
-    @pytest.mark.xfail(reason="Cache handled incorrectly.")
-    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
-    def test_caching_caches_response(self, mock_post):
-        """Test that a response is cached if caching is enabled."""
-        mock_response_content = {"choices": [{"message": {"content": "Cached response"}}]}
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = mock_response_content
-        mock_post.return_value = mock_response
-
-        # Pass cache=True directly in config for OpenRouterAIService
-        api = OpenRouterAIService(
-            config={"api_key": "fake_key", "model": "default/test-model", "timeout_seconds": 10, "cache": True}
-        )
-
-        prompt_text = "Cache this"
-
-        messages = [{"role": "user", "content": prompt_text}]
-        
-        # First call - should call API and cache
-        response1 = api.call_chat_completion(messages=messages, model=DEFAULT_MODEL, params=DEFAULT_PARAMS)
-        mock_post.assert_called_once()
-        assert response1["message"]["content"] == "Cached response"
-
-        # Second call - should use cache
-        response2 = api.call_chat_completion(messages=messages, model=DEFAULT_MODEL, params=DEFAULT_PARAMS)
-        mock_post.assert_called_once()  # Still 1, meaning API wasn't called again
-        assert response2["message"]["content"] == "Cached response"
+    # Cache functionality intentionally removed during AI service overhaul
+    # Will be re-implemented when needed in future versions
 
         # Call with different params - should call API again
         mock_post.reset_mock()

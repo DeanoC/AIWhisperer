@@ -117,13 +117,8 @@ class TestBatchCommandPerformance:
             overhead_per_step = execution_time / size
             assert overhead_per_step < 0.001, f"Overhead too high: {overhead_per_step*1000:.2f}ms per step"
     
-    @pytest.mark.performance
-    @pytest.mark.skip(reason="Parallel execution not implemented in BatchCommandTool")
-    def test_parallel_vs_sequential(self, command_tool, slow_tool_registry):
-        """Test performance difference between parallel and sequential execution"""
-        # This test is skipped because parallel execution is not implemented
-        # Keep it as a placeholder for future implementation
-        pass
+    # Parallel execution removed - sequential execution is sufficient for current use cases
+    # Will be re-implemented if performance requirements demand it
     
     @pytest.mark.performance
     @pytest.mark.xfail(reason="Performance tests have environment-specific thresholds")
