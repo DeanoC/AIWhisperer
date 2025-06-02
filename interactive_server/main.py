@@ -358,7 +358,12 @@ try:
     prompt_config = PromptConfiguration(app_config)
     tool_registry = get_tool_registry()
     prompt_system = PromptSystem(prompt_config, tool_registry)
+    
+    # Enable continuation protocol for all agents
+    prompt_system.enable_feature('continuation_protocol')
+    
     logging.info("PromptSystem initialized successfully with tool registry")
+    logging.info(f"Enabled features: {prompt_system.get_enabled_features()}")
 except Exception as e:
     logging.error(f"Failed to initialize PromptSystem: {e}")
     # Continue without prompt system
