@@ -23,7 +23,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.agents.registry import Agent
+from ai_whisperer.services.agents.registry import Agent
 
 # Simple in-memory log for demonstration (replace with DB or file in production)
 tool_usage_log: List[Dict[str, Any]] = []

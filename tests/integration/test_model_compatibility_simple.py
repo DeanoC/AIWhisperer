@@ -13,9 +13,9 @@ from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime
 
 from ai_whisperer.core.config import load_config
-from ai_whisperer.agents.registry import AgentRegistry
-from ai_whisperer.agents.factory import AgentFactory
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
+from ai_whisperer.services.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.factory import AgentFactory
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService
 from ai_whisperer.model_capabilities import get_model_capabilities
 from interactive_server.stateless_session_manager import StatelessSessionManager
 

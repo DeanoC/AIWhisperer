@@ -6,7 +6,7 @@ Following TDD principles - tests written before implementation.
 import pytest
 from pathlib import Path
 
-from ai_whisperer.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.registry import AgentRegistry
 
 
 class TestDebbieAgentConfig:

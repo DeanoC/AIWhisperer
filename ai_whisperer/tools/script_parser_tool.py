@@ -36,7 +36,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, List, Optional, Union
 import re
 
-from .base_tool import AITool
+from ai_whisperer.services.agents.base_tool import AITool
 
 
 class ScriptFormat(Enum):

@@ -3,8 +3,8 @@ import os
 from unittest.mock import patch, MagicMock, call
 from typing import Dict, Any, List
 
-from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
+from ai_whisperer.services.execution.ai_config import AIConfig
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService, MODELS_API_URL, API_URL
 from ai_whisperer.core.exceptions import OpenRouterAIServiceError, OpenRouterAuthError
 from deepdiff import DeepDiff
 from pprint import pprint
@@ -35,7 +35,7 @@ class TestOpenRouterAdvancedFeatures:
 
         return OpenRouterAIService(ai_config)
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_system_prompt_basic(self, mock_post):
         """Test call_chat_completion with a basic system prompt."""
         mock_response = MagicMock()
@@ -66,7 +66,7 @@ class TestOpenRouterAdvancedFeatures:
         assert called_kwargs["json"] == expected_payload
         assert result["message"]["content"] == "Test response"
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_system_prompt_with_caching_tags(self, mock_post):
         """Test system prompt with cache_control tags (Anthropic/Google specific)."""
         mock_response = MagicMock()
@@ -99,7 +99,7 @@ class TestOpenRouterAdvancedFeatures:
         assert called_kwargs["json"] == expected_payload
         assert result["message"]["content"] == "Test response"
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_tools_basic_flow(self, mock_post):
         """Test basic tool calling flow."""
         api = self._get_api_client()
@@ -189,7 +189,7 @@ class TestOpenRouterAdvancedFeatures:
         # The planning doc implies `call_chat_completion` might handle this, but it's complex.
         # For now, we test the initial request with tools.
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_structured_output_json_schema(self, mock_post):
         """Test requesting structured output using JSON schema."""
         mock_response = MagicMock()
@@ -234,7 +234,7 @@ class TestOpenRouterAdvancedFeatures:
         pass
 
     @pytest.mark.xfail(reason="Cache handled incorrectly.")
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_caching_caches_response(self, mock_post):
         """Test that a response is cached if caching is enabled."""
         mock_response_content = {"choices": [{"message": {"content": "Cached response"}}]}
@@ -267,7 +267,7 @@ class TestOpenRouterAdvancedFeatures:
         api.call_chat_completion(messages=messages, model=DEFAULT_MODEL, params={"temperature": 0.9})
         mock_post.assert_called_once()
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_multimodal_image_url(self, mock_post):
         """Test sending an image URL."""
         mock_response = MagicMock()
@@ -305,7 +305,7 @@ class TestOpenRouterAdvancedFeatures:
         assert called_kwargs["json"] == expected_payload
         assert result["message"]["content"] == "Image described"
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_multimodal_image_base64(self, mock_post):
         """Test sending a base64 encoded image."""
         mock_response = MagicMock()
@@ -341,7 +341,7 @@ class TestOpenRouterAdvancedFeatures:
         assert called_kwargs["json"] == expected_payload
         assert result["message"]["content"] == "Local image described"
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_multimodal_pdf_base64(self, mock_post):
         """Test sending a base64 encoded PDF."""
         mock_response = MagicMock()
@@ -379,7 +379,7 @@ class TestOpenRouterAdvancedFeatures:
         assert called_kwargs["json"] == expected_payload
         assert result["message"]["content"] == "PDF summarized"
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_multimodal_pdf_with_annotations_reuse(self, mock_post):
         """Test sending a PDF with file_annotations for reuse."""
         # This test is more conceptual for unit testing as it depends on state (previous annotations)
@@ -469,7 +469,7 @@ class TestOpenRouterAdvancedFeatures:
         # For now, this test is more of a placeholder for that design decision.
         pass  # Placeholder for annotation reuse testing, needs more clarity on implementation.
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_api_error_handling(self, mock_post):
         """Test that OpenRouterAIServiceError is raised for API errors."""
         mock_response = MagicMock()
@@ -486,7 +486,7 @@ class TestOpenRouterAdvancedFeatures:
 
     @pytest.mark.flaky
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="Test isolation issues in CI - passes individually but fails in full suite")
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
     def test_api_error_handling_non_json_response(self, mock_post):
         """Test that OpenRouterAIServiceError is raised for API errors with non-JSON response."""
         mock_response = MagicMock()

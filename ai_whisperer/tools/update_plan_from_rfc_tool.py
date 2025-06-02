@@ -33,7 +33,7 @@ from pathlib import Path
 
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService
 from ai_whisperer.utils.validation import validate_against_schema
 
 logger = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ Ensure all changes follow TDD methodology."""
                         task_progress[task['name']] = task['status']
             
             # Generate updated plan using AI
-            from ai_whisperer.ai_loop.ai_config import AIConfig
+            from ai_whisperer.services.execution.ai_config import AIConfig
             ai_config = AIConfig(
                 api_key=os.environ.get("OPENROUTER_API_KEY", "dummy_key"),
                 model_id="anthropic/claude-3-5-sonnet",

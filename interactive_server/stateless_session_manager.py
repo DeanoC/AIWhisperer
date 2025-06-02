@@ -13,14 +13,14 @@ from pathlib import Path
 from datetime import datetime
 
 from fastapi import WebSocket
-from ai_whisperer.agents.stateless_agent import StatelessAgent
-from ai_whisperer.agents.config import AgentConfig
-from ai_whisperer.agents.factory import AgentFactory
+from ai_whisperer.services.agents.stateless import StatelessAgent
+from ai_whisperer.services.agents.config import AgentConfig
+from ai_whisperer.services.agents.factory import AgentFactory
 from ai_whisperer.context.agent_context import AgentContext
-from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
-from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
-from ai_whisperer.context_management import ContextManager
+from ai_whisperer.services.execution.ai_loop import StatelessAILoop
+from ai_whisperer.services.execution.ai_config import AIConfig
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService
+from ai_whisperer.services.execution.context import ContextManager
 from ai_whisperer.context.context_manager import AgentContextManager
 from ai_whisperer.utils.path import PathManager
 from .message_models import AIMessageChunkNotification, ContinuationProgressNotification

@@ -32,7 +32,7 @@ async def test_ai_service_timeout_handling(start_interactive_server):
         log_path = os.path.join("logs", "aiwhisperer_debug.log")
         
         # Mock the OpenRouterAIService to bypass API key requirement for timeout test
-        from ai_whisperer.ai_loop.ai_config import AIConfig
+        from ai_whisperer.services.execution.ai_config import AIConfig
         
         def mock_init(self, config=None, shutdown_event=None):
             # Bypass API key validation for test
@@ -48,7 +48,7 @@ async def test_ai_service_timeout_handling(start_interactive_server):
             self.site_url = getattr(config, "site_url", "http://AIWhisperer:8000")
         
         try:
-            with patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService.__init__", mock_init):
+            with patch("ai_whisperer.services.ai.openrouter_ai_service.OpenRouterAIService.__init__", mock_init):
                 async with websockets.connect(uri) as websocket:
                     # Start session
                     start_req = {

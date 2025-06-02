@@ -31,11 +31,11 @@ import logging
 from typing import Dict, List, Any, Optional, Callable, AsyncIterator
 from types import SimpleNamespace
 
-from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.ai_service.ai_service import AIService
+from ai_whisperer.services.execution.ai_config import AIConfig
+from ai_whisperer.services.ai.base import AIService
 from ai_whisperer.context.provider import ContextProvider
 from ai_whisperer.tools.tool_registry import get_tool_registry
-from ai_whisperer.ai_loop.tool_call_accumulator import ToolCallAccumulator
+from ai_whisperer.services.execution.tool_call_accumulator import ToolCallAccumulator
 
 logger = logging.getLogger(__name__)
 

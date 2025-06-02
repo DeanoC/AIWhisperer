@@ -26,7 +26,7 @@ Related:
 import json
 import logging
 from typing import Dict, List, Any, Optional
-from ai_whisperer.ai_service.tool_calling import ToolCall
+from ai_whisperer.services.ai.tool_calling import ToolCall
 
 logger = logging.getLogger(__name__)
 

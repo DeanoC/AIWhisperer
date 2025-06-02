@@ -19,8 +19,8 @@ Dependencies:
 """
 
 from typing import Dict, List, Optional, Any
-from .registry import Agent, AgentRegistry
-from .base_handler import BaseAgentHandler
+from ai_whisperer.services.agents.registry import Agent, AgentRegistry
+from ai_whisperer.services.agents.base import BaseAgentHandler
 
 class AgentSession:
     """Manages a chat session with agent switching capabilities"""

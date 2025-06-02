@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 
 from ai_whisperer.prompt_system import PromptLoader
-from ai_whisperer.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.registry import AgentRegistry
 
 
 @pytest.mark.flaky

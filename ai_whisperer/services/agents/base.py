@@ -24,7 +24,7 @@ Related:
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
-from .registry import Agent
+from ai_whisperer.services.agents.registry import Agent
 
 class BaseAgentHandler(ABC):
     """Base class for all agent handlers"""

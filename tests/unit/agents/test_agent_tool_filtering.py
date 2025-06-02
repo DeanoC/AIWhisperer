@@ -1,7 +1,7 @@
 import pytest
 from ai_whisperer.tools.tool_registry import ToolRegistry
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.agents.registry import Agent
+from ai_whisperer.services.agents.registry import Agent
 
 def get_tools_for_agent(agent: Agent, registry: ToolRegistry):
     return registry.get_filtered_tools({"tags": agent.tool_tags})

@@ -1,6 +1,6 @@
 import pytest
 # Assuming ContextManager will be in src/ai_whisperer/context_management.py
-from ai_whisperer.context_management import ContextManager
+from ai_whisperer.services.execution.context import ContextManager
 
 # Create a placeholder class for now so tests can run without import errors
 

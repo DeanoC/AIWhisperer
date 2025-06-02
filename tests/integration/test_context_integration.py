@@ -3,8 +3,8 @@ import tempfile
 import pytest
 
 from ai_whisperer.context.agent_context import AgentContext
-from ai_whisperer.context_management import ContextManager
-from ai_whisperer.agents.context_manager import AgentContextManager
+from ai_whisperer.services.execution.context import ContextManager
+from ai_whisperer.services.agents.context_manager import AgentContextManager
 
 def test_context_lifecycle_creation_usage_persistence_recovery():
     import pytest

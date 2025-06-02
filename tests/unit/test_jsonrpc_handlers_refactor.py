@@ -6,7 +6,7 @@ from interactive_server.message_models import (
     SendUserMessageRequest, SendUserMessageResponse, StartSessionRequest, StartSessionResponse
 )
 from ai_whisperer.agents.agent import Agent
-from ai_whisperer.agents.config import AgentConfig
+from ai_whisperer.services.agents.config import AgentConfig
 pytestmark = pytest.mark.xfail(reason="Depends on removed InteractiveSessionManager. All code removed for discovery.")
 
 def test_jsonrpc_handlers_refactor_placeholder():
@@ -80,7 +80,7 @@ async def test_agent_selection_and_switching(session_manager, session):
         "tool_limits": {},
         "context_settings": {},
     }
-    from ai_whisperer.agents.factory import AgentFactory
+    from ai_whisperer.services.agents.factory import AgentFactory
     session_obj.agents["test-agent"] = AgentFactory.create_agent(agent_config)
     msg = {
         "jsonrpc": "2.0",

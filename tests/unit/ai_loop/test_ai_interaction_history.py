@@ -3,12 +3,12 @@ import os
 from unittest.mock import MagicMock, patch
 from dotenv import load_dotenv
 
-from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
+from ai_whisperer.services.execution.ai_config import AIConfig
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService, MODELS_API_URL, API_URL
 
 
 # Mock the requests.post call to prevent actual API calls during testing
-@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+@patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
 def test_chat_completion_with_history(mock_post):
     # Configure the mock to return a successful response with dummy data
     mock_response = MagicMock()
@@ -97,7 +97,7 @@ def test_chat_completion_with_history(mock_post):
             assert response['message']['content'] == "This is a test response."
 
 
-@patch("ai_whisperer.ai_service.openrouter_ai_service.requests.post")
+@patch("ai_whisperer.services.ai.openrouter_ai_service.requests.post")
 def test_chat_completion_with_multi_turn_history(mock_post):
     """Test that chat completion works correctly with a longer conversation history (3 turns)."""
     # Configure the mock to return successful responses with dummy data

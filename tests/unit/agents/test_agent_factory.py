@@ -1,10 +1,10 @@
 import pytest
 
 from ai_whisperer.agents.agent import Agent
-from ai_whisperer.agents.config import AgentConfig
+from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
 
-from ai_whisperer.agents.factory import AgentFactory
+from ai_whisperer.services.agents.factory import AgentFactory
 
 class DummyModel:
     def __init__(self, name):
@@ -109,7 +109,7 @@ def test_agent_validation_missing_required_fields():
     assert "model_name" in str(exc.value)
 
 def test_agent_validation_invalid_model():
-    from ai_whisperer.agents.config import AgentConfigError
+    from ai_whisperer.services.agents.config import AgentConfigError
     invalid_cfg = {
         "name": "bad_model",
         "model_name": None,

@@ -5,11 +5,11 @@ import asyncio
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from pathlib import Path
 
-from ai_whisperer.agents.stateless_agent import StatelessAgent
-from ai_whisperer.agents.config import AgentConfig
+from ai_whisperer.services.agents.stateless import StatelessAgent
+from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
 from ai_whisperer.context.agent_context import AgentContext
-from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
 from ai_whisperer.utils.path import PathManager
 from interactive_server.stateless_session_manager import StatelessInteractiveSession

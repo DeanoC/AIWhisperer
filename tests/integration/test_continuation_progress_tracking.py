@@ -6,8 +6,8 @@ import pytest
 import asyncio
 import json
 from unittest.mock import Mock, AsyncMock, patch
-from ai_whisperer.agents.config import AgentConfig
-from ai_whisperer.agents.stateless_agent import StatelessAgent
+from ai_whisperer.services.agents.config import AgentConfig
+from ai_whisperer.services.agents.stateless import StatelessAgent
 from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
 from interactive_server.stateless_session_manager import StatelessSessionManager
 
@@ -165,7 +165,7 @@ class TestContinuationProgressTracking:
     async def test_progress_tracking_with_real_agent(self):
         """Test progress tracking with a real agent setup"""
         # Create a more realistic test with actual agent components
-        from ai_whisperer.agents.registry import Agent
+        from ai_whisperer.services.agents.registry import Agent
         
         # Create agent info with continuation config
         agent_info = Agent(

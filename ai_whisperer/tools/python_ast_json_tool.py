@@ -44,7 +44,7 @@ from typing import Dict, Any, Optional, Union, List, Tuple
 from datetime import datetime, timezone
 from collections import defaultdict
 
-from .base_tool import AITool
+from ai_whisperer.services.agents.base_tool import AITool
 
 
 def extract_comments_from_source(source: str) -> List[Dict[str, Any]]:

@@ -12,8 +12,8 @@ from unittest.mock import Mock, MagicMock
 from abc import ABC
 from typing import Dict, Any, Optional
 
-from ai_whisperer.agents.base_handler import BaseAgentHandler
-from ai_whisperer.agents.registry import Agent
+from ai_whisperer.services.agents.base import BaseAgentHandler
+from ai_whisperer.services.agents.registry import Agent
 
 
 class ConcreteAgentHandler(BaseAgentHandler):

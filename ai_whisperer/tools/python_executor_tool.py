@@ -50,7 +50,7 @@ except ImportError:
     # resource module is not available on Windows
     HAS_RESOURCE = False
 
-from .base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
 import pytest
-from ai_whisperer.agents.registry import Agent, AgentRegistry
+from ai_whisperer.services.agents.registry import Agent, AgentRegistry
 from pathlib import Path
 
 PROMPTS_DIR = Path("/tmp/prompts")  # Dummy path for testing

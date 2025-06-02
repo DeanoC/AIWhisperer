@@ -6,11 +6,11 @@ import asyncio
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
-from ai_whisperer.agents.registry import AgentRegistry
-from ai_whisperer.agents.config import AgentConfig
-from ai_whisperer.agents.stateless_agent import StatelessAgent
+from ai_whisperer.services.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.config import AgentConfig
+from ai_whisperer.services.agents.stateless import StatelessAgent
 from ai_whisperer.context.agent_context import AgentContext
-from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 from ai_whisperer.tools.tool_registry import get_tool_registry, ToolRegistry
 
 

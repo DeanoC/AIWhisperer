@@ -64,7 +64,7 @@ def test_tool_result_flow_real(interactive_app):
     # Patch OpenRouterAIService.stream_chat_completion to yield a tool call for 'tool:run'
     async def fake_stream_chat_completion(self, messages, tools=None, **kwargs):
         # Simulate a tool call chunk
-        from ai_whisperer.ai_service.ai_service import AIStreamChunk
+        from ai_whisperer.services.ai.base import AIStreamChunk
         if messages[-1]["content"] == "tool:run":
             yield AIStreamChunk(
                 delta_content=None,
@@ -78,7 +78,7 @@ def test_tool_result_flow_real(interactive_app):
             finish_reason="stop"
         )
 
-        with patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService.stream_chat_completion", new=fake_stream_chat_completion):
+        with patch("ai_whisperer.services.ai.openrouter_ai_service.OpenRouterAIService.stream_chat_completion", new=fake_stream_chat_completion):
             client = TestClient(interactive_app)
             with client.websocket_connect("/ws") as websocket:
                 # Start a session

@@ -56,7 +56,7 @@ def mock_refine_command_logic(input_file: str, output_dir: str = ".", iterations
 
 
 class TestRefineAIInteraction(unittest.TestCase):
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
     @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")
     def test_prompt_construction_default(self, mock_call_chat_completion, mock_file_open):
@@ -89,7 +89,7 @@ class TestRefineAIInteraction(unittest.TestCase):
 
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in Windows CI with mock patches")
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
     @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")
     def test_prompt_construction_custom(self, mock_call_chat_completion, mock_file_open):
@@ -118,7 +118,7 @@ class TestRefineAIInteraction(unittest.TestCase):
             mock_call_chat_completion.assert_called_once_with(custom_prompt_content, "mock-model", {})
             mock_file_open_inner.assert_any_call(os.path.join(".", "test_requirements_v1.md"), "w")
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
     @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")
     def test_handle_mocked_ai_response_and_save(self, mock_call_chat_completion, mock_file_open):
@@ -160,7 +160,7 @@ class TestRefineAIInteraction(unittest.TestCase):
             self.assertIsNotNone(inner_write_handle_mock, "Write mock handle not found")
             inner_write_handle_mock.write.assert_called_once_with(f"Refined content iteration 1:\n{mock_ai_response}")
 
-    @patch("ai_whisperer.ai_service.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
+    @patch("ai_whisperer.services.ai.openrouter_ai_service.OpenRouterAIService", new=MockOpenRouterAIService)
     @patch("builtins.open", new_callable=mock_open)
     @patch("tests.unit.test_refine_ai_interaction.MockOpenRouterAIService.call_chat_completion")
     def test_file_saving_with_iterations(self, mock_call_chat_completion, mock_file_open):

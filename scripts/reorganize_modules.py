@@ -82,13 +82,13 @@ IMPORT_MAPPINGS = {
     "ai_whisperer.logging_custom": "ai_whisperer.core.logging",
     "ai_whisperer.model_capabilities": "ai_whisperer.core.model_capabilities",
     
-    "ai_whisperer.ai_service.ai_service": "ai_whisperer.services.ai.base",
-    "ai_whisperer.ai_service.openrouter_ai_service": "ai_whisperer.services.ai.openrouter",
-    "ai_whisperer.ai_service.tool_calling": "ai_whisperer.services.ai.tool_calling",
+    "ai_whisperer.services.ai.ai_service": "ai_whisperer.services.ai.base",
+    "ai_whisperer.services.ai.openrouter_ai_service": "ai_whisperer.services.ai.openrouter",
+    "ai_whisperer.services.ai.tool_calling": "ai_whisperer.services.ai.tool_calling",
     
-    "ai_whisperer.ai_loop.stateless_ai_loop": "ai_whisperer.services.execution.ai_loop",
-    "ai_whisperer.ai_loop.ai_config": "ai_whisperer.services.execution.ai_config",
-    "ai_whisperer.ai_loop.tool_call_accumulator": "ai_whisperer.services.execution.tool_call_accumulator",
+    "ai_whisperer.services.execution.stateless_ai_loop": "ai_whisperer.services.execution.ai_loop",
+    "ai_whisperer.services.execution.ai_config": "ai_whisperer.services.execution.ai_config",
+    "ai_whisperer.services.execution.tool_call_accumulator": "ai_whisperer.services.execution.tool_call_accumulator",
     "ai_whisperer.context_management": "ai_whisperer.services.execution.context_management",
     "ai_whisperer.state_management": "ai_whisperer.services.execution.state_management",
     

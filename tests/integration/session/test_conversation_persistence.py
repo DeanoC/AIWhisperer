@@ -11,8 +11,8 @@ from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 
 from interactive_server.stateless_session_manager import StatelessSessionManager
-from ai_whisperer.agents.stateless_agent import StatelessAgent
-from ai_whisperer.agents.config import AgentConfig
+from ai_whisperer.services.agents.stateless import StatelessAgent
+from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
 
 

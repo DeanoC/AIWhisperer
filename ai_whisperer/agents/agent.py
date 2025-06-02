@@ -15,7 +15,7 @@ Usage:
 
 """
 
-from ai_whisperer.agents.config import AgentConfig
+from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
 
 class Agent:

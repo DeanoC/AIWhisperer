@@ -156,7 +156,7 @@ def generate_markdown_report(project_root: Path):
         "   - `ai_whisperer.batch.server_manager`",
         "",
         "2. **Services & Processors**",
-        "   - `ai_whisperer.ai_service.openrouter_ai_service`",
+        "   - `ai_whisperer.services.ai.openrouter_ai_service`",
         "   - `ai_whisperer.batch.script_processor`",
         "   - `postprocessing.scripted_steps.add_items_postprocessor`",
         "",

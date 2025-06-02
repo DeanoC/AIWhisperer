@@ -1,6 +1,6 @@
 import pytest
 from ai_whisperer.tools.base_tool import AITool
-from ai_whisperer.agents.registry import Agent
+from ai_whisperer.services.agents.registry import Agent
 from ai_whisperer.tools.tool_usage_logging import log_tool_usage, get_tool_usage_log
 
 class DummyTool(AITool):

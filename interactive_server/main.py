@@ -74,7 +74,7 @@ from .message_models import (
     ProvideToolResultRequest, ProvideToolResultResponse, SessionParams,
     SessionStatus, MessageStatus, ToolResultStatus
 )
-from ai_whisperer.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.registry import AgentRegistry
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
 from ai_whisperer.utils.path import PathManager
 from pathlib import Path

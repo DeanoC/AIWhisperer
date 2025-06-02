@@ -7,7 +7,7 @@ import pytest
 from pathlib import Path
 import os
 
-from ai_whisperer.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.registry import AgentRegistry
 
 
 @pytest.mark.flaky

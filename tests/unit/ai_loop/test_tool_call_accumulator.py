@@ -1,5 +1,5 @@
 """
-Unit tests for ai_whisperer.ai_loop.tool_call_accumulator
+Unit tests for ai_whisperer.services.execution.tool_call_accumulator
 
 Tests for the ToolCallAccumulator class that accumulates streaming tool call 
 chunks into complete tool calls. This is a CRITICAL module for AI interaction
@@ -10,8 +10,8 @@ import pytest
 import json
 from unittest.mock import Mock, patch
 
-from ai_whisperer.ai_loop.tool_call_accumulator import ToolCallAccumulator
-from ai_whisperer.ai_service.tool_calling import ToolCall
+from ai_whisperer.services.execution.tool_call_accumulator import ToolCallAccumulator
+from ai_whisperer.services.ai.tool_calling import ToolCall
 
 
 class TestToolCallAccumulatorInit:
@@ -327,7 +327,7 @@ class TestToolCallAccumulatorGetMethods:
 class TestToolCallAccumulatorObjectConversion:
     """Test conversion to ToolCall objects."""
     
-    @patch('ai_whisperer.ai_loop.tool_call_accumulator.ToolCall.from_api_response')
+    @patch('ai_whisperer.services.execution.tool_call_accumulator.ToolCall.from_api_response')
     def test_get_tool_call_objects_success(self, mock_from_api):
         """Test successful conversion to ToolCall objects."""
         accumulator = ToolCallAccumulator()
@@ -354,8 +354,8 @@ class TestToolCallAccumulatorObjectConversion:
         assert tool_call_objects[0] == mock_tool_call
         mock_from_api.assert_called_once_with(accumulator.tool_calls[0])
     
-    @patch('ai_whisperer.ai_loop.tool_call_accumulator.ToolCall.from_api_response')
-    @patch('ai_whisperer.ai_loop.tool_call_accumulator.logger')
+    @patch('ai_whisperer.services.execution.tool_call_accumulator.ToolCall.from_api_response')
+    @patch('ai_whisperer.services.execution.tool_call_accumulator.logger')
     def test_get_tool_call_objects_handles_conversion_error(self, mock_logger, mock_from_api):
         """Test handling of conversion errors."""
         accumulator = ToolCallAccumulator()
@@ -381,7 +381,7 @@ class TestToolCallAccumulatorObjectConversion:
         mock_logger.warning.assert_called_once()
         assert "Failed to parse tool call" in str(mock_logger.warning.call_args)
     
-    @patch('ai_whisperer.ai_loop.tool_call_accumulator.ToolCall.from_api_response')
+    @patch('ai_whisperer.services.execution.tool_call_accumulator.ToolCall.from_api_response')
     def test_get_tool_call_objects_partial_success(self, mock_from_api):
         """Test partial success in object conversion."""
         accumulator = ToolCallAccumulator()

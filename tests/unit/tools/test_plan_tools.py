@@ -157,7 +157,7 @@ Start with in-memory implementation, then add Redis support.
             
             # Mock the async stream_chat_completion method
             async def mock_stream():
-                from ai_whisperer.ai_service.ai_service import AIStreamChunk
+                from ai_whisperer.services.ai.base import AIStreamChunk
                 yield AIStreamChunk(delta_content=json.dumps(mock_response))
             
             mock_service.stream_chat_completion = Mock(return_value=mock_stream())
@@ -214,7 +214,7 @@ Start with in-memory implementation, then add Redis support.
             }
             
             async def mock_stream():
-                from ai_whisperer.ai_service.ai_service import AIStreamChunk
+                from ai_whisperer.services.ai.base import AIStreamChunk
                 yield AIStreamChunk(delta_content=json.dumps(mock_response))
             
             mock_service.stream_chat_completion = Mock(return_value=mock_stream())
@@ -243,7 +243,7 @@ Start with in-memory implementation, then add Redis support.
             mock_response = {"plan_type": "initial", "title": "Test", "tasks": [], "validation_criteria": ["Test passes"]}
             
             async def mock_stream():
-                from ai_whisperer.ai_service.ai_service import AIStreamChunk
+                from ai_whisperer.services.ai.base import AIStreamChunk
                 yield AIStreamChunk(delta_content=json.dumps(mock_response))
             
             mock_service.stream_chat_completion = Mock(return_value=mock_stream())
@@ -511,7 +511,7 @@ class TestUpdatePlanFromRFCTool:
             }
             
             async def mock_stream():
-                from ai_whisperer.ai_service.ai_service import AIStreamChunk
+                from ai_whisperer.services.ai.base import AIStreamChunk
                 yield AIStreamChunk(delta_content=json.dumps(mock_response))
             
             mock_service.stream_chat_completion = Mock(return_value=mock_stream())

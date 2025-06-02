@@ -6,7 +6,7 @@ and sends notifications directly from the session layer.
 import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
-from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.context.agent_context import AgentContext
 
 

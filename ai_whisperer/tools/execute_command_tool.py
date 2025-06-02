@@ -25,7 +25,7 @@ import logging
 import sys
 from typing import Dict, Any, Optional, List
 
-from .base_tool import AITool
+from ai_whisperer.services.agents.base_tool import AITool
 import asyncio # Import asyncio for sleep
 import threading # Import threading for Event
 

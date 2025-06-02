@@ -1,6 +1,6 @@
 import pytest
-from ai_whisperer.agents.registry import Agent
-from ai_whisperer.agents.context_manager import AgentContextManager
+from ai_whisperer.services.agents.registry import Agent
+from ai_whisperer.services.agents.context_manager import AgentContextManager
 from pathlib import Path
 
 class DummyContextManager:

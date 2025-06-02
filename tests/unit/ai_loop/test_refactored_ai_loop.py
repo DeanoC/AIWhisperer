@@ -6,10 +6,10 @@ from typing import List, Dict, Any, Optional, Union, AsyncIterator
 from abc import ABC, abstractmethod
 
 # Import real components
-# from ai_whisperer.context_management import ContextManager
-# from ai_whisperer.ai_service.ai_service import AIService, AIStreamChunk
-# from ai_whisperer.ai_loop.ai_config import AIConfig
-# from ai_whisperer.ai_loop.ai_loopy import AILoop
+# from ai_whisperer.services.execution.context import ContextManager
+# from ai_whisperer.services.ai.base import AIService, AIStreamChunk
+# from ai_whisperer.services.execution.ai_config import AIConfig
+# from ai_whisperer.services.execution.ai_loopy import AILoop
 # from ai_whisperer.core.logging import setup_basic_logging, get_logger
 # from ai_whisperer.tools.base_tool import AITool
 # from ai_whisperer.tools.tool_registry import get_tool_registry

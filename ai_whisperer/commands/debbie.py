@@ -2,8 +2,8 @@
 Debbie debugging commands for interactive session monitoring and analysis.
 """
 
-from .base import Command
-from .registry import CommandRegistry
+from ai_whisperer.services.agents.base import Command
+from ai_whisperer.services.agents.registry import CommandRegistry
 from .errors import CommandError
 from typing import Any, Dict, Optional
 import json

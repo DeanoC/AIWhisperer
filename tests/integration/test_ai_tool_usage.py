@@ -5,10 +5,10 @@ import json
 import time
 from unittest.mock import patch
 
-from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.utils.path import PathManager
 
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService, MODELS_API_URL, API_URL
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService, MODELS_API_URL, API_URL
 from ai_whisperer.tools.tool_registry import ToolRegistry
 from ai_whisperer.tools.read_file_tool import ReadFileTool
 from ai_whisperer.tools.write_file_tool import WriteFileTool

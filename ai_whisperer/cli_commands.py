@@ -8,12 +8,12 @@ from pathlib import Path
 import threading # Import threading
 from typing import Optional
 
-from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.context_management import ContextManager
+from ai_whisperer.services.execution.ai_config import AIConfig
+from ai_whisperer.services.execution.context import ContextManager
 # Delegate system removed
 
 from .user_message_level import UserMessageLevel
-from .state_management import StateManager # Import StateManager
+from ai_whisperer.services.execution.state import StateManager # Import StateManager
 
 from ai_whisperer.core.config import load_config
 from ai_whisperer.core.logging import LogMessage, LogLevel, ComponentType, log_event # Import logging components for log_event

@@ -36,7 +36,7 @@ from datetime import datetime
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 
-from .base_tool import AITool
+from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)

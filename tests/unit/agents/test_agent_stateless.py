@@ -5,9 +5,9 @@ This tests the refactored Agent that works without delegates.
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
 from ai_whisperer.agents.agent import Agent
-from ai_whisperer.agents.config import AgentConfig
+from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
-from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
+from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 
 
 class TestAgentWithStatelessAILoop:
@@ -72,7 +72,7 @@ class TestAgentWithStatelessAILoop:
         import pytest
         pytest.xfail("Known failure: see test run 2025-05-30")
         """Test agent processing a message with stateless AILoop."""
-        from ai_whisperer.agents.stateless_agent import StatelessAgent
+        from ai_whisperer.services.agents.stateless import StatelessAgent
         
         agent = StatelessAgent(
             config=mock_agent_config,
@@ -97,7 +97,7 @@ class TestAgentWithStatelessAILoop:
         import pytest
         pytest.xfail("Known failure: see test run 2025-05-30")
         """Test agent with streaming callback support."""
-        from ai_whisperer.agents.stateless_agent import StatelessAgent
+        from ai_whisperer.services.agents.stateless import StatelessAgent
         
         agent = StatelessAgent(
             config=mock_agent_config,
@@ -136,7 +136,7 @@ class TestAgentWithStatelessAILoop:
     @pytest.mark.asyncio
     async def test_agent_tool_execution(self, mock_agent_config, mock_agent_context, mock_stateless_ai_loop):
         """Test agent handling tool calls."""
-        from ai_whisperer.agents.stateless_agent import StatelessAgent
+        from ai_whisperer.services.agents.stateless import StatelessAgent
         
         # Mock response with tool calls
         mock_stateless_ai_loop.process_with_context.return_value = {
@@ -171,7 +171,7 @@ class TestAgentWithStatelessAILoop:
     @pytest.mark.asyncio
     async def test_agent_error_handling(self, mock_agent_config, mock_agent_context, mock_stateless_ai_loop):
         """Test agent error handling."""
-        from ai_whisperer.agents.stateless_agent import StatelessAgent
+        from ai_whisperer.services.agents.stateless import StatelessAgent
         
         # Mock error response
         mock_stateless_ai_loop.process_with_context.return_value = {
@@ -198,7 +198,7 @@ class TestAgentWithStatelessAILoop:
     @pytest.mark.asyncio
     async def test_agent_context_persistence(self, mock_agent_config, mock_agent_context, mock_stateless_ai_loop):
         """Test that agent properly stores messages in context."""
-        from ai_whisperer.agents.stateless_agent import StatelessAgent
+        from ai_whisperer.services.agents.stateless import StatelessAgent
         
         agent = StatelessAgent(
             config=mock_agent_config,
@@ -220,7 +220,7 @@ class TestAgentWithStatelessAILoop:
     @pytest.mark.asyncio
     async def test_agent_custom_generation_params(self, mock_agent_config, mock_agent_context, mock_stateless_ai_loop):
         """Test agent using custom generation parameters."""
-        from ai_whisperer.agents.stateless_agent import StatelessAgent
+        from ai_whisperer.services.agents.stateless import StatelessAgent
         
         # Update config with custom params
         mock_agent_config.generation_params['temperature'] = 0.9
@@ -246,7 +246,7 @@ class TestAgentWithStatelessAILoop:
         import pytest
         pytest.xfail("Known failure: see test run 2025-05-30")
         """Test that stateless agent doesn't manage sessions."""
-        from ai_whisperer.agents.stateless_agent import StatelessAgent
+        from ai_whisperer.services.agents.stateless import StatelessAgent
         
         agent = StatelessAgent(
             config=mock_agent_config,
@@ -265,7 +265,7 @@ class TestAgentWithStatelessAILoop:
     
     def test_agent_config_validation(self, mock_agent_context, mock_stateless_ai_loop):
         """Test agent validates configuration."""
-        from ai_whisperer.agents.stateless_agent import StatelessAgent
+        from ai_whisperer.services.agents.stateless import StatelessAgent
         
         # Should raise error with None config
         with pytest.raises(ValueError, match="AgentConfig must not be None"):

@@ -1,6 +1,6 @@
 import pytest
-from ai_whisperer.agents.session_manager import AgentSession
-from ai_whisperer.agents.registry import Agent
+from ai_whisperer.services.agents.session_manager import AgentSession
+from ai_whisperer.services.agents.registry import Agent
 from pathlib import Path
 
 @pytest.fixture

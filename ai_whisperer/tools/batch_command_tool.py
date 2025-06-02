@@ -32,7 +32,7 @@ from dataclasses import dataclass
 import logging
 from collections import OrderedDict
 
-from .base_tool import AITool
+from ai_whisperer.services.agents.base_tool import AITool
 from .script_parser_tool import ParsedScript, ScriptFormat
 
 

@@ -7,7 +7,7 @@ import json
 from unittest.mock import Mock, AsyncMock, patch
 from typing import List, Dict, Any
 
-from ai_whisperer.ai_service.tool_calling import (
+from ai_whisperer.services.ai.tool_calling import (
     ToolCall,
     ToolCallResult,
     ToolCallHandler,

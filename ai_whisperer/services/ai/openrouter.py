@@ -4,8 +4,8 @@ from typing import Dict, Any, List, Generator, Optional, AsyncIterator
 import json
 import threading
 import logging
-from ai_whisperer.ai_service.ai_service import AIService, AIStreamChunk
-from ai_whisperer.ai_loop.ai_config import AIConfig
+from ai_whisperer.services.ai.base import AIService, AIStreamChunk
+from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.core.exceptions import ( 
     OpenRouterAIServiceError,
     OpenRouterAuthError,

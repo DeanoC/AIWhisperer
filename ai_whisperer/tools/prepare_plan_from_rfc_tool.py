@@ -28,7 +28,7 @@ from pathlib import Path
 from datetime import datetime
 import hashlib
 
-from .base_tool import AITool
+from ai_whisperer.services.agents.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)

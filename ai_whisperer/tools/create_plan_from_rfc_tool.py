@@ -36,7 +36,7 @@ from pathlib import Path
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 from ai_whisperer.core.exceptions import FileRestrictionError
-from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
+from ai_whisperer.services.ai.openrouter import OpenRouterAIService
 from ai_whisperer.core.config import load_config
 from ai_whisperer.utils.validation import validate_against_schema
 
@@ -212,7 +212,7 @@ Generate a structured JSON plan based on the above RFC content and the guideline
             
             # Generate plan using AI
             # Create proper AIConfig object
-            from ai_whisperer.ai_loop.ai_config import AIConfig
+            from ai_whisperer.services.execution.ai_config import AIConfig
             ai_config = AIConfig(
                 api_key=os.environ.get("OPENROUTER_API_KEY", "dummy_key"),
                 model_id=model_override or "anthropic/claude-3-5-sonnet",

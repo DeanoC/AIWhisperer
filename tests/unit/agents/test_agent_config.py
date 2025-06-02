@@ -1,6 +1,6 @@
 import pytest
 
-from ai_whisperer.agents.config import AgentConfig, AgentConfigError
+from ai_whisperer.services.agents.config import AgentConfig, AgentConfigError
 
 def valid_config_dict():
     return {

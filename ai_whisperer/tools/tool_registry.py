@@ -30,7 +30,7 @@ import re
 from typing import Dict, Any, List, Optional, Set
 
 # Assuming AITool is defined in base_tool.py
-from .base_tool import AITool
+from ai_whisperer.services.agents.base_tool import AITool
 from .tool_set import ToolSetManager
 
 logger = logging.getLogger(__name__)

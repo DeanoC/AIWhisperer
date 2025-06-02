@@ -1,6 +1,6 @@
 import json
 import os
-from ai_whisperer.context_management import ContextManager # Import ContextManager
+from ai_whisperer.services.execution.context import ContextManager # Import ContextManager
 
 
 def save_state(state, file_path):
