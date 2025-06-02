@@ -1,0 +1,435 @@
+{
+  "configs": {
+    "app_config": [
+      {
+        "path": "config.yaml",
+        "size": 1721
+      },
+      {
+        "path": "project_dev/aiwhisperer_config.yaml",
+        "size": 1899
+      },
+      {
+        "path": "tests/code_generator/aiwhisperer_config.yaml",
+        "size": 2018
+      }
+    ],
+    "project_meta": [
+      {
+        "path": "pyproject.yaml",
+        "size": 394
+      }
+    ],
+    "tool_config": [
+      {
+        "path": "ai_whisperer/tools/tool_sets.yaml",
+        "size": 5558
+      },
+      {
+        "path": "tests/debugging-tools/debbie/system_health_check/check_tools.yaml",
+        "size": 930
+      },
+      {
+        "path": "tests/debugging-tools/debbie/system_health_check/check_tool_functionality.yaml",
+        "size": 1839
+      }
+    ],
+    "agent_config": [
+      {
+        "path": "ai_whisperer/agents/config/agents.yaml",
+        "size": 4539
+      }
+    ],
+    "schemas": [
+      {
+        "path": "schemas/overview_plan_schema.json",
+        "purpose": "JSON Schema validation"
+      },
+      {
+        "path": "schemas/subtask_schema.json",
+        "purpose": "JSON Schema validation"
+      },
+      {
+        "path": "schemas/python_ast_schema.json",
+        "purpose": "JSON Schema validation"
+      },
+      {
+        "path": "schemas/rfc_reference_schema.json",
+        "purpose": "JSON Schema validation"
+      },
+      {
+        "path": "schemas/rfc_plan_schema.json",
+        "purpose": "JSON Schema validation"
+      },
+      {
+        "path": "schemas/plan_generation_schema.json",
+        "purpose": "JSON Schema validation"
+      },
+      {
+        "path": "schemas/initial_plan_schema.json",
+        "purpose": "JSON Schema validation"
+      }
+    ],
+    "whisper": [
+      {
+        "path": ".WHISPER/project.json"
+      }
+    ],
+    "whisper_structure": {
+      "has_project_json": true,
+      "plans": 4,
+      "rfcs": 3,
+      "rfc_jsons": 3
+    }
+  },
+  "scripts": {
+    "python": [
+      {
+        "name": "analyze_documentation.py",
+        "purpose": "Code analysis (refactoring)"
+      },
+      {
+        "name": "analyze_misc_files.py",
+        "purpose": "Code analysis (refactoring)"
+      },
+      {
+        "name": "analyze_test_structure.py",
+        "purpose": "Code analysis (refactoring)"
+      },
+      {
+        "name": "analyze_code_structure.py",
+        "purpose": "Code analysis (refactoring)"
+      },
+      {
+        "name": "check_settings_persistence.py",
+        "purpose": "Validation/checking"
+      },
+      {
+        "name": "run_isolated_server.py",
+        "purpose": "Execution helper"
+      }
+    ],
+    "batch_tests": [
+      {
+        "name": "test_agent_e_auto_continuation.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_conversation_persistence.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_project_settings_flow.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_continuation_regression.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_e_continuation_with_debbie.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "simple_test.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_multiple_rfc_conversions.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_chat_bugs.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_continuation_across_models.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_rfc_plan_lifecycle.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_continuation_feature.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_patricia_rfc_to_plan.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_rfc_plan_sync.json",
+        "type": "batch mode test script"
+      },
+      {
+        "name": "test_plan_generation_quality.json",
+        "type": "batch mode test script"
+      }
+    ],
+    "shell": [
+      {
+        "name": "start_debug_server.sh",
+        "executable": false
+      },
+      {
+        "name": "setup_worktree_venv.sh",
+        "executable": true
+      },
+      {
+        "name": "start_server.sh",
+        "executable": true
+      }
+    ]
+  },
+  "project_artifacts": {
+    "summary": {
+      "done_tasks": 111,
+      "in_dev_tasks": 35,
+      "total_json_files": 146
+    },
+    "done_features": [
+      {
+        "name": "add_user_message_delegate",
+        "files": 8,
+        "has_overview": true,
+        "subtasks": 6
+      },
+      {
+        "name": "refactor_ai_loop",
+        "files": 11,
+        "has_overview": true,
+        "subtasks": 9
+      },
+      {
+        "name": "add_detail_cli_option",
+        "files": 15,
+        "has_overview": true,
+        "subtasks": 13
+      },
+      {
+        "name": "refactor_prompt_loading",
+        "files": 9,
+        "has_overview": true,
+        "subtasks": 7
+      },
+      {
+        "name": "store_cost_tokens_to_ai_calls",
+        "files": 10,
+        "has_overview": true,
+        "subtasks": 8
+      },
+      {
+        "name": "code_generator_task_type",
+        "files": 11,
+        "has_overview": true,
+        "subtasks": 9
+      },
+      {
+        "name": "delegates_executionengine",
+        "files": 10,
+        "has_overview": true,
+        "subtasks": 8
+      },
+      {
+        "name": "sort_out_paths",
+        "files": 10,
+        "has_overview": true,
+        "subtasks": 8
+      },
+      {
+        "name": "add_tools_use",
+        "files": 12,
+        "has_overview": true,
+        "subtasks": 10
+      },
+      {
+        "name": "ensure_runner_use_correct_dir",
+        "files": 7,
+        "has_overview": true,
+        "subtasks": 5
+      },
+      {
+        "name": "add_delegate_manager",
+        "files": 8,
+        "has_overview": true,
+        "subtasks": 6
+      }
+    ]
+  },
+  "build_files": [],
+  "temp_files": [
+    "test_agent_e_with_fix.log",
+    "agent_e_test.log",
+    "test_server_output.log",
+    "continuation_test_output.log",
+    "test_agent_e_fixed.log",
+    "server_output.log",
+    "server.log",
+    "frontend/frontend.log",
+    "logs/aiwhisperer_server_20250602_091615.log",
+    "logs/aiwhisperer_test_batch_20250602_091711_port21004.log",
+    "logs/aiwhisperer_test_port8999.log",
+    "logs/aiwhisperer_server_batch_20250602_091711_port21004.log",
+    "logs/aiwhisperer_debug_20250602_091711.log",
+    "logs/aiwhisperer_debug_20250602_091345.log",
+    "logs/aiwhisperer_debug_20250602_094953.log",
+    "logs/aiwhisperer_test_20250602_095020.log",
+    "logs/aiwhisperer_debug_batch_20250602_091714_port21004.log",
+    "logs/aiwhisperer_test_port9999.log",
+    "logs/aiwhisperer_server_batch_20250602_095205_port8000.log",
+    "logs/aiwhisperer_test_port34237.log",
+    "logs/aiwhisperer_test.log",
+    "logs/aiwhisperer_server_20250602_095205.log",
+    "logs/aiwhisperer_server_20250602_094837.log",
+    "logs/aiwhisperer_debug_port8005.log",
+    "logs/aiwhisperer_test_port8123.log",
+    "logs/aiwhisperer_server_batch_20250602_091346_port30083.log",
+    "logs/aiwhisperer_debug_batch_20250602_095205_port8000.log",
+    "logs/aiwhisperer_server_batch_23631.log",
+    "logs/aiwhisperer_test_20250602_091337.log",
+    "logs/aiwhisperer_server_batch_20250602_094953_port8000.log",
+    "logs/aiwhisperer_test_port25226.log",
+    "logs/aiwhisperer_server_batch_20250602_091348_port30083.log",
+    "logs/aiwhisperer_test_batch_20250602_091345_port30083.log",
+    "logs/aiwhisperer_server_port30942.log",
+    "logs/aiwhisperer_debug_port30942.log",
+    "logs/aiwhisperer_debug_port8000.log",
+    "logs/aiwhisperer_test_batch_20250602_095205_port8000.log",
+    "logs/aiwhisperer_server_batch_20250602_095020_port8000.log",
+    "logs/aiwhisperer_test_batch_20250602_091348_port30083.log",
+    "logs/aiwhisperer_debug_batch_23631.log",
+    "logs/aiwhisperer_server_20250602_095020.log",
+    "logs/aiwhisperer_test_batch_20250602_095020_port8000.log",
+    "logs/aiwhisperer_test_20250602_091711.log",
+    "logs/aiwhisperer_server_batch_20250602_091712_port21004.log",
+    "logs/aiwhisperer_debug_batch_20250602_091348_port30083.log",
+    "logs/aiwhisperer_server_batch_20250602_094837_port8000.log",
+    "logs/aiwhisperer_test_20250602_094953.log",
+    "logs/aiwhisperer_server_20250602_091345.log",
+    "logs/aiwhisperer_debug_port34237.log",
+    "logs/aiwhisperer_debug_port8999.log",
+    "logs/aiwhisperer_server_batch_20250602_091618_port24519.log",
+    "logs/aiwhisperer_debug_batch_20250602_091615_port24519.log",
+    "logs/aiwhisperer_test_batch_20250602_094837_port8000.log",
+    "logs/aiwhisperer_debug.log",
+    "logs/aiwhisperer_test_20250602_094837.log",
+    "logs/aiwhisperer_test_20250602_095205.log",
+    "logs/aiwhisperer_test_port30942.log",
+    "logs/aiwhisperer_debug_20250602_095205.log",
+    "logs/aiwhisperer_debug_batch_20250602_091711_port21004.log",
+    "logs/aiwhisperer_debug_batch_20250602_091345_port30083.log",
+    "logs/aiwhisperer_server_port8005.log",
+    "logs/aiwhisperer_test_batch_20250602_091712_port21004.log",
+    "logs/aiwhisperer_test_20250602_091345.log",
+    "logs/aiwhisperer_debug_batch_20250602_094953_port8000.log",
+    "logs/aiwhisperer_debug_20250602_095052.log",
+    "logs/aiwhisperer_test_batch_20250602_094953_port8000.log",
+    "logs/aiwhisperer_test_20250602_091615.log",
+    "logs/aiwhisperer_debug_20250602_091615.log",
+    "logs/aiwhisperer_server_20250602_091711.log",
+    "logs/aiwhisperer_test_batch_20250602_091346_port30083.log",
+    "logs/aiwhisperer_debug_batch_20250602_094837_port8000.log",
+    "logs/aiwhisperer_debug_port9999.log",
+    "logs/aiwhisperer_server_port25226.log",
+    "logs/aiwhisperer_test_batch_23631.log",
+    "logs/aiwhisperer_server_port34237.log",
+    "logs/aiwhisperer_server_port9999.log",
+    "logs/aiwhisperer_debug_20250602_091337.log",
+    "logs/aiwhisperer_server_batch_20250602_091345_port30083.log",
+    "logs/aiwhisperer_test_batch_20250602_091615_port24519.log",
+    "logs/aiwhisperer_server_port8000.log",
+    "logs/aiwhisperer_server_20250602_094953.log",
+    "logs/aiwhisperer_test_port8000.log",
+    "logs/aiwhisperer_server_batch_20250602_091714_port21004.log",
+    "logs/aiwhisperer_test_batch_20250602_091714_port21004.log",
+    "logs/aiwhisperer_debug_batch_20250602_091618_port24519.log",
+    "logs/aiwhisperer_test_port8005.log",
+    "logs/aiwhisperer_debug_port25226.log",
+    "logs/aiwhisperer_server_batch_20250602_091615_port24519.log",
+    "logs/aiwhisperer_debug_batch_20250602_095020_port8000.log",
+    "logs/aiwhisperer_debug_port8123.log",
+    "logs/aiwhisperer_debug_20250602_095020.log",
+    "logs/aiwhisperer_debug_batch_20250602_095052_port8000.log",
+    "logs/aiwhisperer_server_20250602_095052.log",
+    "logs/aiwhisperer_test_batch_20250602_095052_port8000.log",
+    "logs/aiwhisperer_server_port8999.log",
+    "logs/aiwhisperer_server_20250602_091337.log",
+    "logs/aiwhisperer_server.log",
+    "logs/aiwhisperer_debug_batch_20250602_091712_port21004.log",
+    "logs/aiwhisperer_debug_20250602_094837.log",
+    "logs/aiwhisperer_debug_batch_20250602_091346_port30083.log",
+    "logs/aiwhisperer_test_20250602_095052.log",
+    "logs/aiwhisperer_test_batch_20250602_091618_port24519.log",
+    "logs/aiwhisperer_server_batch_20250602_095052_port8000.log",
+    "logs/aiwhisperer_server_port8123.log",
+    "tests/unit/test_ast_to_json_conversion.py.bak",
+    ".github/workflows/python-app.yml.bak",
+    {
+      "name": "test_patricia_rfc.txt",
+      "type": "test output",
+      "size": 289
+    },
+    {
+      "name": "debug_plan_ui.txt",
+      "type": "test output",
+      "size": 758
+    },
+    {
+      "name": "test_with_env.txt",
+      "type": "test output",
+      "size": 144059
+    },
+    {
+      "name": "debug_plan_ui_with_debbie.txt",
+      "type": "test output",
+      "size": 698
+    },
+    {
+      "name": "test_debbie_tools.txt",
+      "type": "test output",
+      "size": 923
+    },
+    {
+      "name": "batch_test_result.txt",
+      "type": "test output",
+      "size": 241
+    },
+    {
+      "name": "simple_batch_test.txt",
+      "type": "test output",
+      "size": 152
+    },
+    {
+      "name": "test_plan_batch.txt",
+      "type": "test output",
+      "size": 660
+    },
+    {
+      "name": "debug_plan_analysis.txt",
+      "type": "test output",
+      "size": 521
+    },
+    {
+      "name": "test.txt",
+      "type": "test output",
+      "size": 28
+    },
+    {
+      "name": "test_plan_json_rpc_mismatch.txt",
+      "type": "test output",
+      "size": 628
+    },
+    {
+      "name": "debbie_self_test.txt",
+      "type": "test output",
+      "size": 698
+    },
+    {
+      "name": "debug_plan_endpoints_with_debbie.txt",
+      "type": "test output",
+      "size": 1240
+    }
+  ],
+  "logs": []
+}
