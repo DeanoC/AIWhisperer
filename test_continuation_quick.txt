@@ -1,0 +1,28 @@
+# Quick Continuation Test Script
+# Tests basic multi-tool and continuation functionality
+
+# Test 1: Alice multi-tool on single-tool model
+@a
+List all files in the .WHISPER directory and summarize what each one contains
+
+# Test 2: Patricia multi-step RFC workflow  
+@p
+List existing RFCs, then create a new RFC for adding a notification system to AIWhisperer
+
+# Test 3: Multiple reads in one request
+Read the three most recent RFCs to understand their format
+
+# Test 4: Debbie multi-tool debugging
+@d
+Check session health, analyze performance metrics, and report on monitoring status
+
+# Test 5: Cross-agent workflow
+@a
+What tools are available to Patricia?
+
+@p
+What debugging capabilities does Debbie have?
+
+# Test 6: Explicit continuation test
+@a
+First list the contents of the agents directory, then read the config file for each agent

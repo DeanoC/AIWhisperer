@@ -1,0 +1,192 @@
+{
+  "name": "Agent Continuation System - Regression Test",
+  "description": "Comprehensive test of multi-tool execution and continuation capabilities across different agents",
+  "version": "1.0",
+  "created": "2025-06-02",
+  "test_objectives": [
+    "Verify single-tool models can execute multiple tools",
+    "Test explicit continuation signals work correctly",
+    "Ensure multi-step operations complete successfully",
+    "Validate continuation limits and safety mechanisms",
+    "Test different agents with continuation capabilities"
+  ],
+  "steps": [
+    {
+      "command": "comment",
+      "text": "=== TEST 1: Alice Multi-Tool Execution on Single-Tool Model ===",
+      "description": "Alice uses Gemini (single-tool model) but should handle multiple tools"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "a",
+      "description": "Switch to Alice the AI Assistant",
+      "expected": "Alice introduces herself"
+    },
+    {
+      "command": "user_message",
+      "message": "Can you check what's in the .WHISPER directory and then read the project.json file to understand the project structure?",
+      "description": "Request requiring multiple tool calls",
+      "expected": "Alice should use list_directory and read_file tools",
+      "expect_tools": ["list_directory", "read_file"],
+      "timeout": 30
+    },
+    {
+      "command": "comment",
+      "text": "=== TEST 2: Patricia RFC Multi-Step Continuation ===",
+      "description": "Patricia should demonstrate explicit continuation for multi-step RFC operations"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "p",
+      "description": "Switch to Patricia the Planner",
+      "expected": "Patricia introduces herself as RFC specialist"
+    },
+    {
+      "command": "user_message",
+      "message": "List all RFCs and then create a new RFC for implementing a dark mode feature",
+      "description": "Multi-step task requiring continuation",
+      "expected": "Patricia lists RFCs then continues to create new one",
+      "expect_continuation": true,
+      "expect_tools": ["list_rfcs", "create_rfc"],
+      "timeout": 45
+    },
+    {
+      "command": "user_message",
+      "message": "Great! Now read all three most recent RFCs to compare their structure",
+      "description": "Test multiple tool calls in single request",
+      "expected": "Patricia reads multiple RFCs",
+      "expect_tools": ["read_rfc", "read_rfc", "read_rfc"],
+      "timeout": 30
+    },
+    {
+      "command": "comment",
+      "text": "=== TEST 3: Debbie Batch Script Continuation ===",
+      "description": "Debbie should demonstrate batch script processing with continuation"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "d",
+      "description": "Switch to Debbie the Debugger",
+      "expected": "Debbie introduces herself as debugging assistant"
+    },
+    {
+      "command": "user_message",
+      "message": "First check the session health, then analyze performance, and finally check the global monitoring status",
+      "description": "Multi-step debugging workflow",
+      "expected": "Debbie executes multiple debugging tools in sequence",
+      "expect_tools": ["session_health", "session_analysis", "monitoring_control"],
+      "timeout": 45
+    },
+    {
+      "command": "comment",
+      "text": "=== TEST 4: Continuation Safety Limits ===",
+      "description": "Test that continuation respects safety limits"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "p",
+      "description": "Back to Patricia for safety test"
+    },
+    {
+      "command": "user_message",
+      "message": "Create 10 different test RFCs named test-1 through test-10 (but actually just create the first 3 to test limits)",
+      "description": "Test continuation iteration limits",
+      "expected": "Patricia should stop after max iterations (configured as 10)",
+      "max_continuations": 10,
+      "timeout": 120
+    },
+    {
+      "command": "comment",
+      "text": "=== TEST 5: Explicit Termination Signal ===",
+      "description": "Test that TERMINATE signal stops continuation"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "a",
+      "description": "Switch back to Alice"
+    },
+    {
+      "command": "user_message",
+      "message": "Read the agents.yaml file and tell me about the continuation configuration for each agent",
+      "description": "Single tool call that should terminate normally",
+      "expected": "Alice reads file and provides summary without continuation",
+      "expect_tools": ["read_file"],
+      "expect_continuation": false,
+      "timeout": 30
+    },
+    {
+      "command": "comment",
+      "text": "=== TEST 6: Complex Multi-Agent Workflow ===",
+      "description": "Test agent switching with continuation state management"
+    },
+    {
+      "command": "user_message",
+      "message": "List all Python files in the ai_whisperer directory",
+      "description": "Alice lists files",
+      "expect_tools": ["list_directory"],
+      "timeout": 30
+    },
+    {
+      "command": "switch_agent",
+      "agent": "t",
+      "description": "Switch to Tessa the Tester"
+    },
+    {
+      "command": "user_message",
+      "message": "Based on what Alice found, can you check if there are corresponding test files in the tests directory?",
+      "description": "Cross-agent context awareness",
+      "expected": "Tessa should reference Alice's findings",
+      "timeout": 30
+    },
+    {
+      "command": "comment",
+      "text": "=== TEST 7: Error Recovery with Continuation ===",
+      "description": "Test continuation behavior when tools fail"
+    },
+    {
+      "command": "switch_agent",
+      "agent": "a",
+      "description": "Back to Alice for error test"
+    },
+    {
+      "command": "user_message",
+      "message": "Try to read these files: /nonexistent/file1.txt, agents.yaml, /another/bad/path.txt",
+      "description": "Mix of valid and invalid file paths",
+      "expected": "Alice should handle errors gracefully and continue with valid files",
+      "expect_tools": ["read_file", "read_file", "read_file"],
+      "allow_errors": true,
+      "timeout": 30
+    }
+  ],
+  "validation": {
+    "success_criteria": [
+      "All agents successfully execute multiple tools when needed",
+      "Continuation signals are properly detected and acted upon",
+      "Safety limits prevent infinite continuation loops",
+      "TERMINATE signals stop continuation as expected",
+      "Agents maintain context across continuations",
+      "Error handling doesn't break continuation flow",
+      "No JSON metadata appears in user-facing responses"
+    ],
+    "expect_log_patterns": [
+      "CONTINUATION STRATEGY DECISION: True",
+      "CONTINUATION STRATEGY DECISION: False",
+      "SINGLE_TOOL_MODEL_ERROR.*but max is 1",
+      "Explicit continuation signal",
+      "Safety limits reached",
+      "No explicit continuation signal found, defaulting to TERMINATE"
+    ],
+    "performance_metrics": {
+      "max_response_time": 60,
+      "max_continuation_depth": 10,
+      "expected_tool_success_rate": 0.9
+    }
+  },
+  "notes": [
+    "This test exercises the key improvements in the continuation system",
+    "Single-tool models like Gemini should now handle multiple tools",
+    "Explicit continuation signals override model limitations",
+    "The test covers both positive and negative scenarios",
+    "Monitor logs for continuation strategy decisions"
+  ]
+}
