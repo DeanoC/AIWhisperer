@@ -64,21 +64,34 @@ class TestSystemHealthCheckToolDirectoryFinding:
         """Test finding health check directories in basic paths."""
         tool = SystemHealthCheckTool()
         
-        # Mock Path objects for different paths
-        with patch('ai_whisperer.tools.system_health_check_tool.Path') as mock_path:
-            # Create different mock instances for different paths
-            def create_path_mock(path_str):
-                mock_instance = Mock()
-                mock_instance.exists.return_value = "scripts/debbie/system_health_check" in str(path_str)
-                mock_instance.is_dir.return_value = "scripts/debbie/system_health_check" in str(path_str)
-                mock_instance.__str__.return_value = str(path_str)
-                return mock_instance
+        # Mock Path to return mock path objects
+        with patch('ai_whisperer.tools.system_health_check_tool.Path') as mock_path_class:
+            # Create a mock path instance that exists and is a directory
+            mock_path_instance = Mock()
+            mock_path_instance.exists.return_value = True
+            mock_path_instance.is_dir.return_value = True
             
-            mock_path.side_effect = create_path_mock
+            # Mock Path constructor to return our mock instance for specific paths
+            def path_constructor(path_str):
+                if "scripts/debbie/system_health_check" in str(path_str):
+                    return mock_path_instance
+                else:
+                    # Return a non-existent path mock
+                    non_existent = Mock()
+                    non_existent.exists.return_value = False
+                    non_existent.is_dir.return_value = False
+                    return non_existent
             
-            dirs = tool._find_health_check_directories()
+            mock_path_class.side_effect = path_constructor
             
-            assert isinstance(dirs, list)  # Should return a list of directories
+            # Also need to mock PathManager to avoid import issues
+            with patch('ai_whisperer.tools.system_health_check_tool.PathManager') as mock_pm:
+                mock_pm.get_instance.side_effect = Exception("PathManager not available")
+                
+                dirs = tool._find_health_check_directories()
+                
+                assert isinstance(dirs, list)
+                assert len(dirs) == 1  # Should find the mocked directory
     
     @patch('ai_whisperer.tools.system_health_check_tool.logger')
     def test_find_health_check_directories_with_logging(self, mock_logger):
