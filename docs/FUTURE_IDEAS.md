@@ -115,6 +115,24 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 - Custom agent creation UI
 - Agent marketplace/sharing
 
+### Response Channels (Inspired by ChatGPT)
+- **Multi-channel Response Architecture**
+  - Separate channels for different types of content:
+    - `analysis` channel: Private reasoning and analysis (never shown to user)
+    - `commentary` channel: User-visible tool calls only (no plain text)
+    - `final` channel: Polished user-facing response (no tool calls or reasoning)
+  - Benefits:
+    - Clean separation of concerns
+    - No JSON/metadata leaking into user responses
+    - Better control over what users see
+    - Enables parallel processing of different response types
+  - Implementation ideas:
+    - Modify AI response structure to support multiple channels
+    - Update streaming to handle channel-specific content
+    - Frontend routing based on channel type
+    - Channel-specific formatting and display rules
+  - Would solve current issue where continuation metadata appears in chat
+
 ### Context Management (Extended)
 - Persistent context across sessions
 - Context templates for common scenarios

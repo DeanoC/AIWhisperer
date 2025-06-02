@@ -264,6 +264,9 @@ class StatelessInteractiveSession:
                         
                         logger.info(f"Trying to load prompt via PromptSystem with tools: agents/{prompt_name}")
                         try:
+                            # Enable continuation feature for all agents
+                            self.prompt_system.enable_feature('continuation_protocol')
+                            
                             # Include tools for debugging agents like Debbie
                             include_tools = agent_id.lower() in ['d', 'debbie'] or 'debug' in agent_info.name.lower()
                             prompt = self.prompt_system.get_formatted_prompt("agents", prompt_name, include_tools=include_tools)
@@ -367,6 +370,13 @@ class StatelessInteractiveSession:
                 raise RuntimeError(f"Active agent '{self.active_agent}' not found")
                 
             agent = self.agents[self.active_agent]
+            
+            # Reset continuation tracking for new conversations
+            if not is_continuation:
+                self._continuation_depth = 0
+                if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
+                    agent.continuation_strategy.reset()
+                    logger.debug("Reset continuation strategy for new conversation")
             
             # Notify observer that message processing is starting
             if self.observer:
@@ -475,6 +485,11 @@ class StatelessInteractiveSession:
             if not is_continuation and (not result.get('tool_calls') or result.get('error')):
                 self._continuation_depth = 0
                 logger.debug("Reset continuation depth to 0")
+                
+                # Also reset continuation strategy if present
+                if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
+                    agent.continuation_strategy.reset()
+                    logger.debug("Reset continuation strategy")
             
             # Note: Assistant message is already stored by the AI loop, no need to store again
             
@@ -504,15 +519,28 @@ class StatelessInteractiveSession:
                     # Give a brief pause to let UI update
                     await asyncio.sleep(0.5)
                     
-                    # Get continuation message from agent or use default
+                    # Get continuation message from agent
+                    continuation_msg = "Please continue with the next step."
                     if self.active_agent and self.active_agent in self.agents:
                         agent = self.agents[self.active_agent]
-                        if hasattr(agent, 'get_continuation_message'):
+                        
+                        # Check if agent has continuation strategy for progress tracking
+                        if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
+                            # Get progress information
+                            progress = agent.continuation_strategy.get_progress(agent.context._context)
+                            
+                            # Send progress notification
+                            await self.send_notification("continuation.progress", {
+                                "agent_id": self.active_agent,
+                                "iteration": self._continuation_depth,
+                                "progress": progress
+                            })
+                            
+                            # Use continuation strategy's message
+                            continuation_msg = agent.continuation_strategy.get_continuation_message(tool_names, message)
+                        elif hasattr(agent, 'get_continuation_message'):
+                            # Fallback to old method
                             continuation_msg = agent.get_continuation_message(tool_names, message)
-                        else:
-                            continuation_msg = "Please continue with the next step."
-                    else:
-                        continuation_msg = "Please continue with the next step."
                     
                     logger.info(f"🔄 SENDING CONTINUATION MESSAGE: {continuation_msg}")
                     logger.debug(f"🔄 BEFORE CONTINUATION - Agent context has {len(self.agents[self.active_agent].context._messages)} messages")
@@ -699,7 +727,7 @@ class StatelessInteractiveSession:
     async def _should_continue_after_tools(self, result: Any, original_message: str) -> bool:
         """
         Determine if we should automatically continue after tool execution.
-        This mimics the old delegate system's behavior.
+        Uses the agent's ContinuationStrategy if available.
         
         Args:
             result: The result from agent.process_message
@@ -708,7 +736,14 @@ class StatelessInteractiveSession:
         Returns:
             True if continuation is needed, False otherwise
         """
-        # Only continue if we have a dict result with tool calls
+        # Check if agent has continuation strategy
+        if self.active_agent and self.active_agent in self.agents:
+            agent = self.agents[self.active_agent]
+            if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
+                # Use the new ContinuationStrategy
+                return agent.continuation_strategy.should_continue(result, original_message)
+        
+        # Fallback: Only continue if we have a dict result with tool calls
         if not isinstance(result, dict) or not result.get('tool_calls'):
             return False
         
@@ -741,7 +776,7 @@ class StatelessInteractiveSession:
         # Get the tool that was called
         tool_names = [tc.get('function', {}).get('name', '') for tc in tool_calls]
         
-        # Check if agent has custom continuation logic
+        # Check if agent has custom continuation logic (old method)
         if self.active_agent and self.active_agent in self.agents:
             agent = self.agents[self.active_agent]
             if hasattr(agent, 'should_continue_after_tools'):
