@@ -40,10 +40,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-cov pytest-asyncio
-    - name: Run unit tests
+    - name: Run safe tests
       run: |
-        # Run only unit tests and integration tests that don't need external services
-        pytest -m "unit and not (network or requires_api or slow)" -v --cov=ai_whisperer --cov-report=xml
+        # Run tests that are safe for CI (exclude problematic ones)
+        pytest -m "not (network or requires_api or slow or performance or ai_regression)" -v --cov=ai_whisperer --cov-report=xml
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
