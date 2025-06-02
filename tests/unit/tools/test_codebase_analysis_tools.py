@@ -8,7 +8,7 @@ import tempfile
 from ai_whisperer.tools.analyze_languages_tool import AnalyzeLanguagesTool
 from ai_whisperer.tools.find_similar_code_tool import FindSimilarCodeTool
 from ai_whisperer.tools.get_project_structure_tool import GetProjectStructureTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestAnalyzeLanguagesTool:

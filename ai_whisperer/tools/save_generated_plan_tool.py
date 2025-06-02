@@ -26,8 +26,8 @@ from pathlib import Path
 from datetime import datetime
 
 from .base_tool import AITool
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.json_validator import validate_against_schema
+from ai_whisperer.utils.path import PathManager
+from ai_whisperer.utils.validation import validate_against_schema
 
 logger = logging.getLogger(__name__)
 

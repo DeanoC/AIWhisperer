@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 
 # Import specific exceptions
 from ai_whisperer.ai_loop.ai_config import AIConfig
-from ai_whisperer.exceptions import (
+from ai_whisperer.core.exceptions import (
     OpenRouterAIServiceError,
     OpenRouterAuthError,
     OpenRouterRateLimitError,

@@ -9,7 +9,7 @@ import tempfile
 from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
 from ai_whisperer.tools.read_rfc_tool import ReadRFCTool
 from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestCreateRFCTool:

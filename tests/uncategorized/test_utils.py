@@ -2,7 +2,7 @@ import pytest
 import logging
 
 # Import the actual functions
-from ai_whisperer.utils import setup_logging
+from ai_whisperer.utils.helpers import setup_logging
 
 
 # Basic test for logging setup - more complex tests could mock logging calls

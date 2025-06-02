@@ -15,7 +15,7 @@ from typing import List, Dict, Any
 # Add project to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from ai_whisperer.config import load_config
+from ai_whisperer.core.config import load_config
 from ai_whisperer.model_override import ModelOverride
 from ai_whisperer.batch.batch_client import BatchClient
 from tests.integration.test_model_continuation_compatibility import (

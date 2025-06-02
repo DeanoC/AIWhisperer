@@ -1,7 +1,7 @@
 import pathlib
-from ai_whisperer.exceptions import FileRestrictionError
+from ai_whisperer.core.exceptions import FileRestrictionError
 import pytest
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 import pytest
 import os

@@ -251,7 +251,7 @@ class TestConversationPersistence:
     async def test_save_load_with_context_manager(self):
         """Test save/load with actual context manager"""
         from ai_whisperer.context.context_manager import AgentContextManager
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         
         # Mock PathManager
         with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:

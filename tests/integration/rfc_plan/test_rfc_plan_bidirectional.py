@@ -20,7 +20,7 @@ from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
 from ai_whisperer.tools.read_plan_tool import ReadPlanTool
 from ai_whisperer.tools.move_plan_tool import MovePlanTool
 from ai_whisperer.tools.delete_plan_tool import DeletePlanTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestRFCPlanBidirectional:

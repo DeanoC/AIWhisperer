@@ -6,7 +6,7 @@ import time
 import os
 
 from ai_whisperer.tools.workspace_stats_tool import WorkspaceStatsTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestWorkspaceStatsTool:

@@ -13,7 +13,7 @@ from ai_whisperer.tools.save_generated_plan_tool import SaveGeneratedPlanTool
 from ai_whisperer.tools.update_plan_from_rfc_tool import UpdatePlanFromRFCTool
 from ai_whisperer.tools.delete_plan_tool import DeletePlanTool
 from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestPlanErrorRecovery:

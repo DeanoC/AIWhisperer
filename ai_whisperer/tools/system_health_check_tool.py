@@ -154,7 +154,7 @@ class SystemHealthCheckTool(AITool):
         
         # Also check from PathManager paths if available
         try:
-            from ai_whisperer.path_management import PathManager
+            from ai_whisperer.utils.path import PathManager
             pm = PathManager.get_instance()
             if pm._initialized:
                 possible_paths.extend([

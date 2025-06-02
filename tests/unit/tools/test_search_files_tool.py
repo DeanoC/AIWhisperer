@@ -8,8 +8,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from ai_whisperer.tools.search_files_tool import SearchFilesTool
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.exceptions import FileRestrictionError
+from ai_whisperer.utils.path import PathManager
+from ai_whisperer.core.exceptions import FileRestrictionError
 
 
 @pytest.fixture

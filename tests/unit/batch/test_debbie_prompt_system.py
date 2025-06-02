@@ -24,7 +24,7 @@ class TestDebbiePromptSystem:
     @pytest.fixture
     def debbie_agent(self):
         """Get Debbie agent from registry"""
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         # Initialize PathManager with proper paths
         PathManager._instance = None
         PathManager._initialized = False
@@ -38,7 +38,7 @@ class TestDebbiePromptSystem:
     
     def test_debbie_prompt_file_exists(self, debbie_agent):
         """Test that Debbie's prompt file exists"""
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         path_manager = PathManager.get_instance()
         prompt_file = path_manager.app_path / "prompts" / "agents" / debbie_agent.prompt_file
         
@@ -47,7 +47,7 @@ class TestDebbiePromptSystem:
     
     def test_debbie_prompt_contains_batch_instructions(self):
         """Test that Debbie's prompt contains batch processing instructions"""
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         path_manager = PathManager.get_instance()
         if not path_manager._initialized:
             path_manager.initialize()
@@ -71,7 +71,7 @@ class TestDebbiePromptSystem:
     
     def test_debbie_prompt_retains_debugging_instructions(self):
         """Test that Debbie's prompt still contains debugging instructions"""
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         path_manager = PathManager.get_instance()
         if not path_manager._initialized:
             path_manager.initialize()
@@ -95,7 +95,7 @@ class TestDebbiePromptSystem:
     
     def test_debbie_prompt_structure_is_valid(self):
         """Test that Debbie's prompt has proper structure"""
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         path_manager = PathManager.get_instance()
         if not path_manager._initialized:
             path_manager.initialize()
@@ -118,7 +118,7 @@ class TestDebbiePromptSystem:
     
     def test_debbie_prompt_mentions_dual_role(self):
         """Test that prompt acknowledges Debbie's dual role"""
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         path_manager = PathManager.get_instance()
         if not path_manager._initialized:
             path_manager.initialize()

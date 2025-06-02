@@ -7,8 +7,8 @@ import logging  # Import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-from .exceptions import ConfigError
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.core.exceptions import ConfigError
+from ai_whisperer.utils.path import PathManager
 
 # Default values for optional config settings
 DEFAULT_SITE_URL = "http://localhost:8000"
@@ -54,7 +54,7 @@ def load_config(config_path: str, cli_args: Optional[Dict[str, Any]] = None) -> 
     config_dir = path.parent  # Get the directory containing the config file
 
     # --- Calculate config file hash early ---
-    from .utils import calculate_sha256
+    from ai_whisperer.utils.helpers import calculate_sha256
     try:
         config_file_hash = calculate_sha256(path)
         with open(path, "r", encoding="utf-8") as f:

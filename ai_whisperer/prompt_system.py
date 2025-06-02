@@ -1,8 +1,8 @@
 
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict
-from .exceptions import PromptNotFoundError
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.core.exceptions import PromptNotFoundError
+from ai_whisperer.utils.path import PathManager
 import logging
 logger = logging.getLogger(__name__)
 # Placeholder classes for testing purposes

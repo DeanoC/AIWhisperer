@@ -8,7 +8,7 @@ import pytest
 import json
 
 # Ensure logging is set up before any tests run
-from ai_whisperer.logging_custom import setup_basic_logging
+from ai_whisperer.core.logging import setup_basic_logging
 
 def pytest_configure(config):
     setup_basic_logging()

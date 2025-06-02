@@ -28,7 +28,7 @@ import logging
 from typing import Optional
 
 from .tool_registry import get_tool_registry
-from ..path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
 

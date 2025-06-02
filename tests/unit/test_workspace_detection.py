@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 # Placeholder for the actual function to be implemented
-from ai_whisperer.workspace_detection import find_whisper_workspace, WorkspaceNotFoundError
+from ai_whisperer.utils.workspace import find_whisper_workspace, WorkspaceNotFoundError
 
 def test_whisper_folder_detected_in_current_dir(tmp_path):
     import pytest

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 from ai_whisperer.tools.web_search_tool import WebSearchTool
 from ai_whisperer.tools.fetch_url_tool import FetchURLTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestWebSearchTool:

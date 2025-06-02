@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional, List
 import logging
 
 from interactive_server.services.file_service import FileService
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 from interactive_server.handlers.project_handlers import get_project_manager
 
 logger = logging.getLogger(__name__)

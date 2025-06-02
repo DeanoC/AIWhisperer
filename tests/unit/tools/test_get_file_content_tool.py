@@ -7,8 +7,8 @@ import tempfile
 from pathlib import Path
 
 from ai_whisperer.tools.get_file_content_tool import GetFileContentTool
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.exceptions import FileRestrictionError
+from ai_whisperer.utils.path import PathManager
+from ai_whisperer.core.exceptions import FileRestrictionError
 
 
 @pytest.fixture

@@ -8,7 +8,7 @@ import time
 import os
 from unittest.mock import patch
 from tests.interactive_server.performance_metrics_utils import MetricsCollector
-from ai_whisperer.logging_custom import log_event, LogMessage, LogLevel, ComponentType
+from ai_whisperer.core.logging import log_event, LogMessage, LogLevel, ComponentType
 
 import pytest
 

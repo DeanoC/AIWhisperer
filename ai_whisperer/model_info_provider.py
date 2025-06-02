@@ -10,8 +10,8 @@ from typing import Dict, Any
 
 from ai_whisperer.ai_loop.ai_config import AIConfig
 
-from .config import load_config
-from .exceptions import ConfigError, OpenRouterAIServiceError, ProcessingError
+from ai_whisperer.core.config import load_config
+from ai_whisperer.core.exceptions import ConfigError, OpenRouterAIServiceError, ProcessingError
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 
 logger = logging.getLogger(__name__)

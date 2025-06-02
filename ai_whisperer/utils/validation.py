@@ -10,7 +10,7 @@ from pathlib import Path
 def get_default_schema_dir() -> str:
     """Get the default schema directory from the new config structure."""
     try:
-        from ai_whisperer.config import get_schema_path
+        from ai_whisperer.core.config import get_schema_path
         # Get any schema path to determine the schemas directory
         schema_path = get_schema_path("initial_plan_schema")
         return str(schema_path.parent)
@@ -92,7 +92,7 @@ def validate_against_schema(data: dict, schema_name: str):
     """
     try:
         # Try to use the new config system first
-        from ai_whisperer.config import get_schema_path
+        from ai_whisperer.core.config import get_schema_path
         # Remove .json extension if present since get_schema_path adds it
         clean_schema_name = schema_name.replace('.json', '')
         schema_path = get_schema_path(clean_schema_name)

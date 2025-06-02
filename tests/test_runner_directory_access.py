@@ -8,8 +8,8 @@ from pathlib import Path
 
 from ai_whisperer.tools.read_file_tool import ReadFileTool
 from ai_whisperer.tools.write_file_tool import WriteFileTool
-from ai_whisperer.path_management import PathManager # Import PathManager
-from ai_whisperer.exceptions import FileRestrictionError # Import FileRestrictionError
+from ai_whisperer.utils.path import PathManager # Import PathManager
+from ai_whisperer.core.exceptions import FileRestrictionError # Import FileRestrictionError
 
 
 # Define dummy workspace and output directories for testing

@@ -126,7 +126,7 @@ class TestPatriciaRFCToPlanIntegration:
     async def test_rfc_plan_synchronization(self, script_processor, tmp_path):
         """Test that plans update when RFCs change"""
         # Initialize PathManager for the test
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         PathManager().initialize(config_values={
             'workspace_path': str(tmp_path / "workspace"),
             'output_path': str(tmp_path / "workspace")

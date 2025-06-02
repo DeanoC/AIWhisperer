@@ -38,13 +38,13 @@ import sys
 from collections import ChainMap
 
 # Add scripts directory to path to import hierarchical_config_loader
-scripts_dir = Path(__file__).parent.parent / "scripts"
+scripts_dir = Path(__file__).parent.parent.parent / "scripts"
 if str(scripts_dir) not in sys.path:
     sys.path.insert(0, str(scripts_dir))
 
 from hierarchical_config_loader import HierarchicalConfigLoader
-from ai_whisperer.exceptions import ConfigError
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.core.exceptions import ConfigError
+from ai_whisperer.utils.path import PathManager
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ def load_config_legacy(config_path: str, cli_args: Optional[Dict[str, Any]] = No
         raise ConfigError(f"Configuration file not found: {config_path}")
 
     # Calculate config file hash early
-    from ai_whisperer.utils import calculate_sha256
+    from ai_whisperer.utils.helpers import calculate_sha256
     try:
         config_file_hash = calculate_sha256(path)
         with open(path, "r", encoding="utf-8") as f:

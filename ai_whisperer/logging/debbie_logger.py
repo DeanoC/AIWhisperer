@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import Enum
 import re
 
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
 

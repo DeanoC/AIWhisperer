@@ -15,7 +15,7 @@ from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from ai_whisperer.tools.message_injector_tool import (
     MessageInjectorTool, InjectionType, InjectionResult
 )
-from ai_whisperer.logging_custom import LogLevel, ComponentType, LogSource
+from ai_whisperer.core.logging import LogLevel, ComponentType, LogSource
 
 
 class TestInjectionType:

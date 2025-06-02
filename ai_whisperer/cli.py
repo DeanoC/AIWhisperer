@@ -2,12 +2,12 @@ import argparse
 import sys
 import logging
 from pathlib import Path
-from .exceptions import ConfigError
+from ai_whisperer.core.exceptions import ConfigError
 from .cli_commands_batch_mode import BatchModeCliCommand
 from .cli_commands import BaseCliCommand
 from . import logging_custom
-from .config import load_config
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.core.config import load_config
+from ai_whisperer.utils.path import PathManager
 
 logger = None
 

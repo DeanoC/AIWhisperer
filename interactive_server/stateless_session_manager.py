@@ -22,7 +22,7 @@ from ai_whisperer.ai_loop.ai_config import AIConfig
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService
 from ai_whisperer.context_management import ContextManager
 from ai_whisperer.context.context_manager import AgentContextManager
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 from .message_models import AIMessageChunkNotification, ContinuationProgressNotification
 from .debbie_observer import get_observer
 
@@ -1310,7 +1310,7 @@ class StatelessInteractiveSession:
         from pathlib import Path
         
         # Load the plan generation schema
-        from ai_whisperer.config import get_schema_path
+        from ai_whisperer.core.config import get_schema_path
         schema_path = get_schema_path("plan_generation_schema")
         try:
             with open(schema_path) as f:
@@ -1371,7 +1371,7 @@ class StatelessSessionManager:
         from ai_whisperer.tools.list_directory_tool import ListDirectoryTool
         from ai_whisperer.tools.search_files_tool import SearchFilesTool
         from ai_whisperer.tools.get_file_content_tool import GetFileContentTool
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         
         tool_registry = get_tool_registry()
         

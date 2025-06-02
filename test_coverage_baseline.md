@@ -4,15 +4,15 @@ Generated: /home/deano/projects/AIWhisperer
 
 ## Summary
 
-- **Total Python modules**: 152
-- **Modules with tests**: 110
-- **Overall coverage**: 72.4%
+- **Total Python modules**: 153
+- **Modules with tests**: 112
+- **Overall coverage**: 73.2%
 - **Critical untested modules**: 0
 - **High priority untested**: 16
 
 ## Coverage by System
 
-- **ai_whisperer**: 🟢 73.2%
+- **ai_whisperer**: 🟢 74.2%
 - **interactive_server**: 🟡 60.0%
 - **postprocessing**: 🟢 80.0%
 
@@ -118,7 +118,7 @@ Add integration tests and improve coverage of edge cases.
 
 ## Success Metrics
 
-- **Target overall coverage**: 90% (from 72.4%)
+- **Target overall coverage**: 90% (from 73.2%)
 - **All critical modules**: 100% test coverage
 - **High priority modules**: 80% test coverage
 - **Integration test suite**: Comprehensive workflow coverage

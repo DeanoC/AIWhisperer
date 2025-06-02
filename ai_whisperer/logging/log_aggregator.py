@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 import threading
 import uuid
 
-from ..logging_custom import EnhancedLogMessage, LogSource
+from ai_whisperer.core.logging import EnhancedLogMessage, LogSource
 
 # Type alias for log entries
 LogEntry = Dict[str, Any]

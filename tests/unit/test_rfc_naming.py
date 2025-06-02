@@ -12,7 +12,7 @@ from ai_whisperer.tools.read_rfc_tool import ReadRFCTool
 from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
 from ai_whisperer.tools.delete_rfc_tool import DeleteRFCTool
 from ai_whisperer.tools.list_rfcs_tool import ListRFCsTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 @pytest.fixture

@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 # from ai_whisperer.ai_service.ai_service import AIService, AIStreamChunk
 # from ai_whisperer.ai_loop.ai_config import AIConfig
 # from ai_whisperer.ai_loop.ai_loopy import AILoop
-# from ai_whisperer.logging_custom import setup_basic_logging, get_logger
+# from ai_whisperer.core.logging import setup_basic_logging, get_logger
 # from ai_whisperer.tools.base_tool import AITool
 # from ai_whisperer.tools.tool_registry import get_tool_registry
 

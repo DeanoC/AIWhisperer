@@ -8,7 +8,7 @@ import tempfile
 
 from ai_whisperer.tools.update_rfc_tool import UpdateRFCTool
 from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestUpdateRFCTool:

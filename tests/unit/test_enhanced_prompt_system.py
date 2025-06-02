@@ -8,7 +8,7 @@ import shutil
 import os
 
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration, PromptResolver
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestEnhancedPromptSystem:

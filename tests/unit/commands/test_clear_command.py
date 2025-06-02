@@ -157,7 +157,7 @@ class TestClearCommand:
 @pytest.mark.asyncio
 async def test_context_manager_clear_method():
     """Test the context manager's clear_agent_context method"""
-    from ai_whisperer.path_management import PathManager
+    from ai_whisperer.utils.path import PathManager
     
     # Mock PathManager
     with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:

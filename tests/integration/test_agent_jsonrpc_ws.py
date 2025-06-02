@@ -4,7 +4,7 @@ import pytest
 import asyncio
 import websockets
 import json
-from ai_whisperer.logging_custom import get_test_logger
+from ai_whisperer.core.logging import get_test_logger
 
 logger = get_test_logger()
 

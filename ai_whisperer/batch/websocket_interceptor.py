@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import websockets
 
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 from ..logging.debbie_logger import DebbieLogger
 from ..logging.log_aggregator import LogAggregator
 from .monitoring import MonitoringEvent, DebbieMonitor

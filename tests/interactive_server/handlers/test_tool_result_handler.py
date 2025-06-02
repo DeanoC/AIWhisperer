@@ -93,7 +93,7 @@ def test_tool_result_flow_real(interactive_app):
 
 
                 # Log and collect all messages until we see ToolCallNotification or hit a limit
-                from ai_whisperer.logging_custom import log_event, LogMessage, LogLevel, ComponentType
+                from ai_whisperer.core.logging import log_event, LogMessage, LogLevel, ComponentType
                 received = []
                 for _ in range(10):
                     msg = json.loads(watchdog_recv(websocket))

@@ -153,7 +153,7 @@ class PythonASTJSONTool(AITool):
     
     def __init__(self):
         super().__init__()
-        from ai_whisperer.config import get_schema_path
+        from ai_whisperer.core.config import get_schema_path
         self._schema_path = get_schema_path("python_ast_schema")
         
         # Error handling infrastructure
@@ -2211,7 +2211,7 @@ Example uses:
             
             # Load schema
             if schema_path is None:
-                from ai_whisperer.config import get_schema_path
+                from ai_whisperer.core.config import get_schema_path
                 schema_path = get_schema_path("python_ast_schema")
             else:
                 schema_path = Path(schema_path)

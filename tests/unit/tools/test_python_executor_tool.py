@@ -18,7 +18,7 @@ import sys
 from ai_whisperer.tools.python_executor_tool import (
     PythonExecutorTool, ExecutionResult, DebugSandbox
 )
-from ai_whisperer.logging_custom import LogLevel, ComponentType, LogSource
+from ai_whisperer.core.logging import LogLevel, ComponentType, LogSource
 
 
 class TestExecutionResult:

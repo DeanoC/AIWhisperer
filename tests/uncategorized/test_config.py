@@ -9,9 +9,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from ai_whisperer.config import load_config, DEFAULT_SITE_URL, DEFAULT_APP_NAME
-from ai_whisperer.exceptions import ConfigError
-from ai_whisperer.path_management import PathManager # Import PathManager
+from ai_whisperer.core.config import load_config, DEFAULT_SITE_URL, DEFAULT_APP_NAME
+from ai_whisperer.core.exceptions import ConfigError
+from ai_whisperer.utils.path import PathManager # Import PathManager
 
 # --- Test Data ---
 VALID_OPENROUTER_CONFIG_NO_KEY = {"model": "test_model", "params": {"temperature": 0.7}}

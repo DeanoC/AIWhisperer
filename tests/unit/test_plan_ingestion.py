@@ -5,7 +5,7 @@ import shutil
 import pytest
 from pathlib import Path
 from typing import Dict
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 # Import the new ParserPlan and exceptions
 from ai_whisperer.plan_parser import (

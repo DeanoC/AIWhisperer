@@ -34,7 +34,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 
 from .base_tool import AITool
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ class BatchModeCliCommand(BaseCliCommand):
         # Validate workspace before running batch script
         print(f"🔍 Validating workspace...")
         try:
-            from ai_whisperer.workspace_detection import find_whisper_workspace, WorkspaceNotFoundError
+            from ai_whisperer.utils.workspace import find_whisper_workspace, WorkspaceNotFoundError
             workspace = find_whisper_workspace()
             print(f"   ✅ Workspace detected: {workspace}")
         except Exception as e:

@@ -12,7 +12,7 @@ from typing import Dict, List, Any
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime
 
-from ai_whisperer.config import load_config
+from ai_whisperer.core.config import load_config
 from ai_whisperer.agents.registry import AgentRegistry
 from ai_whisperer.agents.factory import AgentFactory
 from ai_whisperer.ai_service.openrouter_ai_service import OpenRouterAIService

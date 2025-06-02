@@ -11,7 +11,7 @@ if project_root not in sys.path:
     print(f"Added {project_root} to Python path to ensure correct module loading")
 
 # Import logging setup from ai_whisperer
-from ai_whisperer.logging_custom import setup_logging
+from ai_whisperer.core.logging import setup_logging
 
 # Parse args early to get port for logging
 parser = argparse.ArgumentParser(description="AIWhisperer Interactive Server")
@@ -66,7 +66,7 @@ import asyncio
 import uuid
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from ai_whisperer.config import load_config
+from ai_whisperer.core.config import load_config
 from .stateless_session_manager import StatelessSessionManager
 from .message_models import (
     StartSessionRequest, StartSessionResponse, SendUserMessageRequest, SendUserMessageResponse,
@@ -76,7 +76,7 @@ from .message_models import (
 )
 from ai_whisperer.agents.registry import AgentRegistry
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 from pathlib import Path
 from .handlers.project_handlers import init_project_handlers, PROJECT_HANDLERS
 from .handlers.workspace_handler import WorkspaceHandler

@@ -6,7 +6,7 @@ import tempfile
 
 from ai_whisperer.context.context_item import ContextItem
 from ai_whisperer.context.context_manager import AgentContextManager
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestContextItem:

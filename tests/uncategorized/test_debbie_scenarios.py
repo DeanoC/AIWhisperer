@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ai_whisperer.batch.debbie_integration import DebbieDebugger, DebbieFactory
 from ai_whisperer.batch.monitoring import MonitoringEvent, AnomalyAlert
 from ai_whisperer.batch.websocket_interceptor import MessageDirection, MessageType
-from ai_whisperer.logging_custom import LogSource, LogLevel
+from ai_whisperer.core.logging import LogSource, LogLevel
 
 
 class MockSessionManager:

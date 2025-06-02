@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 
 from interactive_server.services.project_manager import ProjectManager
 from interactive_server.models.project import ProjectCreate, ProjectUpdate
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestProjectPathManagerIntegration:

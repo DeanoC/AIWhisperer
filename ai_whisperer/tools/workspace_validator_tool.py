@@ -37,7 +37,7 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 
 from .base_tool import AITool
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
 

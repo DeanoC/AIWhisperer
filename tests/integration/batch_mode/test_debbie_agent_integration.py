@@ -18,7 +18,7 @@ class TestDebbieAgentIntegration:
     @pytest.fixture
     def agent_registry(self):
         """Provide an initialized AgentRegistry"""
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         # Initialize PathManager with proper paths
         PathManager._instance = None
         PathManager._initialized = False
@@ -49,7 +49,7 @@ class TestDebbieAgentIntegration:
         assert 'filesystem' in agent.tool_sets
         
         # Prompt file exists - use PathManager to get correct path
-        from ai_whisperer.path_management import PathManager
+        from ai_whisperer.utils.path import PathManager
         path_manager = PathManager.get_instance()
         prompt_path = path_manager.app_path / "prompts" / "agents" / agent.prompt_file
         assert prompt_path.exists()

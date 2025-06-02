@@ -11,7 +11,7 @@ from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
 from ai_whisperer.context.agent_context import AgentContext
 from ai_whisperer.ai_loop.stateless_ai_loop import StatelessAILoop
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 from interactive_server.stateless_session_manager import StatelessInteractiveSession
 
 

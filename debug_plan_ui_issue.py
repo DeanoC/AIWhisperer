@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from ai_whisperer.tools.list_plans_tool import ListPlansTool
 from ai_whisperer.tools.read_plan_tool import ReadPlanTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 def debug_plan_access():
     """Debug plan access and see what should be available to the UI"""

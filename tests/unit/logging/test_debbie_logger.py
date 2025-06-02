@@ -15,7 +15,7 @@ from ai_whisperer.logging.debbie_logger import (
     PatternType, DetectedPattern, Insight, PatternDetector,
     InsightGenerator, DebbieCommentary, DebbieLogger
 )
-from ai_whisperer.logging_custom import LogLevel, LogSource, ComponentType
+from ai_whisperer.core.logging import LogLevel, LogSource, ComponentType
 
 
 class TestPatternType:

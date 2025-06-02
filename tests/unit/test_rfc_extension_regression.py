@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
 from ai_whisperer.tools.move_rfc_tool import MoveRFCTool
 from ai_whisperer.tools.delete_rfc_tool import DeleteRFCTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 @pytest.fixture

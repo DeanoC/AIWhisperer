@@ -20,9 +20,9 @@ from ai_whisperer.plan_parser import (
 )
 
 # Import necessary components for schema directory handling
-from ai_whisperer.json_validator import set_schema_directory, get_schema_directory
+from ai_whisperer.utils.validation import set_schema_directory, get_schema_directory
 
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 # Placeholder for a Runner class (simplified for this test's focus on plan ingestion)
 class Runner:

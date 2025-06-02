@@ -28,8 +28,8 @@ from typing import Any, Dict, Optional, List
 from ai_whisperer.tools.base_tool import AITool
 # Delegate system removed
 from ai_whisperer.user_message_level import UserMessageLevel
-from ai_whisperer.path_management import PathManager
-from ai_whisperer.exceptions import FileRestrictionError
+from ai_whisperer.utils.path import PathManager
+from ai_whisperer.core.exceptions import FileRestrictionError
 
 logger = logging.getLogger(__name__)
 

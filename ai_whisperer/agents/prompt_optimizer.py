@@ -23,7 +23,7 @@ Related:
 import re
 from typing import Dict, List, Any
 from ai_whisperer.model_capabilities import get_model_capabilities
-from ai_whisperer.logging_custom import get_logger
+from ai_whisperer.core.logging import get_logger
 
 logger = get_logger(__name__)
 

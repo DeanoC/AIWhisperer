@@ -15,8 +15,8 @@ from ai_whisperer.context_management import ContextManager
 from .user_message_level import UserMessageLevel
 from .state_management import StateManager # Import StateManager
 
-from .config import load_config
-from .logging_custom import LogMessage, LogLevel, ComponentType, log_event # Import logging components for log_event
+from ai_whisperer.core.config import load_config
+from ai_whisperer.core.logging import LogMessage, LogLevel, ComponentType, log_event # Import logging components for log_event
 from .model_info_provider import ModelInfoProvider
 # Legacy imports removed - using interactive/batch mode instead
 
@@ -44,7 +44,7 @@ class BatchModeCliCommand(BaseCliCommand):
     def execute(self) -> int:
         # Validate workspace before running batch script
         try:
-            from ai_whisperer.workspace_detection import find_whisper_workspace, WorkspaceNotFoundError
+            from ai_whisperer.utils.workspace import find_whisper_workspace, WorkspaceNotFoundError
             workspace = find_whisper_workspace()
             print(f"Workspace detected: {workspace}")
         except Exception as e:

@@ -5,7 +5,7 @@ import tempfile
 import os
 
 from ai_whisperer.tools.find_pattern_tool import FindPatternTool
-from ai_whisperer.path_management import PathManager
+from ai_whisperer.utils.path import PathManager
 
 
 class TestFindPatternTool:

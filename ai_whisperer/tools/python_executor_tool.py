@@ -51,7 +51,7 @@ except ImportError:
     HAS_RESOURCE = False
 
 from .base_tool import AITool
-from ..logging_custom import EnhancedLogMessage, LogLevel, LogSource, ComponentType
+from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 
 logger = logging.getLogger(__name__)
 
@@ -511,7 +511,7 @@ if errors:
         """Get logs for debugging context"""
         # This would fetch actual logs from log aggregator
         # For now, return mock data
-        from ..logging_custom import LogMessage, LogLevel, ComponentType
+        from ai_whisperer.core.logging import LogMessage, LogLevel, ComponentType
         
         mock_logs = []
         for i in range(10):
