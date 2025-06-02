@@ -40,6 +40,11 @@ class BatchClient:
                     print(f"[DRYRUN] {cmd}")
                 return
             self.server_manager.start_server()
+            
+            # Reinitialize logging with the batch server port
+            from ai_whisperer import logging_custom
+            logging_custom.setup_logging(port=self.server_manager.port)
+            
             if not self.ws_uri:
                 self.ws_uri = f"ws://localhost:{self.server_manager.port}/ws"
             self.ws_client = WebSocketClient(self.ws_uri)

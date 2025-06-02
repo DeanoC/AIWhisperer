@@ -20,18 +20,23 @@ class ServerManager:
             try:
                 if self.port is None:
                     self.port = random.randint(20000, 40000)
+                print(f"Starting batch server on port {self.port}...")
                 self._start_subprocess()
                 # Wait for server to initialize properly
                 time.sleep(2.0)  # Interactive server needs time to initialize
                 if self.is_running():
                     # Give server a bit more time to be ready for connections
                     time.sleep(1.0)
+                    print(f"Batch server started successfully on port {self.port}")
+                    print(f"Server logs: logs/aiwhisperer_server_batch_{self.port}.log")
                     return
                 else:
                     # If not running, treat as failure and retry
+                    print(f"Server failed to start on port {self.port}, retrying...")
                     self.port = None
             except OSError as e:
                 if "Address already in use" in str(e):
+                    print(f"Port {self.port} is in use, trying another port...")
                     self.port = None  # Pick a new port next time
                 else:
                     raise
@@ -57,8 +62,10 @@ class ServerManager:
         """Stop the interactive server if running."""
         if self.process:
             try:
+                print(f"Stopping batch server on port {self.port}...")
                 self.process.terminate()
                 self.process.wait(timeout=2)
+                print("Batch server stopped.")
             except Exception:
                 pass
             self.process = None

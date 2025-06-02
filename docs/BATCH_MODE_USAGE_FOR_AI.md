@@ -19,7 +19,7 @@ AIWhisperer's batch mode is designed for automated testing and scripted interact
 
 ```bash
 # Run batch mode through the CLI with required config
-python -m ai_whisperer.cli --config config.yaml scripts/your_test_script.json
+python -m ai_whisperer.cli --config config.yaml batch scripts/your_test_script.json
 ```
 
 **IMPORTANT**: The config file is required for OpenRouter API key access. All real AI invocations must go through `load_config()`.

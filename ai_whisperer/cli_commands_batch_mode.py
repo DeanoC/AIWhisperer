@@ -1,14 +1,10 @@
 import asyncio
 import logging
+import sys
 from ai_whisperer.batch.batch_client import BatchClient
 from .cli_commands import BaseCliCommand
 
 logger = logging.getLogger(__name__)
-
-
-
-
-import logging
 
 class BatchModeCliCommand(BaseCliCommand):
     def __init__(self, script_path: str, config: dict = None, dry_run: bool = False):
@@ -22,10 +18,18 @@ class BatchModeCliCommand(BaseCliCommand):
         try:
             from ai_whisperer.workspace_detection import find_whisper_workspace, WorkspaceNotFoundError
             workspace = find_whisper_workspace()
-            self.logger.info(f"Workspace detected: {workspace}")
+            print(f"Workspace detected: {workspace}")
         except Exception as e:
-            self.logger.error(f"Error: {e}")
+            print(f"Error: {e}", file=sys.stderr)
             return 1
+        
+        # Show what we're about to run
+        print(f"Running batch script: {self.script_path}")
+        if self.dry_run:
+            print("Mode: DRY RUN (commands will be echoed, not executed)")
+        else:
+            print("Mode: LIVE (commands will be executed)")
+        
         # Run the batch client
         try:
             # Pass config if needed in future

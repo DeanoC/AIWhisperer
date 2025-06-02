@@ -83,17 +83,16 @@ flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
 ### Running the Application
 ```bash
-# Generate initial plan from requirements
-python -m ai_whisperer.main generate initial-plan requirements.md
-
 # List available models
 python -m ai_whisperer.main list-models --config config.yaml --output-csv models.csv
 
-# Interactive mode is now the primary way to execute plans
-# CLI run command still available for batch processing
-python -m ai_whisperer.main run --plan-file plan.json --state-file state.json --config config.yaml
+# Run batch mode scripts (for testing and automation)
+python -m ai_whisperer.cli --config config.yaml batch scripts/script_name.json
 
-# Start interactive server
+# Run batch mode with dry-run (echoes commands without execution)
+python -m ai_whisperer.cli --config config.yaml batch scripts/script_name.json --dry-run
+
+# Start interactive server for web UI
 python -m interactive_server.main
 
 # Start frontend development server

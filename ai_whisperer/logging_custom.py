@@ -167,15 +167,19 @@ def setup_basic_logging(port=None):
         log_dir = "logs"
         os.makedirs(log_dir, exist_ok=True)
         
-        # Include port in filename if provided
+        # Include timestamp in filename for better tracking
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Include port in filename if provided (batch mode)
         if port:
-            server_log_path = os.path.join(log_dir, f"aiwhisperer_server_port{port}.log")
-            test_log_path = os.path.join(log_dir, f"aiwhisperer_test_port{port}.log")
-            debug_log_path = os.path.join(log_dir, f"aiwhisperer_debug_port{port}.log")
+            server_log_path = os.path.join(log_dir, f"aiwhisperer_server_batch_{timestamp}_port{port}.log")
+            test_log_path = os.path.join(log_dir, f"aiwhisperer_test_batch_{timestamp}_port{port}.log")
+            debug_log_path = os.path.join(log_dir, f"aiwhisperer_debug_batch_{timestamp}_port{port}.log")
         else:
-            server_log_path = os.path.join(log_dir, "aiwhisperer_server.log")
-            test_log_path = os.path.join(log_dir, "aiwhisperer_test.log")
-            debug_log_path = os.path.join(log_dir, "aiwhisperer_debug.log")
+            # For interactive mode, use simpler naming
+            server_log_path = os.path.join(log_dir, f"aiwhisperer_server_{timestamp}.log")
+            test_log_path = os.path.join(log_dir, f"aiwhisperer_test_{timestamp}.log")
+            debug_log_path = os.path.join(log_dir, f"aiwhisperer_debug_{timestamp}.log")
             
         server_file_handler = logging.FileHandler(server_log_path, mode='w')
         server_file_handler.setLevel(logging.DEBUG)
