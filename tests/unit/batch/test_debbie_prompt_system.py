@@ -6,10 +6,12 @@ Following TDD principles - tests written before implementation.
 import pytest
 import os
 from pathlib import Path
-import yaml
 
 from ai_whisperer.prompt_system import PromptLoader
-from ai_whisperer.services.agents.registry import Agent
+try:
+    from .test_debbie_agent_config_fixture import agents_config, debbie_config, debbie_agent
+except ImportError:
+    from test_debbie_agent_config_fixture import agents_config, debbie_config, debbie_agent
 
 
 @pytest.mark.flaky
@@ -22,34 +24,7 @@ class TestDebbiePromptSystem:
         """Provide an initialized PromptLoader"""
         return PromptLoader()
     
-    @pytest.fixture
-    def debbie_config(self):
-        """Get Debbie's configuration from the agents config"""
-        config_path = Path("config/agents/agents.yaml")
-        with open(config_path, 'r') as f:
-            agents_config = yaml.safe_load(f)
-        return agents_config['agents'].get('d')
-    
-    @pytest.fixture
-    def debbie_agent(self, debbie_config):
-        """Create Debbie agent from config"""
-        if not debbie_config:
-            return None
-        return Agent(
-            agent_id='d',
-            name=debbie_config['name'],
-            role=debbie_config['role'],
-            description=debbie_config['description'],
-            tool_tags=debbie_config.get('tool_tags', []),
-            prompt_file=debbie_config['prompt_file'],
-            context_sources=debbie_config.get('context_sources', []),
-            color=debbie_config.get('color', '#888888'),
-            icon=debbie_config.get('icon', '🤖'),
-            tool_sets=debbie_config.get('tool_sets'),
-            allow_tools=debbie_config.get('allow_tools'),
-            deny_tools=debbie_config.get('deny_tools'),
-            continuation_config=debbie_config.get('continuation_config')
-        )
+    # Fixtures are imported from test_debbie_agent_config_fixture.py
     
     def test_debbie_prompt_file_exists(self, debbie_agent):
         """Test that Debbie's prompt file exists"""
