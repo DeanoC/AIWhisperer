@@ -16,6 +16,11 @@ class ConfigError(AIWhispererError):
     pass
 
 
+class ConfigurationError(ConfigError):
+    """Alias for ConfigError for consistency."""
+    pass
+
+
 # --- OpenRouter API Errors ---
 
 
@@ -148,7 +153,27 @@ class SubtaskGenerationError(AIWhispererError):
 
 class SchemaValidationError(AIWhispererError):
     """Exception raised when generated data fails schema validation."""
+    pass
+
 
 class PromptNotFoundError(AIWhispererError):
     """Exception raised when a prompt is not found in the resolution hierarchy."""
+    pass
+
+
+# --- Additional exceptions for consistency ---
+
+
+class ToolExecutionError(TaskExecutionError):
+    """Tool execution failures."""
+    pass
+
+
+class SessionError(AIWhispererError):
+    """Session management errors."""
+    pass
+
+
+class AgentError(AIWhispererError):
+    """Agent-related errors."""
     pass
