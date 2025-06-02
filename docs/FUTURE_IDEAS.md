@@ -332,16 +332,25 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 - MCP client
 - Alice to get a new project setup feature (can talk to agent P by mail for ideas on languages etc.)
 - Agent C - Colin the Coder specialist coder. To coding tasks in Agent E plans
+- Agent M - Mary the Memory. Reasonable for context manager + compact + per agent & project memory storage
 - Our workspace project file only support 1 git worktree at a time, would be good to allow multiple worktree so multi plans can be run at the some time in isolation
 - Base git integration on the right view and provided to agents
 - Agent E should commit after each successful task
-- https://manus.im/share/file/5c80a565-2a61-449a-8f2b-350e2c41333a Manus.im for continuation for AI (High priority)
+- ~~https://manus.im/share/file/5c80a565-2a61-449a-8f2b-350e2c41333a Manus.im for continuation for AI (High priority)~~
 - Idea notepad that the quick ideas can be added to and agent P can select one for a new efc and plan if the user asks it
 - Github integration for an agent or as an Agent? Agent R Roger the Repo Man
 - Massive doc cleanup
 - PDF and image support
 - drag and drop in the frontend
+- AI loop per agent, multiple AI loop at the same time
+- Agent specific model and providers
+- Alice has a knowledge base about AIWhisperer, other topics?, other agents can to find info
+- Discoverable tool and sets. Start with descriptioons, agents can ask to use them and it inserted into there tool 
+- 'Minor Agents' double letter names and a hidden from the roster, mostly used by agents via mailbox
 - Think on the idea of 'agents as tools' specialist intelligent tools that other agents can use.
+  - Intellignt merge
+  - Websearcher
+  - A/B tester - agents can ask to test which is better for a given criteria, A/B can apply optimisations techniques.
 - Prompt development refinement / agentic approach? https://manus.im/share/WZHngJw4Woo44W0IxgcYbh?replay=1 https://github.com/dontriskit/awesome-ai-system-prompts
 - AI useable debuggers https://manus.im/share/file/18d10fa9-12ea-475c-8ac8-5f66a371420c
 - Add options to be less 'friendly' for experienced use. i.e. AI introductions can be short/missing, agent E always tells you how to use claude
@@ -349,5 +358,5 @@ This document tracks ideas, nice-to-have features, and improvements that we want
 
 ---
 
-*Last Updated: 2025-06-01*
+*Last Updated: 2025-06-02*
 
