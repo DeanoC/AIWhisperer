@@ -5,7 +5,7 @@ import { MainLayout } from './components/MainLayout';
 import { ViewProvider } from './contexts/ViewContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { ChatView } from './components/ChatView';
-import { JSONPlanView } from './components/JSONPlanView';
+import JSONPlanView from './components/JSONPlanView';
 import { CodeChangesView } from './components/CodeChangesView';
 import { TestResultsView } from './components/TestResultsView';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -445,7 +445,7 @@ function App() {
             
             {/* Plans Route */}
             <Route path="/plans" element={
-              <JSONPlanView data={mockPlanData} />
+              <JSONPlanView jsonRpcService={jsonRpcService} />
             } />
             
             {/* Code Route */}
@@ -471,19 +471,10 @@ function App() {
             
             {/* Settings Route */}
             <Route path="/settings" element={
-              <div style={{ padding: '20px' }}>
-                <h2>Settings</h2>
-                <div>
-                  <label>
-                    <input 
-                      type="checkbox" 
-                      checked={theme === 'dark'} 
-                      onChange={toggleTheme}
-                    />
-                    Dark Theme
-                  </label>
-                </div>
-              </div>
+              <React.Suspense fallback={<div>Loading settings...</div>}>
+                {/** Dynamically import the settings page for code splitting */}
+                {React.createElement(require('./components/SettingsPage').SettingsPage)}
+              </React.Suspense>
             } />
             
             {/* Default Route */}

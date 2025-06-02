@@ -5,6 +5,7 @@
 export interface ProjectSettings {
   defaultAgent?: string;
   autoSave?: boolean;
+  externalAgentType?: string;
 }
 
 export interface Project {

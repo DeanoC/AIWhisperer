@@ -1,0 +1,3 @@
+use script_parser with file_path: scripts/test_settings_persistence.py
+
+Now please run the script you just parsed to test the project settings persistence.

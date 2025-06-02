@@ -170,11 +170,12 @@ def setup_basic_logging(port=None):
         # Include timestamp in filename for better tracking
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        # Include port in filename if provided (batch mode)
-        if port:
-            server_log_path = os.path.join(log_dir, f"aiwhisperer_server_batch_{timestamp}_port{port}.log")
-            test_log_path = os.path.join(log_dir, f"aiwhisperer_test_batch_{timestamp}_port{port}.log")
-            debug_log_path = os.path.join(log_dir, f"aiwhisperer_debug_batch_{timestamp}_port{port}.log")
+        # Check if this is a batch mode server (port-specific logging)
+        batch_port = os.environ.get('AIWHISPERER_BATCH_PORT') or port
+        if batch_port:
+            server_log_path = os.path.join(log_dir, f"aiwhisperer_server_batch_{timestamp}_port{batch_port}.log")
+            test_log_path = os.path.join(log_dir, f"aiwhisperer_test_batch_{timestamp}_port{batch_port}.log")
+            debug_log_path = os.path.join(log_dir, f"aiwhisperer_debug_batch_{timestamp}_port{batch_port}.log")
         else:
             # For interactive mode, use simpler naming
             server_log_path = os.path.join(log_dir, f"aiwhisperer_server_{timestamp}.log")
@@ -203,13 +204,14 @@ def setup_basic_logging(port=None):
         root_logger.handlers = [console_handler, debug_file_handler, server_file_handler, test_file_handler]
 
         # Add a log message to confirm logging setup and file paths
-        logging.getLogger('aiwhisperer.server').info(f"Server logging configured. Log file: {os.path.abspath(server_log_path)}")
-        logging.getLogger('aiwhisperer.test').info(f"Test logging configured. Log file: {os.path.abspath(test_log_path)}")
-        logging.getLogger().info(f"Debug logging configured. Log file: {os.path.abspath(debug_log_path)}")
+        batch_mode_info = f" (batch mode port {batch_port})" if batch_port else ""
+        logging.getLogger('aiwhisperer.server').info(f"Server logging configured{batch_mode_info}. Log file: {os.path.abspath(server_log_path)}")
+        logging.getLogger('aiwhisperer.test').info(f"Test logging configured{batch_mode_info}. Log file: {os.path.abspath(test_log_path)}")
+        logging.getLogger().info(f"Debug logging configured{batch_mode_info}. Log file: {os.path.abspath(debug_log_path)}")
         
         # Print to console for easy access
-        if port:
-            print(f"\n📁 Log files for port {port}:")
+        if batch_port:
+            print(f"\n📁 Log files for port {batch_port}:")
         else:
             print(f"\n📁 Log files:")
         print(f"   Server log: {os.path.abspath(server_log_path)}")

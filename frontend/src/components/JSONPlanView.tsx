@@ -2,6 +2,21 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import './JSONPlanView.css';
 
+// Add type for plan summary
+interface PlanSummary {
+  plan_name: string;
+  _plan_name?: string;
+  _status_dir?: string;
+  name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface JSONPlanViewProps {
+  jsonRpcService?: any;
+}
+
+
 interface Task {
   id: string;
   name: string;
@@ -18,9 +33,7 @@ interface PlanData {
   metadata?: any;
 }
 
-export interface JSONPlanViewProps {
-  data?: PlanData | any;
-}
+
 
 interface TreeNodeProps {
   node: Task;
@@ -32,6 +45,7 @@ interface TreeNodeProps {
   onFocus: () => void;
   searchTerm: string;
 }
+
 
 const TreeNode: React.FC<TreeNodeProps> = ({ 
   node, 
@@ -96,24 +110,55 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   );
 };
 
-export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
+const JSONPlanView: React.FC<JSONPlanViewProps> = (props) => {
+  const [planList, setPlanList] = useState<PlanSummary[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [planData, setPlanData] = useState<PlanData | null>(null);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [editorValue, setEditorValue] = useState('');
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [focusedNode, setFocusedNode] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [showTree, setShowTree] = useState(true);
   const [showEditor, setShowEditor] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [searchMatches, setSearchMatches] = useState(0);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [focusedNode, setFocusedNode] = useState<string | null>(null);
   const treeRef = useRef<HTMLDivElement>(null);
 
-  // Initialize editor with data
+  // Fetch plan list on mount
   useEffect(() => {
-    if (data) {
-      setEditorValue(JSON.stringify(data, null, 2));
+    setLoadingPlans(true);
+    setError(null);
+    const rpc = props.jsonRpcService || (window as any).jsonRpcService;
+    if (rpc) {
+      rpc.sendRequest('plan.list', {})
+        .then((res: any) => {
+          setPlanList(res.plans || []);
+        })
+        .catch(() => setError('Failed to load plan list'))
+        .finally(() => setLoadingPlans(false));
+    } else {
+      setError('No JSON-RPC service available');
+      setLoadingPlans(false);
     }
-  }, [data]);
+  }, [props.jsonRpcService]);
+
+  // Fetch plan data when selectedPlan changes
+  useEffect(() => {
+    if (selectedPlan && (props.jsonRpcService || (window as any).jsonRpcService)) {
+      setLoadingPlan(true);
+      setError(null);
+      const rpc = props.jsonRpcService || (window as any).jsonRpcService;
+      rpc.sendRequest('plan.read', { plan_name: selectedPlan })
+        .then((res: any) => {
+          setPlanData(res.plan || null);
+          setEditorValue(res.plan ? JSON.stringify(res.plan, null, 2) : '');
+        })
+        .catch(() => setError('Failed to load plan'))
+        .finally(() => setLoadingPlan(false));
+    }
+  }, [selectedPlan, props.jsonRpcService]);
 
   // Validate plan structure
   const isValidPlanStructure = (obj: any): obj is PlanData => {
@@ -126,10 +171,8 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
   // Handle editor changes
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (!value) return;
-    
     setEditorValue(value);
     setError(null);
-    
     try {
       const parsed = JSON.parse(value);
       if (!isValidPlanStructure(parsed)) {
@@ -142,9 +185,7 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
 
   // Handle tree node selection
   const handleNodeSelect = useCallback((nodeId: string) => {
-    setSelectedNode(nodeId);
-    
-    // Find node in data and update editor
+    // Find node in planData and update editor
     const findNode = (tasks: Task[]): Task | null => {
       for (const task of tasks) {
         if (task.id === nodeId) return task;
@@ -155,14 +196,13 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
       }
       return null;
     };
-    
-    if (data && isValidPlanStructure(data)) {
-      const node = findNode(data.tasks);
+    if (planData && isValidPlanStructure(planData)) {
+      const node = findNode(planData.tasks);
       if (node) {
         setEditorValue(JSON.stringify(node, null, 2));
       }
     }
-  }, [data]);
+  }, [planData]);
 
   // Handle tree expansion
   const toggleNode = useCallback((nodeId: string) => {
@@ -181,14 +221,12 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!treeRef.current || !treeRef.current.contains(document.activeElement)) return;
-      
       // Implement keyboard navigation logic here
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
         e.preventDefault();
         // Navigation logic would go here
       }
     };
-
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -199,7 +237,6 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
       setSearchMatches(0);
       return;
     }
-    
     const matches = (editorValue.match(new RegExp(searchTerm, 'gi')) || []).length;
     setSearchMatches(matches);
   }, [searchTerm, editorValue]);
@@ -226,22 +263,39 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
     URL.revokeObjectURL(url);
   }, [editorValue]);
 
-  if (!data) {
+  // Plan selection UI
+  if (!planList.length && loadingPlans) {
+    return <div className="json-plan-view empty"><p>Loading plans...</p></div>;
+  }
+  if (!planList.length) {
+    return <div className="json-plan-view empty"><p>No plans found.</p></div>;
+  }
+  if (!selectedPlan) {
     return (
-      <div className="json-plan-view empty" data-testid="json-view">
-        <p>No plan data available</p>
+      <div className="json-plan-view empty">
+        <h3>Select a plan to view</h3>
+        <ul>
+          {planList.map(plan => (
+            <li key={plan.plan_name || plan._plan_name}>
+              <button onClick={() => setSelectedPlan(plan.plan_name || plan._plan_name || '')}>
+                {plan.name || plan.plan_name || plan._plan_name}
+                {plan._status_dir ? ` (${plan._status_dir})` : ''}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     );
   }
-
-  if (!isValidPlanStructure(data)) {
-    return (
-      <div className="json-plan-view error" data-testid="json-view">
-        <p>Invalid plan structure</p>
-      </div>
-    );
+  if (loadingPlan) {
+    return <div className="json-plan-view empty"><p>Loading plan...</p></div>;
   }
-
+  if (!planData) {
+    return <div className="json-plan-view empty"><p>No plan data available</p></div>;
+  }
+  if (!isValidPlanStructure(planData)) {
+    return <div className="json-plan-view error"><p>Invalid plan structure</p></div>;
+  }
   return (
     <div className="json-plan-view supports-high-contrast" data-testid="json-plan-view">
       <div className="json-view-header">
@@ -263,7 +317,6 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
             </span>
           )}
         </div>
-        
         <div className="view-controls">
           <button onClick={() => setShowTree(!showTree)}>
             {showTree ? 'Hide Tree' : 'Show Tree'}
@@ -275,7 +328,6 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
           <button onClick={handleExport}>Export JSON</button>
         </div>
       </div>
-      
       <div className="json-view-content">
         {showTree && (
           <div className="json-tree" data-testid="json-tree">
@@ -285,8 +337,8 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
               aria-label="Plan structure"
               className="tree-container"
             >
-              <h3>{data.name}</h3>
-              {data.tasks.map((task) => (
+              <h3>{planData.name}</h3>
+              {planData.tasks.map((task) => (
                 <TreeNode
                   key={task.id}
                   node={task}
@@ -302,7 +354,6 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
             </div>
           </div>
         )}
-        
         {showEditor && (
           <div className="json-editor">
             {error && (
@@ -328,14 +379,15 @@ export const JSONPlanView: React.FC<JSONPlanViewProps> = ({ data }) => {
           </div>
         )}
       </div>
-      
       <div role="status" className="sr-only" aria-live="polite">
         {searchMatches > 0 && `Found ${searchMatches} matches`}
       </div>
-      
       {searchTerm && searchMatches > 0 && (
         <div data-testid="search-highlight" className="hidden" />
       )}
     </div>
   );
+
 };
+
+export default JSONPlanView;

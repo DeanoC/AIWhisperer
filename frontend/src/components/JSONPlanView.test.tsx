@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import { JSONPlanView } from './JSONPlanView';
+import JSONPlanView from './JSONPlanView';
 import { ViewProvider } from '../contexts/ViewContext';
 
 // Mock Monaco Editor
@@ -57,6 +57,33 @@ describe('JSONPlanView', () => {
     }
   };
 
+  // Mock jsonRpcService
+  const mockJsonRpcService = {
+    sendRequest: jest.fn()
+  };
+
+  // Setup mock responses
+  beforeEach(() => {
+    mockJsonRpcService.sendRequest.mockReset();
+    
+    // Mock plan.list response
+    mockJsonRpcService.sendRequest.mockImplementation((method: string, params: any) => {
+      if (method === 'plan.list') {
+        return Promise.resolve({
+          plans: [
+            { plan_name: 'test-plan', name: 'Test Project Plan' }
+          ]
+        });
+      }
+      if (method === 'plan.read') {
+        return Promise.resolve({
+          plan: mockPlanData
+        });
+      }
+      return Promise.reject(new Error('Unknown method'));
+    });
+  });
+
   const renderWithProvider = (ui: React.ReactElement) => {
     return render(
       <ViewProvider>
@@ -67,7 +94,7 @@ describe('JSONPlanView', () => {
 
   describe('Tree Navigation', () => {
     it('renders plan tree structure', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       expect(screen.getByText('Test Project Plan')).toBeInTheDocument();
       expect(screen.getByText('Setup Project')).toBeInTheDocument();
@@ -75,7 +102,7 @@ describe('JSONPlanView', () => {
     });
 
     it('shows task status indicators', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const setupTask = screen.getByTestId('tree-node-task-1');
       expect(setupTask).toHaveClass('status-completed');
@@ -85,7 +112,7 @@ describe('JSONPlanView', () => {
     });
 
     it('expands and collapses tree nodes', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       // Initially collapsed
       expect(screen.queryByText('Create directories')).not.toBeInTheDocument();
@@ -103,7 +130,7 @@ describe('JSONPlanView', () => {
     });
 
     it('navigates to node on click', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const taskNode = screen.getByText('Setup Project');
       fireEvent.click(taskNode);
@@ -116,7 +143,7 @@ describe('JSONPlanView', () => {
     });
 
     it('supports keyboard navigation', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const tree = screen.getByRole('tree');
       tree.focus();
@@ -137,7 +164,7 @@ describe('JSONPlanView', () => {
 
   describe('JSON Editor', () => {
     it('displays formatted JSON', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const editor = screen.getByTestId('monaco-editor') as HTMLTextAreaElement;
       const content = JSON.parse(editor.value);
@@ -146,7 +173,7 @@ describe('JSONPlanView', () => {
 
     it('validates JSON on edit', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const editor = screen.getByTestId('monaco-editor') as HTMLTextAreaElement;
       
@@ -161,7 +188,7 @@ describe('JSONPlanView', () => {
 
     it('updates tree on valid JSON edit', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const editor = screen.getByTestId('monaco-editor') as HTMLTextAreaElement;
       
@@ -179,7 +206,7 @@ describe('JSONPlanView', () => {
 
     it('supports undo/redo', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const editor = screen.getByTestId('monaco-editor') as HTMLTextAreaElement;
       const originalValue = editor.value;
@@ -198,7 +225,7 @@ describe('JSONPlanView', () => {
     });
 
     it('shows syntax highlighting', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const editor = screen.getByTestId('monaco-editor');
       expect(editor).toHaveAttribute('data-language', 'json');
@@ -208,7 +235,7 @@ describe('JSONPlanView', () => {
   describe('Search and Filter', () => {
     it('searches through JSON content', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const searchInput = screen.getByPlaceholderText('Search JSON...');
       await userEvent.type(searchInput, 'Setup');
@@ -222,7 +249,7 @@ describe('JSONPlanView', () => {
 
     it('filters tree nodes by search', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const searchInput = screen.getByPlaceholderText('Search JSON...');
       await userEvent.type(searchInput, 'dependencies');
@@ -238,7 +265,7 @@ describe('JSONPlanView', () => {
 
     it('clears search on escape', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const searchInput = screen.getByPlaceholderText('Search JSON...');
       await userEvent.type(searchInput, 'test');
@@ -251,7 +278,7 @@ describe('JSONPlanView', () => {
 
   describe('View Controls', () => {
     it('toggles between tree and editor views', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       // Both visible by default
       expect(screen.getByTestId('json-tree')).toBeInTheDocument();
@@ -273,7 +300,7 @@ describe('JSONPlanView', () => {
       const mockDownload = jest.fn();
       global.URL.createObjectURL = jest.fn();
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const exportButton = screen.getByRole('button', { name: 'Export JSON' });
       fireEvent.click(exportButton);
@@ -284,7 +311,7 @@ describe('JSONPlanView', () => {
 
     it('formats JSON on demand', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const editor = screen.getByTestId('monaco-editor') as HTMLTextAreaElement;
       
@@ -310,14 +337,14 @@ describe('JSONPlanView', () => {
 
     it('handles corrupted data', () => {
       const corruptedData = { invalid: 'structure' };
-      renderWithProvider(<JSONPlanView data={corruptedData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       expect(screen.getByText(/Invalid plan structure/)).toBeInTheDocument();
     });
 
     it('recovers from editor errors', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const editor = screen.getByTestId('monaco-editor') as HTMLTextAreaElement;
       
@@ -341,7 +368,7 @@ describe('JSONPlanView', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA labels', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       expect(screen.getByRole('tree')).toHaveAttribute('aria-label', 'Plan structure');
       expect(screen.getByTestId('monaco-editor')).toHaveAttribute('aria-label', 'JSON editor');
@@ -349,7 +376,7 @@ describe('JSONPlanView', () => {
 
     it('announces changes to screen readers', async () => {
       
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const searchInput = screen.getByPlaceholderText('Search JSON...');
       await userEvent.type(searchInput, 'test');
@@ -359,7 +386,7 @@ describe('JSONPlanView', () => {
     });
 
     it('supports high contrast mode', () => {
-      renderWithProvider(<JSONPlanView data={mockPlanData} />);
+      renderWithProvider(<JSONPlanView jsonRpcService={mockJsonRpcService} />);
       
       const container = screen.getByTestId('json-plan-view');
       expect(container).toHaveClass('supports-high-contrast');

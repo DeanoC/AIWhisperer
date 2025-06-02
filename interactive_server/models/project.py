@@ -10,6 +10,7 @@ class ProjectSettings(BaseModel):
     """Project-specific settings."""
     default_agent: Optional[str] = Field(None, description="Default agent for the project")
     auto_save: bool = Field(True, description="Auto-save conversations")
+    external_agent_type: Optional[str] = Field(None, description="External agent type")
 
 
 class Project(BaseModel):

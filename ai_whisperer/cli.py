@@ -1,6 +1,3 @@
-
-
-
 import argparse
 import sys
 import logging
@@ -93,4 +90,13 @@ def cli(args=None):
     else:
         parser.print_help()
         sys.exit(1)
+
+
+def main():
+    """Standard Python main function entry point."""
+    cli()
+
+
+if __name__ == "__main__":
+    main()
 

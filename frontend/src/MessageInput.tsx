@@ -25,7 +25,7 @@ interface MessageInputProps {
 
 const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, sessionStatus, disabled, onFilePickerRequest, loading }) => {
   const [input, setInput] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [commandList, setCommandList] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -79,7 +79,16 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
 
   const { command, after, isCommand } = getCommandHighlight(input);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // Auto-resize textarea
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (showSuggestions && filteredSuggestions.length > 0) {
       if (e.key === 'ArrowDown' || e.key === 'Tab') {
         e.preventDefault();
@@ -99,7 +108,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
           setShowSuggestions(false);
           setSelectedIndex(0);
           setTimeout(() => {
-            inputRef.current?.focus();
+            textareaRef.current?.focus();
             // If the input is just a command (no args), send immediately
             if (completed.trim().split(' ').length === 1) {
               onSend(completed.trim());
@@ -114,6 +123,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
       setShowSuggestions(false);
       return;
     }
+    // Enter to send, Shift+Enter for newline
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (input.trim()) {
@@ -121,8 +131,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
         setInput('');
         setShowSuggestions(false);
         setSelectedIndex(0);
+        setTimeout(() => adjustTextareaHeight(), 0);
       }
     }
+    // Otherwise allow default (including Shift+Enter for newline)
   };
 
 
@@ -140,7 +152,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
                 setInput('/' + cmd + ' ');
                 setShowSuggestions(false);
                 setSelectedIndex(0);
-                setTimeout(() => inputRef.current?.focus(), 0);
+                setTimeout(() => textareaRef.current?.focus(), 0);
               }}
             >
               /{cmd}
@@ -155,11 +167,12 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
             : input || <span>&nbsp;</span>}
           {/* This div mirrors the input value for highlighting */}
         </div>
-        <input
-          ref={inputRef}
-          className={`message-input${isCommand ? ' command-mode' : ''}`}
-          type="text"
+        <textarea
+          ref={textareaRef}
+          className={`message-input textarea${isCommand ? ' command-mode' : ''}`}
           value={input}
+          rows={1}
+          style={{ minHeight: '2.5rem', maxHeight: '8rem', overflowY: 'auto', resize: 'none' }}
           onChange={e => {
             const newValue = e.target.value;
             const oldValue = input;
@@ -176,9 +189,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
                   const currentAtPos = newValue.length - 1;
                   // Request file picker
                   onFilePickerRequest((filePath: string) => {
-                    // Get the current input value at callback time
                     setInput(currentInput => {
-                      // Insert @filePath at the @ position
                       const beforeAt = currentInput.substring(0, currentAtPos);
                       const afterAt = currentInput.substring(currentAtPos + 1);
                       const newInput = beforeAt + '@' + filePath + afterAt;
@@ -186,16 +197,16 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
                     });
                     setShowingAtSymbol(false);
                     setAtSymbolPosition(-1);
-                    // Focus back on input
-                    setTimeout(() => inputRef.current?.focus(), 0);
+                    setTimeout(() => textareaRef.current?.focus(), 0);
                   });
                 }
               }
             }
             setInput(newValue);
+            setTimeout(() => adjustTextareaHeight(), 0);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Enter your message and press Enter to send"
+          placeholder="Enter your message. Press Enter to send, Shift+Enter for new line."
           autoFocus
           disabled={disabled}
         />

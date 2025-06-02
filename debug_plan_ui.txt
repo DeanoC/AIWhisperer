@@ -1,0 +1,11 @@
+Debbie, I need you to investigate why the plan UI is not displaying plans properly. The backend ListPlansTool works fine and returns valid plan data, but the frontend UI shows no plans.
+
+Please investigate and write a detailed analysis covering:
+1. Test the JSON-RPC endpoints that the frontend would call to get plan data
+2. Check if there are any API endpoint mapping issues between frontend and backend
+3. Examine the plan data structure being returned vs what the UI expects
+4. Look for any CORS, authentication, or routing issues
+5. Write the exact JSON response format the UI should receive
+6. Provide specific recommendations for fixing the UI display issue
+
+Write your findings in a structured format that I can use to debug the frontend components.

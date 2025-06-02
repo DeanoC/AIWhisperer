@@ -1,0 +1,9 @@
+Alice, based on your investigation, please write a complete structured analysis of the plan UI issue. Include:
+
+1. Root cause analysis - why the frontend shows no plans
+2. The exact data format mismatch between ListPlansTool output and frontend expectations  
+3. Specific code fixes needed in plan_handler.py and/or ListPlansTool
+4. Expected JSON response format for plan.list endpoint
+5. Action plan to fix the UI display issue
+
+Write this as a comprehensive debugging report I can use to fix the frontend plan display.

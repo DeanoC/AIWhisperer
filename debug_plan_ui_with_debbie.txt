@@ -1,0 +1,11 @@
+Hi Debbie! I need your help debugging a plan UI issue. The frontend plan view isn't displaying plans properly, but I suspect the backend is working. Can you help me investigate?
+
+Please test the plan listing functionality and see what data is available.
+
+Can you also check what plan-related tools are available to you?
+
+Please examine the plan data structure and format to see if there might be any issues with how the data is structured for the frontend.
+
+If you find plans, can you show me the detailed structure of one plan so I can compare it with what the frontend expects?
+
+Can you also check if there are any tools for plan details or plan viewing that the frontend might be trying to use?

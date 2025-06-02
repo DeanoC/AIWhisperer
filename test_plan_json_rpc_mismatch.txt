@@ -1,0 +1,11 @@
+Hi Alice! Based on your analysis, I found the key issue. The frontend is calling:
+1. `rpc.sendRequest('plan.list', {})` expecting `res.plans` 
+2. `rpc.sendRequest('plan.read', { plan_name: selectedPlan })` expecting `res.plan`
+
+But your backend tools are called `list_plans` and `read_plan`. There seems to be a mismatch between the JSON-RPC endpoint names and the tool names.
+
+Can you test the actual plan listing using the list_plans tool?
+
+Can you also test reading a specific plan using the read_plan tool?
+
+Please show me the exact data structure that list_plans returns so I can compare it with what the frontend expects.

@@ -46,6 +46,12 @@ class ListPlansTool(AITool):
                     "type": "integer",
                     "description": "Maximum number of plans to return",
                     "nullable": True
+                },
+                "format": {
+                    "type": "string",
+                    "description": "Output format: 'markdown' (default) or 'json'",
+                    "enum": ["markdown", "json"],
+                    "default": "markdown"
                 }
             }
         }
@@ -65,13 +71,17 @@ class ListPlansTool(AITool):
         - status (string, optional): 'in_progress', 'archived', or 'all' (default: all)
         - sort_by (string, optional): 'created', 'updated', or 'name' (default: created)
         - limit (integer, optional): Maximum number of results
+        - format (string, optional): Output format - 'markdown' (default) or 'json'
         
         Example usage:
         <tool_code>
         list_plans()
         list_plans(status="in_progress")
         list_plans(sort_by="updated", limit=5)
+        list_plans(format="json")
         </tool_code>
+        
+        Use format="json" when you need structured data for UI components or other tools.
         """
     
     def _load_plan_info(self, plan_dir: Path) -> Optional[Dict[str, Any]]:
@@ -98,10 +108,17 @@ class ListPlansTool(AITool):
         status_filter = arguments.get('status', 'all')
         sort_by = arguments.get('sort_by', 'created')
         limit = arguments.get('limit')
+        output_format = arguments.get('format', 'markdown')
         
         try:
             path_manager = PathManager.get_instance()
-            plans_base = Path(path_manager.workspace_path) / ".WHISPER" / "plans"
+            # Handle potential None workspace_path
+            workspace_path = path_manager.workspace_path
+            if workspace_path is None:
+                error_response = {"error": "Workspace path not initialized."}
+                return json.dumps(error_response) if output_format == 'json' else "Error: Workspace path not initialized."
+            
+            plans_base = Path(workspace_path) / ".WHISPER" / "plans"
             
             # Determine which directories to search
             if status_filter == 'all':
@@ -136,9 +153,28 @@ class ListPlansTool(AITool):
             if limit and limit > 0:
                 all_plans = all_plans[:limit]
             
-            # Format response
+            # Return JSON format if requested
+            if output_format == 'json':
+                # Create simplified plan summaries for JSON output
+                plan_summaries = []
+                for plan in all_plans:
+                    summary = {
+                        'plan_name': plan.get('_plan_name', ''),
+                        'title': plan.get('title', 'Untitled'),
+                        'plan_type': plan.get('plan_type', 'unknown'),
+                        'status': plan.get('_status_dir', 'unknown'),
+                        'source_rfc': plan.get('source_rfc', {}).get('rfc_id', 'None'),
+                        'task_count': len(plan.get('tasks', [])),
+                        'created_at': plan.get('created', 'Unknown'),
+                        'updated_at': plan.get('updated', 'Unknown')
+                    }
+                    plan_summaries.append(summary)
+                
+                return json.dumps(plan_summaries, indent=2)
+            
+            # Format response as markdown (default behavior)
             if not all_plans:
-                return "No plans found."
+                return "[]" if output_format == 'json' else "No plans found."
             
             response = f"Found {len(all_plans)} plan(s):\n\n"
             
@@ -171,4 +207,5 @@ class ListPlansTool(AITool):
             
         except Exception as e:
             logger.error(f"Error listing plans: {e}")
-            return f"Error listing plans: {str(e)}"
+            error_response = {"error": f"Error listing plans: {str(e)}"}
+            return json.dumps(error_response) if output_format == 'json' else f"Error listing plans: {str(e)}"
