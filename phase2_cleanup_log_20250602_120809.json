@@ -1,0 +1,91 @@
+{
+  "timestamp": "2025-06-02T12:08:09.163683",
+  "project_root": "/home/deano/projects/AIWhisperer",
+  "operations": [
+    {
+      "operation": "BACKUP",
+      "details": "Created backup directory: /home/deano/projects/AIWhisperer/backup_phase2_20250602_120809",
+      "timestamp": "2025-06-02T12:08:09.157029"
+    },
+    {
+      "operation": "PHASE",
+      "details": "Consolidating Agent-E documentation",
+      "timestamp": "2025-06-02T12:08:09.157044"
+    },
+    {
+      "operation": "CONSOLIDATE",
+      "details": "Merging 3 agent-e files",
+      "timestamp": "2025-06-02T12:08:09.157141"
+    },
+    {
+      "operation": "PHASE",
+      "details": "Consolidating File Browser documentation",
+      "timestamp": "2025-06-02T12:08:09.159893"
+    },
+    {
+      "operation": "CONSOLIDATE",
+      "details": "Merging 4 file browser files",
+      "timestamp": "2025-06-02T12:08:09.159942"
+    },
+    {
+      "operation": "PHASE",
+      "details": "Consolidating Agent Continuation documentation",
+      "timestamp": "2025-06-02T12:08:09.161104"
+    },
+    {
+      "operation": "CONSOLIDATE",
+      "details": "Merging 3 agent continuation files",
+      "timestamp": "2025-06-02T12:08:09.161349"
+    },
+    {
+      "operation": "PHASE",
+      "details": "Archiving cleanup plan files",
+      "timestamp": "2025-06-02T12:08:09.162753"
+    },
+    {
+      "operation": "SKIP",
+      "details": "doc_cleanup_detailed_plan.md not found",
+      "timestamp": "2025-06-02T12:08:09.162769"
+    },
+    {
+      "operation": "SKIP",
+      "details": "doc_cleanup_execution_summary.md not found",
+      "timestamp": "2025-06-02T12:08:09.162778"
+    },
+    {
+      "operation": "SKIP",
+      "details": "complete_doc_cleanup_plan.md not found",
+      "timestamp": "2025-06-02T12:08:09.162785"
+    },
+    {
+      "operation": "PHASE",
+      "details": "Creating legacy archive structure",
+      "timestamp": "2025-06-02T12:08:09.162787"
+    },
+    {
+      "operation": "MOVE",
+      "details": "Moved archive/analysis/ to archive/legacy/analysis/",
+      "timestamp": "2025-06-02T12:08:09.163379"
+    },
+    {
+      "operation": "MOVE",
+      "details": "Moved archive/terminal_ui/ to archive/legacy/terminal_ui/",
+      "timestamp": "2025-06-02T12:08:09.163436"
+    },
+    {
+      "operation": "MOVE",
+      "details": "Moved archive/old_architecture/ to archive/legacy/old_architecture/",
+      "timestamp": "2025-06-02T12:08:09.163466"
+    },
+    {
+      "operation": "MOVE",
+      "details": "Moved archive/delegate_system/ to archive/legacy/delegate_system/",
+      "timestamp": "2025-06-02T12:08:09.163490"
+    },
+    {
+      "operation": "COMPLETE",
+      "details": "Moved 4 directories to legacy archive",
+      "timestamp": "2025-06-02T12:08:09.163493"
+    }
+  ]
+}
