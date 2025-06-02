@@ -153,19 +153,22 @@ class TestContinuationProgressTracking:
     async def test_progress_tracking_with_real_agent(self):
         """Test progress tracking with a real agent setup"""
         # Create a more realistic test with actual agent components
-        from ai_whisperer.agents.factory import AgentInfo
+        from ai_whisperer.agents.registry import Agent
         
         # Create agent info with continuation config
-        agent_info = AgentInfo(
+        agent_info = Agent(
             agent_id="e",
             name="Test Agent",
             role="test",
             description="Test agent",
+            tool_tags=[],
             prompt_file="test.md",
+            context_sources=[],
+            color="#000000",
             continuation_config={
                 "require_explicit_signal": False,
                 "max_iterations": 5,
-                "continuation_patterns": ["next step", "continuing"]
+                "patterns": ["next step", "continuing"]
             }
         )
         

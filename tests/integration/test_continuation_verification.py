@@ -54,8 +54,9 @@ class TestContinuationVerification:
     async def test_continuation_detection(self):
         """Test that continuation needs are detected correctly"""
         strategy = ContinuationStrategy({
-            "continuation_patterns": ["let me", "now I'll", "next"],
-            "termination_patterns": ["complete", "done", "finished"]
+            "patterns": ["let me", "now I'll", "next"],
+            "termination_patterns": ["complete", "done", "finished"],
+            "require_explicit_signal": False
         })
         
         # Test continuation signals
@@ -138,8 +139,9 @@ class TestContinuationVerification:
         """Test that continuation depth is tracked and limited"""
         strategy = ContinuationStrategy({
             "max_iterations": 3,
-            "continuation_patterns": ["continue"],
-            "termination_patterns": ["done"]
+            "patterns": ["continue"],
+            "termination_patterns": ["done"],
+            "require_explicit_signal": False
         })
         
         # Simulate continuation loop

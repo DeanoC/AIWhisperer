@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 
-from interactive_server.stateless_session_manager import StatelessInteractiveSession
+from interactive_server.stateless_session_manager import StatelessSessionManager
 from ai_whisperer.agents.stateless_agent import StatelessAgent
 from ai_whisperer.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
@@ -22,7 +22,9 @@ class TestConversationPersistence:
     @pytest.fixture
     def session_with_agents(self):
         """Create a session with multiple agents and some conversation history"""
-        session = StatelessInteractiveSession("test-persist-session", {}, None, None)
+        config = {"openrouter": {"model": "test-model", "api_key": "test-key"}}
+        session = StatelessSessionManager(config, None, None)
+        session.session_id = "test-persist-session"
         session.websocket = AsyncMock()
         session.is_started = True
         
@@ -152,7 +154,9 @@ class TestConversationPersistence:
         filepath = await session_with_agents.save_session()
         
         # Create a new empty session
-        new_session = StatelessInteractiveSession("new-session", {}, None, None)
+        config = {"openrouter": {"model": "test-model", "api_key": "test-key"}}
+        new_session = StatelessSessionManager(config, None, None)
+        new_session.session_id = "new-session"
         new_session.websocket = AsyncMock()
         new_session.send_notification = AsyncMock()
         
@@ -254,7 +258,9 @@ class TestConversationPersistence:
             mock_pm.return_value = Mock()
             
             # Create session with real context manager
-            session = StatelessInteractiveSession("test-session", {}, None, None)
+            config = {"openrouter": {"model": "test-model", "api_key": "test-key"}}
+            session = StatelessSessionManager(config, None, None)
+            session.session_id = "test-session"
             session.websocket = AsyncMock()
             session.context_manager = AgentContextManager("test-session", mock_pm.return_value)
             session.is_started = True
@@ -285,7 +291,9 @@ class TestConversationPersistence:
 @pytest.mark.asyncio
 async def test_persistence_workflow():
     """Test a complete persistence workflow"""
-    session = StatelessInteractiveSession("workflow-test", {}, None, None)
+    config = {"openrouter": {"model": "test-model", "api_key": "test-key"}}
+    session = StatelessSessionManager(config, None, None)
+    session.session_id = "workflow-test"
     session.websocket = AsyncMock()
     session.is_started = True
     session.agents = {}  # Initialize agents dict
