@@ -1,0 +1,235 @@
+{
+  "name": "Conversation Persistence Test",
+  "description": "Test save, load, and clear functionality across multiple agents",
+  "version": "1.0",
+  "config": {
+    "timeout": 120,
+    "require_server": true,
+    "server_config": {
+      "start_new": true,
+      "port": 8765,
+      "wait_for_ready": true
+    }
+  },
+  "steps": [
+    {
+      "step": 1,
+      "description": "Start session and work with Alice",
+      "agent": "alice",
+      "actions": [
+        {
+          "command": "start_session",
+          "expect": "session_started"
+        },
+        {
+          "command": "wait",
+          "duration": 2
+        },
+        {
+          "command": "switch_agent",
+          "agent": "alice"
+        },
+        {
+          "command": "user_message",
+          "message": "Hello Alice! Can you list the files in the current directory?",
+          "wait_for_completion": true
+        },
+        {
+          "command": "user_message", 
+          "message": "Thanks! Now can you read the README.md file?",
+          "wait_for_completion": true
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "description": "Switch to Patricia and create an RFC",
+      "agent": "patricia",
+      "actions": [
+        {
+          "command": "switch_agent",
+          "agent": "patricia"
+        },
+        {
+          "command": "user_message",
+          "message": "Hi Patricia! Can you create an RFC for adding conversation persistence to AIWhisperer?",
+          "wait_for_completion": true
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "description": "Switch to Eamonn and work with plans",
+      "agent": "e",
+      "actions": [
+        {
+          "command": "switch_agent",
+          "agent": "e"
+        },
+        {
+          "command": "user_message",
+          "message": "Hello Eamonn! Can you list the available plans?",
+          "wait_for_completion": true
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "description": "Save the session",
+      "actions": [
+        {
+          "command": "user_message",
+          "message": "/save",
+          "expect_system_message": "Session saved to:",
+          "capture_output": "saved_filepath"
+        },
+        {
+          "command": "wait",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "description": "Clear all agents' context",
+      "actions": [
+        {
+          "command": "user_message",
+          "message": "/clear all",
+          "expect_system_message": "Cleared context for all agents"
+        },
+        {
+          "command": "wait",
+          "duration": 1
+        }
+      ]
+    },
+    {
+      "step": 6,
+      "description": "Verify context is cleared by asking Alice",
+      "agent": "alice",
+      "actions": [
+        {
+          "command": "switch_agent",
+          "agent": "alice"
+        },
+        {
+          "command": "user_message",
+          "message": "Do you remember what files we discussed earlier?",
+          "expect_no_context": true,
+          "wait_for_completion": true
+        }
+      ]
+    },
+    {
+      "step": 7,
+      "description": "Load the saved session",
+      "actions": [
+        {
+          "command": "user_message",
+          "message": "/load {saved_filepath}",
+          "expect_system_message": "Session loaded successfully",
+          "wait_for_completion": true
+        },
+        {
+          "command": "wait",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "step": 8,
+      "description": "Verify Alice's context is restored",
+      "agent": "alice",
+      "actions": [
+        {
+          "command": "switch_agent",
+          "agent": "alice"
+        },
+        {
+          "command": "user_message",
+          "message": "Can you remind me what files we discussed earlier?",
+          "expect_context_restored": true,
+          "wait_for_completion": true
+        }
+      ]
+    },
+    {
+      "step": 9,
+      "description": "Verify Patricia's context is restored",
+      "agent": "patricia",
+      "actions": [
+        {
+          "command": "switch_agent",
+          "agent": "patricia"
+        },
+        {
+          "command": "user_message",
+          "message": "What RFC were we discussing?",
+          "expect_context_restored": true,
+          "wait_for_completion": true
+        }
+      ]
+    },
+    {
+      "step": 10,
+      "description": "Test saving to custom path",
+      "actions": [
+        {
+          "command": "user_message",
+          "message": "/save test_sessions/custom_save.json",
+          "expect_system_message": "Session saved to:",
+          "capture_output": "custom_filepath"
+        }
+      ]
+    },
+    {
+      "step": 11,
+      "description": "Clear specific agent (Patricia)",
+      "actions": [
+        {
+          "command": "user_message",
+          "message": "/clear patricia",
+          "expect_system_message": "Cleared"
+        }
+      ]
+    },
+    {
+      "step": 12,
+      "description": "Save again after partial clear",
+      "actions": [
+        {
+          "command": "user_message",
+          "message": "/save",
+          "expect_system_message": "Session saved to:",
+          "capture_output": "final_filepath"
+        }
+      ]
+    },
+    {
+      "step": 13,
+      "description": "Test help command",
+      "actions": [
+        {
+          "command": "user_message",
+          "message": "/help",
+          "expect_system_message": "Available commands:"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "check_persistence": {
+      "session_files_created": ["saved_filepath", "custom_filepath", "final_filepath"],
+      "context_restored": ["alice", "patricia", "e"],
+      "commands_working": ["/save", "/load", "/clear", "/help"]
+    },
+    "expected_outcomes": [
+      "Sessions can be saved and loaded",
+      "Context is preserved across save/load",
+      "Clear command removes context",
+      "Multiple agents' states are preserved",
+      "Custom save paths work"
+    ]
+  }
+}

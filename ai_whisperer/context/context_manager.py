@@ -323,6 +323,24 @@ class AgentContextManager:
             "items_by_type": self._count_by_type(items)
         }
     
+    def clear_agent_context(self, agent_id: str) -> int:
+        """Clear all context items for an agent.
+        
+        Args:
+            agent_id: Agent identifier
+            
+        Returns:
+            Number of items cleared
+        """
+        if agent_id not in self.contexts:
+            return 0
+        
+        items_count = len(self.contexts[agent_id])
+        self.contexts[agent_id] = []
+        
+        logger.info(f"Cleared {items_count} context items for agent {agent_id}")
+        return items_count
+    
     def _cleanup_old_items(self, agent_id: str):
         """Remove items that are too old or exceed size limit.
         

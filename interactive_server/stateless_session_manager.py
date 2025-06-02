@@ -379,6 +379,13 @@ class StatelessInteractiveSession:
                     agent.continuation_strategy.reset()
                     logger.debug("Reset continuation strategy for new conversation")
             
+            # Check for commands before processing
+            if message.strip().startswith('/'):
+                command_result = await self._handle_command(message.strip())
+                if command_result:
+                    # Command was handled, return early
+                    return
+            
             # Notify observer that message processing is starting
             if self.observer:
                 self.observer.on_message_start(self.session_id, message)
@@ -396,6 +403,17 @@ class StatelessInteractiveSession:
                     "items_added": len(context_items),
                     "context_summary": self.context_manager.get_context_summary(self.active_agent)
                 })
+            
+            # Optimize message for model-specific behavior
+            model_name = agent.config.model_name if hasattr(agent.config, 'model_name') else \
+                        self.config.get('openrouter', {}).get('model', '')
+            
+            if model_name:
+                from ai_whisperer.agents.prompt_optimizer import optimize_user_message
+                optimized_message = optimize_user_message(message, model_name, self.active_agent)
+                if optimized_message != message:
+                    logger.debug(f"Optimized user message for {model_name}")
+                    message = optimized_message
                 
                 # Add file contents to the message for the agent
                 # This ensures the agent sees the actual content, not just the reference
@@ -729,6 +747,83 @@ class StatelessInteractiveSession:
         if state.get("active_agent") and state["active_agent"] in self.agents:
             self.active_agent = state["active_agent"]
     
+    async def save_session(self, filepath: Optional[str] = None) -> str:
+        """
+        Save the current session state to a file.
+        
+        Args:
+            filepath: Optional custom filepath. If not provided, saves to .WHISPER/sessions/
+            
+        Returns:
+            Path where the session was saved
+        """
+        from pathlib import Path
+        import json
+        
+        # Get session state
+        state = await self.get_state()
+        
+        # Add save metadata
+        state["saved_at"] = datetime.now().isoformat()
+        state["version"] = "1.0"
+        
+        # Determine filepath
+        if not filepath:
+            sessions_dir = Path(".WHISPER/sessions")
+            sessions_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filepath = sessions_dir / f"{self.session_id}_{timestamp}.json"
+        else:
+            filepath = Path(filepath)
+            filepath.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Save to file
+        with open(filepath, 'w') as f:
+            json.dump(state, f, indent=2)
+        
+        logger.info(f"Saved session {self.session_id} to {filepath}")
+        
+        # Send notification to client
+        await self.send_notification("session.saved", {
+            "session_id": self.session_id,
+            "filepath": str(filepath),
+            "saved_at": state["saved_at"]
+        })
+        
+        return str(filepath)
+    
+    async def load_session(self, filepath: str) -> None:
+        """
+        Load a session state from a file.
+        
+        Args:
+            filepath: Path to the session file
+        """
+        from pathlib import Path
+        import json
+        
+        filepath = Path(filepath)
+        if not filepath.exists():
+            raise FileNotFoundError(f"Session file not found: {filepath}")
+        
+        # Load state from file
+        with open(filepath, 'r') as f:
+            state = json.load(f)
+        
+        # Restore the state
+        await self.restore_state(state)
+        
+        logger.info(f"Loaded session from {filepath}")
+        
+        # Send notification to client
+        await self.send_notification("session.loaded", {
+            "session_id": self.session_id,
+            "filepath": str(filepath),
+            "saved_at": state.get("saved_at", "unknown"),
+            "active_agent": self.active_agent,
+            "agent_count": len(self.agents)
+        })
+    
     async def _send_progress_notification(self, progress: dict, tool_names: list = None) -> None:
         """
         Send a progress notification via WebSocket.
@@ -779,6 +874,20 @@ class StatelessInteractiveSession:
         Returns:
             True if continuation is needed, False otherwise
         """
+        # Get model name from active agent or config
+        model_name = None
+        if self.active_agent and self.active_agent in self.agents:
+            agent = self.agents[self.active_agent]
+            model_name = agent.config.model_name
+        
+        if not model_name:
+            # Fallback to config
+            model_name = self.config.get('openrouter', {}).get('model', 'google/gemini-2.5-flash-preview')
+        
+        # Apply model-specific optimizations first
+        if isinstance(result, dict):
+            result = self._apply_model_optimization(result, model_name)
+        
         # Check if agent has continuation strategy FIRST
         # This allows agents to explicitly signal continuation even on single-tool models
         if self.active_agent and self.active_agent in self.agents:
@@ -795,16 +904,6 @@ class StatelessInteractiveSession:
         
         # Check if model supports multi-tool
         from ai_whisperer.model_capabilities import supports_multi_tool
-        
-        # Get model name from active agent or config
-        model_name = None
-        if self.active_agent and self.active_agent in self.agents:
-            agent = self.agents[self.active_agent]
-            model_name = agent.config.model_name
-        
-        if not model_name:
-            # Fallback to config
-            model_name = self.config.get('openrouter', {}).get('model', 'google/gemini-2.5-flash-preview')
         
         model_supports_multi_tool = supports_multi_tool(model_name)
         logger.info(f"🔄 MODEL CAPABILITY CHECK: {model_name} multi-tool support: {model_supports_multi_tool}")
@@ -843,6 +942,76 @@ class StatelessInteractiveSession:
                 return True
         
         return False
+    
+    def _apply_model_optimization(self, response: Dict[str, Any], model_name: str) -> Dict[str, Any]:
+        """Apply model-specific optimizations to improve continuation behavior"""
+        from ai_whisperer.model_capabilities import get_model_capabilities
+        
+        capabilities = get_model_capabilities(model_name)
+        
+        # For single-tool models, enhance continuation signals
+        if not capabilities.get("multi_tool"):
+            response_text = response.get('response', '')
+            if response_text and 'tool_calls' in response:
+                # Add explicit continuation hints to response
+                enhanced_patterns = [
+                    "I'll continue with the next step",
+                    "Now proceeding to the next operation",
+                    "Moving on to step"
+                ]
+                
+                # Check if response already has continuation patterns
+                has_pattern = any(pattern.lower() in response_text.lower() 
+                                for pattern in enhanced_patterns)
+                
+                if not has_pattern and len(response.get('tool_calls', [])) == 1:
+                    # Enhance response with continuation hint
+                    logger.debug(f"Enhancing single-tool model response for better continuation")
+                    response['_continuation_optimized'] = True
+        
+        # For multi-tool models, check if batching was suboptimal
+        elif capabilities.get("multi_tool") and response.get('tool_calls'):
+            tool_count = len(response.get('tool_calls', []))
+            if tool_count == 1:
+                # Log for monitoring - might indicate prompt could be optimized
+                logger.debug(f"Multi-tool model {model_name} used only 1 tool - consider prompt optimization")
+                response['_batching_opportunity'] = True
+        
+        return response
+    
+    def _get_optimal_continuation_config(self, agent_type: str, model_name: str) -> Dict[str, Any]:
+        """Get optimized continuation configuration for agent/model combination"""
+        from ai_whisperer.model_capabilities import get_model_capabilities
+        
+        # Start with agent's base config
+        base_config = {}
+        if agent_type and agent_type in self.agents:
+            agent = self.agents[agent_type]
+            if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
+                base_config = {
+                    'max_iterations': agent.continuation_strategy.max_iterations,
+                    'timeout': agent.continuation_strategy.timeout,
+                    'require_explicit_signal': agent.continuation_strategy.require_explicit_signal
+                }
+        
+        # Apply model-specific adjustments
+        capabilities = get_model_capabilities(model_name)
+        
+        if capabilities.get("multi_tool"):
+            # Multi-tool models need fewer iterations
+            base_config['max_iterations'] = min(base_config.get('max_iterations', 5), 5)
+            # Can use explicit signals effectively
+            base_config['require_explicit_signal'] = True
+        else:
+            # Single-tool models need more iterations
+            base_config['max_iterations'] = base_config.get('max_iterations', 10)
+            # Increase timeout for sequential operations
+            base_config['timeout'] = int(base_config.get('timeout', 300) * 1.5)
+            # Don't require explicit signals
+            base_config['require_explicit_signal'] = False
+            
+        logger.debug(f"Optimized continuation config for {agent_type}/{model_name}: {base_config}")
+        return base_config
     
     async def stop_ai_session(self) -> None:
         """
@@ -942,6 +1111,159 @@ class StatelessInteractiveSession:
             "refreshed": len(refreshed_items),
             "items": [item.to_dict() for item in refreshed_items]
         }
+    
+    async def clear_agent_context(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+        """Clear all context items for an agent.
+        
+        Args:
+            agent_id: Agent ID, uses active agent if not provided
+            
+        Returns:
+            Dictionary with clear operation results
+        """
+        if agent_id is None:
+            agent_id = self.active_agent
+        
+        if not agent_id:
+            return {"cleared": False, "error": "No active agent"}
+        
+        # Get current context size before clearing
+        current_context = self.context_manager.get_agent_context(agent_id)
+        items_count = len(current_context)
+        
+        # Clear the context
+        self.context_manager.clear_agent_context(agent_id)
+        
+        # Also clear the agent's internal context if it has one
+        if agent_id in self.agents:
+            agent = self.agents[agent_id]
+            if hasattr(agent, 'context') and hasattr(agent.context, 'clear'):
+                agent.context.clear()
+        
+        # Notify client
+        await self.send_notification("context.cleared", {
+            "agent_id": agent_id,
+            "items_cleared": items_count
+        })
+        
+        logger.info(f"Cleared {items_count} context items for agent {agent_id}")
+        
+        return {
+            "agent_id": agent_id,
+            "cleared": True,
+            "items_cleared": items_count
+        }
+    
+    async def _handle_command(self, message: str) -> bool:
+        """Handle slash commands.
+        
+        Args:
+            message: The message starting with /
+            
+        Returns:
+            True if command was handled, False otherwise
+        """
+        parts = message.split(maxsplit=1)
+        command = parts[0].lower()
+        args = parts[1] if len(parts) > 1 else ""
+        
+        if command == "/clear":
+            # Handle /clear command
+            target_agent = None
+            if args:
+                # Check if agent name was specified
+                if args in self.agents:
+                    target_agent = args
+                elif args == "all":
+                    # Clear all agents
+                    total_cleared = 0
+                    for agent_id in list(self.agents.keys()):
+                        result = await self.clear_agent_context(agent_id)
+                        total_cleared += result.get("items_cleared", 0)
+                    
+                    # Send response to user
+                    await self._send_system_message(
+                        f"Cleared context for all agents ({total_cleared} items total)"
+                    )
+                    return True
+                else:
+                    await self._send_system_message(
+                        f"Unknown agent: {args}. Available agents: {', '.join(self.agents.keys())}"
+                    )
+                    return True
+            
+            # Clear specific agent or current agent
+            result = await self.clear_agent_context(target_agent)
+            
+            if result.get("cleared"):
+                agent_name = target_agent or self.active_agent
+                await self._send_system_message(
+                    f"Cleared {result['items_cleared']} context items for agent {agent_name}"
+                )
+            else:
+                await self._send_system_message(
+                    f"Failed to clear context: {result.get('error', 'Unknown error')}"
+                )
+            
+            return True
+        
+        elif command == "/save":
+            # Handle /save command
+            try:
+                filepath = await self.save_session(args if args else None)
+                await self._send_system_message(f"Session saved to: {filepath}")
+            except Exception as e:
+                await self._send_system_message(f"Failed to save session: {e}")
+            return True
+        
+        elif command == "/load":
+            # Handle /load command
+            if not args:
+                await self._send_system_message("Please specify a file to load: /load <filepath>")
+                return True
+            
+            try:
+                await self.load_session(args)
+                await self._send_system_message(
+                    f"Session loaded successfully. Active agent: {self.active_agent}, "
+                    f"Total agents: {len(self.agents)}"
+                )
+            except FileNotFoundError:
+                await self._send_system_message(f"Session file not found: {args}")
+            except Exception as e:
+                await self._send_system_message(f"Failed to load session: {e}")
+            return True
+        
+        elif command == "/help":
+            # Show available commands
+            help_text = """Available commands:
+• /clear - Clear context for current agent
+• /clear <agent> - Clear context for specific agent
+• /clear all - Clear context for all agents
+• /save - Save current session
+• /save <filepath> - Save session to specific file
+• /load <filepath> - Load session from file
+• /help - Show this help message"""
+            
+            await self._send_system_message(help_text)
+            return True
+        
+        # Unknown command
+        return False
+    
+    async def _send_system_message(self, message: str):
+        """Send a system message to the client.
+        
+        Args:
+            message: The system message to send
+        """
+        # Send as a notification that looks like an agent message
+        await self.send_notification("agent.message", {
+            "agent_id": "system",
+            "message": message,
+            "timestamp": datetime.now().isoformat(),
+            "type": "system"
+        })
 
 
     def _should_use_structured_output_for_plan(self, agent: Any, message: str) -> bool:
