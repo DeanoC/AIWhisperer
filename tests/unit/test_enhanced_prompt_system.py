@@ -321,11 +321,12 @@ class TestPromptSystemIntegration:
         """Test loading actual shared prompts from the project."""
         # This test uses the real project structure
         # Initialize PathManager first
+        project_root = Path(__file__).parent.parent.parent  # Go up to project root
         PathManager.get_instance().initialize(config_values={
-            'workspace_path': Path.cwd(),
-            'output_path': Path.cwd() / "output",
-            'project_path': Path.cwd(),
-            'prompt_path': Path.cwd()
+            'workspace_path': project_root,
+            'output_path': project_root / "output",
+            'project_path': project_root,
+            'prompt_path': project_root
         })
         
         config = PromptConfiguration({})

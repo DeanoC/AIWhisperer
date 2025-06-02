@@ -60,32 +60,25 @@ class TestSystemHealthCheckToolBasics:
 class TestSystemHealthCheckToolDirectoryFinding:
     """Test health check directory discovery."""
     
-    @patch('ai_whisperer.tools.system_health_check_tool.Path.exists')
-    @patch('ai_whisperer.tools.system_health_check_tool.Path.is_dir')
-    def test_find_health_check_directories_basic_paths(self, mock_is_dir, mock_exists):
+    def test_find_health_check_directories_basic_paths(self):
         """Test finding health check directories in basic paths."""
         tool = SystemHealthCheckTool()
         
-        # Mock one path exists
-        def mock_exists_impl(path_self):
-            return str(path_self) == "scripts/debbie/system_health_check"
-        
-        def mock_is_dir_impl(path_self):
-            return str(path_self) == "scripts/debbie/system_health_check"
-        
-        mock_exists.side_effect = lambda: mock_exists_impl(mock_exists.__self__)
-        mock_is_dir.side_effect = lambda: mock_is_dir_impl(mock_is_dir.__self__)
-        
-        # Patch Path to return our mock
+        # Mock Path objects for different paths
         with patch('ai_whisperer.tools.system_health_check_tool.Path') as mock_path:
-            mock_path_instance = Mock()
-            mock_path_instance.exists.return_value = True
-            mock_path_instance.is_dir.return_value = True
-            mock_path.return_value = mock_path_instance
+            # Create different mock instances for different paths
+            def create_path_mock(path_str):
+                mock_instance = Mock()
+                mock_instance.exists.return_value = "scripts/debbie/system_health_check" in str(path_str)
+                mock_instance.is_dir.return_value = "scripts/debbie/system_health_check" in str(path_str)
+                mock_instance.__str__.return_value = str(path_str)
+                return mock_instance
+            
+            mock_path.side_effect = create_path_mock
             
             dirs = tool._find_health_check_directories()
             
-            assert len(dirs) >= 0  # May find mocked directories
+            assert isinstance(dirs, list)  # Should return a list of directories
     
     @patch('ai_whisperer.tools.system_health_check_tool.logger')
     def test_find_health_check_directories_with_logging(self, mock_logger):
