@@ -33,7 +33,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
 
-from ai_whisperer.tools.base_tool import AITool, ToolResult
+from ai_whisperer.tools.base_tool import AITool
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,56 @@ class SystemHealthCheckTool(AITool):
     @property
     def description(self) -> str:
         return "Run comprehensive system health checks including agent verification, tool testing, and AI provider validation"
+    
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
+        """Schema for tool parameters."""
+        return {
+            "type": "object",
+            "properties": {
+                "check_category": {
+                    "type": "string",
+                    "description": "Category of checks to run (all, agents, tools, providers, custom)",
+                    "enum": ["all", "agents", "tools", "providers", "custom"],
+                    "default": "all"
+                },
+                "specific_checks": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Specific check scripts to run (if not running all)"
+                },
+                "timeout_per_check": {
+                    "type": "integer",
+                    "description": "Timeout in seconds for each check script",
+                    "default": 30
+                },
+                "verbose": {
+                    "type": "boolean",
+                    "description": "Include detailed output from each check",
+                    "default": False
+                }
+            },
+            "required": [],
+            "additionalProperties": False
+        }
+    
+    def get_ai_prompt_instructions(self) -> str:
+        """Instructions for AI on using this tool."""
+        return """
+        Use the system_health_check tool to verify AIWhisperer components are working correctly.
+        You can:
+        - Run all checks with default settings
+        - Filter by category: agents, tools, providers, or custom
+        - Run specific named checks
+        - Set a custom timeout per check (default 30s)
+        - Enable verbose output for detailed diagnostics
+        
+        Examples:
+        - Check everything: execute()
+        - Check only agents: execute(check_category="agents")
+        - Run specific checks: execute(specific_checks=["test_agent_alice", "test_openrouter"])
+        - Verbose output: execute(verbose=True)
+        """
         
     def get_openrouter_tool_definition(self) -> dict:
         return {
@@ -58,34 +108,7 @@ class SystemHealthCheckTool(AITool):
             "function": {
                 "name": self.name,
                 "description": self.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "check_category": {
-                            "type": "string",
-                            "description": "Category of checks to run (all, agents, tools, providers, custom)",
-                            "enum": ["all", "agents", "tools", "providers", "custom"],
-                            "default": "all"
-                        },
-                        "specific_checks": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "Specific check scripts to run (if not running all)"
-                        },
-                        "timeout_per_check": {
-                            "type": "integer",
-                            "description": "Timeout in seconds for each check script",
-                            "default": 30
-                        },
-                        "verbose": {
-                            "type": "boolean",
-                            "description": "Include detailed output from each check",
-                            "default": False
-                        }
-                    },
-                    "required": [],
-                    "additionalProperties": False
-                }
+                "parameters": self.parameters_schema
             }
         }
     
