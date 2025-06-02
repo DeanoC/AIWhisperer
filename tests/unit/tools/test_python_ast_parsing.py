@@ -27,26 +27,26 @@ class TestASTParsingFilePaths:
             source_type="file"
         )
     
-def test_parse_file_with_functions(self, tmp_path):
-    """Test parsing a file with function definitions."""
-    test_file = tmp_path / "functions.py"
-    test_file.write_text("""
+    def test_parse_file_with_functions(self, tmp_path):
+        """Test parsing a file with function definitions."""
+        test_file = tmp_path / "functions.py"
+        test_file.write_text("""
 def hello(name):
-'''Say hello to someone'''
-return f"Hello, {name}!"
+    '''Say hello to someone'''
+    return f"Hello, {name}!"
 def add(a, b):
     return a + b
 """)
         
-    tool = PythonASTJSONTool()
-    result = tool.execute(
-    action="to_json",
-    source=str(test_file),
-    source_type="file"
-    )
+        tool = PythonASTJSONTool()
+        result = tool.execute(
+            action="to_json",
+            source=str(test_file),
+            source_type="file"
+        )
     
-def test_parse_file_with_classes(self, tmp_path):
-    """Test parsing a file with class definitions."""
+    def test_parse_file_with_classes(self, tmp_path):
+            """Test parsing a file with class definitions."""
     test_file = tmp_path / "classes.py"
     test_file.write_text("""
 class Person:

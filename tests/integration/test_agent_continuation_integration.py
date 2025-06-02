@@ -28,7 +28,7 @@ class TestAgentContinuationIntegration:
     @pytest.fixture
     def mock_path_manager(self):
         """Mock PathManager for testing."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
             mock_instance = Mock()
             mock_instance.prompt_path = Path(__file__).parent.parent.parent
             mock_instance.app_path = Path(__file__).parent.parent.parent

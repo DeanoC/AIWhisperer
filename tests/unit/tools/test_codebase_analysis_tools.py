@@ -53,7 +53,7 @@ class TestAnalyzeLanguagesTool:
     @pytest.fixture
     def analyze_tool(self, temp_project):
         """Create tool instance with mocked PathManager."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_project
             mock_instance.resolve_path = lambda x: str(Path(temp_project) / x) if x != '.' else temp_project
@@ -183,7 +183,7 @@ def test_cache_functionality():
     @pytest.fixture
     def similar_code_tool(self, temp_codebase):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_codebase
             mock_pm.return_value = mock_instance
@@ -292,7 +292,7 @@ class TestGetProjectStructureTool:
     @pytest.fixture
     def structure_tool(self, temp_project_structure):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_project_structure
             mock_instance.resolve_path = lambda x: str(Path(temp_project_structure) / x) if x != '.' else temp_project_structure

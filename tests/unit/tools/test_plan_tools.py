@@ -96,7 +96,7 @@ Start with in-memory implementation, then add Redis support.
     @pytest.fixture
     def create_tool(self, temp_workspace):
         """Create tool instance with mocked PathManager."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_workspace
             mock_pm.return_value = mock_instance
@@ -308,7 +308,7 @@ class TestListPlansTool:
     @pytest.fixture
     def list_tool(self, temp_workspace_with_plans):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_workspace_with_plans
             mock_pm.return_value = mock_instance
@@ -404,7 +404,7 @@ class TestReadPlanTool:
     @pytest.fixture
     def read_tool(self, temp_workspace_with_plan):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_workspace_with_plan
             mock_pm.return_value = mock_instance
@@ -490,7 +490,7 @@ class TestUpdatePlanFromRFCTool:
     @pytest.fixture
     def update_tool(self, temp_workspace_with_modified_rfc):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_workspace_with_modified_rfc
             mock_pm.return_value = mock_instance
@@ -591,7 +591,7 @@ class TestMovePlanTool:
     @pytest.fixture
     def move_tool(self, temp_workspace_with_plan_to_move):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_workspace_with_plan_to_move
             mock_pm.return_value = mock_instance
