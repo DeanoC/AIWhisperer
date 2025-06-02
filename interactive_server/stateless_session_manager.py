@@ -409,7 +409,7 @@ class StatelessInteractiveSession:
                         self.config.get('openrouter', {}).get('model', '')
             
             if model_name:
-                from ai_whisperer.agents.prompt_optimizer import optimize_user_message
+                from ai_whisperer.extensions.agents.prompt_optimizer import optimize_user_message
                 optimized_message = optimize_user_message(message, model_name, self.active_agent)
                 if optimized_message != message:
                     logger.debug(f"Optimized user message for {model_name}")

@@ -1,6 +1,6 @@
 import pytest
 
-from ai_whisperer.agents.agent import Agent
+from ai_whisperer.extensions.agents.agent import Agent
 from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent))
 
-from ai_whisperer.batch.batch_client import BatchClient
+from ai_whisperer.extensions.batch.client import BatchClient
 
 
 async def main():

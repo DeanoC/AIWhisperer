@@ -8,9 +8,9 @@ import os
 import json
 import logging
 import asyncio
-from .server_manager import ServerManager
-from .websocket_client import WebSocketClient
-from .script_processor import ScriptProcessor, ScriptFileNotFoundError
+from ai_whisperer.extensions.batch.server_manager import ServerManager
+from ai_whisperer.extensions.batch.websocket_client import WebSocketClient
+from ai_whisperer.extensions.batch.script_processor import ScriptProcessor, ScriptFileNotFoundError
 
 logger = logging.getLogger(__name__)
 

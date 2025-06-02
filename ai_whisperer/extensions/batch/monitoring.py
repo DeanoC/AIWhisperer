@@ -15,7 +15,7 @@ import statistics
 from collections import deque, defaultdict
 
 from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
-from ..logging.debbie_logger import DebbieLogger
+from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 from ..logging.log_aggregator import LogAggregator
 from ..tools.session_inspector_tool import SessionInspectorTool
 from ..tools.message_injector_tool import MessageInjectorTool

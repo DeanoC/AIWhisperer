@@ -8,7 +8,7 @@ import json
 from unittest.mock import Mock, AsyncMock, patch
 from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.services.agents.stateless import StatelessAgent
-from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
+from ai_whisperer.extensions.agents.continuation_strategy import ContinuationStrategy
 from interactive_server.stateless_session_manager import StatelessSessionManager
 
 

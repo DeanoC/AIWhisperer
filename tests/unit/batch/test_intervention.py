@@ -11,12 +11,12 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 import uuid
 
-from ai_whisperer.batch.intervention import (
+from ai_whisperer.extensions.batch.intervention import (
     InterventionStrategy, InterventionResult, InterventionConfig,
     InterventionRecord, InterventionHistory, InterventionExecutor,
     InterventionOrchestrator
 )
-from ai_whisperer.batch.monitoring import AnomalyAlert
+from ai_whisperer.extensions.batch.monitoring import AnomalyAlert
 from ai_whisperer.core.logging import LogLevel
 
 

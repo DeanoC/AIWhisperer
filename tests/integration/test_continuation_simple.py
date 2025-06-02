@@ -7,7 +7,7 @@ import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 
-from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
+from ai_whisperer.extensions.agents.continuation_strategy import ContinuationStrategy
 from ai_whisperer.model_capabilities import get_model_capabilities
 
 

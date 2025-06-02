@@ -10,7 +10,7 @@ from unittest.mock import Mock, AsyncMock, patch, MagicMock
 
 # These imports will fail until implementation
 from ai_whisperer.agents.agent_e_handler import AgentEHandler
-from ai_whisperer.agents.agent_communication import (
+from ai_whisperer.extensions.agents.communication import (
     AgentMessage,
     MessageType,
     ClarificationRequest,

@@ -9,7 +9,7 @@ from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 
 from ai_whisperer.model_capabilities import get_model_capabilities
-from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
+from ai_whisperer.extensions.agents.continuation_strategy import ContinuationStrategy
 from interactive_server.stateless_session_manager import StatelessSessionManager
 
 

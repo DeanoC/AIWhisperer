@@ -15,7 +15,7 @@ from ai_whisperer.agents.external_adapters import (
     ExternalAgentAdapter,
     AdapterRegistry
 )
-from ai_whisperer.agents.decomposed_task import DecomposedTask
+from ai_whisperer.extensions.agents.decomposed_task import DecomposedTask
 from ai_whisperer.agents.external_agent_result import ExternalAgentResult
 
 

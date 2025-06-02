@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, MagicMock
 import time
 
-from ai_whisperer.logging.debbie_logger import (
+from ai_whisperer.extensions.monitoring.debbie_logger import (
     PatternType, DetectedPattern, Insight, PatternDetector,
     InsightGenerator, DebbieCommentary, DebbieLogger
 )

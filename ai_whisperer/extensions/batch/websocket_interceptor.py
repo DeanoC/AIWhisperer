@@ -14,9 +14,9 @@ from enum import Enum
 import websockets
 
 from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
-from ..logging.debbie_logger import DebbieLogger
+from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 from ..logging.log_aggregator import LogAggregator
-from .monitoring import MonitoringEvent, DebbieMonitor
+from ai_whisperer.extensions.batch.monitoring import MonitoringEvent, DebbieMonitor
 
 logger = logging.getLogger(__name__)
 

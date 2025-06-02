@@ -29,7 +29,7 @@ Related:
 import logging
 from typing import Dict, Any, Optional
 
-from .mailbox import get_mailbox
+from ai_whisperer.extensions.mailbox.mailbox import get_mailbox
 
 logger = logging.getLogger(__name__)
 

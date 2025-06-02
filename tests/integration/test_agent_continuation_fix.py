@@ -6,7 +6,7 @@ from unittest.mock import Mock, AsyncMock
 
 from ai_whisperer.services.agents.stateless import StatelessAgent
 from ai_whisperer.services.agents.config import AgentConfig
-from ai_whisperer.agents.continuation_strategy import ContinuationStrategy
+from ai_whisperer.extensions.agents.continuation_strategy import ContinuationStrategy
 from ai_whisperer.context.agent_context import AgentContext
 from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 from interactive_server.stateless_session_manager import StatelessInteractiveSession

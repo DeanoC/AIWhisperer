@@ -4,7 +4,7 @@ Tests for the universal mailbox system.
 import pytest
 from datetime import datetime, timezone
 
-from ai_whisperer.agents.mailbox import (
+from ai_whisperer.extensions.mailbox.mailbox import (
     Mail, MailboxSystem, MessagePriority, MessageStatus,
     get_mailbox, reset_mailbox
 )

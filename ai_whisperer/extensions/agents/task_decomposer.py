@@ -30,7 +30,7 @@ import logging
 from typing import List, Dict, Any, Set, Tuple
 from collections import defaultdict, deque
 
-from .decomposed_task import DecomposedTask
+from ai_whisperer.extensions.agents.decomposed_task import DecomposedTask
 from .agent_e_exceptions import InvalidPlanError, DependencyCycleError, TaskDecompositionError
 
 logger = logging.getLogger(__name__)

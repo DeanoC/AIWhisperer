@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from ai_whisperer.core.config import load_config
 from ai_whisperer.model_override import ModelOverride
-from ai_whisperer.batch.batch_client import BatchClient
+from ai_whisperer.extensions.batch.client import BatchClient
 from tests.integration.test_model_continuation_compatibility import (
     ModelCompatibilityTester,
     CONTINUATION_TEST_SCENARIOS,

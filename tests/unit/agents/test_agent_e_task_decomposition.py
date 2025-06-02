@@ -11,8 +11,8 @@ from pathlib import Path
 
 # These imports will fail until we implement the classes
 # This is expected in TDD - tests first, implementation second
-from ai_whisperer.agents.task_decomposer import TaskDecomposer
-from ai_whisperer.agents.decomposed_task import DecomposedTask
+from ai_whisperer.extensions.agents.task_decomposer import TaskDecomposer
+from ai_whisperer.extensions.agents.decomposed_task import DecomposedTask
 from ai_whisperer.agents.agent_e_exceptions import (
     InvalidPlanError,
     TaskDecompositionError,

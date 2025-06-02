@@ -4,7 +4,7 @@ Test continuation strategy implementation.
 import pytest
 import time
 from unittest.mock import patch
-from ai_whisperer.agents.continuation_strategy import (
+from ai_whisperer.extensions.agents.continuation_strategy import (
     ContinuationStrategy, 
     ContinuationState, 
     ContinuationProgress

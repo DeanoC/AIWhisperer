@@ -4,7 +4,7 @@ This tests the refactored Agent that works without delegates.
 """
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
-from ai_whisperer.agents.agent import Agent
+from ai_whisperer.extensions.agents.agent import Agent
 from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
 from ai_whisperer.services.execution.ai_loop import StatelessAILoop

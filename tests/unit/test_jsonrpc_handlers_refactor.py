@@ -5,7 +5,7 @@ from interactive_server import main as jsonrpc_server
 from interactive_server.message_models import (
     SendUserMessageRequest, SendUserMessageResponse, StartSessionRequest, StartSessionResponse
 )
-from ai_whisperer.agents.agent import Agent
+from ai_whisperer.extensions.agents.agent import Agent
 from ai_whisperer.services.agents.config import AgentConfig
 pytestmark = pytest.mark.xfail(reason="Depends on removed InteractiveSessionManager. All code removed for discovery.")
 

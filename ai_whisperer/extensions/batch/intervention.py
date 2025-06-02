@@ -14,11 +14,11 @@ import json
 import uuid
 
 from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
-from ..logging.debbie_logger import DebbieLogger
+from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 from ..tools.message_injector_tool import MessageInjectorTool, InjectionType
 from ..tools.session_inspector_tool import SessionInspectorTool
 from ..tools.python_executor_tool import PythonExecutorTool
-from .monitoring import AnomalyAlert
+from ai_whisperer.extensions.batch.monitoring import AnomalyAlert
 
 logger = logging.getLogger(__name__)
 

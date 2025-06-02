@@ -8,10 +8,10 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from .monitoring import DebbieMonitor, AnomalyAlert
-from .intervention import InterventionOrchestrator, InterventionConfig
-from .websocket_interceptor import WebSocketInterceptor
-from ..logging.debbie_logger import DebbieLogger
+from ai_whisperer.extensions.batch.monitoring import DebbieMonitor, AnomalyAlert
+from ai_whisperer.extensions.batch.intervention import InterventionOrchestrator, InterventionConfig
+from ai_whisperer.extensions.batch.websocket_interceptor import WebSocketInterceptor
+from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 from ..logging.log_aggregator import LogAggregator
 
 logger = logging.getLogger(__name__)

@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch, MagicMock, call
 from pathlib import Path
 import os
 
-from ai_whisperer.batch.server_manager import ServerManager
+from ai_whisperer.extensions.batch.server_manager import ServerManager
 
 
 class TestServerManagerInit:

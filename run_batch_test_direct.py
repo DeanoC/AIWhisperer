@@ -3,7 +3,7 @@
 
 import asyncio
 import sys
-from ai_whisperer.batch.batch_client import BatchClient
+from ai_whisperer.extensions.batch.client import BatchClient
 
 async def main():
     if len(sys.argv) < 2:
