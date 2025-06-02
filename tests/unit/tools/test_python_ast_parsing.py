@@ -46,9 +46,9 @@ def add(a, b):
         )
     
     def test_parse_file_with_classes(self, tmp_path):
-            """Test parsing a file with class definitions."""
-    test_file = tmp_path / "classes.py"
-    test_file.write_text("""
+        """Test parsing a file with class definitions."""
+        test_file = tmp_path / "classes.py"
+        test_file.write_text("""
 class Person:
 '''A person class'''
 def __init__(self, name: str, age: int):
@@ -59,17 +59,17 @@ def greet(self) -> str:
     return f"Hi, I'm {self.name}"
 """)
         
-    tool = PythonASTJSONTool()
-    result = tool.execute(
+        tool = PythonASTJSONTool()
+        result = tool.execute(
             action="to_json",
             source=str(test_file),
             source_type="file"
         )
     
-def test_parse_nonexistent_file(self):
-    """Test parsing a file that doesn't exist."""
-    tool = PythonASTJSONTool()
-    result = tool.execute(
+    def test_parse_nonexistent_file(self):
+        """Test parsing a file that doesn't exist."""
+        tool = PythonASTJSONTool()
+        result = tool.execute(
             action="to_json",
             source="/nonexistent/file.py",
             source_type="file"
