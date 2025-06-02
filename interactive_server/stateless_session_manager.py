@@ -736,12 +736,15 @@ class StatelessInteractiveSession:
         Returns:
             True if continuation is needed, False otherwise
         """
-        # Check if agent has continuation strategy
+        # Check if agent has continuation strategy FIRST
+        # This allows agents to explicitly signal continuation even on single-tool models
         if self.active_agent and self.active_agent in self.agents:
             agent = self.agents[self.active_agent]
             if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
                 # Use the new ContinuationStrategy
-                return agent.continuation_strategy.should_continue(result, original_message)
+                should_continue = agent.continuation_strategy.should_continue(result, original_message)
+                logger.info(f"🔄 CONTINUATION STRATEGY DECISION: {should_continue}")
+                return should_continue
         
         # Fallback: Only continue if we have a dict result with tool calls
         if not isinstance(result, dict) or not result.get('tool_calls'):
@@ -764,8 +767,8 @@ class StatelessInteractiveSession:
         logger.info(f"🔄 MODEL CAPABILITY CHECK: {model_name} multi-tool support: {model_supports_multi_tool}")
         
         if not model_supports_multi_tool:
-            # Single-tool models should NOT continue after using their one tool
-            logger.info(f"🔄 SINGLE-TOOL MODEL: {model_name} - no continuation after tool use")
+            # Single-tool models should NOT continue after using their one tool (unless using continuation strategy)
+            logger.info(f"🔄 SINGLE-TOOL MODEL: {model_name} - no continuation after tool use (no continuation strategy)")
             return False
         
         # Single-tool model continuation logic
