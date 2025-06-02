@@ -1,0 +1,85 @@
+{
+  "name": "Continuation Feature Test",
+  "description": "Test the agent continuation system with various models",
+  "version": "1.0",
+  "steps": [
+    {
+      "step": 1,
+      "description": "Test Alice with multi-step file operations",
+      "agent": "alice",
+      "actions": [
+        {
+          "command": "user_message",
+          "message": "Please list all Python files in the tests/unit directory, then read the first 20 lines of test_continuation_strategy.py",
+          "wait_for_completion": true,
+          "expect_continuation": true
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "description": "Test Patricia with RFC creation and listing",
+      "agent": "patricia",
+      "actions": [
+        {
+          "command": "switch_agent",
+          "agent": "patricia"
+        },
+        {
+          "command": "user_message",
+          "message": "First list all existing RFCs, then create a new RFC for improving batch mode error handling",
+          "wait_for_completion": true,
+          "expect_continuation": true
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "description": "Test Eamonn with plan operations",
+      "agent": "e",
+      "actions": [
+        {
+          "command": "switch_agent",
+          "agent": "e"
+        },
+        {
+          "command": "user_message",
+          "message": "List all available plans, then read the details of the most recent plan",
+          "wait_for_completion": true,
+          "expect_continuation": true
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "description": "Test complex multi-step continuation",
+      "agent": "alice",
+      "actions": [
+        {
+          "command": "switch_agent",
+          "agent": "alice"
+        },
+        {
+          "command": "user_message",
+          "message": "Analyze the project structure, count the Python files, calculate the total lines of code, and create a summary report",
+          "wait_for_completion": true,
+          "expect_continuation": true,
+          "max_iterations": 5
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "continuation_behavior": {
+      "all_steps_completed": true,
+      "no_user_nudging_required": true,
+      "proper_status_updates": true
+    },
+    "expected_outcomes": [
+      "Agents complete multi-step operations autonomously",
+      "Progress notifications sent during long operations",
+      "Tool calls batched appropriately for model type",
+      "Continuation limits respected"
+    ]
+  }
+}
