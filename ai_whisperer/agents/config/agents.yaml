@@ -100,9 +100,22 @@ agents:
       - clarification_requests
       - progress_tracking
     continuation_config:
-      require_explicit_signal: true
+      require_explicit_signal: false  # Changed to false to allow pattern-based continuation
       max_iterations: 10
       timeout: 600
+      continuation_patterns:
+        - "now I'll"
+        - "next, I"
+        - "let me.*next"
+        - "proceeding to"
+        - "moving on to"
+        - "I'll continue with"
+      termination_patterns:
+        - "completed successfully"
+        - "task is complete"
+        - "finished.*all.*steps"
+        - "ready for execution"
+        - "all done"
     configuration:
       decomposition:
         max_task_depth: 3

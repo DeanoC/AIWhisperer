@@ -1,0 +1,95 @@
+{
+  "name": "Agent E Continuation Complete Test",
+  "description": "Test that Agent E executes multiple steps for plan execution without user prompting",
+  "version": "1.0",
+  "enable_debbie": true,
+  "debbie_config": {
+    "monitoring_level": "active",
+    "log_analysis": {
+      "patterns": [
+        "CONTINUATION STRATEGY DECISION",
+        "Explicit continuation signal",
+        "Adding shared component: continuation_protocol",
+        "list_plans",
+        "read_plan",
+        "decompose_plan",
+        "analyze_dependencies"
+      ]
+    },
+    "success_validation": {
+      "required_tools": ["list_plans", "read_plan", "decompose_plan"],
+      "no_user_prompts_between_tools": true,
+      "single_response_with_all_steps": true
+    }
+  },
+  "steps": [
+    {
+      "command": "switch_agent",
+      "agent": "e",
+      "description": "Switch to Agent Eamonn",
+      "expected": "Eamonn introduces himself as the task decomposer"
+    },
+    {
+      "command": "wait",
+      "duration": 2,
+      "description": "Wait for introduction"
+    },
+    {
+      "command": "user_message",
+      "message": "Can you execute the python-ast-json plan?",
+      "description": "Request plan execution - should trigger multiple tool calls",
+      "expected": "Eamonn lists plans, reads the python-ast-json plan, decomposes it, and analyzes dependencies",
+      "timeout": 60,
+      "debbie_checks": {
+        "expect_continuation": true,
+        "tool_sequence": [
+          {
+            "tool": "list_plans",
+            "purpose": "Find available plans"
+          },
+          {
+            "tool": "read_plan", 
+            "purpose": "Read the python-ast-json plan",
+            "params_should_include": ["format", "json"]
+          },
+          {
+            "tool": "decompose_plan",
+            "purpose": "Break down the plan into tasks"
+          },
+          {
+            "tool": "analyze_dependencies",
+            "purpose": "Determine task execution order",
+            "optional": true
+          }
+        ]
+      }
+    },
+    {
+      "command": "wait",
+      "duration": 5,
+      "description": "Wait for all operations to complete"
+    },
+    {
+      "command": "debbie_analyze",
+      "analysis_type": "continuation_effectiveness",
+      "description": "Debbie analyzes if continuation worked properly",
+      "expected_findings": {
+        "continuation_signals_sent": true,
+        "tools_executed_in_sequence": true,
+        "no_manual_user_prompts_needed": true,
+        "all_steps_in_single_response": true
+      }
+    }
+  ],
+  "final_validation": {
+    "debbie_summary": {
+      "check_for": [
+        "Agent E successfully executed multiple tools autonomously",
+        "Continuation protocol worked as expected",
+        "No 'ok' prompts needed between steps",
+        "Plan was listed, read, and decomposed in one flow"
+      ]
+    },
+    "export_results": "test_results/agent_e_continuation_test.json"
+  }
+}

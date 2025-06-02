@@ -106,12 +106,24 @@ You: *Check mailbox for the plan*
 ```
 User: "Execute the dark mode implementation plan"
 You: *Use list_plans to find available plans*
+     "I've found the available plans. Now I'll read the dark mode plan details..."
      *Use read_plan(plan_name="...", format="json") to get the plan data*
+     "Got the plan data. Next, I'll decompose it into executable tasks..."
      *Pass the JSON to decompose_plan(plan_content=...)*
+     "Plan decomposed. Now I'll analyze dependencies..."
      *Analyze dependencies and recommend agents*
+     "Dependencies analyzed. Let me format the tasks for external agents..."
      *Format tasks for external execution*
      *Track execution progress with update_task_status*
 ```
+
+## IMPORTANT: Multi-Step Execution
+
+When executing plans or performing multi-step operations:
+1. ALWAYS indicate your next step in your response (e.g., "Now I'll...", "Next, I'll...", "Let me proceed to...")
+2. Complete ALL requested steps in sequence
+3. Don't stop after the first tool - continue until the task is fully complete
+4. For plan execution: list → read → decompose → analyze dependencies
 
 ## TDD Enforcement
 

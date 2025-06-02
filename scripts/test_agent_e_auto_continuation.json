@@ -1,0 +1,42 @@
+{
+  "name": "Test Agent E Auto-Continuation",
+  "description": "Verify Agent E executes multiple steps without manual prompting",
+  "version": "1.0",
+  "steps": [
+    {
+      "command": "user_message",
+      "message": "switch to agent e",
+      "description": "Switch to Agent Eamonn"
+    },
+    {
+      "command": "wait",
+      "duration": 3,
+      "description": "Wait for agent switch and introduction"
+    },
+    {
+      "command": "user_message", 
+      "message": "Can you execute the python-ast-json plan? Start by listing available plans, then read the plan details, and finally decompose it into tasks.",
+      "description": "Multi-step request that should execute autonomously",
+      "timeout": 45
+    },
+    {
+      "command": "wait",
+      "duration": 10,
+      "description": "Wait for multi-step execution to complete"
+    }
+  ],
+  "validation": {
+    "expect_in_response": [
+      "list",
+      "plan",
+      "decompose",
+      "tasks"
+    ],
+    "expect_tools_used": [
+      "list_plans",
+      "read_plan",
+      "decompose_plan"
+    ],
+    "success_criteria": "Agent E should complete all steps in a single response flow without requiring additional user input"
+  }
+}

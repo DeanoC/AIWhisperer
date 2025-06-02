@@ -1,0 +1,73 @@
+{
+  "name": "Agent E Continuation Test with Debbie Monitoring",
+  "description": "Test Agent E executes multiple tools autonomously with Debbie analyzing the behavior",
+  "version": "1.0",
+  "config": {
+    "timeout": 60,
+    "log_level": "DEBUG"
+  },
+  "steps": [
+    {
+      "command": "startSession",
+      "description": "Start a new session"
+    },
+    {
+      "command": "session.switch_agent",
+      "params": {
+        "agent_id": "d"
+      },
+      "description": "Switch to Debbie for monitoring setup"
+    },
+    {
+      "command": "sendUserMessage",
+      "params": {
+        "message": "Monitor the next agent interaction for continuation behavior. Log any CONTINUATION signals and tool execution patterns."
+      },
+      "wait": 3
+    },
+    {
+      "command": "session.switch_agent", 
+      "params": {
+        "agent_id": "e"
+      },
+      "description": "Switch to Agent E"
+    },
+    {
+      "command": "wait",
+      "duration": 2,
+      "description": "Wait for agent switch"
+    },
+    {
+      "command": "sendUserMessage",
+      "params": {
+        "message": "Execute the python-ast-json plan. List the available plans first, then read the specific plan with format='json', and finally decompose it into executable tasks."
+      },
+      "description": "Multi-step task for Agent E",
+      "timeout": 45
+    },
+    {
+      "command": "wait",
+      "duration": 15,
+      "description": "Wait for Agent E to complete all steps"
+    },
+    {
+      "command": "session.switch_agent",
+      "params": {
+        "agent_id": "d"
+      },
+      "description": "Switch back to Debbie for analysis"
+    },
+    {
+      "command": "sendUserMessage",
+      "params": {
+        "message": "Analyze the Agent E interaction. Did continuation work? How many tools were executed? Were there any CONTINUE signals?"
+      },
+      "description": "Debbie analyzes the test results",
+      "wait": 5
+    },
+    {
+      "command": "stopSession",
+      "description": "End the session"
+    }
+  ]
+}
