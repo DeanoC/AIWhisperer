@@ -1,6 +1,7 @@
 import pytest
 from unittest import mock
 from ai_whisperer.utils import workspace
+from ai_whisperer.utils.workspace import WorkspaceNotFoundError
 
 # Example CLI entrypoint (to be replaced with actual CLI logic)
 def cli_entrypoint(workspace_path):
@@ -10,10 +11,10 @@ def cli_entrypoint(workspace_path):
 
 def test_cli_validates_workspace_before_execution(tmp_path):
     """Test CLI validates workspace before running commands"""
-    workspace = tmp_path / "project"
-    (workspace / ".WHISPER").mkdir(parents=True)
+    workspace_dir = tmp_path / "project"
+    (workspace_dir / ".WHISPER").mkdir(parents=True)
     # Should not raise
-    assert cli_entrypoint(str(workspace)) is True
+    assert cli_entrypoint(str(workspace_dir)) is True
     # Should raise if not present
     with pytest.raises(workspace.WorkspaceNotFoundError):
         cli_entrypoint(str(tmp_path / "no_workspace"))

@@ -62,7 +62,8 @@ def test_workspace_tools_registration():
     
     # Verify all tools are registered
     all_tools = registry.get_all_tools()
-    tool_names = [tool.name for tool in all_tools]
+    # get_all_tools returns a dict {tool_name: tool_instance}
+    tool_names = list(all_tools.keys())
     
     assert "list_directory" in tool_names
     assert "search_files" in tool_names
