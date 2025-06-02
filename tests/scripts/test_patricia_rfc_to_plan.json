@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "description": "Test Patricia's RFC-to-plan conversion workflow",
+    "created": "2025-05-31",
+    "agent": "p"
+  },
+  "conversation": [
+    {
+      "user": "Hi Patricia! I want to add a feature that displays user avatars in our chat interface. The avatars should show the first letter of the user's name with a colored background."
+    },
+    {
+      "wait_for": "RFC.*created|created.*RFC",
+      "timeout": 30
+    },
+    {
+      "user": "Yes, exactly! The avatars should be circular, about 32x32 pixels, and use a consistent color based on the username (so the same user always gets the same color). We should support both light and dark themes."
+    },
+    {
+      "wait_for": "update.*RFC|RFC.*updated",
+      "timeout": 30
+    },
+    {
+      "user": "Good questions! Let's use a hash function on the username to select from 8-10 predefined colors. For accessibility, ensure at least 4.5:1 contrast ratio. And yes, we should have a fallback generic avatar icon for users without names."
+    },
+    {
+      "wait_for": "update.*RFC|RFC.*updated",
+      "timeout": 30
+    },
+    {
+      "user": "The RFC looks great! Yes, please convert it to an executable plan."
+    },
+    {
+      "wait_for": "plan.*created|created.*plan",
+      "timeout": 60
+    },
+    {
+      "user": "Please show me the plan details."
+    },
+    {
+      "wait_for": "RED.*GREEN.*REFACTOR|TDD|test.*first",
+      "timeout": 30
+    }
+  ],
+  "validation": {
+    "expect_tools": [
+      "create_rfc",
+      "update_rfc",
+      "create_plan_from_rfc",
+      "read_plan"
+    ],
+    "expect_patterns": [
+      "RFC.*avatar",
+      "plan.*avatar",
+      "RED.*phase",
+      "GREEN.*phase",
+      "REFACTOR.*phase"
+    ]
+  }
+}

@@ -62,7 +62,7 @@ async def test_ai_service_timeout_handling(start_interactive_server):
             self.site_url = getattr(config, "site_url", "http://AIWhisperer:8000")
         
         try:
-            with patch("ai_whisperer.services.ai.openrouter_ai_service.OpenRouterAIService.__init__", mock_init):
+            with patch("ai_whisperer.services.ai.openrouter.OpenRouterAIService.__init__", mock_init):
                 async with websockets.connect(uri) as websocket:
                     # Start session
                     start_req = {

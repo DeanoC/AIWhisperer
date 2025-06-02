@@ -1,5 +1,5 @@
 """
-Unit tests for ai_whisperer.batch.server_manager
+Unit tests for ai_whisperer.extensions.batch.server_manager
 
 Tests for server lifecycle management, subprocess handling, and port allocation.
 This is a CRITICAL module for batch processing workflow functionality.
@@ -41,7 +41,7 @@ class TestServerManagerInit:
 class TestServerManagerPortAllocation:
     """Test port allocation logic."""
     
-    @patch('ai_whisperer.batch.server_manager.random.randint')
+    @patch('ai_whisperer.extensions.batch.server_manager.random.randint')
     def test_random_port_allocation(self, mock_randint):
         """Test random port allocation when no port specified."""
         mock_randint.return_value = 25000
@@ -111,8 +111,8 @@ class TestServerManagerIsRunning:
 class TestServerManagerWaitForReady:
     """Test server readiness detection."""
     
-    @patch('ai_whisperer.batch.server_manager.socket.socket')
-    @patch('ai_whisperer.batch.server_manager.time.sleep')
+    @patch('ai_whisperer.extensions.batch.server_manager.socket.socket')
+    @patch('ai_whisperer.extensions.batch.server_manager.time.sleep')
     def test_wait_for_server_ready_success(self, mock_sleep, mock_socket_class):
         """Test successful server readiness detection."""
         manager = ServerManager(port=8080)
@@ -130,9 +130,9 @@ class TestServerManagerWaitForReady:
         mock_socket.connect_ex.assert_called_once_with(('127.0.0.1', 8080))
         mock_socket.close.assert_called_once()
     
-    @patch('ai_whisperer.batch.server_manager.socket.socket')
-    @patch('ai_whisperer.batch.server_manager.time.sleep')
-    @patch('ai_whisperer.batch.server_manager.time.time')
+    @patch('ai_whisperer.extensions.batch.server_manager.socket.socket')
+    @patch('ai_whisperer.extensions.batch.server_manager.time.sleep')
+    @patch('ai_whisperer.extensions.batch.server_manager.time.time')
     def test_wait_for_server_ready_timeout(self, mock_time, mock_sleep, mock_socket_class):
         """Test server readiness timeout."""
         manager = ServerManager(port=8080)
@@ -149,8 +149,8 @@ class TestServerManagerWaitForReady:
         
         assert result is False
     
-    @patch('ai_whisperer.batch.server_manager.socket.socket')
-    @patch('ai_whisperer.batch.server_manager.time.sleep')
+    @patch('ai_whisperer.extensions.batch.server_manager.socket.socket')
+    @patch('ai_whisperer.extensions.batch.server_manager.time.sleep')
     def test_wait_for_server_ready_exception_handling(self, mock_sleep, mock_socket_class):
         """Test exception handling during server readiness check."""
         manager = ServerManager(port=8080)
@@ -158,7 +158,7 @@ class TestServerManagerWaitForReady:
         # Mock socket exception
         mock_socket_class.side_effect = Exception("Socket error")
         
-        with patch('ai_whisperer.batch.server_manager.time.time', side_effect=[0, 15]):
+        with patch('ai_whisperer.extensions.batch.server_manager.time.time', side_effect=[0, 15]):
             result = manager._wait_for_server_ready(timeout_seconds=10)
         
         assert result is False
@@ -209,7 +209,7 @@ class TestServerManagerStartSubprocess:
     """Test subprocess creation and management."""
     
     @patch.dict(os.environ, {}, clear=False)
-    @patch('ai_whisperer.batch.server_manager.subprocess.Popen')
+    @patch('ai_whisperer.extensions.batch.server_manager.subprocess.Popen')
     def test_start_subprocess_success(self, mock_popen):
         """Test successful subprocess creation."""
         manager = ServerManager(port=8080)
@@ -240,7 +240,7 @@ class TestServerManagerStartSubprocess:
         
         assert manager.process == mock_process
     
-    @patch('ai_whisperer.batch.server_manager.subprocess.Popen')
+    @patch('ai_whisperer.extensions.batch.server_manager.subprocess.Popen')
     def test_start_subprocess_server_not_ready(self, mock_popen):
         """Test subprocess creation when server doesn't become ready."""
         manager = ServerManager(port=8080)
@@ -256,7 +256,7 @@ class TestServerManagerStartSubprocess:
                 
                 mock_stop.assert_called_once()
     
-    @patch('ai_whisperer.batch.server_manager.subprocess.Popen')
+    @patch('ai_whisperer.extensions.batch.server_manager.subprocess.Popen')
     def test_start_subprocess_popen_exception(self, mock_popen):
         """Test subprocess creation with Popen exception."""
         manager = ServerManager(port=8080)
@@ -270,7 +270,7 @@ class TestServerManagerStartSubprocess:
 class TestServerManagerStartServer:
     """Test complete server startup process."""
     
-    @patch('ai_whisperer.batch.server_manager.random.randint')
+    @patch('ai_whisperer.extensions.batch.server_manager.random.randint')
     def test_start_server_success_first_attempt(self, mock_randint):
         """Test successful server start on first attempt."""
         mock_randint.return_value = 25000
@@ -278,13 +278,13 @@ class TestServerManagerStartServer:
         
         with patch.object(manager, '_start_subprocess') as mock_start_sub:
             with patch.object(manager, 'is_running', return_value=True):
-                with patch('ai_whisperer.batch.server_manager.time.sleep'):
+                with patch('ai_whisperer.extensions.batch.server_manager.time.sleep'):
                     manager.start_server(max_retries=3)
         
         assert manager.port == 25000
         mock_start_sub.assert_called_once()
     
-    @patch('ai_whisperer.batch.server_manager.random.randint')
+    @patch('ai_whisperer.extensions.batch.server_manager.random.randint')
     def test_start_server_retry_on_port_conflict(self, mock_randint):
         """Test server start retry when port is in use."""
         mock_randint.side_effect = [25000, 25001]  # First port fails, second succeeds
@@ -300,20 +300,20 @@ class TestServerManagerStartServer:
         
         with patch.object(manager, '_start_subprocess', side_effect=mock_start_subprocess):
             with patch.object(manager, 'is_running', return_value=True):
-                with patch('ai_whisperer.batch.server_manager.time.sleep'):
+                with patch('ai_whisperer.extensions.batch.server_manager.time.sleep'):
                     manager.start_server(max_retries=3)
         
         assert manager.port == 25001
         assert call_count == 2
     
-    @patch('ai_whisperer.batch.server_manager.random.randint')
+    @patch('ai_whisperer.extensions.batch.server_manager.random.randint')
     def test_start_server_max_retries_exceeded(self, mock_randint):
         """Test server start failure after max retries."""
         mock_randint.return_value = 25000
         manager = ServerManager()
         
         with patch.object(manager, '_start_subprocess', side_effect=OSError("Address already in use")):
-            with patch('ai_whisperer.batch.server_manager.time.sleep'):
+            with patch('ai_whisperer.extensions.batch.server_manager.time.sleep'):
                 with pytest.raises(RuntimeError, match="Failed to start server after 2 attempts"):
                     manager.start_server(max_retries=2)
     
@@ -323,7 +323,7 @@ class TestServerManagerStartServer:
         
         with patch.object(manager, '_start_subprocess') as mock_start_sub:
             with patch.object(manager, 'is_running', return_value=True):
-                with patch('ai_whisperer.batch.server_manager.time.sleep'):
+                with patch('ai_whisperer.extensions.batch.server_manager.time.sleep'):
                     manager.start_server()
         
         assert manager.port == 8080  # Should not change
@@ -341,7 +341,7 @@ class TestServerManagerIntegration:
         with patch.object(manager, '_start_subprocess') as mock_start:
             with patch.object(manager, 'is_running', side_effect=[True, True, False]) as mock_running:
                 with patch.object(manager, 'stop_server') as mock_stop:
-                    with patch('ai_whisperer.batch.server_manager.time.sleep'):
+                    with patch('ai_whisperer.extensions.batch.server_manager.time.sleep'):
                         # Start server
                         manager.start_server()
                         assert manager.port == 8080
@@ -388,8 +388,8 @@ class TestServerManagerErrorHandling:
         """Test handling of socket creation failure."""
         manager = ServerManager(port=8080)
         
-        with patch('ai_whisperer.batch.server_manager.socket.socket', side_effect=OSError("Socket creation failed")):
-            with patch('ai_whisperer.batch.server_manager.time.time', side_effect=[0, 15]):
+        with patch('ai_whisperer.extensions.batch.server_manager.socket.socket', side_effect=OSError("Socket creation failed")):
+            with patch('ai_whisperer.extensions.batch.server_manager.time.time', side_effect=[0, 15]):
                 result = manager._wait_for_server_ready(timeout_seconds=10)
                 assert result is False
     
@@ -438,7 +438,7 @@ class TestServerManagerPerformance:
         for i in range(3):
             with patch.object(manager, '_start_subprocess'):
                 with patch.object(manager, 'is_running', return_value=True):
-                    with patch('ai_whisperer.batch.server_manager.time.sleep'):
+                    with patch('ai_whisperer.extensions.batch.server_manager.time.sleep'):
                         manager.start_server()
                 
                 mock_process = Mock()
