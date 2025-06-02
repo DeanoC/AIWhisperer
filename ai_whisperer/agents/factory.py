@@ -1,3 +1,23 @@
+"""
+Module: ai_whisperer/agents/factory.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- AgentFactory: Class implementation
+
+Usage:
+    agentfactory = AgentFactory()
+    result = agentfactory.create_agent()
+
+Related:
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+
+"""
+
 from typing import Any, Dict, Optional, Type, Union
 from ai_whisperer.agents.agent import Agent
 from ai_whisperer.agents.config import AgentConfig

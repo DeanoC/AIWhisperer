@@ -1,3 +1,23 @@
+"""
+Module: ai_whisperer/agents/session_manager.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- AgentSession: Manages a chat session with agent switching capabilities
+
+Usage:
+    agentsession = AgentSession()
+    result = agentsession.switch_agent()
+
+Dependencies:
+- base_handler
+
+"""
+
 from typing import Dict, List, Optional, Any
 from .registry import Agent, AgentRegistry
 from .base_handler import BaseAgentHandler

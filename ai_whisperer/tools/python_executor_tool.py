@@ -1,7 +1,31 @@
 """
+Module: ai_whisperer/tools/python_executor_tool.py
+Purpose: AI tool implementation for python executor
+
 Python Executor Tool for Debbie the Debugger.
 Executes Python scripts for advanced debugging and analysis with sandboxed environment.
+
+Key Components:
+- ExecutionResult: Result of Python script execution
+- DebugSandbox: Sandboxed environment for executing Python scripts
+- PythonExecutorTool: 
+
+Usage:
+    tool = ExecutionResult()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- numpy
+- tempfile
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See PHASE_CONSOLIDATED_SUMMARY.md
+- See TEST_CONSOLIDATED_SUMMARY.md
+
 """
+
 
 import os
 import sys

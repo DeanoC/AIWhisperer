@@ -1,6 +1,30 @@
 """
-Create Plan from RFC Tool - Converts RFCs into structured execution plans
+Module: ai_whisperer/tools/create_plan_from_rfc_tool.py
+Purpose: AI tool implementation for create plan from rfc
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- CreatePlanFromRFCTool: Tool for converting RFCs into structured execution plans.
+
+Usage:
+    tool = CreatePlanFromRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- asyncio
+- hashlib
+
+Related:
+- See docs/dependency-analysis-report.md
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+- See TEST_CONSOLIDATED_SUMMARY.md
+
 """
+
 import os
 import logging
 import json

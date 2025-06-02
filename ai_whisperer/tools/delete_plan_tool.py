@@ -1,6 +1,24 @@
 """
-Delete Plan Tool - Removes plan documents from the system
+Module: ai_whisperer/tools/delete_plan_tool.py
+Purpose: AI tool implementation for delete plan
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- DeletePlanTool: Tool for deleting plan documents and their directories.
+
+Usage:
+    tool = DeletePlanTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- shutil
+
 """
+
 import os
 import json
 import logging

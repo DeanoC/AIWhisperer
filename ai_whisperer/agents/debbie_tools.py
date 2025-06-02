@@ -1,7 +1,28 @@
 """
+Module: ai_whisperer/agents/debbie_tools.py
+Purpose: AI agent implementation for specialized task handling
+
 Tool registration for Debbie the Debugger.
 Registers Debbie's specialized debugging tools when she's the active agent.
+
+Key Components:
+- get_debbie_tools(): Get all of Debbie's debugging tools
+- register_debbie_tools(): Register Debbie's tools with the tool registry
+- unregister_debbie_tools(): Unregister Debbie's tools from the tool registry
+
+Usage:
+    tool = Tool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+- See TEST_CONSOLIDATED_SUMMARY.md
+
 """
+
 import logging
 from typing import List
 

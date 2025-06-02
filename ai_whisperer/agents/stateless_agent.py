@@ -1,8 +1,27 @@
 """
+Module: ai_whisperer/agents/stateless_agent.py
+Purpose: AI agent implementation for specialized task handling
+
 Stateless Agent implementation that works with the new stateless AILoop.
 This agent doesn't manage sessions or use delegates - it simply processes
 messages through the AI loop and returns results directly.
+
+Key Components:
+- StatelessAgent: 
+
+Usage:
+    statelessagent = StatelessAgent()
+    result = statelessagent.process_message()
+
+Dependencies:
+- logging
+
+Related:
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+- See docs/archive/consolidated_phase2/docs/architecture/stateless_architecture.md
+
 """
+
 import logging
 from typing import Any, Dict, Optional, Callable, List
 

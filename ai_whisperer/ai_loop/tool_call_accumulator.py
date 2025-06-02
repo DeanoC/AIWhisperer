@@ -1,6 +1,28 @@
 """
-Tool call accumulator for properly handling streaming tool calls.
+Module: ai_whisperer/ai_loop/tool_call_accumulator.py
+Purpose: Implementation of ToolCallAccumulator class
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ToolCallAccumulator: 
+
+Usage:
+    tool = ToolCallAccumulator()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 import json
 import logging
 from typing import Dict, List, Any, Optional

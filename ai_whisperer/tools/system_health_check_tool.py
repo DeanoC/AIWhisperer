@@ -1,6 +1,29 @@
 """
-System Health Check Tool - Runs automated health check scripts for AIWhisperer
+Module: ai_whisperer/tools/system_health_check_tool.py
+Purpose: AI tool implementation for system health check
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- SystemHealthCheckTool: 
+
+Usage:
+    tool = SystemHealthCheckTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- subprocess
+- asyncio
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+- See TEST_CONSOLIDATED_SUMMARY.md
+
 """
+
 import os
 import json
 import asyncio

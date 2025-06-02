@@ -1,7 +1,31 @@
 """
+Module: ai_whisperer/tools/script_parser_tool.py
+Purpose: AI tool implementation for script parser
+
 ScriptParserTool - Parses and validates batch scripts in multiple formats.
 Part of Debbie's batch processing capabilities.
+
+Key Components:
+- ScriptFormat: Supported script formats
+- ParsedScript: Represents a parsed batch script
+- ScriptParserTool: 
+
+Usage:
+    tool = ScriptFormat()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- base_tool
+- dataclasses
+- enum
+
+Related:
+- See docs/batch-mode/PHASE2_TASKS.md
+- See docs/batch-mode/PHASE2_CHECKLIST.md
+- See docs/batch-mode/IMPLEMENTATION_PLAN.md
+
 """
+
 
 import json
 import yaml

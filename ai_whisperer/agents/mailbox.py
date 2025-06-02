@@ -1,7 +1,32 @@
 """
+Module: ai_whisperer/agents/mailbox.py
+Purpose: AI agent implementation for specialized task handling
+
 Universal Mailbox System for Agent and User Communication.
 Provides a standardized way for agents to send and receive messages.
+
+Key Components:
+- MessagePriority: Message priority levels.
+- MessageStatus: Message delivery status.
+- Mail: A mail message in the system.
+- get_mailbox(): Get the global mailbox system instance.
+- reset_mailbox(): Reset the mailbox system (mainly for testing).
+
+Usage:
+    messagepriority = MessagePriority()
+
+Dependencies:
+- logging
+- dataclasses
+- uuid
+
+Related:
+- See docs/agent-e-consolidated-implementation.md
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
+
 """
+
 import uuid
 import logging
 from datetime import datetime, timezone

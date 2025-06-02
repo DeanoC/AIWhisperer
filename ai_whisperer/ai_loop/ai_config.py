@@ -1,3 +1,21 @@
+"""
+Module: ai_whisperer/ai_loop/ai_config.py
+Purpose: Configuration management and settings
+
+This module provides the AIConfig class which
+specialized functionality for the AIWhisperer system.
+
+Key Components:
+- AIConfig: 
+
+Usage:
+    aiconfig = AIConfig()
+
+Related:
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+
+"""
+
 from typing import Dict, Any, Optional
 
 class AIConfig:

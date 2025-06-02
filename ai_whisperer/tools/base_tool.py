@@ -1,3 +1,26 @@
+"""
+Module: ai_whisperer/tools/base_tool.py
+Purpose: AI tool implementation for base
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- AITool: 
+
+Usage:
+    tool = AITool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- abc
+
+Related:
+- See docs/execute_command_tool_design.md
+
+"""
+
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 

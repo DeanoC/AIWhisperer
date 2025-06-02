@@ -1,4 +1,25 @@
-"""Tool Set management for organizing tools into collections."""
+"""
+Module: ai_whisperer/tools/tool_set.py
+Purpose: Tool Set management for organizing tools into collections.
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ToolSet: Represents a collection of tools with inheritance support.
+- ToolSetManager: Manages tool sets including loading, inheritance resolution, and lookups.
+
+Usage:
+    tool = ToolSet()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- yaml
+
+"""
+
 from typing import Dict, List, Set, Optional, Any, Union
 import yaml
 from pathlib import Path

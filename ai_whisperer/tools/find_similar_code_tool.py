@@ -1,6 +1,27 @@
 """
-Find Similar Code Tool - Searches for code similar to proposed features
+Module: ai_whisperer/tools/find_similar_code_tool.py
+Purpose: AI tool implementation for find similar code
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- FindSimilarCodeTool: Tool for finding code similar to proposed features or patterns.
+
+Usage:
+    tool = FindSimilarCodeTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- collections
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
+
 import os
 import logging
 import re

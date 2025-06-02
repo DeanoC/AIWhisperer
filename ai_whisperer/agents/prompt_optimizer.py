@@ -1,6 +1,24 @@
 """
-Prompt optimization for model-specific continuation behavior.
+Module: ai_whisperer/agents/prompt_optimizer.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- PromptOptimizer: Optimizes prompts based on model capabilities for better continuation
+- optimize_user_message(): 
+
+Usage:
+    promptoptimizer = PromptOptimizer()
+    result = promptoptimizer.optimize_prompt()
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
+
 
 import re
 from typing import Dict, List, Any

@@ -1,7 +1,28 @@
 """
+Module: ai_whisperer/agents/decomposed_task.py
+Purpose: AI agent implementation for specialized task handling
+
 DecomposedTask data model for Agent E.
 Represents a task that has been decomposed for external agent execution.
+
+Key Components:
+- TaskStatus: Status of a decomposed task.
+- DecomposedTask: A task decomposed by Agent E for execution by external agents.
+
+Usage:
+    taskstatus = TaskStatus()
+
+Dependencies:
+- dataclasses
+- uuid
+- enum
+
+Related:
+- See docs/agent-e-consolidated-implementation.md
+- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
+
 """
+
 import json
 import uuid
 from datetime import datetime, timezone

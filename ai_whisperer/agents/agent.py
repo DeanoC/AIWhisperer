@@ -1,3 +1,20 @@
+"""
+Module: ai_whisperer/agents/agent.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- Agent: Class implementation
+
+Usage:
+    agent = Agent()
+    result = agent.process_message()
+
+"""
+
 from ai_whisperer.agents.config import AgentConfig
 from ai_whisperer.context.agent_context import AgentContext
 

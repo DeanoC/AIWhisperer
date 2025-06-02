@@ -1,3 +1,30 @@
+"""
+Module: ai_whisperer/tools/tool_registry.py
+Purpose: Implementation of ToolRegistry class
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ToolRegistry: 
+- get_tool_registry(): Returns the singleton instance of the ToolRegistry.
+
+Usage:
+    tool = ToolRegistry()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- tool_set
+- base_tool
+
+Related:
+- See docs/execute_command_tool_design.md
+- See docs/archive/consolidated_phase2/CODEBASE_ANALYSIS_REPORT.md
+
+"""
+
 import logging
 import re
 from typing import Dict, Any, List, Optional, Set

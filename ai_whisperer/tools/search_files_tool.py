@@ -1,6 +1,28 @@
 """
-Search Files Tool - Search for files by name pattern or content
+Module: ai_whisperer/tools/search_files_tool.py
+Purpose: AI tool implementation for search files
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- SearchFilesTool: Tool for searching files within the workspace by name or content.
+
+Usage:
+    tool = SearchFilesTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- fnmatch
+
+Related:
+- See docs/file-browser-consolidated-implementation.md
+- See docs/archive/phase2_consolidation/file_browser_implementation_checklist.md
+
 """
+
 import os
 import re
 import fnmatch

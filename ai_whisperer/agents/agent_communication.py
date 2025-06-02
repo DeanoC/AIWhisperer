@@ -1,7 +1,29 @@
 """
+Module: ai_whisperer/agents/agent_communication.py
+Purpose: AI agent implementation for specialized task handling
+
 Agent Communication Protocol for inter-agent messaging.
 Defines message types and data structures for Agent E <-> Agent P communication.
+
+Key Components:
+- MessageType: Types of messages agents can exchange.
+- AgentMessage: Base message structure for agent communication.
+- ClarificationRequest: Request for clarification on a specific aspect of a task.
+
+Usage:
+    messagetype = MessageType()
+
+Dependencies:
+- dataclasses
+- uuid
+- enum
+
+Related:
+- See docs/agent-e-consolidated-implementation.md
+- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
+
 """
+
 import uuid
 from enum import Enum
 from dataclasses import dataclass, field

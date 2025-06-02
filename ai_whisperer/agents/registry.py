@@ -1,3 +1,28 @@
+"""
+Module: ai_whisperer/agents/registry.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- Agent: Represents a specialized AI agent with specific capabilities
+- AgentRegistry: Manages available agents and their configurations
+
+Usage:
+    agent = Agent()
+    result = agent.shortcut()
+
+Dependencies:
+- dataclasses
+- yaml
+
+Related:
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+
+"""
+
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
 from pathlib import Path

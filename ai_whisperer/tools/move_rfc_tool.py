@@ -1,6 +1,27 @@
 """
-Move RFC Tool - Moves RFCs between status folders
+Module: ai_whisperer/tools/move_rfc_tool.py
+Purpose: AI tool implementation for move rfc
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- MoveRFCTool: Tool for moving RFC documents between status folders.
+
+Usage:
+    tool = MoveRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- shutil
+
+Related:
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
+
 import os
 import logging
 import json

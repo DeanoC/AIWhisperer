@@ -1,7 +1,31 @@
 """
+Module: ai_whisperer/tools/message_injector_tool.py
+Purpose: AI tool implementation for message injector
+
 Message Injector Tool for Debbie the Debugger.
 Injects messages into AI sessions to unstick agents or simulate user responses.
+
+Key Components:
+- InjectionType: Types of message injections
+- InjectionResult: Result of message injection
+- MessageInjectorTool: 
+
+Usage:
+    tool = InjectionType()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- logging_custom
+- time
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See PHASE_CONSOLIDATED_SUMMARY.md
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 
 import json
 import time

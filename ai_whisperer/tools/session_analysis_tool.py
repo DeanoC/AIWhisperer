@@ -1,7 +1,23 @@
 """
+Module: ai_whisperer/tools/session_analysis_tool.py
+Purpose: AI tool implementation for session analysis
+
 Session analysis tool for Debbie the Debugger.
 Provides deep analysis of session patterns and performance.
+
+Key Components:
+- SessionAnalysisTool: Analyze session patterns and performance
+
+Usage:
+    tool = SessionAnalysisTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- time
+- collections
+
 """
+
 import json
 import time
 from typing import Dict, Any, List, Optional

@@ -1,3 +1,19 @@
+"""
+Module: ai_whisperer/agents/context_manager.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- AgentContextManager: Context manager specialized for agent-specific needs
+
+Usage:
+    agentcontextmanager = AgentContextManager()
+
+"""
+
 from typing import List, Dict, Any
 from pathlib import Path
 from ai_whisperer.context_management import ContextManager

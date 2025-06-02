@@ -1,3 +1,24 @@
+"""
+Module: ai_whisperer/tools/tool_usage_logging.py
+Purpose: Utility functions for tool usage logging
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- log_tool_usage(): Function implementation
+- get_tool_usage_log(): Function implementation
+
+Usage:
+    tool = Tool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+"""
+
 import logging
 from datetime import datetime, timezone
 from ai_whisperer.tools.base_tool import AITool

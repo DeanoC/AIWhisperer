@@ -1,4 +1,32 @@
-"""Continuation strategy module for managing multi-step agent operations."""
+"""
+Module: ai_whisperer/agents/continuation_strategy.py
+Purpose: Continuation strategy module for managing multi-step agent operations.
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- ContinuationProgress: Tracks progress information for continuation operations.
+- ContinuationState: Represents the continuation state from an AI response.
+- ContinuationStrategy: Manages continuation detection and execution for agents.
+
+Usage:
+    continuationprogress = ContinuationProgress()
+    result = continuationprogress.to_dict()
+
+Dependencies:
+- logging
+- time
+- dataclasses
+
+Related:
+- See docs/feature/agent-continuation-consolidated-implementation.md
+- See docs/archive/phase2_consolidation/agent-continuation-implementation-plan.md
+- See docs/archive/phase2_consolidation/agent-continuation-implementation-checklist.md
+
+"""
+
 
 import re
 import time

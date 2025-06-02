@@ -1,7 +1,30 @@
 """
+Module: ai_whisperer/tools/workspace_validator_tool.py
+Purpose: AI tool implementation for workspace validator
+
 Workspace Validator Tool for Debbie the Debugger.
 Validates AIWhisperer workspace health, configuration, and dependencies.
+
+Key Components:
+- ValidationStatus: Status levels for validation checks
+- CheckCategory: Categories of validation checks
+- ValidationCheck: Individual validation check result
+
+Usage:
+    tool = ValidationStatus()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- logging_custom
+- base_tool
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See PHASE_CONSOLIDATED_SUMMARY.md
+
 """
+
 
 import os
 import json

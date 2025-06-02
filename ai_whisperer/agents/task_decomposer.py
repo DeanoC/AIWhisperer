@@ -1,7 +1,29 @@
 """
-Task Decomposer for Agent E.
-Breaks down Agent P plans into executable tasks for external agents.
+Module: ai_whisperer/agents/task_decomposer.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- TaskDecomposer: Decomposes plans into executable tasks for external agents.
+
+Usage:
+    taskdecomposer = TaskDecomposer()
+    result = taskdecomposer.decompose_plan()
+
+Dependencies:
+- logging
+- agent_e_exceptions
+- uuid
+
+Related:
+- See docs/agent-e-consolidated-implementation.md
+- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
+
 """
+
 import re
 import uuid
 import logging

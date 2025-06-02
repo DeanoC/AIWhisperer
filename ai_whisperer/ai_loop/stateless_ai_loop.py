@@ -1,8 +1,30 @@
 """
+Module: ai_whisperer/ai_loop/stateless_ai_loop.py
+Purpose: Implementation of StatelessAILoop class
+
 Stateless AILoop implementation that works without delegates.
 This provides a cleaner interface for direct usage without the complexity
 of delegate management and event notifications.
+
+Key Components:
+- StatelessAILoop: 
+
+Usage:
+    statelessailoop = StatelessAILoop()
+    result = statelessailoop.process_with_context()
+
+Dependencies:
+- logging
+- asyncio
+- types
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+- See docs/archive/consolidated_phase2/PR_DESCRIPTION.md
+
 """
+
 import asyncio
 import json
 import logging

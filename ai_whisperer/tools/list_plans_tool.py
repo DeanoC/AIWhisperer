@@ -1,6 +1,26 @@
 """
-List Plans Tool - Lists available execution plans
+Module: ai_whisperer/tools/list_plans_tool.py
+Purpose: AI tool implementation for list plans
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ListPlansTool: Tool for listing execution plans.
+
+Usage:
+    tool = ListPlansTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+
+Related:
+- See UI_IMPROVEMENT_IMPLEMENTATION_PLAN.md
+
 """
+
 import os
 import logging
 import json

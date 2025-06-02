@@ -1,6 +1,24 @@
 """
-Move Plan Tool - Moves plans between status directories
+Module: ai_whisperer/tools/move_plan_tool.py
+Purpose: AI tool implementation for move plan
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- MovePlanTool: Tool for moving plans between status directories.
+
+Usage:
+    tool = MovePlanTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- shutil
+
 """
+
 import os
 import logging
 import json

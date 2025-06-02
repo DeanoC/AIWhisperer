@@ -1,6 +1,28 @@
 """
-Tool for decomposing Agent P plans into executable tasks.
+Module: ai_whisperer/tools/decompose_plan_tool.py
+Purpose: AI tool implementation for decompose plan
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- DecomposePlanTool: Tool for decomposing plans into executable tasks.
+
+Usage:
+    tool = DecomposePlanTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- base_tool
+- agents.agent_e_exceptions
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 import json
 import logging
 from typing import Dict, Any, List, Optional

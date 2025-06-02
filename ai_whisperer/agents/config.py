@@ -1,3 +1,25 @@
+"""
+Module: ai_whisperer/agents/config.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- AgentConfigError: Raised when agent configuration is invalid.
+- AgentConfig: Class implementation
+
+Usage:
+    agentconfigerror = AgentConfigError()
+
+Related:
+- See docs/directory_restriction_strategy.md
+- See docs/archive/consolidated_phase2/CODEBASE_ANALYSIS_REPORT.md
+- See docs/archive/legacy/analysis/path_manager_analysis.md
+
+"""
+
 from typing import Any, Dict, List, Optional, Union
 
 

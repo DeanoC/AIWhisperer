@@ -1,7 +1,30 @@
 """
+Module: ai_whisperer/tools/session_inspector_tool.py
+Purpose: AI tool implementation for session inspector
+
 Session Inspector Tool for Debbie the Debugger.
 Analyzes active session state, message history, and detects common issues like stalls.
+
+Key Components:
+- SessionAnalysis: Results of session analysis
+- SessionInspectorTool: 
+
+Usage:
+    tool = SessionAnalysis()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- logging_custom
+- time
+
+Related:
+- See docs/archive/debugging-session-2025-05-30-consolidated.md
+- See PHASE_CONSOLIDATED_SUMMARY.md
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 
 import json
 import time

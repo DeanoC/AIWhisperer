@@ -1,3 +1,27 @@
+"""
+Module: ai_whisperer/agents/base_handler.py
+Purpose: Handler implementation for base
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- BaseAgentHandler: Base class for all agent handlers
+
+Usage:
+    baseagenthandler = BaseAgentHandler()
+    result = baseagenthandler.handle_message()
+
+Dependencies:
+- abc
+
+Related:
+- See UNTESTED_MODULES_REPORT.md
+- See TEST_CONSOLIDATED_SUMMARY.md
+
+"""
+
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 from .registry import Agent

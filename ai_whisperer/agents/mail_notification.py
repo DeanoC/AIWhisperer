@@ -1,6 +1,31 @@
 """
-Mail Notification System - Adds "You've got mail" notifications to agent responses.
+Module: ai_whisperer/agents/mail_notification.py
+Purpose: AI agent implementation for specialized task handling
+
+This module implements an AI agent that processes user messages
+and executes specialized tasks. It integrates with the tool system
+and manages conversation context.
+
+Key Components:
+- MailNotificationMixin: Mixin to add mail notification capabilities to agents.
+- get_mail_notification(): Helper function to generate mail notification string.
+- inject_mail_notification(): Decorator to inject mail notifications into agent responses.
+
+Usage:
+    mailnotificationmixin = MailNotificationMixin()
+    result = mailnotificationmixin.check_for_mail_notification()
+
+Dependencies:
+- logging
+- mailbox
+
+Related:
+- See docs/agent-e-consolidated-implementation.md
+- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
+- See UNTESTED_MODULES_REPORT.md
+
 """
+
 import logging
 from typing import Dict, Any, Optional
 

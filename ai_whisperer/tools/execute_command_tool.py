@@ -1,3 +1,25 @@
+"""
+Module: ai_whisperer/tools/execute_command_tool.py
+Purpose: AI tool implementation for execute command
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- ExecuteCommandTool: 
+
+Usage:
+    tool = ExecuteCommandTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- subprocess
+- base_tool
+
+"""
+
 import subprocess
 import logging
 import sys

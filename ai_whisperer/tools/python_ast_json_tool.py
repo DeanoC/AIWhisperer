@@ -1,8 +1,33 @@
-"""Python AST to JSON converter tool.
+"""
+Module: ai_whisperer/tools/python_ast_json_tool.py
+Purpose: Python AST to JSON converter tool.
 
 This tool provides functionality to convert Python Abstract Syntax Trees (AST)
 to JSON representation and back, supporting both file paths and module names.
+
+Key Components:
+- ProcessingTimeoutError: Custom timeout error for processing timeouts.
+- PythonASTJSONTool: Tool for converting Python code to AST JSON representation and back.
+- extract_comments_from_source(): Extract comments from Python source code.
+- calculate_formatting_metrics(): Calculate formatting metrics for source code.
+- extract_docstring_info(): Extract docstring information from AST node.
+
+Usage:
+    tool = ProcessingTimeoutError()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- tempfile
+- queue
+- ast
+
+Related:
+- See docs/dependency-analysis-report.md
+- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
+- See MERGE_READINESS_REPORT.md
+
 """
+
 
 import ast
 import json

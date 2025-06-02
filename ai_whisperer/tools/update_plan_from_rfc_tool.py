@@ -1,6 +1,28 @@
 """
-Update Plan from RFC Tool - Updates plans when source RFC changes
+Module: ai_whisperer/tools/update_plan_from_rfc_tool.py
+Purpose: AI tool implementation for update plan from rfc
+
+This module implements an AI-usable tool that extends the AITool
+base class. It provides structured input/output handling and
+integrates with the OpenRouter API for AI model interactions.
+
+Key Components:
+- UpdatePlanFromRFCTool: Tool for updating plans when source RFC changes.
+
+Usage:
+    tool = UpdatePlanFromRFCTool()
+    result = await tool.execute(**parameters)
+
+Dependencies:
+- logging
+- asyncio
+- hashlib
+
+Related:
+- See TEST_CONSOLIDATED_SUMMARY.md
+
 """
+
 import os
 import logging
 import json
