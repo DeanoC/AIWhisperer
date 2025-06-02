@@ -10,12 +10,49 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
     print(f"Added {project_root} to Python path to ensure correct module loading")
 
-# Set up logging early
-logging.basicConfig(level=logging.INFO)
+# Import logging setup from ai_whisperer
+from ai_whisperer.logging_custom import setup_logging
+
+# Parse args early to get port for logging
+parser = argparse.ArgumentParser(description="AIWhisperer Interactive Server")
+parser.add_argument("--debbie-monitor", action="store_true", 
+                   help="Enable Debbie monitoring for session debugging")
+parser.add_argument("--monitor-level", choices=["passive", "active"], default="passive",
+                   help="Monitoring level: passive (observe only) or active (can intervene)")
+parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "config.yaml"),
+                   help="Configuration file path")
+parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
+parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
+
+# Only parse args if running as main
+if __name__ == "__main__":
+    early_args = parser.parse_args()
+    port_for_logging = early_args.port
+else:
+    # When imported as module (e.g., via uvicorn), check sys.argv for port
+    port_for_logging = 8000  # Default
+    import sys
+    for i, arg in enumerate(sys.argv):
+        if arg.startswith("--port="):
+            try:
+                port_for_logging = int(arg.split("=")[1])
+                break
+            except:
+                pass
+        elif arg == "--port" and i + 1 < len(sys.argv):
+            try:
+                port_for_logging = int(sys.argv[i + 1])
+                break
+            except:
+                pass
+
+# Set up logging with port in filename
+setup_logging(port=port_for_logging)
 logger = logging.getLogger(__name__)
 logger.info("Starting AIWhisperer interactive server...")
 logger.info(f"Python executable: {sys.executable}")
 logger.info(f"Project root: {project_root}")
+logger.info(f"Port for logging: {port_for_logging}")
 
 import ai_whisperer.commands.echo
 import ai_whisperer.commands.status
@@ -203,15 +240,7 @@ app.add_middleware(
 
 # Parse command line arguments for Debbie monitoring
 def parse_args():
-    parser = argparse.ArgumentParser(description="AIWhisperer Interactive Server")
-    parser.add_argument("--debbie-monitor", action="store_true", 
-                       help="Enable Debbie monitoring for session debugging")
-    parser.add_argument("--monitor-level", choices=["passive", "active"], default="passive",
-                       help="Monitoring level: passive (observe only) or active (can intervene)")
-    parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "config.yaml"),
-                       help="Configuration file path")
-    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
-    parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
+    # Re-parse args since this is called later in initialization
     return parser.parse_args()
 
 def initialize_server(cli_args=None):

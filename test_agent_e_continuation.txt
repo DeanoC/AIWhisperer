@@ -1,0 +1,8 @@
+# Test Agent E Continuation
+# This specifically tests that Eamonn includes continuation signals
+
+# Switch to Eamonn
+@e
+
+# Ask him to execute a plan (should require multiple steps)
+Execute the python-ast-json plan - list plans, read it, decompose it, and analyze dependencies

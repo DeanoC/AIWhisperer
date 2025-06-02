@@ -110,13 +110,14 @@ class EnhancedLogMessage(LogMessage):
         return data
 
 
-def setup_logging(config_path: Optional[str] = None):
+def setup_logging(config_path: Optional[str] = None, port: Optional[int] = None):
     """
     Configures the logging system.
 
     Args:
         config_path: Optional path to a logging configuration file (e.g., YAML).
                      If None, a basic console logger is configured.
+        port: Optional port number to include in log filenames for server isolation
     """
     if config_path and os.path.exists(config_path):
         with open(config_path, "r") as f:
@@ -130,19 +131,23 @@ def setup_logging(config_path: Optional[str] = None):
             if logging_config and isinstance(logging_config, dict) and 'version' in logging_config:
                 logging.config.dictConfig(logging_config)
             else:
-                setup_basic_logging()
+                setup_basic_logging(port=port)
         except Exception as e:
             logging.error(f"Error loading logging configuration from {config_path}: {e}")
             # Fallback to basic configuration on error
-            setup_basic_logging()
-        else:
-            if config_path:
-                logging.warning(f"Logging configuration file not found at {config_path}. Using basic console logging.")
-            setup_basic_logging()
+            setup_basic_logging(port=port)
+    else:
+        if config_path:
+            logging.warning(f"Logging configuration file not found at {config_path}. Using basic console logging.")
+        setup_basic_logging(port=port)
 
 
-def setup_basic_logging():
-    """Sets up a basic console logger."""
+def setup_basic_logging(port=None):
+    """Sets up a basic console logger.
+    
+    Args:
+        port: Optional port number to include in log filenames for server isolation
+    """
 
     try:
         # Remove any existing handlers from the root logger to avoid duplicates
@@ -161,21 +166,29 @@ def setup_basic_logging():
         # Main server log file (only logs from 'aiwhisperer.server')
         log_dir = "logs"
         os.makedirs(log_dir, exist_ok=True)
-        server_log_path = os.path.join(log_dir, "aiwhisperer_server.log")
+        
+        # Include port in filename if provided
+        if port:
+            server_log_path = os.path.join(log_dir, f"aiwhisperer_server_port{port}.log")
+            test_log_path = os.path.join(log_dir, f"aiwhisperer_test_port{port}.log")
+            debug_log_path = os.path.join(log_dir, f"aiwhisperer_debug_port{port}.log")
+        else:
+            server_log_path = os.path.join(log_dir, "aiwhisperer_server.log")
+            test_log_path = os.path.join(log_dir, "aiwhisperer_test.log")
+            debug_log_path = os.path.join(log_dir, "aiwhisperer_debug.log")
+            
         server_file_handler = logging.FileHandler(server_log_path, mode='w')
         server_file_handler.setLevel(logging.DEBUG)
         server_file_handler.setFormatter(formatter)
         server_file_handler.addFilter(lambda record: record.name.startswith('aiwhisperer.server'))
 
         # Test log file (only logs from 'aiwhisperer.test')
-        test_log_path = os.path.join(log_dir, "aiwhisperer_test.log")
         test_file_handler = logging.FileHandler(test_log_path, mode='w')
         test_file_handler.setLevel(logging.DEBUG)
         test_file_handler.setFormatter(formatter)
         test_file_handler.addFilter(lambda record: record.name.startswith('aiwhisperer.test'))
 
         # Debug log file (all debug info, legacy, logs everything)
-        debug_log_path = os.path.join(log_dir, "aiwhisperer_debug.log")
         debug_file_handler = logging.FileHandler(debug_log_path, mode='w')
         debug_file_handler.setLevel(logging.DEBUG)
         debug_file_handler.setFormatter(formatter)
@@ -189,6 +202,15 @@ def setup_basic_logging():
         logging.getLogger('aiwhisperer.server').info(f"Server logging configured. Log file: {os.path.abspath(server_log_path)}")
         logging.getLogger('aiwhisperer.test').info(f"Test logging configured. Log file: {os.path.abspath(test_log_path)}")
         logging.getLogger().info(f"Debug logging configured. Log file: {os.path.abspath(debug_log_path)}")
+        
+        # Print to console for easy access
+        if port:
+            print(f"\n📁 Log files for port {port}:")
+        else:
+            print(f"\n📁 Log files:")
+        print(f"   Server log: {os.path.abspath(server_log_path)}")
+        print(f"   Debug log:  {os.path.abspath(debug_log_path)}")
+        print(f"   Test log:   {os.path.abspath(test_log_path)}\n")
 
     except Exception as e:
         # If basic logging setup fails, print an error to stderr as a fallback

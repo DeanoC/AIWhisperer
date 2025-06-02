@@ -1,0 +1,35 @@
+{
+  "name": "Test Agent E Continuation Protocol",
+  "description": "Test that Agent Eamonn properly uses continuation signals for multi-step tasks",
+  "version": "1.0",
+  "steps": [
+    {
+      "command": "switch_agent",
+      "agent": "e",
+      "description": "Switch to Eamonn the Executioner",
+      "expected": "Eamonn introduces himself"
+    },
+    {
+      "command": "user_message",
+      "message": "Execute the python-ast-json plan. First list available plans, then read the plan, decompose it, and analyze dependencies.",
+      "description": "Multi-step task that should trigger continuation",
+      "expected": "Eamonn should use multiple tools in sequence with continuation",
+      "expect_tools": ["list_plans", "read_plan", "decompose_plan", "analyze_dependencies"],
+      "expect_continuation": true,
+      "timeout": 60
+    }
+  ],
+  "validation": {
+    "expect_log_patterns": [
+      "CONTINUATION STRATEGY DECISION: True",
+      "Explicit continuation signal: True",
+      "Adding shared component: continuation_protocol"
+    ],
+    "success_criteria": [
+      "All 4 tools execute in sequence",
+      "Continuation signals sent between tool calls",
+      "No need for user to say 'ok' between steps",
+      "Task completes autonomously"
+    ]
+  }
+}

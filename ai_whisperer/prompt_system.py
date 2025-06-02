@@ -255,18 +255,13 @@ class PromptSystem:
         
         # Add shared components if requested (default: True)
         if include_shared:
+            logger.info(f"Including shared components. Enabled features: {self._enabled_features}")
+            logger.info(f"Available shared components: {list(self._shared_components.keys())}")
             # Add enabled shared components
             for feature in sorted(self._enabled_features):  # Sort for consistent ordering
                 if feature in self._shared_components:
-                    content_parts.append(f"\n\n## {feature.upper()} INSTRUCTIONS\n{self._shared_components[feature]}")
-            
-            # Add continuation if enabled
-            if 'continuation' in self._enabled_features:
-                content_parts.append(f"\n\n## CONTINUATION PROTOCOL\n{self._shared_components.get('continuation_protocol', '')}")
-            
-            # Add mailbox if enabled
-            if 'mailbox' in self._enabled_features:
-                content_parts.append(f"\n\n## MAILBOX PROTOCOL\n{self._shared_components.get('mailbox_protocol', '')}")
+                    logger.info(f"Adding shared component: {feature}")
+                    content_parts.append(f"\n\n## {feature.upper().replace('_', ' ')} INSTRUCTIONS\n{self._shared_components[feature]}")
         
         # Include tool instructions if requested and tool registry is available
         if include_tools and self._tool_registry:
