@@ -46,101 +46,16 @@ from collections import defaultdict
 
 from ai_whisperer.tools.base_tool import AITool
 
-
-def extract_comments_from_source(source: str) -> List[Dict[str, Any]]:
-    """Extract comments from Python source code."""
-    comments = []
-    try:
-        tokens = tokenize.generate_tokens(io.StringIO(source).readline)
-        for tok in tokens:
-            if tok.type == tokenize.COMMENT:
-                comments.append({
-                    'line': tok.start[0],
-                    'column': tok.start[1],
-                    'text': tok.string,
-                    'end_line': tok.end[0],
-                    'end_column': tok.end[1]
-                })
-    except tokenize.TokenError:
-        # Handle incomplete source
-        pass
-    return comments
-
-
-def calculate_formatting_metrics(source: str) -> Dict[str, Any]:
-    """Calculate formatting metrics for source code."""
-    lines = source.split('\n')
-    
-    # Detect indentation style
-    indentation_counts = defaultdict(int)
-    for line in lines:
-        if line.strip() and line[0] in ' \t':
-            indent = ''
-            for char in line:
-                if char in ' \t':
-                    indent += char
-                else:
-                    break
-            if indent:
-                indentation_counts[indent] += 1
-    
-    # Determine predominant indentation
-    indentation_style = 'none'
-    indentation_size = 0
-    if indentation_counts:
-        # Find most common indentation pattern
-        common_indent = max(indentation_counts.items(), key=lambda x: x[1])[0]
-        if '\t' in common_indent:
-            indentation_style = 'tabs'
-        else:
-            indentation_style = 'spaces'
-            indentation_size = len(common_indent)
-    
-    # Detect quote preferences
-    single_quotes = source.count("'")
-    double_quotes = source.count('"')
-    quote_style = 'single' if single_quotes > double_quotes else 'double'
-    
-    # Line length statistics
-    line_lengths = [len(line) for line in lines if line.strip()]
-    max_line_length = max(line_lengths) if line_lengths else 0
-    avg_line_length = sum(line_lengths) / len(line_lengths) if line_lengths else 0
-    
-    # Blank line patterns
-    blank_lines = sum(1 for line in lines if not line.strip())
-    
-    return {
-        'indentation': {
-            'style': indentation_style,
-            'size': indentation_size
-        },
-        'quote_style': quote_style,
-        'line_endings': '\n',  # Default to Unix style
-        'line_length': {
-            'max': max_line_length,
-            'average': avg_line_length
-        },
-        'blank_lines': blank_lines,
-        'total_lines': len(lines)
-    }
-
-
-def extract_docstring_info(node: ast.AST) -> Optional[Dict[str, Any]]:
-    """Extract docstring information from AST node."""
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
-        if hasattr(node, 'body') and node.body:
-            first = node.body[0]
-            if (isinstance(first, ast.Expr) and 
-                isinstance(first.value, ast.Constant) and
-                isinstance(first.value.value, str)):
-                return {
-                    'value': first.value.value,
-                    'lineno': getattr(first, 'lineno', None),
-                    'col_offset': getattr(first, 'col_offset', None),
-                    'end_lineno': getattr(first, 'end_lineno', None),
-                    'end_col_offset': getattr(first, 'end_col_offset', None)
-                }
-    return None
+# Import extracted constants and helpers
+from ai_whisperer.tools.ast_constants import (
+    ERROR_TYPE_MAPPINGS, AST_NODE_TYPES, BUILTIN_TYPES,
+    OPERATORS, COMPARE_OPS, DEFAULT_LIMITS, RECONSTRUCTION_MODES
+)
+from ai_whisperer.tools.ast_helpers import (
+    extract_comments_from_source, calculate_formatting_metrics,
+    extract_docstring_info, safe_ast_parse, get_node_type_name,
+    estimate_node_complexity, count_ast_nodes, get_ast_depth
+)
 
 
 class ProcessingTimeoutError(TimeoutError):
@@ -168,28 +83,7 @@ class PythonASTJSONTool(AITool):
         self._memory_optimization_applied = False
         
         # Initialize error type mappings
-        self._error_type_mappings = {
-            FileNotFoundError: 'file_not_found',
-            PermissionError: 'permission_denied',
-            IsADirectoryError: 'is_directory',
-            NotADirectoryError: 'not_directory',
-            OSError: 'os_error',
-            IOError: 'io_error',
-            UnicodeDecodeError: 'encoding_error',
-            UnicodeError: 'unicode_error',
-            SyntaxError: 'syntax_error',
-            IndentationError: 'indentation_error',
-            TabError: 'tab_error',
-            ValueError: 'value_error',
-            TypeError: 'type_error',
-            AttributeError: 'attribute_error',
-            KeyError: 'key_error',
-            MemoryError: 'memory_exhaustion',
-            RecursionError: 'recursion_limit_exceeded',
-            ProcessingTimeoutError: 'processing_timeout',
-            TimeoutError: 'network_timeout',
-            Exception: 'unknown_error'
-        }
+        self._error_type_mappings = ERROR_TYPE_MAPPINGS
         
     @property
     def name(self) -> str:
