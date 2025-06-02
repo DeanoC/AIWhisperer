@@ -31,23 +31,23 @@ After implementing the Agent Continuation System and resolving merge conflicts, 
 - **Count**: 4 tests
 - **Solution**: Review implementation and update tests accordingly
 
-### 3. Continuation Progress Tracking Tests
+### 3. ✅ Continuation Progress Tracking Tests (FIXED)
 - **Location**: `tests/integration/test_continuation_progress_tracking.py`
-- **Issue**: Tests depend on specific WebSocket notification format
-- **Count**: 6 tests
-- **Solution**: Ensure notification format matches test expectations
+- **Issue**: Used non-existent AgentInfo, wrong config key
+- **Fix**: Changed to use Agent from registry, fixed config key from 'continuation_patterns' to 'patterns'
+- **Status**: Fixed
 
-### 4. Conversation Persistence Tests
+### 4. ✅ Conversation Persistence Tests (FIXED)
 - **Location**: `tests/integration/test_conversation_persistence.py`
-- **Issue**: Some persistence operations may not be working correctly
-- **Count**: 3 tests
-- **Solution**: Review save/load implementation
+- **Issue**: Used wrong class name StatelessInteractiveSession
+- **Fix**: Changed to use StatelessSessionManager with proper config initialization
+- **Status**: Fixed
 
-### 5. Continuation Verification Tests
+### 5. ✅ Continuation Verification Tests (FIXED)
 - **Location**: `tests/integration/test_continuation_verification.py`
-- **Issue**: Verification logic may have edge cases
-- **Count**: 4 tests
-- **Solution**: Review continuation verification logic
+- **Issue**: Wrong config key for patterns, missing require_explicit_signal
+- **Fix**: Changed 'continuation_patterns' to 'patterns', added require_explicit_signal=False
+- **Status**: Fixed
 
 ### 6. Stateless AI Loop Tests
 - **Location**: `tests/unit/test_stateless_ailoop.py`
