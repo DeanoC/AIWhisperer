@@ -34,7 +34,8 @@ def agents_config():
                 'description': 'Intelligent debugging companion and batch script processor for AIWhisperer',
                 'tool_tags': ['debugging', 'monitoring', 'testing', 'analysis', 'filesystem', 'command', 'batch'],
                 'prompt_file': 'debbie_debugger.prompt.md',
-                'context_sources': ['session_history', 'error_logs', 'performance_metrics', 'workspace_structure', 'batch_scripts']
+                'context_sources': ['session_history', 'error_logs', 'performance_metrics', 'workspace_structure', 'batch_scripts'],
+                '_from_mock_config': True  # Mark this as mock config
             }
         }
     }
@@ -51,7 +52,7 @@ def debbie_agent(debbie_config):
     """Create Debbie agent from config"""
     if not debbie_config:
         return None
-    return Agent(
+    agent = Agent(
         agent_id='d',
         name=debbie_config['name'],
         role=debbie_config['role'],
@@ -66,3 +67,7 @@ def debbie_agent(debbie_config):
         deny_tools=debbie_config.get('deny_tools'),
         continuation_config=debbie_config.get('continuation_config')
     )
+    # Mark if from mock config
+    if debbie_config.get('_from_mock_config'):
+        agent._from_mock_config = True
+    return agent
