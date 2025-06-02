@@ -46,7 +46,7 @@ class TestPromptSystemPerformance:
     @pytest.fixture
     def mock_path_manager(self, large_prompt_dir):
         """Mock PathManager to use temporary directory."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
             mock_instance = Mock()
             mock_instance.prompt_path = Path(large_prompt_dir)
             mock_instance.app_path = Path(large_prompt_dir)

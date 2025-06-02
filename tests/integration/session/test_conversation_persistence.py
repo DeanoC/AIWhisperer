@@ -254,7 +254,7 @@ class TestConversationPersistence:
         from ai_whisperer.utils.path import PathManager
         
         # Mock PathManager
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_pm.return_value = Mock()
             
             # Create session with real context manager

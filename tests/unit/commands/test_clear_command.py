@@ -160,7 +160,7 @@ async def test_context_manager_clear_method():
     from ai_whisperer.utils.path import PathManager
     
     # Mock PathManager
-    with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+    with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
         mock_pm.return_value = Mock()
         
         manager = AgentContextManager("test-session", mock_pm.return_value)

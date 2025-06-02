@@ -1,5 +1,5 @@
 """
-Unit tests for ai_whisperer.logging.debbie_logger
+Unit tests for ai_whisperer.extensions.monitoring.debbie_logger
 
 Tests for Debbie's enhanced logger with intelligent commentary and pattern detection.
 This is a HIGH PRIORITY module with 10/10 complexity score.
@@ -567,7 +567,7 @@ class TestDebbieLogger:
         assert logger.commentary is not None
         assert isinstance(logger.commentary, DebbieCommentary)
     
-    @patch('ai_whisperer.logging.debbie_logger.logging.getLogger')
+    @patch('ai_whisperer.extensions.monitoring.debbie_logger.logging.getLogger')
     def test_log_basic(self, mock_get_logger):
         """Test basic logging functionality."""
         mock_logger_instance = Mock()
@@ -650,7 +650,7 @@ class TestDebbieLogger:
         logger = DebbieLogger("test")
         logger.commentary.observe = Mock()
         
-        with patch('ai_whisperer.logging.debbie_logger.logging.getLogger'):
+        with patch('ai_whisperer.extensions.monitoring.debbie_logger.logging.getLogger'):
             logger.info("Test message", details={"test": "data"})
         
         # Commentary should observe the event
@@ -668,7 +668,7 @@ class TestDebbieLoggerIntegration:
         logger = DebbieLogger("test_integration")
         
         # Mock the actual logger to avoid output
-        with patch('ai_whisperer.logging.debbie_logger.logging.getLogger'):
+        with patch('ai_whisperer.extensions.monitoring.debbie_logger.logging.getLogger'):
             # Generate tool loop pattern
             for i in range(10):
                 logger.log(
@@ -691,7 +691,7 @@ class TestDebbieLoggerIntegration:
         """Test stall detection and explanation flow."""
         logger = DebbieLogger("test_stall")
         
-        with patch('ai_whisperer.logging.debbie_logger.logging.getLogger'):
+        with patch('ai_whisperer.extensions.monitoring.debbie_logger.logging.getLogger'):
             # First log a tool execution
             logger.log(
                 level=LogLevel.INFO,

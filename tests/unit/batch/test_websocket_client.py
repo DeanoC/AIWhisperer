@@ -1,5 +1,5 @@
 """
-Unit tests for ai_whisperer.batch.websocket_client
+Unit tests for ai_whisperer.extensions.batch.websocket_client
 
 Tests for the WebSocketClient that handles WebSocket connection and communication
 with the interactive server. This is a HIGH PRIORITY module with 10/10 complexity
@@ -52,7 +52,7 @@ class TestWebSocketClientConnection:
     """Test WebSocket connection functionality."""
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.batch.websocket_client.websockets.connect')
+    @patch('ai_whisperer.extensions.batch.websocket_client.websockets.connect')
     async def test_connect_success(self, mock_connect):
         """Test successful connection."""
         mock_connection = AsyncMock()
@@ -77,7 +77,7 @@ class TestWebSocketClientConnection:
             pass
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.batch.websocket_client.websockets.connect')
+    @patch('ai_whisperer.extensions.batch.websocket_client.websockets.connect')
     async def test_connect_timeout(self, mock_connect):
         """Test connection timeout."""
         mock_connect.side_effect = asyncio.TimeoutError()
@@ -90,7 +90,7 @@ class TestWebSocketClientConnection:
         assert "Connection timeout after 5.0s" in str(exc_info.value)
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.batch.websocket_client.websockets.connect')
+    @patch('ai_whisperer.extensions.batch.websocket_client.websockets.connect')
     async def test_connect_general_error(self, mock_connect):
         """Test connection general error."""
         mock_connect.side_effect = Exception("Network error")
@@ -363,7 +363,7 @@ class TestWebSocketClientNotifications:
             pass
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.batch.websocket_client.logger')
+    @patch('ai_whisperer.extensions.batch.websocket_client.logger')
     async def test_receive_messages_json_error(self, mock_logger):
         """Test receiving invalid JSON message."""
         client = WebSocketClient("ws://localhost:8000/ws")
@@ -388,7 +388,7 @@ class TestWebSocketClientNotifications:
         assert "Failed to parse message" in mock_logger.error.call_args[0][0]
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.batch.websocket_client.logger')
+    @patch('ai_whisperer.extensions.batch.websocket_client.logger')
     async def test_receive_messages_handler_error(self, mock_logger):
         """Test error in message handler."""
         client = WebSocketClient("ws://localhost:8000/ws")
@@ -425,8 +425,8 @@ class TestWebSocketClientNotifications:
     
     @pytest.mark.asyncio
     @pytest.mark.xfail(reason="Test hangs and causes system slowdown")
-    @patch('ai_whisperer.batch.websocket_client.logger')
-    @patch('ai_whisperer.batch.websocket_client.websockets')
+    @patch('ai_whisperer.extensions.batch.websocket_client.logger')
+    @patch('ai_whisperer.extensions.batch.websocket_client.websockets')
     async def test_receive_messages_connection_closed(self, mock_websockets, mock_logger):
         """Test handling connection closed."""
         client = WebSocketClient("ws://localhost:8000/ws")
@@ -536,7 +536,7 @@ class TestWebSocketClientIntegration:
     """Integration tests for WebSocketClient."""
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.batch.websocket_client.websockets.connect')
+    @patch('ai_whisperer.extensions.batch.websocket_client.websockets.connect')
     async def test_full_request_response_flow(self, mock_connect):
         """Test complete request/response flow."""
         mock_connection = AsyncMock()

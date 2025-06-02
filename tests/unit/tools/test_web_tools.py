@@ -24,7 +24,7 @@ class TestWebSearchTool:
     @pytest.fixture
     def search_tool(self, temp_cache_dir):
         """Create tool instance with mocked PathManager."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.output_path = temp_cache_dir
             mock_pm.return_value = mock_instance
@@ -178,7 +178,7 @@ class TestFetchURLTool:
     @pytest.fixture
     def fetch_tool(self, temp_cache_dir):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.output_path = temp_cache_dir
             mock_pm.return_value = mock_instance

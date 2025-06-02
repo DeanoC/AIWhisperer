@@ -74,7 +74,7 @@ This is a test summary.
     @pytest.fixture
     def update_tool(self, temp_workspace_with_rfc):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_workspace_with_rfc
             mock_pm.return_value = mock_instance
@@ -247,7 +247,7 @@ Test summary.
     @pytest.fixture
     def move_tool(self, temp_workspace_with_rfcs):
         """Create tool instance."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_pm:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_pm:
             mock_instance = Mock()
             mock_instance.workspace_path = temp_workspace_with_rfcs
             mock_pm.return_value = mock_instance

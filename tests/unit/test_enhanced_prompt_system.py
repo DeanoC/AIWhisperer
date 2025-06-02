@@ -48,7 +48,7 @@ class TestEnhancedPromptSystem:
     @pytest.fixture
     def mock_path_manager(self, temp_prompt_dir):
         """Mock PathManager to use temporary directory."""
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
             mock_instance = Mock()
             mock_instance.prompt_path = Path(temp_prompt_dir)
             mock_instance.app_path = Path(temp_prompt_dir)
@@ -215,7 +215,7 @@ class TestEnhancedPromptSystem:
             os.chmod(bad_file, 0o000)
             
             # Should not raise an exception during init
-            with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+            with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
                 mock_instance = Mock()
                 mock_instance.prompt_path = Path(temp_prompt_dir)
                 mock_instance.app_path = Path(temp_prompt_dir)
@@ -236,7 +236,7 @@ class TestEnhancedPromptSystem:
         shutil.rmtree(shared_dir)
         
         # Should not raise an exception
-        with patch('ai_whisperer.path_management.PathManager.get_instance') as mock_get_instance:
+        with patch('ai_whisperer.utils.path.PathManager.get_instance') as mock_get_instance:
             mock_instance = Mock()
             mock_instance.prompt_path = Path(temp_prompt_dir)
             mock_instance.app_path = Path(temp_prompt_dir)

@@ -104,7 +104,7 @@ class TestSystemHealthCheckToolDirectoryFinding:
             # Should log found directories
             assert mock_logger.info.called
     
-    @patch('ai_whisperer.path_management.PathManager')
+    @patch('ai_whisperer.utils.path.PathManager')
     def test_find_health_check_directories_with_path_manager(self, mock_path_manager):
         """Test directory finding with PathManager integration."""
         tool = SystemHealthCheckTool()

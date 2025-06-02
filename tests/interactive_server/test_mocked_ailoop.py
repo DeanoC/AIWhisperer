@@ -208,7 +208,7 @@ def test_ai_message_chunk_notification_stream(interactive_app):
                 if messages and messages[-1].get("content") == "stream":
                     yield AIStreamChunk(delta_content="This is a streamed chunk.")
                     yield AIStreamChunk(delta_content="Final chunk.", finish_reason="stop")
-            with patch("ai_whisperer.services.ai.openrouter_ai_service.OpenRouterAIService.stream_chat_completion", new=fake_stream_chat_completion):
+            with patch("ai_whisperer.services.ai.openrouter.OpenRouterAIService.stream_chat_completion", new=fake_stream_chat_completion):
                 client = TestClient(interactive_app)
                 with client.websocket_connect("/ws") as websocket:
                     # Start a session and get sessionId
