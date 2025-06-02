@@ -4,9 +4,21 @@ from datetime import datetime, timezone
 from jsonschema import validate, ValidationError
 import os
 from typing import Optional
+from pathlib import Path
 
-# Default schema directory at the project root
-DEFAULT_SCHEMA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "schemas"))
+# Default schema directory using new hierarchical config structure
+def get_default_schema_dir() -> str:
+    """Get the default schema directory from the new config structure."""
+    try:
+        from ai_whisperer.config import get_schema_path
+        # Get any schema path to determine the schemas directory
+        schema_path = get_schema_path("initial_plan_schema")
+        return str(schema_path.parent)
+    except:
+        # Fallback to old location if config system fails
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config", "schemas"))
+
+DEFAULT_SCHEMA_DIR = get_default_schema_dir()
 
 # Global variable to hold the configured schema directory
 _schema_directory: Optional[str] = None
@@ -78,7 +90,16 @@ def validate_against_schema(data: dict, schema_name: str):
                is_valid (bool): True if validation passes, False otherwise.
                error_message (str or None): Detailed error message if validation fails, None otherwise.
     """
-    schema_path = os.path.join(get_schema_directory(), schema_name)
+    try:
+        # Try to use the new config system first
+        from ai_whisperer.config import get_schema_path
+        # Remove .json extension if present since get_schema_path adds it
+        clean_schema_name = schema_name.replace('.json', '')
+        schema_path = get_schema_path(clean_schema_name)
+    except:
+        # Fallback to old method
+        schema_path = os.path.join(get_schema_directory(), schema_name)
+    
     try:
         schema_content = load_schema(schema_path)
     except RuntimeError as e:

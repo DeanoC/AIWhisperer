@@ -1310,7 +1310,8 @@ class StatelessInteractiveSession:
         from pathlib import Path
         
         # Load the plan generation schema
-        schema_path = Path(__file__).parent.parent / "schemas" / "plan_generation_schema.json"
+        from ai_whisperer.config import get_schema_path
+        schema_path = get_schema_path("plan_generation_schema")
         try:
             with open(schema_path) as f:
                 plan_schema = json.load(f)
