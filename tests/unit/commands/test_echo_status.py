@@ -1,6 +1,6 @@
 import unittest
-from ai_whisperer.commands.echo import EchoCommand
-from ai_whisperer.commands.status import StatusCommand
+from ai_whisperer.interfaces.cli.commands.echo import EchoCommand
+from ai_whisperer.interfaces.cli.commands.status import StatusCommand
 
 class TestCommands(unittest.TestCase):
     def test_echo(self):

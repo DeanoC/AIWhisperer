@@ -4,8 +4,8 @@ Tests for DebbieCommand debugging functionality.
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from ai_whisperer.commands.debbie import DebbieCommand
-from ai_whisperer.commands.errors import CommandError
+from ai_whisperer.interfaces.cli.commands.debbie import DebbieCommand
+from ai_whisperer.interfaces.cli.commands.errors import CommandError
 from datetime import datetime, timedelta
 
 
@@ -304,7 +304,7 @@ class TestDebbieCommandIntegration:
     @patch('interactive_server.debbie_observer.get_observer')
     def test_command_registry_registration(self, mock_get_observer):
         """Test that DebbieCommand is properly registered"""
-        from ai_whisperer.commands.registry import CommandRegistry
+        from ai_whisperer.interfaces.cli.commands.registry import CommandRegistry
         
         # Command should be registered
         command_cls = CommandRegistry.get('debbie')

@@ -4,7 +4,7 @@ Debbie debugging commands for interactive session monitoring and analysis.
 
 from ai_whisperer.services.agents.base import Command
 from ai_whisperer.services.agents.registry import CommandRegistry
-from .errors import CommandError
+from ai_whisperer.interfaces.cli.commands.errors import CommandError
 from typing import Any, Dict, Optional
 import json
 from datetime import datetime

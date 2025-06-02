@@ -5,7 +5,7 @@ import sys
 
 # Assuming the main CLI entry point is in ai_whisperer.cli
 # You might need to adjust the import based on the actual project structure
-# from ai_whisperer.cli import main
+# from ai_whisperer.interfaces.cli.main import main
 
 # Placeholder for the actual CLI execution function or a mock
 def run_interactive_cli(command, timeout=10):

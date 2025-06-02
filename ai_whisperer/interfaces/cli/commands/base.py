@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
-from .args import parse_args
+from ai_whisperer.interfaces.cli.commands.args import parse_args
 
 class Command(ABC):
     """

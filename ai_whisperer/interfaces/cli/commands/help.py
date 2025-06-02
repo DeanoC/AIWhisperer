@@ -1,6 +1,6 @@
 from ai_whisperer.services.agents.base import Command
 from ai_whisperer.services.agents.registry import CommandRegistry
-from .errors import CommandError
+from ai_whisperer.interfaces.cli.commands.errors import CommandError
 
 class HelpCommand(Command):
     name = 'help'

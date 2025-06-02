@@ -3,9 +3,9 @@ import sys
 import logging
 from pathlib import Path
 from ai_whisperer.core.exceptions import ConfigError
-from .cli_commands_batch_mode import BatchModeCliCommand
-from .cli_commands import BaseCliCommand
-from . import logging_custom
+from ai_whisperer.interfaces.cli.batch import BatchModeCliCommand
+from ai_whisperer.interfaces.cli.commands import BaseCliCommand
+from ai_whisperer.core import logging
 from ai_whisperer.core.config import load_config
 from ai_whisperer.utils.path import PathManager
 
@@ -66,9 +66,9 @@ def cli(args=None):
         sys.exit(0)
 
     # Setup logging
-    logging_custom.setup_logging()
+    logging.setup_logging()
     global logger
-    logger = logging_custom.get_logger(__name__)
+    logger = logging.get_logger(__name__)
 
     # Load config and .env (enforces API key and config validation)
     try:

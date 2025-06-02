@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
-from ai_whisperer.commands import agent as agent_commands
+from ai_whisperer.interfaces.cli.commands import agent as agent_commands
 
 @pytest.mark.asyncio
 class TestAgentInspectCommand:

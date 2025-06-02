@@ -54,12 +54,12 @@ logger.info(f"Python executable: {sys.executable}")
 logger.info(f"Project root: {project_root}")
 logger.info(f"Port for logging: {port_for_logging}")
 
-import ai_whisperer.commands.echo
-import ai_whisperer.commands.status
-import ai_whisperer.commands.help
-import ai_whisperer.commands.agent
-import ai_whisperer.commands.session
-import ai_whisperer.commands.debbie
+import ai_whisperer.interfaces.cli.commands.echo
+import ai_whisperer.interfaces.cli.commands.status
+import ai_whisperer.interfaces.cli.commands.help
+import ai_whisperer.interfaces.cli.commands.agent
+import ai_whisperer.interfaces.cli.commands.session
+import ai_whisperer.interfaces.cli.commands.debbie
 import json
 import inspect
 import asyncio
@@ -533,9 +533,9 @@ async def debbie_send_alert_notification(websocket, alert_data):
 
 
 # Handler registry
-from ai_whisperer.commands.registry import CommandRegistry
+from ai_whisperer.interfaces.cli.commands.registry import CommandRegistry
 
-from ai_whisperer.commands.errors import CommandError
+from ai_whisperer.interfaces.cli.commands.errors import CommandError
 
 async def dispatch_command_handler(params, websocket=None):
     session_id = params.get("sessionId")
