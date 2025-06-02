@@ -8,6 +8,7 @@ from interactive_server.main import app
 
 NUM_CLIENTS = 12
 
+@pytest.mark.performance
 @pytest.mark.timeout(30)
 def test_websocket_stress():
     pytest.xfail("Known issue: FastAPI TestClient + threading + asyncio event loop leaks cause process to hang. See https://github.com/tiangolo/fastapi/issues/3941 and related discussions.")

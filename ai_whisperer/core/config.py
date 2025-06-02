@@ -69,8 +69,12 @@ def load_config(config_path: Optional[str] = None,
     Raises:
         ConfigError: If configuration loading or validation fails
     """
-    # Load .env file first
-    load_dotenv()
+    # Load .env file first, with error handling for CI/test environments
+    try:
+        load_dotenv()
+    except IOError as e:
+        # In CI or test environments, the starting path might not exist
+        logger.debug(f"Could not load .env file: {e}")
     
     # Determine loading mode
     if config_path and not environment:

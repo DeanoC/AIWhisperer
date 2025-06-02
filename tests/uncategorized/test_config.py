@@ -314,7 +314,7 @@ def test_load_config_missing_openrouter_model(mock_getcwd, create_test_files, mo
     monkeypatch.setenv("OPENROUTER_API_KEY", mock_api_key)
 
     # The actual error message when the base openrouter config is missing 'model'
-    expected_error_msg = r"Missing or empty required keys in 'openrouter' section of .*: model"
+    expected_error_msg = r"Missing or empty required keys in 'openrouter' section: model"
     with pytest.raises(ConfigError, match=expected_error_msg):
         load_config(str(config_path))
 

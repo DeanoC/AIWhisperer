@@ -317,4 +317,4 @@ class TestAgentContinuationIntegration:
             # The actual format includes "CONTINUATION PROTOCOL INSTRUCTIONS" (with spaces)
             assert 'CONTINUATION PROTOCOL INSTRUCTIONS' in formatted
             # Check for actual content from the continuation protocol
-            assert 'When responding, you MUST include a "continuation" field' in formatted
+            assert 'When to Signal Continuation' in formatted
