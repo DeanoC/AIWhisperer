@@ -14,9 +14,9 @@ from enum import Enum
 import uuid
 
 from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger, LogLevel
-from ..tools.message_injector_tool import MessageInjectorTool, InjectionType
-from ..tools.session_inspector_tool import SessionInspectorTool
-from ..tools.python_executor_tool import PythonExecutorTool
+from ai_whisperer.tools.message_injector_tool import MessageInjectorTool
+from ai_whisperer.tools.session_inspector_tool import SessionInspectorTool
+from ai_whisperer.tools.python_executor_tool import PythonExecutorTool
 from ai_whisperer.extensions.batch.monitoring import AnomalyAlert
 
 logger = logging.getLogger(__name__)

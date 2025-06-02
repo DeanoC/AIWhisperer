@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from ai_whisperer.core.logging import EnhancedLogMessage, LogLevel, LogSource, ComponentType
 from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
-from ..logging.log_aggregator import LogAggregator
+from ai_whisperer.extensions.monitoring.log_aggregator import LogAggregator
 from ai_whisperer.extensions.batch.monitoring import MonitoringEvent, DebbieMonitor
 
 logger = logging.getLogger(__name__)

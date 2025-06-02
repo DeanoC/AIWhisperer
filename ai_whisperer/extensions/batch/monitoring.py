@@ -14,9 +14,9 @@ import statistics
 from collections import deque, defaultdict
 
 from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger, LogLevel, LogSource, ComponentType
-from ..logging.log_aggregator import LogAggregator
-from ..tools.session_inspector_tool import SessionInspectorTool
-from ..tools.message_injector_tool import MessageInjectorTool
+from ai_whisperer.extensions.monitoring.log_aggregator import LogAggregator
+from ai_whisperer.tools.session_inspector_tool import SessionInspectorTool
+from ai_whisperer.tools.message_injector_tool import MessageInjectorTool
 
 logger = logging.getLogger(__name__)
 

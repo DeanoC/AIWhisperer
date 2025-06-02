@@ -8,9 +8,23 @@ import time
 import os
 from unittest.mock import patch
 from tests.interactive_server.performance_metrics_utils import MetricsCollector
-from ai_whisperer.core.logging import log_event, LogMessage, LogLevel, ComponentType
+from ai_whisperer.core.logging import LogMessage, LogLevel, ComponentType
 
-import pytest
+
+def log_event(message, logger_name="aiwhisperer"):
+    """Simple log function for tests"""
+    import logging
+    logger = logging.getLogger(logger_name)
+    if message.level == LogLevel.DEBUG:
+        logger.debug(message.event_summary)
+    elif message.level == LogLevel.INFO:
+        logger.info(message.event_summary)
+    elif message.level == LogLevel.WARNING:
+        logger.warning(message.event_summary)
+    elif message.level == LogLevel.ERROR:
+        logger.error(message.event_summary)
+    elif message.level == LogLevel.CRITICAL:
+        logger.critical(message.event_summary)
 
 import pytest
 @pytest.mark.performance

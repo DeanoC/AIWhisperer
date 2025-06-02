@@ -17,7 +17,7 @@ from ai_whisperer.extensions.batch.intervention import (
     InterventionOrchestrator
 )
 from ai_whisperer.extensions.batch.monitoring import AnomalyAlert
-from ai_whisperer.extensions.monitoring.debbie_logger import LogLevel
+from ai_whisperer.core.logging import LogLevel
 
 
 class TestInterventionStrategy:
@@ -284,7 +284,7 @@ class TestInterventionExecutor:
         assert len(executor.strategy_handlers) == 6
     
     @pytest.mark.asyncio
-    @patch('ai_whisperer.batch.intervention.DebbieLogger')
+    @patch('ai_whisperer.extensions.batch.intervention.DebbieLogger')
     async def test_intervene_success(self, mock_logger_class):
         """Test successful intervention."""
         mock_logger = Mock()

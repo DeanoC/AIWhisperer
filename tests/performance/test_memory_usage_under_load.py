@@ -8,8 +8,6 @@ import threading
 from tests.interactive_server.performance_metrics_utils import MetricsCollector
 
 import pytest
-
-import pytest
 @pytest.mark.performance
 @pytest.mark.asyncio
 @pytest.mark.xfail(reason="Known failure: see test run 2025-05-30, CI error", strict=False)
