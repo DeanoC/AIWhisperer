@@ -46,7 +46,7 @@ def test_chat_completion_with_history(mock_post):
             }
         }
 
-        with patch("ai_whisperer.config.load_config", return_value=mock_config):
+        with patch("ai_whisperer.core.config.load_config", return_value=mock_config):
             # Now OpenRouterAIService should be initialized with the mocked config
             # Map relevant config values to AIConfig arguments
             ai_config = AIConfig(
@@ -140,7 +140,7 @@ def test_chat_completion_with_multi_turn_history(mock_post):
             app_name=mock_config["openrouter"]["app_name"],
         )
 
-        with patch("ai_whisperer.config.load_config", return_value=mock_config):
+        with patch("ai_whisperer.core.config.load_config", return_value=mock_config):
             # Initialize the API
             api = OpenRouterAIService(ai_config)
 

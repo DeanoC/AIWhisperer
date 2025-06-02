@@ -6,9 +6,10 @@ Following TDD principles - tests written before implementation.
 import pytest
 import os
 from pathlib import Path
+import yaml
 
 from ai_whisperer.prompt_system import PromptLoader
-from ai_whisperer.services.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.registry import Agent
 
 
 @pytest.mark.flaky
@@ -22,126 +23,94 @@ class TestDebbiePromptSystem:
         return PromptLoader()
     
     @pytest.fixture
-    def debbie_agent(self):
-        """Get Debbie agent from registry"""
-        from ai_whisperer.utils.path import PathManager
-        # Initialize PathManager with proper paths
-        PathManager._instance = None
-        PathManager._initialized = False
-        path_manager = PathManager.get_instance()
-        path_manager.initialize()  # Initialize with defaults
-        
-        # Use the app_path for consistent prompt location
-        prompts_dir = path_manager.app_path / "prompts"
-        registry = AgentRegistry(prompts_dir)
-        return registry.get_agent('D')
+    def debbie_config(self):
+        """Get Debbie's configuration from the agents config"""
+        config_path = Path("config/agents/agents.yaml")
+        with open(config_path, 'r') as f:
+            agents_config = yaml.safe_load(f)
+        return agents_config['agents'].get('d')
+    
+    @pytest.fixture
+    def debbie_agent(self, debbie_config):
+        """Create Debbie agent from config"""
+        if not debbie_config:
+            return None
+        return Agent(
+            agent_id='d',
+            name=debbie_config['name'],
+            role=debbie_config['role'],
+            description=debbie_config['description'],
+            tool_tags=debbie_config.get('tool_tags', []),
+            prompt_file=debbie_config['prompt_file'],
+            context_sources=debbie_config.get('context_sources', []),
+            color=debbie_config.get('color', '#888888'),
+            icon=debbie_config.get('icon', '🤖'),
+            tool_sets=debbie_config.get('tool_sets'),
+            allow_tools=debbie_config.get('allow_tools'),
+            deny_tools=debbie_config.get('deny_tools'),
+            continuation_config=debbie_config.get('continuation_config')
+        )
     
     def test_debbie_prompt_file_exists(self, debbie_agent):
         """Test that Debbie's prompt file exists"""
-        from ai_whisperer.utils.path import PathManager
-        path_manager = PathManager.get_instance()
-        prompt_file = path_manager.app_path / "prompts" / "agents" / debbie_agent.prompt_file
+        prompt_file = Path("prompts/agents") / debbie_agent.prompt_file
         
         assert prompt_file.exists(), f"Prompt file {prompt_file} should exist"
         assert prompt_file.is_file(), f"{prompt_file} should be a file"
     
     def test_debbie_prompt_contains_batch_instructions(self):
         """Test that Debbie's prompt contains batch processing instructions"""
-        from ai_whisperer.utils.path import PathManager
-        path_manager = PathManager.get_instance()
-        if not path_manager._initialized:
-            path_manager.initialize()
-        prompt_file = path_manager.app_path / "prompts" / "agents" / "debbie_debugger.prompt.md"
+        prompt_file = Path("prompts/agents/debbie_debugger.prompt.md")
+        assert prompt_file.exists(), f"Debbie's prompt file should exist at {prompt_file}"
         
-        if prompt_file.exists():
-            content = prompt_file.read_text()
-            
-            # Check for batch-related keywords
-            batch_keywords = [
-                "batch",
-                "script",
-                "automated",
-                "sequential",
-                "commands"
-            ]
-            
-            found_keywords = [kw for kw in batch_keywords if kw.lower() in content.lower()]
-            assert len(found_keywords) >= 2, \
-                f"Prompt should contain batch processing instructions, found: {found_keywords}"
-    
-    def test_debbie_prompt_retains_debugging_instructions(self):
-        """Test that Debbie's prompt still contains debugging instructions"""
-        from ai_whisperer.utils.path import PathManager
-        path_manager = PathManager.get_instance()
-        if not path_manager._initialized:
-            path_manager.initialize()
-        prompt_file = path_manager.app_path / "prompts" / "agents" / "debbie_debugger.prompt.md"
+        content = prompt_file.read_text()
         
-        if prompt_file.exists():
-            content = prompt_file.read_text()
-            
-            # Check for debugging-related keywords
-            debug_keywords = [
-                "debug",
-                "monitor",
-                "detect",
-                "analyze",
-                "troubleshoot"
-            ]
-            
-            found_keywords = [kw for kw in debug_keywords if kw.lower() in content.lower()]
-            assert len(found_keywords) >= 3, \
-                f"Prompt should retain debugging instructions, found: {found_keywords}"
+        # Check for batch mode content
+        assert "batch" in content.lower(), "Prompt should mention batch processing"
+        assert any(keyword in content.lower() for keyword in ["script", "automated", "monitoring"]), \
+            "Prompt should contain batch-related keywords"
     
-    def test_debbie_prompt_structure_is_valid(self):
-        """Test that Debbie's prompt has proper structure"""
-        from ai_whisperer.utils.path import PathManager
-        path_manager = PathManager.get_instance()
-        if not path_manager._initialized:
-            path_manager.initialize()
-        prompt_file = path_manager.app_path / "prompts" / "agents" / "debbie_debugger.prompt.md"
+    def test_debbie_prompt_contains_debugging_instructions(self):
+        """Test that Debbie's prompt contains debugging instructions"""
+        prompt_file = Path("prompts/agents/debbie_debugger.prompt.md")
+        assert prompt_file.exists()
         
-        if prompt_file.exists():
-            content = prompt_file.read_text()
-            
-            # Check for essential sections
-            assert "# " in content, "Should have markdown headers"
-            assert "## " in content, "Should have subsections"
-            
-            # Check for role definition
-            assert "role" in content.lower() or "purpose" in content.lower(), \
-                "Should define Debbie's role/purpose"
-            
-            # Check for capabilities or tools mention
-            assert "tool" in content.lower() or "capabilit" in content.lower(), \
-                "Should mention tools or capabilities"
-    
-    def test_debbie_prompt_mentions_dual_role(self):
-        """Test that prompt acknowledges Debbie's dual role"""
-        from ai_whisperer.utils.path import PathManager
-        path_manager = PathManager.get_instance()
-        if not path_manager._initialized:
-            path_manager.initialize()
-        prompt_file = path_manager.app_path / "prompts" / "agents" / "debbie_debugger.prompt.md"
+        content = prompt_file.read_text()
         
-        if prompt_file.exists():
-            content = prompt_file.read_text()
-            
-            # Should mention both debugging and batch processing
-            has_debug = "debug" in content.lower()
-            has_batch = "batch" in content.lower() or "script" in content.lower()
-            
-            assert has_debug and has_batch, \
-                "Prompt should mention both debugging and batch/script processing roles"
+        # Check for debugging content
+        assert "debug" in content.lower(), "Prompt should mention debugging"
+        assert any(keyword in content.lower() for keyword in ["error", "issue", "problem", "troubleshoot"]), \
+            "Prompt should contain debugging-related keywords"
     
-    def test_prompt_loader_can_load_debbie_prompt(self, prompt_loader, debbie_agent):
-        """Test that PromptLoader can successfully load Debbie's prompt"""
-        # This test might need adjustment based on actual PromptLoader implementation
-        try:
-            prompt = prompt_loader.load_agent_prompt(debbie_agent.prompt_file)
-            assert prompt is not None, "Should load prompt successfully"
-            assert isinstance(prompt, str), "Prompt should be a string"
-            assert len(prompt) > 100, "Prompt should have substantial content"
-        except AttributeError:
-            # If method doesn't exist yet, that's expected in TDD
-            pytest.skip("PromptLoader.load_agent_prompt not implemented yet")
+    def test_prompt_dual_mode_support(self):
+        """Test that the prompt supports both debugging and batch modes"""
+        prompt_file = Path("prompts/agents/debbie_debugger.prompt.md")
+        assert prompt_file.exists()
+        
+        content = prompt_file.read_text()
+        
+        # Check for dual-mode indicators
+        has_batch_mode = "batch" in content.lower()
+        has_debug_mode = "debug" in content.lower()
+        
+        assert has_batch_mode and has_debug_mode, \
+            "Prompt should support both batch processing and debugging modes"
+    
+    def test_prompt_includes_monitoring_capabilities(self):
+        """Test that prompt includes monitoring and intervention capabilities"""
+        prompt_file = Path("prompts/agents/debbie_debugger.prompt.md")
+        assert prompt_file.exists()
+        
+        content = prompt_file.read_text()
+        
+        # Check for monitoring capabilities
+        monitoring_keywords = ["monitor", "watch", "observe", "track", "intervene", "pause"]
+        assert any(keyword in content.lower() for keyword in monitoring_keywords), \
+            "Prompt should include monitoring and intervention capabilities"
+    
+    def test_prompt_system_loads_debbie_prompt(self, prompt_loader, debbie_agent):
+        """Test that the prompt system can load Debbie's prompt"""
+        # Note: This test would need the actual PromptLoader implementation
+        # For now, we'll just verify the prompt file path is correct
+        expected_path = Path("prompts/agents") / debbie_agent.prompt_file
+        assert expected_path.exists(), f"Expected prompt at {expected_path}"

@@ -5,70 +5,79 @@ Following TDD principles - tests written before implementation.
 
 import pytest
 from pathlib import Path
+import yaml
+import os
 
-from ai_whisperer.services.agents.registry import AgentRegistry
+from ai_whisperer.services.agents.registry import Agent
 
 
 class TestDebbieAgentConfig:
     """Test Debbie's configuration for batch processing capabilities"""
     
     @pytest.fixture
-    def agent_registry(self):
-        """Provide an initialized AgentRegistry"""
-        prompts_dir = Path("prompts")
-        return AgentRegistry(prompts_dir)
+    def agents_config(self):
+        """Load agents configuration from YAML"""
+        config_path = Path("config/agents/agents.yaml")
+        with open(config_path, 'r') as f:
+            return yaml.safe_load(f)
     
     @pytest.fixture
-    def debbie_agent(self, agent_registry):
-        """Get Debbie agent from registry"""
-        return agent_registry.get_agent('D')
+    def debbie_config(self, agents_config):
+        """Get Debbie's configuration from the agents config"""
+        return agents_config['agents'].get('d')
+    
+    @pytest.fixture
+    def debbie_agent(self, debbie_config):
+        """Create Debbie agent from config"""
+        if not debbie_config:
+            return None
+        return Agent(
+            agent_id='d',
+            name=debbie_config['name'],
+            role=debbie_config['role'],
+            description=debbie_config['description'],
+            tool_tags=debbie_config.get('tool_tags', []),
+            prompt_file=debbie_config['prompt_file'],
+            context_sources=debbie_config.get('context_sources', []),
+            color=debbie_config.get('color', '#888888'),
+            icon=debbie_config.get('icon', '🤖'),
+            tool_sets=debbie_config.get('tool_sets'),
+            allow_tools=debbie_config.get('allow_tools'),
+            deny_tools=debbie_config.get('deny_tools'),
+            continuation_config=debbie_config.get('continuation_config')
+        )
     
     def test_debbie_agent_exists_in_config(self, debbie_agent):
         """Test that Debbie agent exists in the agent configuration"""
-        assert debbie_agent is not None, "Debbie agent should exist with key 'D'"
+        assert debbie_agent is not None, "Debbie agent should exist with key 'd'"
         assert debbie_agent.name == "Debbie the Debugger"
     
     def test_debbie_agent_has_required_properties(self, debbie_agent):
         """Test that Debbie has all required agent properties"""
-        assert hasattr(debbie_agent, 'name')
-        assert hasattr(debbie_agent, 'role')
-        assert hasattr(debbie_agent, 'description')
-        assert hasattr(debbie_agent, 'prompt_file')
-        assert hasattr(debbie_agent, 'tool_sets')
+        assert debbie_agent.agent_id == 'd'
+        assert debbie_agent.role == "debugging_assistant, batch_processor"
+        assert debbie_agent.prompt_file == "debbie_debugger.prompt.md"
+        assert debbie_agent.description
     
     def test_debbie_agent_role_includes_batch_processor(self, debbie_agent):
-        """Test that Debbie has batch_processor role"""
-        # Currently Debbie only has debugging_assistant role
-        # This test should fail until we add batch_processor
-        roles = debbie_agent.role.split(',') if isinstance(debbie_agent.role, str) else [debbie_agent.role]
-        roles = [r.strip() for r in roles]
-        
-        assert 'batch_processor' in roles, "Debbie should have batch_processor role"
-        assert 'debugging_assistant' in roles, "Debbie should retain debugging_assistant role"
+        """Test that Debbie's role includes batch processing"""
+        assert "batch_processor" in debbie_agent.role
     
     def test_debbie_agent_has_batch_tools(self, debbie_agent):
-        """Test that Debbie has batch processing tools configured"""
-        # This should fail until we add batch_tools to tool_sets
-        assert 'batch_tools' in debbie_agent.tool_sets, "Should have batch processing tools"
-        assert 'debugging_tools' in debbie_agent.tool_sets, "Should retain debugging tools"
-        assert 'filesystem' in debbie_agent.tool_sets, "Should have filesystem tools"
+        """Test that Debbie has tools needed for batch processing"""
+        # Check for batch-specific tool tags
+        assert "batch" in debbie_agent.tool_tags
+        assert "monitoring" in debbie_agent.tool_tags
+        assert "filesystem" in debbie_agent.tool_tags
+        assert "command" in debbie_agent.tool_tags
     
     def test_debbie_agent_prompt_supports_batch_mode(self, debbie_agent):
-        """Test that Debbie's prompt file supports batch operations"""
-        assert debbie_agent.prompt_file is not None
-        # For now, we expect the same prompt file
-        # Later we might want a combined prompt or multiple files
-        assert 'debbie' in debbie_agent.prompt_file.lower()
+        """Test that Debbie's prompt file exists and is configured"""
+        prompt_path = Path("prompts/agents") / debbie_agent.prompt_file
+        assert prompt_path.exists(), f"Prompt file {prompt_path} should exist"
     
     def test_debbie_agent_dual_role_configuration(self, debbie_agent):
-        """Test that Debbie is configured for dual-role operation"""
-        # Check that Debbie has configurations for both roles
-        roles = debbie_agent.role.split(',') if isinstance(debbie_agent.role, str) else [debbie_agent.role]
-        roles = [r.strip() for r in roles]
-        
-        # Should have at least 2 roles
-        assert len(roles) >= 2, f"Debbie should have multiple roles, found: {roles}"
-        
-        # Should have multiple tool sets
-        assert len(debbie_agent.tool_sets) >= 3, \
-            f"Should have multiple tool sets for dual functionality, found: {debbie_agent.tool_sets}"
+        """Test that Debbie can function as both debugger and batch processor"""
+        roles = [r.strip() for r in debbie_agent.role.split(',')]
+        assert "debugging_assistant" in roles
+        assert "batch_processor" in roles

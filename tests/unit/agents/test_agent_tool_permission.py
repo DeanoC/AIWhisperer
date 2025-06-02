@@ -6,10 +6,13 @@ from ai_whisperer.services.agents.registry import Agent
 def get_tools_for_agent(agent: Agent, registry: ToolRegistry):
     # If allow_tools is set, only those tools are allowed
     if hasattr(agent, 'allow_tools') and agent.allow_tools:
-        return [t for t in registry.get_all_tools() if t.name in agent.allow_tools]
+        all_tools = registry.get_all_tools()
+        # get_all_tools returns a dict {tool_name: tool_instance}
+        return [tool for name, tool in all_tools.items() if name in agent.allow_tools]
     # Default: tag filtering, then apply deny_tools if present
     tools = registry.get_filtered_tools({"tags": agent.tool_tags})
     if hasattr(agent, 'deny_tools') and agent.deny_tools:
+        # get_filtered_tools returns a list of tool instances
         tools = [t for t in tools if t.name not in agent.deny_tools]
     return tools
 
