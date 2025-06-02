@@ -32,8 +32,8 @@ class TestAdvancedASTScenarios:
         )
         
         # Should parse without errors
-        assert result["status"] == "success"
-        assert "body" in result["data"]
+        assert "ast" in result
+        assert "body" in result["ast"]
     
     def test_parse_malformed_unicode(self):
         """Test handling of malformed unicode in code."""
@@ -52,7 +52,8 @@ emoji = "😀🎉🐍"
         )
         
         # Should handle unicode properly
-        assert result["status"] == "success"
+        assert "ast" in result
+        assert result["ast"]["node_type"] == "Module"
     
     def test_parse_highly_nested_data_structures(self, fixtures_dir, tmp_path):
         """Test parsing of very deeply nested data structures."""
@@ -69,6 +70,6 @@ emoji = "😀🎉🐍"
         )
         
         # Should handle deep nesting
-        assert result["status"] == "success"
+        assert "ast" in result
         # The AST should contain the deeply nested dictionary
-        assert result["data"]["body"][0]["type"] == "Assign"
+        assert result["ast"]["body"][0]["node_type"] == "Assign"

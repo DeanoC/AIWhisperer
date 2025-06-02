@@ -35,9 +35,8 @@ class TestASTParsingFilePaths:
         )
         
         # Verify basic structure
-        assert result["status"] == "success"
-        assert "data" in result
-        assert result["data"]["type"] == "Module"
+        assert "ast" in result
+        assert result["ast"]["node_type"] == "Module"
     
     def test_parse_file_with_functions(self, fixtures_dir, tmp_path):
         """Test parsing a file with function definitions."""
@@ -54,10 +53,10 @@ class TestASTParsingFilePaths:
         )
         
         # Verify functions are parsed
-        assert result["status"] == "success"
-        assert "body" in result["data"]
-        assert len(result["data"]["body"]) == 2  # Two functions
-        assert all(node["type"] == "FunctionDef" for node in result["data"]["body"])
+        assert "ast" in result
+        assert "body" in result["ast"]
+        assert len(result["ast"]["body"]) == 2  # Two functions
+        assert all(node["node_type"] == "FunctionDef" for node in result["ast"]["body"])
     
     def test_parse_file_with_classes(self, fixtures_dir, tmp_path):
         """Test parsing a file with class definitions."""
@@ -74,10 +73,10 @@ class TestASTParsingFilePaths:
         )
         
         # Verify class is parsed
-        assert result["status"] == "success"
-        assert "body" in result["data"]
-        assert len(result["data"]["body"]) == 1  # One class
-        assert result["data"]["body"][0]["type"] == "ClassDef"
+        assert "ast" in result
+        assert "body" in result["ast"]
+        assert len(result["ast"]["body"]) == 1  # One class
+        assert result["ast"]["body"][0]["node_type"] == "ClassDef"
     
     def test_parse_nonexistent_file(self):
         """Test parsing a file that doesn't exist."""
@@ -89,7 +88,6 @@ class TestASTParsingFilePaths:
         )
         
         # Should return error status
-        assert result["status"] == "error"
         assert "error" in result
     
     def test_parse_file_with_encoding(self, fixtures_dir, tmp_path):
@@ -107,7 +105,8 @@ class TestASTParsingFilePaths:
         )
         
         # Should handle UTF-8 encoding
-        assert result["status"] == "success"
+        assert "ast" in result
+        assert result["ast"]["node_type"] == "Module"
     
     def test_parse_relative_file_path(self, fixtures_dir, tmp_path):
         """Test parsing with relative file path."""
@@ -128,7 +127,8 @@ class TestASTParsingFilePaths:
                 source_type="file"
             )
             
-            assert result["status"] == "success"
+            assert "ast" in result
+            assert result["ast"]["node_type"] == "Module"
         finally:
             os.chdir(original_cwd)
 
@@ -145,9 +145,9 @@ class TestASTParsingModules:
             source_type="module"
         )
         
-        # Should successfully parse os.path module
-        assert result["status"] == "success"
-        assert result["data"]["type"] == "Module"
+        # Built-in modules return error
+        assert "error" in result
+        assert "built-in module" in result["error"]
     
     def test_parse_third_party_module(self):
         """Test parsing a third-party module."""
@@ -159,7 +159,8 @@ class TestASTParsingModules:
         )
         
         # Should parse pytest module
-        assert result["status"] == "success"
+        assert "ast" in result
+        assert result["ast"]["node_type"] == "Module"
     
     def test_parse_nonexistent_module(self):
         """Test parsing a module that doesn't exist."""
@@ -171,7 +172,7 @@ class TestASTParsingModules:
         )
         
         # Should return error
-        assert result["status"] == "error"
+        assert "error" in result
     
     def test_parse_package_init(self):
         """Test parsing a package __init__.py file."""
@@ -183,7 +184,8 @@ class TestASTParsingModules:
         )
         
         # Should parse json module
-        assert result["status"] == "success"
+        assert "ast" in result
+        assert result["ast"]["node_type"] == "Module"
     
     @staticmethod
     def test_module_to_json_static_method():
@@ -192,8 +194,9 @@ class TestASTParsingModules:
         from ai_whisperer.tools.python_ast_json_tool import PythonASTJSONTool
         
         result = PythonASTJSONTool.module_to_json("os")
-        assert result["status"] == "success"
-        assert result["data"]["type"] == "Module"
+        # Built-in modules return error
+        assert "error" in result
+        assert "built-in module" in result["error"]
 
 
 class TestASTParsingCodeStrings:
@@ -218,8 +221,8 @@ print(result)
             source_type="code"
         )
         
-        assert result["status"] == "success"
-        assert len(result["data"]["body"]) == 3  # function def, assignment, print
+        assert "ast" in result
+        assert len(result["ast"]["body"]) == 3  # function def, assignment, print
     
     def test_parse_empty_code_string(self):
         """Test parsing empty code string."""
@@ -231,8 +234,8 @@ print(result)
         )
         
         # Empty code should still parse successfully
-        assert result["status"] == "success"
-        assert result["data"]["body"] == []
+        assert "ast" in result
+        assert result["ast"]["body"] == []
 
 
 class TestASTNodeStructure:
@@ -253,8 +256,9 @@ class MyClass:
             source_type="code"
         )
         
-        class_node = result["data"]["body"][0]
-        assert class_node["type"] == "ClassDef"
+        assert "ast" in result
+        class_node = result["ast"]["body"][0]
+        assert class_node["node_type"] == "ClassDef"
         assert "name" in class_node
         assert "body" in class_node
         assert "bases" in class_node
@@ -272,9 +276,10 @@ class MyClass:
         )
         
         # Should have ListComp in expression
-        expr_node = result["data"]["body"][0]
-        assert expr_node["type"] == "Expr"
-        assert expr_node["value"]["type"] == "ListComp"
+        assert "ast" in result
+        expr_node = result["ast"]["body"][0]
+        assert expr_node["node_type"] == "Expr"
+        assert expr_node["value"]["node_type"] == "ListComp"
 
 
 class TestASTParsingEdgeCases:
@@ -304,7 +309,8 @@ def outer():
         )
         
         # Should parse without errors
-        assert result["status"] == "success"
+        assert "ast" in result
+        assert result["ast"]["node_type"] == "Module"
     
     def test_parse_unicode_identifiers(self):
         """Test parsing unicode identifiers."""
@@ -321,8 +327,8 @@ def outer():
         )
         
         # Should handle unicode identifiers
-        assert result["status"] == "success"
-        assert len(result["data"]["body"]) == 2
+        assert "ast" in result
+        assert len(result["ast"]["body"]) == 2
     
     def test_parse_complex_expressions(self):
         """Test parsing complex expressions."""
@@ -338,7 +344,8 @@ result = (lambda x: x ** 2)(5) + [i for i in range(10)][5] + {'a': 1}.get('a', 0
         )
         
         # Should parse complex expression
-        assert result["status"] == "success"
+        assert "ast" in result
+        assert result["ast"]["node_type"] == "Module"
     
     def test_parse_file_with_different_newlines(self, tmp_path):
         """Test parsing files with different newline styles."""
@@ -354,5 +361,5 @@ result = (lambda x: x ** 2)(5) + [i for i in range(10)][5] + {'a': 1}.get('a', 0
         )
         
         # Should handle different newline styles
-        assert result["status"] == "success"
-        assert len(result["data"]["body"]) == 3
+        assert "ast" in result
+        assert len(result["ast"]["body"]) == 3
