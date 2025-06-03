@@ -206,7 +206,7 @@ class CreateRFCTool(AITool):
 ---
 *This RFC was created by AIWhisperer's Agent P (Patricia)*"""
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute RFC creation."""
         title = arguments.get('title')
         summary = arguments.get('summary')
@@ -216,13 +216,25 @@ class CreateRFCTool(AITool):
         author = arguments.get('author', 'User')
         
         if not title:
-            return "Error: 'title' is required."
+            return {
+                "error": "'title' is required.",
+                "rfc_id": None,
+                "path": None
+            }
         
         if not summary:
-            return "Error: 'summary' is required."
+            return {
+                "error": "'summary' is required.",
+                "rfc_id": None,
+                "path": None
+            }
         
         if not short_name:
-            return "Error: 'short_name' is required."
+            return {
+                "error": "'short_name' is required.",
+                "rfc_id": None,
+                "path": None
+            }
         
         try:
             # Generate RFC filename and ID
@@ -292,22 +304,26 @@ class CreateRFCTool(AITool):
             
             logger.info(f"Created RFC {rfc_id}: {title}")
             
-            return f"""RFC created successfully!
-
-**RFC ID**: {rfc_id}
-**Title**: {title}
-**Status**: in_progress
-**Filename**: {filename}
-**Location**: .WHISPER/rfc/in_progress/{filename}
-
-The RFC has been created and is ready for refinement. You can now:
-1. Add more requirements through discussion
-2. Answer clarifying questions to improve the RFC
-3. Research technical approaches
-4. Archive with 'move_rfc' when refinement is complete
-
-Next step: Use Agent P to refine this RFC through conversation."""
+            return {
+                "rfc_id": rfc_id,
+                "title": title,
+                "short_name": short_name,
+                "status": "in_progress",
+                "filename": filename,
+                "path": str(rfc_path.relative_to(path_manager.workspace_path)),
+                "absolute_path": str(rfc_path),
+                "metadata_path": str(metadata_path.relative_to(path_manager.workspace_path)),
+                "created": created_date,
+                "author": author,
+                "summary": summary,
+                "background": background,
+                "initial_requirements": initial_requirements
+            }
             
         except Exception as e:
             logger.error(f"Error creating RFC: {e}")
-            return f"Error creating RFC: {str(e)}"
+            return {
+                "error": f"Error creating RFC: {str(e)}",
+                "rfc_id": None,
+                "path": None
+            }
