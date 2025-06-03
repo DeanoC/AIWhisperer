@@ -8,80 +8,96 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from collections import defaultdict
 
-from ai_whisperer.tools.base_tool import BaseTool, ToolParameter, ToolResult
+from ai_whisperer.tools.base_tool import AITool
+from pathlib import Path
 
 
-class PromptMetricsTool(BaseTool):
+class PromptMetricsTool(AITool):
     """Tool for collecting and analyzing prompt effectiveness metrics."""
     
-    name = "prompt_metrics"
-    description = "Analyze agent responses to measure prompt compliance and effectiveness"
-    category = "analysis"
+    @property
+    def name(self) -> str:
+        return "prompt_metrics"
     
-    parameters = [
-        ToolParameter(
-            name="action",
-            type="string",
-            description="Action to perform: 'analyze_response', 'log_tool_usage', 'get_summary', 'compare_versions', 'get_tool_metrics'",
-            required=True
-        ),
-        ToolParameter(
-            name="agent_id",
-            type="string", 
-            description="Agent ID (A, P, T, D, E)",
-            required=False
-        ),
-        ToolParameter(
-            name="response",
-            type="string",
-            description="Agent response to analyze",
-            required=False
-        ),
-        ToolParameter(
-            name="session_id",
-            type="string",
-            description="Session ID for tracking",
-            required=False
-        ),
-        ToolParameter(
-            name="prompt_version",
-            type="string",
-            description="Prompt version identifier (e.g., 'current', 'revised')",
-            required=False
-        ),
-        ToolParameter(
-            name="tool_name",
-            type="string",
-            description="Name of the tool being logged",
-            required=False
-        ),
-        ToolParameter(
-            name="tool_success",
-            type="boolean",
-            description="Whether the tool execution succeeded",
-            required=False
-        ),
-        ToolParameter(
-            name="error_message",
-            type="string",
-            description="Error message if tool failed",
-            required=False
-        ),
-        ToolParameter(
-            name="execution_time_ms",
-            type="integer",
-            description="Tool execution time in milliseconds",
-            required=False
-        )
-    ]
+    @property
+    def description(self) -> str:
+        return "Analyze agent responses to measure prompt compliance and effectiveness"
     
-    def __init__(self, workspace_path: str):
-        super().__init__(workspace_path)
-        self.metrics_file = self.workspace_path / "metrics" / "prompt_metrics.json"
-        self.tool_metrics_file = self.workspace_path / "metrics" / "tool_metrics.json"
-        self.metrics_file.parent.mkdir(exist_ok=True)
+    @property
+    def category(self) -> str:
+        return "analysis"
+    
+    @property
+    def parameters_schema(self) -> dict:
+        return {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "description": "Action to perform: 'analyze_response', 'log_tool_usage', 'get_summary', 'compare_versions', 'get_tool_metrics'",
+                    "enum": ["analyze_response", "log_tool_usage", "get_summary", "compare_versions", "get_tool_metrics"]
+                },
+                "agent_id": {
+                    "type": "string",
+                    "description": "Agent ID (A, P, T, D, E)"
+                },
+                "response": {
+                    "type": "string",
+                    "description": "Agent response to analyze"
+                },
+                "session_id": {
+                    "type": "string",
+                    "description": "Session ID for tracking"
+                },
+                "prompt_version": {
+                    "type": "string",
+                    "description": "Prompt version identifier (e.g., 'current', 'revised')"
+                },
+                "tool_name": {
+                    "type": "string",
+                    "description": "Name of the tool being logged"
+                },
+                "tool_success": {
+                    "type": "boolean",
+                    "description": "Whether the tool execution succeeded"
+                },
+                "error_message": {
+                    "type": "string",
+                    "description": "Error message if tool failed"
+                },
+                "execution_time_ms": {
+                    "type": "integer",
+                    "description": "Tool execution time in milliseconds"
+                }
+            },
+            "required": ["action"],
+            "additionalProperties": False
+        }
+    
+    def __init__(self):
+        super().__init__()
+        # Use current working directory for metrics storage
+        self.metrics_dir = Path.cwd() / "metrics"
+        self.metrics_dir.mkdir(exist_ok=True)
+        self.metrics_file = self.metrics_dir / "prompt_metrics.json"
+        self.tool_metrics_file = self.metrics_dir / "tool_metrics.json"
         self._load_metrics()
         self._load_tool_metrics()
+    
+    def get_ai_prompt_instructions(self) -> str:
+        """Provide instructions for AI on how to use this tool."""
+        return """Use the prompt_metrics tool to analyze agent responses and track tool usage:
+        
+        Actions:
+        - analyze_response: Analyze an agent's response for channel compliance, conciseness, and autonomy
+        - log_tool_usage: Record when a tool is used by an agent
+        - get_summary: Get aggregated metrics for an agent or all agents
+        - compare_versions: Compare metrics between prompt versions (current vs revised)
+        - get_tool_metrics: Get tool usage statistics
+        
+        Example usage:
+        prompt_metrics(action="analyze_response", agent_id="A", response="[FINAL]Hello[/FINAL]", session_id="test123", prompt_version="revised")
+        """
     
     def _load_metrics(self):
         """Load existing metrics from file."""
@@ -365,7 +381,7 @@ class PromptMetricsTool(BaseTool):
         
         return result
     
-    async def execute(self, **kwargs) -> ToolResult:
+    def execute(self, **kwargs) -> Dict:
         """Execute the prompt metrics tool."""
         action = kwargs.get("action")
         
@@ -376,10 +392,10 @@ class PromptMetricsTool(BaseTool):
             version = kwargs.get("prompt_version", "current")
             
             if not agent_id or not response:
-                return ToolResult(
-                    success=False,
-                    error="Missing required parameters: agent_id and response"
-                )
+                return {
+                    "success": False,
+                    "error": "Missing required parameters: agent_id and response"
+                }
             
             # Perform analysis
             analysis = self._analyze_response(agent_id, response, session_id, version)
@@ -390,41 +406,41 @@ class PromptMetricsTool(BaseTool):
             self.metrics[agent_id][version].append(analysis)
             self._save_metrics()
             
-            return ToolResult(
-                success=True,
-                data=analysis,
-                metadata={
+            return {
+                "success": True,
+                "data": analysis,
+                "metadata": {
                     "agent_id": agent_id,
                     "version": version,
                     "overall_score": analysis["overall_score"]
                 }
-            )
+            }
         
         elif action == "get_summary":
             agent_id = kwargs.get("agent_id")
             summary = self._get_summary(agent_id)
             
-            return ToolResult(
-                success=True,
-                data=summary,
-                metadata={"agents_analyzed": list(summary.keys())}
-            )
+            return {
+                "success": True,
+                "data": summary,
+                "metadata": {"agents_analyzed": list(summary.keys())}
+            }
         
         elif action == "compare_versions":
             agent_id = kwargs.get("agent_id")
             if not agent_id:
-                return ToolResult(
-                    success=False,
-                    error="Missing required parameter: agent_id"
-                )
+                return {
+                    "success": False,
+                    "error": "Missing required parameter: agent_id"
+                }
             
             comparison = self._compare_versions(agent_id)
             
-            return ToolResult(
-                success=True,
-                data=comparison,
-                metadata={"agent_id": agent_id}
-            )
+            return {
+                "success": True,
+                "data": comparison,
+                "metadata": {"agent_id": agent_id}
+            }
         
         elif action == "log_tool_usage":
             agent_id = kwargs.get("agent_id")
@@ -434,44 +450,44 @@ class PromptMetricsTool(BaseTool):
             execution_time_ms = kwargs.get("execution_time_ms")
             
             if not agent_id or not tool_name:
-                return ToolResult(
-                    success=False,
-                    error="Missing required parameters: agent_id and tool_name"
-                )
+                return {
+                    "success": False,
+                    "error": "Missing required parameters: agent_id and tool_name"
+                }
             
             log_result = self._log_tool_usage(
                 agent_id, tool_name, tool_success, 
                 error_message, execution_time_ms
             )
             
-            return ToolResult(
-                success=True,
-                data=log_result,
-                metadata={
+            return {
+                "success": True,
+                "data": log_result,
+                "metadata": {
                     "agent_id": agent_id,
                     "tool_name": tool_name,
                     "logged": True
                 }
-            )
+            }
         
         elif action == "get_tool_metrics":
             agent_id = kwargs.get("agent_id")
             metrics = self._get_tool_metrics(agent_id)
             
-            return ToolResult(
-                success=True,
-                data=metrics,
-                metadata={
+            return {
+                "success": True,
+                "data": metrics,
+                "metadata": {
                     "agents_analyzed": list(metrics.keys()),
                     "timestamp": datetime.now().isoformat()
                 }
-            )
+            }
         
         else:
-            return ToolResult(
-                success=False,
-                error=f"Unknown action: {action}"
-            )
+            return {
+                "success": False,
+                "error": f"Unknown action: {action}"
+            }
 
 
 # Usage example:

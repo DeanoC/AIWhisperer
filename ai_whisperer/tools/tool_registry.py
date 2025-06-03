@@ -289,6 +289,13 @@ class LazyToolRegistry:
                 "class": "ParseExternalResultTool",
                 "category": "agent_e"
             },
+            
+            # Analysis and metrics tools
+            "prompt_metrics": {
+                "module": "ai_whisperer.tools.prompt_metrics_tool",
+                "class": "PromptMetricsTool",
+                "category": "analysis"
+            },
         })
     
     def set_path_manager(self, path_manager):

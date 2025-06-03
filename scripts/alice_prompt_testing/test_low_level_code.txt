@@ -1,0 +1,4 @@
+# Test Alice's ability to help with detailed code analysis
+# This tests if Alice provides specific code insights and uses appropriate tools
+
+Can you show me how the switch_agent tool works and what parameters it takes?

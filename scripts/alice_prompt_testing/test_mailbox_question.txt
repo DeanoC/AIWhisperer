@@ -1,0 +1,4 @@
+# Test Alice's ability to handle mailbox-related questions
+# This tests if Alice can explain the mailbox system and check for messages
+
+How does the mailbox system work? Do I have any pending messages?
