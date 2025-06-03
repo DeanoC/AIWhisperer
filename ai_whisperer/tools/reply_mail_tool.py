@@ -131,11 +131,11 @@ Example usage:
             to_agent=original.from_agent,  # Reply to sender
             subject=subject,
             body=body,
-            priority=priority,
-            reply_to=message_id
+            priority=priority
+            # Note: reply_to will be set by reply_to_mail method
         )
         
-        # Send the reply
-        reply_id = mailbox.send_mail(mail)
+        # Send the reply using reply_to_mail to maintain threading
+        reply_id = mailbox.reply_to_mail(message_id, mail)
         
         return f"Reply sent successfully to {original.from_agent or 'User'} (ID: {reply_id})"
