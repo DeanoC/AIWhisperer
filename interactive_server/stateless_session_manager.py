@@ -27,6 +27,7 @@ from ai_whisperer.utils.path import PathManager
 from .message_models import AIMessageChunkNotification, ContinuationProgressNotification
 from .debbie_observer import get_observer
 from .agent_switch_handler import AgentSwitchHandler
+from ai_whisperer.channels.integration import get_channel_integration
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,9 @@ class StatelessInteractiveSession:
                 logger.error(f"Failed to initialize Debbie observer for session {session_id}: {e}")
         else:
             logger.debug(f"No observer provided for session {session_id}")
+        
+        # Initialize channel integration
+        self.channel_integration = get_channel_integration()
         
         # Register tools for interactive sessions
         self._register_tools()
@@ -461,7 +465,9 @@ class StatelessInteractiveSession:
                 
                 message = enriched_message
             
-            # Create streaming callback
+            # Create streaming callback with channel support
+            chunk_buffer = []  # Buffer for accumulating chunks for channel routing
+            
             async def send_chunk(chunk: str):
                 """Send a chunk of AI response to the client"""
                 try:
@@ -469,7 +475,28 @@ class StatelessInteractiveSession:
                     if self.websocket is None:
                         logger.warning(f"WebSocket disconnected for session {self.session_id}, skipping chunk")
                         return
-                        
+                    
+                    # Accumulate chunks for channel routing
+                    chunk_buffer.append(chunk)
+                    
+                    # Process accumulated content through channels
+                    accumulated_content = ''.join(chunk_buffer)
+                    channel_messages = self.channel_integration.process_ai_response(
+                        self.session_id,
+                        accumulated_content,
+                        agent_id=self.active_agent,
+                        is_partial=True  # This is a partial response
+                    )
+                    
+                    # Send channel messages
+                    for channel_msg in channel_messages:
+                        await self.websocket.send_json({
+                            "jsonrpc": "2.0",
+                            "method": "ChannelMessageNotification",
+                            "params": channel_msg
+                        })
+                    
+                    # Also send traditional chunk notification for backward compatibility
                     notification = AIMessageChunkNotification(
                         sessionId=self.session_id,
                         chunk=chunk,
@@ -506,6 +533,30 @@ class StatelessInteractiveSession:
                     'finish_reason': 'error',
                     'error': f'Unexpected result type: {type(result)}'
                 }
+            
+            # Process final response through channels
+            if result.get('response'):
+                final_content = ''.join(chunk_buffer) if chunk_buffer else result.get('response', '')
+                channel_messages = self.channel_integration.process_ai_response(
+                    self.session_id,
+                    final_content,
+                    agent_id=self.active_agent,
+                    is_partial=False  # This is the final response
+                )
+                
+                # Send final channel messages
+                for channel_msg in channel_messages:
+                    if self.websocket is not None:
+                        try:
+                            await self.websocket.send_json({
+                                "jsonrpc": "2.0",
+                                "method": "ChannelMessageNotification",
+                                "params": channel_msg
+                            })
+                        except Exception as e:
+                            logger.error(f"Error sending final channel message: {e}")
+                            if "closed" in str(e).lower():
+                                self.websocket = None
             
             # Send final notification if WebSocket is still connected
             if self.websocket is not None:
@@ -1084,6 +1135,11 @@ class StatelessInteractiveSession:
         
         # Clean up AI loops
         self.ai_loop_manager.cleanup()
+        
+        # Clear channel data for this session
+        if hasattr(self, 'channel_integration'):
+            self.channel_integration.clear_session(self.session_id)
+            logger.info(f"Cleared channel data for session {self.session_id}")
         
         # Stop observing this session
         if self.observer:

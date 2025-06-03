@@ -1,1 +1,1 @@
-# Channel tests module
+"""Unit tests for the channels subsystem."""

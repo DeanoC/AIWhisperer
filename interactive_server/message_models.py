@@ -1,7 +1,8 @@
 
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Literal, Any
+from datetime import datetime
 
 # ToolCallNotification model for tool call events
 class ToolCallNotification(BaseModel):
@@ -87,3 +88,40 @@ class EchoParams(BaseModel):
 class AddParams(BaseModel):
     a: int
     b: int
+
+# Channel Message Models
+class ChannelMetadata(BaseModel):
+    """Metadata for channel messages."""
+    sequence: int
+    timestamp: str  # ISO format
+    agentId: Optional[str] = None
+    sessionId: Optional[str] = None
+    toolCalls: Optional[List[str]] = None
+    continuationDepth: Optional[int] = None
+    isPartial: bool = False
+    custom: Dict[str, Any] = Field(default_factory=dict)
+
+class ChannelMessageNotification(BaseModel):
+    """Notification for channel-routed messages."""
+    type: Literal["channel_message"] = "channel_message"
+    channel: Literal["analysis", "commentary", "final"]
+    content: str
+    metadata: ChannelMetadata
+    
+class ChannelVisibilityUpdate(BaseModel):
+    """Update channel visibility preferences."""
+    sessionId: str
+    showCommentary: bool
+    showAnalysis: bool = False  # Default to hidden
+    
+class ChannelHistoryRequest(BaseModel):
+    """Request channel message history."""
+    sessionId: str
+    channels: Optional[List[Literal["analysis", "commentary", "final"]]] = None
+    limit: Optional[int] = None
+    sinceSequence: Optional[int] = None
+    
+class ChannelHistoryResponse(BaseModel):
+    """Response with channel message history."""
+    messages: List[ChannelMessageNotification]
+    totalCount: int
