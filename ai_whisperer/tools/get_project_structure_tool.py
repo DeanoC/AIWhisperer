@@ -375,7 +375,7 @@ class GetProjectStructureTool(AITool):
         
         return dict(components)
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute project structure analysis."""
         path = arguments.get('path', '.')
         max_depth = arguments.get('max_depth', 4)
@@ -392,7 +392,11 @@ class GetProjectStructureTool(AITool):
                 root_path = Path(path_manager.resolve_path(path))
             
             if not root_path.exists():
-                return f"Error: Path '{path}' does not exist."
+                return {
+                    "error": f"Path '{path}' does not exist.",
+                    "path": path,
+                    "structure": None
+                }
             
             # Initialize statistics
             stats = {
@@ -405,100 +409,19 @@ class GetProjectStructureTool(AITool):
             # Analyze structure
             structure = self._analyze_directory(root_path, root_path, 0, max_depth, stats)
             
-            # Build response
-            response = f"**Project Structure Analysis: {root_path.name}**\n\n"
-            
-            # Overview statistics
-            response += "## Overview\n"
-            response += f"- Total directories: {stats['total_dirs']}\n"
-            response += f"- Total files: {stats['total_files']}\n"
-            response += f"- Directory depth analyzed: {max_depth}\n\n"
-            
-            # Important files
-            if include_files and stats['important_files']:
-                response += "## Key Files\n"
-                for file_info in stats['important_files']:
-                    response += f"- **{file_info['name']}**: {file_info['purpose']} "
-                    response += f"(at {file_info['path']})\n"
-                response += "\n"
-            
-            # Project components
-            components = self._identify_project_components(structure, stats['important_files'])
-            if components:
-                response += "## Project Components\n"
-                
-                if components.get('source_roots'):
-                    response += f"- **Source roots**: {', '.join(components['source_roots'])}\n"
-                if components.get('test_roots'):
-                    response += f"- **Test directories**: {', '.join(components['test_roots'])}\n"
-                if components.get('api_dirs'):
-                    response += f"- **API/Endpoints**: {', '.join(components['api_dirs'])}\n"
-                if components.get('model_dirs'):
-                    response += f"- **Models/Schemas**: {', '.join(components['model_dirs'])}\n"
-                if components.get('ui_dirs'):
-                    response += f"- **UI Components**: {', '.join(components['ui_dirs'])}\n"
-                if components.get('config_dirs'):
-                    response += f"- **Configuration**: {', '.join(components['config_dirs'])}\n"
-                if components.get('entry_points'):
-                    response += f"- **Entry points**: {', '.join(components['entry_points'])}\n"
-                
-                response += "\n"
-            
-            # File type distribution
-            if stats['extensions']:
-                response += "## File Types\n"
-                sorted_exts = sorted(stats['extensions'].items(), 
-                                   key=lambda x: x[1], reverse=True)[:10]
-                for ext, count in sorted_exts:
-                    response += f"- {ext}: {count} files\n"
-                if len(stats['extensions']) > 10:
-                    response += f"- ... and {len(stats['extensions']) - 10} more types\n"
-                response += "\n"
-            
-            # Directory tree
+            # Build tree if requested
+            tree_text = None
             if show_tree:
-                response += "## Directory Tree\n```\n"
-                response += structure['name'] + "/\n"
+                tree_lines = [structure['name'] + "/"]
                 for i, child in enumerate(structure['children']):
                     is_last = i == len(structure['children']) - 1
-                    response += self._build_tree(child, "", is_last)
-                response += "```\n\n"
+                    tree_lines.append(self._build_tree(child, "", is_last))
+                tree_text = ''.join(tree_lines)
             
-            # Key directories with purposes
-            response += "## Key Directories\n"
+            # Identify project components
+            components = self._identify_project_components(structure, stats['important_files'])
             
-            def list_key_dirs(node: Dict[str, Any], indent: int = 0):
-                result = ""
-                if node.get('purpose') and node.get('purpose') != "Custom directory":
-                    prefix = "  " * indent + "- "
-                    result += f"{prefix}**{node['name']}**: {node['purpose']}\n"
-                    
-                    # Show selected important subdirectories
-                    important_children = [
-                        child for child in node.get('children', [])
-                        if child.get('purpose') and child.get('purpose') != "Custom directory"
-                    ][:3]  # Limit to 3 subdirs
-                    
-                    for child in important_children:
-                        result += list_key_dirs(child, indent + 1)
-                
-                return result
-            
-            dirs_text = ""
-            for child in structure['children']:
-                dirs_text += list_key_dirs(child)
-            
-            if dirs_text:
-                response += dirs_text
-            else:
-                response += "No standard directories detected.\n"
-            
-            response += "\n"
-            
-            # Project type inference
-            response += "## Project Type Analysis\n"
-            
-            # Determine project type based on files and structure
+            # Determine project types
             project_types = []
             
             # Check for web frameworks
@@ -524,13 +447,58 @@ class GetProjectStructureTool(AITool):
             if components.get('test_roots'):
                 project_types.append("Has Test Suite")
             
-            if project_types:
-                response += "This appears to be: " + ", ".join(project_types)
-            else:
-                response += "Project type could not be determined from structure."
+            # Get key directories
+            key_directories = []
+            def extract_key_dirs(node: Dict[str, Any], path_prefix: str = ""):
+                current_path = f"{path_prefix}/{node['name']}" if path_prefix else node['name']
+                if node.get('purpose') and node.get('purpose') != "Custom directory":
+                    key_directories.append({
+                        "path": current_path,
+                        "name": node['name'],
+                        "purpose": node['purpose'],
+                        "file_count": node.get('file_count', 0),
+                        "subdir_count": node.get('subdir_count', 0)
+                    })
+                for child in node.get('children', []):
+                    extract_key_dirs(child, current_path)
             
-            return response
+            for child in structure['children']:
+                extract_key_dirs(child)
+            
+            # File type distribution
+            file_types = []
+            if stats['extensions']:
+                sorted_exts = sorted(stats['extensions'].items(), 
+                                   key=lambda x: x[1], reverse=True)
+                for ext, count in sorted_exts:
+                    file_types.append({
+                        "extension": ext,
+                        "count": count,
+                        "percentage": round(count / stats['total_files'] * 100, 1) if stats['total_files'] > 0 else 0
+                    })
+            
+            return {
+                "path": path,
+                "root_name": root_path.name,
+                "statistics": {
+                    "total_directories": stats['total_dirs'],
+                    "total_files": stats['total_files'],
+                    "max_depth_analyzed": max_depth
+                },
+                "structure": structure,
+                "tree_visualization": tree_text,
+                "important_files": stats['important_files'],
+                "key_directories": key_directories,
+                "components": components,
+                "file_types": file_types,
+                "project_types": project_types,
+                "extensions_summary": dict(stats['extensions'])
+            }
             
         except Exception as e:
             logger.error(f"Error analyzing project structure: {e}")
-            return f"Error analyzing project structure: {str(e)}"
+            return {
+                "error": f"Error analyzing project structure: {str(e)}",
+                "path": path,
+                "structure": None
+            }
