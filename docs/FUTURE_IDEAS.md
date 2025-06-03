@@ -326,8 +326,62 @@ This document tracks ideas, nice-to-have features, and improvements that we want
   - Important for full file management capabilities
 
 
+## Async Multi-Agent Workflows (HIGH PRIORITY)
+
+### Independent Agent AI Loops with Mailbox Coordination
+Revolutionary architecture where each agent runs its own AI loop independently, enabling true parallel multi-agent workflows:
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Agent E    │    │  Agent C    │    │  Agent P    │
+│ (AI Loop 1) │◄──►│ (AI Loop 2) │◄──►│ (AI Loop 3) │
+│ Plan Mgmt   │    │ Coding      │    │ RFC Design  │
+└─────┬───────┘    └─────┬───────┘    └─────┬───────┘
+      │                  │                  │
+      └──────────────────┼──────────────────┘
+                         │
+                   ┌─────▼───────┐
+                   │  Mailbox    │
+                   │  System     │
+                   └─────────────┘
+```
+
+**Agent Capabilities:**
+- 🛌 **Sleep/Wake Control**: Agents can sleep on timers or events, wake up to check progress
+- 📬 **Async Mailbox Communication**: "Hey Colin, can you implement this task?"
+- 🔄 **Progress Monitoring**: "Alice, update me when user responds"
+- ⚡ **Parallel Execution**: Multiple agents working simultaneously on different aspects
+- 🤝 **Agent Coordination**: Agents can request help, delegate tasks, and collaborate
+
+**Example Workflows:**
+- **Agent E** decomposes plan → sleeps while **Agent C** codes individual tasks → wakes to commit completed work
+- **Agent P** works on RFC planning while **Agent M** manages context in background
+- **Alice** handles user interaction while specialized agents collaborate behind the scenes
+- **Agent E** periodically checks task status and coordinates next steps
+
+**Technical Architecture:**
+- Independent AI session per agent
+- Async task queues and event systems  
+- Agent sleep/wake scheduling
+- Mailbox-driven inter-agent communication
+- Conflict resolution for shared resources
+- Agent lifecycle management
+
+**Benefits:**
+- True parallel agent workflows
+- Agents can specialize without blocking others
+- Complex multi-step tasks can be decomposed and executed in parallel
+- User interaction remains responsive while background work continues
+- Natural delegation and collaboration patterns
+
+**Implementation Challenges:**
+- Managing multiple AI loops without conflicts
+- Agent coordination and synchronization
+- Resource sharing and locking
+- Error handling across agent boundaries
+- Debugging multi-agent interactions
+
 ## Random unstructured ideas
-- Asynchronous sleeper agents, able to wake up at intervals and check on things including other agents
 - MCP server
 - MCP client
 - Alice to get a new project setup feature (can talk to agent P by mail for ideas on languages etc.)

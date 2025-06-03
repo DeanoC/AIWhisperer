@@ -16,6 +16,8 @@ interface ProjectContextType {
   
   // Actions
   connectWorkspace: (name: string, path: string, description?: string, outputPath?: string) => Promise<void>;
+  joinProject: (path: string) => Promise<void>;
+  createNewProject: (name: string, parentPath: string, template: string, description?: string, gitInit?: boolean, workspacePath?: string) => Promise<void>;
   activateProject: (projectId: string) => Promise<void>;
   updateProject: (projectId: string, updates: any) => Promise<void>;
   deleteProject: (projectId: string, deleteFiles?: boolean) => Promise<void>;
@@ -113,12 +115,62 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     try {
       setError(null);
       const response = await projectService.connectWorkspace({ name, path, description, outputPath });
-      setActiveProject(response.project);
+      
+      // Immediately activate the connected project to initialize workspace
+      const activateResponse = await projectService.activateProject(response.project.id);
+      setActiveProject(activateResponse.project);
       await refreshProjects();
       
       // Trigger a custom event to notify other components
       window.dispatchEvent(new CustomEvent('workspace-changed', { 
-        detail: { workspace: response.project } 
+        detail: { workspace: activateResponse.project } 
+      }));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  }, [refreshProjects]);
+
+  const joinProject = useCallback(async (path: string) => {
+    try {
+      setError(null);
+      const response = await projectService.joinProject({ path });
+      
+      // Immediately activate the joined project to initialize workspace
+      const activateResponse = await projectService.activateProject(response.project.id);
+      setActiveProject(activateResponse.project);
+      await refreshProjects();
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('workspace-changed', { 
+        detail: { workspace: activateResponse.project } 
+      }));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  }, [refreshProjects]);
+
+  const createNewProject = useCallback(async (name: string, parentPath: string, template: string, description?: string, gitInit: boolean = false, workspacePath?: string) => {
+    try {
+      setError(null);
+      const response = await projectService.createNewProject({ 
+        name, 
+        path: parentPath, 
+        template, 
+        description,
+        git_init: gitInit,
+        workspace_path: workspacePath
+      });
+      
+      // Immediately activate the newly created project to initialize workspace
+      const activateResponse = await projectService.activateProject(response.project.id);
+      setActiveProject(activateResponse.project);
+      await refreshProjects();
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('workspace-changed', { 
+        detail: { workspace: activateResponse.project } 
       }));
     } catch (err: any) {
       setError(err.message);
@@ -205,6 +257,8 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     isLoading,
     error,
     connectWorkspace,
+    joinProject,
+    createNewProject,
     activateProject,
     updateProject,
     deleteProject,

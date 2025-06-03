@@ -25,6 +25,27 @@ export interface ProjectCreate {
   path: string;
   outputPath?: string;
   description?: string;
+  custom_whisper_path?: string;
+}
+
+export interface ProjectJoin {
+  path: string;
+}
+
+export interface ProjectCreateNew {
+  name: string;
+  path: string;
+  template: string;
+  description?: string;
+  git_init: boolean;
+  custom_whisper_path?: string;
+  workspace_path?: string;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export interface ProjectUpdate {

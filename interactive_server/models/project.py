@@ -32,6 +32,23 @@ class ProjectCreate(BaseModel):
     path: str = Field(..., description="Project directory path")
     output_path: Optional[str] = Field(None, description="Output path for generated files")
     description: Optional[str] = Field(None, description="Project description")
+    custom_whisper_path: Optional[str] = Field(None, description="Custom .WHISPER folder location (outside project)")
+
+
+class ProjectJoin(BaseModel):
+    """Schema for joining an existing project with .WHISPER folder."""
+    path: str = Field(..., description="Path to directory containing .WHISPER folder")
+
+
+class ProjectCreateNew(BaseModel):
+    """Schema for creating a brand new project with directory structure."""
+    name: str = Field(..., description="Project name")
+    path: str = Field(..., description="Directory path where project will be created")
+    template: str = Field("basic", description="Project template to use")
+    description: Optional[str] = Field(None, description="Project description")
+    git_init: bool = Field(False, description="Initialize Git repository")
+    custom_whisper_path: Optional[str] = Field(None, description="Custom .WHISPER folder location (outside project)")
+    workspace_path: Optional[str] = Field(None, description="Existing workspace path (use instead of creating new project folder)")
 
 
 class ProjectUpdate(BaseModel):
