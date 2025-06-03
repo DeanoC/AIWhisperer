@@ -19,7 +19,7 @@ parser.add_argument("--debbie-monitor", action="store_true",
                    help="Enable Debbie monitoring for session debugging")
 parser.add_argument("--monitor-level", choices=["passive", "active"], default="passive",
                    help="Monitoring level: passive (observe only) or active (can intervene)")
-parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "config.yaml"),
+parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "config/main.yaml"),
                    help="Configuration file path")
 parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
 parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
@@ -282,7 +282,7 @@ try:
         class DefaultArgs:
             debbie_monitor = False
             monitor_level = "passive"
-            config = os.environ.get("AIWHISPERER_CONFIG", "config.yaml")
+            config = os.environ.get("AIWHISPERER_CONFIG", "config/main.yaml")
         
         cli_args, app_config, debbie_observer = initialize_server(DefaultArgs())
 except Exception as e:
@@ -293,7 +293,7 @@ except Exception as e:
     class DefaultArgs:
         debbie_monitor = False
         monitor_level = "passive"
-        config = "config.yaml"
+        config = "config/main.yaml"
     cli_args = DefaultArgs()
 
 # Initialize PathManager
