@@ -115,12 +115,15 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     try {
       setError(null);
       const response = await projectService.connectWorkspace({ name, path, description, outputPath });
-      setActiveProject(response.project);
+      
+      // Immediately activate the connected project to initialize workspace
+      const activateResponse = await projectService.activateProject(response.project.id);
+      setActiveProject(activateResponse.project);
       await refreshProjects();
       
       // Trigger a custom event to notify other components
       window.dispatchEvent(new CustomEvent('workspace-changed', { 
-        detail: { workspace: response.project } 
+        detail: { workspace: activateResponse.project } 
       }));
     } catch (err: any) {
       setError(err.message);
@@ -132,12 +135,15 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     try {
       setError(null);
       const response = await projectService.joinProject({ path });
-      setActiveProject(response.project);
+      
+      // Immediately activate the joined project to initialize workspace
+      const activateResponse = await projectService.activateProject(response.project.id);
+      setActiveProject(activateResponse.project);
       await refreshProjects();
       
       // Trigger a custom event to notify other components
       window.dispatchEvent(new CustomEvent('workspace-changed', { 
-        detail: { workspace: response.project } 
+        detail: { workspace: activateResponse.project } 
       }));
     } catch (err: any) {
       setError(err.message);
@@ -155,12 +161,15 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
         description,
         git_init: gitInit
       });
-      setActiveProject(response.project);
+      
+      // Immediately activate the newly created project to initialize workspace
+      const activateResponse = await projectService.activateProject(response.project.id);
+      setActiveProject(activateResponse.project);
       await refreshProjects();
       
       // Trigger a custom event to notify other components
       window.dispatchEvent(new CustomEvent('workspace-changed', { 
-        detail: { workspace: response.project } 
+        detail: { workspace: activateResponse.project } 
       }));
     } catch (err: any) {
       setError(err.message);

@@ -109,4 +109,8 @@ python -m ai_whisperer.main list-models --config config/main.yaml
 - Performance optimization for WebSocket streaming
 - RFC-to-Plan conversion with structured output support
 
+## VM Configuration Memories
+
+- This is Claude's VM. You may install any tool that would be useful
+
 For detailed implementation guidance, architecture details, and module documentation, see [CODE_MAP.md](CODE_MAP.md).
