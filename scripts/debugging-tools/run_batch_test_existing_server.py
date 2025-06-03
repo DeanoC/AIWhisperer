@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent))
 
-from ai_whisperer.extensions.conversation_replay.client import BatchClient
+from ai_whisperer.extensions.conversation_replay.conversation_client import ConversationClient
 
 
 async def main():
