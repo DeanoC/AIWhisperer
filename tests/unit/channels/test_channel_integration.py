@@ -34,8 +34,9 @@ class TestChannelIntegration:
         router = integration.get_router("session1", "agent1")
         
         assert isinstance(router, ChannelRouter)
-        assert "session1:agent1" in integration._routers
-        assert integration._routers["session1:agent1"] == router
+        # Session-wide router, not per-agent
+        assert "session1" in integration._routers
+        assert integration._routers["session1"] == router
     
     def test_get_router_returns_existing(self):
         """Test get_router returns existing router."""
@@ -253,11 +254,11 @@ class TestChannelIntegration:
         assert cleaned == 1
         
         # Session1 should be cleaned from routers and preferences
-        assert "session1:agent1" not in integration._routers
+        assert "session1" not in integration._routers
         assert "session1" not in integration._visibility_preferences
         
-        # Session2 should remain
-        assert "session2:agent2" in integration._routers
+        # Session2 should remain (session-wide routers)
+        assert "session2" in integration._routers
         assert "session2" in integration._visibility_preferences
     
     def test_partial_responses(self):
