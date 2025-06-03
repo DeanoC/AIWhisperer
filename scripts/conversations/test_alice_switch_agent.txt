@@ -1,0 +1,8 @@
+# Test Alice's new switch_agent tool
+# Alice should now be able to properly switch to other agents
+
+Hi Alice! I need help creating some RFCs.
+
+Thanks! I also need to create an RFC for implementing a file browser component. Can you help with that too?
+
+Perfect! After we're done with RFCs, I might need help debugging some issues.

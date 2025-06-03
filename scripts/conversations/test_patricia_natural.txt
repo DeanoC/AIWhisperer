@@ -1,0 +1,12 @@
+# Test Patricia RFC Creation - Natural Language Version
+# Alice should understand and help us switch to Patricia
+
+Hi! I need help creating some RFCs. Can you connect me with Patricia the Planner?
+
+I'd like Patricia to create an RFC for adding a terminal feature to the frontend. Patricia, when you create it, please first explain what you're going to do.
+
+Patricia, did you create the RFC? Can you show me what was created?
+
+Patricia, let's create another RFC for a file browser component in the frontend. Again, please tell me your plan before creating it.
+
+Patricia, can you list all the RFCs to confirm both were created?

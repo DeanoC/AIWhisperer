@@ -116,13 +116,15 @@ class StatelessInteractiveSession:
         from ai_whisperer.tools.send_mail_tool import SendMailTool
         from ai_whisperer.tools.check_mail_tool import CheckMailTool
         from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
+        from ai_whisperer.tools.switch_agent_tool import SwitchAgentTool
         
         tool_registry = get_tool_registry()
         tool_registry.register_tool(SendMailTool())
         tool_registry.register_tool(CheckMailTool())
         tool_registry.register_tool(ReplyMailTool())
+        tool_registry.register_tool(SwitchAgentTool())
         
-        logger.info("Registered all tools for interactive session including mailbox tools")
+        logger.info("Registered all tools for interactive session including mailbox and agent switching tools")
     
     
     async def create_agent(self, agent_id: str, system_prompt: str, config: Optional[AgentConfig] = None) -> StatelessAgent:
@@ -1555,10 +1557,12 @@ class StatelessSessionManager:
         from ai_whisperer.tools.send_mail_tool import SendMailTool
         from ai_whisperer.tools.check_mail_tool import CheckMailTool
         from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
+        from ai_whisperer.tools.switch_agent_tool import SwitchAgentTool
         
         tool_registry.register_tool(SendMailTool())
         tool_registry.register_tool(CheckMailTool())
         tool_registry.register_tool(ReplyMailTool())
+        tool_registry.register_tool(SwitchAgentTool())
         
         logger.info("Registered mailbox tools")
         

@@ -1,0 +1,12 @@
+# Test Patricia RFC Creation - Fixed Version
+# First ask Alice to switch to Patricia, then test RFC creation
+
+Hi Alice! Can you please switch me to Patricia? I need to create some RFCs.
+
+Please create an RFC for implementing a terminal feature in the frontend. Make sure to explain what you're doing before you create it.
+
+Did you create the RFC? Can you show me what was created?
+
+Let's test again. Can you create another RFC for adding a file browser component to the frontend? Please tell me what you're going to do first.
+
+Great! Can you list all RFCs now to confirm both were created?
