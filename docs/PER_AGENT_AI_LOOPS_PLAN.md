@@ -163,4 +163,39 @@ This work enables:
 ---
 
 *Created: 2025-06-03*
-*Status: Planning Phase*
+*Updated: 2025-06-03*
+*Status: Phase 2 Complete - Ready for Testing*
+
+## Implementation Progress
+
+### Phase 1: Break the Singleton Pattern ✓ COMPLETE
+- Discovered StatelessAILoop was already non-singleton (good architecture)
+- Created AILoopFactory for creating configured AI loop instances
+- Created AILoopManager for managing per-agent AI loops
+- Integrated with StatelessSessionManager
+
+### Phase 2: Agent-Specific Configuration ✓ COMPLETE
+- Extended Agent dataclass with `ai_config` field
+- Updated agent registry to load AI configurations from YAML
+- Modified session manager to use agent-specific AI configs
+- Added example configurations:
+  - Debbie: Uses GPT-3.5-turbo (fast, temperature 0.5)
+  - Eamonn: Uses Claude-3-Opus (powerful, 8000 tokens)
+  - Alice: Uses default model from global config
+- Created AILoopInspectorTool for Debbie to verify configurations
+- Added comprehensive tests and verification scripts
+
+### Files Created/Modified
+- ✅ `ai_whisperer/services/execution/ai_loop_factory.py` (created)
+- ✅ `ai_whisperer/services/agents/ai_loop_manager.py` (created)
+- ✅ `ai_whisperer/services/agents/registry.py` (modified)
+- ✅ `interactive_server/stateless_session_manager.py` (modified)
+- ✅ `config/agents/agents.yaml` (modified)
+- ✅ `ai_whisperer/tools/ai_loop_inspector_tool.py` (created)
+- ✅ `tests/integration/test_per_agent_ai_loops.py` (created)
+
+### Next Steps
+- Run comprehensive tests in production environment
+- Monitor resource usage with multiple AI loops
+- Consider implementing connection pooling for efficiency
+- Document the new architecture for other developers

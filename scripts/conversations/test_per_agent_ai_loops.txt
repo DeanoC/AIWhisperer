@@ -1,0 +1,43 @@
+# Test Per-Agent AI Loops
+# This conversation script tests that each agent uses its configured AI model
+
+USER: Hi Debbie! Let's test the per-agent AI loops feature. First, can you check which AI models are configured for each agent?
+
+AGENT: @d
+
+USER: Can you use the ai_loop_inspector tool to see the current AI loop configurations?
+
+WAIT: 3
+
+USER: Great! Now let's switch between agents and verify each one uses the correct model. First, let's check Alice.
+
+AGENT: @a
+
+USER: What AI model are you using, Alice?
+
+WAIT: 2
+
+USER: Now let's switch to Eamonn and check his model.
+
+AGENT: @e  
+
+USER: Hi Eamonn! What AI model are you using for task decomposition?
+
+WAIT: 2
+
+USER: Let's go back to Debbie to inspect the AI loops again.
+
+AGENT: @d
+
+USER: Debbie, can you use the ai_loop_inspector tool with include_details=True to show me all the active AI loops and verify:
+1. Alice uses the default model
+2. Debbie (you) uses gpt-3.5-turbo with temperature 0.5
+3. Eamonn uses claude-3-opus with 8000 max tokens
+
+WAIT: 5
+
+USER: Perfect! Can you also check which agents have custom models vs default models?
+
+WAIT: 3
+
+USER: Excellent test! The per-agent AI loops are working correctly. Each agent is using its configured AI model.

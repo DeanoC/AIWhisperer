@@ -43,6 +43,7 @@ class Agent:
     allow_tools: Optional[List[str]] = None  # Explicitly allowed tool names
     deny_tools: Optional[List[str]] = None  # Explicitly denied tool names
     continuation_config: Optional[Dict[str, Any]] = None  # Configuration for continuation behavior
+    ai_config: Optional[Dict[str, Any]] = None  # AI model configuration (model, temperature, etc.)
 
     @property
     def shortcut(self) -> str:
@@ -83,7 +84,8 @@ class AgentRegistry:
                         tool_sets=agent_cfg.get('tool_sets'),
                         allow_tools=agent_cfg.get('allow_tools'),
                         deny_tools=agent_cfg.get('deny_tools'),
-                        continuation_config=agent_cfg.get('continuation_config')
+                        continuation_config=agent_cfg.get('continuation_config'),
+                        ai_config=agent_cfg.get('ai_config')
                     )
         else:
             # Only use hardcoded fallback if no config file exists
