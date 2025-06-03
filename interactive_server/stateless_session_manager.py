@@ -1553,18 +1553,8 @@ class StatelessSessionManager:
         tool_registry.register_tool(FindPatternTool(path_manager))
         tool_registry.register_tool(WorkspaceStatsTool(path_manager))
         
-        # Register mailbox tools
-        from ai_whisperer.tools.send_mail_tool import SendMailTool
-        from ai_whisperer.tools.check_mail_tool import CheckMailTool
-        from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
-        from ai_whisperer.tools.switch_agent_tool import SwitchAgentTool
-        
-        tool_registry.register_tool(SendMailTool())
-        tool_registry.register_tool(CheckMailTool())
-        tool_registry.register_tool(ReplyMailTool())
-        tool_registry.register_tool(SwitchAgentTool())
-        
-        logger.info("Registered mailbox tools")
+        # Mailbox tools are already registered in __init__ method
+        # Skip duplicate registration here
         
         # Register RFC management tools
         from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
