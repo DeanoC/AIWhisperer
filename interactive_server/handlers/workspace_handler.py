@@ -260,6 +260,45 @@ class WorkspaceHandler:
                 "error": str(e)
             }
     
+    async def write_file(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
+        """Write content to a file.
+        
+        JSON-RPC method: workspace.writeFile
+        
+        Args:
+            params: Dict with 'path' and 'content' keys
+            websocket: WebSocket connection (optional, unused)
+            
+        Returns:
+            Dict with success status and file metadata
+        """
+        # Check if there's an active project
+        try:
+            project_manager = get_project_manager()
+            if not project_manager.get_active_project():
+                raise RuntimeError("No active workspace. Please open a project first.")
+        except Exception as e:
+            logger.error(f"Error checking active project: {e}")
+            raise RuntimeError("Unable to access project manager.")
+            
+        path = params.get("path")
+        content = params.get("content")
+        
+        if not path:
+            raise ValueError("File path is required")
+        if content is None:
+            raise ValueError("File content is required")
+            
+        try:
+            result = await self.file_service.write_file(path, content)
+            return result
+        except ValueError as e:
+            logger.error(f"Invalid file write request: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error writing file {path}: {e}")
+            raise RuntimeError(f"Failed to write file: {str(e)}")
+
     def get_methods(self) -> Dict[str, Any]:
         """Get all methods provided by this handler.
         
@@ -272,4 +311,5 @@ class WorkspaceHandler:
             "workspace.searchFiles": self.search_files,
             "workspace.getFileContent": self.get_file_content,
             "workspace.clearCache": self.clear_cache,
+            "workspace.writeFile": self.write_file,
         }

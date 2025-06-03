@@ -1,0 +1,212 @@
+.code-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--surface-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+}
+
+.code-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--surface-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  min-height: 60px;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0; /* Allow text to truncate */
+}
+
+.file-info h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-stats {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unsaved-indicator {
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-button {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-button:hover:not(:disabled) {
+  background: var(--accent-primary-hover);
+}
+
+.save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reload-button,
+.close-button {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.reload-button:hover,
+.close-button:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-focus);
+  color: var(--text-primary);
+}
+
+.close-button {
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.code-editor-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.code-editor-loading,
+.code-editor-error,
+.code-editor-binary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 16px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 20px;
+}
+
+.code-editor-error {
+  color: var(--error);
+}
+
+.code-editor-error .error-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.code-editor-error button {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.code-editor-binary .icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.code-editor-binary p {
+  margin: 8px 0;
+  color: var(--text-secondary);
+}
+
+.code-editor-binary .file-size {
+  font-size: 14px;
+  color: var(--text-tertiary);
+}
+
+/* Theme-specific Monaco Editor container styling */
+.theme-light .code-editor-container {
+  --editor-background: #ffffff;
+}
+
+.theme-dark .code-editor-container {
+  --editor-background: #1e1e1e;
+}
+
+/* Ensure Monaco Editor fills container properly */
+.code-editor-content > div {
+  height: 100% !important;
+}
+
+/* Loading state specific styling */
+.code-editor-loading {
+  background: var(--surface-primary);
+  font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .code-editor-header {
+    padding: 8px 12px;
+    min-height: 50px;
+  }
+  
+  .file-info h3 {
+    font-size: 14px;
+  }
+  
+  .file-stats {
+    font-size: 11px;
+  }
+  
+  .editor-actions {
+    gap: 6px;
+  }
+  
+  .save-button,
+  .reload-button,
+  .close-button {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 32px;
+    height: 32px;
+  }
+}

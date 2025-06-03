@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabData } from './Tabs';
 import { ChatView } from './ChatView';
 import { FileBrowser } from './FileBrowser';
+import { CodeEditor } from './CodeEditor';
 import JSONPlanView from './JSONPlanView';
 import { CodeChangesView } from './CodeChangesView';
 import { TestResultsView } from './TestResultsView';
+import { SettingsPage } from './SettingsPage';
 
 // You can extend this to dynamically add more tab types
-export type MainTabType = 'chat' | 'file' | 'json' | 'code' | 'test';
+export type MainTabType = 'chat' | 'file' | 'editor' | 'json' | 'code' | 'test' | 'settings';
 
 export interface MainTabsProps {
   // All props needed for ChatView, FileBrowser, etc.
@@ -17,7 +19,11 @@ export interface MainTabsProps {
   codeChangesProps?: any;
   testResultsProps?: any;
   // Callback to pass up tab opening functions
-  onTabsReady?: (handlers: { openFilesTab: () => void }) => void;
+  onTabsReady?: (handlers: { 
+    openFilesTab: () => void;
+    openEditorTab: (filePath: string) => void;
+    openSettingsTab: () => void;
+  }) => void;
 }
 
 export const MainTabs: React.FC<MainTabsProps> = ({
@@ -58,6 +64,40 @@ export const MainTabs: React.FC<MainTabsProps> = ({
   }, [chatProps]);
   const [activeKey, setActiveKey] = useState('chat');
 
+  // Add a function to open editor tabs
+  const openEditorTab = useCallback((filePath: string) => {
+    const editorKey = `editor-${filePath}`;
+    const fileName = filePath.split('/').pop() || filePath;
+    
+    setTabs(prev => {
+      // Check if editor tab for this file already exists
+      if (prev.find(tab => tab.key === editorKey)) {
+        setActiveKey(editorKey);
+        return prev;
+      }
+      
+      return [
+        ...prev,
+        {
+          key: editorKey,
+          title: fileName,
+          content: (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
+              <CodeEditor 
+                filePath={filePath}
+                jsonRpcService={fileBrowserProps.jsonRpcService}
+                theme={chatProps.theme}
+                onClose={() => closeTab(editorKey)}
+              />
+            </div>
+          ),
+          closable: true
+        }
+      ];
+    });
+    setActiveKey(editorKey);
+  }, [fileBrowserProps.jsonRpcService, chatProps.theme]);
+
   // Add a visible button to open the Files tab for now
   const openFilesTab = useCallback(() => {
     setTabs(prev => {
@@ -69,7 +109,10 @@ export const MainTabs: React.FC<MainTabsProps> = ({
           title: 'Files',
           content: (
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
-              <FileBrowser {...fileBrowserProps} />
+              <FileBrowser 
+                {...fileBrowserProps} 
+                onOpenInEditor={openEditorTab}
+              />
             </div>
           ),
           closable: true
@@ -77,14 +120,35 @@ export const MainTabs: React.FC<MainTabsProps> = ({
       ];
     });
     setActiveKey('file');
-  }, [fileBrowserProps]);
+  }, [fileBrowserProps, openEditorTab]);
+
+  // Add a function to open the Settings tab
+  const openSettingsTab = useCallback(() => {
+    setTabs(prev => {
+      if (prev.find(tab => tab.key === 'settings')) return prev;
+      return [
+        ...prev,
+        {
+          key: 'settings',
+          title: 'Settings',
+          content: (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
+              <SettingsPage />
+            </div>
+          ),
+          closable: true
+        }
+      ];
+    });
+    setActiveKey('settings');
+  }, [setTabs, setActiveKey]); // Add correct dependencies
 
   // Pass tab opening functions to parent
   useEffect(() => {
     if (onTabsReady) {
-      onTabsReady({ openFilesTab });
+      onTabsReady({ openFilesTab, openEditorTab, openSettingsTab });
     }
-  }, [onTabsReady, openFilesTab]);
+  }, [onTabsReady, openFilesTab, openEditorTab, openSettingsTab]);
 
   const closeTab = (key: string) => {
     setTabs(prev => {

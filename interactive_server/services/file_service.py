@@ -449,3 +449,91 @@ class FileService:
                 
         except Exception as e:
             raise RuntimeError(f"Failed to read file: {str(e)}")
+    
+    async def write_file(self, path: str, content: str) -> Dict[str, Any]:
+        """Write content to a file within workspace boundaries.
+        
+        Args:
+            path: File path relative to workspace or absolute within workspace
+            content: Content to write to the file
+            
+        Returns:
+            Dict with success status and file metadata
+            
+        Raises:
+            ValueError: If path is invalid or outside workspace
+            RuntimeError: If file write operation fails
+        """
+        try:
+            # First resolve any template strings
+            resolved_path_str = self.path_manager.resolve_path(path)
+            
+            # Convert to Path object
+            resolved_path = Path(resolved_path_str)
+            
+            # If it's a relative path, make it relative to workspace
+            if not resolved_path.is_absolute():
+                workspace_path = self.path_manager.workspace_path
+                if workspace_path:
+                    resolved_path = Path(workspace_path) / resolved_path
+                else:
+                    resolved_path = resolved_path.resolve()
+            
+            # Validate that the path is within workspace boundaries
+            if not self.path_manager.is_path_within_workspace(str(resolved_path)):
+                raise ValueError(f"Path '{path}' is outside the workspace boundaries")
+            
+            # Ensure parent directory exists
+            resolved_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Write the file
+            with open(resolved_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            # Get file metadata
+            stat = resolved_path.stat()
+            
+            # Clear any cached directory listing that might include this file
+            self._invalidate_cache_for_path(str(resolved_path.parent))
+            
+            logger.info(f"File written successfully: {resolved_path}")
+            
+            return {
+                "success": True,
+                "path": str(resolved_path),
+                "size": stat.st_size,
+                "modified": stat.st_mtime,
+                "message": f"File written successfully to {resolved_path}"
+            }
+            
+        except ValueError as e:
+            logger.error(f"Invalid path for write operation: {e}")
+            raise
+        except PermissionError as e:
+            logger.error(f"Permission denied writing to {path}: {e}")
+            raise RuntimeError(f"Permission denied: {str(e)}")
+        except OSError as e:
+            logger.error(f"OS error writing to {path}: {e}")
+            raise RuntimeError(f"File system error: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected error writing to {path}: {e}")
+            raise RuntimeError(f"Failed to write file: {str(e)}")
+
+    def _invalidate_cache_for_path(self, dir_path: str):
+        """Invalidate cache entries that might be affected by file changes.
+        
+        Args:
+            dir_path: Directory path that was modified
+        """
+        with self._cache_lock:
+            # Remove cache entries for the parent directory and any recursive entries
+            keys_to_remove = []
+            for cache_key in self._dir_cache.keys():
+                if cache_key.startswith(dir_path):
+                    keys_to_remove.append(cache_key)
+            
+            for key in keys_to_remove:
+                if key in self._dir_cache:
+                    del self._dir_cache[key]
+                if key in self._cache_access_order:
+                    self._cache_access_order.remove(key)

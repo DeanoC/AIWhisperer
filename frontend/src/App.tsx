@@ -50,7 +50,11 @@ function App() {
   const [jsonRpcService, setJsonRpcService] = useState<JsonRpcService | undefined>(undefined);
   
   // Tab opening handlers
-  const [tabHandlers, setTabHandlers] = useState<{ openFilesTab?: () => void }>({});
+  const [tabHandlers, setTabHandlers] = useState<{ 
+    openFilesTab?: () => void;
+    openEditorTab?: (filePath: string) => void;
+    openSettingsTab?: () => void;
+  }>({});
   
   // Track which agent we've updated messages for to prevent duplicate updates
   const lastUpdatedAgentRef = useRef<string | null>(null);
@@ -482,6 +486,7 @@ function App() {
               onThemeToggle={toggleTheme}
               connectionStatus={wsStatus}
               onOpenFilesTab={tabHandlers.openFilesTab}
+              onOpenSettingsTab={tabHandlers.openSettingsTab}
             >
               {/* Main tabbed area */}
               <MainTabs

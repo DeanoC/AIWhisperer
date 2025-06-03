@@ -10,6 +10,7 @@ interface SidebarProps {
   onNewChat?: () => void;
   onNewPlan?: () => void;
   onOpenFilesTab?: () => void;
+  onOpenSettingsTab?: () => void;
 }
 
 interface NavItem {
@@ -58,7 +59,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   disabled = false,
   onNewChat,
   onNewPlan,
-  onOpenFilesTab
+  onOpenFilesTab,
+  onOpenSettingsTab
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
@@ -179,6 +181,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
       );
     }
 
+    // Special handling for Settings tab
+    if (item.path === '/settings') {
+      return (
+        <button
+          key={item.path}
+          className={`nav-item ${collapsed ? 'collapsed' : ''}`}
+          aria-disabled={disabled || !onOpenSettingsTab}
+          onClick={() => {
+            if (!disabled && onOpenSettingsTab) {
+              onOpenSettingsTab();
+            }
+          }}
+          onMouseEnter={() => collapsed && setActiveTooltip(item.label)}
+          onMouseLeave={() => setActiveTooltip(null)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            width: '100%',
+            textAlign: 'left',
+            cursor: disabled ? 'not-allowed' : 'pointer'
+          }}
+        >
+          <span className="nav-icon" data-testid={item.iconTestId}>{item.icon}</span>
+          <span className="nav-label">{item.label}</span>
+          {collapsed && activeTooltip === item.label && (
+            <div className="tooltip" role="tooltip">{item.label}</div>
+          )}
+        </button>
+      );
+    }
+
     // Regular router navigation for other items
     return (
       <NavLink
@@ -186,7 +220,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         to={item.path}
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${collapsed ? 'collapsed' : ''}`}
         aria-disabled={disabled}
-        onClick={handleLinkClick}
+        onClick={(e) => {
+          handleLinkClick(e);
+          if (item.path === '/settings' && onOpenSettingsTab) {
+            onOpenSettingsTab();
+          }
+        }}
         onMouseEnter={() => collapsed && setActiveTooltip(item.label)}
         onMouseLeave={() => setActiveTooltip(null)}
       >

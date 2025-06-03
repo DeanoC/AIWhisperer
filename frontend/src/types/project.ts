@@ -50,6 +50,7 @@ export interface ProjectHistory {
 export interface UISettings {
   autoLoadLastProject: boolean;
   showProjectSelector: boolean;
+  alwaysUseClassicFileWrite?: boolean;
 }
 
 export interface ProjectResponse {

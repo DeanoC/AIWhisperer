@@ -1,8 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { ProjectSettingsPanel } from './ProjectSettingsPanel';
 import projectService from '../services/projectService';
 import { ProjectSettings, UISettings, Project } from '../types/project';
+import './SettingsPage.css';
 
 export const SettingsPage: React.FC = () => {
   const [projectSettings, setProjectSettings] = useState<ProjectSettings>({});
@@ -49,17 +49,41 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading settings...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (loading) {
+    return (
+      <div className="settings-container">
+        <div className="settings-loading">
+          <span className="loader"></span>
+          <p>Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="settings-container">
+        <div className="settings-error">
+          <span className="error-icon">⚠️</span>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Settings</h2>
-      <ProjectSettingsPanel
-        projectSettings={projectSettings}
-        uiSettings={uiSettings}
-        onChange={handleChange}
-      />
+    <div className="settings-container">
+      <div className="settings-header">
+        <h2>Settings</h2>
+      </div>
+      <div className="settings-content">
+        <ProjectSettingsPanel
+          projectSettings={projectSettings}
+          uiSettings={uiSettings}
+          onChange={handleChange}
+        />
+      </div>
     </div>
   );
 };

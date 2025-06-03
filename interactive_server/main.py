@@ -60,6 +60,7 @@ import ai_whisperer.interfaces.cli.commands.help
 import ai_whisperer.interfaces.cli.commands.agent
 import ai_whisperer.interfaces.cli.commands.session
 import ai_whisperer.interfaces.cli.commands.debbie
+import ai_whisperer.interfaces.cli.commands.write_file
 import json
 import inspect
 import asyncio

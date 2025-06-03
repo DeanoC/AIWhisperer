@@ -16,6 +16,7 @@ interface MainLayoutProps {
   connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'error';
   // Tab opening handlers
   onOpenFilesTab?: () => void;
+  onOpenSettingsTab?: () => void;
 }
 
 interface PanelState {
@@ -69,7 +70,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   currentPlan,
   onThemeToggle,
   connectionStatus = 'disconnected',
-  onOpenFilesTab
+  onOpenFilesTab,
+  onOpenSettingsTab
 }) => {
   const [panelState, setPanelState] = useState<PanelState>(() => {
     // Initialize from localStorage
@@ -274,11 +276,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           role="navigation"
           data-testid="sidebar"
         >
-          <Sidebar 
-            collapsed={panelState.sidebarCollapsed} 
+          <Sidebar
+            collapsed={panelState.sidebarCollapsed}
             onCollapse={toggleSidebar}
             disabled={isLoading}
             onOpenFilesTab={onOpenFilesTab}
+            onOpenSettingsTab={onOpenSettingsTab}
           />
           {!panelState.sidebarCollapsed && (
             <div

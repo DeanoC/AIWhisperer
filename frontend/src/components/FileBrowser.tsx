@@ -6,6 +6,7 @@ import './FileBrowser.css';
 interface FileBrowserProps {
   jsonRpcService?: JsonRpcService;
   onFileSelect?: (filePath: string) => void;
+  onOpenInEditor?: (filePath: string) => void;
 }
 
 interface FileContent {
@@ -17,7 +18,7 @@ interface FileContent {
   error?: string;
 }
 
-export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFileSelect }) => {
+export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFileSelect, onOpenInEditor }) => {
   const [rootNodes, setRootNodes] = useState<FileNode[]>([]);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -273,11 +274,26 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ jsonRpcService, onFile
         {selectedPath && (
           <div className="file-preview">
             <div className="file-preview-header">
-              <h3>{selectedPath}</h3>
-              {fileContent && !fileContent.is_binary && fileContent.total_lines && (
-                <span className="file-info">
-                  {fileContent.total_lines} lines • {formatFileSize(fileContent.size)}
-                </span>
+              <div className="file-header-info">
+                <h3>{selectedPath}</h3>
+                {fileContent && !fileContent.is_binary && fileContent.total_lines && (
+                  <span className="file-info">
+                    {fileContent.total_lines} lines • {formatFileSize(fileContent.size)}
+                  </span>
+                )}
+              </div>
+              
+              {/* Button bar */}
+              {fileContent && !fileContent.is_binary && !fileContent.error && onOpenInEditor && (
+                <div className="file-actions">
+                  <button 
+                    className="open-editor-button"
+                    onClick={() => onOpenInEditor(selectedPath)}
+                    title="Open in Code Editor"
+                  >
+                    📝 Edit
+                  </button>
+                </div>
               )}
             </div>
             
