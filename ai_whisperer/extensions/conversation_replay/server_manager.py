@@ -72,11 +72,38 @@ class ServerManager:
         print(f"   🔧 Environment AIWHISPERER_REPLAY_PORT: {env.get('AIWHISPERER_REPLAY_PORT')}")
         
         try:
-            self.process = subprocess.Popen(server_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+            # Get the project root directory (where .env file is)
+            import ai_whisperer
+            # ai_whisperer module is at /path/to/AIWhisperer/ai_whisperer/__init__.py
+            # So we need to go up 2 levels: ai_whisperer -> AIWhisperer
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(ai_whisperer.__file__)))
+            print(f"   🔧 Working directory: {project_root}")
+            
+            self.process = subprocess.Popen(
+                server_cmd, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                env=env,
+                cwd=project_root  # Set working directory to project root
+            )
             print(f"   🔧 Subprocess started with PID: {self.process.pid}")
+            
+            # Check for immediate startup errors
+            if self.process.poll() is not None:
+                stdout, stderr = self.process.communicate()
+                print(f"   ❌ Subprocess exited immediately with code: {self.process.returncode}")
+                print(f"   📤 Stdout: {stdout.decode() if stdout else 'None'}")
+                print(f"   📤 Stderr: {stderr.decode() if stderr else 'None'}")
+                raise RuntimeError(f"Server subprocess failed to start")
             
             # Wait for server to be ready
             if not self._wait_for_server_ready():
+                # If server didn't start properly, get the process output for debugging
+                if self.process.poll() is not None:
+                    stdout, stderr = self.process.communicate()
+                    print(f"   ❌ Subprocess died with code: {self.process.returncode}")
+                    print(f"   📤 Stdout: {stdout.decode() if stdout else 'None'}")
+                    print(f"   📤 Stderr: {stderr.decode() if stderr else 'None'}")
                 self.stop_server()
                 raise RuntimeError(f"Server failed to start on port {self.port}")
                 

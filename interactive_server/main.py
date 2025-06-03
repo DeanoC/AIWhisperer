@@ -419,9 +419,17 @@ async def send_user_message_handler(params, websocket=None):
     try:
         logging.debug(f"[send_user_message_handler] Calling session.send_user_message: {model.message}")
         # The session now has built-in streaming support
-        await session.send_user_message(model.message)
+        result = await session.send_user_message(model.message)
+        
+        # Return the actual AI response along with the status
         response = SendUserMessageResponse(messageId=str(uuid.uuid4()), status=MessageStatus.OK).model_dump()
-        logging.debug("[send_user_message_handler] Message sent successfully, returning OK response.")
+        
+        # Add the AI response to the result
+        if result and isinstance(result, dict):
+            response['ai_response'] = result.get('response', '')
+            response['tool_calls'] = result.get('tool_calls', [])
+        
+        logging.debug(f"[send_user_message_handler] Message sent successfully, returning response with AI result.")
         return response
     except Exception as e:
         logging.error(f"[send_user_message_handler] Exception: {e}")
