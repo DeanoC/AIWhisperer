@@ -6,13 +6,16 @@ supporting the per-agent AI loop architecture.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass, field
 
 from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 from ai_whisperer.services.ai.base import AIService
 from ai_whisperer.services.ai.openrouter import OpenRouterAIService
+
+if TYPE_CHECKING:
+    from ai_whisperer.services.agents.config import AgentConfig
 
 logger = logging.getLogger(__name__)
 
