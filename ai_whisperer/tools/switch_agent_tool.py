@@ -63,6 +63,39 @@ class SwitchAgentTool(AITool):
         """Get instructions for the AI on how to use this tool."""
         return self.get_ai_instructions()
     
+    def _get_session_from_context(self, context: Any) -> Optional[Any]:
+        """
+        Extract session from various context formats.
+        
+        Args:
+            context: The context object that may contain the session
+            
+        Returns:
+            The session object if found, None otherwise
+        """
+        # Import here to avoid circular imports
+        from interactive_server.stateless_session_manager import StatelessInteractiveSession
+        
+        # Method 1: Direct access if context is the session
+        if isinstance(context, StatelessInteractiveSession):
+            return context
+            
+        # Method 2: Session as attribute
+        if hasattr(context, 'session'):
+            return context.session
+            
+        # Method 3: Session in dict
+        if isinstance(context, dict) and 'session' in context:
+            return context['session']
+            
+        # Method 4: Through ai_context (how tools are called)
+        if hasattr(context, 'ai_context'):
+            ai_context = context.ai_context
+            if hasattr(ai_context, 'session'):
+                return ai_context.session
+                
+        return None
+    
     async def execute(self, agent_id: str, reason: str, context_summary: Optional[str] = None, **kwargs) -> Dict[str, Any]:
         """
         Switch to a different agent.
@@ -76,31 +109,11 @@ class SwitchAgentTool(AITool):
             Result of the switch operation
         """
         try:
-            # Import here to avoid circular imports
-            from interactive_server.stateless_session_manager import StatelessInteractiveSession
-            
             # Get the context object which should contain the session
             context = kwargs.get('context', {})
             
-            # The session should be passed as part of the tool execution context
-            # Try different ways to access it
-            session = None
-            
-            # Method 1: Direct access if context is the session
-            if isinstance(context, StatelessInteractiveSession):
-                session = context
-            # Method 2: Session as attribute
-            elif hasattr(context, 'session'):
-                session = context.session
-            # Method 3: Session in dict
-            elif isinstance(context, dict) and 'session' in context:
-                session = context['session']
-            # Method 4: Through ai_context (how tools are called)
-            elif hasattr(context, 'ai_context'):
-                # The AI context might have the session
-                ai_context = context.ai_context
-                if hasattr(ai_context, 'session'):
-                    session = ai_context.session
+            # Extract session using helper method
+            session = self._get_session_from_context(context)
             
             if not session:
                 logger.error(f"Could not find session in context. Context type: {type(context)}, keys: {context.keys() if isinstance(context, dict) else 'N/A'}")
