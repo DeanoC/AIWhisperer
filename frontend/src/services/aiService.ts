@@ -1,9 +1,8 @@
 import { JsonRpcService } from './jsonRpcService';
-import { SessionInfo, SessionStatus, AIMessageChunk } from '../types/ai';
+import { SessionInfo, SessionStatus } from '../types/ai';
 import { Agent, AgentHandoffContext, AgentHandoffNotification } from '../types/agent';
 import { ChannelMessage, ChannelVisibilityPreferences, ChannelHistoryRequest, ChannelHistoryResponse, ChannelStats } from '../types/channel';
 
-export type AIMessageChunkHandler = (chunk: AIMessageChunk) => void;
 export type ChannelMessageHandler = (message: ChannelMessage) => void;
 export type AgentChangedHandler = (agentId: string) => void;
 export type AgentHandoffHandler = (handoff: AgentHandoffNotification) => void;
@@ -13,7 +12,6 @@ export class AIService {
   private sessionId: string | null = null;
   private sessionInfo: SessionInfo | null = null;
   private status: SessionStatus = SessionStatus.Idle;
-  private chunkHandler?: AIMessageChunkHandler;
   private channelMessageHandler?: ChannelMessageHandler;
   private error: string | null = null;
 
@@ -107,9 +105,7 @@ export class AIService {
     }
   }
 
-  onAIMessageChunk(handler: AIMessageChunkHandler) {
-    this.chunkHandler = handler;
-  }
+  // Legacy chunk handler removed - use onChannelMessage instead
 
   onChannelMessage(handler: ChannelMessageHandler) {
     this.channelMessageHandler = handler;
@@ -133,22 +129,7 @@ export class AIService {
       }
     }
     
-    // Keep backward compatibility with chunk notifications
-    if (notification.method === 'AIMessageChunkNotification') {
-      const params = notification.params || {};
-      const chunk: AIMessageChunk = {
-        content: params.chunk,
-        index: params.index ?? 0,
-        isFinal: params.isFinal ?? false,
-      };
-      console.log('[AIService] Processing AI chunk:', chunk);
-      if (this.chunkHandler) {
-        console.log('[AIService] Calling chunk handler with:', chunk);
-        this.chunkHandler(chunk);
-      } else {
-        console.log('[AIService] No chunk handler registered!');
-      }
-    }
+    // Legacy chunk notifications removed - using channels only
     if (notification.method === 'SessionStatusNotification') {
       const params = notification.params || {};
       if (typeof params.status === 'number') {

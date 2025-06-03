@@ -363,8 +363,9 @@ try:
     tool_registry = get_tool_registry()
     prompt_system = PromptSystem(prompt_config, tool_registry)
     
-    # Enable continuation protocol for all agents
+    # Enable continuation protocol and channel system for all agents
     prompt_system.enable_feature('continuation_protocol')
+    prompt_system.enable_feature('channel_system')
     
     logging.info("PromptSystem initialized successfully with tool registry")
     logging.info(f"Enabled features: {prompt_system.get_enabled_features()}")

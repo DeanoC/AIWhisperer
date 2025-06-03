@@ -496,17 +496,7 @@ class StatelessInteractiveSession:
                             "params": channel_msg
                         })
                     
-                    # Also send traditional chunk notification for backward compatibility
-                    notification = AIMessageChunkNotification(
-                        sessionId=self.session_id,
-                        chunk=chunk,
-                        isFinal=False
-                    )
-                    await self.websocket.send_json({
-                        "jsonrpc": "2.0",
-                        "method": "AIMessageChunkNotification",
-                        "params": notification.model_dump()
-                    })
+                    # Traditional chunk notifications removed - using channels only
                     logger.debug(f"Sent chunk: {len(chunk)} chars")
                 except Exception as e:
                     logger.error(f"Error sending chunk: {e}")
@@ -558,23 +548,7 @@ class StatelessInteractiveSession:
                             if "closed" in str(e).lower():
                                 self.websocket = None
             
-            # Send final notification if WebSocket is still connected
-            if self.websocket is not None:
-                try:
-                    final_notification = AIMessageChunkNotification(
-                        sessionId=self.session_id,
-                        chunk="",
-                        isFinal=True
-                    )
-                    await self.websocket.send_json({
-                        "jsonrpc": "2.0",
-                        "method": "AIMessageChunkNotification",
-                        "params": final_notification.model_dump()
-                    })
-                except Exception as e:
-                    logger.error(f"Error sending final notification: {e}")
-                    if "closed" in str(e).lower():
-                        self.websocket = None
+            # Final notifications now handled by channel system
             
             # Debug logging to understand the result type
             logger.debug(f"Result type: {type(result)}, value: {result}")
@@ -727,50 +701,16 @@ class StatelessInteractiveSession:
             # Send a simple introduction request
             introduction_prompt = "Please introduce yourself briefly, mentioning your name and what you help with."
             
-            # Create streaming callback for introduction
-            async def send_intro_chunk(chunk: str):
-                """Send introduction chunk to the client"""
-                try:
-                    notification = AIMessageChunkNotification(
-                        sessionId=self.session_id,
-                        chunk=chunk,
-                        isFinal=False
-                    )
-                    await self.websocket.send_json({
-                        "jsonrpc": "2.0",
-                        "method": "AIMessageChunkNotification",
-                        "params": notification.model_dump()
-                    })
-                except Exception as e:
-                    logger.error(f"Error sending introduction chunk: {e}")
-            
             # Get the agent to introduce itself without storing in context
             agent = self.agents[self.active_agent]
             
-            # Process introduction without storing messages
+            # Process introduction - channels will handle the streaming
             await agent.process_message(
                 introduction_prompt, 
-                on_stream_chunk=send_intro_chunk,
                 store_messages=False  # Don't store introduction in context
             )
             
-            # Send final notification if WebSocket is still connected
-            if self.websocket is not None:
-                try:
-                    final_notification = AIMessageChunkNotification(
-                        sessionId=self.session_id,
-                        chunk="",
-                        isFinal=True
-                    )
-                    await self.websocket.send_json({
-                        "jsonrpc": "2.0",
-                        "method": "AIMessageChunkNotification",
-                        "params": final_notification.model_dump()
-                    })
-                except Exception as e:
-                    logger.error(f"Error sending final notification: {e}")
-                    if "closed" in str(e).lower():
-                        self.websocket = None
+            # Final notifications now handled by channel system
             
             logger.info(f"Agent '{self.active_agent}' introduced itself")
             

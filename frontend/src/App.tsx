@@ -295,30 +295,7 @@ function App() {
     }
   }, [aiService, sessionStatus, addUserMessage, startAIMessage, appendAIChunk, addSystemMessage, sendUserMessage]);
 
-  // Set AI message chunk handler
-  useEffect(() => {
-    if (!aiService) return;
-    
-    let introductionStarted = false;
-    
-    aiService.onAIMessageChunk((chunk) => {
-      // If we receive a chunk without loading state being true,
-      // it's likely an agent introduction, so start the AI message
-      if (!loading && chunk.content && !introductionStarted) {
-        introductionStarted = true;
-        startAIMessage();
-      }
-      appendAIChunk(chunk);
-      
-      // Reset the flag when message is final
-      if (chunk.isFinal) {
-        introductionStarted = false;
-      }
-    });
-    return () => {
-      aiService.onAIMessageChunk(() => {});
-    };
-  }, [aiService, appendAIChunk, loading, startAIMessage]);
+  // AI message handling now done via channels
 
   // Update message agent metadata when current agent is set
   useEffect(() => {
