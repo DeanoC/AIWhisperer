@@ -145,7 +145,7 @@ export class AIService {
           sessionId: params.sessionId,
           toolCalls: [],
           continuationDepth: 0,
-          isPartial: params.isPartial || true
+          isPartial: params.isPartial ?? true
         }
       };
       console.log('[AIService] Processing streaming update as channel message:', channelMessage);
