@@ -18,6 +18,7 @@ class PathManager:
         self._output_path = None
         self._workspace_path = None
         self._prompt_path = None
+        self._whisper_path = None
         self._initialized = False
 
     @classmethod
@@ -35,6 +36,7 @@ class PathManager:
             cls._instance._output_path = None
             cls._instance._workspace_path = None
             cls._instance._prompt_path = None
+            cls._instance._whisper_path = None
             cls._instance._initialized = False
         cls._instance = None
         cls._initialized = False
@@ -57,6 +59,9 @@ class PathManager:
 
         prompt_path = project_json.get("prompt_path")
         self._prompt_path = Path(str(prompt_path)).resolve() if prompt_path else self._project_path
+
+        whisper_path = project_json.get("whisper_path")
+        self._whisper_path = Path(str(whisper_path)).resolve() if whisper_path else None
 
         self._app_path = Path(__file__).parent.parent.resolve()
         self._initialized = True
@@ -142,6 +147,12 @@ class PathManager:
         if not self._initialized:
             raise RuntimeError("PathManager not initialized.")
         return self._workspace_path
+    
+    @property
+    def whisper_path(self):
+        if not self._initialized:
+            raise RuntimeError("PathManager not initialized.")
+        return self._whisper_path
 
     def resolve_path(self, template_string):
         if not self._initialized:
@@ -153,6 +164,7 @@ class PathManager:
         resolved = resolved.replace("{output_path}", str(self._output_path if self._output_path is not None else ""))
         resolved = resolved.replace("{workspace_path}", str(self._workspace_path if self._workspace_path is not None else ""))
         resolved = resolved.replace("{prompt_path}", str(self._prompt_path if self._prompt_path is not None else ""))
+        resolved = resolved.replace("{whisper_path}", str(self._whisper_path if self._whisper_path is not None else ""))
         return resolved
 
     def is_path_within_workspace(self, path):
@@ -180,3 +192,23 @@ class PathManager:
             return resolved_path.is_relative_to(resolved_output_path)
         except Exception:
             return False
+    
+    def is_path_within_whisper(self, path):
+        """Check if path is within the .WHISPER directory."""
+        if not self._initialized:
+            raise RuntimeError("PathManager not initialized.")
+        try:
+            resolved_path = Path(path).resolve()
+            if self._whisper_path is None:
+                return False
+            resolved_whisper_path = self._whisper_path if isinstance(self._whisper_path, Path) else Path(self._whisper_path)
+            resolved_whisper_path = resolved_whisper_path.resolve()
+            return resolved_path.is_relative_to(resolved_whisper_path)
+        except Exception:
+            return False
+    
+    def is_path_allowed(self, path):
+        """Check if path is allowed for file operations (workspace, output, or whisper)."""
+        return (self.is_path_within_workspace(path) or 
+                self.is_path_within_output(path) or 
+                self.is_path_within_whisper(path))

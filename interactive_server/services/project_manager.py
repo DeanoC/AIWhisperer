@@ -10,7 +10,7 @@ import logging
 from contextlib import contextmanager
 
 from ..models.project import (
-    Project, ProjectCreate, ProjectUpdate, ProjectSummary,
+    Project, ProjectCreate, ProjectJoin, ProjectCreateNew, ProjectUpdate, ProjectSummary,
     ProjectHistory, UISettings, ProjectSettings
 )
 from ai_whisperer.utils.path import PathManager
@@ -115,9 +115,12 @@ class ProjectManager:
         except Exception as e:
             logger.error(f"Failed to save UI settings: {e}")
     
-    def _create_whisper_structure(self, project_path: Path) -> Path:
+    def _create_whisper_structure(self, project_path: Path, custom_whisper_path: Optional[Path] = None) -> Path:
         """Create .WHISPER directory structure for a project."""
-        whisper_path = project_path / ".WHISPER"
+        if custom_whisper_path:
+            whisper_path = custom_whisper_path / f".WHISPER_{project_path.name}"
+        else:
+            whisper_path = project_path / ".WHISPER"
         
         # Create directory structure
         directories = [
@@ -135,6 +138,167 @@ class ProjectManager:
             directory.mkdir(parents=True, exist_ok=True)
         
         return whisper_path
+    
+    def _setup_project_template(self, project_path: Path, template: str):
+        """Set up project template files."""
+        if template == "basic":
+            # Create basic project structure
+            (project_path / "src").mkdir(exist_ok=True)
+            (project_path / "docs").mkdir(exist_ok=True)
+            
+            # Create README.md
+            readme_content = f"""# {project_path.name}
+
+Project created with AIWhisperer.
+
+## Structure
+
+- `src/` - Source code
+- `docs/` - Documentation
+- `.WHISPER/` - AIWhisperer project data
+
+## Getting Started
+
+1. Open this project in AIWhisperer
+2. Start chatting with agents to develop your project
+"""
+            with open(project_path / "README.md", 'w') as f:
+                f.write(readme_content)
+                
+        elif template == "python":
+            # Python project template
+            (project_path / "src").mkdir(exist_ok=True)
+            (project_path / "tests").mkdir(exist_ok=True)
+            (project_path / "docs").mkdir(exist_ok=True)
+            
+            # Create basic Python files
+            with open(project_path / "src" / "__init__.py", 'w') as f:
+                f.write("")
+            
+            with open(project_path / "requirements.txt", 'w') as f:
+                f.write("# Add your dependencies here\n")
+                
+            with open(project_path / "README.md", 'w') as f:
+                f.write(f"""# {project_path.name}
+
+Python project created with AIWhisperer.
+
+## Setup
+
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+```python
+# Add usage examples here
+```
+""")
+                
+        elif template == "web":
+            # Web project template
+            (project_path / "src").mkdir(exist_ok=True)
+            (project_path / "public").mkdir(exist_ok=True)
+            
+            # Create basic HTML structure
+            with open(project_path / "public" / "index.html", 'w') as f:
+                f.write(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{project_path.name}</title>
+    <link rel="stylesheet" href="../src/style.css">
+</head>
+<body>
+    <h1>Welcome to {project_path.name}</h1>
+    <p>Web project created with AIWhisperer.</p>
+    <script src="../src/script.js"></script>
+</body>
+</html>""")
+                
+            with open(project_path / "src" / "style.css", 'w') as f:
+                f.write("""/* Add your styles here */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+h1 {
+    color: #333;
+}
+""")
+                
+            with open(project_path / "src" / "script.js", 'w') as f:
+                f.write("""// Add your JavaScript here
+console.log('Project loaded successfully!');
+""")
+                
+            with open(project_path / "README.md", 'w') as f:
+                f.write(f"""# {project_path.name}
+
+Web project created with AIWhisperer.
+
+## Structure
+
+- `public/` - Static assets and HTML files  
+- `src/` - Source code (CSS, JS)
+
+## Development
+
+Open `public/index.html` in your browser to view the project.
+""")
+    
+    def _init_git_repository(self, project_path: Path):
+        """Initialize Git repository in project directory."""
+        try:
+            import subprocess
+            result = subprocess.run(['git', 'init'], cwd=project_path, capture_output=True, text=True)
+            if result.returncode != 0:
+                logger.warning(f"Failed to initialize Git repository: {result.stderr}")
+                return False
+                
+            # Create .gitignore
+            gitignore_content = """# AIWhisperer
+.WHISPER/sessions/
+.WHISPER/artifacts/tmp/
+
+# Common ignores
+.env
+.env.local
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Language specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+"""
+            with open(project_path / ".gitignore", 'w') as f:
+                f.write(gitignore_content)
+                
+            logger.info(f"Initialized Git repository at {project_path}")
+            return True
+            
+        except Exception as e:
+            logger.warning(f"Failed to initialize Git repository: {e}")
+            return False
     
     def _update_recent_projects(self, project: Project):
         """Update recent projects list."""
@@ -168,7 +332,8 @@ class ProjectManager:
             "path": project.path,
             "output_path": project.output_path if project.output_path else None,
             "workspace_path": project.path,  # workspace is same as project path
-            "prompt_path": project.path      # prompt path defaults to project path
+            "prompt_path": project.path,     # prompt path defaults to project path
+            "whisper_path": project.whisper_path  # add whisper path to PathManager
         }
         
         # Initialize PathManager with project settings
@@ -177,9 +342,10 @@ class ProjectManager:
         logger.info(f"Initialized PathManager for project: {project.name}")
         logger.info(f"  - Workspace: {path_manager.workspace_path}")
         logger.info(f"  - Output: {path_manager.output_path}")
+        logger.info(f"  - Whisper: {path_manager.whisper_path}")
     
     def create_project(self, project_data: ProjectCreate) -> Project:
-        """Create a new project."""
+        """Create a new project (legacy method - connects to existing directory)."""
         project_path = Path(project_data.path)
         
         # Validate path
@@ -189,13 +355,29 @@ class ProjectManager:
         if not project_path.is_dir():
             raise ValueError(f"Project path is not a directory: {project_path}")
         
+        # Handle custom whisper path
+        custom_whisper_base = None
+        if project_data.custom_whisper_path:
+            custom_whisper_base = Path(project_data.custom_whisper_path)
+            if not custom_whisper_base.exists():
+                raise ValueError(f"Custom whisper path does not exist: {custom_whisper_base}")
+            if not custom_whisper_base.is_dir():
+                raise ValueError(f"Custom whisper path is not a directory: {custom_whisper_base}")
+        
         # Check if .WHISPER already exists
-        whisper_path = project_path / ".WHISPER"
+        if custom_whisper_base:
+            whisper_path = custom_whisper_base / f".WHISPER_{project_path.name}"
+        else:
+            whisper_path = project_path / ".WHISPER"
+            
         if whisper_path.exists():
-            raise ValueError(f"Project already exists at {project_path}")
+            if custom_whisper_base:
+                raise ValueError(f"Project already exists at custom whisper location: {whisper_path}. Use join_project() instead.")
+            else:
+                raise ValueError(f"Project already exists at {project_path}. Use join_project() instead.")
         
         # Create .WHISPER structure
-        whisper_path = self._create_whisper_structure(project_path)
+        whisper_path = self._create_whisper_structure(project_path, custom_whisper_base)
         
         # Create project
         project = Project(
@@ -219,6 +401,130 @@ class ProjectManager:
         self._update_recent_projects(project)
         
         logger.info(f"Created project: {project.name} at {project.path}")
+        
+        return project
+    
+    def join_project(self, join_data: ProjectJoin) -> Project:
+        """Join an existing project with .WHISPER folder."""
+        project_path = Path(join_data.path)
+        
+        # Validate path
+        if not project_path.exists():
+            raise ValueError(f"Project path does not exist: {project_path}")
+        
+        if not project_path.is_dir():
+            raise ValueError(f"Project path is not a directory: {project_path}")
+        
+        # Check if .WHISPER exists
+        whisper_path = project_path / ".WHISPER"
+        if not whisper_path.exists():
+            raise ValueError(f"No .WHISPER folder found at {project_path}. Use create_project() instead.")
+        
+        # Load existing project metadata
+        project_file = whisper_path / "project.json"
+        if not project_file.exists():
+            raise ValueError(f"No project.json found in .WHISPER folder at {whisper_path}")
+        
+        try:
+            with open(project_file, 'r') as f:
+                project_data = json.load(f)
+                
+            # Create project from existing data
+            project = Project(**project_data)
+            
+            # Ensure paths are up to date (in case project was moved)
+            project.path = str(project_path)
+            project.whisper_path = str(whisper_path)
+            
+            # Update last accessed time
+            project.last_accessed_at = datetime.now(timezone.utc)
+            
+        except Exception as e:
+            raise ValueError(f"Failed to load existing project: {e}")
+        
+        # Check if project already exists in our registry (by path)
+        existing_project = None
+        for pid, proj in self.projects.items():
+            if proj.path == str(project_path):
+                existing_project = proj
+                break
+        
+        if existing_project:
+            # Update existing project with loaded data
+            existing_project.name = project.name
+            existing_project.description = project.description
+            existing_project.settings = project.settings
+            existing_project.last_accessed_at = project.last_accessed_at
+            project = existing_project
+        else:
+            # Add new project to registry
+            self.projects[project.id] = project
+        
+        # Save updated registry
+        self._save_projects()
+        
+        # Update project.json with any changes
+        with open(project_file, 'w') as f:
+            json.dump(project.model_dump(), f, indent=2, default=str)
+        
+        # Update recent projects
+        self._update_recent_projects(project)
+        
+        logger.info(f"Joined existing project: {project.name} at {project.path}")
+        
+        return project
+    
+    def create_new_project(self, project_data: ProjectCreateNew) -> Project:
+        """Create a brand new project with directory structure."""
+        project_path = Path(project_data.path) / project_data.name
+        
+        # Check if project directory already exists
+        if project_path.exists():
+            raise ValueError(f"Directory already exists at {project_path}")
+        
+        # Create project directory
+        project_path.mkdir(parents=True, exist_ok=False)
+        
+        # Set up project template
+        self._setup_project_template(project_path, project_data.template)
+        
+        # Initialize Git if requested
+        if project_data.git_init:
+            self._init_git_repository(project_path)
+        
+        # Handle custom whisper path
+        custom_whisper_base = None
+        if project_data.custom_whisper_path:
+            custom_whisper_base = Path(project_data.custom_whisper_path)
+            if not custom_whisper_base.exists():
+                raise ValueError(f"Custom whisper path does not exist: {custom_whisper_base}")
+            if not custom_whisper_base.is_dir():
+                raise ValueError(f"Custom whisper path is not a directory: {custom_whisper_base}")
+        
+        # Create .WHISPER structure
+        whisper_path = self._create_whisper_structure(project_path, custom_whisper_base)
+        
+        # Create project
+        project = Project(
+            name=project_data.name,
+            path=str(project_path),
+            whisper_path=str(whisper_path),
+            description=project_data.description
+        )
+        
+        # Save project metadata
+        project_file = whisper_path / "project.json"
+        with open(project_file, 'w') as f:
+            json.dump(project.model_dump(), f, indent=2, default=str)
+        
+        # Add to projects
+        self.projects[project.id] = project
+        self._save_projects()
+        
+        # Update recent projects
+        self._update_recent_projects(project)
+        
+        logger.info(f"Created new project: {project.name} at {project.path}")
         
         return project
     

@@ -25,6 +25,7 @@ export interface ProjectCreate {
   path: string;
   outputPath?: string;
   description?: string;
+  custom_whisper_path?: string;
 }
 
 export interface ProjectJoin {
@@ -37,6 +38,7 @@ export interface ProjectCreateNew {
   template: string;
   description?: string;
   git_init: boolean;
+  custom_whisper_path?: string;
 }
 
 export interface ProjectTemplate {

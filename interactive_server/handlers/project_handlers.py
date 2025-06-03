@@ -7,7 +7,7 @@ from pathlib import Path
 import json
 
 from ..services.project_manager import ProjectManager
-from ..models.project import ProjectCreate, ProjectUpdate
+from ..models.project import ProjectCreate, ProjectJoin, ProjectCreateNew, ProjectUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -287,9 +287,87 @@ async def project_settings_update_handler(params: Dict[str, Any], websocket=None
         }
 
 
+async def project_join_handler(params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
+    """Join an existing project with .WHISPER folder"""
+    try:
+        manager = get_project_manager()
+        join_data = ProjectJoin(**params)
+        project = manager.join_project(join_data)
+        
+        return {
+            "project": model_to_dict(project),
+            "message": f"Joined existing project '{project.name}' successfully"
+        }
+    except ValueError as e:
+        return {
+            "error": {"code": -32602, "message": str(e)}
+        }
+    except Exception as e:
+        logger.error(f"Failed to join project: {e}")
+        return {
+            "error": {"code": -32603, "message": "Failed to join project"}
+        }
+
+
+async def project_create_new_handler(params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
+    """Create a brand new project with directory structure"""
+    try:
+        manager = get_project_manager()
+        project_data = ProjectCreateNew(**params)
+        project = manager.create_new_project(project_data)
+        
+        return {
+            "project": model_to_dict(project),
+            "message": f"Created new project '{project.name}' successfully"
+        }
+    except ValueError as e:
+        return {
+            "error": {"code": -32602, "message": str(e)}
+        }
+    except Exception as e:
+        logger.error(f"Failed to create new project: {e}")
+        return {
+            "error": {"code": -32603, "message": "Failed to create new project"}
+        }
+
+
+async def project_templates_handler(params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
+    """List available project templates"""
+    try:
+        templates = [
+            {
+                "id": "basic",
+                "name": "Basic Project",
+                "description": "Basic project structure with src/ and docs/ folders"
+            },
+            {
+                "id": "python",
+                "name": "Python Project",
+                "description": "Python project with src/, tests/, and requirements.txt"
+            },
+            {
+                "id": "web",
+                "name": "Web Project",
+                "description": "Web project with HTML, CSS, and JavaScript files"
+            }
+        ]
+        
+        return {
+            "templates": templates
+        }
+    except Exception as e:
+        logger.error(f"Failed to get project templates: {e}")
+        return {
+            "error": {"code": -32603, "message": "Failed to get project templates"}
+        }
+
+
 # Handler registry
 PROJECT_HANDLERS = {
     "project.connect": project_connect_handler,
+    "project.join": project_join_handler,
+    "project.create_new": project_create_new_handler,
+    "project.templates": project_templates_handler,
     "project.list": project_list_handler,
     "project.recent": project_recent_handler,
     "project.active": project_active_handler,
