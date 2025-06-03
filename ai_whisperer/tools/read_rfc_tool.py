@@ -204,20 +204,29 @@ class ReadRFCTool(AITool):
         
         return metadata
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute RFC reading."""
         rfc_id = arguments.get('rfc_id')
         section = arguments.get('section')
         
         if not rfc_id:
-            return "Error: 'rfc_id' is required."
+            return {
+                "error": "'rfc_id' is required.",
+                "rfc_id": None,
+                "content": None
+            }
         
         try:
             # Find RFC file
             rfc_path = self._find_rfc_file(rfc_id)
             
             if not rfc_path:
-                return f"Error: RFC '{rfc_id}' not found in any RFC folder (new, in_progress, archived)."
+                return {
+                    "error": f"RFC '{rfc_id}' not found in any RFC folder (new, in_progress, archived).",
+                    "rfc_id": rfc_id,
+                    "found": False,
+                    "content": None
+                }
             
             # Read content
             with open(rfc_path, 'r', encoding='utf-8') as f:
@@ -236,26 +245,36 @@ class ReadRFCTool(AITool):
             # Determine folder location
             folder = rfc_path.parent.name
             
-            # Build response
-            response = f"**RFC Found**: {rfc_id}\n"
-            response += f"**Location**: .WHISPER/rfc/{folder}/{rfc_id}.md\n"
-            response += f"**Title**: {metadata.get('title', 'Unknown')}\n"
-            response += f"**Status**: {metadata.get('status', 'Unknown')}\n"
-            response += f"**Author**: {metadata.get('author', 'Unknown')}\n"
-            response += f"**Created**: {metadata.get('created', 'Unknown')}\n"
-            response += f"**Last Updated**: {metadata.get('updated', 'Unknown')}\n"
-            response += "\n" + "-" * 50 + "\n\n"
-            
             # Extract requested section or full content
             if section and section != "all":
-                response += f"## {section.title()} Section\n\n"
-                response += self._extract_section(content, section)
+                section_content = self._extract_section(content, section)
+                extracted_content = {
+                    "section": section,
+                    "content": section_content
+                }
             else:
                 # Return full content
-                response += content
+                extracted_content = {
+                    "section": "all",
+                    "content": content
+                }
             
-            return response
+            # Build structured response
+            return {
+                "rfc_id": rfc_id,
+                "found": True,
+                "location": f".WHISPER/rfc/{folder}/{rfc_path.name}",
+                "absolute_path": str(rfc_path),
+                "folder": folder,
+                "metadata": metadata,
+                "content": extracted_content,
+                "full_content": content if section and section != "all" else None
+            }
             
         except Exception as e:
             logger.error(f"Error reading RFC {rfc_id}: {e}")
-            return f"Error reading RFC: {str(e)}"
+            return {
+                "error": f"Error reading RFC: {str(e)}",
+                "rfc_id": rfc_id,
+                "content": None
+            }

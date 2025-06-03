@@ -179,7 +179,7 @@ class ListRFCsTool(AITool):
         # Fallback
         return datetime.min
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute RFC listing."""
         status_filter = arguments.get('status', 'in_progress')
         sort_by = arguments.get('sort_by', 'created')
@@ -217,14 +217,7 @@ class ListRFCsTool(AITool):
             # Apply limit
             rfcs = rfcs[:limit]
             
-            # Format response
-            if not rfcs:
-                return f"No RFCs found with status filter: {status_filter}"
-            
-            response = f"**RFC List** (Status: {status_filter}, Sort: {sort_by})\n"
-            response += f"Found {len(rfcs)} RFC(s)\n\n"
-            
-            # Group by status for better display
+            # Group by status
             status_groups = {}
             for rfc in rfcs:
                 status = rfc['status']
@@ -232,23 +225,20 @@ class ListRFCsTool(AITool):
                     status_groups[status] = []
                 status_groups[status].append(rfc)
             
-            # Display by status group
-            for status in ['in_progress', 'archived']:
-                if status in status_groups:
-                    response += f"\n## {status.replace('_', ' ').title()}\n\n"
-                    for rfc in status_groups[status]:
-                        response += f"**{rfc['filename']}**\n"
-                        response += f"  - Title: {rfc['title']}\n"
-                        response += f"  - RFC ID: {rfc['rfc_id']}\n"
-                        response += f"  - Author: {rfc['author']}\n"
-                        response += f"  - Created: {rfc['created']}\n"
-                        response += f"  - Updated: {rfc['updated']}\n\n"
-            
-            response += "\n" + "-" * 50 + "\n"
-            response += "Use `read_rfc(rfc_id=\"filename\" or rfc_id=\"RFC-XXXX-XX-XX-XXXX\")` to view details"
-            
-            return response
+            return {
+                "rfcs": rfcs,
+                "total_count": len(rfcs),
+                "status_filter": status_filter,
+                "sort_by": sort_by,
+                "limit": limit,
+                "truncated": len(rfcs) == limit,
+                "by_status": status_groups
+            }
             
         except Exception as e:
             logger.error(f"Error listing RFCs: {e}")
-            return f"Error listing RFCs: {str(e)}"
+            return {
+                "error": f"Error listing RFCs: {str(e)}",
+                "rfcs": [],
+                "total_count": 0
+            }

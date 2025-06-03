@@ -90,7 +90,7 @@ Example usage:
 - To the user: send_mail(subject="Task Complete", body="I have completed the requested task...")
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, **kwargs) -> dict:
         """Execute the tool to send mail."""
         # Debug: Check if we're getting 'arguments' instead of kwargs
         if 'arguments' in kwargs and isinstance(kwargs['arguments'], dict):
@@ -108,9 +108,17 @@ Example usage:
         
         # Validate required fields
         if not subject:
-            return "Error: Subject is required for sending mail"
+            return {
+                "error": "Subject is required for sending mail",
+                "message_id": None,
+                "sent": False
+            }
         if not body:
-            return "Error: Body is required for sending mail"
+            return {
+                "error": "Body is required for sending mail",
+                "message_id": None,
+                "sent": False
+            }
         
         # Map priority string to enum
         priority_map = {
@@ -144,12 +152,20 @@ Example usage:
             # Send the mail
             message_id = mailbox.send_mail(mail)
             
-            # Check if we should trigger agent switching (for agent-to-agent mail)
-            if to_agent:
-                # This is agent-to-agent communication
-                # Return a result that includes metadata for agent switching
-                return f"Mail sent successfully to {to_agent} (ID: {message_id}). The message has been delivered to their mailbox."
-            else:
-                return f"Mail sent successfully to user (ID: {message_id})"
+            # Return structured result
+            return {
+                "message_id": message_id,
+                "to": to_agent if to_agent else "user",
+                "from": from_agent,
+                "subject": subject,
+                "priority": priority_str,
+                "sent": True,
+                "error": None
+            }
         except ValueError as e:
-            return f"Error sending mail: {str(e)}"
+            return {
+                "error": f"Error sending mail: {str(e)}",
+                "message_id": None,
+                "to": to_agent if to_agent else "user",
+                "sent": False
+            }
