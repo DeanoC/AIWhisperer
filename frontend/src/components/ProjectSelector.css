@@ -78,7 +78,7 @@
   gap: 8px;
 }
 
-.connect-button, .close-button {
+.connect-button, .close-button, .create-button {
   padding: 6px 12px;
   border: none;
   border-radius: 4px;
@@ -87,12 +87,12 @@
   transition: background 0.2s;
 }
 
-.connect-button {
+.connect-button, .create-button {
   background: #007acc;
   color: white;
 }
 
-.connect-button:hover {
+.connect-button:hover, .create-button:hover {
   background: #005a9e;
 }
 

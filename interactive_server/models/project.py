@@ -48,6 +48,7 @@ class ProjectCreateNew(BaseModel):
     description: Optional[str] = Field(None, description="Project description")
     git_init: bool = Field(False, description="Initialize Git repository")
     custom_whisper_path: Optional[str] = Field(None, description="Custom .WHISPER folder location (outside project)")
+    workspace_path: Optional[str] = Field(None, description="Existing workspace path (use instead of creating new project folder)")
 
 
 class ProjectUpdate(BaseModel):

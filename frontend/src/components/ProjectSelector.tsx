@@ -142,6 +142,8 @@ function CreateNewProjectDialog({ onClose }: CreateNewProjectDialogProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [templates, setTemplates] = useState<Array<{id: string, name: string, description: string}>>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [useExistingWorkspace, setUseExistingWorkspace] = useState(false);
+  const [workspacePath, setWorkspacePath] = useState('');
 
   // Load available templates
   useEffect(() => {
@@ -171,7 +173,14 @@ function CreateNewProjectDialog({ onClose }: CreateNewProjectDialogProps) {
     setIsCreating(true);
 
     try {
-      await createNewProject(name, parentPath, template, description, gitInit);
+      await createNewProject(
+        name, 
+        parentPath, 
+        template, 
+        description, 
+        gitInit,
+        useExistingWorkspace ? workspacePath : undefined
+      );
       onClose();
     } catch (err: any) {
       setError(err.message);
@@ -222,14 +231,52 @@ function CreateNewProjectDialog({ onClose }: CreateNewProjectDialogProps) {
               </button>
             </div>
             <small className="form-help">
-              {name && parentPath ? 
-                `Project will be created at: ${parentPath}/${name}` : 
-                'The project folder will be created inside this directory'
+              {useExistingWorkspace ? 
+                `AIWhisperer metadata will be stored at: ${parentPath}/${name}/.WHISPER` :
+                name && parentPath ? 
+                  `Project will be created at: ${parentPath}/${name}` : 
+                  'The project folder will be created inside this directory'
               }
             </small>
           </div>
 
           <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={useExistingWorkspace}
+                onChange={e => setUseExistingWorkspace(e.target.checked)}
+              />
+              Use existing workspace (instead of creating new project folder)
+            </label>
+          </div>
+
+          {useExistingWorkspace && (
+            <>
+              <div className="form-group">
+                <label htmlFor="workspacePath">Workspace Directory</label>
+                <div className="path-input-group">
+                  <input
+                    id="workspacePath"
+                    type="text"
+                    value={workspacePath}
+                    onChange={e => setWorkspacePath(e.target.value)}
+                    placeholder="/home/user/projects/MyProject"
+                    required
+                  />
+                  <button type="button" onClick={handleBrowse} className="browse-button">
+                    Browse
+                  </button>
+                </div>
+                <small className="form-help">
+                  Path to existing project directory containing your source code
+                </small>
+              </div>
+            </>
+          )}
+
+          {!useExistingWorkspace && (
+            <div className="form-group">
             <label htmlFor="template">Project Template</label>
             {loadingTemplates ? (
               <div>Loading templates...</div>
@@ -252,7 +299,8 @@ function CreateNewProjectDialog({ onClose }: CreateNewProjectDialogProps) {
                 {templates.find(t => t.id === template)?.description}
               </small>
             )}
-          </div>
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="description">Description (optional)</label>
@@ -284,7 +332,7 @@ function CreateNewProjectDialog({ onClose }: CreateNewProjectDialogProps) {
             <button type="button" onClick={onClose} disabled={isCreating}>
               Cancel
             </button>
-            <button type="submit" disabled={isCreating || !name || !parentPath || loadingTemplates}>
+            <button type="submit" disabled={isCreating || !name || !parentPath || (useExistingWorkspace && !workspacePath) || loadingTemplates}>
               {isCreating ? 'Creating...' : 'Create Project'}
             </button>
           </div>

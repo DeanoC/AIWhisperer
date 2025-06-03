@@ -17,7 +17,7 @@ interface ProjectContextType {
   // Actions
   connectWorkspace: (name: string, path: string, description?: string, outputPath?: string) => Promise<void>;
   joinProject: (path: string) => Promise<void>;
-  createNewProject: (name: string, parentPath: string, template: string, description?: string, gitInit?: boolean) => Promise<void>;
+  createNewProject: (name: string, parentPath: string, template: string, description?: string, gitInit?: boolean, workspacePath?: string) => Promise<void>;
   activateProject: (projectId: string) => Promise<void>;
   updateProject: (projectId: string, updates: any) => Promise<void>;
   deleteProject: (projectId: string, deleteFiles?: boolean) => Promise<void>;
@@ -151,7 +151,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     }
   }, [refreshProjects]);
 
-  const createNewProject = useCallback(async (name: string, parentPath: string, template: string, description?: string, gitInit: boolean = false) => {
+  const createNewProject = useCallback(async (name: string, parentPath: string, template: string, description?: string, gitInit: boolean = false, workspacePath?: string) => {
     try {
       setError(null);
       const response = await projectService.createNewProject({ 
@@ -159,7 +159,8 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
         path: parentPath, 
         template, 
         description,
-        git_init: gitInit
+        git_init: gitInit,
+        workspace_path: workspacePath
       });
       
       // Immediately activate the newly created project to initialize workspace

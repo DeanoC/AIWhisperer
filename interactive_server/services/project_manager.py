@@ -476,38 +476,70 @@ yarn-error.log*
     
     def create_new_project(self, project_data: ProjectCreateNew) -> Project:
         """Create a brand new project with directory structure."""
-        project_path = Path(project_data.path) / project_data.name
-        parent_path = Path(project_data.path)
         
-        # Validate parent directory
-        if not parent_path.exists():
-            raise ValueError(f"Parent directory does not exist: {parent_path}")
+        # Check if using existing workspace or creating new project folder
+        if project_data.workspace_path:
+            # Use existing workspace directory
+            workspace_path = Path(project_data.workspace_path)
+            
+            # Validate workspace directory exists
+            if not workspace_path.exists():
+                raise ValueError(f"Workspace directory does not exist: {workspace_path}")
+            
+            if not workspace_path.is_dir():
+                raise ValueError(f"Workspace path is not a directory: {workspace_path}")
+            
+            # Check if we have read access to workspace directory
+            if not os.access(workspace_path, os.R_OK):
+                raise ValueError(f"No read permission to workspace directory: {workspace_path}")
+            
+            # Set project path to the workspace (where code lives)
+            project_path = workspace_path
+                
+        else:
+            # Create new project folder
+            project_path = Path(project_data.path) / project_data.name
+            parent_path = Path(project_data.path)
+            
+            # Validate parent directory
+            if not parent_path.exists():
+                raise ValueError(f"Parent directory does not exist: {parent_path}")
+            
+            if not parent_path.is_dir():
+                raise ValueError(f"Parent path is not a directory: {parent_path}")
+            
+            # Check if we have write permission to parent directory
+            if not os.access(parent_path, os.W_OK):
+                raise ValueError(f"No write permission to parent directory: {parent_path}")
+            
+            # Check if project directory already exists
+            if project_path.exists():
+                raise ValueError(f"Directory already exists at {project_path}")
+            
+            # Create project directory
+            try:
+                project_path.mkdir(parents=True, exist_ok=False)
+            except PermissionError as e:
+                raise ValueError(f"Permission denied creating project directory: {project_path}") from e
+            except OSError as e:
+                raise ValueError(f"Failed to create project directory: {project_path} - {e}") from e
+            
+            # Set up project template (only for new projects, not existing workspaces)
+            self._setup_project_template(project_path, project_data.template)
+            
+            # Initialize Git if requested (only for new projects)
+            if project_data.git_init:
+                self._init_git_repository(project_path)
         
-        if not parent_path.is_dir():
-            raise ValueError(f"Parent path is not a directory: {parent_path}")
-        
-        # Check if we have write permission to parent directory
-        if not os.access(parent_path, os.W_OK):
-            raise ValueError(f"No write permission to parent directory: {parent_path}")
-        
-        # Check if project directory already exists
-        if project_path.exists():
-            raise ValueError(f"Directory already exists at {project_path}")
-        
-        # Create project directory
-        try:
-            project_path.mkdir(parents=True, exist_ok=False)
-        except PermissionError as e:
-            raise ValueError(f"Permission denied creating project directory: {project_path}") from e
-        except OSError as e:
-            raise ValueError(f"Failed to create project directory: {project_path} - {e}") from e
-        
-        # Set up project template
-        self._setup_project_template(project_path, project_data.template)
-        
-        # Initialize Git if requested
-        if project_data.git_init:
-            self._init_git_repository(project_path)
+        # Determine whisper location
+        if project_data.workspace_path:
+            # For existing workspace, create .WHISPER at parent/name location
+            whisper_base_path = Path(project_data.path) / project_data.name
+            # Create the whisper base directory if it doesn't exist
+            whisper_base_path.mkdir(parents=True, exist_ok=True)
+        else:
+            # For new project, .WHISPER goes with the project
+            whisper_base_path = project_path
         
         # Handle custom whisper path
         custom_whisper_base = None
@@ -519,12 +551,12 @@ yarn-error.log*
                 raise ValueError(f"Custom whisper path is not a directory: {custom_whisper_base}")
         
         # Create .WHISPER structure
-        whisper_path = self._create_whisper_structure(project_path, custom_whisper_base)
+        whisper_path = self._create_whisper_structure(whisper_base_path, custom_whisper_base)
         
         # Create project
         project = Project(
             name=project_data.name,
-            path=str(project_path),
+            path=str(project_path),  # This is the workspace (code) path
             whisper_path=str(whisper_path),
             description=project_data.description
         )

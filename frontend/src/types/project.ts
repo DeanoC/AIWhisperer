@@ -39,6 +39,7 @@ export interface ProjectCreateNew {
   description?: string;
   git_init: boolean;
   custom_whisper_path?: string;
+  workspace_path?: string;
 }
 
 export interface ProjectTemplate {
