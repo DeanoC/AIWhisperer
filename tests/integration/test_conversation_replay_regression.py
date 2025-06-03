@@ -131,9 +131,15 @@ class TestConversationReplayRegression:
             manager1.stop_server()
             manager2.stop_server()
     
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_full_conversation_replay_integration(self):
         """Test full end-to-end conversation replay."""
+        # Skip if no API key configured
+        import os
+        if not os.getenv('OPENROUTER_API_KEY'):
+            pytest.skip("API key required for integration test")
+            
         # Create a simple conversation
         conv_file = self.create_test_conversation("integration", [
             "Hello Alice, please just say hello back to me."
