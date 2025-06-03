@@ -20,6 +20,7 @@ from ai_whisperer.context.agent_context import AgentContext
 from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.services.ai.openrouter import OpenRouterAIService
+from ai_whisperer.services.agents.ai_loop_manager import AILoopManager
 from ai_whisperer.services.execution.context import ContextManager
 from ai_whisperer.context.context_manager import AgentContextManager
 from ai_whisperer.utils.path import PathManager
@@ -61,6 +62,9 @@ class StatelessInteractiveSession:
         self.agents: Dict[str, StatelessAgent] = {}
         self.active_agent: Optional[str] = None
         self.introduced_agents: set = set()  # Track which agents have introduced themselves
+        
+        # AI Loop management - each agent gets its own AI loop
+        self.ai_loop_manager = AILoopManager(default_config=config)
         
         # Continuation tracking
         self._continuation_depth = 0  # Track continuation depth to prevent loops
@@ -112,41 +116,16 @@ class StatelessInteractiveSession:
         from ai_whisperer.tools.send_mail_tool import SendMailTool
         from ai_whisperer.tools.check_mail_tool import CheckMailTool
         from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
+        from ai_whisperer.tools.switch_agent_tool import SwitchAgentTool
         
         tool_registry = get_tool_registry()
         tool_registry.register_tool(SendMailTool())
         tool_registry.register_tool(CheckMailTool())
         tool_registry.register_tool(ReplyMailTool())
+        tool_registry.register_tool(SwitchAgentTool())
         
-        logger.info("Registered all tools for interactive session including mailbox tools")
+        logger.info("Registered all tools for interactive session including mailbox and agent switching tools")
     
-    def _create_stateless_ai_loop(self, agent_id: str = None) -> StatelessAILoop:
-        """Create a StatelessAILoop instance for an agent"""
-        # Extract AI configuration
-        openrouter_config = self.config.get("openrouter", {})
-        ai_config = AIConfig(
-            api_key=openrouter_config.get("api_key"),
-            model_id=openrouter_config.get("model", "openai/gpt-3.5-turbo"),
-            temperature=openrouter_config.get("params", {}).get("temperature", 0.7),
-            max_tokens=openrouter_config.get("params", {}).get("max_tokens", 1000),
-            max_reasoning_tokens=openrouter_config.get("params", {}).get("max_reasoning_tokens", None)
-        )
-        
-        # Create AI service
-        ai_service = OpenRouterAIService(config=ai_config)
-        
-        # Create agent context to pass to AI loop
-        agent_context = {
-            'agent_id': agent_id,
-            'agent_name': agent_id  # We'll use agent_id as the name for now
-        }
-        
-        # Create StatelessAILoop with agent context
-        return StatelessAILoop(
-            config=ai_config,
-            ai_service=ai_service,
-            agent_context=agent_context
-        )
     
     async def create_agent(self, agent_id: str, system_prompt: str, config: Optional[AgentConfig] = None) -> StatelessAgent:
         """
@@ -188,8 +167,12 @@ class StatelessInteractiveSession:
         context = AgentContext(agent_id=agent_id, system_prompt=system_prompt)
         logger.info(f"Created AgentContext for {agent_id} with system prompt length: {len(system_prompt)}")
         
-        # Create stateless AI loop for this agent
-        ai_loop = self._create_stateless_ai_loop(agent_id)
+        # Get or create AI loop for this agent through the manager
+        ai_loop = self.ai_loop_manager.get_or_create_ai_loop(
+            agent_id=agent_id,
+            agent_config=config,
+            fallback_config=self.config
+        )
         
         # Create stateless agent with registry info for tool filtering
         agent = StatelessAgent(config, context, ai_loop, agent_registry_info)
@@ -341,10 +324,35 @@ class StatelessInteractiveSession:
                     logger.warning(f"⚠️ No prompt system or prompt file configured for {agent_id}, using basic fallback")
                     prompt_source = "no_config_fallback"
                 
+                # Create agent config with AI settings if available
+                agent_config = None
+                if agent_info.ai_config:
+                    # Create AgentConfig with agent-specific AI settings
+                    openrouter_config = self.config.get("openrouter", {})
+                    agent_config = AgentConfig(
+                        name=agent_info.name,
+                        description=agent_info.description,
+                        system_prompt=system_prompt,
+                        model_name=agent_info.ai_config.get("model", openrouter_config.get("model", "openai/gpt-3.5-turbo")),
+                        provider=agent_info.ai_config.get("provider", "openrouter"),
+                        api_settings={
+                            "api_key": openrouter_config.get("api_key"),
+                            **agent_info.ai_config.get("api_settings", {})
+                        },
+                        generation_params={
+                            **openrouter_config.get("params", {}),
+                            **agent_info.ai_config.get("generation_params", {})
+                        },
+                        tool_permissions=[],
+                        tool_limits={},
+                        context_settings=agent_info.ai_config.get("context_settings", {"max_context_messages": 50})
+                    )
+                    logger.info(f"Created agent config with custom AI settings: model={agent_config.model_name}")
+                
                 # Create the agent with the loaded prompt and registry info
                 logger.info(f"📝 Agent {agent_id} ({agent_info.name}) prompt loaded from: {prompt_source}")
                 logger.info(f"About to create agent with prompt: {system_prompt[:200]}...")
-                await self._create_agent_internal(agent_id, system_prompt, config=None, agent_registry_info=agent_info)
+                await self._create_agent_internal(agent_id, system_prompt, config=agent_config, agent_registry_info=agent_info)
                 logger.info(f"Created agent '{agent_id}' from registry with system prompt")
             
             # Verify agent exists now
@@ -1074,6 +1082,9 @@ class StatelessInteractiveSession:
         self.agents.clear()
         self.active_agent = None
         
+        # Clean up AI loops
+        self.ai_loop_manager.cleanup()
+        
         # Stop observing this session
         if self.observer:
             self.observer.stop_observing(self.session_id)
@@ -1542,16 +1553,8 @@ class StatelessSessionManager:
         tool_registry.register_tool(FindPatternTool(path_manager))
         tool_registry.register_tool(WorkspaceStatsTool(path_manager))
         
-        # Register mailbox tools
-        from ai_whisperer.tools.send_mail_tool import SendMailTool
-        from ai_whisperer.tools.check_mail_tool import CheckMailTool
-        from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
-        
-        tool_registry.register_tool(SendMailTool())
-        tool_registry.register_tool(CheckMailTool())
-        tool_registry.register_tool(ReplyMailTool())
-        
-        logger.info("Registered mailbox tools")
+        # Mailbox tools are already registered in __init__ method
+        # Skip duplicate registration here
         
         # Register RFC management tools
         from ai_whisperer.tools.create_rfc_tool import CreateRFCTool
@@ -1612,6 +1615,7 @@ class StatelessSessionManager:
             from ai_whisperer.tools.python_executor_tool import PythonExecutorTool
             from ai_whisperer.tools.script_parser_tool import ScriptParserTool
             from ai_whisperer.tools.batch_command_tool import BatchCommandTool
+            from ai_whisperer.tools.ai_loop_inspector_tool import AILoopInspectorTool
             
             tool_registry.register_tool(SessionHealthTool())
             tool_registry.register_tool(SessionAnalysisTool())
@@ -1622,6 +1626,7 @@ class StatelessSessionManager:
             tool_registry.register_tool(PythonExecutorTool())
             tool_registry.register_tool(ScriptParserTool())
             tool_registry.register_tool(BatchCommandTool(tool_registry))
+            tool_registry.register_tool(AILoopInspectorTool())
             
             logger.info("Successfully registered Debbie's debugging and batch processing tools")
         except ImportError as e:

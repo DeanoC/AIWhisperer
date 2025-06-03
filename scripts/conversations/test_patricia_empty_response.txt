@@ -1,0 +1,24 @@
+# Test Patricia Empty Response Issue
+# Testing if Patricia provides feedback when creating RFCs
+
+USER: Hi Patricia! I'd like to test your RFC creation capabilities.
+
+AGENT: @p
+
+WAIT: 2
+
+USER: Please create an RFC for adding a terminal feature to the frontend. Make sure to tell me what you're doing before you do it.
+
+WAIT: 5
+
+USER: Did you create something? I didn't see any response from you.
+
+WAIT: 3
+
+USER: Let's try again. Can you first tell me what you're going to do, then create an RFC for implementing a file browser in the frontend?
+
+WAIT: 5
+
+USER: Thank you! Can you list all the RFCs we have now?
+
+WAIT: 3

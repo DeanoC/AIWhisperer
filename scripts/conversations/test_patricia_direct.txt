@@ -1,0 +1,14 @@
+# Test Patricia directly by starting with her
+# This bypasses the agent switching issue
+
+@Patricia, I need to create an RFC for implementing a terminal feature in the frontend.
+
+Before you create it, can you tell me what you're going to do?
+
+Now please create the RFC for the terminal feature.
+
+Great! Can you show me what was created using read_rfc?
+
+Let's create another one. Please create an RFC for adding a file browser to the frontend. Again, explain what you'll do first.
+
+Can you list all the RFCs we have now?

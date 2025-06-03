@@ -3,6 +3,7 @@ import sys
 import os
 import pytest
 
+@pytest.mark.skip(reason="Resource-intensive test that overloads local dev machines")
 @pytest.mark.performance
 def test_websocket_stress_subprocess():
     """Run the websocket stress test in a subprocess to avoid thread/event loop leaks."""

@@ -8,6 +8,7 @@ from interactive_server.main import app
 
 NUM_CLIENTS = 12
 
+@pytest.mark.skip(reason="Resource-intensive test that overloads local dev machines")
 @pytest.mark.performance
 @pytest.mark.timeout(30)
 def test_websocket_stress():

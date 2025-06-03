@@ -1,0 +1,28 @@
+# Test Patricia RFC Creation Issue
+# Testing if Patricia responds properly when asked to create an RFC
+
+USER: Hello Patricia!
+
+AGENT: @p
+
+WAIT: 2
+
+USER: What RFCs do we currently have?
+
+WAIT: 3
+
+USER: Let's create an RFC for implementing a terminal to the frontend of AIWhisperer
+
+WAIT: 5
+
+USER: Did you create the RFC? Can you tell me about it?
+
+WAIT: 3
+
+USER: Let's test again. Can you create another RFC for adding a file browser component to the frontend?
+
+WAIT: 5
+
+USER: Great! Can you list all RFCs now to confirm both were created?
+
+WAIT: 3

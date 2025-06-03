@@ -410,6 +410,24 @@ Revolutionary architecture where each agent runs its own AI loop independently, 
 - Add options to be less 'friendly' for experienced use. i.e. AI introductions can be short/missing, agent E always tells you how to use claude
 - Integrate AI dynamic buttons in the message bubbles, allow agents to create buttons using the output markdown for easy user interaction
 
+
+## Notes about conceptual framework for multi-agent systems:
+Our interface is a chat system. The main chat is a group chat which all agents can be part of we can also have (in theory, not implelented yet) private chats with an agents and small group chats as well (not implemented yet).
+The main group chat doesn't nessecarily have a focused agent in the real world. I chat to all my mates, some will reply some not. Group chats like discord, irc, slack, etc. are all like this.
+The question is does that make sense for agents?
+The primary issue is confusion for the agents and cost of all the AI listening to everything
+An alternative is to have a primary agent that is the main chat agent and the others are secondary agents that can be called on
+This would have the current UI active agent get the users messages and prehaps a @name at the start of the message to indicate which agent to send it to
+this solves several issues:
+- Agents can be focused on specific tasks
+- Costs are reduced as only the active agent is processing messages
+- Agents can 'wake up' and process the messages that have happened while they were asleep (though this might get complicated)
+To really work we might need rooms
+We have a mailbox system that allows agents to send messages to each other, this is a good way to allow agents to communicate without needing to be in the same chat.
+The other paradigm is to not base it on a chat system and more like email. The user sends and recieves messages from agents, they can reply to messages and the agents can reply back. This biggest issue is that the user won't see much of the interaction between agents, which is a key part of the system.
+
+Prehaps we always open 2 chats at start, a private one with Alice The Assistant and the main group chat. If you want a quiet life you can chat with alice who will update and route your messages to the correct agent/s. If you want to see the group chat you can but it might get rowdy like a real shared group chat...
+
 ---
 
 *Last Updated: 2025-06-02*

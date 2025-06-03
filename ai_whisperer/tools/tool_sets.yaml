@@ -260,7 +260,8 @@ specialized_sets:
   # Agent switching tools
   agent_switching:
     description: "Tools for switching between different AI agents"
-    tools: []  # These tools need to be implemented
+    tools:
+      - switch_agent
     tags:
       - agent_switching
       - navigation
