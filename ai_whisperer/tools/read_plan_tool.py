@@ -124,22 +124,28 @@ class ReadPlanTool(AITool):
         
         return result
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute plan reading."""
         plan_name = arguments.get('plan_name')
         include_tasks = arguments.get('include_tasks', True)
         output_format = arguments.get('format', 'markdown')
         
         if not plan_name:
-            error_response = {"error": "'plan_name' is required."}
-            return json.dumps(error_response) if output_format == 'json' else "Error: 'plan_name' is required."
+            return {
+                "error": "'plan_name' is required.",
+                "plan_name": None,
+                "found": False
+            }
         
         try:
             # Find plan directory
             plan_dir = self._find_plan(plan_name)
             if not plan_dir:
-                error_response = {"error": f"Plan '{plan_name}' not found."}
-                return json.dumps(error_response) if output_format == 'json' else f"Error: Plan '{plan_name}' not found."
+                return {
+                    "error": f"Plan '{plan_name}' not found.",
+                    "plan_name": plan_name,
+                    "found": False
+                }
             
             # Load plan data
             plan_file = plan_dir / "plan.json"
@@ -153,76 +159,25 @@ class ReadPlanTool(AITool):
                 with open(ref_file, 'r') as f:
                     ref_data = json.load(f)
             
-            # Return JSON format if requested
-            if output_format == 'json':
-                return json.dumps(plan_data, indent=2)
+            # Add metadata to plan data
+            plan_data["_metadata"] = {
+                "plan_name": plan_name,
+                "plan_directory": str(plan_dir),
+                "status_folder": plan_dir.parent.name,
+                "found": True,
+                "include_tasks": include_tasks,
+                "rfc_reference_exists": ref_data is not None
+            }
             
-            # Format response as markdown
-            response = f"**Plan Found**: {plan_name}\n\n"
-            
-            # Basic information
-            response += f"**Title**: {plan_data.get('title', 'Untitled')}\n"
-            
-            if plan_data.get('description'):
-                response += f"**Description**: {plan_data['description']}\n"
-            
-            response += f"**Type**: {plan_data.get('plan_type', 'unknown')}\n"
-            response += f"**Status**: {plan_data.get('status', 'unknown')}\n"
-            
-            # Source RFC info
-            source_rfc = plan_data.get('source_rfc', {})
-            response += f"**Source RFC**: {source_rfc.get('rfc_id', 'None')} - {source_rfc.get('title', 'Unknown')}\n"
-            
-            # Timestamps
-            response += f"**Created**: {plan_data.get('created', 'Unknown')}\n"
-            response += f"**Updated**: {plan_data.get('updated', 'Unknown')}\n"
-            
-            # Task summary
-            tasks = plan_data.get('tasks', [])
-            response += f"\n**Total Tasks**: {len(tasks)}\n"
-            
-            # TDD phase breakdown
-            tdd_phases = {'red': 0, 'green': 0, 'refactor': 0}
-            for task in tasks:
-                phase = task.get('tdd_phase', '').lower()
-                if phase in tdd_phases:
-                    tdd_phases[phase] += 1
-            
-            if any(tdd_phases.values()):
-                response += f"**TDD Breakdown**: RED ({tdd_phases['red']}), GREEN ({tdd_phases['green']}), REFACTOR ({tdd_phases['refactor']})\n"
-            
-            # Validation criteria
-            criteria = plan_data.get('validation_criteria', [])
-            if criteria:
-                response += f"\n**Validation Criteria**:\n"
-                for criterion in criteria:
-                    response += f"- {criterion}\n"
-            
-            # RFC sync status
             if ref_data:
-                response += f"\n**RFC Sync Status**:\n"
-                response += f"- Last Sync: {ref_data.get('last_sync', 'Unknown')}\n"
-                response += f"- RFC Path: {ref_data.get('rfc_path', 'Unknown')}\n"
+                plan_data["_metadata"]["rfc_sync"] = ref_data
             
-            # Detailed task list
-            if include_tasks and tasks:
-                response += f"\n## Tasks\n\n"
-                for i, task in enumerate(tasks, 1):
-                    response += self._format_task(task, i)
-                    response += "\n"
-            
-            # Refinement history
-            history = plan_data.get('refinement_history', [])
-            if history:
-                response += f"\n## Refinement History\n\n"
-                for entry in history[-5:]:  # Show last 5 entries
-                    response += f"- {entry.get('timestamp', 'Unknown')}: {entry.get('action', 'Unknown action')}\n"
-                    if entry.get('details'):
-                        response += f"  Details: {entry['details']}\n"
-            
-            return response
+            return plan_data
             
         except Exception as e:
             logger.error(f"Error reading plan: {e}")
-            error_response = {"error": f"Error reading plan: {str(e)}"}
-            return json.dumps(error_response) if output_format == 'json' else f"Error reading plan: {str(e)}"
+            return {
+                "error": f"Error reading plan: {str(e)}",
+                "plan_name": plan_name,
+                "found": False
+            }

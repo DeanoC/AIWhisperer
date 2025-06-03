@@ -84,12 +84,16 @@ A JSON object containing:
 - recommendations: Suggestions for optimization
 """
     
-    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Execute the analyze dependencies tool."""
         tasks_json = arguments.get("tasks")
         
         if not tasks_json:
-            return "Error: tasks parameter is required"
+            return {
+                "error": "tasks parameter is required",
+                "total_tasks": 0,
+                "analyzed": False
+            }
         
         try:
             # Parse the tasks
@@ -107,7 +111,11 @@ A JSON object containing:
                 dependencies = task.get("dependencies", [])
                 
                 if not task_id:
-                    return "Error: Each task must have an 'id' or 'task_id' field"
+                    return {
+                        "error": "Each task must have an 'id' or 'task_id' field",
+                        "total_tasks": len(tasks_data),
+                        "analyzed": False
+                    }
                 
                 dependency_graph[task_id] = dependencies
                 task_map[task_id] = task
@@ -116,7 +124,12 @@ A JSON object containing:
             try:
                 execution_order = self._decomposer._topological_sort(dependency_graph)
             except DependencyCycleError as e:
-                return f"Error: Circular dependency detected - {str(e)}"
+                return {
+                    "error": f"Circular dependency detected - {str(e)}",
+                    "has_circular_dependencies": True,
+                    "total_tasks": len(tasks_data),
+                    "analyzed": False
+                }
             
             # Build execution phases
             phases = []
@@ -175,11 +188,20 @@ A JSON object containing:
             
             analysis["recommendations"] = recommendations
             
-            return json.dumps(analysis, indent=2)
+            analysis["analyzed"] = True
+            return analysis
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse tasks JSON: {e}")
-            return f"Error: Invalid JSON format - {str(e)}"
+            return {
+                "error": f"Invalid JSON format - {str(e)}",
+                "total_tasks": 0,
+                "analyzed": False
+            }
         except Exception as e:
             logger.error(f"Unexpected error in analyze_dependencies: {e}", exc_info=True)
-            return f"Error: Unexpected error - {str(e)}"
+            return {
+                "error": f"Unexpected error - {str(e)}",
+                "total_tasks": 0,
+                "analyzed": False
+            }

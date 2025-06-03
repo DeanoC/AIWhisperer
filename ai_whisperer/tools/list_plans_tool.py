@@ -120,7 +120,7 @@ class ListPlansTool(AITool):
             logger.error(f"Error loading plan from {plan_dir}: {e}")
             return None
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute plan listing."""
         status_filter = arguments.get('status', 'all')
         sort_by = arguments.get('sort_by', 'created')
@@ -132,8 +132,11 @@ class ListPlansTool(AITool):
             # Handle potential None workspace_path
             workspace_path = path_manager.workspace_path
             if workspace_path is None:
-                error_response = {"error": "Workspace path not initialized."}
-                return json.dumps(error_response) if output_format == 'json' else "Error: Workspace path not initialized."
+                return {
+                    "error": "Workspace path not initialized.",
+                    "plans": [],
+                    "count": 0
+                }
             
             plans_base = Path(workspace_path) / ".WHISPER" / "plans"
             
@@ -170,30 +173,20 @@ class ListPlansTool(AITool):
             if limit and limit > 0:
                 all_plans = all_plans[:limit]
             
-            # Return JSON format if requested
-            if output_format == 'json':
-                # Create simplified plan summaries for JSON output
-                plan_summaries = []
-                for plan in all_plans:
-                    summary = {
-                        'plan_name': plan.get('_plan_name', ''),
-                        'title': plan.get('title', 'Untitled'),
-                        'plan_type': plan.get('plan_type', 'unknown'),
-                        'status': plan.get('_status_dir', 'unknown'),
-                        'source_rfc': plan.get('source_rfc', {}).get('rfc_id', 'None'),
-                        'task_count': len(plan.get('tasks', [])),
-                        'created_at': plan.get('created', 'Unknown'),
-                        'updated_at': plan.get('updated', 'Unknown')
-                    }
-                    plan_summaries.append(summary)
-                
-                return json.dumps(plan_summaries, indent=2)
-            
-            # Format response as markdown (default behavior)
-            if not all_plans:
-                return "[]" if output_format == 'json' else "No plans found."
-            
-            response = f"Found {len(all_plans)} plan(s):\n\n"
+            # Create simplified plan summaries
+            plan_summaries = []
+            for plan in all_plans:
+                summary = {
+                    'plan_name': plan.get('_plan_name', ''),
+                    'title': plan.get('title', 'Untitled'),
+                    'plan_type': plan.get('plan_type', 'unknown'),
+                    'status': plan.get('_status_dir', 'unknown'),
+                    'source_rfc': plan.get('source_rfc', {}).get('rfc_id', 'None'),
+                    'task_count': len(plan.get('tasks', [])),
+                    'created_at': plan.get('created', 'Unknown'),
+                    'updated_at': plan.get('updated', 'Unknown')
+                }
+                plan_summaries.append(summary)
             
             # Group by status
             by_status = {}
@@ -203,26 +196,21 @@ class ListPlansTool(AITool):
                     by_status[status] = []
                 by_status[status].append(plan)
             
-            # Display plans
-            for status in ['in_progress', 'archived']:
-                if status not in by_status:
-                    continue
-                
-                response += f"## {status.replace('_', ' ').title()}\n\n"
-                
-                for plan in by_status[status]:
-                    response += f"**{plan['_plan_name']}**\n"
-                    response += f"- Title: {plan.get('title', 'Untitled')}\n"
-                    response += f"- Type: {plan.get('plan_type', 'unknown')}\n"
-                    response += f"- Source RFC: {plan.get('source_rfc', {}).get('rfc_id', 'None')}\n"
-                    response += f"- Tasks: {len(plan.get('tasks', []))}\n"
-                    response += f"- Created: {plan.get('created', 'Unknown')}\n"
-                    response += f"- Updated: {plan.get('updated', 'Unknown')}\n"
-                    response += "\n"
-            
-            return response
+            return {
+                "plans": plan_summaries,
+                "count": len(plan_summaries),
+                "status_filter": status_filter,
+                "sort_by": sort_by,
+                "by_status": {
+                    "in_progress": len(by_status.get('in_progress', [])),
+                    "archived": len(by_status.get('archived', []))
+                }
+            }
             
         except Exception as e:
             logger.error(f"Error listing plans: {e}")
-            error_response = {"error": f"Error listing plans: {str(e)}"}
-            return json.dumps(error_response) if output_format == 'json' else f"Error listing plans: {str(e)}"
+            return {
+                "error": f"Error listing plans: {str(e)}",
+                "plans": [],
+                "count": 0
+            }

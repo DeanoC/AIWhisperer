@@ -166,20 +166,28 @@ Requirements:
 Generate an updated JSON plan maintaining the same structure as the original.
 Ensure all changes follow TDD methodology."""
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute plan update from RFC."""
         plan_name = arguments.get('plan_name')
         force_update = arguments.get('force', False)
         preserve_progress = arguments.get('preserve_progress', True)
         
         if not plan_name:
-            return "Error: 'plan_name' is required."
+            return {
+                "error": "'plan_name' is required.",
+                "plan_name": None,
+                "updated": False
+            }
         
         try:
             # Find plan
             plan_dir = self._find_plan(plan_name)
             if not plan_dir:
-                return f"Error: Plan '{plan_name}' not found."
+                return {
+                    "error": f"Plan '{plan_name}' not found.",
+                    "plan_name": plan_name,
+                    "updated": False
+                }
             
             # Load current plan
             plan_file = plan_dir / "plan.json"
@@ -190,10 +198,20 @@ Ensure all changes follow TDD methodology."""
             has_changed, rfc_content, error = self._check_rfc_changes(plan_dir)
             
             if error:
-                return f"Error checking RFC: {error}"
+                return {
+                    "error": f"Error checking RFC: {error}",
+                    "plan_name": plan_name,
+                    "updated": False
+                }
             
             if not has_changed and not force_update:
-                return "Plan is already up to date with the RFC."
+                return {
+                    "message": "Plan is already up to date with the RFC.",
+                    "plan_name": plan_name,
+                    "updated": False,
+                    "rfc_changed": False,
+                    "force_update": force_update
+                }
             
             # Store task progress if preserving
             task_progress = {}
@@ -279,7 +297,12 @@ Ensure all changes follow TDD methodology."""
             # Validate updated plan
             valid, error = validate_against_schema(updated_plan, "rfc_plan_schema.json")
             if not valid:
-                return f"Error: Updated plan failed validation: {error}"
+                return {
+                    "error": f"Updated plan failed validation: {error}",
+                    "plan_name": plan_name,
+                    "updated": False,
+                    "validation_error": error
+                }
             
             # Save updated plan
             with open(plan_file, 'w', encoding='utf-8') as f:
@@ -313,24 +336,31 @@ Ensure all changes follow TDD methodology."""
             old_tasks = len(current_plan.get('tasks', []))
             new_tasks = len(updated_plan.get('tasks', []))
             
-            response = f"""Plan updated successfully!
-
-**Plan**: {plan_name}
-**RFC Status**: {"RFC has changed since last sync" if has_changed else "No RFC changes detected (forced update)"}
-**Task Changes**: {old_tasks} → {new_tasks} tasks
-
-Updates applied:
-- Plan regenerated from current RFC content
-- TDD structure maintained
-"""
-            
-            if preserve_progress and task_progress:
-                response += f"- Task progress preserved for {len(task_progress)} tasks\n"
-            
-            response += "\nUse 'read_plan' to review the updated plan."
-            
-            return response
+            return {
+                "updated": True,
+                "plan_name": plan_name,
+                "rfc_changed": has_changed,
+                "force_update": force_update,
+                "preserve_progress": preserve_progress,
+                "task_changes": {
+                    "old_count": old_tasks,
+                    "new_count": new_tasks,
+                    "difference": new_tasks - old_tasks
+                },
+                "progress_preserved": len(task_progress) if preserve_progress and task_progress else 0,
+                "timestamp": now,
+                "plan_location": str(plan_file),
+                "updates_applied": [
+                    "Plan regenerated from current RFC content",
+                    "TDD structure maintained",
+                    f"Task progress preserved for {len(task_progress)} tasks" if preserve_progress and task_progress else "No progress to preserve"
+                ]
+            }
             
         except Exception as e:
             logger.error(f"Error updating plan from RFC: {e}")
-            return f"Error updating plan: {str(e)}"
+            return {
+                "error": f"Error updating plan: {str(e)}",
+                "plan_name": plan_name,
+                "updated": False
+            }
