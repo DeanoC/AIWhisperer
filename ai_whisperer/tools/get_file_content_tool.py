@@ -101,7 +101,7 @@ class GetFileContentTool(AITool):
         </tool_code>
         """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the file content reading."""
         file_path_str = arguments.get('path')
         start_line = arguments.get('start_line')
@@ -109,7 +109,12 @@ class GetFileContentTool(AITool):
         preview_only = arguments.get('preview_only', False)
         
         if not file_path_str:
-            return "Error: 'path' argument is required."
+            return {
+                "error": "'path' argument is required.",
+                "path": None,
+                "content": None,
+                "lines": []
+            }
         
         path_manager = PathManager.get_instance()
         
@@ -128,11 +133,21 @@ class GetFileContentTool(AITool):
         
         # Check if file exists
         if not abs_file_path.exists():
-            return f"Error: File '{file_path_str}' does not exist."
+            return {
+                "error": f"File '{file_path_str}' does not exist.",
+                "path": file_path_str,
+                "content": None,
+                "lines": []
+            }
         
         # Check if it's a file
         if not abs_file_path.is_file():
-            return f"Error: Path '{file_path_str}' is not a file."
+            return {
+                "error": f"Path '{file_path_str}' is not a file.",
+                "path": file_path_str,
+                "content": None,
+                "lines": []
+            }
         
         try:
             # Get file metadata
@@ -140,7 +155,13 @@ class GetFileContentTool(AITool):
             
             # Check if file is likely binary
             if self._is_binary_file(abs_file_path):
-                return f"Error: File '{file_path_str}' appears to be a binary file. Use appropriate tools for binary files."
+                return {
+                    "error": f"File '{file_path_str}' appears to be a binary file. Use appropriate tools for binary files.",
+                    "path": file_path_str,
+                    "content": None,
+                    "lines": [],
+                    "is_binary": True
+                }
             
             # Read file content
             with open(abs_file_path, 'r', encoding='utf-8') as f:
@@ -151,25 +172,42 @@ class GetFileContentTool(AITool):
             # Handle preview mode
             if preview_only:
                 preview_lines = lines[:200]
-                content = self._format_lines_with_numbers(preview_lines, 1)
-                
-                # Add metadata
-                rel_path = os.path.relpath(abs_file_path, workspace_path)
-                metadata = [
-                    f"File: {rel_path}",
-                    f"Total lines: {total_lines}",
-                    f"File size: {self._format_size(file_size)}",
-                    f"Preview: First 200 lines" if total_lines > 200 else "Preview: Complete file",
-                    "-" * 50
+                formatted_lines = [
+                    {
+                        "line_number": i + 1,
+                        "content": line.rstrip('\n')
+                    }
+                    for i, line in enumerate(preview_lines)
                 ]
                 
-                return "\n".join(metadata) + "\n" + content
+                rel_path = os.path.relpath(abs_file_path, workspace_path)
+                
+                return {
+                    "path": file_path_str,
+                    "absolute_path": str(abs_file_path),
+                    "relative_path": rel_path,
+                    "exists": True,
+                    "size": file_size,
+                    "size_formatted": self._format_size(file_size),
+                    "total_lines": total_lines,
+                    "preview_mode": True,
+                    "preview_lines": len(preview_lines),
+                    "truncated": total_lines > 200,
+                    "content": ''.join(preview_lines),
+                    "lines": formatted_lines
+                }
             
             # Handle line range
             if start_line is not None or end_line is not None:
                 # Validate line numbers
                 if start_line is not None and start_line > total_lines:
-                    return f"Error: start_line ({start_line}) exceeds total lines ({total_lines})."
+                    return {
+                        "error": f"start_line ({start_line}) exceeds total lines ({total_lines}).",
+                        "path": file_path_str,
+                        "content": None,
+                        "lines": [],
+                        "total_lines": total_lines
+                    }
                 
                 if end_line is not None and end_line > total_lines:
                     end_line = total_lines
@@ -183,31 +221,87 @@ class GetFileContentTool(AITool):
                 end_idx = min(total_lines, end_idx)
                 
                 if start_idx >= end_idx:
-                    return f"Error: Invalid line range. start_line ({start_line}) must be less than end_line ({end_line})."
+                    return {
+                        "error": f"Invalid line range. start_line ({start_line}) must be less than end_line ({end_line}).",
+                        "path": file_path_str,
+                        "content": None,
+                        "lines": []
+                    }
                 
                 selected_lines = lines[start_idx:end_idx]
-                content = self._format_lines_with_numbers(selected_lines, start_idx + 1)
+                formatted_lines = [
+                    {
+                        "line_number": start_idx + i + 1,
+                        "content": line.rstrip('\n')
+                    }
+                    for i, line in enumerate(selected_lines)
+                ]
                 
-                # Add range info
                 rel_path = os.path.relpath(abs_file_path, workspace_path)
-                header = f"File: {rel_path} (lines {start_idx + 1}-{end_idx} of {total_lines})\n" + "-" * 50
                 
-                return header + "\n" + content
+                return {
+                    "path": file_path_str,
+                    "absolute_path": str(abs_file_path),
+                    "relative_path": rel_path,
+                    "exists": True,
+                    "size": file_size,
+                    "size_formatted": self._format_size(file_size),
+                    "total_lines": total_lines,
+                    "range": {
+                        "start": start_idx + 1,
+                        "end": end_idx,
+                        "lines_read": len(selected_lines)
+                    },
+                    "content": ''.join(selected_lines),
+                    "lines": formatted_lines
+                }
             
-            # Return full content with line numbers
-            content = self._format_lines_with_numbers(lines, 1)
+            # Return full content
+            formatted_lines = [
+                {
+                    "line_number": i + 1,
+                    "content": line.rstrip('\n')
+                }
+                for i, line in enumerate(lines)
+            ]
+            
             rel_path = os.path.relpath(abs_file_path, workspace_path)
-            header = f"File: {rel_path} ({total_lines} lines)\n" + "-" * 50
             
-            return header + "\n" + content
+            return {
+                "path": file_path_str,
+                "absolute_path": str(abs_file_path),
+                "relative_path": rel_path,
+                "exists": True,
+                "size": file_size,
+                "size_formatted": self._format_size(file_size),
+                "total_lines": total_lines,
+                "content": ''.join(lines),
+                "lines": formatted_lines
+            }
             
         except UnicodeDecodeError:
-            return f"Error: Unable to decode file '{file_path_str}'. The file may be binary or use a different encoding."
+            return {
+                "error": f"Unable to decode file '{file_path_str}'. The file may be binary or use a different encoding.",
+                "path": file_path_str,
+                "content": None,
+                "lines": [],
+                "is_binary": True
+            }
         except PermissionError:
-            return f"Error: Permission denied to read file '{file_path_str}'."
+            return {
+                "error": f"Permission denied to read file '{file_path_str}'.",
+                "path": file_path_str,
+                "content": None,
+                "lines": []
+            }
         except Exception as e:
             logger.error(f"Error reading file '{file_path_str}': {e}")
-            return f"Error reading file '{file_path_str}': {str(e)}"
+            return {
+                "error": f"Error reading file '{file_path_str}': {str(e)}",
+                "path": file_path_str,
+                "content": None,
+                "lines": []
+            }
     
     def _format_lines_with_numbers(self, lines: List[str], start_num: int) -> str:
         """Format lines with line numbers."""

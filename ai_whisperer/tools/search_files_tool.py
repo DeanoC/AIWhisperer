@@ -117,7 +117,7 @@ class SearchFilesTool(AITool):
         </tool_code>
         """
     
-    def execute(self, arguments: Dict[str, Any] = None, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
         """Execute the file search."""
         # Handle both arguments dict and kwargs patterns
         if arguments is None:
@@ -130,7 +130,12 @@ class SearchFilesTool(AITool):
         
         pattern = arguments.get('pattern')
         if not pattern:
-            return "Error: 'pattern' argument is required."
+            return {
+                "error": "'pattern' argument is required.",
+                "pattern": None,
+                "search_type": None,
+                "results": []
+            }
         
         search_type = arguments.get('search_type', 'name')
         file_types = arguments.get('file_types', [])
@@ -142,7 +147,12 @@ class SearchFilesTool(AITool):
         max_results = max(1, min(1000, max_results))
         
         if search_type not in ['name', 'content']:
-            return f"Error: Invalid search_type '{search_type}'. Must be 'name' or 'content'."
+            return {
+                "error": f"Invalid search_type '{search_type}'. Must be 'name' or 'content'.",
+                "pattern": pattern,
+                "search_type": search_type,
+                "results": []
+            }
         
         path_manager = PathManager.get_instance()
         
@@ -159,10 +169,22 @@ class SearchFilesTool(AITool):
             raise FileRestrictionError(f"Access denied. Search path '{search_path}' is outside the workspace directory.")
         
         if not base_path.exists():
-            return f"Error: Search path '{search_path}' does not exist."
+            return {
+                "error": f"Search path '{search_path}' does not exist.",
+                "pattern": pattern,
+                "search_type": search_type,
+                "search_path": search_path,
+                "results": []
+            }
         
         if not base_path.is_dir():
-            return f"Error: Search path '{search_path}' is not a directory."
+            return {
+                "error": f"Search path '{search_path}' is not a directory.",
+                "pattern": pattern,
+                "search_type": search_type,
+                "search_path": search_path,
+                "results": []
+            }
         
         try:
             if search_type == 'name':
@@ -170,26 +192,40 @@ class SearchFilesTool(AITool):
             else:
                 results = self._search_by_content(base_path, pattern, file_types, max_results, ignore_case)
             
-            if not results:
-                return f"No files found matching pattern '{pattern}'."
-            
-            # Format results
+            # Format results as structured data
             workspace_path = Path(path_manager.workspace_path)
             formatted_results = []
             
-            for i, file_path in enumerate(results, 1):
+            for file_path in results:
                 rel_path = os.path.relpath(file_path, workspace_path)
-                formatted_results.append(f"{i}. {rel_path}")
+                stat = file_path.stat()
+                formatted_results.append({
+                    "path": rel_path,
+                    "absolute_path": str(file_path),
+                    "size": stat.st_size,
+                    "type": "file"
+                })
             
-            header = f"Found {len(results)} file(s) matching '{pattern}':"
-            if len(results) == max_results:
-                header += f" (showing first {max_results})"
-            
-            return header + "\n" + "\n".join(formatted_results)
+            return {
+                "pattern": pattern,
+                "search_type": search_type,
+                "search_path": search_path,
+                "file_types": file_types,
+                "ignore_case": ignore_case,
+                "total_matches": len(results),
+                "max_results": max_results,
+                "truncated": len(results) == max_results,
+                "results": formatted_results
+            }
             
         except Exception as e:
             logger.error(f"Error searching files: {e}")
-            return f"Error searching files: {str(e)}"
+            return {
+                "error": f"Error searching files: {str(e)}",
+                "pattern": pattern,
+                "search_type": search_type,
+                "results": []
+            }
     
     def _search_by_name(self, base_path: Path, pattern: str, file_types: List[str], 
                        max_results: int, ignore_case: bool) -> List[Path]:
