@@ -100,8 +100,17 @@ class ListDirectoryTool(AITool):
         </tool_code>
         """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any] = None, **kwargs) -> str:
         """Execute the directory listing."""
+        # Handle both arguments dict and kwargs patterns
+        if arguments is None:
+            arguments = {}
+        
+        # Merge kwargs into arguments, excluding agent context params
+        for key, value in kwargs.items():
+            if not key.startswith("_"):  # Skip agent context params
+                arguments[key] = value
+        
         path = arguments.get('path', '.')
         recursive = arguments.get('recursive', False)
         max_depth = arguments.get('max_depth', 3)

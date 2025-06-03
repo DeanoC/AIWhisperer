@@ -28,7 +28,7 @@ import logging
 from typing import Dict, Any, List
 
 from ai_whisperer.tools.base_tool import AITool
-from ..agents.external_adapters import AdapterRegistry
+from ..extensions.agents.external_adapters import AdapterRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ A JSON object containing:
 - installation_links: Links to install missing agents (if any)
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
         """Execute the validate external agent tool."""
         agents_param = arguments.get("agents", "all")
         

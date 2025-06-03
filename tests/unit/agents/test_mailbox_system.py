@@ -22,10 +22,10 @@ class TestMailboxSystem:
         """Test sending and checking mail."""
         mailbox = get_mailbox()
         
-        # Send mail from agent_p to agent_e
+        # Send mail from patricia to eamonn
         mail = Mail(
-            from_agent="agent_p",
-            to_agent="agent_e",
+            from_agent="patricia",
+            to_agent="eamonn",
             subject="Task clarification",
             body="Please use JWT authentication"
         )
@@ -33,18 +33,18 @@ class TestMailboxSystem:
         message_id = mailbox.send_mail(mail)
         assert message_id == mail.message_id
         
-        # Check agent_e has unread mail
-        assert mailbox.has_unread_mail("agent_e")
-        assert mailbox.get_unread_count("agent_e") == 1
+        # Check eamonn has unread mail
+        assert mailbox.has_unread_mail("eamonn")
+        assert mailbox.get_unread_count("eamonn") == 1
         
         # Check mail
-        unread = mailbox.check_mail("agent_e")
+        unread = mailbox.check_mail("eamonn")
         assert len(unread) == 1
         assert unread[0].subject == "Task clarification"
         assert unread[0].status == MessageStatus.READ
         
         # No more unread
-        assert not mailbox.has_unread_mail("agent_e")
+        assert not mailbox.has_unread_mail("eamonn")
     
     def test_reply_to_mail(self):
         """Test replying to messages."""
@@ -52,8 +52,8 @@ class TestMailboxSystem:
         
         # Original message
         original = Mail(
-            from_agent="agent_e",
-            to_agent="agent_p",
+            from_agent="eamonn",
+            to_agent="patricia",
             subject="Need help",
             body="What authentication method?"
         )
@@ -61,8 +61,8 @@ class TestMailboxSystem:
         
         # Reply
         reply = Mail(
-            from_agent="agent_p",
-            to_agent="agent_e",
+            from_agent="patricia",
+            to_agent="eamonn",
             subject="Re: Need help",
             body="Use OAuth2"
         )
@@ -83,7 +83,7 @@ class TestMailboxSystem:
         # Send urgent message
         urgent = Mail(
             from_agent="user",
-            to_agent="agent_p",
+            to_agent="patricia",
             subject="URGENT: System down",
             body="Production is down!",
             priority=MessagePriority.URGENT
@@ -91,7 +91,7 @@ class TestMailboxSystem:
         
         mailbox.send_mail(urgent)
         
-        messages = mailbox.check_mail("agent_p")
+        messages = mailbox.check_mail("patricia")
         assert len(messages) == 1
         assert messages[0].priority == MessagePriority.URGENT
     
@@ -101,7 +101,7 @@ class TestMailboxSystem:
         
         # Agent to user
         mail = Mail(
-            from_agent="agent_e",
+            from_agent="eamonn",
             to_agent="",  # Empty means user
             subject="Task completed",
             body="Authentication implemented"
@@ -113,7 +113,7 @@ class TestMailboxSystem:
         assert mailbox.has_unread_mail("")  # Empty string for user
         user_mail = mailbox.check_mail("")
         assert len(user_mail) == 1
-        assert user_mail[0].from_agent == "agent_e"
+        assert user_mail[0].from_agent == "eamonn"
     
     def test_notification_handler(self):
         """Test notification callbacks."""
@@ -126,12 +126,12 @@ class TestMailboxSystem:
             notifications.append(mail)
         
         # Register handler
-        mailbox.register_notification_handler("agent_p", handler)
+        mailbox.register_notification_handler("patricia", handler)
         
         # Send mail
         mail = Mail(
-            from_agent="agent_e",
-            to_agent="agent_p",
+            from_agent="eamonn",
+            to_agent="patricia",
             subject="Test",
             body="Test notification"
         )
@@ -148,23 +148,23 @@ class TestMailboxSystem:
         
         # Send and read mail
         mail = Mail(
-            from_agent="agent_p",
-            to_agent="agent_e",
+            from_agent="patricia",
+            to_agent="eamonn",
             subject="Old task",
             body="Completed"
         )
         message_id = mailbox.send_mail(mail)
-        mailbox.check_mail("agent_e")  # Mark as read
+        mailbox.check_mail("eamonn")  # Mark as read
         
         # Archive it
         success = mailbox.archive_mail(message_id)
         assert success
         
         # Not in regular mail
-        regular = mailbox.get_all_mail("agent_e", include_archived=False)
+        regular = mailbox.get_all_mail("eamonn", include_archived=False)
         assert len(regular) == 0
         
         # But available with include_archived
-        all_mail = mailbox.get_all_mail("agent_e", include_archived=True)
+        all_mail = mailbox.get_all_mail("eamonn", include_archived=True)
         assert len(all_mail) == 1
         assert all_mail[0].status == MessageStatus.ARCHIVED

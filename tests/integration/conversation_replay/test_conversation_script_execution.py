@@ -55,8 +55,8 @@ class TestConversationScriptIntegration:
     
     @pytest.fixture
     def command_tool(self, tool_registry):
-        """Create BatchCommandTool with registry"""
-        tool = BatchCommandTool()
+        """Create ConversationCommandTool with registry"""
+        tool = ConversationCommandTool()
         tool.set_tool_registry(tool_registry)
         return tool
     

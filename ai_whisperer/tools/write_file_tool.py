@@ -71,7 +71,7 @@ class WriteFileTool(AITool):
     def tags(self) -> List[str]:
         return ["filesystem", "file_write"]
 
-    def execute(self, path: str, content: str, line_count: int = None) -> Dict[str, Any]:
+    def execute(self, path: str, content: str, line_count: int = None, **kwargs) -> Dict[str, Any]:
         """
         Writes the provided content to the specified file path.
 
@@ -83,6 +83,10 @@ class WriteFileTool(AITool):
         Returns:
             A dictionary indicating success or failure, including the resolved file path on success.
         """
+        # Filter out agent context parameters
+        agent_params = {k: v for k, v in kwargs.items() if k.startswith('_')}
+        if agent_params:
+            logger.debug(f"Agent context: {agent_params}")
 
         if not path:
             return {"status": "error", "message": "'path' argument is missing."}

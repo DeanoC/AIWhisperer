@@ -29,8 +29,8 @@ class TestConversationReplayPerformance:
     
     @pytest.fixture
     def command_tool(self):
-        """Create BatchCommandTool with mock registry"""
-        tool = BatchCommandTool()
+        """Create ConversationCommandTool with mock registry"""
+        tool = ConversationCommandTool()
         
         # Create mock registry
         registry = Mock(spec=ToolRegistry)

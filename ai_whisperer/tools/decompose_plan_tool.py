@@ -28,8 +28,8 @@ from typing import Any, Dict, List
 import json
 import logging
 from ai_whisperer.tools.base_tool import AITool
-from ..agents.task_decomposer import TaskDecomposer
-from ..agents.agent_e_exceptions import (
+from ..extensions.agents.task_decomposer import TaskDecomposer
+from ..extensions.agents.agent_e_exceptions import (
     InvalidPlanError,
     TaskDecompositionError
 )
@@ -89,7 +89,7 @@ A JSON object containing:
 - tasks: Array of decomposed tasks with dependencies and metadata
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
         """Execute the decompose plan tool."""
         plan_content = arguments.get("plan_content")
         max_depth = arguments.get("max_depth", 3)

@@ -110,6 +110,81 @@ class MailboxSystem:
         self._archive: List[Mail] = []
         # Notification callbacks
         self._notification_handlers: Dict[str, Any] = {}
+        
+        # Agent alias mapping - maps various names to canonical agent names
+        self._agent_aliases = {
+            # Alice aliases
+            'a': 'alice',
+            'alice': 'alice',
+            'alice the ai assistant': 'alice',
+            'assistant': 'alice',
+            'agent a': 'alice',
+            
+            # Patricia aliases
+            'p': 'patricia',
+            'patricia': 'patricia',
+            'patricia the planner': 'patricia',
+            'planner': 'patricia',
+            'agent p': 'patricia',
+            
+            # Tessa aliases
+            't': 'tessa',
+            'tessa': 'tessa',
+            'tessa the tester': 'tessa',
+            'tester': 'tessa',
+            'agent t': 'tessa',
+            
+            # Debbie aliases
+            'd': 'debbie',
+            'debbie': 'debbie',
+            'debbie the debugger': 'debbie',
+            'debugger': 'debbie',
+            'agent d': 'debbie',
+            
+            # Eamonn aliases
+            'e': 'eamonn',
+            'eamonn': 'eamonn',
+            'eamonn the executioner': 'eamonn',
+            'executioner': 'eamonn',
+            'agent e': 'eamonn',
+            
+            # User aliases
+            'user': 'user',
+            'human': 'user',
+            'me': 'user',
+            '': 'user',  # Empty string defaults to user
+        }
+    
+    def _resolve_agent_name(self, name: str) -> str:
+        """Resolve agent name aliases to canonical names.
+        
+        Args:
+            name: Agent name or alias
+            
+        Returns:
+            Canonical agent name
+            
+        Raises:
+            ValueError: If the agent name cannot be resolved
+        """
+        if not name:
+            return 'user'  # Empty means user - this is intentional
+            
+        # Convert to lowercase for matching
+        name_lower = name.lower().strip()
+        
+        # Try direct lookup
+        if name_lower in self._agent_aliases:
+            return self._agent_aliases[name_lower]
+        
+        # Try without "agent " prefix
+        if name_lower.startswith('agent '):
+            without_prefix = name_lower[6:]
+            if without_prefix in self._agent_aliases:
+                return self._agent_aliases[without_prefix]
+        
+        # If no match found, raise an error instead of using unknown name
+        raise ValueError(f"Unknown recipient: '{name}'. Valid recipients are: alice, patricia, tessa, debbie, eamonn, user")
     
     def send_mail(self, mail: Mail) -> str:
         """Send a mail message.
@@ -119,9 +194,21 @@ class MailboxSystem:
             
         Returns:
             Message ID
+            
+        Raises:
+            ValueError: If recipient cannot be resolved
         """
+        # Resolve recipient alias to canonical name
+        try:
+            recipient = self._resolve_agent_name(mail.to_agent or "user")
+        except ValueError as e:
+            logger.error(f"Failed to send mail: {e}")
+            raise
+        
+        # Update the mail object with canonical name
+        mail.to_agent = recipient if recipient != "user" else ""
+        
         # Add to recipient's inbox
-        recipient = mail.to_agent or "user"
         self._inboxes[recipient].append(mail)
         
         # Update unread count
@@ -146,8 +233,17 @@ class MailboxSystem:
             
         Returns:
             List of unread messages
+            
+        Raises:
+            ValueError: If agent name cannot be resolved
         """
-        recipient = agent_name or "user"
+        # Resolve agent alias to canonical name
+        try:
+            recipient = self._resolve_agent_name(agent_name or "user")
+        except ValueError as e:
+            logger.error(f"Failed to check mail: {e}")
+            raise
+            
         inbox = self._inboxes[recipient]
         
         # Get unread messages
@@ -175,7 +271,7 @@ class MailboxSystem:
         Returns:
             List of mail messages
         """
-        recipient = agent_name or "user"
+        recipient = self._resolve_agent_name(agent_name or "user")
         inbox = self._inboxes[recipient]
         
         result = []
@@ -197,7 +293,7 @@ class MailboxSystem:
         Returns:
             True if there are unread messages
         """
-        recipient = agent_name or "user"
+        recipient = self._resolve_agent_name(agent_name or "user")
         return self._unread_counts[recipient] > 0
     
     def get_unread_count(self, agent_name: str = "") -> int:
@@ -209,7 +305,7 @@ class MailboxSystem:
         Returns:
             Number of unread messages
         """
-        recipient = agent_name or "user"
+        recipient = self._resolve_agent_name(agent_name or "user")
         return self._unread_counts[recipient]
     
     def reply_to_mail(self, original_message_id: str, reply: Mail) -> str:
@@ -259,7 +355,7 @@ class MailboxSystem:
             agent_name: Name of agent (empty for user)
             handler: Callback function that takes a Mail object
         """
-        recipient = agent_name or "user"
+        recipient = self._resolve_agent_name(agent_name or "user")
         self._notification_handlers[recipient] = handler
     
     def get_conversation_thread(self, message_id: str) -> List[Mail]:

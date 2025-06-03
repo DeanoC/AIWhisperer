@@ -3,7 +3,10 @@ Model capabilities configuration for AIWhisperer.
 Defines which models support multi-tool calling and other advanced features.
 """
 
+import logging
 from typing import Dict, Any
+
+logger = logging.getLogger(__name__)
 
 # Model capability definitions
 MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
@@ -133,9 +136,15 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "structured_output": False
     },
     "google/gemini-2.5-flash-preview": {
-        "multi_tool": False,  # Based on observed behavior
-        "parallel_tools": False,
-        "max_tools_per_turn": 1,
+        "multi_tool": True,  # Gemini 2.5 supports multiple tools per turn
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
+        "structured_output": False
+    },
+    "google/gemini-2.5-flash-preview-05-20:thinking": {
+        "multi_tool": True,  # Gemini 2.5 supports multiple tools per turn
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
         "structured_output": False
     },
     
@@ -188,6 +197,12 @@ def get_model_capabilities(model_name: str) -> Dict[str, Any]:
     for model_prefix, capabilities in MODEL_CAPABILITIES.items():
         if model_prefix != "default" and model_name.startswith(model_prefix):
             return capabilities
+    
+    # Log warning when using default capabilities
+    logger.warning(
+        f"Model '{model_name}' not found in MODEL_CAPABILITIES configuration. "
+        f"Using default single-tool capabilities. Consider adding this model to the configuration."
+    )
     
     # Return default capabilities
     return MODEL_CAPABILITIES["default"]

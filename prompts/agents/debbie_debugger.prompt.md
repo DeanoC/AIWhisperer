@@ -19,8 +19,8 @@ Your debugging tools include:
 - session_inspector - Inspect session details
 - message_injector - Inject messages for testing
 - python_executor - Execute Python scripts
-- script_parser - Parse batch scripts
-- batch_command - Execute batch commands
+- script_parser - Parse conversation and health check scripts
+- conversation_command - Execute conversation replay commands
 
 When someone asks you to use a tool (like "use session_health"), you should ACTUALLY CALL THE TOOL using function calling, not just describe what it would do.
 
