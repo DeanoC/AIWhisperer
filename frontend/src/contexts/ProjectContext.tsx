@@ -16,6 +16,8 @@ interface ProjectContextType {
   
   // Actions
   connectWorkspace: (name: string, path: string, description?: string, outputPath?: string) => Promise<void>;
+  joinProject: (path: string) => Promise<void>;
+  createNewProject: (name: string, parentPath: string, template: string, description?: string, gitInit?: boolean) => Promise<void>;
   activateProject: (projectId: string) => Promise<void>;
   updateProject: (projectId: string, updates: any) => Promise<void>;
   deleteProject: (projectId: string, deleteFiles?: boolean) => Promise<void>;
@@ -126,6 +128,46 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     }
   }, [refreshProjects]);
 
+  const joinProject = useCallback(async (path: string) => {
+    try {
+      setError(null);
+      const response = await projectService.joinProject({ path });
+      setActiveProject(response.project);
+      await refreshProjects();
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('workspace-changed', { 
+        detail: { workspace: response.project } 
+      }));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  }, [refreshProjects]);
+
+  const createNewProject = useCallback(async (name: string, parentPath: string, template: string, description?: string, gitInit: boolean = false) => {
+    try {
+      setError(null);
+      const response = await projectService.createNewProject({ 
+        name, 
+        path: parentPath, 
+        template, 
+        description,
+        git_init: gitInit
+      });
+      setActiveProject(response.project);
+      await refreshProjects();
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('workspace-changed', { 
+        detail: { workspace: response.project } 
+      }));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  }, [refreshProjects]);
+
   const activateProject = useCallback(async (projectId: string) => {
     try {
       setError(null);
@@ -205,6 +247,8 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     isLoading,
     error,
     connectWorkspace,
+    joinProject,
+    createNewProject,
     activateProject,
     updateProject,
     deleteProject,

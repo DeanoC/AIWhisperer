@@ -360,6 +360,40 @@ form {
   line-height: 1.4;
 }
 
+/* Existing project notice */
+.existing-project-notice {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.notice-icon {
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+.notice-content {
+  flex: 1;
+}
+
+.notice-content strong {
+  display: block;
+  color: #1976d2;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.notice-content p {
+  margin: 0;
+  color: #1565c0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .dialog-actions button[type="submit"] {
   background: #007acc;
   color: white;

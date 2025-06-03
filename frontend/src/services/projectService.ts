@@ -160,6 +160,39 @@ class ProjectService {
       throw new Error(error.message || 'Failed to get project templates');
     }
   }
+
+  async checkForExistingWhisper(path: string): Promise<{ hasWhisper: boolean; projectName?: string }> {
+    try {
+      // We can use the file service to check if .WHISPER exists
+      const result = await this.ensureJsonRpc().sendRequest('file.list_directory', {
+        path: path,
+        include_hidden: true
+      });
+      
+      const files = result.files || [];
+      const whisperFolder = files.find((file: any) => file.name === '.WHISPER' && file.is_directory);
+      
+      if (whisperFolder) {
+        // Try to read project.json to get the project name
+        try {
+          const projectJsonResult = await this.ensureJsonRpc().sendRequest('file.get_content', {
+            path: `${path}/.WHISPER/project.json`
+          });
+          
+          const projectData = JSON.parse(projectJsonResult.content);
+          return { hasWhisper: true, projectName: projectData.name };
+        } catch {
+          // If we can't read project.json, just return that whisper exists
+          return { hasWhisper: true };
+        }
+      }
+      
+      return { hasWhisper: false };
+    } catch (error: any) {
+      // If we can't check the directory, assume no whisper folder
+      return { hasWhisper: false };
+    }
+  }
 }
 
 const projectService = new ProjectService();
