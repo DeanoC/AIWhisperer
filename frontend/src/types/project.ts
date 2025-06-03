@@ -27,6 +27,24 @@ export interface ProjectCreate {
   description?: string;
 }
 
+export interface ProjectJoin {
+  path: string;
+}
+
+export interface ProjectCreateNew {
+  name: string;
+  path: string;
+  template: string;
+  description?: string;
+  git_init: boolean;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export interface ProjectUpdate {
   name?: string;
   outputPath?: string;

@@ -5,6 +5,9 @@
 import {
   Project,
   ProjectCreate,
+  ProjectJoin,
+  ProjectCreateNew,
+  ProjectTemplate,
   ProjectUpdate,
   ProjectResponse,
   ProjectSummary,
@@ -128,6 +131,33 @@ class ProjectService {
       return result.settings;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to update UI settings');
+    }
+  }
+
+  async joinProject(data: ProjectJoin): Promise<ProjectResponse> {
+    try {
+      const result = await this.ensureJsonRpc().sendRequest('project.join', data);
+      return result;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to join project');
+    }
+  }
+
+  async createNewProject(data: ProjectCreateNew): Promise<ProjectResponse> {
+    try {
+      const result = await this.ensureJsonRpc().sendRequest('project.create_new', data);
+      return result;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to create new project');
+    }
+  }
+
+  async getProjectTemplates(): Promise<ProjectTemplate[]> {
+    try {
+      const result = await this.ensureJsonRpc().sendRequest('project.templates', {});
+      return result.templates;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get project templates');
     }
   }
 }
