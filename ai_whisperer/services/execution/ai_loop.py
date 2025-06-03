@@ -43,16 +43,18 @@ class StatelessAILoop:
     maintaining session state or using delegates.
     """
     
-    def __init__(self, config: AIConfig, ai_service: AIService):
+    def __init__(self, config: AIConfig, ai_service: AIService, agent_context: Optional[Dict[str, Any]] = None):
         """
         Initialize the stateless AI loop.
         
         Args:
             config: AI configuration settings
             ai_service: The AI service instance for chat completions
+            agent_context: Optional context about the current agent
         """
         self.config = config
         self.ai_service = ai_service
+        self.agent_context = agent_context or {}
     
     async def process_with_context(
         self,
@@ -552,23 +554,36 @@ class StatelessAILoop:
                 start_time = asyncio.get_event_loop().time()
                 logger.info(f"   🔄 Starting execution...")
                 
+                # Add agent context to tool args if available
+                if self.agent_context:
+                    # Create a copy of tool_args to avoid modifying the original
+                    enriched_args = tool_args.copy()
+                    # Add agent context parameters
+                    if 'agent_id' in self.agent_context:
+                        enriched_args['_agent_id'] = self.agent_context['agent_id']
+                    if 'agent_name' in self.agent_context:
+                        enriched_args['_agent_name'] = self.agent_context['agent_name']
+                        enriched_args['_from_agent'] = self.agent_context['agent_name']
+                else:
+                    enriched_args = tool_args
+                
                 # Check if execute method is async
                 if asyncio.iscoroutinefunction(tool_instance.execute):
                     # Try different calling conventions
                     try:
                         # First try the newer 'arguments' pattern (RFC tools, read_file_tool)
-                        tool_result = await tool_instance.execute(arguments=tool_args)
+                        tool_result = await tool_instance.execute(arguments=enriched_args)
                     except TypeError:
                         # Fallback to **kwargs pattern (base_tool, execute_command_tool, write_file_tool)
-                        tool_result = await tool_instance.execute(**tool_args)
+                        tool_result = await tool_instance.execute(**enriched_args)
                 else:
                     # Try different calling conventions
                     try:
                         # First try the newer 'arguments' pattern (RFC tools, read_file_tool)
-                        tool_result = tool_instance.execute(arguments=tool_args)
+                        tool_result = tool_instance.execute(arguments=enriched_args)
                     except TypeError:
                         # Fallback to **kwargs pattern (base_tool, execute_command_tool, write_file_tool)
-                        tool_result = tool_instance.execute(**tool_args)
+                        tool_result = tool_instance.execute(**enriched_args)
                 
                 execution_time = asyncio.get_event_loop().time() - start_time
                 logger.info(f"   ✅ Tool {tool_name} completed in {execution_time:.3f}s")

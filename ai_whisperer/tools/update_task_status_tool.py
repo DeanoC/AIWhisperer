@@ -28,7 +28,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
 from ai_whisperer.tools.base_tool import AITool
-from ..agents.decomposed_task import TaskStatus
+from ..extensions.agents.decomposed_task import TaskStatus
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ A JSON object containing:
 - next_steps: Suggested next actions
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
         """Execute the update task status tool."""
         task_id = arguments.get("task_id")
         status_str = arguments.get("status")

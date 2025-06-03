@@ -237,3 +237,31 @@ specialized_sets:
       - external_agents
       - integration
       - validation
+  
+  # General assistant tools for Alice
+  general_assistant:
+    description: "General purpose assistant tools for problem solving"
+    inherits:
+      - readonly_filesystem
+      - code_execution
+    tools:
+      - analyze_languages
+      - get_project_structure
+      - find_similar_code
+      - workspace_stats
+      - web_search
+      - fetch_url
+    tags:
+      - assistant
+      - analysis
+      - research
+      - general_purpose
+  
+  # Agent switching tools
+  agent_switching:
+    description: "Tools for switching between different AI agents"
+    tools: []  # These tools need to be implemented
+    tags:
+      - agent_switching
+      - navigation
+      - multi_agent

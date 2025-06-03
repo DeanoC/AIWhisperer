@@ -28,8 +28,8 @@ from typing import Any, Dict, List
 import json
 import logging
 from ai_whisperer.tools.base_tool import AITool
-from ..agents.task_decomposer import TaskDecomposer
-from ..agents.agent_e_exceptions import DependencyCycleError
+from ..extensions.agents.task_decomposer import TaskDecomposer
+from ..extensions.agents.agent_e_exceptions import DependencyCycleError
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ A JSON object containing:
 - recommendations: Suggestions for optimization
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
         """Execute the analyze dependencies tool."""
         tasks_json = arguments.get("tasks")
         

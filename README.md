@@ -2,7 +2,7 @@
 
 [![Python application](https://github.com/DeanoC/AIWhisperer/actions/workflows/python-app.yml/badge.svg)](https://github.com/DeanoC/AIWhisperer/actions/workflows/python-app.yml)
 
-AI Whisperer is a Python-based AI development assistant that transforms project requirements into structured task definitions. It features both command-line and interactive web interfaces for AI-powered software development workflows.
+AI Whisperer is a AI development tool that takes requirements and implements them. It features both command-line and interactive web interfaces for AI-powered software development workflows.
 
 ## Key Features
 
@@ -97,9 +97,3 @@ AI Whisperer uses a modern, stateless architecture:
 For detailed architecture information, see [CODE_MAP.md](CODE_MAP.md) and [docs/architecture/](docs/architecture/).
 
 ## Project Development
-
-AI Whisperer is a "dogfooding" tool - it develops itself through its own system. New features go through the RFC → Plan → Implementation cycle, providing both improvements and validation of the development process.
-
-## License
-
-See [LICENSE](LICENSE) file for details.

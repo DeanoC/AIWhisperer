@@ -73,7 +73,16 @@ class ReadFileTool(AITool):
         Ensure the file path is within the workspace directory.
         """
 
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any] = None, **kwargs) -> str:
+        # Handle both arguments dict and kwargs patterns
+        if arguments is None:
+            arguments = {}
+        
+        # Merge kwargs into arguments, excluding agent context params
+        for key, value in kwargs.items():
+            if not key.startswith("_"):  # Skip agent context params
+                arguments[key] = value
+        
         file_path_str = arguments.get('path')
         start_line = arguments.get('start_line')
         end_line = arguments.get('end_line')

@@ -78,11 +78,15 @@ class ExecuteCommandTool(AITool):
         Returns: A dictionary with 'stdout', 'stderr', and 'returncode'.
         """
 
-    def execute(self, command: str, cwd: str = ".", shutdown_event: Optional[threading.Event] = None) -> Dict[str, Any]:
+    def execute(self, command: str, cwd: str = ".", shutdown_event: Optional[threading.Event] = None, **kwargs) -> Dict[str, Any]:
         """
         Executes a shell command and returns the output, error, and return code.
         Checks for shutdown_event during execution.
         """
+        # Filter out agent context parameters
+        agent_params = {k: v for k, v in kwargs.items() if k.startswith('_')}
+        if agent_params:
+            logger.debug(f"Agent context: {agent_params}")
         logger.info(f"Executing command: {command} in directory: {cwd}")
         process = None
         stdout_output = ""

@@ -21,121 +21,135 @@ Related:
 """
 
 import json
-from ai_whisperer.tools.base_tool import BaseTool, ToolResult, ToolDefinition, ParameterDefinition
+from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.extensions.mailbox.mailbox import Mail, MessagePriority, get_mailbox
 
-class SendMailTool(BaseTool):
+class SendMailTool(AITool):
     """Tool for sending mail messages to agents or users."""
     
-    def get_definition(self) -> ToolDefinition:
-        """Get the tool definition."""
-        return ToolDefinition(
-            name="send_mail",
-            description="Send a message to another agent or the user via the mailbox system",
-            parameters=[
-                ParameterDefinition(
-                    name="to_agent",
-                    description="Name of recipient agent (leave empty to send to user)",
-                    type="string",
-                    required=False
-                ),
-                ParameterDefinition(
-                    name="subject",
-                    description="Subject line of the message",
-                    type="string",
-                    required=True
-                ),
-                ParameterDefinition(
-                    name="body",
-                    description="Body content of the message",
-                    type="string",
-                    required=True
-                ),
-                ParameterDefinition(
-                    name="priority",
-                    description="Message priority: low, normal, high, urgent",
-                    type="string",
-                    required=False
-                ),
-                ParameterDefinition(
-                    name="reply_to",
-                    description="Message ID this is replying to (if applicable)",
-                    type="string",
-                    required=False
-                ),
-                ParameterDefinition(
-                    name="metadata",
-                    description="Additional metadata as JSON string",
-                    type="string",
-                    required=False
-                )
-            ]
-        )
+    @property
+    def name(self) -> str:
+        """Return the tool name."""
+        return "send_mail"
     
-    def execute(self, **kwargs) -> ToolResult:
-        """Execute the send mail tool."""
+    @property
+    def description(self) -> str:
+        """Return the tool description."""
+        return "Send a message to another agent or the user via the mailbox system"
+    
+    @property
+    def parameters_schema(self) -> dict:
+        """Return the parameters schema."""
+        return {
+            "type": "object",
+            "properties": {
+                "to_agent": {
+                    "type": "string",
+                    "description": "Name of recipient agent (leave empty to send to user)"
+                },
+                "subject": {
+                    "type": "string",
+                    "description": "Subject line of the message"
+                },
+                "body": {
+                    "type": "string",
+                    "description": "Body content of the message"
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": ["low", "normal", "high", "urgent"],
+                    "description": "Priority level of the message",
+                    "default": "normal"
+                }
+            },
+            "required": ["subject", "body"]
+        }
+    
+    @property
+    def category(self) -> str:
+        """Return the tool category."""
+        return "Communication"
+    
+    @property
+    def tags(self) -> list:
+        """Return the tool tags."""
+        return ["mailbox", "communication", "messaging"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        """Return instructions for the AI on how to use this tool."""
+        return """Use the send_mail tool to send messages to other agents or the user.
+        
+Parameters:
+- to_agent: Name of recipient agent (e.g., 'Patricia', 'Debbie'). Leave empty to send to user.
+- subject: Subject line of the message
+- body: Main content of the message
+- priority: Message priority (low/normal/high/urgent)
+
+Example usage:
+- To another agent: send_mail(to_agent="Patricia", subject="RFC Review Request", body="Please review the attached RFC...")
+- To the user: send_mail(subject="Task Complete", body="I have completed the requested task...")
+"""
+    
+    def execute(self, **kwargs) -> str:
+        """Execute the tool to send mail."""
+        # Debug: Check if we're getting 'arguments' instead of kwargs
+        if 'arguments' in kwargs and isinstance(kwargs['arguments'], dict):
+            # Tool is being called with arguments pattern
+            actual_args = kwargs['arguments']
+        else:
+            # Tool is being called with **kwargs pattern
+            actual_args = kwargs
+            
+        # Extract parameters from the correct source
+        to_agent = actual_args.get('to_agent', '').strip()
+        subject = actual_args.get('subject', '')
+        body = actual_args.get('body', '')
+        priority_str = actual_args.get('priority', 'normal').lower()
+        
+        # Validate required fields
+        if not subject:
+            return "Error: Subject is required for sending mail"
+        if not body:
+            return "Error: Body is required for sending mail"
+        
+        # Map priority string to enum
+        priority_map = {
+            'low': MessagePriority.LOW,
+            'normal': MessagePriority.NORMAL,
+            'high': MessagePriority.HIGH,
+            'urgent': MessagePriority.URGENT
+        }
+        priority = priority_map.get(priority_str, MessagePriority.NORMAL)
+        
+        # Get the mailbox instance
+        mailbox = get_mailbox()
+        
+        # Determine sender - in tool context, we'll use the current agent name if available
+        # Try different possible parameter names that might contain agent info
+        # Check both actual_args (for user params) and kwargs (for system params)
+        from_agent = (kwargs.get('_from_agent') or kwargs.get('_agent_name') or 
+                     kwargs.get('_agent_id') or actual_args.get('_from_agent') or 
+                     actual_args.get('_agent_name') or actual_args.get('_agent_id') or 'Unknown')
+        
+        # Create mail object
+        mail = Mail(
+            from_agent=from_agent,
+            to_agent=to_agent,  # Don't convert empty string to None
+            subject=subject,
+            body=body,
+            priority=priority
+        )
+        
         try:
-            # Get current agent name from context if available
-            from_agent = kwargs.get('_agent_name', 'unknown')
-            
-            # Parse priority
-            priority_str = kwargs.get('priority', 'normal').lower()
-            priority_map = {
-                'low': MessagePriority.LOW,
-                'normal': MessagePriority.NORMAL,
-                'high': MessagePriority.HIGH,
-                'urgent': MessagePriority.URGENT
-            }
-            priority = priority_map.get(priority_str, MessagePriority.NORMAL)
-            
-            # Parse metadata if provided
-            metadata = {}
-            if 'metadata' in kwargs:
-                try:
-                    metadata = json.loads(kwargs['metadata'])
-                except json.JSONDecodeError:
-                    return ToolResult(
-                        success=False,
-                        data={},
-                        error="Invalid JSON in metadata parameter"
-                    )
-            
-            # Create mail
-            mail = Mail(
-                from_agent=from_agent,
-                to_agent=kwargs.get('to_agent', ''),
-                subject=kwargs['subject'],
-                body=kwargs['body'],
-                priority=priority,
-                reply_to=kwargs.get('reply_to'),
-                metadata=metadata
-            )
-            
-            # Send via mailbox
-            mailbox = get_mailbox()
+            # Send the mail
             message_id = mailbox.send_mail(mail)
             
-            # Check if recipient has notification
-            recipient = mail.to_agent or "user"
-            notification = ""
-            if mailbox.has_unread_mail(mail.to_agent):
-                count = mailbox.get_unread_count(mail.to_agent)
-                notification = f"{recipient} has {count} unread message(s)"
-            
-            return ToolResult(
-                success=True,
-                data={
-                    'message_id': message_id,
-                    'to': recipient,
-                    'subject': mail.subject,
-                    'notification': notification
-                },
-                metadata={'priority': priority_str}
-            )
-            
-        except Exception as e:
-            return ToolResult(
-                success=False,
-                data={},
-                error=f"Failed to send mail: {str(e)}"
-            )
+            # Check if we should trigger agent switching (for agent-to-agent mail)
+            if to_agent:
+                # This is agent-to-agent communication
+                # Return a result that includes metadata for agent switching
+                return f"Mail sent successfully to {to_agent} (ID: {message_id}). The message has been delivered to their mailbox."
+            else:
+                return f"Mail sent successfully to user (ID: {message_id})"
+        except ValueError as e:
+            return f"Error sending mail: {str(e)}"

@@ -127,8 +127,8 @@ class SystemHealthCheckTool(AITool):
             if not all_checks:
                 return self._format_error(f"No health check scripts found for category: {check_category}")
             
-            # Run health checks using batch runner
-            results = await self._run_batch_health_checks(all_checks, timeout_per_check, verbose)
+            # Run health checks using conversation command runner
+            results = await self._run_health_checks(all_checks, timeout_per_check, verbose)
             
             # Generate report
             return self._generate_health_report(results, verbose)
@@ -231,40 +231,40 @@ class SystemHealthCheckTool(AITool):
         else:
             return 'custom'
     
-    async def _run_batch_health_checks(
+    async def _run_health_checks(
         self, 
         checks: List[Dict[str, Any]], 
         timeout: int,
         verbose: bool
     ) -> List[Dict[str, Any]]:
-        """Run all health check scripts using batch runner"""
+        """Run all health check scripts using conversation command runner"""
         results = []
         
-        # Get batch runner tools
+        # Get conversation command tools
         try:
             from ai_whisperer.tools.tool_registry import get_tool_registry
             registry = get_tool_registry()
             
-            batch_tool = registry.get_tool_by_name('batch_command')
+            conversation_tool = registry.get_tool_by_name('conversation_command')
             parser_tool = registry.get_tool_by_name('script_parser')
             
-            if not batch_tool or not parser_tool:
-                logger.error("Batch runner tools not available")
+            if not conversation_tool or not parser_tool:
+                logger.error("Conversation command tools not available")
                 return [{
-                    'name': 'batch_tools',
+                    'name': 'conversation_tools',
                     'category': 'system',
                     'status': 'error',
-                    'error': 'Batch runner tools not found',
+                    'error': 'Conversation command tools not found',
                     'duration': 0
                 }]
             
-            # Set the tool registry on the batch tool if it doesn't have it
-            if hasattr(batch_tool, 'tool_registry') and batch_tool.tool_registry is None:
-                batch_tool.tool_registry = registry
+            # Set the tool registry on the conversation tool if it doesn't have it
+            if hasattr(conversation_tool, 'tool_registry') and conversation_tool.tool_registry is None:
+                conversation_tool.tool_registry = registry
         except Exception as e:
-            logger.error(f"Failed to get batch tools: {e}")
+            logger.error(f"Failed to get conversation tools: {e}")
             return [{
-                'name': 'batch_tools',
+                'name': 'conversation_tools',
                 'category': 'system', 
                 'status': 'error',
                 'error': str(e),
@@ -298,7 +298,7 @@ class SystemHealthCheckTool(AITool):
                     continue
                     
                 # Run the parsed script
-                batch_result = batch_tool.execute(
+                conversation_result = conversation_tool.execute(
                     script=parsed_script,
                     dry_run=False,
                     stop_on_error=False,
@@ -306,18 +306,18 @@ class SystemHealthCheckTool(AITool):
                 )
                 
                 # Analyze results
-                result['output'] = str(batch_result)
+                result['output'] = str(conversation_result)
                 
                 # Check for success indicators
-                if isinstance(batch_result, dict):
-                    if batch_result.get('success', False):
+                if isinstance(conversation_result, dict):
+                    if conversation_result.get('success', False):
                         result['status'] = 'passed'
                     else:
                         result['status'] = 'failed'
-                        result['error'] = batch_result.get('error', 'Unknown error')
-                elif 'error' in str(batch_result).lower():
+                        result['error'] = conversation_result.get('error', 'Unknown error')
+                elif 'error' in str(conversation_result).lower():
                     result['status'] = 'failed'
-                    result['error'] = str(batch_result)
+                    result['error'] = str(conversation_result)
                 else:
                     # Assume success if no explicit error
                     result['status'] = 'passed'
