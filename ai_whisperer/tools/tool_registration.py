@@ -181,7 +181,7 @@ def _register_debugging_tools(tool_registry) -> None:
         from .workspace_validator_tool import WorkspaceValidatorTool
         from .python_executor_tool import PythonExecutorTool
         from .script_parser_tool import ScriptParserTool
-        from .batch_command_tool import BatchCommandTool
+        from .conversation_command_tool import ConversationCommandTool
         from .system_health_check_tool import SystemHealthCheckTool
         
         tool_registry.register_tool(SessionHealthTool())
@@ -192,7 +192,7 @@ def _register_debugging_tools(tool_registry) -> None:
         tool_registry.register_tool(WorkspaceValidatorTool())
         tool_registry.register_tool(PythonExecutorTool())
         tool_registry.register_tool(ScriptParserTool())
-        tool_registry.register_tool(BatchCommandTool(tool_registry))
+        tool_registry.register_tool(ConversationCommandTool(tool_registry))
         tool_registry.register_tool(SystemHealthCheckTool())
         
         logger.debug("Registered debugging tools")

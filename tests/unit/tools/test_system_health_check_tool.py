@@ -66,21 +66,33 @@ class TestSystemHealthCheckToolDirectoryFinding:
         
         # Mock Path to return mock path objects
         with patch('ai_whisperer.tools.system_health_check_tool.Path') as mock_path_class:
-            # Create a mock path instance that exists and is a directory
+            # Create unique resolved path mocks for existing directories
+            mock_resolved_path = Mock()
+            mock_resolved_path.exists.return_value = True
+            mock_resolved_path.is_dir.return_value = True
+            
+            # Create mock for existing path
             mock_path_instance = Mock()
             mock_path_instance.exists.return_value = True
             mock_path_instance.is_dir.return_value = True
+            mock_path_instance.resolve.return_value = mock_resolved_path
+            
+            # Create mock for non-existing path
+            mock_non_existent_resolved = Mock()
+            mock_non_existent_resolved.exists.return_value = False
+            mock_non_existent_resolved.is_dir.return_value = False
+            
+            mock_non_existent = Mock()
+            mock_non_existent.exists.return_value = False
+            mock_non_existent.is_dir.return_value = False
+            mock_non_existent.resolve.return_value = mock_non_existent_resolved
             
             # Mock Path constructor to return our mock instance for specific paths
             def path_constructor(path_str):
-                if "scripts/debbie/system_health_check" in str(path_str):
+                if "scripts/debbie/system_health_check" in str(path_str) and not "tests/" in str(path_str):
                     return mock_path_instance
                 else:
-                    # Return a non-existent path mock
-                    non_existent = Mock()
-                    non_existent.exists.return_value = False
-                    non_existent.is_dir.return_value = False
-                    return non_existent
+                    return mock_non_existent
             
             mock_path_class.side_effect = path_constructor
             
@@ -89,7 +101,7 @@ class TestSystemHealthCheckToolDirectoryFinding:
             dirs = tool._find_health_check_directories()
             
             assert isinstance(dirs, list)
-            assert len(dirs) == 1  # Should find the mocked directory
+            assert len(dirs) == 1  # Should find only the one mocked existing directory
     
     @patch('ai_whisperer.tools.system_health_check_tool.logger')
     def test_find_health_check_directories_with_logging(self, mock_logger):
@@ -283,25 +295,25 @@ class TestSystemHealthCheckToolScriptCollection:
         assert sorted_scripts[2]['name'] == 'z_test'
 
 
-class TestSystemHealthCheckToolBatchExecution:
-    """Test batch execution of health checks."""
+class TestSystemHealthCheckToolExecution:
+    """Test execution of health checks."""
     
     @pytest.mark.asyncio
-    async def test_run_batch_health_checks_tool_registry_error(self):
+    async def test_run_health_checks_tool_registry_error(self):
         """Test handling of tool registry errors."""
         tool = SystemHealthCheckTool()
         
         with patch('ai_whisperer.tools.tool_registry.get_tool_registry') as mock_registry:
             mock_registry.side_effect = Exception("Registry not available")
             
-            results = await tool._run_batch_health_checks([], 30, False)
+            results = await tool._run_health_checks([], 30, False)
             
             assert len(results) == 1
             assert results[0]['status'] == 'error'
             assert 'Registry not available' in results[0]['error']
     
     @pytest.mark.asyncio
-    async def test_run_batch_health_checks_missing_tools(self):
+    async def test_run_health_checks_missing_tools(self):
         """Test handling of missing batch tools."""
         tool = SystemHealthCheckTool()
         
@@ -310,27 +322,27 @@ class TestSystemHealthCheckToolBatchExecution:
             mock_reg.get_tool_by_name.return_value = None
             mock_registry.return_value = mock_reg
             
-            results = await tool._run_batch_health_checks([], 30, False)
+            results = await tool._run_health_checks([], 30, False)
             
             assert len(results) == 1
             assert results[0]['status'] == 'error'
             assert 'Batch runner tools not found' in results[0]['error']
     
     @pytest.mark.asyncio
-    async def test_run_batch_health_checks_successful_execution(self):
+    async def test_run_health_checks_successful_execution(self):
         """Test successful execution of health checks."""
         tool = SystemHealthCheckTool()
         
         # Mock successful tools
-        mock_batch_tool = AsyncMock()
+        mock_conversation_tool = AsyncMock()
         mock_parser_tool = AsyncMock()
-        mock_batch_tool.execute.return_value = {"success": True, "output": "Check passed"}
+        mock_conversation_tool.execute.return_value = {"success": True, "output": "Check passed"}
         mock_parser_tool.execute.return_value = "parsed_script_content"
         
         with patch('ai_whisperer.tools.tool_registry.get_tool_registry') as mock_registry:
             mock_reg = Mock()
             mock_reg.get_tool_by_name.side_effect = lambda name: {
-                'batch_command': mock_batch_tool,
+                'conversation_command': mock_conversation_tool,
                 'script_parser': mock_parser_tool
             }.get(name)
             mock_registry.return_value = mock_reg
@@ -342,7 +354,7 @@ class TestSystemHealthCheckToolBatchExecution:
                 'format': 'json'
             }]
             
-            results = await tool._run_batch_health_checks(checks, 30, False)
+            results = await tool._run_health_checks(checks, 30, False)
             
             assert len(results) == 1
             assert results[0]['status'] == 'passed'
@@ -350,75 +362,80 @@ class TestSystemHealthCheckToolBatchExecution:
             assert 'duration' in results[0]
     
     @pytest.mark.asyncio
-    async def test_run_batch_health_checks_parser_error(self):
+    async def test_run_health_checks_parser_error(self):
         """Test handling of parser errors."""
         tool = SystemHealthCheckTool()
         
-        mock_batch_tool = AsyncMock()
-        mock_parser_tool = AsyncMock()
-        mock_parser_tool.execute.return_value = "ERROR: Failed to parse script"
+        mock_conversation_tool = AsyncMock()
+        mock_parser_tool = Mock()
+        # Mock parse_script to raise an exception
+        mock_parser_tool.parse_script.side_effect = Exception("Failed to parse script")
         
         with patch('ai_whisperer.tools.tool_registry.get_tool_registry') as mock_registry:
             mock_reg = Mock()
             mock_reg.get_tool_by_name.side_effect = lambda name: {
-                'batch_command': mock_batch_tool,
+                'conversation_command': mock_conversation_tool,
                 'script_parser': mock_parser_tool
             }.get(name)
             mock_registry.return_value = mock_reg
             
             checks = [{'name': 'test', 'path': Path('test.json'), 'category': 'tools', 'format': 'json'}]
             
-            results = await tool._run_batch_health_checks(checks, 30, False)
+            results = await tool._run_health_checks(checks, 30, False)
             
+            assert len(results) == 1
             assert results[0]['status'] == 'error'
             assert 'Failed to parse script' in results[0]['error']
     
     @pytest.mark.asyncio
-    async def test_run_batch_health_checks_execution_timeout(self):
+    async def test_run_health_checks_execution_timeout(self):
         """Test handling of execution timeouts."""
         tool = SystemHealthCheckTool()
         
-        mock_batch_tool = AsyncMock()
-        mock_parser_tool = AsyncMock()
-        mock_parser_tool.execute.return_value = "parsed_content"
-        mock_batch_tool.execute.side_effect = asyncio.TimeoutError()
+        mock_conversation_tool = Mock()
+        mock_parser_tool = Mock()
+        # Mock parse_script to return a valid parsed script
+        mock_parsed_script = Mock()
+        mock_parser_tool.parse_script.return_value = mock_parsed_script
+        # Mock batch tool execute to timeout
+        mock_conversation_tool.execute.side_effect = asyncio.TimeoutError()
         
         with patch('ai_whisperer.tools.tool_registry.get_tool_registry') as mock_registry:
             mock_reg = Mock()
             mock_reg.get_tool_by_name.side_effect = lambda name: {
-                'batch_command': mock_batch_tool,
+                'conversation_command': mock_conversation_tool,
                 'script_parser': mock_parser_tool
             }.get(name)
             mock_registry.return_value = mock_reg
             
             checks = [{'name': 'timeout_test', 'path': Path('test.json'), 'category': 'tools', 'format': 'json'}]
             
-            results = await tool._run_batch_health_checks(checks, 5, False)
+            results = await tool._run_health_checks(checks, 5, False)
             
             assert results[0]['status'] == 'timeout'
             assert 'timed out after 5 seconds' in results[0]['error']
     
     @pytest.mark.asyncio
-    async def test_run_batch_health_checks_failed_execution(self):
+    async def test_run_health_checks_failed_execution(self):
         """Test handling of failed executions."""
         tool = SystemHealthCheckTool()
         
-        mock_batch_tool = AsyncMock()
+        mock_conversation_tool = AsyncMock()
         mock_parser_tool = AsyncMock()
         mock_parser_tool.execute.return_value = "parsed_content"
-        mock_batch_tool.execute.return_value = {"success": False, "error": "Test failed"}
+        mock_conversation_tool.execute.return_value = {"success": False, "error": "Test failed"}
         
         with patch('ai_whisperer.tools.tool_registry.get_tool_registry') as mock_registry:
             mock_reg = Mock()
             mock_reg.get_tool_by_name.side_effect = lambda name: {
-                'batch_command': mock_batch_tool,
+                'conversation_command': mock_conversation_tool,
                 'script_parser': mock_parser_tool
             }.get(name)
             mock_registry.return_value = mock_reg
             
             checks = [{'name': 'fail_test', 'path': Path('test.json'), 'category': 'tools', 'format': 'json'}]
             
-            results = await tool._run_batch_health_checks(checks, 30, False)
+            results = await tool._run_health_checks(checks, 30, False)
             
             assert results[0]['status'] == 'failed'
             assert results[0]['error'] == 'Test failed'
@@ -598,7 +615,7 @@ class TestSystemHealthCheckToolExecution:
         
         with patch.object(tool, '_find_health_check_directories', return_value=[mock_dir]):
             with patch.object(tool, '_collect_check_scripts', return_value=mock_checks):
-                with patch.object(tool, '_run_batch_health_checks', return_value=mock_results):
+                with patch.object(tool, '_run_health_checks', return_value=mock_results):
                     with patch.object(tool, '_generate_health_report', return_value="Health report"):
                         result = await tool.execute()
                         
@@ -684,7 +701,7 @@ class TestSystemHealthCheckToolIntegration:
         
         with patch.object(tool, '_find_health_check_directories', return_value=[mock_dir]):
             with patch.object(tool, '_collect_check_scripts', return_value=mock_checks):
-                with patch.object(tool, '_run_batch_health_checks', return_value=mock_results):
+                with patch.object(tool, '_run_health_checks', return_value=mock_results):
                     
                     result = await tool.execute(check_category="agents", verbose=True)
                     
@@ -709,7 +726,7 @@ class TestSystemHealthCheckToolIntegration:
         
         with patch.object(tool, '_find_health_check_directories', return_value=[Mock()]):
             with patch.object(tool, '_collect_check_scripts', return_value=[Mock() for _ in range(4)]):
-                with patch.object(tool, '_run_batch_health_checks', return_value=mock_results):
+                with patch.object(tool, '_run_health_checks', return_value=mock_results):
                     
                     result = await tool.execute()
                     
