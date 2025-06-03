@@ -1,7 +1,7 @@
 // Node.js script to test backend WebSocket JSON-RPC session and message flow
 const WebSocket = require('ws');
 
-const WS_URL = 'ws://127.0.0.1:8000/ws';
+const WS_URL = 'ws://127.0.0.1:8001/ws';
 const ws = new WebSocket(WS_URL);
 
 let sessionId = null;

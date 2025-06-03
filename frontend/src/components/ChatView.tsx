@@ -44,6 +44,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
   currentAIMessage = '',
   loading = false
 }) => {
+  console.log('[ChatView] Rendering with props:', {
+    messagesLength: messages?.length,
+    firstMessage: messages?.[0],
+    currentAgent: currentAgent?.name,
+    sessionStatus,
+    wsStatus
+  });
+
   const [showTransition, setShowTransition] = useState(false);
   const [transitionAgents, setTransitionAgents] = useState<{ from: string; to: string } | null>(null);
   const [isAgentSelectorCompact, setIsAgentSelectorCompact] = useState(false);

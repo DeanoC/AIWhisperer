@@ -40,11 +40,13 @@ export class AIService {
 // (Removed duplicate imports and class definition)
 
   async startSession(userId: string): Promise<SessionInfo> {
+    console.log('[AIService] Starting session for user:', userId);
     try {
       const result = await this.rpc.sendRequest('startSession', {
         userId,
         sessionParams: { language: 'en' },
       });
+      console.log('[AIService] Session start result:', result);
       this.sessionId = result.sessionId;
       // Convert numeric status to enum
       const statusMap: { [key: number]: SessionStatus } = {
@@ -57,6 +59,7 @@ export class AIService {
         ? (statusMap[result.status] || SessionStatus.Error)
         : result.status;
       this.status = status;
+      console.log('[AIService] Session status set to:', status);
       this.sessionInfo = {
         id: result.sessionId,
         status: status,
@@ -65,6 +68,7 @@ export class AIService {
       };
       return this.sessionInfo;
     } catch (err: any) {
+      console.error('[AIService] Failed to start session:', err);
       this.error = err.message || 'Failed to start session';
       throw err;
     }
@@ -114,7 +118,12 @@ export class AIService {
         isFinal: params.isFinal ?? false,
       };
       console.log('[AIService] Processing AI chunk:', chunk);
-      this.chunkHandler?.(chunk);
+      if (this.chunkHandler) {
+        console.log('[AIService] Calling chunk handler with:', chunk);
+        this.chunkHandler(chunk);
+      } else {
+        console.log('[AIService] No chunk handler registered!');
+      }
     }
     if (notification.method === 'SessionStatusNotification') {
       const params = notification.params || {};
@@ -162,15 +171,20 @@ export class AIService {
 
   // Agent-related methods
   async listAgents(): Promise<Agent[]> {
+    console.log('[AIService] Listing agents...');
     try {
       const result = await this.rpc.sendRequest('agent.list', {});
+      console.log('[AIService] List agents result:', result);
       // Handle both direct array and wrapped response
       const agents = result.agents || result;
       if (!Array.isArray(agents)) {
+        console.error('[AIService] Invalid response: expected array of agents, got:', agents);
         throw new Error('Invalid response: expected array of agents');
       }
+      console.log('[AIService] Found agents:', agents);
       return agents;
     } catch (err: any) {
+      console.error('[AIService] Failed to list agents:', err);
       this.error = err.message || 'Failed to list agents';
       throw err;
     }

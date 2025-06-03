@@ -20,26 +20,6 @@ export function useAISession(aiService: AIService | undefined, userId: string) {
     }, 200);
     return () => clearInterval(interval);
   }, [aiService]);
-
-
-  // Listen for session status changes from AIService
-  useEffect(() => {
-    if (!aiService) return;
-    const interval = setInterval(() => {
-      const newStatus = aiService.getStatus && aiService.getStatus();
-      setStatus((prev: SessionStatus) => (prev !== newStatus ? newStatus : prev));
-    }, 200);
-    return () => clearInterval(interval);
-  }, [aiService]);
-  // Listen for session status changes from AIService
-  useEffect(() => {
-    if (!aiService) return;
-    const interval = setInterval(() => {
-      const newStatus = aiService.getStatus && aiService.getStatus();
-      setStatus((prev: SessionStatus) => (prev !== newStatus ? newStatus : prev));
-    }, 200);
-    return () => clearInterval(interval);
-  }, [aiService]);
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Idle);
   const [error, setError] = useState<string | null>(null);

@@ -9,6 +9,7 @@ interface SidebarProps {
   disabled?: boolean;
   onNewChat?: () => void;
   onNewPlan?: () => void;
+  onOpenFilesTab?: () => void;
 }
 
 interface NavItem {
@@ -56,7 +57,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCollapse, 
   disabled = false,
   onNewChat,
-  onNewPlan 
+  onNewPlan,
+  onOpenFilesTab
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
@@ -144,23 +146,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [collapsed]);
 
-  const renderNavItem = (item: NavItem) => (
-    <NavLink
-      key={item.path}
-      to={item.path}
-      className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${collapsed ? 'collapsed' : ''}`}
-      aria-disabled={disabled}
-      onClick={handleLinkClick}
-      onMouseEnter={() => collapsed && setActiveTooltip(item.label)}
-      onMouseLeave={() => setActiveTooltip(null)}
-    >
-      <span className="nav-icon" data-testid={item.iconTestId}>{item.icon}</span>
-      <span className="nav-label">{item.label}</span>
-      {collapsed && activeTooltip === item.label && (
-        <div className="tooltip" role="tooltip">{item.label}</div>
-      )}
-    </NavLink>
-  );
+  const renderNavItem = (item: NavItem) => {
+    // Handle Files tab specially - don't use router navigation
+    if (item.path === '/files' && onOpenFilesTab) {
+      return (
+        <button
+          key={item.path}
+          className={`nav-item ${collapsed ? 'collapsed' : ''}`}
+          aria-disabled={disabled}
+          onClick={() => {
+            if (!disabled && onOpenFilesTab) {
+              onOpenFilesTab();
+            }
+          }}
+          onMouseEnter={() => collapsed && setActiveTooltip(item.label)}
+          onMouseLeave={() => setActiveTooltip(null)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            width: '100%',
+            textAlign: 'left',
+            cursor: disabled ? 'not-allowed' : 'pointer'
+          }}
+        >
+          <span className="nav-icon" data-testid={item.iconTestId}>{item.icon}</span>
+          <span className="nav-label">{item.label}</span>
+          {collapsed && activeTooltip === item.label && (
+            <div className="tooltip" role="tooltip">{item.label}</div>
+          )}
+        </button>
+      );
+    }
+
+    // Regular router navigation for other items
+    return (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${collapsed ? 'collapsed' : ''}`}
+        aria-disabled={disabled}
+        onClick={handleLinkClick}
+        onMouseEnter={() => collapsed && setActiveTooltip(item.label)}
+        onMouseLeave={() => setActiveTooltip(null)}
+      >
+        <span className="nav-icon" data-testid={item.iconTestId}>{item.icon}</span>
+        <span className="nav-label">{item.label}</span>
+        {collapsed && activeTooltip === item.label && (
+          <div className="tooltip" role="tooltip">{item.label}</div>
+        )}
+      </NavLink>
+    );
+  };
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`} data-testid="sidebar">

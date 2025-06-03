@@ -1,0 +1,109 @@
+/* Theme definitions for the application */
+
+/* Dark theme (default) */
+.theme-dark {
+  --background-color: #1e1e1e;
+  --surface-color: #252526;
+  --border-color: #3e3e42;
+  --text-color: #cccccc;
+  --text-muted: #969696;
+  --accent-color: #007acc;
+  --accent-hover: #1177bb;
+  --error-color: #f48771;
+  --warning-color: #ffcc02;
+  --success-color: #89d185;
+  
+  /* Chat specific colors */
+  --chat-user-bg: #2d2d30;
+  --chat-assistant-bg: #1e1e1e;
+  --chat-system-bg: #264f78;
+  
+  /* Input colors */
+  --input-bg: #3c3c3c;
+  --input-border: #464647;
+  --input-focus-border: #007acc;
+  
+  /* Button colors */
+  --button-primary-bg: #0e639c;
+  --button-primary-hover: #1177bb;
+  --button-secondary-bg: #2d2d30;
+  --button-secondary-hover: #404040;
+  
+  /* Tab colors */
+  --tab-active-bg: #1e1e1e;
+  --tab-inactive-bg: #2d2d30;
+  --tab-border: #3e3e42;
+  --tab-close-hover: #e81123;
+}
+
+/* Light theme */
+.theme-light {
+  --background-color: #ffffff;
+  --surface-color: #f3f3f3;
+  --border-color: #e1e1e1;
+  --text-color: #333333;
+  --text-muted: #666666;
+  --accent-color: #0078d4;
+  --accent-hover: #106ebe;
+  --error-color: #d13438;
+  --warning-color: #ffb900;
+  --success-color: #107c10;
+  
+  /* Chat specific colors */
+  --chat-user-bg: #f0f0f0;
+  --chat-assistant-bg: #ffffff;
+  --chat-system-bg: #cce7ff;
+  
+  /* Input colors */
+  --input-bg: #ffffff;
+  --input-border: #cccccc;
+  --input-focus-border: #0078d4;
+  
+  /* Button colors */
+  --button-primary-bg: #0078d4;
+  --button-primary-hover: #106ebe;
+  --button-secondary-bg: #f3f3f3;
+  --button-secondary-hover: #e1e1e1;
+  
+  /* Tab colors */
+  --tab-active-bg: #ffffff;
+  --tab-inactive-bg: #f3f3f3;
+  --tab-border: #e1e1e1;
+  --tab-close-hover: #d13438;
+}
+
+/* High contrast theme */
+.theme-high-contrast {
+  --background-color: #000000;
+  --surface-color: #000000;
+  --border-color: #ffffff;
+  --text-color: #ffffff;
+  --text-muted: #ffffff;
+  --accent-color: #ffff00;
+  --accent-hover: #ffff66;
+  --error-color: #ff0000;
+  --warning-color: #ffff00;
+  --success-color: #00ff00;
+  
+  /* Chat specific colors */
+  --chat-user-bg: #000000;
+  --chat-assistant-bg: #000000;
+  --chat-system-bg: #000000;
+  
+  /* Input colors */
+  --input-bg: #000000;
+  --input-border: #ffffff;
+  --input-focus-border: #ffff00;
+  
+  /* Button colors */
+  --button-primary-bg: #000000;
+  --button-primary-hover: #333333;
+  --button-secondary-bg: #000000;
+  --button-secondary-hover: #333333;
+  
+  /* Tab colors */
+  --tab-active-bg: #000000;
+  --tab-inactive-bg: #000000;
+  --tab-border: #ffffff;
+  --tab-close-hover: #ff0000;
+}

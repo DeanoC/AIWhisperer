@@ -169,7 +169,11 @@
 /* Main Content */
 .layout-main {
   flex: 1;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
   background: var(--bg-primary);
   outline: none;
 }

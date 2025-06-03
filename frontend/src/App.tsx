@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { ChatMessage, MessageSender } from './types/chat';
+import { Agent } from './types/agent';
+import { SessionStatus, MessageStatus } from './types/ai';
 import './App.css';
+import './themes.css';
 import { MainLayout } from './components/MainLayout';
 import { ViewProvider } from './contexts/ViewContext';
 import { ProjectProvider } from './contexts/ProjectContext';
@@ -13,10 +17,9 @@ import { AIService } from './services/aiService';
 import { JsonRpcService } from './services/jsonRpcService';
 import { useAISession } from './hooks/useAISession';
 import { useChat } from './hooks/useChat';
-import { SessionStatus } from './types/ai';
-import { Agent } from './types/agent';
 import { ProjectIntegration } from './components/ProjectIntegration';
 import { FileBrowser } from './components/FileBrowser';
+import { MainTabs } from './components/MainTabs';
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 const USER_ID = 'demo-user';
@@ -28,6 +31,9 @@ function App() {
     (localStorage.getItem('app.theme') as 'light' | 'dark') || 'light'
   );
 
+  // Add debugging for initial render
+  // console.log('[App] Component rendering...');
+
   // WebSocket connection
   const { status: wsStatus, ws } = useWebSocket(WS_URL);
 
@@ -35,16 +41,28 @@ function App() {
   const [aiService, setAIService] = useState<AIService | undefined>(undefined);
 
   // Current agent state
+  const [currentAgent, setCurrentAgent] = useState<Agent | undefined>(undefined);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // for general loading (agent switch, etc.)
+  const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true); // for very first app load only
 
   // JSON-RPC service for reuse
   const [jsonRpcService, setJsonRpcService] = useState<JsonRpcService | undefined>(undefined);
   
+  // Tab opening handlers
+  const [tabHandlers, setTabHandlers] = useState<{ openFilesTab?: () => void }>({});
+  
   // Track which agent we've updated messages for to prevent duplicate updates
   const lastUpdatedAgentRef = useRef<string | null>(null);
+
+  // Add debugging for state
+  // console.log('[App] Current state:', {
+  //   wsStatus,
+  //   currentAgent: currentAgent?.name,
+  //   agentsCount: agents.length,
+  //   isLoading,
+  //   isInitialLoading
+  // });
 
   // Initialize services when WebSocket is connected
   useEffect(() => {
@@ -155,9 +173,12 @@ function App() {
       if (aiService && sessionStatus !== SessionStatus.Active) {
         setIsInitialLoading(true);
         try {
+          console.log('[App] Starting session...');
           await startSession();
+          console.log('[App] Session started, loading agents...');
           // Load agents from backend
           const loadedAgents = await aiService.listAgents();
+          console.log('[App] Loaded agents:', loadedAgents);
           // Map backend format to frontend format
           const mappedAgents = loadedAgents.map((agent: any) => ({
             id: (agent.agent_id || agent.id).toLowerCase(),  // Ensure lowercase for consistency
@@ -170,17 +191,31 @@ function App() {
             shortcut: agent.shortcut
           }));
           setAgents(mappedAgents);
+          console.log('[App] Mapped agents:', mappedAgents);
+          
           // Get current agent from backend
           const currentAgentId = await aiService.getCurrentAgent();
+          console.log('[App] Current agent ID from backend:', currentAgentId);
           if (currentAgentId) {
             const agent = mappedAgents.find((a: Agent) => a.id.toLowerCase() === currentAgentId.toLowerCase());
             if (agent) {
+              console.log('[App] Setting current agent:', agent);
               setCurrentAgent(agent);
             }
           } else if (mappedAgents.length > 0) {
             // If no current agent, default to first (should be Alice)
             const defaultAgent = mappedAgents.find((a: Agent) => a.id.toLowerCase() === 'a') || mappedAgents[0];
-            await handleAgentSelect(defaultAgent.id);
+            console.log('[App] Setting default agent:', defaultAgent);
+            // Wait a bit for session to be fully active before switching
+            setTimeout(async () => {
+              try {
+                await handleAgentSelect(defaultAgent.id);
+              } catch (error) {
+                console.error('[App] Failed to set default agent:', error);
+                // Fallback: just set the agent without backend call
+                setCurrentAgent(defaultAgent);
+              }
+            }, 100);
           }
         } catch (error) {
           console.error('Failed to start session:', error);
@@ -212,8 +247,13 @@ function App() {
 
   // Send message handler
   const handleSendMessage = useCallback(async (text: string) => {
-    if (!aiService || sessionStatus !== SessionStatus.Active) return;
+    console.log('[App] handleSendMessage called:', { text });
+    if (!aiService || sessionStatus !== SessionStatus.Active) {
+      console.log('[App] Cannot send message - aiService or session not ready');
+      return;
+    }
     
+    // console.log('[App] Adding user message and processing...');
     addUserMessage(text);
     
     // Handle commands
@@ -222,12 +262,20 @@ function App() {
         startAIMessage();
         const result = await aiService.dispatchCommand(text.trim());
         if (result.error) {
-          addSystemMessage(`ERROR: ${result.error}`);
+          appendAIChunk({ 
+            content: `ERROR: ${result.error}`, 
+            index: 0, 
+            isFinal: true 
+          });
         } else {
           const output = typeof result.output === 'string' 
             ? result.output 
             : JSON.stringify(result.output, null, 2);
-          addSystemMessage(output || JSON.stringify(result));
+          appendAIChunk({ 
+            content: output || JSON.stringify(result), 
+            index: 0, 
+            isFinal: true 
+          });
         }
       } catch (err: any) {
         appendAIChunk({ 
@@ -410,80 +458,64 @@ function App() {
     }
   } : null;
 
+  // Add debugging for initial render
+  console.log('[App] Rendering with:', {
+    agents: agents.length,
+    currentAgent: currentAgent?.name,
+    sessionStatus,
+    wsStatus,
+    messages: messages.length,
+    isInitialLoading
+  });
+
   return (
-    <Router>
-      <ProjectProvider>
-        <ProjectIntegration jsonRpcService={jsonRpcService} />
-        <ViewProvider>
-          <MainLayout 
-            theme={theme} 
-            isLoading={isInitialLoading}
-            currentAgent={agentContext}
-            onThemeToggle={toggleTheme}
-            connectionStatus={wsStatus}
-          >
-          <Routes>
-            {/* Chat Route */}
-            <Route path="/chat" element={
-              <ChatView 
-                messages={messages}
-                currentAgent={currentAgent}
-                agents={agents}
-                onSendMessage={handleSendMessage}
-                onAgentSelect={handleAgentSelect}
-                onHandoffToAgent={handleHandoffToAgent}
-                sessionStatus={sessionStatus}
-                wsStatus={wsStatus}
-                sessionError={sessionError || undefined}
-                onThemeToggle={toggleTheme}
-                theme={theme}
-                jsonRpcService={jsonRpcService}
-                currentAIMessage={currentAIMessage}
-                loading={loading}
-              />
-            } />
-            
-            {/* Plans Route */}
-            <Route path="/plans" element={
-              <JSONPlanView jsonRpcService={jsonRpcService} />
-            } />
-            
-            {/* Code Route */}
-            <Route path="/code" element={
-              <CodeChangesView data={mockCodeChanges} />
-            } />
-            
-            {/* Tests Route */}
-            <Route path="/tests" element={
-              <TestResultsView data={mockTestResults} />
-            } />
-            
-            {/* Files Route */}
-            <Route path="/files" element={
-              <FileBrowser 
-                jsonRpcService={jsonRpcService}
-                onFileSelect={(filePath) => {
-                  console.log('File selected:', filePath);
-                  // TODO: Handle file selection - could add to chat context
+    <div className={`theme-${theme}`}>
+      
+      <Router>
+        <ProjectProvider>
+          <ProjectIntegration jsonRpcService={jsonRpcService} />
+          <ViewProvider>
+            <MainLayout 
+              theme={theme} 
+              isLoading={isInitialLoading}
+              currentAgent={agentContext}
+              onThemeToggle={toggleTheme}
+              connectionStatus={wsStatus}
+              onOpenFilesTab={tabHandlers.openFilesTab}
+            >
+              {/* Main tabbed area */}
+              <MainTabs
+                chatProps={{
+                  messages,
+                  currentAgent,
+                  agents,
+                  onSendMessage: handleSendMessage,
+                  onAgentSelect: handleAgentSelect,
+                  onHandoffToAgent: handleHandoffToAgent,
+                  sessionStatus,
+                  wsStatus,
+                  sessionError: sessionError || undefined,
+                  onThemeToggle: toggleTheme,
+                  theme,
+                  jsonRpcService,
+                  currentAIMessage,
+                  loading,
                 }}
+                fileBrowserProps={{
+                  jsonRpcService,
+                  onFileSelect: (filePath: string) => {
+                    console.log('File selected:', filePath);
+                    // TODO: Handle file selection - could add to chat context
+                  },
+                }}
+                // Add other props as needed for JSONPlanView, CodeChangesView, etc.
+                onTabsReady={setTabHandlers}
               />
-            } />
-            
-            {/* Settings Route */}
-            <Route path="/settings" element={
-              <React.Suspense fallback={<div>Loading settings...</div>}>
-                {/** Dynamically import the settings page for code splitting */}
-                {React.createElement(require('./components/SettingsPage').SettingsPage)}
-              </React.Suspense>
-            } />
-            
-            {/* Default Route */}
-            <Route path="/" element={<Navigate to="/chat" replace />} />
-          </Routes>
-        </MainLayout>
-      </ViewProvider>
-    </ProjectProvider>
-    </Router>
+            </MainLayout>
+          </ViewProvider>
+        </ProjectProvider>
+      </Router>
+    </div>
   );
 }
 
