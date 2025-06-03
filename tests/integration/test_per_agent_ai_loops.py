@@ -89,116 +89,158 @@ class TestPerAgentAILoops:
     
     def test_ai_loop_manager_creates_different_loops(self, ai_loop_manager, agent_registry):
         """Test that AI loop manager creates different loops for different agents."""
-        # Create AI loop for Alice (default config)
-        alice_info = agent_registry.get_agent("A")
-        alice_loop = ai_loop_manager.get_or_create_ai_loop("A")
-        
-        # Create AI loop for Debbie (custom config)
-        debbie_info = agent_registry.get_agent("D")
-        debbie_config = AgentConfig(
-            name=debbie_info.name,
-            description=debbie_info.description,
-            system_prompt="Test",
-            model_name="openai/gpt-3.5-turbo",
-            provider="openrouter",
-            api_settings={"api_key": "test"},
-            generation_params={"temperature": 0.5, "max_tokens": 2000},
-            tool_permissions=[],
-            tool_limits={},
-            context_settings={}
-        )
-        debbie_loop = ai_loop_manager.get_or_create_ai_loop("D", debbie_config)
-        
-        # Create AI loop for Eamonn (custom config)
-        eamonn_info = agent_registry.get_agent("E")
-        eamonn_config = AgentConfig(
-            name=eamonn_info.name,
-            description=eamonn_info.description,
-            system_prompt="Test",
-            model_name="anthropic/claude-3-opus-20240229",
-            provider="openrouter",
-            api_settings={"api_key": "test"},
-            generation_params={"temperature": 0.7, "max_tokens": 8000},
-            tool_permissions=[],
-            tool_limits={},
-            context_settings={}
-        )
-        eamonn_loop = ai_loop_manager.get_or_create_ai_loop("E", eamonn_config)
-        
-        # Verify different models are used
-        active_models = ai_loop_manager.get_active_models()
-        assert len(active_models) == 3
-        assert active_models["D"] == "openai/gpt-3.5-turbo"
-        assert active_models["E"] == "anthropic/claude-3-opus-20240229"
-        
-        # Verify configurations
-        assert ai_loop_manager._ai_loops["D"].config.temperature == 0.5
-        assert ai_loop_manager._ai_loops["D"].config.max_tokens == 2000
-        assert ai_loop_manager._ai_loops["E"].config.temperature == 0.7
-        assert ai_loop_manager._ai_loops["E"].config.max_tokens == 8000
+        # Mock the AI loop factory to avoid real AI service creation
+        with patch('ai_whisperer.services.agents.ai_loop_manager.AILoopFactory') as MockFactory:
+            # Create mock AI loops
+            mock_alice_loop = Mock()
+            mock_alice_loop.config.model_id = "google/gemini-2.5-flash-preview-05-20:thinking"  # Default from config
+            
+            mock_debbie_loop = Mock()
+            mock_debbie_loop.config.model_id = "openai/gpt-3.5-turbo"
+            
+            mock_eamonn_loop = Mock()
+            mock_eamonn_loop.config.model_id = "anthropic/claude-3-opus-20240229"
+            
+            # Set up factory to return different loops
+            MockFactory.create_ai_loop.side_effect = [mock_alice_loop, mock_debbie_loop, mock_eamonn_loop]
+            
+            # Create AI loop for Alice (default config)
+            alice_info = agent_registry.get_agent("A")
+            alice_loop = ai_loop_manager.get_or_create_ai_loop("A")
+            
+            # Create AI loop for Debbie (custom config)
+            debbie_info = agent_registry.get_agent("D")
+            debbie_config = AgentConfig(
+                name=debbie_info.name,
+                description=debbie_info.description,
+                system_prompt="Test",
+                model_name="openai/gpt-3.5-turbo",
+                provider="openrouter",
+                api_settings={"api_key": "test"},
+                generation_params={"temperature": 0.5, "max_tokens": 2000},
+                tool_permissions=[],
+                tool_limits={},
+                context_settings={}
+            )
+            debbie_loop = ai_loop_manager.get_or_create_ai_loop("D", debbie_config)
+            
+            # Create AI loop for Eamonn (custom config)
+            eamonn_info = agent_registry.get_agent("E")
+            eamonn_config = AgentConfig(
+                name=eamonn_info.name,
+                description=eamonn_info.description,
+                system_prompt="Test",
+                model_name="anthropic/claude-3-opus-20240229",
+                provider="openrouter",
+                api_settings={"api_key": "test"},
+                generation_params={"temperature": 0.7, "max_tokens": 8000},
+                tool_permissions=[],
+                tool_limits={},
+                context_settings={}
+            )
+            eamonn_loop = ai_loop_manager.get_or_create_ai_loop("E", eamonn_config)
+            
+            # Verify different models are used
+            active_models = ai_loop_manager.get_active_models()
+            assert len(active_models) == 3
+            assert active_models["A"] == "google/gemini-2.5-flash-preview-05-20:thinking"
+            assert active_models["D"] == "openai/gpt-3.5-turbo"
+            assert active_models["E"] == "anthropic/claude-3-opus-20240229"
+            
+            # Verify factory was called correctly
+            assert MockFactory.create_ai_loop.call_count == 3
     
     def test_ai_loop_manager_cleanup(self, ai_loop_manager):
         """Test AI loop manager cleanup."""
-        # Create some AI loops
-        ai_loop_manager.get_or_create_ai_loop("test1")
-        ai_loop_manager.get_or_create_ai_loop("test2")
-        
-        assert len(ai_loop_manager._ai_loops) == 2
-        
-        # Remove one
-        assert ai_loop_manager.remove_ai_loop("test1") is True
-        assert len(ai_loop_manager._ai_loops) == 1
-        assert "test1" not in ai_loop_manager._ai_loops
-        
-        # Cleanup all
-        ai_loop_manager.cleanup()
-        assert len(ai_loop_manager._ai_loops) == 0
+        # Mock the AI loop factory to avoid real AI service creation
+        with patch('ai_whisperer.services.agents.ai_loop_manager.AILoopFactory') as MockFactory:
+            # Create mock AI loops
+            mock_loop1 = Mock()
+            mock_loop1.config.model_id = "test/model1"
+            mock_loop2 = Mock()
+            mock_loop2.config.model_id = "test/model2"
+            
+            MockFactory.create_ai_loop.side_effect = [mock_loop1, mock_loop2]
+            
+            # Create some AI loops
+            ai_loop_manager.get_or_create_ai_loop("test1")
+            ai_loop_manager.get_or_create_ai_loop("test2")
+            
+            assert len(ai_loop_manager._ai_loops) == 2
+            
+            # Remove one
+            assert ai_loop_manager.remove_ai_loop("test1") is True
+            assert len(ai_loop_manager._ai_loops) == 1
+            assert "test1" not in ai_loop_manager._ai_loops
+            
+            # Cleanup all
+            ai_loop_manager.cleanup()
+            assert len(ai_loop_manager._ai_loops) == 0
     
     @pytest.mark.asyncio
     async def test_session_uses_per_agent_loops(self, config, agent_registry):
         """Test that interactive session correctly uses per-agent AI loops."""
         from interactive_server.stateless_session_manager import StatelessInteractiveSession
         
-        # Create mock websocket
-        mock_websocket = Mock()
-        mock_websocket.send_json = Mock(return_value=asyncio.Future())
-        mock_websocket.send_json.return_value.set_result(None)
-        
-        # Create prompt system
-        prompt_system = PromptSystem(Path(__file__).parent.parent.parent / "prompts")
-        
-        # Create session
-        session = StatelessInteractiveSession(
-            session_id="test",
-            websocket=mock_websocket,
-            config=config,
-            agent_registry=agent_registry,
-            prompt_system=prompt_system
-        )
-        
-        try:
-            # Start session (creates default agent)
-            await session.start_ai_session()
+        # Mock the AI loop factory to avoid real AI service creation
+        with patch('ai_whisperer.services.agents.ai_loop_manager.AILoopFactory') as MockFactory:
+            # Create mock AI loops for different agents
+            mock_alice_loop = Mock()
+            mock_alice_loop.config.model_id = "google/gemini-2.5-flash-preview-05-20:thinking"  # Default from config
             
-            # Switch to Debbie
-            await session.switch_agent("d")
+            mock_debbie_loop = Mock()
+            mock_debbie_loop.config.model_id = "openai/gpt-3.5-turbo"
             
-            # Verify Debbie's AI loop uses correct model
-            active_models = session.ai_loop_manager.get_active_models()
-            # Agent IDs are lowercase in the session
-            assert "d" in active_models
-            assert active_models["d"] == "openai/gpt-3.5-turbo"
+            mock_eamonn_loop = Mock()
+            mock_eamonn_loop.config.model_id = "anthropic/claude-3-opus-20240229"
             
-            # Switch to Eamonn
-            await session.switch_agent("e")
+            # Set up factory to return different loops based on call order
+            MockFactory.create_ai_loop.side_effect = [
+                mock_alice_loop,  # For initial agent
+                mock_debbie_loop,  # For Debbie
+                mock_eamonn_loop   # For Eamonn
+            ]
             
-            # Verify Eamonn's AI loop uses correct model
-            active_models = session.ai_loop_manager.get_active_models()
-            assert "e" in active_models
-            assert active_models["e"] == "anthropic/claude-3-opus-20240229"
+            # Create mock websocket
+            mock_websocket = Mock()
+            mock_websocket.send_json = Mock(return_value=asyncio.Future())
+            mock_websocket.send_json.return_value.set_result(None)
             
-            # Verify both AI loops exist
-            assert len(active_models) >= 2
+            # Create prompt system
+            prompt_system = PromptSystem(Path(__file__).parent.parent.parent / "prompts")
             
-        finally:
-            await session.cleanup()
+            # Create session
+            session = StatelessInteractiveSession(
+                session_id="test",
+                websocket=mock_websocket,
+                config=config,
+                agent_registry=agent_registry,
+                prompt_system=prompt_system
+            )
+            
+            try:
+                # Start session (creates default agent)
+                await session.start_ai_session()
+                
+                # Switch to Debbie
+                await session.switch_agent("d")
+                
+                # Verify Debbie's AI loop uses correct model
+                active_models = session.ai_loop_manager.get_active_models()
+                # Agent IDs are lowercase in the session
+                assert "d" in active_models
+                assert active_models["d"] == "openai/gpt-3.5-turbo"
+                
+                # Switch to Eamonn
+                await session.switch_agent("e")
+                
+                # Verify Eamonn's AI loop uses correct model
+                active_models = session.ai_loop_manager.get_active_models()
+                assert "e" in active_models
+                assert active_models["e"] == "anthropic/claude-3-opus-20240229"
+                
+                # Verify both AI loops exist
+                assert len(active_models) >= 2
+                
+            finally:
+                await session.cleanup()
