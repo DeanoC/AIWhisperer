@@ -21,25 +21,9 @@ class BaseCliCommand(ABC):
         """Executes the command logic."""
         pass
 
-# setup_ui removed for batch mode only
+# setup_ui removed - using interactive server instead
 
-class BatchModeCliCommand(BaseCliCommand):
-    def __init__(self, script_path: str):
-        self.script_path = script_path
-
-    def execute(self) -> int:
-        # Validate workspace before running batch script
-        try:
-            workspace = find_whisper_workspace()
-            print(f"Workspace detected: {workspace}")
-        except Exception as e:
-            print(f"Error: {e}")
-            return 1
-        # TODO: Implement batch script execution logic here
-        print(f"[BatchMode] Would execute script: {self.script_path}")
-        return 0
-
-# File intentionally ends here for batch mode only
+# Note: For conversation replay functionality, see conversation_replay.py command
 
 #         logger.debug(f"[green]Successfully generated task JSON: {result_path}[/green]")
 #         return 0

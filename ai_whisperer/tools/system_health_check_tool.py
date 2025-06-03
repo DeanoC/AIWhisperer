@@ -146,6 +146,7 @@ class SystemHealthCheckTool(AITool):
             Path("scripts/debbie/system_health_check"),
             Path(".WHISPER/scripts/system_health_check"),
             Path("tests/health_checks"),
+            Path("tests/debugging-tools/debbie/system_health_check"),
         ]
         
         # Also check from PathManager paths if available
@@ -156,14 +157,21 @@ class SystemHealthCheckTool(AITool):
                 possible_paths.extend([
                     pm.workspace_path / "scripts" / "debbie" / "system_health_check",
                     pm.project_path / "scripts" / "debbie" / "system_health_check",
+                    pm.project_path / "tests" / "debugging-tools" / "debbie" / "system_health_check",
                 ])
         except:
             pass
         
+        # Use a set to deduplicate resolved paths
+        seen_paths = set()
+        
         for path in possible_paths:
-            if path.exists() and path.is_dir():
-                dirs.append(path)
-                logger.info(f"Found health check directory: {path}")
+            resolved_path = path.resolve()
+            if resolved_path.exists() and resolved_path.is_dir():
+                if resolved_path not in seen_paths:
+                    dirs.append(resolved_path)
+                    seen_paths.add(resolved_path)
+                    logger.info(f"Found health check directory: {resolved_path}")
         
         return dirs
     
@@ -249,6 +257,10 @@ class SystemHealthCheckTool(AITool):
                     'error': 'Batch runner tools not found',
                     'duration': 0
                 }]
+            
+            # Set the tool registry on the batch tool if it doesn't have it
+            if hasattr(batch_tool, 'tool_registry') and batch_tool.tool_registry is None:
+                batch_tool.tool_registry = registry
         except Exception as e:
             logger.error(f"Failed to get batch tools: {e}")
             return [{
@@ -275,37 +287,40 @@ class SystemHealthCheckTool(AITool):
             try:
                 logger.info(f"Running health check: {check['name']} ({check['format']})")
                 
-                # Parse the script first
-                parse_result = await parser_tool.execute(file_path=str(check['path']))
-                
-                if isinstance(parse_result, str) and 'error' in parse_result.lower():
+                # Parse the script directly using the parser tool's internal method
+                try:
+                    # Use the parser tool's parse_script method directly to get ParsedScript object
+                    parsed_script = parser_tool.parse_script(str(check['path']))
+                except Exception as parse_error:
                     result['status'] = 'error'
-                    result['error'] = f"Failed to parse script: {parse_result}"
-                else:
-                    # Run the parsed script
-                    batch_result = await batch_tool.execute(
-                        script=parse_result,
-                        dry_run=False,
-                        stop_on_error=False,
-                        pass_context=True
-                    )
+                    result['error'] = f"Failed to parse script: {str(parse_error)}"
+                    results.append(result)
+                    continue
                     
-                    # Analyze results
-                    result['output'] = str(batch_result)
-                    
-                    # Check for success indicators
-                    if isinstance(batch_result, dict):
-                        if batch_result.get('success', False):
-                            result['status'] = 'passed'
-                        else:
-                            result['status'] = 'failed'
-                            result['error'] = batch_result.get('error', 'Unknown error')
-                    elif 'error' in str(batch_result).lower():
-                        result['status'] = 'failed'
-                        result['error'] = str(batch_result)
-                    else:
-                        # Assume success if no explicit error
+                # Run the parsed script
+                batch_result = batch_tool.execute(
+                    script=parsed_script,
+                    dry_run=False,
+                    stop_on_error=False,
+                    pass_context=True
+                )
+                
+                # Analyze results
+                result['output'] = str(batch_result)
+                
+                # Check for success indicators
+                if isinstance(batch_result, dict):
+                    if batch_result.get('success', False):
                         result['status'] = 'passed'
+                    else:
+                        result['status'] = 'failed'
+                        result['error'] = batch_result.get('error', 'Unknown error')
+                elif 'error' in str(batch_result).lower():
+                    result['status'] = 'failed'
+                    result['error'] = str(batch_result)
+                else:
+                    # Assume success if no explicit error
+                    result['status'] = 'passed'
                         
             except asyncio.TimeoutError:
                 result['status'] = 'timeout'

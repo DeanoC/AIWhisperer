@@ -1,0 +1,26 @@
+{
+  "name": "test_single_message",
+  "description": "Simple one-message chat with immediate response - no continuation needed",
+  "config": {
+    "agent": "default",
+    "model": "google/gemini-2.5-flash-preview",
+    "max_iterations": 1
+  },
+  "steps": [
+    {
+      "name": "simple_greeting",
+      "user_message": "Hello! What is 2 + 2?",
+      "expected_behavior": {
+        "should_continue": false,
+        "response_pattern": "4|four",
+        "tools_used": [],
+        "description": "Should respond with the answer without using any tools"
+      }
+    }
+  ],
+  "validation": {
+    "check_continuation_signals": true,
+    "require_completion": true,
+    "max_response_time": 10
+  }
+}

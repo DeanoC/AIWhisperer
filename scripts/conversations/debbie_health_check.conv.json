@@ -1,0 +1,35 @@
+{
+  "name": "Debbie System Health Check Conversation",
+  "description": "A conversation where we ask Debbie to run health checks",
+  "version": "1.0",
+  "messages": [
+    {
+      "type": "switch_agent",
+      "agent": "d",
+      "note": "Switch to Debbie the Debugger"
+    },
+    {
+      "type": "user_message",
+      "content": "Hi Debbie! I need your help with a system health check."
+    },
+    {
+      "type": "user_message",
+      "content": "Can you please run the system_health_check tool with verbose output enabled? I want to see the status of all agents, tools, and system components."
+    },
+    {
+      "type": "wait",
+      "seconds": 3,
+      "note": "Give Debbie time to run the health check"
+    },
+    {
+      "type": "user_message",
+      "content": "Based on the results, what do you recommend we fix first?"
+    }
+  ],
+  "expected_outcomes": [
+    "Debbie acknowledges the request",
+    "system_health_check tool is executed",
+    "Health report is generated",
+    "Debbie provides recommendations"
+  ]
+}

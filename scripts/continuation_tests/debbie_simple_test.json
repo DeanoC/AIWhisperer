@@ -1,0 +1,10 @@
+{
+  "name": "Simple Test",
+  "description": "Basic test to verify Debbie script execution",
+  "steps": [
+    {
+      "action": "send_message",
+      "content": "What is 2 + 2?"
+    }
+  ]
+}

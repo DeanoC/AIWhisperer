@@ -1,0 +1,13 @@
+{
+  "name": "Debbie System Health Check",
+  "description": "Use Debbie to perform a comprehensive system health check",
+  "steps": [
+    {
+      "action": "switch_agent",
+      "agent": "d"
+    },
+    {
+      "command": "Please run a system health check with verbose output to analyze all agents, tools, and system components."
+    }
+  ]
+}

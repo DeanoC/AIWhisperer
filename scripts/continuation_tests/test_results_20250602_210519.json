@@ -1,0 +1,37 @@
+[
+  {
+    "name": "test_single_message",
+    "start_time": "2025-06-02T21:05:15.830705",
+    "steps": [
+      {
+        "name": "simple_greeting",
+        "success": false,
+        "stdout": "\n\ud83d\udcc1 Log files:\n   Server log: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_20250602_210515.log\n   Debug log:  /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_20250602_210515.log\n   Test log:   /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_20250602_210515.log\n\n\ud83d\udd0d Validating workspace...\n   \u2705 Workspace detected: /home/deano/projects/AIWhisperer\n\ud83d\udcc4 Running batch script: /home/deano/projects/AIWhisperer/scripts/continuation_tests/_temp_test_single_message.json\n   \ud83d\ude80 Mode: LIVE (commands will be executed)\n\ud83c\udfad Starting Debbie batch mode...\n\ud83c\udfac Starting batch execution...\n   \ud83d\udcc4 Script: /home/deano/projects/AIWhisperer/scripts/continuation_tests/_temp_test_single_message.json\n   \ud83d\udcc1 Working directory: /home/deano/projects/AIWhisperer\n   \ud83e\uddea Dry run: False\n   \ud83d\udcd6 Loading script...\n   \u2705 Script loaded: 19 commands\n   \ud83d\ude80 Starting batch server...\n\ud83d\ude80 Starting batch mode server...\n   \ud83d\udce1 Attempting to start server on port 35021\n   \ud83d\udd27 Starting subprocess with Python: /home/deano/projects/AIWhisperer/.venv/bin/python\n   \ud83d\udd27 Port: 35021\n   \ud83d\udd27 Command: /home/deano/projects/AIWhisperer/.venv/bin/python -m interactive_server.main --host=127.0.0.1 --port=35021\n   \ud83d\udd27 Environment AIWHISPERER_BATCH_PORT: 35021\n   \ud83d\udd27 Subprocess started with PID: 1398428\n   \u23f3 Waiting for server to be ready on port 35021...\n   \u2705 Server is ready on port 35021\n   \u2705 Batch server started successfully on port 35021\n   \ud83d\udcc1 Server logs: logs/aiwhisperer_server_batch_35021.log\n   \ud83c\udf10 Server URL: http://127.0.0.1:35021\n   \ud83e\uddf9 Cleaning up...\n\ud83d\uded1 Stopping batch server on port 35021\n   \u2705 Batch server stopped successfully\n\u2705 Cleanup completed\n\ud83d\udca5 Batch execution failed: cannot import name 'logging_custom' from 'ai_whisperer' (/home/deano/projects/AIWhisperer/ai_whisperer/__init__.py)\n",
+        "stderr": "2025-06-02 21:05:15,941 1398427 MainThread aiwhisperer.server - INFO - Server logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_20250602_210515.log\n2025-06-02 21:05:15,942 1398427 MainThread aiwhisperer.test - INFO - Test logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_20250602_210515.log\n2025-06-02 21:05:15,942 1398427 MainThread root - INFO - Debug logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_20250602_210515.log\n2025-06-02 21:05:15,942 1398427 MainThread ai_whisperer.core.config - INFO - Loading configuration in legacy mode from: /home/deano/projects/AIWhisperer/config/main.yaml\n2025-06-02 21:05:15,945 1398427 MainThread ai_whisperer.core.config - INFO - Successfully loaded legacy configuration from: /home/deano/projects/AIWhisperer/config/main.yaml\n2025-06-02 21:05:15,945 1398427 MainThread asyncio - DEBUG - Using selector: EpollSelector\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - INFO - Loading script from: /home/deano/projects/AIWhisperer/scripts/continuation_tests/_temp_test_single_message.json\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 1: Added command '{'\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 2: Added command '\"name\": \"simple_greeting\",'\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 3: Added command '\"config\": {'\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 4: Added command '\"agent\": \"default\",'\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 5: Added command '\"model\": \"google/gemini-2.5-flash-preview\",'\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 6: Added command '\"max_iterations\": 1'\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 7: Added command '},'\n2025-06-02 21:05:15,946 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 8: Added command '\"steps\": ['\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 9: Added command '{'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 10: Added command '\"user_message\": \"Hello! What is 2 + 2?\",'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 11: Added command '\"expected_behavior\": {'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 12: Added command '\"should_continue\": false,'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 13: Added command '\"response_pattern\": \"4|four\",'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 14: Added command '\"tools_used\": [],'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 15: Added command '\"description\": \"Should respond with the answer without using any tools\"'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 16: Added command '}'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 17: Added command '}'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 18: Added command ']'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - DEBUG - Line 19: Added command '}'\n2025-06-02 21:05:15,947 1398427 MainThread ai_whisperer.extensions.batch.script_processor - INFO - Loaded 19 commands from script\n2025-06-02 21:05:19,120 1398427 MainThread ai_whisperer.interfaces.cli.batch - ERROR - Batch execution failed: cannot import name 'logging_custom' from 'ai_whisperer' (/home/deano/projects/AIWhisperer/ai_whisperer/__init__.py)\n",
+        "validations": {
+          "continuation": {
+            "passed": true,
+            "expected": false,
+            "actual": false,
+            "reason": "Expected continuation=False, found=False"
+          },
+          "tools_used": {
+            "passed": true,
+            "expected": [],
+            "actual": [],
+            "reason": "Expected tools [], found []"
+          },
+          "response_pattern": {
+            "passed": true,
+            "expected": "4|four",
+            "actual": true,
+            "reason": "Pattern '4|four' found"
+          }
+        }
+      }
+    ],
+    "success": false,
+    "error": "Step 'simple_greeting' failed",
+    "end_time": "2025-06-02T21:05:19.142186"
+  }
+]

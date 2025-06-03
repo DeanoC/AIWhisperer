@@ -44,21 +44,21 @@ agents:
     
   d:
     name: "Debbie the Debugger"
-    role: "debugging_assistant, batch_processor"
-    description: "Intelligent debugging companion and batch script processor for AIWhisperer"
-    tool_tags: ["debugging", "monitoring", "testing", "analysis", "filesystem", "command", "batch"]
+    role: "debugging_assistant, conversation_replayer"
+    description: "Intelligent debugging companion and conversation replay processor for AIWhisperer"
+    tool_tags: ["debugging", "monitoring", "testing", "analysis", "filesystem", "command", "conversation"]
     prompt_file: "debbie_debugger.prompt.md"
-    context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure", "batch_scripts"]
+    context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure", "conversation_files"]
     color: "#DC2626"
     icon: "🐛"
-    tool_sets: ["debugging_tools", "batch_tools", "monitoring_tools", "filesystem", "command", "analysis"]
+    tool_sets: ["debugging_tools", "conversation_tools", "monitoring_tools", "filesystem", "command", "analysis"]
     capabilities:
       - session_monitoring
       - error_detection
       - performance_analysis
       - automated_recovery
       - script_execution
-      - batch_script_processing
+      - conversation_replay
       - multi_format_parsing
       - automated_user_simulation
     continuation_config:
@@ -74,9 +74,9 @@ agents:
         auto_continue: true
         max_retries: 3
         recovery_strategies: ["prompt", "restart", "escalate"]
-      batch:
+      conversation:
         supported_formats: ["json", "yaml", "txt"]
-        max_script_size: 1048576  # 1MB
+        max_file_size: 1048576  # 1MB
         execution_timeout: 3600   # 1 hour
         auto_continue: true
         error_handling: "continue_on_error"

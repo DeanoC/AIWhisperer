@@ -1,0 +1,20 @@
+{
+  "name": "Debbie System Health Check",
+  "description": "Use Debbie to perform a comprehensive system health check",
+  "steps": [
+    {
+      "action": "switch_agent",
+      "agent": "d",
+      "message": "Switching to Debbie for system health check..."
+    },
+    {
+      "action": "test",
+      "command": "system_health_check",
+      "args": {
+        "check_category": "all",
+        "verbose": true
+      },
+      "message": "Running comprehensive system health check..."
+    }
+  ]
+}

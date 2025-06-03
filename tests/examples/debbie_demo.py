@@ -14,8 +14,8 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ai_whisperer.extensions.batch.debbie_integration import DebbieDebugger, DebbieFactory
-from ai_whisperer.extensions.batch.monitoring import MonitoringEvent, AnomalyAlert
+from ai_whisperer.extensions.conversation_replay.debbie_integration import DebbieDebugger, DebbieFactory
+from ai_whisperer.extensions.conversation_replay.monitoring import MonitoringEvent, AnomalyAlert
 from ai_whisperer.extensions.monitoring.debbie_logger import DebbieLogger
 
 

@@ -1,0 +1,57 @@
+{
+  "name": "test_complex_rfc_workflow",
+  "description": "Complex end-to-end test: Create RFC, convert to plan, and execute",
+  "config": {
+    "max_iterations": 20,
+    "timeout": 600
+  },
+  "steps": [
+    {
+      "name": "create_rfc",
+      "agent": "agent_patricia",
+      "user_message": "Create an RFC for a simple Python calculator that can add and subtract two numbers. Keep it minimal but complete.",
+      "expected_behavior": {
+        "should_continue": false,
+        "tools_used": ["create_rfc"],
+        "verify_rfc_created": true
+      }
+    },
+    {
+      "name": "convert_to_plan",
+      "agent": "agent_patricia",
+      "user_message": "Convert the calculator RFC to an executable plan",
+      "expected_behavior": {
+        "should_continue": true,
+        "tools_used": ["read_rfc", "create_plan_from_rfc"],
+        "verify_plan_created": true
+      }
+    },
+    {
+      "name": "execute_plan",
+      "agent": "agent_eamonn",
+      "user_message": "Execute the calculator implementation plan",
+      "expected_behavior": {
+        "should_continue": true,
+        "min_iterations": 3,
+        "tools_include": ["write_file", "read_file", "python_executor"],
+        "verify_implementation": true
+      }
+    },
+    {
+      "name": "test_implementation",
+      "agent": "agent_tester",
+      "user_message": "Test the calculator implementation",
+      "expected_behavior": {
+        "should_continue": false,
+        "tools_used": ["python_executor", "read_file"],
+        "verify_tests_pass": true
+      }
+    }
+  ],
+  "validation": {
+    "check_continuation_signals": true,
+    "check_agent_transitions": true,
+    "verify_artifacts": ["rfc", "plan", "implementation", "tests"],
+    "allow_failures": false
+  }
+}

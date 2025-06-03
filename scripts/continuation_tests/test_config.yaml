@@ -1,0 +1,17 @@
+# Test configuration for continuation tests
+# DO NOT COMMIT THIS FILE IF IT CONTAINS REAL API KEYS
+openrouter:
+  api_key: ${OPENROUTER_API_KEY}  # Set via environment variable
+  model: google/gemini-2.5-flash-preview
+  params:
+    temperature: 0.7
+    max_tokens: 8000
+
+prompts: {}
+
+workspace_ignore_patterns:
+- .git
+- .venv
+- __pycache__
+- .idea
+- .vscode

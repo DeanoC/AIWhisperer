@@ -1,0 +1,12 @@
+{
+  "metadata": {
+    "title": "Simple Test",
+    "description": "Basic test to verify batch mode works"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is 2 + 2?"
+    }
+  ]
+}

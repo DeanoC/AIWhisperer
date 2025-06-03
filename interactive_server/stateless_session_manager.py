@@ -1462,7 +1462,7 @@ class StatelessSessionManager:
             tool_registry.register_tool(WorkspaceValidatorTool())
             tool_registry.register_tool(PythonExecutorTool())
             tool_registry.register_tool(ScriptParserTool())
-            tool_registry.register_tool(BatchCommandTool())
+            tool_registry.register_tool(BatchCommandTool(tool_registry))
             
             logger.info("Successfully registered Debbie's debugging and batch processing tools")
         except ImportError as e:

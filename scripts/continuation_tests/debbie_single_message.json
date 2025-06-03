@@ -1,0 +1,10 @@
+{
+  "name": "Single Message Test",
+  "description": "Test simple one-message interaction without continuation",
+  "steps": [
+    {
+      "command": "message_injector",
+      "message": "Hello! What is 2 + 2?"
+    }
+  ]
+}

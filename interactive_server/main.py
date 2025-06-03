@@ -81,17 +81,8 @@ from pathlib import Path
 from .handlers.project_handlers import init_project_handlers, PROJECT_HANDLERS
 from .handlers.workspace_handler import WorkspaceHandler
 
-# Initialize agent registry
-try:
-    prompts_dir = Path(os.environ.get("AIWHISPERER_PROMPTS", "prompts"))
-    agent_registry = AgentRegistry(prompts_dir)
-    logger.info(f"AgentRegistry initialized with prompts_dir: {prompts_dir}")
-    logger.info(f"Available agents: {[a.agent_id for a in agent_registry.list_agents()]}")
-except Exception as e:
-    logger.error(f"Failed to initialize AgentRegistry: {e}")
-    import traceback
-    traceback.print_exc()
-    agent_registry = None
+# Agent registry will be initialized later after PathManager
+agent_registry = None
 # === Agent/Session JSON-RPC Handlers ===
 async def agent_list_handler(params, websocket=None):
     if not agent_registry:
@@ -317,7 +308,7 @@ try:
     logging.info(f"  - project_path: {path_manager.project_path}")
     
     # Verify prompts directory exists
-    prompts_dir = path_manager.app_path / "prompts" / "agents"
+    prompts_dir = path_manager.project_path / "prompts" / "agents"
     if prompts_dir.exists():
         agent_prompts = list(prompts_dir.glob("*.md"))
         logging.info(f"  - Found {len(agent_prompts)} agent prompts in {prompts_dir}")
@@ -327,6 +318,18 @@ try:
             logging.warning("  - ⚠️ Debbie's prompt file NOT found in agent prompts!")
     else:
         logging.warning(f"  - ⚠️ Prompts directory not found at {prompts_dir}")
+    
+    # Initialize agent registry now that we have PathManager
+    try:
+        agent_registry = AgentRegistry(prompts_dir)
+        logging.info(f"AgentRegistry initialized with prompts_dir: {prompts_dir}")
+        logging.info(f"Available agents: {[a.agent_id for a in agent_registry.list_agents()]}")
+    except Exception as e:
+        logging.error(f"Failed to initialize AgentRegistry: {e}")
+        import traceback
+        traceback.print_exc()
+        agent_registry = None
+        
 except Exception as e:
     logging.error(f"Failed to initialize PathManager: {e}")
     # Continue without PathManager

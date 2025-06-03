@@ -1,0 +1,17 @@
+# Debbie System Health Check Script
+# This script switches to Debbie and runs a comprehensive system health check
+
+# First, let's see what agents are available
+list files in /home/deano/projects/AIWhisperer/config/agents
+
+# Switch to Debbie (the debugger)
+switch to agent d
+
+# Now ask Debbie to run the system health check
+Please run a comprehensive system health check and provide a detailed report.
+
+# The health check will analyze:
+# - Agent functionality
+# - Tool availability
+# - System components
+# - Configuration status

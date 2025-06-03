@@ -1,0 +1,123 @@
+[
+  {
+    "name": "test_basic_continuation",
+    "start_time": "2025-06-02T20:58:16.403125",
+    "steps": [
+      {
+        "name": "multi_file_analysis",
+        "success": false,
+        "stdout": "",
+        "stderr": "/home/deano/projects/AIWhisperer/.venv/bin/python: No module named ai_whisperer.cli\n",
+        "validations": {
+          "continuation": {
+            "passed": false,
+            "expected": true,
+            "actual": false,
+            "reason": "Expected continuation=True, found=False"
+          },
+          "tools_used": {
+            "passed": false,
+            "expected": [
+              "list_directory",
+              "read_file"
+            ],
+            "actual": [],
+            "reason": "Expected tools ['list_directory', 'read_file'], found []"
+          }
+        }
+      }
+    ],
+    "success": false,
+    "error": "Step 'multi_file_analysis' failed",
+    "end_time": "2025-06-02T20:58:16.414940"
+  },
+  {
+    "name": "test_complex_rfc_workflow",
+    "start_time": "2025-06-02T20:58:16.415020",
+    "steps": [
+      {
+        "name": "create_rfc",
+        "success": false,
+        "stdout": "",
+        "stderr": "/home/deano/projects/AIWhisperer/.venv/bin/python: No module named ai_whisperer.cli\n",
+        "validations": {
+          "continuation": {
+            "passed": true,
+            "expected": false,
+            "actual": false,
+            "reason": "Expected continuation=False, found=False"
+          },
+          "tools_used": {
+            "passed": false,
+            "expected": [
+              "create_rfc"
+            ],
+            "actual": [],
+            "reason": "Expected tools ['create_rfc'], found []"
+          }
+        }
+      }
+    ],
+    "success": false,
+    "error": "Step 'create_rfc' failed",
+    "end_time": "2025-06-02T20:58:16.426063"
+  },
+  {
+    "name": "test_single_message",
+    "start_time": "2025-06-02T20:58:16.426153",
+    "steps": [
+      {
+        "name": "simple_greeting",
+        "success": false,
+        "stdout": "",
+        "stderr": "/home/deano/projects/AIWhisperer/.venv/bin/python: No module named ai_whisperer.cli\n",
+        "validations": {
+          "continuation": {
+            "passed": true,
+            "expected": false,
+            "actual": false,
+            "reason": "Expected continuation=False, found=False"
+          },
+          "tools_used": {
+            "passed": true,
+            "expected": [],
+            "actual": [],
+            "reason": "Expected tools [], found []"
+          },
+          "response_pattern": {
+            "passed": false,
+            "expected": "4|four",
+            "actual": false,
+            "reason": "Pattern '4|four' not found"
+          }
+        }
+      }
+    ],
+    "success": false,
+    "error": "Step 'simple_greeting' failed",
+    "end_time": "2025-06-02T20:58:16.435871"
+  },
+  {
+    "name": "test_single_tool_continuation",
+    "start_time": "2025-06-02T20:58:16.435935",
+    "steps": [
+      {
+        "name": "sequential_file_operations",
+        "success": false,
+        "stdout": "",
+        "stderr": "/home/deano/projects/AIWhisperer/.venv/bin/python: No module named ai_whisperer.cli\n",
+        "validations": {
+          "continuation": {
+            "passed": false,
+            "expected": true,
+            "actual": false,
+            "reason": "Expected continuation=True, found=False"
+          }
+        }
+      }
+    ],
+    "success": false,
+    "error": "Step 'sequential_file_operations' failed",
+    "end_time": "2025-06-02T20:58:16.445019"
+  }
+]

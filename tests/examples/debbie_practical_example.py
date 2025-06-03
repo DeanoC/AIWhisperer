@@ -13,8 +13,8 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ai_whisperer.extensions.batch.debbie_integration import DebbieFactory, integrate_debbie_with_batch_client
-from ai_whisperer.extensions.batch.client import BatchClient
+from ai_whisperer.extensions.conversation_replay.debbie_integration import DebbieFactory, integrate_debbie_with_batch_client
+from ai_whisperer.extensions.conversation_replay.client import BatchClient
 from ai_whisperer.tools.workspace_validator_tool import WorkspaceValidatorTool
 from ai_whisperer.tools.python_executor_tool import PythonExecutorTool
 

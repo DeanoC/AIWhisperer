@@ -1,0 +1,19 @@
+{
+  "name": "Check Basic Agent Functionality",
+  "description": "Test that we can list agents and get agent info",
+  "timeout": 30,
+  "steps": [
+    {
+      "id": "list_agents",
+      "description": "List available agents",
+      "action": {
+        "type": "message",
+        "content": "Please list all available agents using the appropriate command."
+      },
+      "expected": {
+        "tool_call": "any",
+        "output_contains": ["Alice", "Patricia", "Debbie"]
+      }
+    }
+  ]
+}

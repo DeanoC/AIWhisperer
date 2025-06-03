@@ -55,15 +55,15 @@ FILE_MOVEMENTS = {
     "ai_whisperer/model_info_provider.py": "ai_whisperer/utils/model_info.py",
     "ai_whisperer/user_message_level.py": "ai_whisperer/utils/message_level.py",
     
-    # Extension modules - Batch
-    "ai_whisperer/batch/batch_client.py": "ai_whisperer/extensions/batch/client.py",
-    "ai_whisperer/batch/debbie_integration.py": "ai_whisperer/extensions/batch/debbie_integration.py",
-    "ai_whisperer/batch/intervention.py": "ai_whisperer/extensions/batch/intervention.py",
-    "ai_whisperer/batch/monitoring.py": "ai_whisperer/extensions/batch/monitoring.py",
-    "ai_whisperer/batch/script_processor.py": "ai_whisperer/extensions/batch/script_processor.py",
-    "ai_whisperer/batch/server_manager.py": "ai_whisperer/extensions/batch/server_manager.py",
-    "ai_whisperer/batch/websocket_client.py": "ai_whisperer/extensions/batch/websocket_client.py",
-    "ai_whisperer/batch/websocket_interceptor.py": "ai_whisperer/extensions/batch/websocket_interceptor.py",
+    # Extension modules - Conversation Replay (formerly Batch)
+    "ai_whisperer/batch/batch_client.py": "ai_whisperer/extensions/conversation_replay/client.py",
+    "ai_whisperer/batch/debbie_integration.py": "ai_whisperer/extensions/conversation_replay/debbie_integration.py",
+    "ai_whisperer/batch/intervention.py": "ai_whisperer/extensions/conversation_replay/intervention.py",
+    "ai_whisperer/batch/monitoring.py": "ai_whisperer/extensions/conversation_replay/monitoring.py",
+    "ai_whisperer/batch/script_processor.py": "ai_whisperer/extensions/conversation_replay/script_processor.py",
+    "ai_whisperer/batch/server_manager.py": "ai_whisperer/extensions/conversation_replay/server_manager.py",
+    "ai_whisperer/batch/websocket_client.py": "ai_whisperer/extensions/conversation_replay/websocket_client.py",
+    "ai_whisperer/batch/websocket_interceptor.py": "ai_whisperer/extensions/conversation_replay/websocket_interceptor.py",
     
     # Extension modules - Monitoring
     "ai_whisperer/logging/debbie_logger.py": "ai_whisperer/extensions/monitoring/debbie_logger.py",
@@ -112,14 +112,14 @@ IMPORT_MAPPINGS = {
     "ai_whisperer.model_info_provider": "ai_whisperer.utils.model_info",
     "ai_whisperer.user_message_level": "ai_whisperer.utils.message_level",
     
-    "ai_whisperer.batch.batch_client": "ai_whisperer.extensions.batch.client",
-    "ai_whisperer.batch.debbie_integration": "ai_whisperer.extensions.batch.debbie_integration",
-    "ai_whisperer.batch.intervention": "ai_whisperer.extensions.batch.intervention",
-    "ai_whisperer.batch.monitoring": "ai_whisperer.extensions.batch.monitoring",
-    "ai_whisperer.batch.script_processor": "ai_whisperer.extensions.batch.script_processor",
-    "ai_whisperer.batch.server_manager": "ai_whisperer.extensions.batch.server_manager",
-    "ai_whisperer.batch.websocket_client": "ai_whisperer.extensions.batch.websocket_client",
-    "ai_whisperer.batch.websocket_interceptor": "ai_whisperer.extensions.batch.websocket_interceptor",
+    "ai_whisperer.batch.batch_client": "ai_whisperer.extensions.conversation_replay.client",
+    "ai_whisperer.batch.debbie_integration": "ai_whisperer.extensions.conversation_replay.debbie_integration",
+    "ai_whisperer.batch.intervention": "ai_whisperer.extensions.conversation_replay.intervention",
+    "ai_whisperer.batch.monitoring": "ai_whisperer.extensions.conversation_replay.monitoring",
+    "ai_whisperer.batch.script_processor": "ai_whisperer.extensions.conversation_replay.script_processor",
+    "ai_whisperer.batch.server_manager": "ai_whisperer.extensions.conversation_replay.server_manager",
+    "ai_whisperer.batch.websocket_client": "ai_whisperer.extensions.conversation_replay.websocket_client",
+    "ai_whisperer.batch.websocket_interceptor": "ai_whisperer.extensions.conversation_replay.websocket_interceptor",
     
     "ai_whisperer.logging.debbie_logger": "ai_whisperer.extensions.monitoring.debbie_logger",
     "ai_whisperer.logging.log_aggregator": "ai_whisperer.extensions.monitoring.log_aggregator",

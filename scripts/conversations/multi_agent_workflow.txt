@@ -1,0 +1,17 @@
+# Multi-Agent Workflow Conversation
+# This shows how to work with multiple agents in sequence
+
+# Start with Patricia for RFC creation
+Please switch to agent P (Patricia)
+
+Patricia, I need an RFC for a simple user authentication system with email and password
+
+# Now switch to agent E to decompose it
+Please switch to agent E (Eamonn)
+
+Eamonn, can you take the RFC that Patricia just created and break it down into tasks for external agents?
+
+# Switch to Debbie to check everything is working
+Please switch to agent D (Debbie)
+
+Debbie, can you verify that the RFC and task decomposition were created successfully?

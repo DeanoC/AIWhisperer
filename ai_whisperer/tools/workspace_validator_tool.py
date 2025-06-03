@@ -16,7 +16,6 @@ Usage:
 
 Dependencies:
 - logging
-- logging_custom
 - base_tool
 
 Related:

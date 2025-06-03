@@ -20,9 +20,9 @@ Dependencies:
 - enum
 
 Related:
-- See docs/batch-mode/PHASE2_TASKS.md
-- See docs/batch-mode/PHASE2_CHECKLIST.md
-- See docs/batch-mode/IMPLEMENTATION_PLAN.md
+- See docs/conversation-replay/PHASE2_TASKS.md
+- See docs/conversation-replay/PHASE2_CHECKLIST.md
+- See docs/conversation-replay/IMPLEMENTATION_PLAN.md
 
 """
 

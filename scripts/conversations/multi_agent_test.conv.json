@@ -1,0 +1,55 @@
+{
+  "name": "Multi-Agent Conversation Test",
+  "description": "Test conversation flow between multiple agents",
+  "version": "1.0",
+  "messages": [
+    {
+      "type": "switch_agent",
+      "agent": "a",
+      "note": "Start with Alice"
+    },
+    {
+      "type": "user_message",
+      "content": "Hi Alice! Can you tell me what agents are available?"
+    },
+    {
+      "type": "wait",
+      "seconds": 2
+    },
+    {
+      "type": "switch_agent",
+      "agent": "p",
+      "note": "Switch to Patricia"
+    },
+    {
+      "type": "user_message",
+      "content": "Patricia, I need an RFC for a simple logging system. Can you create one?"
+    },
+    {
+      "type": "wait",
+      "seconds": 5
+    },
+    {
+      "type": "switch_agent",
+      "agent": "t",
+      "note": "Switch to Tessa"
+    },
+    {
+      "type": "user_message",
+      "content": "Tessa, what test cases would you recommend for a logging system?"
+    },
+    {
+      "type": "wait",
+      "seconds": 3
+    },
+    {
+      "type": "switch_agent",
+      "agent": "d",
+      "note": "Switch to Debbie for debugging"
+    },
+    {
+      "type": "user_message",
+      "content": "Debbie, can you check if all the agents are working properly?"
+    }
+  ]
+}

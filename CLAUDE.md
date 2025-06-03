@@ -11,17 +11,19 @@ AIWhisperer is a Python CLI tool that uses AI models via OpenRouter to automate 
 ## CRITICAL: Configuration Requirements
 
 **ALL real AI invocations require a config file with OpenRouter API key:**
-- Copy `config.yaml.example` to `config.yaml`
+- `main\config.yaml` is an real config file that must be used for all AI interactions
 - Set `OPENROUTER_API_KEY` environment variable or add to config
-- All commands (CLI, batch mode, interactive) must use `load_config()`
+- All commands (CLI, conversation replay, interactive) must use `load_config()`
 - Only unit tests with mocked AI can skip config requirements
 
-## CRITICAL: Batch Mode Usage
+## CRITICAL: Conversation Replay Mode
 
-**IMPORTANT**: Before using batch mode, **ALWAYS** read the batch mode documentation:
-- See `docs/BATCH_MODE_USAGE_FOR_AI.md` for complete instructions
-- **Correct Method**: `python -m ai_whisperer.cli --config config.yaml <script>`
+**IMPORTANT**: This replays conversations with AI agents, NOT batch processing:
+- See `docs/CONVERSATION_REPLAY_USAGE_FOR_AI.md` for complete instructions
+- **Correct Method**: `python -m ai_whisperer.interfaces.cli.main --config config/main.yaml replay <conversation_file>`
 - **Config file is REQUIRED** - all real AI invocations need OpenRouter API key via `load_config()`
+- The API key is loaded from the `.env` file automatically by `load_config()`
+- Conversation files are plain text files where each line is a message
 
 ## Essential Development Commands
 
@@ -58,11 +60,11 @@ black . --line-length 120 --skip-magic-trailing-comma
 # Interactive mode (recommended)
 python -m interactive_server.main
 
-# Batch mode
-python -m ai_whisperer.cli --config config.yaml batch scripts/script_name.json
+# Conversation replay mode (replays conversations with AI agents)
+python -m ai_whisperer.interfaces.cli.main --config config/main.yaml replay conversations/test.txt
 
-# List models
-python -m ai_whisperer.main list-models --config config.yaml
+# List models (legacy)
+python -m ai_whisperer.main list-models --config config/main.yaml
 ```
 
 ## Key Architectural Principles

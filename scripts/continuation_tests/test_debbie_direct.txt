@@ -1,0 +1,1 @@
+List the Python files in the ai_whisperer/tools directory, then read the first 20 lines of base_tool.py

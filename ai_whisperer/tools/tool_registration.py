@@ -192,7 +192,7 @@ def _register_debugging_tools(tool_registry) -> None:
         tool_registry.register_tool(WorkspaceValidatorTool())
         tool_registry.register_tool(PythonExecutorTool())
         tool_registry.register_tool(ScriptParserTool())
-        tool_registry.register_tool(BatchCommandTool())
+        tool_registry.register_tool(BatchCommandTool(tool_registry))
         tool_registry.register_tool(SystemHealthCheckTool())
         
         logger.debug("Registered debugging tools")

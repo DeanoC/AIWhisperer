@@ -1,0 +1,14 @@
+# Debbie Health Check Conversation
+# Each line is sent as a message to the AI
+
+# First, switch to Debbie
+Please switch to agent D (Debbie the Debugger)
+
+# Ask Debbie to run a health check
+Hi Debbie! Can you run a comprehensive system health check?
+
+# Request verbose output
+Please use the system_health_check tool with verbose=true to see all details
+
+# Ask for recommendations based on results
+Based on the health check results, what should we fix first?

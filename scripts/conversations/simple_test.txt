@@ -1,0 +1,10 @@
+# Simple test conversation
+# This will be sent line by line to the AI
+
+Hi! Can you tell me what agent you are?
+
+Please list the available agents
+
+Switch to agent D (Debbie)
+
+Hi Debbie! Can you confirm you're now the active agent?

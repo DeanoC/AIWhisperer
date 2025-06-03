@@ -61,7 +61,10 @@ class AgentRegistry:
         # Try to load from YAML config, fallback to hardcoded
         import yaml
         import os
-        config_path = os.path.join(os.path.dirname(__file__), 'config', 'agents.yaml')
+        # Look for config in the project's config directory
+        from ai_whisperer.utils.path import PathManager
+        path_manager = PathManager.get_instance()
+        config_path = path_manager.project_path / 'config' / 'agents' / 'agents.yaml'
         agents = {}
         if os.path.exists(config_path):
             with open(config_path, 'r', encoding='utf-8') as f:
@@ -83,7 +86,7 @@ class AgentRegistry:
                         continuation_config=agent_cfg.get('continuation_config')
                     )
         else:
-            # Hardcoded fallback
+            # Only use hardcoded fallback if no config file exists
             agents = {
                 "P": Agent(
                     agent_id="P",

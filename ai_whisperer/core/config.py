@@ -72,6 +72,12 @@ def load_config(config_path: Optional[str] = None,
     # Load .env file first, with error handling for CI/test environments
     try:
         load_dotenv()
+        # Debug: Check if API key is loaded from environment
+        api_key = os.getenv('OPENROUTER_API_KEY')
+        if api_key:
+            logger.debug(f"API key loaded from environment: {api_key[:10]}... (length: {len(api_key)})")
+        else:
+            logger.debug("No API key found in environment")
     except IOError as e:
         # In CI or test environments, the starting path might not exist
         logger.debug(f"Could not load .env file: {e}")
@@ -214,6 +220,9 @@ def _validate_and_process_config(config: Dict[str, Any],
         if not api_key_from_env:
             raise ConfigError("OPENROUTER_API_KEY not found in environment variables or config")
         openrouter_config["api_key"] = api_key_from_env
+        logger.debug(f"API key set in config from env: {api_key_from_env[:10]}... (length: {len(api_key_from_env)})")
+    else:
+        logger.debug(f"API key already in config: {openrouter_config['api_key'][:10]}... (length: {len(openrouter_config['api_key'])})")
 
     # Load Optional Settings with Defaults
     openrouter_config["site_url"] = openrouter_config.get("site_url", DEFAULT_SITE_URL)

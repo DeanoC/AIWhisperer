@@ -1,0 +1,37 @@
+[
+  {
+    "name": "test_single_message",
+    "start_time": "2025-06-02T20:59:40.293119",
+    "steps": [
+      {
+        "name": "simple_greeting",
+        "success": false,
+        "stdout": "\n\ud83d\udcc1 Log files:\n   Server log: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_20250602_205940.log\n   Debug log:  /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_20250602_205940.log\n   Test log:   /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_20250602_205940.log\n\n",
+        "stderr": "2025-06-02 20:59:40,425 1398007 MainThread aiwhisperer.server - INFO - Server logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_20250602_205940.log\n2025-06-02 20:59:40,425 1398007 MainThread aiwhisperer.test - INFO - Test logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_20250602_205940.log\n2025-06-02 20:59:40,425 1398007 MainThread root - INFO - Debug logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_20250602_205940.log\n2025-06-02 20:59:40,426 1398007 MainThread ai_whisperer.core.config - INFO - Loading configuration in legacy mode from: /home/deano/projects/AIWhisperer/config.yaml\nError loading config: Configuration file not found: /home/deano/projects/AIWhisperer/config.yaml\n",
+        "validations": {
+          "continuation": {
+            "passed": true,
+            "expected": false,
+            "actual": false,
+            "reason": "Expected continuation=False, found=False"
+          },
+          "tools_used": {
+            "passed": true,
+            "expected": [],
+            "actual": [],
+            "reason": "Expected tools [], found []"
+          },
+          "response_pattern": {
+            "passed": true,
+            "expected": "4|four",
+            "actual": true,
+            "reason": "Pattern '4|four' found"
+          }
+        }
+      }
+    ],
+    "success": false,
+    "error": "Step 'simple_greeting' failed",
+    "end_time": "2025-06-02T20:59:40.447328"
+  }
+]

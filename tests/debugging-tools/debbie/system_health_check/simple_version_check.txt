@@ -1,0 +1,6 @@
+# Simple Version Check
+# Tests basic functionality
+
+1. Check Python version
+2. Check if AIWhisperer is importable
+3. Verify basic components

@@ -1,0 +1,28 @@
+{
+  "name": "test_basic_continuation",
+  "description": "Test explicit continuation with a multi-step task",
+  "config": {
+    "agent": "default",
+    "model": "google/gemini-2.5-flash-preview",
+    "max_iterations": 5
+  },
+  "steps": [
+    {
+      "name": "multi_file_analysis",
+      "user_message": "Please analyze the Python files in the tools directory and give me a summary of what each one does. Start with just the first 3 files.",
+      "expected_behavior": {
+        "should_continue": true,
+        "tools_used": ["list_directory", "read_file"],
+        "continuation_reason": "multiple files to analyze",
+        "description": "Should list directory, read files, and signal continuation"
+      }
+    }
+  ],
+  "validation": {
+    "check_continuation_signals": true,
+    "check_progress_tracking": true,
+    "require_completion": false,
+    "min_iterations": 2,
+    "max_iterations": 5
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "test_single_tool_continuation",
+  "description": "Test continuation with single-tool models using explicit signals",
+  "config": {
+    "agent": "default",
+    "model": "google/gemini-2.5-flash-preview-thinking",
+    "max_iterations": 3
+  },
+  "steps": [
+    {
+      "name": "sequential_file_operations",
+      "user_message": "Create a file called test.txt with 'Hello World', then read it back to confirm it was created correctly.",
+      "expected_behavior": {
+        "should_continue": true,
+        "tools_sequence": ["write_file", "read_file"],
+        "continuation_after_first_tool": true,
+        "description": "Single-tool model should write file, signal continuation, then read file"
+      }
+    }
+  ],
+  "validation": {
+    "check_continuation_signals": true,
+    "check_explicit_continuation": true,
+    "expected_iterations": 2,
+    "verify_file_created": true
+  }
+}

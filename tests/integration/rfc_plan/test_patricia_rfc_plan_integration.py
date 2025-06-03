@@ -7,8 +7,8 @@ import pytest
 import json
 from pathlib import Path
 from unittest.mock import Mock, patch, AsyncMock
-from ai_whisperer.extensions.batch.script_processor import ScriptProcessor
-from ai_whisperer.extensions.batch.client import BatchClient
+from ai_whisperer.extensions.conversation_replay.script_processor import ScriptProcessor
+from ai_whisperer.extensions.conversation_replay.client import BatchClient
 
 
 @pytest.mark.integration
