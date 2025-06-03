@@ -10,7 +10,6 @@ import json
 import logging
 from typing import Optional, Dict, Any
 from ai_whisperer.tools.send_mail_tool import SendMailTool
-from ai_whisperer.tools.base_tool import ToolResult
 from ai_whisperer.extensions.mailbox.mailbox import Mail, MessagePriority, get_mailbox
 
 logger = logging.getLogger(__name__)
@@ -27,17 +26,29 @@ class SendMailWithSwitchTool(SendMailTool):
         """Set the session manager for agent switching."""
         self._session_manager = session_manager
         
-    def execute(self, **kwargs) -> ToolResult:
+    def execute(self, **kwargs) -> str:
         """Execute the send mail tool with agent switching support."""
         # Get the session context if available
         session_id = kwargs.get('_session_id')
         current_agent = kwargs.get('_agent_name', 'unknown')
         
         # First, send the mail normally
-        result = super().execute(**kwargs)
+        result_str = super().execute(**kwargs)
         
-        if not result.success:
-            return result
+        # Check if the mail was sent successfully
+        if "Error" in result_str:
+            return result_str
+            
+        # Extract message ID from result string if present
+        message_id = None
+        if "ID:" in result_str:
+            try:
+                # Extract ID from format "... (ID: xxx). ..."
+                id_start = result_str.find("ID:") + 3
+                id_end = result_str.find(")", id_start)
+                message_id = result_str[id_start:id_end].strip()
+            except:
+                pass
             
         # Check if we're sending to another agent (not user)
         to_agent = kwargs.get('to_agent', '')
@@ -49,25 +60,30 @@ class SendMailWithSwitchTool(SendMailTool):
                 # Log the synchronous switch
                 logger.info(f"Initiating synchronous agent switch: {current_agent} -> {to_agent}")
                 
-                # Add metadata to indicate this is a synchronous switch
+                # Create a result that includes switch metadata
                 switch_metadata = {
                     'switch_type': 'synchronous_mail',
                     'from_agent': current_agent,
                     'to_agent': to_agent,
-                    'message_id': result.data.get('message_id'),
+                    'message_id': message_id,
                     'return_to': current_agent
                 }
                 
-                # Return enhanced result with switch instruction
-                result.metadata['agent_switch'] = switch_metadata
-                result.data['switch_to_agent'] = to_agent
-                result.data['switch_reason'] = f"Processing mail from {current_agent}"
+                # Return enhanced result as JSON string with switch instruction
+                enhanced_result = {
+                    'message': result_str,
+                    'success': True,
+                    'message_id': message_id,
+                    'agent_switch': switch_metadata,
+                    'switch_to_agent': to_agent,
+                    'switch_reason': f"Processing mail from {current_agent}"
+                }
                 
-                # The actual switching will be handled by the session manager
-                # when it processes this tool result
+                # Return as formatted string that includes switch info
+                return f"{result_str}\n[Agent switch required: {current_agent} -> {to_agent}]"
                 
             except Exception as e:
                 logger.error(f"Failed to prepare agent switch: {e}")
-                # Don't fail the mail send, just log the error
+                # Don't fail the mail send, just return the original result
                 
-        return result
+        return result_str
