@@ -42,15 +42,33 @@ describe('AIService', () => {
     expect(msgId).toBe('msg-1');
   });
 
-  it('handles AI message chunk notifications', async () => {
+  it('handles channel message notifications', async () => {
     rpc.sendRequest.mockResolvedValueOnce({ sessionId: 'abc', status: 1, model: 'gpt-test' });
     await service.startSession('user1');
-    const chunks: any[] = [];
-    service.onAIMessageChunk((chunk) => chunks.push(chunk));
-    rpc._notify({ method: 'AIMessageChunkNotification', params: { chunk: 'hi', index: 0, isFinal: false } });
-    rpc._notify({ method: 'AIMessageChunkNotification', params: { chunk: 'bye', index: 1, isFinal: true } });
-    expect(chunks.length).toBe(2);
-    expect(chunks[1].isFinal).toBe(true);
+    const channelMessages: any[] = [];
+    service.onChannelMessage((message) => channelMessages.push(message));
+    
+    rpc._notify({ 
+      method: 'ChannelMessageNotification', 
+      params: { 
+        channel: 'final', 
+        content: 'Hello world', 
+        metadata: { sequence: 1, timestamp: '2023-01-01T00:00:00Z', isPartial: false }
+      } 
+    });
+    
+    rpc._notify({ 
+      method: 'ChannelMessageNotification', 
+      params: { 
+        channel: 'analysis', 
+        content: 'Internal reasoning', 
+        metadata: { sequence: 2, timestamp: '2023-01-01T00:00:01Z', isPartial: true }
+      } 
+    });
+    
+    expect(channelMessages.length).toBe(2);
+    expect(channelMessages[0].channel).toBe('final');
+    expect(channelMessages[1].metadata.isPartial).toBe(true);
   });
 
   it('handles session stopped notification', async () => {

@@ -154,18 +154,29 @@ export const ChannelChatView: React.FC<ChannelChatViewProps> = ({
     }
   };
 
-  // Combine regular messages with channel messages
-  // Channel messages will appear between regular messages based on timing
+  // Combine regular messages with channel messages and sort by timestamp
   const combinedMessages = React.useMemo(() => {
-    const combined: Array<ChatMessage | ChannelMessage> = [...messages];
+    const combined: Array<ChatMessage | ChannelMessage> = [];
     
-    // Insert visible channel messages at appropriate positions
-    // For now, append them at the end (later we can interleave based on timestamps)
+    // Add regular messages (user and system messages)
+    messages.forEach(msg => combined.push(msg));
+    
+    // Add visible channel messages (AI responses)
     visibleMessages.forEach(channelMsg => {
-      combined.push(channelMsg);
+      // Add a timestamp property for sorting if it doesn't exist
+      const msgWithTimestamp = {
+        ...channelMsg,
+        timestamp: channelMsg.metadata.timestamp || new Date().toISOString()
+      };
+      combined.push(msgWithTimestamp);
     });
     
-    return combined;
+    // Sort all messages by timestamp
+    return combined.sort((a, b) => {
+      const timeA = new Date('timestamp' in a ? a.timestamp : a.metadata?.timestamp || '').getTime();
+      const timeB = new Date('timestamp' in b ? b.timestamp : b.metadata?.timestamp || '').getTime();
+      return timeA - timeB;
+    });
   }, [messages, visibleMessages]);
 
   return (
@@ -234,11 +245,16 @@ export const ChannelChatView: React.FC<ChannelChatViewProps> = ({
           // Check if it's a channel message
           if ('type' in item && item.type === 'channel_message') {
             const channelMsg = item as ChannelMessage;
+            // Look up the correct agent from the message metadata
+            const messageAgent = channelMsg.metadata.agentId 
+              ? agents.find(a => a.id === channelMsg.metadata.agentId) 
+              : currentAgent;
+            
             return (
               <ChannelMessageComponent
                 key={`channel-${channelMsg.metadata.sequence}`}
                 message={channelMsg}
-                agent={currentAgent || undefined}
+                agent={messageAgent || undefined}
                 isVisible={true}
               />
             );

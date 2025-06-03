@@ -56,6 +56,7 @@ class ChannelRouter:
         self.session_id = session_id
         self.agent_id = agent_id
         self._sequence_counter = 0
+        self._streaming_sequences: Dict[ChannelType, int] = {}  # Track sequence numbers for streaming messages
     
     def route_response(self, content: str, is_partial: bool = False) -> List[ChannelMessage]:
         """
@@ -70,6 +71,12 @@ class ChannelRouter:
         """
         messages = []
         remaining_content = content
+        
+        # For new complete messages (not partial updates), clear any streaming sequences
+        # This ensures each new complete response gets fresh sequence numbers
+        if not is_partial:
+            logger.debug(f"Processing new complete response, clearing {len(self._streaming_sequences)} streaming sequences, current counter: {self._sequence_counter}")
+            self._streaming_sequences.clear()
         
         # First, extract explicitly marked channel content
         for channel_type, pattern in self.CHANNEL_PATTERNS.items():
@@ -164,10 +171,28 @@ class ChannelRouter:
         custom: Optional[Dict[str, Any]] = None
     ) -> ChannelMessage:
         """Create a ChannelMessage with metadata."""
-        self._sequence_counter += 1
+        # For streaming messages, reuse the sequence number for the same channel
+        if is_partial:
+            if channel not in self._streaming_sequences:
+                self._sequence_counter += 1
+                self._streaming_sequences[channel] = self._sequence_counter
+                logger.debug(f"Started new streaming sequence {self._sequence_counter} for channel {channel.value}")
+            sequence = self._streaming_sequences[channel]
+        else:
+            # For final messages, use existing streaming sequence or create new one
+            if channel in self._streaming_sequences:
+                sequence = self._streaming_sequences[channel]
+                # Clear the streaming sequence since this is the final message
+                del self._streaming_sequences[channel]
+                logger.debug(f"Completed streaming sequence {sequence} for channel {channel.value}")
+            else:
+                # ALWAYS increment for new messages, even if non-streaming
+                self._sequence_counter += 1
+                sequence = self._sequence_counter
+                logger.debug(f"Created new sequence {sequence} for channel {channel.value} (non-streaming)")
         
         metadata = ChannelMetadata(
-            sequence=self._sequence_counter,
+            sequence=sequence,
             timestamp=datetime.now(timezone.utc),
             agent_id=self.agent_id,
             session_id=self.session_id,
@@ -181,6 +206,10 @@ class ChannelRouter:
             content=content,
             metadata=metadata
         )
+    
+    def reset_streaming(self):
+        """Reset streaming sequences for a new conversation."""
+        self._streaming_sequences.clear()
     
     def parse_channel_markers(self, content: str) -> List[Tuple[ChannelType, str]]:
         """

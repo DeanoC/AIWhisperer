@@ -53,7 +53,12 @@ export const ChannelMessage: React.FC<ChannelMessageProps> = ({
   return (
     <div 
       className={`channel-message ${message.channel} ${isCompact ? 'compact' : ''} ${message.metadata.isPartial ? 'partial' : ''}`}
-      style={{ '--channel-color': channelColor } as React.CSSProperties}
+      style={{ 
+        '--channel-color': channelColor,
+        '--agent-color': agent?.color || channelColor,
+        borderLeftColor: agent?.color || channelColor,
+        backgroundColor: agent?.color ? `${agent.color}15` : undefined
+      } as React.CSSProperties}
     >
       {!isCompact && (
         <div className="channel-message-header">

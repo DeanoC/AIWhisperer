@@ -29,16 +29,24 @@ class ChannelIntegration:
         }
     
     def get_router(self, session_id: str, agent_id: Optional[str] = None) -> ChannelRouter:
-        """Get or create a router for a session."""
-        key = f"{session_id}:{agent_id or 'default'}"
+        """Get or create a router for a session (session-wide, not per-agent)."""
+        # Use session-wide router instead of per-agent to get consistent sequence numbers
+        key = session_id  # Remove agent_id from key to share router across agents
         
         if key not in self._routers:
             self._routers[key] = ChannelRouter(
                 session_id=session_id,
-                agent_id=agent_id
+                agent_id=None  # Session-wide router
             )
+            logger.debug(f"Created new session-wide router for {key}")
+        else:
+            logger.debug(f"Reusing session-wide router for {key}, current sequence: {self._routers[key]._sequence_counter}")
         
-        return self._routers[key]
+        # Update agent_id for this specific call (for metadata)
+        router = self._routers[key]
+        router.agent_id = agent_id  # Set current agent for this message
+        
+        return router
     
     def process_ai_response(
         self, 
@@ -76,6 +84,11 @@ class ChannelIntegration:
             websocket_messages.append(self._to_websocket_format(message))
         
         return websocket_messages
+    
+    def reset_streaming(self, session_id: str, agent_id: Optional[str] = None):
+        """Reset streaming for a new conversation."""
+        router = self.get_router(session_id, agent_id)
+        router.reset_streaming()
     
     def _to_websocket_format(self, message: ChannelMessage) -> Dict[str, Any]:
         """Convert ChannelMessage to WebSocket notification format."""

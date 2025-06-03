@@ -37,8 +37,28 @@ export function useChannels(aiService?: AIService): UseChannelsResult {
     const handleChannelMessage = (message: ChannelMessage) => {
       console.log('[useChannels] Received channel message:', message);
       
-      // If it's a partial message, update existing one with same sequence
-      if (message.metadata.isPartial) {
+      // Special handling for streaming updates (sequence 1 with isPartial=true)
+      if (message.metadata.isPartial && message.metadata.sequence === 1) {
+        // This is a streaming update - find and update the most recent streaming message for this channel/agent
+        setChannelMessages(prev => {
+          const existingIndex = prev.findIndex(
+            m => m.metadata.isPartial && 
+                 m.metadata.agentId === message.metadata.agentId &&
+                 m.channel === message.channel
+          );
+          
+          if (existingIndex !== -1) {
+            // Update existing streaming message
+            const updated = [...prev];
+            updated[existingIndex] = message;
+            return updated;
+          } else {
+            // Add new streaming message
+            return [...prev, message];
+          }
+        });
+      } else if (message.metadata.isPartial) {
+        // Regular partial message with proper sequence
         setChannelMessages(prev => {
           const existingIndex = prev.findIndex(
             m => m.metadata.sequence === message.metadata.sequence && 
@@ -56,12 +76,22 @@ export function useChannels(aiService?: AIService): UseChannelsResult {
           }
         });
       } else {
-        // Final message - replace any partial with same sequence or add new
+        // Final message - replace any streaming message for this agent/channel or add new
         setChannelMessages(prev => {
-          const existingIndex = prev.findIndex(
+          // First try to find exact sequence match
+          let existingIndex = prev.findIndex(
             m => m.metadata.sequence === message.metadata.sequence && 
                  m.channel === message.channel
           );
+          
+          // If no exact sequence match, look for streaming message to replace
+          if (existingIndex === -1) {
+            existingIndex = prev.findIndex(
+              m => m.metadata.isPartial && 
+                   m.metadata.agentId === message.metadata.agentId &&
+                   m.channel === message.channel
+            );
+          }
           
           if (existingIndex !== -1) {
             const updated = [...prev];

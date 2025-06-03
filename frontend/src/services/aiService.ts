@@ -1,7 +1,7 @@
 import { JsonRpcService } from './jsonRpcService';
 import { SessionInfo, SessionStatus } from '../types/ai';
 import { Agent, AgentHandoffContext, AgentHandoffNotification } from '../types/agent';
-import { ChannelMessage, ChannelVisibilityPreferences, ChannelHistoryRequest, ChannelHistoryResponse, ChannelStats } from '../types/channel';
+import { ChannelMessage, ChannelType, ChannelVisibilityPreferences, ChannelHistoryRequest, ChannelHistoryResponse, ChannelStats } from '../types/channel';
 
 export type ChannelMessageHandler = (message: ChannelMessage) => void;
 export type AgentChangedHandler = (agentId: string) => void;
@@ -124,6 +124,31 @@ export class AIService {
         metadata: params.metadata
       };
       console.log('[AIService] Processing channel message:', channelMessage);
+      if (this.channelMessageHandler) {
+        this.channelMessageHandler(channelMessage);
+      }
+    }
+    
+    // Handle streaming updates - convert to channel messages for backward compatibility
+    if (notification.method === 'StreamingUpdate') {
+      const params = notification.params || {};
+      // Create a synthetic channel message for streaming content
+      // This goes to the 'final' channel as the main response
+      const channelMessage: ChannelMessage = {
+        type: 'channel_message',
+        channel: ChannelType.FINAL,
+        content: params.content,
+        metadata: {
+          sequence: 1, // Use a placeholder sequence for streaming
+          timestamp: new Date().toISOString(),
+          agentId: params.agentId,
+          sessionId: params.sessionId,
+          toolCalls: [],
+          continuationDepth: 0,
+          isPartial: params.isPartial || true
+        }
+      };
+      console.log('[AIService] Processing streaming update as channel message:', channelMessage);
       if (this.channelMessageHandler) {
         this.channelMessageHandler(channelMessage);
       }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Tabs, TabData } from './Tabs';
 import { ChatView } from './ChatView';
 import { ChannelChatView } from './ChannelChatView';
@@ -45,7 +45,14 @@ export const MainTabs: React.FC<MainTabsProps> = ({
     },
   ]);
 
-  // Update chat tab content whenever chatProps change
+  // Memoize the chat content to prevent infinite re-renders
+  const chatContent = useMemo(() => (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
+      <ChannelChatView {...chatProps} />
+    </div>
+  ), [chatProps]);
+  
+  // Update chat tab content when chat content changes
   useEffect(() => {
     setTabs(prev => {
       const chatTabIndex = prev.findIndex(tab => tab.key === 'chat');
@@ -54,15 +61,11 @@ export const MainTabs: React.FC<MainTabsProps> = ({
       const newTabs = [...prev];
       newTabs[chatTabIndex] = {
         ...newTabs[chatTabIndex],
-        content: (
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
-            <ChannelChatView {...chatProps} />
-          </div>
-        )
+        content: chatContent
       };
       return newTabs;
     });
-  }, [chatProps]);
+  }, [chatContent]);
   const [activeKey, setActiveKey] = useState('chat');
 
   // Add a function to open editor tabs

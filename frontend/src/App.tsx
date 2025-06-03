@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ChatMessage, MessageSender } from './types/chat';
 import { Agent } from './types/agent';
@@ -327,7 +327,18 @@ function App() {
       const agent = agents.find(a => a.id.toLowerCase() === agentId.toLowerCase());
       if (agent) {
         setCurrentAgent(agent);
-        addSystemMessage(`Switched to ${agent.name}`);
+        
+        // Request introduction from the agent first
+        try {
+          await aiService.sendUserMessage("Please introduce yourself briefly.");
+          // Add system message after AI responds
+          setTimeout(() => {
+            addSystemMessage(`✓ Switched to ${agent.name}`);
+          }, 500);
+        } catch (error) {
+          console.error('Failed to request agent introduction:', error);
+          addSystemMessage(`Switched to ${agent.name}`);
+        }
       }
     });
     
@@ -440,6 +451,38 @@ function App() {
     }
   } : null;
 
+  // Memoize chatProps to prevent infinite re-renders
+  const chatProps = useMemo(() => ({
+    messages,
+    currentAgent,
+    agents,
+    onSendMessage: handleSendMessage,
+    onAgentSelect: handleAgentSelect,
+    onHandoffToAgent: handleHandoffToAgent,
+    sessionStatus,
+    wsStatus,
+    sessionError: sessionError || undefined,
+    onThemeToggle: toggleTheme,
+    theme,
+    jsonRpcService,
+    aiService,
+    currentAIMessage,
+    loading,
+  }), [
+    messages, currentAgent, agents, handleSendMessage, handleAgentSelect, 
+    handleHandoffToAgent, sessionStatus, wsStatus, sessionError, toggleTheme, 
+    theme, jsonRpcService, aiService, currentAIMessage, loading
+  ]);
+
+  // Memoize fileBrowserProps to prevent re-renders
+  const fileBrowserProps = useMemo(() => ({
+    jsonRpcService,
+    onFileSelect: (filePath: string) => {
+      console.log('File selected:', filePath);
+      // TODO: Handle file selection - could add to chat context
+    },
+  }), [jsonRpcService]);
+
   // Add debugging for initial render
   console.log('[App] Rendering with:', {
     agents: agents.length,
@@ -468,30 +511,8 @@ function App() {
             >
               {/* Main tabbed area */}
               <MainTabs
-                chatProps={{
-                  messages,
-                  currentAgent,
-                  agents,
-                  onSendMessage: handleSendMessage,
-                  onAgentSelect: handleAgentSelect,
-                  onHandoffToAgent: handleHandoffToAgent,
-                  sessionStatus,
-                  wsStatus,
-                  sessionError: sessionError || undefined,
-                  onThemeToggle: toggleTheme,
-                  theme,
-                  jsonRpcService,
-                  aiService,
-                  currentAIMessage,
-                  loading,
-                }}
-                fileBrowserProps={{
-                  jsonRpcService,
-                  onFileSelect: (filePath: string) => {
-                    console.log('File selected:', filePath);
-                    // TODO: Handle file selection - could add to chat context
-                  },
-                }}
+                chatProps={chatProps}
+                fileBrowserProps={fileBrowserProps}
                 // Add other props as needed for JSONPlanView, CodeChangesView, etc.
                 onTabsReady={setTabHandlers}
               />
