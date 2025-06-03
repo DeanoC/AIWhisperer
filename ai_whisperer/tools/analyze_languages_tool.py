@@ -267,7 +267,7 @@ class AnalyzeLanguagesTool(AITool):
         
         return dict(frameworks)
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute language analysis."""
         path = arguments.get('path', '.')
         include_config = arguments.get('include_config', True)
@@ -283,7 +283,11 @@ class AnalyzeLanguagesTool(AITool):
                 root_path = Path(path_manager.resolve_path(path))
             
             if not root_path.exists():
-                return f"Error: Path '{path}' does not exist."
+                return {
+                    "error": f"Path '{path}' does not exist.",
+                    "path": path,
+                    "languages": {}
+                }
             
             # Statistics
             language_stats = defaultdict(lambda: {'count': 0, 'size': 0, 'files': []})
@@ -344,62 +348,72 @@ class AnalyzeLanguagesTool(AITool):
             # Detect frameworks
             frameworks = self._detect_frameworks(package_files_found)
             
-            # Build response
-            response = f"**Language Analysis for: {path}**\n"
-            response += f"Total files analyzed: {total_files}\n\n"
+            # Build structured response
+            language_details = []
+            for lang, stats in sorted_languages:
+                lang_info = {
+                    "language": lang,
+                    "file_count": stats['count'],
+                    "total_size": stats['size'],
+                    "size_formatted": self._format_size(stats['size']),
+                    "example_files": stats['files'][:5],
+                    "frameworks": frameworks.get(lang, [])
+                }
+                language_details.append(lang_info)
             
-            if sorted_languages:
-                response += "## Programming Languages\n\n"
-                for lang, stats in sorted_languages:
-                    response += f"### {lang}\n"
-                    response += f"- Files: {stats['count']}\n"
-                    response += f"- Total size: {self._format_size(stats['size'])}\n"
-                    
-                    # Add framework info if available
-                    if lang in frameworks:
-                        response += f"- Frameworks: {', '.join(frameworks[lang])}\n"
-                    
-                    if stats['files']:
-                        response += f"- Examples:\n"
-                        for example in stats['files'][:3]:
-                            response += f"  - {example}\n"
-                    response += "\n"
-            else:
-                response += "No programming language files found.\n"
-            
-            # Package files section
-            if package_files_found:
-                response += "## Package/Configuration Files\n\n"
-                for pkg_file, pkg_path in sorted(package_files_found.items()):
-                    rel_path = pkg_path.relative_to(root_path)
-                    indicator = self.PACKAGE_FILES.get(pkg_file, 'Unknown')
-                    response += f"- **{pkg_file}**: {indicator} (at {rel_path})\n"
-                response += "\n"
-            
-            # Summary
-            response += "## Summary\n\n"
-            if sorted_languages:
-                primary_lang = sorted_languages[0][0]
-                response += f"- **Primary language**: {primary_lang} "
-                response += f"({sorted_languages[0][1]['count']} files)\n"
-                
-                if len(sorted_languages) > 1:
-                    response += f"- **Other languages**: "
-                    response += ", ".join([lang for lang, _ in sorted_languages[1:4]])
-                    if len(sorted_languages) > 4:
-                        response += f" and {len(sorted_languages) - 4} more"
-                    response += "\n"
+            # Package files info
+            package_info = []
+            for pkg_file, pkg_path in sorted(package_files_found.items()):
+                package_info.append({
+                    "file": pkg_file,
+                    "path": str(pkg_path.relative_to(root_path)),
+                    "indicator": self.PACKAGE_FILES.get(pkg_file, 'Unknown')
+                })
             
             # Project type inference
             project_type = self._infer_project_type(sorted_languages, package_files_found, frameworks)
-            if project_type:
-                response += f"- **Project type**: {project_type}\n"
             
-            return response
+            # Primary and secondary languages
+            primary_language = None
+            secondary_languages = []
+            if sorted_languages:
+                primary_language = {
+                    "name": sorted_languages[0][0],
+                    "file_count": sorted_languages[0][1]['count'],
+                    "percentage": round(sorted_languages[0][1]['count'] / total_files * 100, 1) if total_files > 0 else 0
+                }
+                secondary_languages = [
+                    {
+                        "name": lang,
+                        "file_count": stats['count'],
+                        "percentage": round(stats['count'] / total_files * 100, 1) if total_files > 0 else 0
+                    }
+                    for lang, stats in sorted_languages[1:]
+                ]
+            
+            return {
+                "path": path,
+                "total_files": total_files,
+                "languages": language_details,
+                "package_files": package_info,
+                "frameworks": frameworks,
+                "project_type": project_type,
+                "primary_language": primary_language,
+                "secondary_languages": secondary_languages,
+                "summary": {
+                    "language_count": len(sorted_languages),
+                    "has_tests": any('test' in frameworks.get(lang, []).lower() if isinstance(frameworks.get(lang, []), str) else any('test' in f.lower() for f in frameworks.get(lang, [])) for lang in frameworks),
+                    "is_web_project": project_type and ('Web' in project_type or 'API' in project_type)
+                }
+            }
             
         except Exception as e:
             logger.error(f"Error analyzing languages: {e}")
-            return f"Error analyzing languages: {str(e)}"
+            return {
+                "error": f"Error analyzing languages: {str(e)}",
+                "path": path,
+                "languages": {}
+            }
     
     def _format_size(self, size: int) -> str:
         """Format file size in human-readable format."""

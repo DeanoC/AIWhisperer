@@ -135,7 +135,7 @@ class SaveGeneratedPlanTool(AITool):
         
         return None
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Save the generated plan."""
         plan_name = arguments.get('plan_name')
         plan_content = arguments.get('plan_content')
@@ -143,7 +143,11 @@ class SaveGeneratedPlanTool(AITool):
         rfc_hash = arguments.get('rfc_hash')
         
         if not all([plan_name, plan_content, rfc_id]):
-            return "Error: 'plan_name', 'plan_content', and 'rfc_id' are required."
+            return {
+                "error": "'plan_name', 'plan_content', and 'rfc_id' are required.",
+                "saved": False,
+                "plan_name": plan_name
+            }
         
         try:
             # Add metadata to plan
@@ -155,7 +159,12 @@ class SaveGeneratedPlanTool(AITool):
             # Find RFC metadata
             rfc_result = self._find_rfc_metadata(rfc_id)
             if not rfc_result:
-                return f"Error: RFC '{rfc_id}' metadata not found."
+                return {
+                    "error": f"RFC '{rfc_id}' metadata not found.",
+                    "saved": False,
+                    "plan_name": plan_name,
+                    "rfc_id": rfc_id
+                }
             
             rfc_path, rfc_metadata = rfc_result
             
@@ -170,7 +179,12 @@ class SaveGeneratedPlanTool(AITool):
             # Validate plan against schema
             valid, error = validate_against_schema(plan_content, "rfc_plan_schema.json")
             if not valid:
-                return f"Error: Generated plan failed validation: {error}"
+                return {
+                    "error": f"Generated plan failed validation: {error}",
+                    "saved": False,
+                    "plan_name": plan_name,
+                    "validation_error": error
+                }
             
             # Create plan directory
             path_manager = PathManager.get_instance()
@@ -221,18 +235,27 @@ class SaveGeneratedPlanTool(AITool):
             refactor_count = len(tdd_phases.get("refactor", []))
             total_tasks = len(plan_content.get("tasks", []))
             
-            return f"""Plan saved successfully!
-
-**Plan Name**: {plan_name}
-**Location**: .WHISPER/plans/in_progress/{plan_name}/
-**Total Tasks**: {total_tasks}
-**TDD Breakdown**:
-- RED (Tests): {red_count} tasks
-- GREEN (Implementation): {green_count} tasks  
-- REFACTOR (Improvement): {refactor_count} tasks
-
-The plan has been linked to RFC {rfc_id}. Use 'read_plan' to view the full plan details."""
+            return {
+                "saved": True,
+                "plan_name": plan_name,
+                "plan_path": f".WHISPER/plans/in_progress/{plan_name}/",
+                "absolute_path": str(plan_path),
+                "rfc_id": rfc_id,
+                "rfc_linked": True,
+                "total_tasks": total_tasks,
+                "tdd_breakdown": {
+                    "red": red_count,
+                    "green": green_count,
+                    "refactor": refactor_count
+                },
+                "created": now,
+                "status": "in_progress"
+            }
             
         except Exception as e:
             logger.error(f"Error saving generated plan: {e}")
-            return f"Error saving plan: {str(e)}"
+            return {
+                "error": f"Error saving plan: {str(e)}",
+                "saved": False,
+                "plan_name": plan_name
+            }
