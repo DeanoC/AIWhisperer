@@ -203,13 +203,15 @@
 }
 
 .dialog {
-  background: white;
+  background: var(--surface-color, white);
+  color: var(--text-color, #333);
   border-radius: 8px;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color, #ddd);
 }
 
 .dialog-header {
@@ -217,7 +219,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color, #eee);
 }
 
 .dialog-header h2 {
@@ -262,19 +264,23 @@ form {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--input-border, #ddd);
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s;
+  background: var(--input-bg, white);
+  color: var(--text-color, #333);
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
-  border-color: #007acc;
+  border-color: var(--accent-color, #007acc);
 }
 
 .path-input-group {
@@ -358,6 +364,34 @@ form {
   color: #666;
   font-size: 12px;
   line-height: 1.4;
+}
+
+/* Checkbox styles */
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-color, #333) !important;
+  cursor: pointer;
+  font-weight: normal !important;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto !important;
+  margin: 0 !important;
+}
+
+/* Fallback for themes that don't use CSS variables */
+.theme-dark .checkbox-label {
+  color: #cccccc !important;
+}
+
+.theme-light .checkbox-label {
+  color: #333333 !important;
+}
+
+.theme-high-contrast .checkbox-label {
+  color: #ffffff !important;
 }
 
 /* Existing project notice */

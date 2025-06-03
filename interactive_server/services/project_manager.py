@@ -477,13 +477,30 @@ yarn-error.log*
     def create_new_project(self, project_data: ProjectCreateNew) -> Project:
         """Create a brand new project with directory structure."""
         project_path = Path(project_data.path) / project_data.name
+        parent_path = Path(project_data.path)
+        
+        # Validate parent directory
+        if not parent_path.exists():
+            raise ValueError(f"Parent directory does not exist: {parent_path}")
+        
+        if not parent_path.is_dir():
+            raise ValueError(f"Parent path is not a directory: {parent_path}")
+        
+        # Check if we have write permission to parent directory
+        if not os.access(parent_path, os.W_OK):
+            raise ValueError(f"No write permission to parent directory: {parent_path}")
         
         # Check if project directory already exists
         if project_path.exists():
             raise ValueError(f"Directory already exists at {project_path}")
         
         # Create project directory
-        project_path.mkdir(parents=True, exist_ok=False)
+        try:
+            project_path.mkdir(parents=True, exist_ok=False)
+        except PermissionError as e:
+            raise ValueError(f"Permission denied creating project directory: {project_path}") from e
+        except OSError as e:
+            raise ValueError(f"Failed to create project directory: {project_path} - {e}") from e
         
         # Set up project template
         self._setup_project_template(project_path, project_data.template)

@@ -11,6 +11,7 @@ export function ProjectSelector() {
   const { activeProject, recentProjects, activateProject, closeWorkspace, isLoading } = useProject();
   const [isOpen, setIsOpen] = useState(false);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const [showCreateNewDialog, setShowCreateNewDialog] = useState(false);
 
   const handleProjectSelect = async (projectId: string) => {
     try {
@@ -58,6 +59,15 @@ export function ProjectSelector() {
                     Close Workspace
                   </button>
                 )}
+                <button
+                  className="create-button"
+                  onClick={() => {
+                    setShowCreateNewDialog(true);
+                    setIsOpen(false);
+                  }}
+                >
+                  Create New Project
+                </button>
                 <button
                   className="connect-button"
                   onClick={() => {
@@ -109,7 +119,178 @@ export function ProjectSelector() {
       {showConnectDialog && (
         <ConnectWorkspaceDialog onClose={() => setShowConnectDialog(false)} />
       )}
+      
+      {showCreateNewDialog && (
+        <CreateNewProjectDialog onClose={() => setShowCreateNewDialog(false)} />
+      )}
     </>
+  );
+}
+
+interface CreateNewProjectDialogProps {
+  onClose: () => void;
+}
+
+function CreateNewProjectDialog({ onClose }: CreateNewProjectDialogProps) {
+  const { createNewProject } = useProject();
+  const [name, setName] = useState('');
+  const [parentPath, setParentPath] = useState('');
+  const [template, setTemplate] = useState('basic');
+  const [description, setDescription] = useState('');
+  const [gitInit, setGitInit] = useState(false);
+  const [error, setError] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [templates, setTemplates] = useState<Array<{id: string, name: string, description: string}>>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+
+  // Load available templates
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const availableTemplates = await projectService.getProjectTemplates();
+        setTemplates(availableTemplates);
+        if (availableTemplates.length > 0) {
+          setTemplate(availableTemplates[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load templates:', err);
+        // Use fallback templates if API fails
+        setTemplates([
+          { id: 'basic', name: 'Basic Project', description: 'Basic project structure' }
+        ]);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+    loadTemplates();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsCreating(true);
+
+    try {
+      await createNewProject(name, parentPath, template, description, gitInit);
+      onClose();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleBrowse = () => {
+    alert('File browser integration coming soon. Please type the path manually.');
+  };
+
+  return (
+    <div className="dialog-overlay" onClick={onClose}>
+      <div className="dialog" onClick={e => e.stopPropagation()}>
+        <div className="dialog-header">
+          <h2>Create New Project</h2>
+          <button className="dialog-close" onClick={onClose}>×</button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="projectName">Project Name</label>
+            <input
+              id="projectName"
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="my-awesome-project"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="parentPath">Parent Directory</label>
+            <div className="path-input-group">
+              <input
+                id="parentPath"
+                type="text"
+                value={parentPath}
+                onChange={e => setParentPath(e.target.value)}
+                placeholder="/home/user/projects"
+                required
+              />
+              <button type="button" onClick={handleBrowse} className="browse-button">
+                Browse
+              </button>
+            </div>
+            <small className="form-help">
+              {name && parentPath ? 
+                `Project will be created at: ${parentPath}/${name}` : 
+                'The project folder will be created inside this directory'
+              }
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="template">Project Template</label>
+            {loadingTemplates ? (
+              <div>Loading templates...</div>
+            ) : (
+              <select
+                id="template"
+                value={template}
+                onChange={e => setTemplate(e.target.value)}
+                className="template-select"
+              >
+                {templates.map(tmpl => (
+                  <option key={tmpl.id} value={tmpl.id}>
+                    {tmpl.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {!loadingTemplates && templates.find(t => t.id === template) && (
+              <small className="form-help">
+                {templates.find(t => t.id === template)?.description}
+              </small>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="description">Description (optional)</label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Brief description of the project"
+              rows={3}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={gitInit}
+                onChange={e => setGitInit(e.target.checked)}
+              />
+              Initialize Git repository
+            </label>
+          </div>
+
+          {error && (
+            <div className="error-message">{error}</div>
+          )}
+
+          <div className="dialog-actions">
+            <button type="button" onClick={onClose} disabled={isCreating}>
+              Cancel
+            </button>
+            <button type="submit" disabled={isCreating || !name || !parentPath || loadingTemplates}>
+              {isCreating ? 'Creating...' : 'Create Project'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
