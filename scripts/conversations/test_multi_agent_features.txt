@@ -1,0 +1,13 @@
+Hi Alice! Can you tell me which AI model you're using?
+
+Great! Now I need help creating an RFC for a new authentication system. Can you switch me to Patricia?
+
+Thanks Patricia! Please create an RFC for implementing OAuth2 authentication with the following requirements:
+- Support for Google and GitHub providers
+- JWT token management
+- Refresh token rotation
+- Session management
+
+Perfect! Now I need some technical expertise. Can you get Eamonn to review this?
+
+Hi Eamonn! Can you tell me which AI model you're using and review the authentication RFC Patricia just created?
