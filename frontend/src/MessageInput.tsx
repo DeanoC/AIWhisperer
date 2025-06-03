@@ -217,6 +217,9 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, fetchCommandList, s
           </span>
         )}
       </div>
+      <div style={{ fontSize: '0.85em', color: '#888', marginTop: '2px', marginLeft: '2px' }}>
+        Press <b>Enter</b> to send, <b>Shift+Enter</b> for a new line
+      </div>
       <button
         className="send-btn"
         onClick={() => {

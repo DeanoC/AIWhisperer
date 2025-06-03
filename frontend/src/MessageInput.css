@@ -142,6 +142,23 @@
   color: transparent;
 }
 
+/* Multi-line textarea enhancements */
+.message-input.textarea {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  resize: none;
+  min-height: 2.5rem;
+  max-height: 8rem;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* Button style update for consistency */
 .send-btn {
   background: #1976d2;
