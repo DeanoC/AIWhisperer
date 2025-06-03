@@ -362,12 +362,54 @@ async def project_templates_handler(params: Dict[str, Any], websocket=None) -> D
         }
 
 
+async def project_check_whisper_handler(params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
+    """Check if a directory contains an existing .WHISPER folder"""
+    try:
+        path = params.get("path")
+        if not path:
+            return {
+                "error": {"code": -32602, "message": "Missing path parameter"}
+            }
+        
+        project_path = Path(path)
+        if not project_path.exists() or not project_path.is_dir():
+            return {
+                "has_whisper": False,
+                "error": "Path does not exist or is not a directory"
+            }
+        
+        whisper_path = project_path / ".WHISPER"
+        has_whisper = whisper_path.exists() and whisper_path.is_dir()
+        
+        result = {"has_whisper": has_whisper}
+        
+        if has_whisper:
+            # Try to read project name from project.json
+            project_json_path = whisper_path / "project.json"
+            if project_json_path.exists():
+                try:
+                    with open(project_json_path, 'r') as f:
+                        project_data = json.load(f)
+                        result["project_name"] = project_data.get("name")
+                except Exception as e:
+                    logger.warning(f"Failed to read project.json: {e}")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to check for .WHISPER folder: {e}")
+        return {
+            "error": {"code": -32603, "message": f"Failed to check directory: {str(e)}"}
+        }
+
+
 # Handler registry
 PROJECT_HANDLERS = {
     "project.connect": project_connect_handler,
     "project.join": project_join_handler,
     "project.create_new": project_create_new_handler,
     "project.templates": project_templates_handler,
+    "project.check_whisper": project_check_whisper_handler,
     "project.list": project_list_handler,
     "project.recent": project_recent_handler,
     "project.active": project_active_handler,
