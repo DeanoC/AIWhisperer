@@ -163,19 +163,19 @@ class ProjectService {
 
   async checkForExistingWhisper(path: string): Promise<{ hasWhisper: boolean; projectName?: string }> {
     try {
-      // We can use the file service to check if .WHISPER exists
-      const result = await this.ensureJsonRpc().sendRequest('file.list_directory', {
+      // Use workspace.listDirectory to check if .WHISPER exists
+      const result = await this.ensureJsonRpc().sendRequest('workspace.listDirectory', {
         path: path,
-        include_hidden: true
+        show_hidden: true
       });
       
       const files = result.files || [];
-      const whisperFolder = files.find((file: any) => file.name === '.WHISPER' && file.is_directory);
+      const whisperFolder = files.find((file: any) => file.name === '.WHISPER' && file.type === 'directory');
       
       if (whisperFolder) {
         // Try to read project.json to get the project name
         try {
-          const projectJsonResult = await this.ensureJsonRpc().sendRequest('file.get_content', {
+          const projectJsonResult = await this.ensureJsonRpc().sendRequest('workspace.getFileContent', {
             path: `${path}/.WHISPER/project.json`
           });
           
@@ -190,6 +190,7 @@ class ProjectService {
       return { hasWhisper: false };
     } catch (error: any) {
       // If we can't check the directory, assume no whisper folder
+      console.warn('Failed to check for existing .WHISPER folder:', error);
       return { hasWhisper: false };
     }
   }
