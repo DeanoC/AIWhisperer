@@ -17,14 +17,12 @@ async def main():
     print(f"Running batch test: {script_path}")
     print("Using existing server on port 8000...")
     
-    # Create client with existing server URI
-    client = BatchClient(script_path, server_port=8000, ws_uri="ws://localhost:8000/ws", dry_run=False)
-    
-    # Prevent it from trying to start a new server
-    client.server_manager.port = 8000
-    client.server_manager.process = None  # Fake process to skip startup
-    
-    await client.run()
+    # Updated to use ConversationClient
+    # Note: This script needs to be updated for the new conversation replay architecture
+    print("This script needs to be updated for the new conversation replay architecture")
+    # ConversationClient doesn't support connecting to existing server yet
+    # client = ConversationClient(script_path, dry_run=False)
+    # await client.run()
 
 
 if __name__ == "__main__":
