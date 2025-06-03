@@ -1,0 +1,3 @@
+# Test read_file tool with structured output
+
+Read the first 10 lines of README.md
