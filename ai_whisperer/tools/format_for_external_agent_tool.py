@@ -28,9 +28,9 @@ from typing import Any, Dict, List
 import json
 import logging
 from ai_whisperer.tools.base_tool import AITool
-from ..agents.decomposed_task import DecomposedTask
-from ..agents.external_adapters import AdapterRegistry
-from ..agents.agent_e_exceptions import ExternalAgentError
+from ..extensions.agents.decomposed_task import DecomposedTask
+from ..extensions.agents.external_adapters import AdapterRegistry
+from ..extensions.agents.agent_e_exceptions import ExternalAgentError
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ A JSON object containing:
 - alternatives: Alternative agents if the target is unavailable
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
         """Execute the format for external agent tool."""
         task_json = arguments.get("task")
         agent_name = arguments.get("agent")

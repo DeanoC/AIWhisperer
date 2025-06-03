@@ -188,6 +188,7 @@ class PromptSystem:
         self._tool_registry = tool_registry # Store the optional ToolRegistry instance
         self._shared_components = {}
         self._enabled_features = set(['core'])  # Core is always enabled
+        self._debug_options = set()  # Debug options for testing
         self._load_shared_components()
     
     def _load_shared_components(self):
@@ -224,6 +225,52 @@ class PromptSystem:
     def get_enabled_features(self) -> set:
         """Get the set of enabled features for debugging"""
         return self._enabled_features.copy()
+    
+    def enable_debug_option(self, option: str):
+        """Enable a debug option (e.g., 'single_tool', 'verbose_progress')"""
+        self._debug_options.add(option)
+        logger.info(f"Enabled debug option: {option}")
+        
+        # Automatically load debug_options component if any debug option is enabled
+        if self._debug_options and 'debug_options' not in self._enabled_features:
+            self.enable_feature('debug_options')
+    
+    def disable_debug_option(self, option: str):
+        """Disable a debug option"""
+        self._debug_options.discard(option)
+        logger.info(f"Disabled debug option: {option}")
+        
+        # Disable debug_options component if no debug options remain
+        if not self._debug_options and 'debug_options' in self._enabled_features:
+            self.disable_feature('debug_options')
+    
+    def get_debug_options(self) -> set:
+        """Get the set of active debug options"""
+        return self._debug_options.copy()
+    
+    def set_debug_mode(self, single_tool: bool = False, verbose_progress: bool = False, 
+                       force_sequential: bool = False, explicit_continuation: bool = False):
+        """Convenience method to set multiple debug options at once"""
+        # Clear existing debug options
+        self._debug_options.clear()
+        
+        # Set requested options
+        if single_tool:
+            self._debug_options.add('single_tool')
+        if verbose_progress:
+            self._debug_options.add('verbose_progress')
+        if force_sequential:
+            self._debug_options.add('force_sequential')
+        if explicit_continuation:
+            self._debug_options.add('explicit_continuation')
+        
+        # Update debug_options feature
+        if self._debug_options:
+            self.enable_feature('debug_options')
+        else:
+            self.disable_feature('debug_options')
+        
+        logger.info(f"Debug mode set with options: {self._debug_options}")
 
     def get_prompt(self, category: str, name: str) -> Prompt:
         """
@@ -257,11 +304,19 @@ class PromptSystem:
         if include_shared:
             logger.info(f"Including shared components. Enabled features: {self._enabled_features}")
             logger.info(f"Available shared components: {list(self._shared_components.keys())}")
+            logger.info(f"Active debug options: {self._debug_options}")
+            
             # Add enabled shared components
             for feature in sorted(self._enabled_features):  # Sort for consistent ordering
                 if feature in self._shared_components:
                     logger.info(f"Adding shared component: {feature}")
-                    content_parts.append(f"\n\n## {feature.upper().replace('_', ' ')} INSTRUCTIONS\n{self._shared_components[feature]}")
+                    component_content = self._shared_components[feature]
+                    
+                    # Customize debug_options content based on active debug options
+                    if feature == 'debug_options' and self._debug_options:
+                        component_content = self._customize_debug_content(component_content)
+                    
+                    content_parts.append(f"\n\n## {feature.upper().replace('_', ' ')} INSTRUCTIONS\n{component_content}")
         
         # Include tool instructions if requested and tool registry is available
         if include_tools and self._tool_registry:
@@ -314,4 +369,57 @@ class PromptSystem:
         available = sorted(list(set(available)))
 
         return available
+    
+    def _customize_debug_content(self, content: str) -> str:
+        """Customize debug_options content based on active debug options"""
+        lines = content.split('\n')
+        active_sections = []
+        current_section = []
+        section_name = None
+        
+        for line in lines:
+            # Check if this is a section header
+            if line.startswith('### '):
+                # Save previous section if it was active
+                if current_section and section_name and self._should_include_debug_section(section_name):
+                    active_sections.extend(current_section)
+                
+                # Start new section
+                section_name = line[4:].strip()
+                current_section = [line]
+            else:
+                current_section.append(line)
+        
+        # Don't forget the last section
+        if current_section and section_name and self._should_include_debug_section(section_name):
+            active_sections.extend(current_section)
+        
+        # Always include the header and general sections
+        result = []
+        for line in lines:
+            if line.startswith('# Debug Options') or line.startswith('## '):
+                result.append(line)
+            elif line.startswith('**DEBUG MODE ACTIVE**'):
+                result.append(line)
+                result.append(f"**Active options**: {', '.join(sorted(self._debug_options))}")
+                break
+        
+        # Add only the active sections
+        if active_sections:
+            result.extend([''] + active_sections)
+        
+        return '\n'.join(result)
+    
+    def _should_include_debug_section(self, section_name: str) -> bool:
+        """Check if a debug section should be included based on active options"""
+        section_map = {
+            'Single Tool Execution Mode': 'single_tool',
+            'Explicit Continuation Signals': 'explicit_continuation',
+            'Verbose Progress Reporting': 'verbose_progress',
+            'Force Sequential Processing': 'force_sequential',
+            'No Optimization': 'single_tool',  # Also applies to single_tool mode
+        }
+        
+        required_option = section_map.get(section_name)
+        return required_option in self._debug_options if required_option else False
     

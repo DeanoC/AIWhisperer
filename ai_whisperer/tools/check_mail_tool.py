@@ -1,120 +1,129 @@
 """
 Module: ai_whisperer/tools/check_mail_tool.py
-Purpose: AI tool implementation for check mail
+Purpose: AI tool implementation for checking mail
 
 This module implements an AI-usable tool that extends the AITool
 base class. It provides structured input/output handling and
 integrates with the OpenRouter API for AI model interactions.
 
 Key Components:
-- CheckMailTool: Tool for checking mailbox messages.
+- CheckMailTool: Tool for checking mail messages in the mailbox.
 
 Usage:
     tool = CheckMailTool()
-    result = await tool.execute(**parameters)
+    result = tool.execute(**parameters)
 
 Related:
 - See docs/agent-e-consolidated-implementation.md
-- See docs/dependency-analysis-report.md
-- See docs/archive/phase2_consolidation/agent-e-implementation-summary.md
 
 """
 
-from ai_whisperer.tools.base_tool import BaseTool, ToolResult, ToolDefinition, ParameterDefinition
-from ai_whisperer.extensions.mailbox.mailbox import get_mailbox
+from ai_whisperer.tools.base_tool import AITool
+from ai_whisperer.extensions.mailbox.mailbox import get_mailbox, MessageStatus
 
-class CheckMailTool(BaseTool):
-    """Tool for checking mailbox messages."""
+class CheckMailTool(AITool):
+    """Tool for checking mail messages in the mailbox."""
     
-    def get_definition(self) -> ToolDefinition:
-        """Get the tool definition."""
-        return ToolDefinition(
-            name="check_mail",
-            description="Check mailbox for new messages or view message history",
-            parameters=[
-                ParameterDefinition(
-                    name="unread_only",
-                    description="Only show unread messages (default: true)",
-                    type="boolean",
-                    required=False
-                ),
-                ParameterDefinition(
-                    name="include_archived",
-                    description="Include archived messages (default: false)",
-                    type="boolean",
-                    required=False
-                ),
-                ParameterDefinition(
-                    name="limit",
-                    description="Maximum number of messages to return",
-                    type="integer",
-                    required=False
-                )
-            ]
-        )
+    @property
+    def name(self) -> str:
+        """Return the tool name."""
+        return "check_mail"
     
-    def execute(self, **kwargs) -> ToolResult:
-        """Execute the check mail tool."""
-        try:
-            # Get current agent name from context
-            agent_name = kwargs.get('_agent_name', '')
-            
-            # Parse parameters
-            unread_only = kwargs.get('unread_only', True)
-            include_archived = kwargs.get('include_archived', False)
-            limit = kwargs.get('limit', 50)
-            
-            # Get mailbox
-            mailbox = get_mailbox()
-            
-            # Get messages based on parameters
-            if unread_only:
-                messages = mailbox.check_mail(agent_name)
-            else:
-                messages = mailbox.get_all_mail(
-                    agent_name,
-                    include_read=True,
-                    include_archived=include_archived
-                )
-            
-            # Apply limit
-            if limit and len(messages) > limit:
-                messages = messages[:limit]
-            
-            # Format messages for output
-            formatted_messages = []
-            for mail in messages:
-                formatted_messages.append({
-                    'message_id': mail.message_id,
-                    'from': mail.from_agent or 'user',
-                    'subject': mail.subject,
-                    'body': mail.body,
-                    'timestamp': mail.timestamp.isoformat(),
-                    'priority': mail.priority.value,
-                    'status': mail.status.value,
-                    'reply_to': mail.reply_to
-                })
-            
-            # Get unread count for notification
-            unread_count = mailbox.get_unread_count(agent_name)
-            
-            return ToolResult(
-                success=True,
-                data={
-                    'messages': formatted_messages,
-                    'count': len(formatted_messages),
-                    'unread_count': unread_count,
-                    'has_more': len(messages) == limit if limit else False
+    @property
+    def description(self) -> str:
+        """Return the tool description."""
+        return "Check your mailbox for new messages"
+    
+    @property
+    def parameters_schema(self) -> dict:
+        """Return the parameters schema."""
+        return {
+            "type": "object",
+            "properties": {
+                "unread_only": {
+                    "type": "boolean",
+                    "description": "Whether to show only unread messages",
+                    "default": True
                 },
-                metadata={
-                    'agent': agent_name or 'user',
-                    'unread_only': unread_only
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of messages to retrieve",
+                    "default": 10
                 }
-            )
+            },
+            "required": []
+        }
+    
+    @property
+    def category(self) -> str:
+        """Return the tool category."""
+        return "Communication"
+    
+    @property
+    def tags(self) -> list:
+        """Return the tool tags."""
+        return ["mailbox", "communication", "messaging"]
+    
+    def get_ai_prompt_instructions(self) -> str:
+        """Return instructions for the AI on how to use this tool."""
+        return """Use the check_mail tool to check your mailbox for messages.
+        
+Parameters:
+- unread_only: Show only unread messages (default: true)
+- limit: Maximum number of messages to retrieve (default: 10)
+
+Example usage:
+- Check all unread: check_mail()
+- Check last 5 messages: check_mail(unread_only=false, limit=5)
+"""
+    
+    def execute(self, **kwargs) -> str:
+        """Execute the tool to check mail."""
+        # Check if we're getting 'arguments' instead of kwargs
+        if 'arguments' in kwargs and isinstance(kwargs['arguments'], dict):
+            # Tool is being called with arguments pattern
+            actual_args = kwargs['arguments']
+        else:
+            # Tool is being called with **kwargs pattern
+            actual_args = kwargs
             
-        except Exception as e:
-            return ToolResult(
-                success=False,
-                data={'messages': [], 'count': 0, 'unread_count': 0},
-                error=f"Failed to check mail: {str(e)}"
-            )
+        # Extract parameters
+        unread_only = actual_args.get('unread_only', True)
+        limit = actual_args.get('limit', 10)
+        
+        # Get current agent name from context
+        # Try different possible parameter names that might contain agent info
+        agent_name = (kwargs.get('_from_agent') or kwargs.get('_agent_name') or 
+                     kwargs.get('_agent_id') or actual_args.get('_from_agent') or 
+                     actual_args.get('_agent_name') or actual_args.get('_agent_id') or '')
+        
+        # Get the mailbox instance
+        mailbox = get_mailbox()
+        
+        # Get messages based on unread_only parameter
+        if unread_only:
+            # check_mail returns only unread messages and marks them as read
+            messages = mailbox.check_mail(agent_name)
+        else:
+            # get_all_mail returns all messages (read and unread)
+            messages = mailbox.get_all_mail(agent_name, include_read=True, include_archived=False)
+        
+        if not messages:
+            return "No messages found in your mailbox."
+        
+        # Format messages for display
+        result = f"You have {len(messages)} {'unread' if unread_only else ''} message(s):\n\n"
+        
+        for i, mail in enumerate(messages[:limit], 1):
+            # Use the status field instead of is_read
+            status = mail.status.value.upper()
+            result += f"{i}. [{status}] From: {mail.from_agent or 'User'}\n"
+            result += f"   Subject: {mail.subject}\n"
+            result += f"   Priority: {mail.priority.value}\n"
+            result += f"   Body: {mail.body[:100]}{'...' if len(mail.body) > 100 else ''}\n"
+            result += f"   ID: {mail.message_id}\n\n"
+        
+        if len(messages) > limit:
+            result += f"(Showing {limit} of {len(messages)} messages)"
+        
+        return result

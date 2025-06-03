@@ -28,8 +28,8 @@ import logging
 from typing import Dict, Any, List
 
 from ai_whisperer.tools.base_tool import AITool
-from ..agents.external_adapters import AdapterRegistry
-from ..agents.decomposed_task import DecomposedTask
+from ..extensions.agents.external_adapters import AdapterRegistry
+from ..extensions.agents.decomposed_task import DecomposedTask
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ A JSON object containing:
 - best_choice: The top recommendation with confidence level
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
         """Execute the recommend external agent tool."""
         task_json = arguments.get("task")
         only_available = arguments.get("only_available", True)

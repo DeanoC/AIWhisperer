@@ -8,7 +8,7 @@ agents:
     context_sources: ["rfc_templates", "existing_rfcs", "codebase_structure"]
     color: "#9C27B0"
     icon: "📝"
-    tool_sets: ["rfc_specialist"]
+    tool_sets: ["rfc_specialist", "mailbox_tools"]
     continuation_config:
       require_explicit_signal: true
       max_iterations: 10
@@ -18,15 +18,31 @@ agents:
     name: "Alice the AI Assistant"
     role: "assistant" 
     description: "General-purpose AI assistant for coding and problem-solving"
-    tool_tags: ["filesystem", "command", "analysis"]
+    tool_tags: ["filesystem", "command", "analysis", "agent_switching"]
     prompt_file: "alice_assistant.prompt.md"
     context_sources: ["conversation_history", "workspace_structure"]
     color: "#F97316"
     icon: "🤖"
+    tool_sets: ["general_assistant", "agent_switching", "mailbox_tools"]
     continuation_config:
-      require_explicit_signal: true
-      max_iterations: 5
-      timeout: 300
+      require_explicit_signal: false  # Use AI-driven continuation
+      max_iterations: 8
+      timeout: 600
+      patterns:
+        - "let me"
+        - "I'll"
+        - "next"
+        - "now"
+        - "continuing"
+        - "step"
+        - "checking"
+        - "then"
+      termination_patterns:
+        - "complete"
+        - "finished"
+        - "done"
+        - "ready"
+        - "all set"
     
   t:
     name: "Tessa the Tester"
@@ -51,7 +67,7 @@ agents:
     context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure", "conversation_files"]
     color: "#DC2626"
     icon: "🐛"
-    tool_sets: ["debugging_tools", "conversation_tools", "monitoring_tools", "filesystem", "command", "analysis"]
+    tool_sets: ["debugging_tools", "conversation_tools", "monitoring_tools", "filesystem", "command", "analysis", "mailbox_tools"]
     capabilities:
       - session_monitoring
       - error_detection

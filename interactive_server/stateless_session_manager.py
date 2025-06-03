@@ -25,6 +25,7 @@ from ai_whisperer.context.context_manager import AgentContextManager
 from ai_whisperer.utils.path import PathManager
 from .message_models import AIMessageChunkNotification, ContinuationProgressNotification
 from .debbie_observer import get_observer
+from .agent_switch_handler import AgentSwitchHandler
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,9 @@ class StatelessInteractiveSession:
         # Lock for thread-safe operations
         self._lock = asyncio.Lock()
         
+        # Initialize agent switch handler
+        self.agent_switch_handler = AgentSwitchHandler(self)
+        
         # Initialize context tracking
         path_manager = PathManager()
         if project_path:
@@ -103,7 +107,18 @@ class StatelessInteractiveSession:
         # Register all tools
         register_all_tools(path_manager)
         
-        logger.info("Registered all tools for interactive session")
+        # Also register mailbox tools explicitly in case they're not in register_all_tools
+        from ai_whisperer.tools.tool_registry import get_tool_registry
+        from ai_whisperer.tools.send_mail_tool import SendMailTool
+        from ai_whisperer.tools.check_mail_tool import CheckMailTool
+        from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
+        
+        tool_registry = get_tool_registry()
+        tool_registry.register_tool(SendMailTool())
+        tool_registry.register_tool(CheckMailTool())
+        tool_registry.register_tool(ReplyMailTool())
+        
+        logger.info("Registered all tools for interactive session including mailbox tools")
     
     def _create_stateless_ai_loop(self, agent_id: str = None) -> StatelessAILoop:
         """Create a StatelessAILoop instance for an agent"""
@@ -120,10 +135,17 @@ class StatelessInteractiveSession:
         # Create AI service
         ai_service = OpenRouterAIService(config=ai_config)
         
-        # Create StatelessAILoop
+        # Create agent context to pass to AI loop
+        agent_context = {
+            'agent_id': agent_id,
+            'agent_name': agent_id  # We'll use agent_id as the name for now
+        }
+        
+        # Create StatelessAILoop with agent context
         return StatelessAILoop(
             config=ai_config,
-            ai_service=ai_service
+            ai_service=ai_service,
+            agent_context=agent_context
         )
     
     async def create_agent(self, agent_id: str, system_prompt: str, config: Optional[AgentConfig] = None) -> StatelessAgent:
@@ -515,6 +537,21 @@ class StatelessInteractiveSession:
                     logger.debug("Reset continuation strategy")
             
             # Note: Assistant message is already stored by the AI loop, no need to store again
+            
+            # Check if agent switching is needed based on tool results
+            if result.get('tool_calls') and hasattr(self, 'agent_switch_handler'):
+                switch_occurred, additional_response = await self.agent_switch_handler.handle_tool_results(
+                    result.get('tool_calls', []),
+                    result.get('response', '')
+                )
+                
+                if switch_occurred and additional_response:
+                    # Append the additional response from agent switching
+                    if result.get('response'):
+                        result['response'] += additional_response
+                    else:
+                        result['response'] = additional_response
+                    logger.info("Agent switch completed, appended response")
             
             # Check if continuation is needed (like old delegate system)
             try:
@@ -1238,6 +1275,112 @@ class StatelessInteractiveSession:
                 await self._send_system_message(f"Failed to load session: {e}")
             return True
         
+        elif command == "/debug":
+            # Handle /debug command for testing
+            if not args:
+                # Show debug status
+                if self.prompt_system:
+                    debug_options = self.prompt_system.get_debug_options()
+                    if debug_options:
+                        await self._send_system_message(
+                            f"Debug mode active with options: {', '.join(sorted(debug_options))}"
+                        )
+                    else:
+                        await self._send_system_message("Debug mode is not active")
+                else:
+                    await self._send_system_message("Prompt system not available")
+                return True
+            
+            # Parse debug options
+            options = args.split()
+            if options[0] == "off":
+                # Disable all debug options
+                if self.prompt_system:
+                    self.prompt_system.set_debug_mode()  # All False by default
+                    
+                    # Regenerate the active agent's system prompt without debug options
+                    if self.active_agent in self.agents:
+                        agent = self.agents[self.active_agent]
+                        if hasattr(agent, 'config') and hasattr(agent, 'ai_loop'):
+                            try:
+                                system_prompt = self.prompt_system.get_formatted_prompt(
+                                    'agents',
+                                    self.active_agent,
+                                    include_tools=True,
+                                    include_shared=True
+                                )
+                                # Update the agent's AI loop with new system prompt
+                                agent.ai_loop.config.system_prompt = system_prompt
+                                logger.info(f"Updated {self.active_agent} agent prompt without debug options")
+                            except Exception as e:
+                                logger.warning(f"Failed to update agent prompt: {e}")
+                    
+                    await self._send_system_message("Debug mode disabled")
+                else:
+                    await self._send_system_message("Prompt system not available")
+            elif options[0] == "on":
+                # Enable specific debug options
+                debug_flags = {
+                    'single_tool': False,
+                    'verbose_progress': False,
+                    'force_sequential': False,
+                    'explicit_continuation': False
+                }
+                
+                # Parse remaining options
+                for opt in options[1:]:
+                    if opt in debug_flags:
+                        debug_flags[opt] = True
+                    else:
+                        await self._send_system_message(
+                            f"Unknown debug option: {opt}. "
+                            f"Available: {', '.join(debug_flags.keys())}"
+                        )
+                        return True
+                
+                if self.prompt_system:
+                    self.prompt_system.set_debug_mode(**debug_flags)
+                    enabled_opts = [k for k, v in debug_flags.items() if v]
+                    
+                    # Regenerate the active agent's system prompt with debug options
+                    if self.active_agent in self.agents:
+                        agent = self.agents[self.active_agent]
+                        if hasattr(agent, 'config') and hasattr(agent, 'ai_loop'):
+                            # Get the updated prompt with debug options
+                            try:
+                                system_prompt = self.prompt_system.get_formatted_prompt(
+                                    'agents',
+                                    self.active_agent,
+                                    include_tools=True,
+                                    include_shared=True
+                                )
+                                # Update the agent's AI loop with new system prompt
+                                agent.ai_loop.config.system_prompt = system_prompt
+                                logger.info(f"Updated {self.active_agent} agent prompt with debug options")
+                            except Exception as e:
+                                logger.warning(f"Failed to update agent prompt: {e}")
+                    
+                    if enabled_opts:
+                        await self._send_system_message(
+                            f"Debug mode enabled with options: {', '.join(enabled_opts)}"
+                        )
+                    else:
+                        await self._send_system_message(
+                            "Debug mode enabled with default options. "
+                            "Use: /debug on single_tool verbose_progress"
+                        )
+                else:
+                    await self._send_system_message("Prompt system not available")
+            else:
+                await self._send_system_message(
+                    "Usage:\n"
+                    "• /debug - Show current debug status\n"
+                    "• /debug off - Disable debug mode\n"
+                    "• /debug on [options] - Enable debug mode with options\n"
+                    "  Options: single_tool, verbose_progress, force_sequential, explicit_continuation"
+                )
+            return True
+            
         elif command == "/help":
             # Show available commands
             help_text = """Available commands:
@@ -1247,6 +1390,7 @@ class StatelessInteractiveSession:
 • /save - Save current session
 • /save <filepath> - Save session to specific file
 • /load <filepath> - Load session from file
+• /debug - Show debug status or configure debug options
 • /help - Show this help message"""
             
             await self._send_system_message(help_text)
@@ -1397,6 +1541,17 @@ class StatelessSessionManager:
         path_manager = PathManager()
         tool_registry.register_tool(FindPatternTool(path_manager))
         tool_registry.register_tool(WorkspaceStatsTool(path_manager))
+        
+        # Register mailbox tools
+        from ai_whisperer.tools.send_mail_tool import SendMailTool
+        from ai_whisperer.tools.check_mail_tool import CheckMailTool
+        from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
+        
+        tool_registry.register_tool(SendMailTool())
+        tool_registry.register_tool(CheckMailTool())
+        tool_registry.register_tool(ReplyMailTool())
+        
+        logger.info("Registered mailbox tools")
         
         # Register RFC management tools
         from ai_whisperer.tools.create_rfc_tool import CreateRFCTool

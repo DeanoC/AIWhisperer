@@ -28,7 +28,7 @@ import logging
 from typing import Dict, Any, List
 
 from ai_whisperer.tools.base_tool import AITool
-from ..agents.external_adapters import AdapterRegistry
+from ..extensions.agents.external_adapters import AdapterRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ A JSON object containing:
 - agent_insights: Agent-specific observations
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
         """Execute the parse external result tool."""
         agent_name = arguments.get("agent")
         output = arguments.get("output", "")
