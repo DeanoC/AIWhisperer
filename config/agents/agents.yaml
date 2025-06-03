@@ -69,13 +69,13 @@ agents:
     icon: "🐛"
     tool_sets: ["debugging_tools", "conversation_tools", "monitoring_tools", "filesystem", "command", "analysis", "mailbox_tools"]
     allow_tools: ["ai_loop_inspector"]  # Allow the new inspection tool
-    # Debbie uses a fast model for quick debugging responses
+    # Debbie uses Gemini 2.5 Flash for debugging with massive context window
     ai_config:
-      model: "openai/gpt-3.5-turbo"  # Fast model for debugging
+      model: "google/gemini-2.5-flash-preview"  # 1M token context for debugging
       provider: "openrouter"
       generation_params:
         temperature: 0.5  # Lower temperature for more predictable debugging
-        max_tokens: 2000  # Smaller context for faster responses
+        max_tokens: 8000  # Much larger context for debugging analysis
     capabilities:
       - session_monitoring
       - error_detection

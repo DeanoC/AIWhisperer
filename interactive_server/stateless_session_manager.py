@@ -27,6 +27,7 @@ from ai_whisperer.utils.path import PathManager
 from .message_models import AIMessageChunkNotification, ContinuationProgressNotification
 from .debbie_observer import get_observer
 from .agent_switch_handler import AgentSwitchHandler
+from ai_whisperer.channels.integration import get_channel_integration
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,9 @@ class StatelessInteractiveSession:
                 logger.error(f"Failed to initialize Debbie observer for session {session_id}: {e}")
         else:
             logger.debug(f"No observer provided for session {session_id}")
+        
+        # Initialize channel integration
+        self.channel_integration = get_channel_integration()
         
         # Register tools for interactive sessions
         self._register_tools()
@@ -222,8 +226,7 @@ class StatelessInteractiveSession:
             await self.create_agent("default", system_prompt)
             logger.info(f"Started session {self.session_id} with default agent")
             
-            # Have the default agent introduce itself
-            await self._agent_introduction()
+            # Introduction will be handled by switch_agent or first message
             
             return self.session_id
             
@@ -380,7 +383,6 @@ class StatelessInteractiveSession:
             # Have the agent introduce itself if not already introduced
             if self.active_agent and self.active_agent not in self.introduced_agents:
                 await self._agent_introduction()
-                self.introduced_agents.add(self.active_agent)
     
     async def send_user_message(self, message: str, is_continuation: bool = False):
         """
@@ -461,26 +463,48 @@ class StatelessInteractiveSession:
                 
                 message = enriched_message
             
-            # Create streaming callback
+            # Note: Don't reset streaming sequences - let router handle sequence numbering naturally
+            
+            # Create streaming callback with proper channel support
+            chunk_buffer = []  # Buffer for accumulating chunks
+            processed_length = 0  # Track how much content we've already processed
+            
             async def send_chunk(chunk: str):
                 """Send a chunk of AI response to the client"""
+                nonlocal processed_length
                 try:
                     # Check if WebSocket is still connected
                     if self.websocket is None:
                         logger.warning(f"WebSocket disconnected for session {self.session_id}, skipping chunk")
                         return
-                        
-                    notification = AIMessageChunkNotification(
-                        sessionId=self.session_id,
-                        chunk=chunk,
-                        isFinal=False
-                    )
-                    await self.websocket.send_json({
-                        "jsonrpc": "2.0",
-                        "method": "AIMessageChunkNotification",
-                        "params": notification.model_dump()
-                    })
-                    logger.debug(f"Sent chunk: {len(chunk)} chars")
+                    
+                    # Accumulate chunks for display but don't create channel messages during streaming
+                    # We'll only send the final complete message through the channel system
+                    chunk_buffer.append(chunk)
+                    accumulated_content = ''.join(chunk_buffer)
+                    
+                    # Only process new content that we haven't seen before
+                    if len(accumulated_content) > processed_length:
+                        # Send raw streaming update directly without going through channel system
+                        # This avoids creating duplicate sequence numbers
+                        if accumulated_content.strip():
+                            await self.websocket.send_json({
+                                "jsonrpc": "2.0",
+                                "method": "StreamingUpdate",
+                                "params": {
+                                    "type": "streaming_chunk",
+                                    "content": accumulated_content,
+                                    "sessionId": self.session_id,
+                                    "agentId": self.active_agent,
+                                    "isPartial": True
+                                }
+                            })
+                            
+                            processed_length = len(accumulated_content)
+                    
+                    # Reduce debug spam - only log significant chunks
+                    if len(accumulated_content) % 100 == 0:  # Log every 100 chars
+                        logger.debug(f"Sent streaming chunk: {len(chunk)} chars, total: {len(accumulated_content)}")
                 except Exception as e:
                     logger.error(f"Error sending chunk: {e}")
                     # If we get a RuntimeError about closed connection, clear the WebSocket
@@ -507,23 +531,34 @@ class StatelessInteractiveSession:
                     'error': f'Unexpected result type: {type(result)}'
                 }
             
-            # Send final notification if WebSocket is still connected
-            if self.websocket is not None:
-                try:
-                    final_notification = AIMessageChunkNotification(
-                        sessionId=self.session_id,
-                        chunk="",
-                        isFinal=True
-                    )
-                    await self.websocket.send_json({
-                        "jsonrpc": "2.0",
-                        "method": "AIMessageChunkNotification",
-                        "params": final_notification.model_dump()
-                    })
-                except Exception as e:
-                    logger.error(f"Error sending final notification: {e}")
-                    if "closed" in str(e).lower():
-                        self.websocket = None
+            # Process final message through channel integration to get proper final sequences
+            if result.get('response'):
+                final_content = result.get('response', '')
+                
+                # Process the final response through channel integration with is_partial=False
+                # This ensures we get proper final sequence numbers
+                final_channel_messages = self.channel_integration.process_ai_response(
+                    self.session_id,
+                    final_content,
+                    agent_id=self.active_agent,
+                    is_partial=False  # This is the key - marks it as a final complete message
+                )
+                
+                # Send final channel messages with proper sequence numbers
+                for channel_msg in final_channel_messages:
+                    if self.websocket is not None:
+                        try:
+                            await self.websocket.send_json({
+                                "jsonrpc": "2.0",
+                                "method": "ChannelMessageNotification",
+                                "params": channel_msg
+                            })
+                        except Exception as e:
+                            logger.error(f"Error sending final channel message: {e}")
+                            if "closed" in str(e).lower():
+                                self.websocket = None
+            
+            # Final notifications now handled by channel system
             
             # Debug logging to understand the result type
             logger.debug(f"Result type: {type(result)}, value: {result}")
@@ -673,54 +708,15 @@ class StatelessInteractiveSession:
             return
         
         try:
-            # Send a simple introduction request
+            # Send a simple introduction request using the full streaming pipeline
             introduction_prompt = "Please introduce yourself briefly, mentioning your name and what you help with."
             
-            # Create streaming callback for introduction
-            async def send_intro_chunk(chunk: str):
-                """Send introduction chunk to the client"""
-                try:
-                    notification = AIMessageChunkNotification(
-                        sessionId=self.session_id,
-                        chunk=chunk,
-                        isFinal=False
-                    )
-                    await self.websocket.send_json({
-                        "jsonrpc": "2.0",
-                        "method": "AIMessageChunkNotification",
-                        "params": notification.model_dump()
-                    })
-                except Exception as e:
-                    logger.error(f"Error sending introduction chunk: {e}")
+            # Use the normal send_user_message pipeline but mark as internal
+            logger.info(f"Requesting introduction from agent '{self.active_agent}'")
+            await self.send_user_message(introduction_prompt, is_continuation=False)
             
-            # Get the agent to introduce itself without storing in context
-            agent = self.agents[self.active_agent]
-            
-            # Process introduction without storing messages
-            await agent.process_message(
-                introduction_prompt, 
-                on_stream_chunk=send_intro_chunk,
-                store_messages=False  # Don't store introduction in context
-            )
-            
-            # Send final notification if WebSocket is still connected
-            if self.websocket is not None:
-                try:
-                    final_notification = AIMessageChunkNotification(
-                        sessionId=self.session_id,
-                        chunk="",
-                        isFinal=True
-                    )
-                    await self.websocket.send_json({
-                        "jsonrpc": "2.0",
-                        "method": "AIMessageChunkNotification",
-                        "params": final_notification.model_dump()
-                    })
-                except Exception as e:
-                    logger.error(f"Error sending final notification: {e}")
-                    if "closed" in str(e).lower():
-                        self.websocket = None
-            
+            # Mark as introduced
+            self.introduced_agents.add(self.active_agent)
             logger.info(f"Agent '{self.active_agent}' introduced itself")
             
         except Exception as e:
@@ -1084,6 +1080,11 @@ class StatelessInteractiveSession:
         
         # Clean up AI loops
         self.ai_loop_manager.cleanup()
+        
+        # Clear channel data for this session
+        if hasattr(self, 'channel_integration'):
+            self.channel_integration.clear_session(self.session_id)
+            logger.info(f"Cleared channel data for session {self.session_id}")
         
         # Stop observing this session
         if self.observer:

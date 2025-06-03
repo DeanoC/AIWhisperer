@@ -363,8 +363,9 @@ try:
     tool_registry = get_tool_registry()
     prompt_system = PromptSystem(prompt_config, tool_registry)
     
-    # Enable continuation protocol for all agents
+    # Enable continuation protocol and channel system for all agents
     prompt_system.enable_feature('continuation_protocol')
+    prompt_system.enable_feature('channel_system')
     
     logging.info("PromptSystem initialized successfully with tool registry")
     logging.info(f"Enabled features: {prompt_system.get_enabled_features()}")
@@ -544,6 +545,76 @@ async def debbie_send_alert_notification(websocket, alert_data):
         logger.error(f"Failed to send Debbie alert notification: {e}")
 
 
+# Channel-related handlers
+async def channel_get_history_handler(params, websocket=None):
+    """Get channel message history for a session"""
+    from .message_models import ChannelHistoryRequest, ChannelHistoryResponse
+    
+    try:
+        request = ChannelHistoryRequest(**params)
+    except Exception as e:
+        logger.error(f"Invalid channel history request: {e}")
+        raise ValueError(f"Invalid request: {e}")
+    
+    session = session_manager.get_session(request.sessionId)
+    if not session:
+        raise ValueError(f"Session {request.sessionId} not found")
+    
+    # Get history from channel integration
+    history = session.channel_integration.get_channel_history(
+        session_id=request.sessionId,
+        channels=request.channels,
+        limit=request.limit,
+        since_sequence=request.sinceSequence
+    )
+    
+    # Convert to response format
+    response = ChannelHistoryResponse(
+        messages=history.get("messages", []),
+        totalCount=history.get("totalCount", 0)
+    )
+    
+    return response.model_dump()
+
+
+async def channel_update_visibility_handler(params, websocket=None):
+    """Update channel visibility preferences for a session"""
+    from .message_models import ChannelVisibilityUpdate
+    
+    try:
+        request = ChannelVisibilityUpdate(**params)
+    except Exception as e:
+        logger.error(f"Invalid visibility update request: {e}")
+        raise ValueError(f"Invalid request: {e}")
+    
+    session = session_manager.get_session(request.sessionId)
+    if not session:
+        raise ValueError(f"Session {request.sessionId} not found")
+    
+    # Update visibility preferences
+    session.channel_integration.set_visibility_preferences(
+        session_id=request.sessionId,
+        show_commentary=request.showCommentary,
+        show_analysis=request.showAnalysis
+    )
+    
+    return {"success": True, "sessionId": request.sessionId}
+
+
+async def channel_get_stats_handler(params, websocket=None):
+    """Get channel statistics for a session"""
+    session_id = params.get("sessionId")
+    if not session_id:
+        raise ValueError("sessionId is required")
+    
+    session = session_manager.get_session(session_id)
+    if not session:
+        raise ValueError(f"Session {session_id} not found")
+    
+    stats = session.channel_integration.get_session_stats(session_id)
+    return stats
+
+
 # Handler registry
 from ai_whisperer.interfaces.cli.commands.registry import CommandRegistry
 
@@ -584,6 +655,10 @@ HANDLERS = {
     # Debbie monitoring handlers
     "debbie.status": debbie_get_status_handler,
     "debbie.alerts": debbie_get_alerts_handler,
+    # Channel handlers
+    "channel.history": channel_get_history_handler,
+    "channel.updateVisibility": channel_update_visibility_handler,
+    "channel.stats": channel_get_stats_handler,
     # Project management handlers
     **PROJECT_HANDLERS,
     # Plan management handlers

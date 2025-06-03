@@ -3,6 +3,7 @@ import requests
 import json
 import threading
 import logging
+import os
 from typing import Any, Dict, List, Optional, AsyncIterator
 from ai_whisperer.services.ai.base import AIService, AIStreamChunk
 from ai_whisperer.services.execution.ai_config import AIConfig
@@ -144,7 +145,11 @@ class OpenRouterAIService(AIService):
                 "X-Title": self.app_name,
             }
             
-            logger.debug(f"Streaming payload: {json.dumps(payload, indent=2)}")
+            # Only log payload details if explicitly requested via environment variable
+            if logger.isEnabledFor(logging.DEBUG) and os.getenv('AIWHISPERER_DEBUG_OPENROUTER'):
+                logger.debug(f"Streaming payload: {json.dumps(payload, indent=2)}")
+            else:
+                logger.debug(f"Starting OpenRouter stream for model: {payload.get('model')}")
             
             try:
                 response = requests.post(API_URL, headers=headers, json=payload, stream=True, timeout=60)

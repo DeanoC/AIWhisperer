@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ChatMessage, MessageSender } from './types/chat';
 import { Agent } from './types/agent';
@@ -9,6 +9,7 @@ import { MainLayout } from './components/MainLayout';
 import { ViewProvider } from './contexts/ViewContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { ChatView } from './components/ChatView';
+import { ChannelChatView } from './components/ChannelChatView';
 import JSONPlanView from './components/JSONPlanView';
 import { CodeChangesView } from './components/CodeChangesView';
 import { TestResultsView } from './components/TestResultsView';
@@ -294,30 +295,7 @@ function App() {
     }
   }, [aiService, sessionStatus, addUserMessage, startAIMessage, appendAIChunk, addSystemMessage, sendUserMessage]);
 
-  // Set AI message chunk handler
-  useEffect(() => {
-    if (!aiService) return;
-    
-    let introductionStarted = false;
-    
-    aiService.onAIMessageChunk((chunk) => {
-      // If we receive a chunk without loading state being true,
-      // it's likely an agent introduction, so start the AI message
-      if (!loading && chunk.content && !introductionStarted) {
-        introductionStarted = true;
-        startAIMessage();
-      }
-      appendAIChunk(chunk);
-      
-      // Reset the flag when message is final
-      if (chunk.isFinal) {
-        introductionStarted = false;
-      }
-    });
-    return () => {
-      aiService.onAIMessageChunk(() => {});
-    };
-  }, [aiService, appendAIChunk, loading, startAIMessage]);
+  // AI message handling now done via channels
 
   // Update message agent metadata when current agent is set
   useEffect(() => {
@@ -349,7 +327,18 @@ function App() {
       const agent = agents.find(a => a.id.toLowerCase() === agentId.toLowerCase());
       if (agent) {
         setCurrentAgent(agent);
-        addSystemMessage(`Switched to ${agent.name}`);
+        
+        // Request introduction from the agent first
+        try {
+          await aiService.sendUserMessage("Please introduce yourself briefly.");
+          // Add system message after AI responds
+          setTimeout(() => {
+            addSystemMessage(`✓ Switched to ${agent.name}`);
+          }, 500);
+        } catch (error) {
+          console.error('Failed to request agent introduction:', error);
+          addSystemMessage(`Switched to ${agent.name}`);
+        }
       }
     });
     
@@ -462,6 +451,38 @@ function App() {
     }
   } : null;
 
+  // Memoize chatProps to prevent infinite re-renders
+  const chatProps = useMemo(() => ({
+    messages,
+    currentAgent,
+    agents,
+    onSendMessage: handleSendMessage,
+    onAgentSelect: handleAgentSelect,
+    onHandoffToAgent: handleHandoffToAgent,
+    sessionStatus,
+    wsStatus,
+    sessionError: sessionError || undefined,
+    onThemeToggle: toggleTheme,
+    theme,
+    jsonRpcService,
+    aiService,
+    currentAIMessage,
+    loading,
+  }), [
+    messages, currentAgent, agents, handleSendMessage, handleAgentSelect, 
+    handleHandoffToAgent, sessionStatus, wsStatus, sessionError, toggleTheme, 
+    theme, jsonRpcService, aiService, currentAIMessage, loading
+  ]);
+
+  // Memoize fileBrowserProps to prevent re-renders
+  const fileBrowserProps = useMemo(() => ({
+    jsonRpcService,
+    onFileSelect: (filePath: string) => {
+      console.log('File selected:', filePath);
+      // TODO: Handle file selection - could add to chat context
+    },
+  }), [jsonRpcService]);
+
   // Add debugging for initial render
   console.log('[App] Rendering with:', {
     agents: agents.length,
@@ -490,29 +511,8 @@ function App() {
             >
               {/* Main tabbed area */}
               <MainTabs
-                chatProps={{
-                  messages,
-                  currentAgent,
-                  agents,
-                  onSendMessage: handleSendMessage,
-                  onAgentSelect: handleAgentSelect,
-                  onHandoffToAgent: handleHandoffToAgent,
-                  sessionStatus,
-                  wsStatus,
-                  sessionError: sessionError || undefined,
-                  onThemeToggle: toggleTheme,
-                  theme,
-                  jsonRpcService,
-                  currentAIMessage,
-                  loading,
-                }}
-                fileBrowserProps={{
-                  jsonRpcService,
-                  onFileSelect: (filePath: string) => {
-                    console.log('File selected:', filePath);
-                    // TODO: Handle file selection - could add to chat context
-                  },
-                }}
+                chatProps={chatProps}
+                fileBrowserProps={fileBrowserProps}
                 // Add other props as needed for JSONPlanView, CodeChangesView, etc.
                 onTabsReady={setTabHandlers}
               />

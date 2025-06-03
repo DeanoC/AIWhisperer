@@ -1,0 +1,144 @@
+.channel-message {
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background-color: var(--bg-secondary);
+  border-left: 4px solid var(--channel-color);
+  transition: all 0.2s ease;
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.channel-message.analysis {
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+
+.channel-message.commentary {
+  background-color: var(--bg-tertiary);
+}
+
+.channel-message.final {
+  background-color: var(--bg-primary);
+  border-left-width: 6px;
+}
+
+.channel-message.compact {
+  padding: 8px;
+  margin: 4px 0;
+}
+
+.channel-message.partial {
+  opacity: 0.9;
+}
+
+.channel-message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+
+.channel-icon {
+  font-size: 1.1em;
+}
+
+.channel-label {
+  font-weight: 600;
+  color: var(--channel-color);
+}
+
+.channel-agent {
+  font-weight: 500;
+}
+
+.channel-tools {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.channel-sequence {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+.channel-message-content {
+  color: var(--text-primary);
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.channel-message-json {
+  background-color: var(--bg-tertiary);
+  padding: 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.channel-message-streaming {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.streaming-indicator {
+  animation: pulse 1.5s ease-in-out infinite;
+  color: var(--channel-color);
+  font-size: 0.8em;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .channel-message {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .channel-message.commentary {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .channel-message.final {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .channel-message-json {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .channel-message {
+    padding: 8px;
+  }
+
+  .channel-message-header {
+    flex-wrap: wrap;
+  }
+
+  .channel-tools {
+    order: 1;
+    width: 100%;
+    margin-top: 4px;
+  }
+}

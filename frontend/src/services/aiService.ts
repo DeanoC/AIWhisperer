@@ -1,8 +1,9 @@
 import { JsonRpcService } from './jsonRpcService';
-import { SessionInfo, SessionStatus, AIMessageChunk } from '../types/ai';
+import { SessionInfo, SessionStatus } from '../types/ai';
 import { Agent, AgentHandoffContext, AgentHandoffNotification } from '../types/agent';
+import { ChannelMessage, ChannelType, ChannelVisibilityPreferences, ChannelHistoryRequest, ChannelHistoryResponse, ChannelStats } from '../types/channel';
 
-export type AIMessageChunkHandler = (chunk: AIMessageChunk) => void;
+export type ChannelMessageHandler = (message: ChannelMessage) => void;
 export type AgentChangedHandler = (agentId: string) => void;
 export type AgentHandoffHandler = (handoff: AgentHandoffNotification) => void;
 
@@ -11,7 +12,7 @@ export class AIService {
   private sessionId: string | null = null;
   private sessionInfo: SessionInfo | null = null;
   private status: SessionStatus = SessionStatus.Idle;
-  private chunkHandler?: AIMessageChunkHandler;
+  private channelMessageHandler?: ChannelMessageHandler;
   private error: string | null = null;
 
   constructor(rpc: JsonRpcService) {
@@ -104,27 +105,56 @@ export class AIService {
     }
   }
 
-  onAIMessageChunk(handler: AIMessageChunkHandler) {
-    this.chunkHandler = handler;
+  // Legacy chunk handler removed - use onChannelMessage instead
+
+  onChannelMessage(handler: ChannelMessageHandler) {
+    this.channelMessageHandler = handler;
   }
 
   private handleNotification(notification: any) {
     console.log('[AIService] Received notification:', notification);
-    if (notification.method === 'AIMessageChunkNotification') {
+    
+    // Handle channel messages
+    if (notification.method === 'ChannelMessageNotification') {
       const params = notification.params || {};
-      const chunk: AIMessageChunk = {
-        content: params.chunk,
-        index: params.index ?? 0,
-        isFinal: params.isFinal ?? false,
+      const channelMessage: ChannelMessage = {
+        type: 'channel_message',
+        channel: params.channel,
+        content: params.content,
+        metadata: params.metadata
       };
-      console.log('[AIService] Processing AI chunk:', chunk);
-      if (this.chunkHandler) {
-        console.log('[AIService] Calling chunk handler with:', chunk);
-        this.chunkHandler(chunk);
-      } else {
-        console.log('[AIService] No chunk handler registered!');
+      console.log('[AIService] Processing channel message:', channelMessage);
+      if (this.channelMessageHandler) {
+        this.channelMessageHandler(channelMessage);
       }
     }
+    
+    // Handle streaming updates - convert to channel messages for backward compatibility
+    if (notification.method === 'StreamingUpdate') {
+      const params = notification.params || {};
+      // Create a synthetic channel message for streaming content
+      // This goes to the 'final' channel as the main response
+      const channelMessage: ChannelMessage = {
+        type: 'channel_message',
+        channel: ChannelType.FINAL,
+        content: params.content,
+        metadata: {
+          sequence: 1, // Use a placeholder sequence for streaming
+          timestamp: new Date().toISOString(),
+          agentId: params.agentId,
+          sessionId: params.sessionId,
+          toolCalls: [],
+          continuationDepth: 0,
+          isPartial: params.isPartial ?? true
+        }
+      };
+      console.log('[AIService] Processing streaming update as channel message:', channelMessage);
+      if (this.channelMessageHandler) {
+        this.channelMessageHandler(channelMessage);
+      }
+    }
+    
+    // Legacy chunk notifications removed - using channels only
     if (notification.method === 'SessionStatusNotification') {
       const params = notification.params || {};
       if (typeof params.status === 'number') {
@@ -252,5 +282,44 @@ export class AIService {
         this.agentHandoffHandlers.splice(index, 1);
       }
     };
+  }
+
+  // Channel-related methods
+  async getChannelHistory(request: ChannelHistoryRequest): Promise<ChannelHistoryResponse> {
+    if (!this.sessionId) throw new Error('No session active');
+    try {
+      const result = await this.rpc.sendRequest('channel.history', request);
+      return result;
+    } catch (err: any) {
+      this.error = err.message || 'Failed to get channel history';
+      throw err;
+    }
+  }
+
+  async updateChannelVisibility(preferences: ChannelVisibilityPreferences): Promise<void> {
+    if (!this.sessionId) throw new Error('No session active');
+    try {
+      await this.rpc.sendRequest('channel.updateVisibility', {
+        sessionId: this.sessionId,
+        showCommentary: preferences.showCommentary,
+        showAnalysis: preferences.showAnalysis
+      });
+    } catch (err: any) {
+      this.error = err.message || 'Failed to update channel visibility';
+      throw err;
+    }
+  }
+
+  async getChannelStats(): Promise<ChannelStats> {
+    if (!this.sessionId) throw new Error('No session active');
+    try {
+      const result = await this.rpc.sendRequest('channel.stats', {
+        sessionId: this.sessionId
+      });
+      return result;
+    } catch (err: any) {
+      this.error = err.message || 'Failed to get channel stats';
+      throw err;
+    }
   }
 }
