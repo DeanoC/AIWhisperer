@@ -103,6 +103,29 @@
   padding: 16px;
   background: var(--bg-primary, #ffffff);
   border-bottom: 1px solid var(--border-color, #e5e7eb);
+  gap: 12px;
+}
+
+.channel-controls-toggle {
+  margin-left: auto;
+  padding: 6px 12px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.channel-controls-toggle:hover {
+  background-color: var(--bg-primary);
+  border-color: var(--primary-color);
+}
+
+.chat-view.channel-enabled .chat-messages {
+  /* Adjust for channel messages */
+  padding: 16px;
 }
 
 /* Messages Container */

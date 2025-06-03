@@ -9,6 +9,7 @@ import { MainLayout } from './components/MainLayout';
 import { ViewProvider } from './contexts/ViewContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { ChatView } from './components/ChatView';
+import { ChannelChatView } from './components/ChannelChatView';
 import JSONPlanView from './components/JSONPlanView';
 import { CodeChangesView } from './components/CodeChangesView';
 import { TestResultsView } from './components/TestResultsView';
@@ -503,6 +504,7 @@ function App() {
                   onThemeToggle: toggleTheme,
                   theme,
                   jsonRpcService,
+                  aiService,
                   currentAIMessage,
                   loading,
                 }}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabData } from './Tabs';
 import { ChatView } from './ChatView';
+import { ChannelChatView } from './ChannelChatView';
 import { FileBrowser } from './FileBrowser';
 import { CodeEditor } from './CodeEditor';
 import JSONPlanView from './JSONPlanView';
@@ -55,7 +56,7 @@ export const MainTabs: React.FC<MainTabsProps> = ({
         ...newTabs[chatTabIndex],
         content: (
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
-            <ChatView {...chatProps} />
+            <ChannelChatView {...chatProps} />
           </div>
         )
       };
