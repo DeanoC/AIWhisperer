@@ -362,6 +362,8 @@ class StatelessInteractiveSession:
             message: The user message to send
             is_continuation: Whether this is a continuation message (internal use)
         """
+        logger.debug(f"[send_user_message] Processing message for session {self.session_id}")
+        
         if not self.is_started or not self.active_agent:
             raise RuntimeError(f"Session {self.session_id} is not started or no active agent")
         
@@ -462,7 +464,9 @@ class StatelessInteractiveSession:
                 logger.info("Enabling structured output for plan generation")
             
             # Process message with streaming
+            logger.debug(f"[send_user_message] Calling agent.process_message")
             result = await agent.process_message(message, on_stream_chunk=send_chunk, **kwargs)
+            logger.debug(f"[send_user_message] Agent processing completed")
             
             # Defensive: ensure result is a dict
             if not isinstance(result, dict):
