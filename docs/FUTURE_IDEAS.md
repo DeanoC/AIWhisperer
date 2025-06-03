@@ -424,7 +424,9 @@ this solves several issues:
 - Agents can 'wake up' and process the messages that have happened while they were asleep (though this might get complicated)
 To really work we might need rooms
 We have a mailbox system that allows agents to send messages to each other, this is a good way to allow agents to communicate without needing to be in the same chat.
-The other paradigm is to not base it on a chat system and more like email. The user sends and recieves messages from agents, they can reply to messages and the agents can reply back. This biggest issue is that the user won't see much of the interaction between agents, which is a key part of the system.gre
+The other paradigm is to not base it on a chat system and more like email. The user sends and recieves messages from agents, they can reply to messages and the agents can reply back. This biggest issue is that the user won't see much of the interaction between agents, which is a key part of the system.
+
+Prehaps we always open 2 chats at start, a private one with Alice The Assistant and the main group chat. If you want a quiet life you can chat with alice who will update and route your messages to the correct agent/s. If you want to see the group chat you can but it might get rowdy like a real shared group chat...
 
 ---
 
