@@ -112,9 +112,12 @@ class OpenRouterAIService(AIService):
         """
         Streaming chat completion.
         """
+        # Extract response_format from kwargs if present
+        response_format = kwargs.pop('response_format', None)
+        
         # Build payload
         params = kwargs
-        payload = self._build_payload(messages, None, params, tools, None)
+        payload = self._build_payload(messages, None, params, tools, response_format)
         payload["stream"] = True
         
         # Stream using the internal method
@@ -209,8 +212,9 @@ class OpenRouterAIService(AIService):
         response_format: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Build the API payload."""
+        model_name = model or self.model
         payload = {
-            "model": model or self.model,
+            "model": model_name,
             "messages": messages,
         }
         
@@ -237,7 +241,12 @@ class OpenRouterAIService(AIService):
         if tools:
             payload["tools"] = tools
         if response_format:
+            # OpenRouter handles the translation to provider-specific formats
             payload["response_format"] = response_format
+            logger.debug(f"Using response_format for model {model_name}: {response_format}")
+            # Log full payload for debugging Gemini issues
+            if model_name and "gemini" in model_name.lower():
+                logger.info(f"Full payload for Gemini: {json.dumps(payload, indent=2)}")
             
         return payload
 
@@ -247,8 +256,11 @@ class OpenRouterAIService(AIService):
         try:
             error_data = response.json()
             error_msg = error_data.get("error", {}).get("message", response.text)
+            # Log full error details for debugging
+            logger.error(f"OpenRouter API error {status_code}: Full response: {error_data}")
         except:
             error_msg = response.text
+            logger.error(f"OpenRouter API error {status_code}: Raw response: {response.text}")
             
         if status_code == 401:
             raise OpenRouterAuthError(f"Authentication failed: {error_msg}")

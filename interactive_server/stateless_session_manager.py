@@ -276,6 +276,19 @@ class StatelessInteractiveSession:
                             # Enable continuation feature for all agents
                             self.prompt_system.enable_feature('continuation_protocol')
                             
+                            # Check if model supports structured output and enable JSON format if so
+                            model_name = None
+                            if agent_info.ai_config and agent_info.ai_config.get("model"):
+                                model_name = agent_info.ai_config.get("model")
+                            else:
+                                model_name = self.config.get("openrouter", {}).get("model")
+                            
+                            if model_name:
+                                from ai_whisperer.model_capabilities import supports_structured_output
+                                if supports_structured_output(model_name):
+                                    self.prompt_system.enable_feature('json_output_format')
+                                    logger.info(f"Enabled JSON output format for {model_name}")
+                            
                             # Include tools for debugging agents like Debbie
                             include_tools = agent_id.lower() in ['d', 'debbie'] or 'debug' in agent_info.name.lower()
                             prompt = self.prompt_system.get_formatted_prompt("agents", prompt_name, include_tools=include_tools)
@@ -520,8 +533,20 @@ class StatelessInteractiveSession:
                 logger.info("Enabling structured output for plan generation")
             # Otherwise, check if we should use structured continuation output
             elif self._should_use_structured_continuation(agent):
-                kwargs['response_format'] = self._get_continuation_schema()
-                logger.info("Enabling structured output for continuation protocol")
+                # Check if model has quirks about tools with structured output
+                agent_tools = agent._get_agent_tools() if hasattr(agent, '_get_agent_tools') else []
+                model_name = agent.config.model_name if hasattr(agent, 'config') else ''
+                
+                if agent_tools and model_name:
+                    from ai_whisperer.model_capabilities import has_quirk
+                    if has_quirk(model_name, "no_tools_with_structured_output"):
+                        logger.info(f"Skipping structured output for {model_name} with tools (model quirk: no_tools_with_structured_output)")
+                    else:
+                        kwargs['response_format'] = self._get_continuation_schema()
+                        logger.info("Enabling structured output for continuation protocol")
+                else:
+                    kwargs['response_format'] = self._get_continuation_schema()
+                    logger.info("Enabling structured output for continuation protocol")
             
             # Process message with streaming
             logger.debug(f"[send_user_message] Calling agent.process_message")
@@ -540,6 +565,22 @@ class StatelessInteractiveSession:
             # Process final message through channel integration to get proper final sequences
             if result.get('response'):
                 final_content = result.get('response', '')
+                
+                # If we're using structured output, parse the JSON response
+                if result.get('used_structured_output') and isinstance(final_content, str):
+                    try:
+                        parsed_response = json.loads(final_content)
+                        if isinstance(parsed_response, dict) and 'response' in parsed_response:
+                            # Extract the actual response content
+                            final_content = parsed_response['response']
+                            # Update the result with parsed content
+                            result['response'] = final_content
+                            # Also extract continuation info if present
+                            if 'continuation' in parsed_response:
+                                result['continuation'] = parsed_response['continuation']
+                            logger.debug("Parsed structured output response successfully")
+                    except json.JSONDecodeError:
+                        logger.debug("Response is not JSON, using raw content")
                 
                 # Process the final response through channel integration with is_partial=False
                 # This ensures we get proper final sequence numbers
@@ -629,6 +670,20 @@ class StatelessInteractiveSession:
                     **kwargs
                 )
                 
+                # Parse structured output if needed
+                if tool_response_result.get('used_structured_output') and isinstance(tool_response_result.get('response'), str):
+                    try:
+                        parsed_response = json.loads(tool_response_result['response'])
+                        if isinstance(parsed_response, dict) and 'response' in parsed_response:
+                            # Extract the actual response content
+                            tool_response_result['response'] = parsed_response['response']
+                            # Also extract continuation info if present
+                            if 'continuation' in parsed_response:
+                                tool_response_result['continuation'] = parsed_response['continuation']
+                            logger.debug("Parsed structured output response from tool processing")
+                    except json.JSONDecodeError:
+                        logger.debug("Tool response is not JSON, using raw content")
+                
                 # Store the final AI response
                 if tool_response_result.get('response') and not tool_response_result.get('error'):
                     final_assistant_msg = {
@@ -648,21 +703,81 @@ class StatelessInteractiveSession:
                     'response': tool_response_result.get('response'),
                     'tool_calls': result.get('tool_calls'),  # Keep original tool calls
                     'finish_reason': tool_response_result.get('finish_reason', 'stop'),
-                    'error': tool_response_result.get('error')
+                    'error': tool_response_result.get('error'),
+                    'continuation': tool_response_result.get('continuation'),  # Preserve continuation info
+                    'used_structured_output': tool_response_result.get('used_structured_output', False)
                 }
                 result = combined_result
                 logger.info("🔧 Tool results processed and final response generated")
             
             # Check if the AI wants to continue (using general continuation protocol)
             # This is separate from tool handling - it's about multi-step tasks
-            if self.active_agent and self.active_agent in self.agents:
+            if self.active_agent and self.active_agent in self.agents and not is_continuation:
                 agent = self.agents[self.active_agent]
-                if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
-                    should_continue = agent.continuation_strategy.should_continue(result, message)
-                    if should_continue:
-                        logger.info("🔄 AI signaled continuation needed")
-                        # TODO: Handle continuation logic here if needed
-                        # This is for multi-step reasoning, not tool results
+                
+                # Extract continuation state from response
+                continuation_state = None
+                if result.get('continuation'):
+                    continuation_state = result.get('continuation')
+                elif result.get('response') and isinstance(result['response'], str):
+                    # Try to extract from response if it's still in JSON format
+                    try:
+                        parsed = json.loads(result['response'])
+                        if isinstance(parsed, dict) and 'continuation' in parsed:
+                            continuation_state = parsed['continuation']
+                    except:
+                        # Try to extract continuation from partial JSON using regex
+                        continuation_match = re.search(r'"continuation"\s*:\s*\{[^}]*"status"\s*:\s*"(CONTINUE|TERMINATE)"[^}]*\}', result['response'])
+                        if continuation_match:
+                            status = continuation_match.group(1)
+                            continuation_state = {'status': status}
+                            logger.debug(f"Extracted continuation status from partial JSON: {status}")
+                
+                # Special handling for error responses that might need continuation
+                if result.get('finish_reason') == 'error' and not continuation_state:
+                    # Check if the response indicates the AI was trying to do something
+                    response_text = result.get('response', '')
+                    if response_text and any(indicator in response_text for indicator in ['[COMMENTARY]', 'I will', "I'll", 'need to', 'going to']):
+                        logger.info("🔄 Error response appears to be attempting an action, assuming CONTINUE")
+                        continuation_state = {'status': 'CONTINUE', 'reason': 'Error response indicates ongoing task'}
+                
+                # Check if we should continue
+                should_continue = False
+                if continuation_state and isinstance(continuation_state, dict):
+                    should_continue = continuation_state.get('status') == 'CONTINUE'
+                    logger.info(f"🔄 Continuation state: {continuation_state}")
+                
+                if should_continue:
+                    logger.info("🔄 AI signaled CONTINUE - executing continuation")
+                    self._continuation_depth += 1
+                    
+                    # Check depth limit
+                    if self._continuation_depth > self._max_continuation_depth:
+                        logger.warning(f"Max continuation depth {self._max_continuation_depth} reached, stopping")
+                    else:
+                        # Create continuation message
+                        continuation_msg = "Please continue with the next step."
+                        if continuation_state.get('reason'):
+                            continuation_msg = f"Continue: {continuation_state['reason']}"
+                        
+                        # Recursively call send_user_message to continue
+                        logger.info(f"🔄 Sending continuation message: {continuation_msg}")
+                        continuation_result = await self.send_user_message(continuation_msg, is_continuation=True)
+                        
+                        # Merge continuation result with original result
+                        if continuation_result and isinstance(continuation_result, dict):
+                            # Append continuation response to original
+                            if result.get('response') and continuation_result.get('response'):
+                                result['response'] += "\n\n" + continuation_result['response']
+                            # Use continuation's finish reason
+                            if continuation_result.get('finish_reason'):
+                                result['finish_reason'] = continuation_result['finish_reason']
+                            # Merge tool calls if any
+                            if continuation_result.get('tool_calls'):
+                                if result.get('tool_calls'):
+                                    result['tool_calls'].extend(continuation_result['tool_calls'])
+                                else:
+                                    result['tool_calls'] = continuation_result['tool_calls']
             
             # Reset continuation depth if we're done with continuations
             if not is_continuation:
@@ -795,7 +910,7 @@ class StatelessInteractiveSession:
             Path where the session was saved
         """
         from pathlib import Path
-        import json
+        # json is already imported at module level
         
         # Get session state
         state = await self.get_state()
@@ -837,7 +952,7 @@ class StatelessInteractiveSession:
             filepath: Path to the session file
         """
         from pathlib import Path
-        import json
+        # json is already imported at module level
         
         filepath = Path(filepath)
         if not filepath.exists():
@@ -1378,7 +1493,7 @@ class StatelessInteractiveSession:
         Returns:
             The response_format dict for plan generation
         """
-        import json
+        # json is already imported at module level
         from pathlib import Path
         
         # Load the plan generation schema
@@ -1433,7 +1548,7 @@ class StatelessInteractiveSession:
         Returns:
             The response_format dict for continuation protocol
         """
-        import json
+        # json is already imported at module level
         from pathlib import Path
         
         # Load the continuation schema
@@ -1451,7 +1566,7 @@ class StatelessInteractiveSession:
                 "type": "json_schema",
                 "json_schema": {
                     "name": "continuation_protocol",
-                    "strict": True,  # Use strict for simple schemas
+                    "strict": False,  # Use false for better compatibility
                     "schema": continuation_schema
                 }
             }

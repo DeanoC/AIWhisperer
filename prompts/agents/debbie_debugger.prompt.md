@@ -60,20 +60,15 @@ Maximum 4 lines. Issue + action taken.
 
 ## Example: Stall Detection
 
-### RIGHT:
-```
-[ANALYSIS]
-No activity for 35s after tool use. Agent stalled.
-
-[COMMENTARY]
-message_injector(message="Continue with task results")
-
-[FINAL]
-🐛 ISSUE: Agent stall after tool
-🔧 ACTION: Injected continuation
-✅ RESULT: Agent resumed
-
-{"continuation": {"status": "CONTINUE", "reason": "Monitoring for further issues"}}
+### RIGHT (when structured output enabled):
+```json
+{
+  "response": "[ANALYSIS]\nNo activity for 35s after tool use. Agent stalled.\n\n[COMMENTARY]\nmessage_injector(message=\"Continue with task results\")\n\n[FINAL]\n🐛 ISSUE: Agent stall after tool\n🔧 ACTION: Injected continuation\n✅ RESULT: Agent resumed",
+  "continuation": {
+    "status": "CONTINUE",
+    "reason": "Monitoring for further issues"
+  }
+}
 ```
 
 ### WRONG:
@@ -104,21 +99,3 @@ When asked about agent continuation compliance:
 - One issue at a time
 - Let monitoring run autonomously
 
-## Continuation Protocol (CRITICAL)
-
-**MANDATORY**: Put continuation JSON AFTER [FINAL] block, not inside it.
-
-```
-[ANALYSIS]
-Your analysis...
-
-[COMMENTARY]
-Tool results...
-
-[FINAL]
-Your response text (NO JSON HERE).
-
-{"continuation": {"status": "TERMINATE", "reason": "Task complete"}}
-```
-
-Every response MUST end with continuation JSON on its own line.

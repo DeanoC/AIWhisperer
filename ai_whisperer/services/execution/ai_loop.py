@@ -28,6 +28,7 @@ Related:
 import asyncio
 import json
 import logging
+import re
 from typing import Dict, List, Any, Optional, Callable, AsyncIterator
 from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.services.ai.base import AIService
@@ -158,7 +159,7 @@ class StatelessAILoop:
                     response_format=response_format,
                     **params
                 )
-                return await self._process_stream(stream, on_stream_chunk)
+                return await self._process_stream(stream, on_stream_chunk, response_format)
             
             # Run with timeout if specified, with retry logic for empty responses
             max_retries = 3
@@ -345,7 +346,7 @@ class StatelessAILoop:
                     response_format=response_format,
                     **params
                 )
-                return await self._process_stream(stream, on_stream_chunk)
+                return await self._process_stream(stream, on_stream_chunk, response_format)
             
             # Run with timeout if specified
             if timeout:
@@ -402,7 +403,8 @@ class StatelessAILoop:
     async def _process_stream(
         self,
         stream: AsyncIterator,
-        on_stream_chunk: Optional[Callable[[str], Any]] = None
+        on_stream_chunk: Optional[Callable[[str], Any]] = None,
+        response_format: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Process the AI response stream.
@@ -410,6 +412,7 @@ class StatelessAILoop:
         Args:
             stream: The AI response stream
             on_stream_chunk: Optional callback for each chunk
+            response_format: Optional response format used for structured output
             
         Returns:
             Dict with response data
@@ -493,13 +496,22 @@ class StatelessAILoop:
                 # The AI will process them from the tool messages
                 
             logger.info(f"🔄 RETURNING RESULT: response_length={len(full_response)}, reasoning_length={len(full_reasoning)}, tool_calls={len(tool_calls) if tool_calls else 0}")
+            
+            # Apply postprocessing if we have a JSON response that might be wrapped in markdown
+            processed_response = full_response
+            if full_response and self._should_apply_postprocessing(full_response):
+                processed_response = self._postprocess_response(full_response)
+                if processed_response != full_response:
+                    logger.debug("Applied postprocessing to clean response")
+            
             return {
-                'response': full_response,
+                'response': processed_response,
                 'reasoning': full_reasoning if full_reasoning else None,
                 'finish_reason': finish_reason,
                 'tool_calls': tool_calls,
                 'tool_results': tool_results_list,  # Return the raw tool results
-                'error': None
+                'error': None,
+                'used_structured_output': response_format is not None  # Track if structured output was used
             }
             
         except Exception as e:
@@ -606,3 +618,48 @@ class StatelessAILoop:
                 results.append({"error": f"Failed to execute {tool_name}: {str(e)}"})
         
         return results
+    
+    def _should_apply_postprocessing(self, response: str) -> bool:
+        """
+        Check if postprocessing should be applied to clean markdown wrappers.
+        
+        Args:
+            response: The AI response string
+            
+        Returns:
+            True if response appears to be JSON wrapped in markdown
+        """
+        if not response:
+            return False
+            
+        # Check if response starts with markdown code block
+        response_stripped = response.strip()
+        return response_stripped.startswith('```json') or response_stripped.startswith('```')
+    
+    def _postprocess_response(self, response: str) -> str:
+        """
+        Apply postprocessing to clean markdown wrappers from JSON responses.
+        
+        Args:
+            response: The AI response string
+            
+        Returns:
+            Cleaned response with markdown wrappers removed
+        """
+        try:
+            # Use the same regex pattern as clean_backtick_wrapper
+            cleaned = re.sub(r"^```[a-zA-Z]*\n?(.*)\n?```$", r"\1", response.strip(), flags=re.DOTALL)
+            
+            # Validate it's valid JSON after cleaning
+            try:
+                json.loads(cleaned)
+                logger.debug("Successfully cleaned markdown wrapper from JSON response")
+                return cleaned
+            except json.JSONDecodeError:
+                # If it's not valid JSON after cleaning, return original
+                logger.debug("Cleaned response is not valid JSON, returning original")
+                return response
+                
+        except Exception as e:
+            logger.error(f"Error in postprocessing response: {e}")
+            return response
