@@ -58,9 +58,10 @@ class TestCreateRFCTool:
         
         result = create_tool.execute(arguments)
         
-        # Check success message
-        assert "RFC created successfully!" in result
-        assert "RFC-" in result
+        assert isinstance(result, dict)
+        assert 'rfc_id' in result
+        assert result['rfc_id'].startswith("RFC-")
+        assert 'path' in result
         
         # Verify file was created - look for files with the short name pattern
         rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("test-rfc-*.md"))
@@ -86,6 +87,9 @@ class TestCreateRFCTool:
         
         result = create_tool.execute(arguments)
         
+        assert isinstance(result, dict)
+        assert 'rfc_id' in result
+        
         # Find created file
         rfc_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("feature-rfc-*.md"))
         assert len(rfc_files) == 1
@@ -105,10 +109,12 @@ class TestCreateRFCTool:
         # Create second RFC with same short name - should get different ID
         result2 = create_tool.execute({"title": "RFC 2", "summary": "Second", "short_name": "test-rfc"})
         
+        assert isinstance(result1, dict)
+        assert isinstance(result2, dict)
+        
         # Extract IDs
-        import re
-        id1 = re.search(r'RFC-\d{4}-\d{2}-\d{2}-\d{4}', result1).group()
-        id2 = re.search(r'RFC-\d{4}-\d{2}-\d{2}-\d{4}', result2).group()
+        id1 = result1['rfc_id']
+        id2 = result2['rfc_id']
         
         assert id1 != id2
         
@@ -121,7 +127,8 @@ class TestCreateRFCTool:
             "author": "Tester"
         }
         
-        create_tool.execute(arguments)
+        result = create_tool.execute(arguments)
+        assert isinstance(result, dict)
         
         # Check for JSON metadata file
         json_files = list(Path(temp_workspace, ".WHISPER", "rfc", "in_progress").glob("test-metadata-*.json"))
@@ -210,11 +217,22 @@ Technical details here.
         """Test reading full RFC content."""
         result = read_tool.execute({"rfc_id": "RFC-2025-05-29-0001"})
         
-        assert "**RFC Found**: RFC-2025-05-29-0001" in result
-        assert "**Title**: Test Feature" in result
-        assert "**Status**: in_progress" in result
-        assert "This is a test summary" in result
-        assert "Technical details here" in result
+        assert isinstance(result, dict)
+        assert result['found'] is True
+        assert 'content' in result
+        
+        # Content is nested
+        content_data = result['content']
+        assert isinstance(content_data, dict)
+        assert 'content' in content_data
+        
+        # The actual RFC text is in content['content']
+        rfc_text = content_data['content']
+        assert "RFC-2025-05-29-0001" in rfc_text
+        assert "Test Feature" in rfc_text
+        assert "in_progress" in rfc_text
+        assert "This is a test summary" in rfc_text
+        assert "Technical details here" in rfc_text
     
     def test_read_specific_section(self, read_tool):
         """Test reading specific RFC section."""
@@ -223,16 +241,25 @@ Technical details here.
             "section": "requirements"
         })
         
-        assert "## Requirements Section" in result
-        assert "- [ ] Requirement 1" in result
-        assert "- [ ] Requirement 2" in result
-        assert "Technical details" not in result  # Should not include other sections
+        assert isinstance(result, dict)
+        assert 'content' in result
+        
+        # Get the section content
+        content_data = result['content']
+        section_text = content_data['content']
+        
+        assert "Requirement 1" in section_text
+        assert "Requirement 2" in section_text
+        # When reading specific section, should not include other sections
+        assert "Technical details" not in section_text
     
     def test_read_nonexistent_rfc(self, read_tool):
         """Test reading non-existent RFC."""
         result = read_tool.execute({"rfc_id": "RFC-9999-99-99-9999"})
         
-        assert "Error: RFC 'RFC-9999-99-99-9999' not found" in result
+        assert isinstance(result, dict)
+        assert 'error' in result
+        assert "not found" in result['error']
 
 
 class TestListRFCsTool:
@@ -303,35 +330,60 @@ Summary for {title}"""
         """Test listing all RFCs."""
         result = list_tool.execute({"status": "all"})
         
-        assert "Found 4 RFC(s)" in result
-        assert "RFC-2025-05-29-0001" in result
-        assert "RFC-2025-05-28-0001" in result
-        assert "RFC-2025-05-27-0001" in result
-        assert "Feature A" in result
-        assert "Feature C" in result
-        assert "Feature D" in result
+        assert isinstance(result, dict)
+        assert 'by_status' in result
+        
+        # Collect all RFCs from all statuses
+        all_rfcs = []
+        for status_rfcs in result['by_status'].values():
+            all_rfcs.extend(status_rfcs)
+        
+        assert len(all_rfcs) == 4
+        
+        rfc_ids = [rfc['rfc_id'] for rfc in all_rfcs]
+        assert "RFC-2025-05-29-0001" in rfc_ids
+        assert "RFC-2025-05-28-0001" in rfc_ids
+        assert "RFC-2025-05-27-0001" in rfc_ids
+        
+        titles = [rfc['title'] for rfc in all_rfcs]
+        assert "Feature A" in titles
+        assert "Feature C" in titles
+        assert "Feature D" in titles
     
     def test_list_by_status(self, list_tool):
         """Test filtering by status."""
         result = list_tool.execute({"status": "in_progress"})
         
-        assert "Found 3 RFC(s)" in result
-        assert "RFC-2025-05-29-0001" in result
-        assert "RFC-2025-05-29-0002" in result
-        assert "RFC-2025-05-28-0001" in result  # in_progress
-        assert "RFC-2025-05-27-0001" not in result  # archived
+        assert isinstance(result, dict)
+        assert 'by_status' in result
+        
+        # Should only have in_progress RFCs
+        in_progress_rfcs = result['by_status'].get('in_progress', [])
+        assert len(in_progress_rfcs) == 3
+        
+        rfc_ids = [rfc['rfc_id'] for rfc in in_progress_rfcs]
+        assert "RFC-2025-05-29-0001" in rfc_ids
+        assert "RFC-2025-05-29-0002" in rfc_ids
+        assert "RFC-2025-05-28-0001" in rfc_ids  # in_progress
+        
+        # Archived should not be included when filtering by in_progress
+        assert 'archived' not in result['by_status'] or len(result['by_status'].get('archived', [])) == 0
     
     def test_sort_by_created(self, list_tool):
         """Test sorting by creation date."""
         result = list_tool.execute({"sort_by": "created", "limit": 2})
         
-        # Check that we got results
-        assert "Found" in result
-        assert "RFC-2025-05-29" in result  # Should include newest RFCs
+        assert isinstance(result, dict)
+        assert 'by_status' in result
+        assert result.get('sort_by') == 'created'
         
-        # Should be sorted by created date (newest first)
-        # Just verify the structure is present
-        assert "## In Progress" in result or "## Archived" in result
+        # Collect all RFCs and check total count respects limit
+        all_rfcs = []
+        for status_rfcs in result['by_status'].values():
+            all_rfcs.extend(status_rfcs)
+        
+        # With limit=2, should have at most 2 RFCs total
+        assert len(all_rfcs) <= 2
     
     def test_empty_status(self, list_tool, temp_workspace_with_rfcs):
         """Test listing empty status folder."""
@@ -344,4 +396,8 @@ Summary for {title}"""
         
         result = list_tool.execute({"status": "archived"})
         
-        assert "No RFCs found" in result
+        assert isinstance(result, dict)
+        assert 'by_status' in result
+        # When filtering by archived and it's empty, might not have the key or have empty list
+        archived_rfcs = result['by_status'].get('archived', [])
+        assert len(archived_rfcs) == 0

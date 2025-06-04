@@ -45,8 +45,8 @@ class TestPlanErrorRecovery:
             "plan_type": "initial"
         })
         
-        assert "Error" in result
-        assert "not found" in result.lower()
+        assert "error" in result
+        assert "not found" in result.get('error', '').lower()
     
     def test_save_plan_invalid_schema(self, temp_workspace):
         """Test error when saving plan with invalid schema."""
@@ -69,7 +69,7 @@ class TestPlanErrorRecovery:
             "rfc_id": "test-feature"
         })
         
-        assert "Error" in result or "validation" in result.lower()
+        assert "error" in result or "validation" in result.get('content', '').lower()
     
     def test_save_plan_missing_rfc_reference(self, temp_workspace):
         """Test error when saving plan without RFC reference."""
@@ -88,8 +88,8 @@ class TestPlanErrorRecovery:
             "rfc_id": "non-existent-rfc"
         })
         
-        assert "Error" in result
-        assert "metadata not found" in result
+        assert "error" in result
+        assert "metadata not found" in result.get('error', '')
     
     def test_update_plan_missing_plan(self, temp_workspace):
         """Test error when updating non-existent plan."""
@@ -98,8 +98,8 @@ class TestPlanErrorRecovery:
             "plan_name": "non-existent-plan"
         })
         
-        assert "Error" in result
-        assert "not found" in result.lower()
+        assert "error" in result
+        assert "not found" in result.get('error', '').lower()
     
     def test_delete_plan_without_confirmation(self, temp_workspace):
         """Test that delete requires confirmation."""
@@ -135,8 +135,8 @@ class TestPlanErrorRecovery:
             "confirm_delete": False
         })
         
-        assert "Delete operation cancelled" in result
-        assert "confirm_delete=true" in result
+        assert "Delete operation cancelled" in result.get('error', '')
+        assert "confirm_delete=true" in result.get('error', '')
     
     @pytest.mark.xfail(reason="File locking behavior varies by platform")
     def test_concurrent_plan_updates(self, temp_workspace):
@@ -197,7 +197,7 @@ class TestPlanErrorRecovery:
         })
         
         # Should succeed but overwrite
-        assert "Plan saved successfully" in result
+        assert result.get('saved') is True
     
     def test_corrupted_plan_file_recovery(self, temp_workspace):
         """Test recovery from corrupted plan file."""
@@ -226,7 +226,7 @@ class TestPlanErrorRecovery:
         })
         
         # If save failed, the test is irrelevant
-        if "Error" in result:
+        if "error" in result:
             # Create the plan directory and file manually for testing
             path_manager = PathManager.get_instance()
             if not path_manager.workspace_path:
@@ -251,7 +251,7 @@ class TestPlanErrorRecovery:
         read_tool = ReadPlanTool()
         result = read_tool.execute({"plan_name": "corrupt-plan"})
         
-        assert "Error" in result
+        assert "error" in result
     
     @pytest.mark.xfail(reason="Permission testing is platform-specific")
     def test_filesystem_permission_error(self, temp_workspace):
@@ -297,7 +297,7 @@ class TestPlanErrorRecovery:
                 "rfc_hash": "hash"
             })
             
-            assert "Error" in result
+            assert "error" in result
             
         finally:
             # Restore permissions
@@ -314,11 +314,8 @@ class TestPlanErrorRecovery:
         })
         
         # Extract the RFC ID from the result
-        # The result format includes "**RFC ID**: RFC-2025-06-01-0001"
-        import re
-        match = re.search(r'\*\*RFC ID\*\*: (RFC-\d{4}-\d{2}-\d{2}-\d{4})', rfc_result)
-        assert match, f"Could not extract RFC ID from result: {rfc_result}"
-        rfc_id = match.group(1)
+        rfc_id = rfc_result.get('rfc_id')
+        assert rfc_id, f"Could not extract RFC ID from result: {rfc_result}"
         
         # Create a very large plan
         large_tasks = []
@@ -353,7 +350,7 @@ class TestPlanErrorRecovery:
         })
         
         # Should handle large plans gracefully
-        assert "Plan saved successfully" in result
+        assert result.get('saved') is True
         
         # Verify file was saved
         path_manager = PathManager.get_instance()

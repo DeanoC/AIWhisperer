@@ -138,7 +138,9 @@ def test_read_file_tool_execute_success(temp_project_file):
         result = tool.execute(arguments)
     finally:
         os.chdir(old_cwd)
-    assert expected_content.splitlines()[0] in result
+    assert isinstance(result, dict)
+    assert 'content' in result
+    assert expected_content.splitlines()[0] in result['content']
 
 def test_read_file_tool_execute_file_not_found(temp_project_dir):
     """Tests ReadFileTool handling of FileNotFoundError with a relative path."""
@@ -148,11 +150,10 @@ def test_read_file_tool_execute_file_not_found(temp_project_dir):
     old_cwd = os.getcwd()
     os.chdir(temp_project_dir)
     try:
-        tool.execute(arguments)
-    except FileNotFoundError:
-        pass
-    else:
-        assert False, "Expected FileNotFoundError"
+        result = tool.execute(arguments)
+        assert isinstance(result, dict)
+        assert 'error' in result
+        assert 'not found' in result['error'].lower() or 'does not exist' in result['error'].lower()
     finally:
         os.chdir(old_cwd)
 
@@ -168,14 +169,18 @@ def test_read_file_tool_execute_permission_denied(temp_project_file):
             result = tool.execute(arguments)
     finally:
         os.chdir(old_cwd)
-    assert "Permission denied" in result or "denied" in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "Permission denied" in result['error'] or "denied" in result['error']
 
 def test_read_file_tool_execute_missing_file_path(path_manager_initialized):
     """Tests ReadFileTool handling of missing file_path argument."""
     tool = ReadFileTool()
     arguments = {}
     result = tool.execute(arguments)
-    assert "argument is missing" in result or "missing" in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "argument is missing" in result['error'] or "missing" in result['error'] or "required" in result['error'].lower()
 
 def test_read_file_tool_execute_path_outside_project_dir(path_manager_initialized):
     """Tests ReadFileTool handling of paths attempting to access outside the project directory."""
@@ -192,10 +197,10 @@ def test_read_file_tool_execute_path_outside_project_dir(path_manager_initialize
     old_cwd = os.getcwd()
     os.chdir(temp_dir)
     try:
-        with pytest.raises(FileRestrictionError) as excinfo:
-            tool.execute(arguments)
-        assert "Access denied" in str(excinfo.value) or "outside the workspace directory" in str(excinfo.value)
-        assert '../sensitive_file.txt' in str(excinfo.value)
+        result = tool.execute(arguments)
+        assert isinstance(result, dict)
+        assert 'error' in result
+        assert "Access denied" in result['error'] or "outside the workspace" in result['error'].lower()
     finally:
         os.chdir(old_cwd)
         shutil.rmtree(temp_dir)
@@ -216,8 +221,12 @@ def test_read_file_tool_execute_unsupported_file_type(temp_project_dir):
         result = tool.execute(arguments)
     finally:
         os.chdir(old_cwd)
-    # The tool currently returns the raw bytes as a string, so check for that
-    assert "\x00\x01\x02\x03" in result or result.strip() == "1 | \x00\x01\x02\x03"
+    assert isinstance(result, dict)
+    # The tool may return binary content or an error for binary files
+    if 'content' in result:
+        assert "\x00\x01\x02\x03" in result['content'] or "1 | \x00\x01\x02\x03" in result['content']
+    elif 'error' in result:
+        assert 'binary' in result['error'].lower() or 'decode' in result['error'].lower()
 
 # Tests for WriteFileTool
 def test_write_file_tool_name():

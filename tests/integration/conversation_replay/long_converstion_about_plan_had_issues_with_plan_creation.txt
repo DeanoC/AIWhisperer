@@ -1,0 +1,164 @@
+I'm Patricia, an AI specializing in transforming ideas into executable plans through RFC development and TDD-based planning.
+I'm ready to help you structure your next project!
+
+21:18
+I am Patricia, an AI expert in RFC and plan generation. I help convert ideas into structured, executable plans.
+
+21:18
+✓ Switched to Patricia the Planner
+I want to create an RFC for asynchronous agents feature
+
+21:19
+RFC-2025-06-04-0001 for 'Asynchronous Agents Feature' has been created.
+To refine this RFC, please clarify:
+
+What specific functionalities will asynchronous agents enable?
+What existing components will need refactoring?
+What are the expected acceptance criteria?
+21:20
+Async agents will enable multiple seperates tasks to be run at the same time. They will optionally be able to sleep and wake to monitor activites and other agents
+
+21:21
+RFC updated with concurrent task execution and sleep/wake monitoring. Next, please clarify:
+
+Which existing components will require refactoring for asynchronicity?
+What mechanisms will be used for agents to 'sleep, wake, and monitor'?
+What are the specific acceptance criteria for this feature?
+Show less
+21:21
+The backend ai loops have already refactored to be 1 per agent, but now we will have extend to multiple ones running at the same time. The frontend UI will need updating to allow both group chats and 1-1 chats with particular agents. The mailbox system will need to be improved to support messages async agents. @docs/FUTURE_IDEAS.md contains a basic design of some features. Some tools may be made concurrently safe.
+
+Show less
+21:24
+RFC updated with refactoring details and conceptual framework. To finalize, please specify:
+
+Concrete acceptance criteria for concurrent tasks, agent sleep/wake, and UI/mailbox improvements.
+How will conflict resolution for shared resources be handled?
+What are the strategies for error handling and debugging in multi-agent interactions?
+Show less
+21:24
+Acceptance criters for concurrent tasks will be that stay isolated from each other except vis specific tools (like the mallbox), for sleep/wake acceptable would a periodic function maybe something like debbie monitoring the system every 30 mins?
+UI and mailbox will involve some design work
+Shared resources will have to have auto pausing for small opereations with an optional locking protocol for longer use.
+Error and debugging needs a design
+
+Show less
+21:27
+RFC updated with acceptance criteria and shared resource management details. The RFC is now sufficiently clear. I will now proceed to prepare and generate the execution plan.
+
+21:27
+ok
+
+21:28
+ok
+
+21:28
+Generating the execution plan for 'Asynchronous Agents Feature' based on the RFC. This will include tasks for testing, implementation, and refinement.
+
+21:29
+ok
+
+21:29
+There was an issue saving the plan. I'm regenerating it with the correct structure now.
+
+21:29
+ok
+
+21:30
+continue
+
+21:30
+Correction: The plan save failed due to a missing task name. I'm fixing that and trying again.
+
+21:31
+pl
+
+21:32
+The execution plan for 'Asynchronous Agents Feature' has been successfully generated and saved as 'async-agents-plan-2025-06-04'.
+It contains 16 tasks, broken down into 5 Red (Test), 8 Green (Implementation), and 3 Refactor tasks.
+
+21:32
+can you show me it please?
+
+21:32
+Here is the execution plan for 'Asynchronous Agents Feature':
+
+Plan: Asynchronous Agents Feature
+Overview: Implement asynchronous capabilities for agents, enabling concurrent task execution, agent sleep/wake cycles, and enhanced inter-agent communication via an improved mailbox system. This includes refactoring existing AI loops and updating the frontend UI.
+
+Milestones:
+
+Core Asynchronous Agent Framework
+Mailbox & UI Enhancements
+Shared Resource Management & Error Handling
+Validation Criteria:
+
+Concurrent tasks remain isolated except via specific tools.
+Agents can sleep and wake based on periodic functions.
+UI supports group and 1-1 chats.
+Mailbox handles asynchronous agent messages.
+Shared resources use auto-pausing for small operations and optional locking for longer ones.
+Tasks:
+Red (Test) Phase
+T001: Write tests for agent task isolation (concurrent execution)
+Description: Write unit and integration tests to verify that concurrent agent tasks do not interfere with each other unless explicitly using shared tools.
+Validation Criteria: Verify that concurrent agent tasks do not interfere with each other unless explicitly using shared tools.
+T002: Write tests for agent sleep/wake functionality
+Description: Develop tests to confirm agents can enter and exit sleep states and wake up based on periodic triggers.
+Validation Criteria: Verify agents can enter and exit sleep states.; Verify agents wake up based on periodic triggers (e.g., 30-minute intervals).
+T003: Write tests for asynchronous mailbox communication
+Description: Create tests for asynchronous message sending and receiving between agents via the mailbox system.
+Validation Criteria: Verify asynchronous messages can be sent and received between agents.; Verify message delivery without blocking sender or receiver agents.
+T004: Write tests for frontend UI group and 1-1 chat features
+Description: Design tests for the new UI components supporting group and 1-1 chats with agents.
+Validation Criteria: Verify the UI correctly displays group chats with multiple agents.; Verify the UI correctly handles 1-1 conversations with specific agents.
+T005: Write tests for shared resource auto-pausing and locking
+Description: Implement tests for the auto-pausing and optional locking protocols for shared resources.
+Validation Criteria: Verify short operations on shared resources auto-pause correctly.; Verify the optional locking protocol prevents conflicts for longer operations.
+Green (Implementation) Phase
+T006: Implement core asynchronous agent framework (independent AI loops, async task queues)
+Description: Develop the foundational framework for independent AI loops and asynchronous task management for agents.
+Dependencies: T001
+Validation Criteria: Core framework for running independent AI loops per agent is established.; Asynchronous task queues are integrated for managing agent operations.
+T007: Implement agent sleep/wake mechanism
+Description: Implement the functionality allowing agents to sleep, wake up periodically, or based on specific events.
+Dependencies: T002, T006
+Validation Criteria: Agents can programmatically enter a sleep state.; Agents can be configured to wake up periodically or upon specific events.
+T008: Refactor backend AI loops for concurrency
+Description: Modify existing backend AI loops to support multiple concurrent tasks per agent.
+Dependencies: T001, T006
+Validation Criteria: Backend AI loops can run multiple agent tasks concurrently without conflicts.; Each agent maintains its isolated execution context.
+T009: Improve mailbox system for asynchronous message handling
+Description: Enhance the mailbox system to reliably handle asynchronous communication and message passing between agents.
+Dependencies: T003, T006
+Validation Criteria: Mailbox system supports non-blocking, asynchronous message exchange between agents.; Message delivery is reliable in a concurrent environment.
+T010: Develop frontend UI for group and 1-1 chats
+Description: Implement new UI components and logic for group chat interfaces and direct 1-1 messaging with individual agents.
+Dependencies: T004, T009
+Validation Criteria: Frontend UI allows users to initiate and participate in group chats with multiple agents.; Frontend UI allows users to initiate and participate in 1-1 chats with specific agents.
+T011: Implement shared resource auto-pausing
+Description: Implement automatic pausing mechanisms for short operations on shared resources to prevent conflicts.
+Dependencies: T005, T006
+Validation Criteria: Short operations on shared resources automatically pause execution to avoid conflicts.; No deadlocks or performance degradation due to auto-pausing.
+T012: Implement optional locking protocol for shared resources
+Description: Develop an optional locking protocol for longer, resource-intensive operations to ensure data integrity.
+Dependencies: T005, T006
+Validation Criteria: Longer operations can acquire and release locks on shared resources.; Resource access is correctly arbitrated by the locking protocol.
+T013: Design and implement initial error handling and debugging mechanisms for multi-agent interactions
+Description: Lay the groundwork for error handling and debugging tools specifically designed for multi-agent asynchronous environments.
+Dependencies: T006, T008, T009
+Validation Criteria: Basic mechanisms for logging and tracing errors across agent boundaries are in place.; Tools are available to inspect the state of individual agents during concurrent execution.
+Refactor Phase
+T014: Optimize performance of concurrent agent execution
+Description: Refine the asynchronous agent framework for improved performance, reduced latency, and efficient resource utilization.
+Dependencies: T006, T008
+Validation Criteria: Concurrent agent operations demonstrate improved efficiency and reduced latency.; Resource utilization is optimized.
+T015: Refine agent sleep/wake scheduling and event triggers
+Description: Enhance the precision and responsiveness of agent sleep/wake cycles, incorporating advanced scheduling and event-driven triggers.
+Dependencies: T007
+Validation Criteria: Agent sleep/wake cycles are more efficient and adaptable to dynamic workloads.; Event-driven wake-up mechanisms are robust.
+T016: Enhance error handling and debugging tools for multi-agent systems
+Description: Develop more sophisticated debugging features and comprehensive error reporting for complex multi-agent interactions.
+Dependencies: T013
+Validation Criteria: Advanced debugging features are available for diagnosing complex multi-agent interactions.; Error reporting is comprehensive and actionable.
+Show

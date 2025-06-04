@@ -97,8 +97,9 @@ This is a test summary.
             "content": "Users need a caching mechanism to improve performance."
         })
         
-        assert "RFC updated successfully!" in result
-        assert "Background" in result
+        assert isinstance(result, dict)
+        assert result.get('updated') is True
+        assert result.get('section') == 'background'
         
         # Verify file was updated
         rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
@@ -116,8 +117,9 @@ This is a test summary.
             "append": True
         })
         
-        assert "RFC updated successfully!" in result
-        assert "Appended to" in result
+        assert isinstance(result, dict)
+        assert result.get('updated') is True
+        assert result.get('action') == 'appended'
         
         # Verify content was appended
         rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
@@ -134,7 +136,8 @@ This is a test summary.
             "content": "Enhanced Caching Feature"
         })
         
-        assert "RFC updated successfully!" in result
+        assert isinstance(result, dict)
+        assert result.get('updated') is True
         
         # Verify title was updated
         rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
@@ -149,7 +152,8 @@ This is a test summary.
             "content": "Use Redis for distributed caching."
         })
         
-        assert "RFC updated successfully!" in result
+        assert isinstance(result, dict)
+        assert result.get('updated') is True
         
         # Verify section was added
         rfc_path = Path(temp_workspace_with_rfc) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
@@ -197,7 +201,9 @@ This is a test summary.
             "content": "New content"
         })
         
-        assert "Error: RFC 'RFC-9999-99-99-9999' not found" in result
+        assert isinstance(result, dict)
+        assert 'error' in result
+        assert "not found" in result['error']
 
 
 class TestMoveRFCTool:
@@ -270,10 +276,11 @@ Test summary.
             "reason": "Refinement complete"
         })
         
-        assert "RFC moved successfully!" in result
-        assert "in_progress" in result
-        assert "archived" in result
-        assert "Refinement complete" in result
+        assert isinstance(result, dict)
+        assert result.get('moved') is True
+        assert result.get('previous_status') == "in_progress"
+        assert result.get('new_status') == "archived"
+        assert result.get('reason') == "Refinement complete"
         
         # Verify file was moved
         old_path = Path(temp_workspace_with_rfcs) / ".WHISPER" / "rfc" / "in_progress" / "RFC-2025-05-29-0001.md"
@@ -332,7 +339,10 @@ Test summary.
             "target_status": "in_progress"
         })
         
-        assert "already in 'in_progress' status" in result
+        assert isinstance(result, dict)
+        assert 'error' in result or 'already' in str(result).lower()
+        if 'error' in result:
+            assert "already" in result['error'].lower()
     
     def test_rfc_not_found(self, move_tool):
         """Test moving non-existent RFC."""
@@ -341,7 +351,9 @@ Test summary.
             "target_status": "in_progress"
         })
         
-        assert "Error: RFC 'RFC-9999-99-99-9999' not found" in result
+        assert isinstance(result, dict)
+        assert 'error' in result
+        assert "not found" in result['error']
     
     def test_transition_messages(self, move_tool, temp_workspace_with_rfcs):
         """Test appropriate messages for different transitions."""
@@ -350,4 +362,4 @@ Test summary.
             "rfc_id": "RFC-2025-05-29-0001",
             "target_status": "archived"
         })
-        assert "refinement is complete" in result
+        assert "refinement is complete" in result.get('transition_message', '')

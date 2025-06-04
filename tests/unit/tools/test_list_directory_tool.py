@@ -61,13 +61,20 @@ def test_list_directory_flat(setup_test_directory):
     # List root directory
     result = tool.execute({"path": ".", "include_hidden": False})
     
-    assert "Contents of workspace root:" in result
-    assert "[DIR]  src/" in result
-    assert "[DIR]  tests/" in result
-    assert "[FILE] README.md" in result
-    assert "[FILE] config.yaml" in result
-    assert ".gitignore" not in result  # Hidden file excluded
-    assert ".hidden" not in result  # Hidden directory excluded
+    assert isinstance(result, dict)
+    assert result['path'] == ''  # '.' is normalized to empty string
+    entries = result['entries']
+    
+    # Check for expected entries
+    dir_names = [e['name'] for e in entries if e['type'] == 'directory']
+    file_names = [e['name'] for e in entries if e['type'] == 'file']
+    
+    assert 'src' in dir_names
+    assert 'tests' in dir_names
+    assert 'README.md' in file_names
+    assert 'config.yaml' in file_names
+    assert '.gitignore' not in file_names  # Hidden file excluded
+    assert '.hidden' not in dir_names  # Hidden directory excluded
 
 
 def test_list_directory_with_hidden(setup_test_directory):
@@ -76,8 +83,14 @@ def test_list_directory_with_hidden(setup_test_directory):
     
     result = tool.execute({"path": ".", "include_hidden": True})
     
-    assert "[FILE] .gitignore" in result
-    assert "[DIR]  .hidden/" in result
+    assert isinstance(result, dict)
+    entries = result['entries']
+    
+    dir_names = [e['name'] for e in entries if e['type'] == 'directory']
+    file_names = [e['name'] for e in entries if e['type'] == 'file']
+    
+    assert '.gitignore' in file_names
+    assert '.hidden' in dir_names
 
 
 def test_list_directory_subdirectory(setup_test_directory):
@@ -86,9 +99,15 @@ def test_list_directory_subdirectory(setup_test_directory):
     
     result = tool.execute({"path": "src"})
     
-    assert "Contents of src:" in result
-    assert "[DIR]  components/" in result
-    assert "[FILE] main.py" in result
+    assert isinstance(result, dict)
+    assert result['path'] == 'src'
+    entries = result['entries']
+    
+    dir_names = [e['name'] for e in entries if e['type'] == 'directory']
+    file_names = [e['name'] for e in entries if e['type'] == 'file']
+    
+    assert 'components' in dir_names
+    assert 'main.py' in file_names
 
 
 def test_list_directory_recursive(setup_test_directory):
@@ -97,13 +116,29 @@ def test_list_directory_recursive(setup_test_directory):
     
     result = tool.execute({"path": ".", "recursive": True, "max_depth": 2})
     
-    assert "Workspace root:" in result
-    assert "src/" in result
-    assert "├── components/" in result
-    assert "│   └── app.py" in result
-    assert "└── main.py" in result
-    assert "tests/" in result
-    assert "└── test_main.py" in result
+    assert isinstance(result, dict)
+    assert result['recursive'] is True
+    assert result['max_depth'] == 2
+    entries = result['entries']
+    
+    # In recursive mode, entries are flattened with depth field
+    # Check src directory at depth 0
+    src_entries = [e for e in entries if e['path'] == 'src']
+    assert len(src_entries) == 1
+    assert src_entries[0]['type'] == 'directory'
+    assert src_entries[0]['depth'] == 0
+    
+    # Check components directory at depth 1
+    components_entries = [e for e in entries if e['path'] == 'src/components']
+    assert len(components_entries) == 1
+    assert components_entries[0]['type'] == 'directory'
+    assert components_entries[0]['depth'] == 1
+    
+    # Check app.py at depth 2
+    app_entries = [e for e in entries if e['name'] == 'app.py']
+    assert len(app_entries) == 1
+    assert app_entries[0]['path'] == 'src/components/app.py'
+    assert app_entries[0]['depth'] == 2
 
 
 def test_list_directory_recursive_depth_limit(setup_test_directory):
@@ -112,10 +147,21 @@ def test_list_directory_recursive_depth_limit(setup_test_directory):
     
     result = tool.execute({"path": ".", "recursive": True, "max_depth": 1})
     
-    # Should show src/components/ but not app.py inside it
-    assert "src/" in result
-    assert "├── components/" in result
-    assert "app.py" not in result  # Beyond depth limit
+    assert isinstance(result, dict)
+    assert result['max_depth'] == 1
+    entries = result['entries']
+    
+    # Should show src and components but not app.py (which would be at depth 2)
+    # Check that we have entries at depth 0 and 1
+    depths = [e['depth'] for e in entries]
+    assert 0 in depths
+    assert 1 in depths
+    assert 2 not in depths  # Nothing at depth 2 due to limit
+    
+    # Should have src/components but not src/components/app.py
+    paths = [e['path'] for e in entries]
+    assert 'src/components' in paths
+    assert 'src/components/app.py' not in paths
 
 
 def test_list_directory_nonexistent_path(setup_test_directory):
@@ -124,7 +170,9 @@ def test_list_directory_nonexistent_path(setup_test_directory):
     
     result = tool.execute({"path": "nonexistent"})
     
-    assert "Error: Path 'nonexistent' does not exist." in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "does not exist" in result['error']
 
 
 def test_list_directory_file_not_directory(setup_test_directory):
@@ -133,7 +181,9 @@ def test_list_directory_file_not_directory(setup_test_directory):
     
     result = tool.execute({"path": "README.md"})
     
-    assert "Error: Path 'README.md' is not a directory." in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "not a directory" in result['error']
 
 
 def test_list_directory_outside_workspace():
@@ -141,8 +191,10 @@ def test_list_directory_outside_workspace():
     tool = ListDirectoryTool()
     
     # Try to access parent directory
-    with pytest.raises(FileRestrictionError):
-        tool.execute({"path": ".."})
+    result = tool.execute({"path": ".."})
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "outside" in result['error'].lower() or "denied" in result['error'].lower()
 
 
 def test_list_directory_empty_directory(setup_test_directory):
@@ -154,7 +206,11 @@ def test_list_directory_empty_directory(setup_test_directory):
     tool = ListDirectoryTool()
     result = tool.execute({"path": "empty"})
     
-    assert "Directory is empty." in result
+    assert isinstance(result, dict)
+    assert result['path'] == 'empty'
+    assert len(result['entries']) == 0
+    assert result['total_files'] == 0
+    assert result['total_directories'] == 0
 
 
 def test_list_directory_file_sizes(setup_test_directory):
@@ -166,7 +222,13 @@ def test_list_directory_file_sizes(setup_test_directory):
     tool = ListDirectoryTool()
     result = tool.execute({"path": "."})
     
-    assert "[FILE] large.txt (4.9KB)" in result
+    assert isinstance(result, dict)
+    entries = result['entries']
+    
+    large_entry = next((e for e in entries if e['name'] == 'large.txt'), None)
+    assert large_entry is not None
+    assert large_entry['size'] == 5000
+    assert large_entry['size_formatted'] == '4.9 KB'
 
 
 def test_list_directory_max_depth_validation(setup_test_directory):
@@ -175,10 +237,14 @@ def test_list_directory_max_depth_validation(setup_test_directory):
     
     # Test max_depth too high
     result = tool.execute({"path": ".", "recursive": True, "max_depth": 20})
+    assert isinstance(result, dict)
     # Should be clamped to 10, but still work
-    assert "Workspace root:" in result
+    assert result['max_depth'] <= 10
+    assert len(result['entries']) > 0
     
     # Test max_depth too low
     result = tool.execute({"path": ".", "recursive": True, "max_depth": 0})
+    assert isinstance(result, dict)
     # Should be clamped to 1
-    assert "src/" in result
+    assert result['max_depth'] == 1
+    assert len(result['entries']) > 0

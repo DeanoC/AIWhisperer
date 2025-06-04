@@ -28,10 +28,9 @@ class TestRFCPlanBidirectional:
     
     def _extract_rfc_id(self, result):
         """Extract RFC ID from create result."""
-        import re
-        match = re.search(r'\*\*RFC ID\*\*: (RFC-\d{4}-\d{2}-\d{2}-\d{4})', result)
-        assert match, f"Could not extract RFC ID from result: {result}"
-        return match.group(1)
+        rfc_id = result.get('rfc_id')
+        assert rfc_id, f"Could not extract RFC ID from result: {result}"
+        return rfc_id
     
     @pytest.fixture
     def temp_workspace(self):
@@ -61,7 +60,7 @@ class TestRFCPlanBidirectional:
             "short_name": "auth-system",
             "summary": "Implement user authentication with JWT"
         })
-        assert "RFC created successfully" in result
+        assert result.get('rfc_id') is not None
         
         # Extract the RFC ID from the result
         rfc_id = self._extract_rfc_id(result)
@@ -72,10 +71,10 @@ class TestRFCPlanBidirectional:
             "rfc_id": rfc_id,
             "plan_type": "initial"
         })
-        assert "RFC prepared for plan generation" in prepare_result
+        assert prepare_result.get('prepared') is True
         
         # Extract RFC metadata from prepare result
-        rfc_hash = prepare_result.split('rfc_hash: "')[1].split('"')[0]
+        rfc_hash = prepare_result.get('rfc_hash')
         
         # Create a sample plan
         sample_plan = {
@@ -106,7 +105,7 @@ class TestRFCPlanBidirectional:
             "rfc_id": rfc_id,  # Use the actual RFC ID
             "rfc_hash": rfc_hash
         })
-        assert "Plan saved successfully" in save_result
+        assert save_result.get('saved') is True
         
         # Verify RFC metadata was updated
         path_manager = PathManager.get_instance()
@@ -135,10 +134,8 @@ class TestRFCPlanBidirectional:
         })
         
         # Extract RFC ID from the result
-        import re
-        match = re.search(r'(RFC-\d{4}-\d{2}-\d{2}-\d{4})', rfc_result)
-        assert match, f"Could not extract RFC ID from result: {rfc_result}"
-        rfc_id = match.group(1)
+        rfc_id = rfc_result.get('rfc_id')
+        assert rfc_id, f"Could not extract RFC ID from result: {rfc_result}"
         
         # Prepare and save a plan
         prepare_tool = PreparePlanFromRFCTool()
@@ -147,7 +144,7 @@ class TestRFCPlanBidirectional:
             "plan_type": "initial"
         })
         
-        rfc_hash = prepare_result.split('rfc_hash: "')[1].split('"')[0]
+        rfc_hash = prepare_result.get('rfc_hash')
         
         save_tool = SaveGeneratedPlanTool()
         save_tool.execute({
@@ -172,7 +169,7 @@ class TestRFCPlanBidirectional:
             "section": "requirements",
             "content": "- Use Redis for caching\n- Support TTL configuration\n- Add cache invalidation"
         })
-        assert "RFC updated successfully" in update_result
+        assert update_result.get('updated') is True
         
         # Check if plan needs update - mock the AI service
         with patch('ai_whisperer.tools.update_plan_from_rfc_tool.OpenRouterAIService') as mock_service:
@@ -209,7 +206,7 @@ class TestRFCPlanBidirectional:
             })
             
             # Should detect RFC changes
-            assert "successfully" in sync_result or "up to date" in sync_result
+            assert sync_result.get('updated') is not None or sync_result.get('up_to_date') is True
     
     def test_plan_archival_workflow(self, temp_workspace):
         """Test moving plans between in_progress and archived."""
@@ -230,7 +227,7 @@ class TestRFCPlanBidirectional:
             "plan_type": "initial"
         })
         
-        rfc_hash = prepare_result.split('rfc_hash: "')[1].split('"')[0]
+        rfc_hash = prepare_result.get('rfc_hash')
         
         save_tool = SaveGeneratedPlanTool()
         save_tool.execute({
@@ -254,7 +251,7 @@ class TestRFCPlanBidirectional:
             "plan_name": "logging-plan-2024-01-01",
             "to_status": "archived"
         })
-        assert "Plan moved successfully" in archive_result
+        assert archive_result.get('moved') is True
         
         # Verify plan is in archived folder
         path_manager = PathManager.get_instance()
@@ -294,7 +291,7 @@ class TestRFCPlanBidirectional:
             "plan_type": "initial"
         })
         
-        rfc_hash = prepare_result.split('rfc_hash: "')[1].split('"')[0]
+        rfc_hash = prepare_result.get('rfc_hash')
         
         save_tool = SaveGeneratedPlanTool()
         save_tool.execute({
@@ -319,7 +316,7 @@ class TestRFCPlanBidirectional:
             "confirm_delete": True,
             "reason": "Test deletion"
         })
-        assert "Plan deleted successfully" in delete_result
+        assert delete_result.get('deleted') is True
         
         # Verify RFC metadata was updated
         path_manager = PathManager.get_instance()
@@ -343,8 +340,8 @@ class TestRFCPlanBidirectional:
             "rfc_id": "non-existent-rfc",
             "plan_type": "initial"
         })
-        assert "Error" in result
-        assert "not found" in result
+        assert "error" in result
+        assert "not found" in result.get('error', '')
     
     def test_error_handling_invalid_plan_content(self, temp_workspace):
         """Test error handling for invalid plan content."""
@@ -365,7 +362,7 @@ class TestRFCPlanBidirectional:
             "plan_content": {"invalid": "structure"},  # Missing required fields
             "rfc_id": rfc_id
         })
-        assert "Error" in result or "validation" in result.lower()
+        assert "error" in result or "validation" in result.get('error', '').lower()
     
     def test_multiple_plans_from_single_rfc(self, temp_workspace):
         """Test creating multiple plans from a single RFC."""
@@ -388,7 +385,7 @@ class TestRFCPlanBidirectional:
             "rfc_id": rfc_id,
             "plan_type": "initial"
         })
-        rfc_hash = prepare_result.split('rfc_hash: "')[1].split('"')[0]
+        rfc_hash = prepare_result.get('rfc_hash')
         
         save_tool.execute({
             "plan_name": "complex-plan-phase1",

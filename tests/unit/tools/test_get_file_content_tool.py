@@ -68,12 +68,13 @@ def test_read_small_file(setup_test_files):
     
     result = tool.execute({"path": "small.txt"})
     
-    assert "File: small.txt (5 lines)" in result
-    assert "   1 | Line 1" in result
-    assert "   2 | Line 2" in result
-    assert "   3 | Line 3" in result
-    assert "   4 | Line 4" in result
-    assert "   5 | Line 5" in result
+    assert isinstance(result, dict)
+    assert result['exists'] is True
+    assert result['total_lines'] == 5
+    assert "Line 1\nLine 2\nLine 3\nLine 4\nLine 5" in result['content']
+    assert len(result['lines']) == 5
+    assert result['lines'][0]['line_number'] == 1
+    assert result['lines'][0]['content'] == "Line 1"
 
 
 def test_read_with_line_range(setup_test_files):
@@ -86,12 +87,17 @@ def test_read_with_line_range(setup_test_files):
         "end_line": 4
     })
     
-    assert "File: small.txt (lines 2-4 of 5)" in result
-    assert "   2 | Line 2" in result
-    assert "   3 | Line 3" in result
-    assert "   4 | Line 4" in result
-    assert "Line 1" not in result
-    assert "Line 5" not in result
+    assert isinstance(result, dict)
+    assert result['exists'] is True
+    assert result['total_lines'] == 5
+    assert 'range' in result
+    assert len(result['lines']) == 3
+    assert result['lines'][0]['line_number'] == 2
+    assert result['lines'][0]['content'] == "Line 2"
+    assert result['lines'][2]['line_number'] == 4
+    assert "Line 2\nLine 3\nLine 4" in result['content']
+    assert "Line 1" not in result['content']
+    assert "Line 5" not in result['content']
 
 
 def test_preview_mode(setup_test_files):
@@ -103,12 +109,14 @@ def test_preview_mode(setup_test_files):
         "preview_only": True
     })
     
-    assert "File: large.py" in result
-    assert "Total lines: 300" in result
-    assert "Preview: First 200 lines" in result
-    assert "   1 | # Line 1" in result
-    assert " 200 | " in result
-    assert " 201 | " not in result  # Should stop at 200
+    assert isinstance(result, dict)
+    assert result['preview_mode'] is True
+    assert result['total_lines'] == 300
+    assert result['preview_lines'] == 200
+    assert result['truncated'] is True
+    assert len(result['lines']) == 200
+    assert result['lines'][0]['content'] == "# Line 1"
+    assert result['lines'][199]['content'] == "# Line 200"
 
 
 def test_preview_mode_small_file(setup_test_files):
@@ -120,11 +128,14 @@ def test_preview_mode_small_file(setup_test_files):
         "preview_only": True
     })
     
-    assert "File: small.txt" in result
-    assert "Total lines: 5" in result
-    assert "Preview: Complete file" in result
-    assert "   1 | Line 1" in result
-    assert "   5 | Line 5" in result
+    assert isinstance(result, dict)
+    assert result['preview_mode'] is True
+    assert result['total_lines'] == 5
+    assert result['preview_lines'] == 5
+    assert result['truncated'] is False
+    assert len(result['lines']) == 5
+    assert result['lines'][0]['content'] == "Line 1"
+    assert result['lines'][4]['content'] == "Line 5"
 
 
 def test_read_empty_file(setup_test_files):
@@ -133,7 +144,11 @@ def test_read_empty_file(setup_test_files):
     
     result = tool.execute({"path": "empty.txt"})
     
-    assert "File: empty.txt (0 lines)" in result
+    assert isinstance(result, dict)
+    assert result['exists'] is True
+    assert result['total_lines'] == 0
+    assert result['content'] == ""
+    assert len(result['lines']) == 0
 
 
 def test_read_unicode_file(setup_test_files):
@@ -142,9 +157,12 @@ def test_read_unicode_file(setup_test_files):
     
     result = tool.execute({"path": "unicode.txt"})
     
-    assert "Hello 世界" in result
-    assert "Γειά σου κόσμε" in result
-    assert "🌍🌎🌏" in result
+    assert isinstance(result, dict)
+    assert result['exists'] is True
+    assert "Hello 世界" in result['content']
+    assert "Γειά σου κόσμε" in result['content']
+    assert "🌍🌎🌏" in result['content']
+    assert len(result['lines']) == 3
 
 
 def test_binary_file_detection(setup_test_files):
@@ -153,8 +171,9 @@ def test_binary_file_detection(setup_test_files):
     
     result = tool.execute({"path": "binary.dat"})
     
-    assert "Error:" in result
-    assert "binary file" in result.lower()
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "binary file" in result['error'].lower()
 
 
 def test_nonexistent_file(setup_test_files):
@@ -163,7 +182,9 @@ def test_nonexistent_file(setup_test_files):
     
     result = tool.execute({"path": "nonexistent.txt"})
     
-    assert "Error: File 'nonexistent.txt' does not exist." in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "does not exist" in result['error']
 
 
 def test_directory_instead_of_file(setup_test_files):
@@ -174,15 +195,18 @@ def test_directory_instead_of_file(setup_test_files):
     tool = GetFileContentTool()
     result = tool.execute({"path": "testdir"})
     
-    assert "Error: Path 'testdir' is not a file." in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "not a file" in result['error']
 
 
 def test_outside_workspace_access():
     """Test that access outside workspace is denied."""
     tool = GetFileContentTool()
     
-    with pytest.raises(FileRestrictionError):
+    with pytest.raises(FileRestrictionError) as excinfo:
         tool.execute({"path": "../outside.txt"})
+    assert "outside the workspace" in str(excinfo.value).lower()
 
 
 def test_missing_path_argument():
@@ -191,7 +215,9 @@ def test_missing_path_argument():
     
     result = tool.execute({})
     
-    assert "Error: 'path' argument is required." in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "path" in result['error'].lower() and "required" in result['error'].lower()
 
 
 def test_invalid_line_range(setup_test_files):
@@ -203,7 +229,9 @@ def test_invalid_line_range(setup_test_files):
         "path": "small.txt",
         "start_line": 10
     })
-    assert "Error: start_line (10) exceeds total lines (5)" in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "exceeds total lines" in result['error'] or "beyond file length" in result['error'].lower()
     
     # Invalid range (start > end)
     result = tool.execute({
@@ -211,7 +239,9 @@ def test_invalid_line_range(setup_test_files):
         "start_line": 4,
         "end_line": 2
     })
-    assert "Error: Invalid line range" in result
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert "invalid line range" in result['error'].lower()
 
 
 def test_line_range_adjustment(setup_test_files):
@@ -224,10 +254,16 @@ def test_line_range_adjustment(setup_test_files):
         "end_line": 10  # Beyond file length
     })
     
-    assert "File: small.txt (lines 3-5 of 5)" in result
-    assert "   3 | Line 3" in result
-    assert "   4 | Line 4" in result
-    assert "   5 | Line 5" in result
+    assert isinstance(result, dict)
+    assert result['exists'] is True
+    assert result['total_lines'] == 5
+    # Should have lines 3-5 (adjusted from 3-10)
+    assert len(result['lines']) == 3
+    assert result['lines'][0]['line_number'] == 3
+    assert result['lines'][0]['content'] == "Line 3"
+    assert result['lines'][2]['line_number'] == 5
+    assert result['lines'][2]['content'] == "Line 5"
+    assert "Line 3\nLine 4\nLine 5" in result['content']
 
 
 def test_file_size_formatting(setup_test_files):
@@ -242,4 +278,6 @@ def test_file_size_formatting(setup_test_files):
         "preview_only": True
     })
     
-    assert "File size: 2.0KB" in result
+    assert isinstance(result, dict)
+    assert result['size'] == 2048
+    assert result['size_formatted'] == "2.0KB"

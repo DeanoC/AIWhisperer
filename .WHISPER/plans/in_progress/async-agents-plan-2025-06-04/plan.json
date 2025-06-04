@@ -1,0 +1,301 @@
+{
+  "status": "in_progress",
+  "title": "Asynchronous Agents Feature",
+  "overview": "Implement asynchronous capabilities for agents, enabling concurrent task execution, agent sleep/wake cycles, and enhanced inter-agent communication via an improved mailbox system. This includes refactoring existing AI loops and updating the frontend UI.",
+  "milestones": [
+    "Core Asynchronous Agent Framework",
+    "Mailbox & UI Enhancements",
+    "Shared Resource Management & Error Handling"
+  ],
+  "source_rfc": {
+    "rfc_id": "RFC-2025-06-04-0001",
+    "title": "Asynchronous Agents Feature",
+    "filename": "async-agents-2025-06-04.md",
+    "version_hash": "7ca065594b5a8630c543aef4c4e4bde21396b754185afcca96a4c0104a9221fa"
+  },
+  "tasks": [
+    {
+      "tdd_phase": "red",
+      "agent_type": "test_generation",
+      "title": "Write tests for agent task isolation (concurrent execution)",
+      "validation_criteria": [
+        "Verify that concurrent agent tasks do not interfere with each other unless explicitly using shared tools."
+      ],
+      "type": "test",
+      "id": "T001",
+      "name": "Write tests for agent task isolation (concurrent execution)",
+      "description": "Write unit and integration tests to verify that concurrent agent tasks do not interfere with each other unless explicitly using shared tools."
+    },
+    {
+      "description": "Develop tests to confirm agents can enter and exit sleep states and wake up based on periodic triggers.",
+      "id": "T002",
+      "name": "Write tests for agent sleep/wake functionality",
+      "tdd_phase": "red",
+      "type": "test",
+      "title": "Write tests for agent sleep/wake functionality",
+      "validation_criteria": [
+        "Verify agents can enter and exit sleep states.",
+        "Verify agents wake up based on periodic triggers (e.g., 30-minute intervals)."
+      ],
+      "agent_type": "test_generation"
+    },
+    {
+      "tdd_phase": "red",
+      "validation_criteria": [
+        "Verify asynchronous messages can be sent and received between agents.",
+        "Verify message delivery without blocking sender or receiver agents."
+      ],
+      "id": "T003",
+      "agent_type": "test_generation",
+      "description": "Create tests for asynchronous message sending and receiving between agents via the mailbox system.",
+      "name": "Write tests for asynchronous mailbox communication",
+      "type": "test",
+      "title": "Write tests for asynchronous mailbox communication"
+    },
+    {
+      "description": "Design tests for the new UI components supporting group and 1-1 chats with agents.",
+      "agent_type": "test_generation",
+      "id": "T004",
+      "tdd_phase": "red",
+      "name": "Write tests for frontend UI group and 1-1 chat features",
+      "type": "test",
+      "title": "Write tests for frontend UI group and 1-1 chat features",
+      "validation_criteria": [
+        "Verify the UI correctly displays group chats with multiple agents.",
+        "Verify the UI correctly handles 1-1 conversations with specific agents."
+      ]
+    },
+    {
+      "type": "test",
+      "id": "T005",
+      "agent_type": "test_generation",
+      "validation_criteria": [
+        "Verify short operations on shared resources auto-pause correctly.",
+        "Verify the optional locking protocol prevents conflicts for longer operations."
+      ],
+      "tdd_phase": "red",
+      "description": "Implement tests for the auto-pausing and optional locking protocols for shared resources.",
+      "title": "Write tests for shared resource auto-pausing and locking",
+      "name": "Write tests for shared resource auto-pausing and locking"
+    },
+    {
+      "id": "T006",
+      "name": "Implement core asynchronous agent framework (independent AI loops, async task queues)",
+      "validation_criteria": [
+        "Core framework for running independent AI loops per agent is established.",
+        "Asynchronous task queues are integrated for managing agent operations."
+      ],
+      "title": "Implement core asynchronous agent framework (independent AI loops, async task queues)",
+      "dependencies": [
+        "T001"
+      ],
+      "type": "implementation",
+      "agent_type": "code_generation",
+      "tdd_phase": "green",
+      "description": "Develop the foundational framework for independent AI loops and asynchronous task management for agents."
+    },
+    {
+      "id": "T007",
+      "validation_criteria": [
+        "Agents can programmatically enter a sleep state.",
+        "Agents can be configured to wake up periodically or upon specific events."
+      ],
+      "description": "Implement the functionality allowing agents to sleep, wake up periodically, or based on specific events.",
+      "title": "Implement agent sleep/wake mechanism",
+      "name": "Implement agent sleep/wake mechanism",
+      "type": "implementation",
+      "agent_type": "code_generation",
+      "dependencies": [
+        "T002",
+        "T006"
+      ],
+      "tdd_phase": "green"
+    },
+    {
+      "name": "Refactor backend AI loops for concurrency",
+      "validation_criteria": [
+        "Backend AI loops can run multiple agent tasks concurrently without conflicts.",
+        "Each agent maintains its isolated execution context."
+      ],
+      "dependencies": [
+        "T001",
+        "T006"
+      ],
+      "id": "T008",
+      "tdd_phase": "green",
+      "title": "Refactor backend AI loops for concurrency",
+      "description": "Modify existing backend AI loops to support multiple concurrent tasks per agent.",
+      "type": "implementation",
+      "agent_type": "code_generation"
+    },
+    {
+      "type": "implementation",
+      "tdd_phase": "green",
+      "validation_criteria": [
+        "Mailbox system supports non-blocking, asynchronous message exchange between agents.",
+        "Message delivery is reliable in a concurrent environment."
+      ],
+      "title": "Improve mailbox system for asynchronous message handling",
+      "name": "Improve mailbox system for asynchronous message handling",
+      "description": "Enhance the mailbox system to reliably handle asynchronous communication and message passing between agents.",
+      "agent_type": "code_generation",
+      "id": "T009",
+      "dependencies": [
+        "T003",
+        "T006"
+      ]
+    },
+    {
+      "tdd_phase": "green",
+      "name": "Develop frontend UI for group and 1-1 chats",
+      "description": "Implement new UI components and logic for group chat interfaces and direct 1-1 messaging with individual agents.",
+      "type": "implementation",
+      "validation_criteria": [
+        "Frontend UI allows users to initiate and participate in group chats with multiple agents.",
+        "Frontend UI allows users to initiate and participate in 1-1 chats with specific agents."
+      ],
+      "id": "T010",
+      "agent_type": "file_edit",
+      "title": "Develop frontend UI for group and 1-1 chats",
+      "dependencies": [
+        "T004",
+        "T009"
+      ]
+    },
+    {
+      "type": "implementation",
+      "title": "Implement shared resource auto-pausing",
+      "name": "Implement shared resource auto-pausing",
+      "id": "T011",
+      "agent_type": "code_generation",
+      "tdd_phase": "green",
+      "validation_criteria": [
+        "Short operations on shared resources automatically pause execution to avoid conflicts.",
+        "No deadlocks or performance degradation due to auto-pausing."
+      ],
+      "dependencies": [
+        "T005",
+        "T006"
+      ],
+      "description": "Implement automatic pausing mechanisms for short operations on shared resources to prevent conflicts."
+    },
+    {
+      "agent_type": "code_generation",
+      "title": "Implement optional locking protocol for shared resources",
+      "description": "Develop an optional locking protocol for longer, resource-intensive operations to ensure data integrity.",
+      "type": "implementation",
+      "validation_criteria": [
+        "Longer operations can acquire and release locks on shared resources.",
+        "Resource access is correctly arbitrated by the locking protocol."
+      ],
+      "dependencies": [
+        "T005",
+        "T006"
+      ],
+      "name": "Implement optional locking protocol for shared resources",
+      "tdd_phase": "green",
+      "id": "T012"
+    },
+    {
+      "title": "Design and implement initial error handling and debugging mechanisms for multi-agent interactions",
+      "description": "Lay the groundwork for error handling and debugging tools specifically designed for multi-agent asynchronous environments.",
+      "agent_type": "code_generation",
+      "type": "implementation",
+      "tdd_phase": "green",
+      "validation_criteria": [
+        "Basic mechanisms for logging and tracing errors across agent boundaries are in place.",
+        "Tools are available to inspect the state of individual agents during concurrent execution."
+      ],
+      "name": "Design and implement initial error handling and debugging mechanisms for multi-agent interactions",
+      "dependencies": [
+        "T006",
+        "T008",
+        "T009"
+      ],
+      "id": "T013"
+    },
+    {
+      "agent_type": "code_generation",
+      "dependencies": [
+        "T006",
+        "T008"
+      ],
+      "validation_criteria": [
+        "Concurrent agent operations demonstrate improved efficiency and reduced latency.",
+        "Resource utilization is optimized."
+      ],
+      "tdd_phase": "refactor",
+      "id": "T014",
+      "type": "refactor",
+      "title": "Optimize performance of concurrent agent execution",
+      "description": "Refine the asynchronous agent framework for improved performance, reduced latency, and efficient resource utilization.",
+      "name": "Optimize performance of concurrent agent execution"
+    },
+    {
+      "title": "Refine agent sleep/wake scheduling and event triggers",
+      "name": "Refine agent sleep/wake scheduling and event triggers",
+      "id": "T015",
+      "agent_type": "code_generation",
+      "description": "Enhance the precision and responsiveness of agent sleep/wake cycles, incorporating advanced scheduling and event-driven triggers.",
+      "dependencies": [
+        "T007"
+      ],
+      "tdd_phase": "refactor",
+      "type": "refactor",
+      "validation_criteria": [
+        "Agent sleep/wake cycles are more efficient and adaptable to dynamic workloads.",
+        "Event-driven wake-up mechanisms are robust."
+      ]
+    },
+    {
+      "dependencies": [
+        "T013"
+      ],
+      "type": "refactor",
+      "tdd_phase": "refactor",
+      "validation_criteria": [
+        "Advanced debugging features are available for diagnosing complex multi-agent interactions.",
+        "Error reporting is comprehensive and actionable."
+      ],
+      "agent_type": "code_generation",
+      "id": "T016",
+      "name": "Enhance error handling and debugging tools for multi-agent systems",
+      "title": "Enhance error handling and debugging tools for multi-agent systems",
+      "description": "Develop more sophisticated debugging features and comprehensive error reporting for complex multi-agent interactions."
+    }
+  ],
+  "updated": "2025-06-04 18:32:35",
+  "tdd_phases": {
+    "red": [
+      "T001",
+      "T002",
+      "T003",
+      "T004",
+      "T005"
+    ],
+    "green": [
+      "T006",
+      "T007",
+      "T008",
+      "T009",
+      "T010",
+      "T011",
+      "T012",
+      "T013"
+    ],
+    "refactor": [
+      "T014",
+      "T015",
+      "T016"
+    ]
+  },
+  "validation_criteria": [
+    "Concurrent tasks remain isolated except via specific tools.",
+    "Agents can sleep and wake based on periodic functions.",
+    "UI supports group and 1-1 chats.",
+    "Mailbox handles asynchronous agent messages.",
+    "Shared resources use auto-pausing for small operations and optional locking for longer ones."
+  ],
+  "created": "2025-06-04 18:32:35",
+  "plan_type": "initial"
+}

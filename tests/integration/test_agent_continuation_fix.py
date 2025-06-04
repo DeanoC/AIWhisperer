@@ -1,7 +1,6 @@
-"""Test to verify agent continuation works after fixing the order of checks."""
+"""Test to verify agent continuation works with the new AI-driven approach."""
 
 import pytest
-import asyncio
 from unittest.mock import Mock, AsyncMock
 
 from ai_whisperer.services.agents.stateless import StatelessAgent
@@ -9,20 +8,19 @@ from ai_whisperer.services.agents.config import AgentConfig
 from ai_whisperer.extensions.agents.continuation_strategy import ContinuationStrategy
 from ai_whisperer.context.agent_context import AgentContext
 from ai_whisperer.services.execution.ai_loop import StatelessAILoop
-from interactive_server.stateless_session_manager import StatelessInteractiveSession
 
 
 class TestAgentContinuationFix:
-    """Test the fixed continuation logic."""
+    """Test the new AI-driven continuation logic."""
     
     @pytest.fixture
-    def single_tool_agent_config(self):
-        """Create a config for a single-tool model agent."""
+    def agent_config(self):
+        """Create a config for an agent."""
         return AgentConfig(
-            name="test_single_tool_agent",
-            description="Test agent using single-tool model",
+            name="test_agent",
+            description="Test agent",
             system_prompt="You are a test agent.",
-            model_name="google/gemini-2.5-flash-preview-05-20:thinking",  # Single-tool model
+            model_name="openai/gpt-4",
             provider="openrouter",
             api_settings={"api_key": "test_key"},
             generation_params={},
@@ -31,101 +29,83 @@ class TestAgentContinuationFix:
             context_settings={}
         )
     
-    @pytest.fixture
-    def mock_websocket(self):
-        """Create a mock WebSocket."""
-        websocket = AsyncMock()
-        websocket.send_json = AsyncMock()
-        return websocket
-    
-    @pytest.fixture
-    def session_with_continuation(self, mock_websocket):
-        """Create a session with continuation enabled."""
-        config = {'openrouter': {'api_key': 'test', 'model': 'google/gemini-2.5-flash-preview-05-20:thinking'}}
+    def test_continuation_strategy_processes_ai_response(self):
+        """Test that continuation strategy processes AI responses correctly."""
+        strategy = ContinuationStrategy({'require_explicit_signal': True})
         
-        session = StatelessInteractiveSession(
-            session_id="test_session",
-            websocket=mock_websocket,
-            config=config
-        )
-        
-        # Create mock agent with continuation strategy
-        mock_agent = Mock()
-        mock_agent.config = Mock(model_name='google/gemini-2.5-flash-preview-05-20:thinking')
-        
-        # Initialize continuation strategy
-        continuation_strategy = ContinuationStrategy({'require_explicit_signal': True})
-        continuation_strategy.reset()
-        mock_agent.continuation_strategy = continuation_strategy
-        
-        # Add to session
-        session.agents['test'] = mock_agent
-        session.active_agent = 'test'
-        
-        return session
-    
-    @pytest.mark.asyncio
-    async def test_continuation_strategy_checked_before_model_capability(self, session_with_continuation):
-        """Test that continuation strategy is checked BEFORE model capability check."""
-        session = session_with_continuation
-        
-        # Create a response with explicit CONTINUE signal
-        result = {
-            'response': 'I need to continue with more analysis.',
+        # AI response with explicit continuation signal (structured output)
+        ai_response = {
+            'response': 'I need to analyze more files to complete this task.',
             'continuation': {
                 'status': 'CONTINUE',
-                'reason': 'Need to analyze more files'
-            },
-            'tool_calls': [{'function': {'name': 'read_file', 'arguments': {'path': 'test.py'}}}]
+                'reason': 'Need to analyze additional files'
+            }
         }
         
-        # Test continuation detection
-        should_continue = await session._should_continue_after_tools(result, "analyze the project")
-        
-        # Should return True because continuation strategy detects the CONTINUE signal
-        # even though it's a single-tool model
+        # Strategy should detect the continuation signal from AI
+        should_continue = strategy.should_continue(ai_response)
         assert should_continue is True
-    
-    @pytest.mark.asyncio
-    async def test_no_continuation_without_explicit_signal(self, session_with_continuation):
-        """Test that single-tool models don't continue without explicit signal."""
-        session = session_with_continuation
         
-        # Response WITHOUT continuation signal
-        result = {
-            'response': 'I found the file content.',
+        # Extract continuation state
+        state = strategy.extract_continuation_state(ai_response)
+        assert state is not None
+        assert state.status == 'CONTINUE'
+        assert state.reason == 'Need to analyze additional files'
+    
+    def test_no_continuation_without_ai_signal(self):
+        """Test that continuation doesn't happen without AI signal."""
+        strategy = ContinuationStrategy({'require_explicit_signal': True})
+        
+        # AI response without continuation signal
+        ai_response = {
+            'response': 'I found the information you requested.',
             'tool_calls': [{'function': {'name': 'read_file', 'arguments': {'path': 'test.py'}}}]
         }
         
-        # Test continuation detection
-        should_continue = await session._should_continue_after_tools(result, "read test.py")
-        
-        # Should return False because there's no explicit continuation signal
+        # Should not continue without explicit signal
+        should_continue = strategy.should_continue(ai_response)
         assert should_continue is False
     
-    @pytest.mark.asyncio
-    async def test_terminate_signal_stops_continuation(self, session_with_continuation):
-        """Test that TERMINATE signal prevents continuation."""
-        session = session_with_continuation
+    def test_terminate_signal_from_ai(self):
+        """Test that AI TERMINATE signal stops continuation."""
+        strategy = ContinuationStrategy({'require_explicit_signal': True})
         
-        # Response with explicit TERMINATE signal
-        result = {
+        # AI response with explicit TERMINATE signal
+        ai_response = {
             'response': 'I have completed the analysis.',
             'continuation': {
                 'status': 'TERMINATE',
-                'reason': 'Analysis complete'
-            },
-            'tool_calls': [{'function': {'name': 'read_file', 'arguments': {'path': 'test.py'}}}]
+                'reason': 'Task completed successfully'
+            }
         }
         
-        # Test continuation detection
-        should_continue = await session._should_continue_after_tools(result, "analyze test.py")
-        
-        # Should return False because of TERMINATE signal
+        # Should not continue with TERMINATE signal
+        should_continue = strategy.should_continue(ai_response)
         assert should_continue is False
+        
+        # Extract continuation state
+        state = strategy.extract_continuation_state(ai_response)
+        assert state is not None
+        assert state.status == 'TERMINATE'
+        assert state.reason == 'Task completed successfully'
     
-    def test_agent_gets_continuation_strategy_from_config(self, single_tool_agent_config):
-        """Test that agents initialize continuation strategy from registry config."""
+    def test_tools_return_data_not_continuation(self):
+        """Test that tools return structured data without continuation logic."""
+        # Mock a tool response - just data, no continuation
+        tool_response = {
+            "content": "File content here",
+            "path": "test.py",
+            "exists": True,
+            "size": 1234
+        }
+        
+        # Tool responses should not contain continuation signals
+        assert 'continuation' not in tool_response
+        assert 'CONTINUE' not in str(tool_response)
+        assert 'TERMINATE' not in str(tool_response)
+    
+    def test_agent_continuation_strategy_initialization(self, agent_config):
+        """Test that agents can be initialized with continuation strategy."""
         context = AgentContext(agent_id="test", system_prompt="Test")
         ai_loop = Mock(spec=StatelessAILoop)
         
@@ -138,9 +118,9 @@ class TestAgentContinuationFix:
         }
         
         # Create agent
-        agent = StatelessAgent(single_tool_agent_config, context, ai_loop, agent_registry_info)
+        agent = StatelessAgent(agent_config, context, ai_loop, agent_registry_info)
         
-        # Verify continuation strategy was created
+        # Verify continuation strategy was created with correct config
         assert agent.continuation_strategy is not None
         assert isinstance(agent.continuation_strategy, ContinuationStrategy)
         assert agent.continuation_strategy.require_explicit_signal is True

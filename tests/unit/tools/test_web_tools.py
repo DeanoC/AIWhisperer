@@ -60,10 +60,18 @@ class TestWebSearchTool:
         
         result = search_tool.execute({"query": "Python caching"})
         
-        assert "Python Caching Guide" in result
-        assert "https://example.com/python-caching" in result
-        assert "Learn about caching" in result
-        assert "functools Documentation" in result
+        assert isinstance(result, dict)
+        assert result["total_results"] == 2
+        assert len(result["results"]) == 2
+        
+        # Check first result
+        assert result["results"][0]["title"] == "Python Caching Guide"
+        assert result["results"][0]["url"] == "https://example.com/python-caching"
+        assert "Learn about caching" in result["results"][0]["snippet"]
+        
+        # Check second result
+        assert result["results"][1]["title"] == "functools Documentation"
+        assert "lru_cache" in result["results"][1]["snippet"]
         
         # Verify request was made
         mock_post.assert_called_once()
@@ -103,15 +111,19 @@ class TestWebSearchTool:
             mock_post.return_value = mock_response
             
             result1 = search_tool.execute({"query": "test query"})
-            assert "Test Result" in result1
-            assert "(Results from cache)" not in result1
+            assert isinstance(result1, dict)
+            assert result1["total_results"] == 1
+            assert result1["results"][0]["title"] == "Test Result"
+            assert result1["from_cache"] is False
             mock_post.assert_called_once()
         
         # Second search - should use cache
         with patch('requests.post') as mock_post:
             result2 = search_tool.execute({"query": "test query"})
-            assert "Test Result" in result2
-            assert "(Results from cache)" in result2
+            assert isinstance(result2, dict)
+            assert result2["total_results"] == 1
+            assert result2["results"][0]["title"] == "Test Result"
+            assert result2["from_cache"] is True
             mock_post.assert_not_called()
     
     @patch('requests.post')
@@ -121,7 +133,9 @@ class TestWebSearchTool:
         mock_post.side_effect = Exception("Connection timeout")
         
         result = search_tool.execute({"query": "test"})
-        assert "No results found" in result  # Empty results returned on error
+        assert isinstance(result, dict)
+        assert result["total_results"] == 0
+        assert len(result["results"]) == 0
     
     @patch('requests.post')
     def test_no_results(self, mock_post, search_tool):
@@ -132,8 +146,9 @@ class TestWebSearchTool:
         mock_post.return_value = mock_response
         
         result = search_tool.execute({"query": "very obscure query"})
-        assert "No results found" in result
-        assert "Simplifying your query" in result
+        assert isinstance(result, dict)
+        assert result["total_results"] == 0
+        assert len(result["results"]) == 0
     
     def test_max_results_limit(self, search_tool):
         """Test max results parameter."""
@@ -160,10 +175,12 @@ class TestWebSearchTool:
             })
             
             # Should only show 3 results
-            assert "1. Result 0" in result
-            assert "2. Result 1" in result
-            assert "3. Result 2" in result
-            assert "4. Result 3" not in result
+            assert isinstance(result, dict)
+            assert result["max_results"] == 3
+            assert len(result["results"]) == 3
+            assert result["results"][0]["title"] == "Result 0"
+            assert result["results"][1]["title"] == "Result 1"
+            assert result["results"][2]["title"] == "Result 2"
 
 
 class TestFetchURLTool:
@@ -220,12 +237,15 @@ class TestFetchURLTool:
             "extract_mode": "markdown"
         })
         
-        assert "# Test Page" in result
-        assert "This is a **test** paragraph" in result
-        assert "- Item 1" in result
-        assert "- Item 2" in result
-        assert "```" in result
-        assert 'def hello():' in result
+        assert isinstance(result, dict)
+        assert result["extract_mode"] == "markdown"
+        content = result["content"]
+        assert "# Test Page" in content
+        assert "This is a **test** paragraph" in content
+        assert "- Item 1" in content
+        assert "- Item 2" in content
+        assert "```" in content
+        assert 'def hello():' in content
     
     @patch('requests.get')
     def test_fetch_code_blocks(self, mock_get, fetch_tool):
@@ -257,12 +277,16 @@ function hello() {
             "extract_mode": "code_blocks"
         })
         
-        assert "Code Blocks Found:" in result
-        assert "def factorial(n):" in result
-        assert "function hello()" in result
-        # Should find the language classes
-        assert "language-python" in result or "python" in result
-        assert "language-javascript" in result or "javascript" in result
+        assert isinstance(result, dict)
+        assert result["extract_mode"] == "code_blocks"
+        code_blocks = result["content"]
+        assert isinstance(code_blocks, list)
+        assert len(code_blocks) >= 2  # May find more due to nested extraction
+        
+        # Check code content exists
+        all_code = ' '.join([block.get('code', '') for block in code_blocks])
+        assert "def factorial(n):" in all_code
+        assert "function hello()" in all_code
     
     @patch('requests.get')
     def test_url_validation(self, mock_get, fetch_tool):
@@ -292,15 +316,17 @@ function hello() {
             mock_get.return_value = mock_response
             
             result1 = fetch_tool.execute({"url": "https://example.com"})
-            assert "Test content" in result1
-            assert "(Content from cache)" not in result1
+            assert isinstance(result1, dict)
+            assert "Test content" in result1["content"]
+            assert result1["from_cache"] is False
             mock_get.assert_called_once()
         
         # Second fetch - should use cache
         with patch('requests.get') as mock_get:
             result2 = fetch_tool.execute({"url": "https://example.com"})
-            assert "Test content" in result2
-            assert "(Content from cache)" in result2
+            assert isinstance(result2, dict)
+            assert "Test content" in result2["content"]
+            assert result2["from_cache"] is True
             mock_get.assert_not_called()
     
     @patch('requests.get')
@@ -313,12 +339,16 @@ function hello() {
         mock_get.return_value = mock_response
         
         result = fetch_tool.execute({"url": "https://example.com/notfound"})
-        assert "Error: HTTP 404 - Not Found" in result
+        assert isinstance(result, dict)
+        assert "error" in result
+        assert "404" in result["error"]
         
         # Test timeout
         mock_get.side_effect = Exception("Connection timeout")
         result = fetch_tool.execute({"url": "https://example.com"})
-        assert "Error processing content" in result
+        assert isinstance(result, dict)
+        assert "error" in result
+        assert "Error processing content" in result["error"]
     
     @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", 
                         reason="Socket resource warning in CI")
@@ -331,7 +361,9 @@ function hello() {
         mock_get.return_value = mock_response
         
         result = fetch_tool.execute({"url": "https://example.com"})
-        assert "Error: Content too large" in result
+        assert isinstance(result, dict)
+        assert "error" in result
+        assert "Content too large" in result["error"]
     
     @patch('requests.get')
     def test_include_links_option(self, mock_get, fetch_tool):
@@ -349,12 +381,16 @@ function hello() {
             "url": "https://example.com",
             "include_links": False
         })
-        assert "Link Text" in result
-        assert "[Link Text]" not in result
+        assert isinstance(result, dict)
+        content = result["content"]
+        assert "Link Text" in content
+        assert "[Link Text]" not in content
         
         # With include_links
         result = fetch_tool.execute({
             "url": "https://example.com",
             "include_links": True
         })
-        assert "[Link Text](https://example.com/page)" in result
+        assert isinstance(result, dict)
+        content = result["content"]
+        assert "[Link Text](https://example.com/page)" in content

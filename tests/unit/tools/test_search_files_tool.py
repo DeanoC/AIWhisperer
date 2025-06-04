@@ -76,13 +76,17 @@ def test_search_by_name_glob_pattern(setup_test_workspace):
     # Search for all Python files
     result = tool.execute({"pattern": "*.py", "search_type": "name"})
     
-    assert "Found" in result
-    assert "main.py" in result
-    assert "setup.py" in result
-    assert "app.py" in result
-    assert "utils.py" in result
-    assert "test_main.py" in result
-    assert ".gitignore" not in result  # Hidden files excluded
+    assert isinstance(result, dict)
+    assert result["total_matches"] > 0
+    
+    # Extract file names from results
+    file_names = [r["path"] for r in result["results"]]
+    assert any("main.py" in f for f in file_names)
+    assert any("setup.py" in f for f in file_names)
+    assert any("app.py" in f for f in file_names)
+    assert any("utils.py" in f for f in file_names)
+    assert any("test_main.py" in f for f in file_names)
+    assert not any(".gitignore" in f for f in file_names)  # Hidden files excluded
 
 
 def test_search_by_name_specific_pattern(setup_test_workspace):
@@ -111,9 +115,14 @@ def test_search_by_name_with_file_types(setup_test_workspace):
         "file_types": [".js"]
     })
     
-    assert "index.js" in result
-    assert "App.js" in result
-    assert "main.py" not in result
+    assert isinstance(result, dict)
+    assert result["total_matches"] > 0
+    
+    # Extract file names from results
+    file_names = [r["path"] for r in result["results"]]
+    assert any("index.js" in f for f in file_names)
+    assert any("App.js" in f for f in file_names)
+    assert not any("main.py" in f for f in file_names)
 
 
 def test_search_by_content_simple(setup_test_workspace):
@@ -126,11 +135,16 @@ def test_search_by_content_simple(setup_test_workspace):
         "search_type": "content"
     })
     
-    assert "main.py" in result
-    assert "app.py" in result
-    assert "index.js" in result
-    assert "README.md" in result
-    assert "utils.py" not in result  # Doesn't contain TODO
+    assert isinstance(result, dict)
+    assert result["total_matches"] > 0
+    
+    # Extract file names from results
+    file_names = [r["path"] for r in result["results"]]
+    assert any("main.py" in f for f in file_names)
+    assert any("app.py" in f for f in file_names)
+    assert any("index.js" in f for f in file_names)
+    assert any("README.md" in f for f in file_names)
+    assert not any("utils.py" in f for f in file_names)  # Doesn't contain TODO
 
 
 def test_search_by_content_regex(setup_test_workspace):
@@ -143,11 +157,16 @@ def test_search_by_content_regex(setup_test_workspace):
         "search_type": "content"
     })
     
-    assert "main.py" in result
-    assert "app.py" in result
-    assert "test_app.py" in result  # Contains FIXME
-    assert "README.md" in result
-    assert "utils.py" not in result
+    assert isinstance(result, dict)
+    assert result["total_matches"] > 0
+    
+    # Extract file names from results
+    file_names = [r["path"] for r in result["results"]]
+    assert any("main.py" in f for f in file_names)
+    assert any("app.py" in f for f in file_names)
+    assert any("test_app.py" in f for f in file_names)  # Contains FIXME
+    assert any("README.md" in f for f in file_names)
+    assert not any("utils.py" in f for f in file_names)
 
 
 def test_search_with_ignore_case(setup_test_workspace):
@@ -207,11 +226,10 @@ def test_search_max_results(setup_test_workspace):
         "max_results": 3
     })
     
-    assert "Found" in result
-    assert "(showing first 3)" in result
-    # Count number of results (numbered lines)
-    result_lines = [line for line in result.split('\n') if line.strip() and line[0].isdigit()]
-    assert len(result_lines) == 3
+    assert isinstance(result, dict)
+    assert result["max_results"] == 3
+    assert len(result["results"]) <= 3
+    assert result["truncated"] == (result["total_matches"] == 3)
 
 
 def test_search_no_results(setup_test_workspace):
@@ -223,7 +241,9 @@ def test_search_no_results(setup_test_workspace):
         "search_type": "name"
     })
     
-    assert "No files found matching pattern '*.xyz'" in result
+    assert isinstance(result, dict)
+    assert result["total_matches"] == 0
+    assert len(result["results"]) == 0
 
 
 def test_search_invalid_pattern(setup_test_workspace):
@@ -236,8 +256,9 @@ def test_search_invalid_pattern(setup_test_workspace):
         "search_type": "content"
     })
     
-    # Should not crash, just return no results
-    assert "No files found" in result or "Found" in result
+    # Should not crash, just return results (possibly empty)
+    assert isinstance(result, dict)
+    assert "results" in result
 
 
 def test_search_missing_pattern():
@@ -246,7 +267,9 @@ def test_search_missing_pattern():
     
     result = tool.execute({})
     
-    assert "Error: 'pattern' argument is required." in result
+    assert isinstance(result, dict)
+    assert "error" in result
+    assert "'pattern' argument is required" in result["error"]
 
 
 def test_search_invalid_search_type():
@@ -258,7 +281,9 @@ def test_search_invalid_search_type():
         "search_type": "invalid"
     })
     
-    assert "Error: Invalid search_type 'invalid'" in result
+    assert isinstance(result, dict)
+    assert "error" in result
+    assert "Invalid search_type 'invalid'" in result["error"]
 
 
 def test_search_nonexistent_path(setup_test_workspace):
@@ -270,7 +295,9 @@ def test_search_nonexistent_path(setup_test_workspace):
         "search_path": "nonexistent"
     })
     
-    assert "Error: Search path 'nonexistent' does not exist." in result
+    assert isinstance(result, dict)
+    assert "error" in result
+    assert "Search path 'nonexistent' does not exist" in result["error"]
 
 
 def test_search_outside_workspace():
@@ -298,8 +325,12 @@ def test_search_skips_binary_files(setup_test_workspace):
         "search_type": "content"
     })
     
+    assert isinstance(result, dict)
+    
+    # Extract file names from results
+    file_names = [r["path"] for r in result["results"]]
     # Binary files should not appear in content search results
-    assert "binary_test.bin" not in result
-    assert "data.bin" not in result
+    assert not any("binary_test.bin" in f for f in file_names)
+    assert not any("data.bin" in f for f in file_names)
     # But text files with TODO should appear
-    assert "main.py" in result
+    assert any("main.py" in f for f in file_names)

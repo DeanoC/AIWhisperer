@@ -1,0 +1,20 @@
+{
+  "rfc_id": "RFC-2025-06-04-0001",
+  "filename": "async-agents-2025-06-04.md",
+  "short_name": "async-agents",
+  "title": "Asynchronous Agents Feature",
+  "status": "in_progress",
+  "created": "2025-06-04 18:19:55",
+  "updated": "2025-06-04 18:27:24",
+  "author": "User",
+  "last_updated_section": "technical_considerations",
+  "last_updated_by": "Agent P",
+  "derived_plans": [
+    {
+      "plan_name": "async-agents-plan-2025-06-04",
+      "status": "in_progress",
+      "location": ".WHISPER/plans/in_progress/async-agents-plan-2025-06-04",
+      "created": "2025-06-04 18:32:35"
+    }
+  ]
+}
