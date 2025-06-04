@@ -25,24 +25,9 @@ agents:
     icon: "🤖"
     tool_sets: ["general_assistant", "agent_switching", "mailbox_tools"]
     continuation_config:
-      require_explicit_signal: false  # Use AI-driven continuation
+      require_explicit_signal: true  # Use structured continuation protocol
       max_iterations: 8
       timeout: 600
-      patterns:
-        - "let me"
-        - "I'll"
-        - "next"
-        - "now"
-        - "continuing"
-        - "step"
-        - "checking"
-        - "then"
-      termination_patterns:
-        - "complete"
-        - "finished"
-        - "done"
-        - "ready"
-        - "all set"
     
   t:
     name: "Tessa the Tester"
@@ -131,22 +116,9 @@ agents:
       - clarification_requests
       - progress_tracking
     continuation_config:
-      require_explicit_signal: false  # Changed to false to allow pattern-based continuation
+      require_explicit_signal: true  # Use structured continuation protocol
       max_iterations: 10
       timeout: 600
-      continuation_patterns:
-        - "now I'll"
-        - "next, I"
-        - "let me.*next"
-        - "proceeding to"
-        - "moving on to"
-        - "I'll continue with"
-      termination_patterns:
-        - "completed successfully"
-        - "task is complete"
-        - "finished.*all.*steps"
-        - "ready for execution"
-        - "all done"
     configuration:
       decomposition:
         max_task_depth: 3

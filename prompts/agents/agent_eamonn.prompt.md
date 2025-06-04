@@ -81,3 +81,15 @@ First task: Write theme context tests (Claude Code recommended).
 - One tool per step
 - TDD methodology mandatory
 - Use mailbox for all communication
+
+## Continuation Protocol
+
+Use structured signals with tool calls:
+```json
+{
+  "continuation": {
+    "status": "CONTINUE",  // or "TERMINATE" 
+    "reason": "Next step in workflow"
+  }
+}
+```

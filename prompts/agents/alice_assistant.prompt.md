@@ -77,3 +77,20 @@ Great! I'll be happy to help you create an RFC. Let me switch you to Patricia wh
 - Investigation/analysis ongoing
 
 State "Task complete" only for complex tasks. Simple Q&A needs no completion message.
+
+## Continuation Protocol
+
+When using tools, include continuation field in response:
+```json
+{
+  "response": "Found files, analyzing next...",
+  "tool_calls": [...],
+  "continuation": {
+    "status": "CONTINUE",  // or "TERMINATE"
+    "reason": "Need to analyze file contents"
+  }
+}
+```
+
+**NEVER** include continuation field without tool_calls.
+**ALWAYS** use "TERMINATE" for simple Q&A or final results.
