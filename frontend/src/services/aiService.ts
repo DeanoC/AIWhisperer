@@ -152,13 +152,25 @@ export class AIService {
           const parsed = JSON.parse(params.content);
           if (parsed && typeof parsed === 'object' && 'final' in parsed) {
             content = parsed.final;
+          } else {
+            // JSON is valid but no 'final' field yet, don't show anything
+            content = '';
           }
         } catch (e) {
-          // JSON is incomplete during streaming, use raw content
-          // Try to extract partial final content if visible
-          const finalMatch = params.content.match(/"final"\s*:\s*"([^"]*)/);
-          if (finalMatch && finalMatch[1]) {
-            content = finalMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+          // JSON is incomplete during streaming - don't show partial content
+          // Only show content if we can cleanly extract a complete 'final' field with meaningful content
+          const finalMatch = params.content.match(/"final"\s*:\s*"([^"]*(?:\\.[^"]*)*?)"/);
+          if (finalMatch && finalMatch[1] && finalMatch[1].length > 10) {
+            // Unescape the JSON string content only if we have a complete string with substance
+            content = finalMatch[1]
+              .replace(/\\n/g, '\n')
+              .replace(/\\"/g, '"')
+              .replace(/\\\\/g, '\\')
+              .replace(/\\t/g, '\t')
+              .replace(/\\r/g, '\r');
+          } else {
+            // No complete substantial final field visible yet, don't show anything
+            content = '';
           }
         }
       }

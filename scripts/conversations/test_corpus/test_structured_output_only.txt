@@ -1,0 +1,3 @@
+# Test structured output format specifically
+# This should trigger the structured output format for Alice
+What tools do you have available?

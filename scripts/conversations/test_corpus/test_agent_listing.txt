@@ -1,0 +1,11 @@
+# Test agent listing response formatting
+# This tests JSON display issues and repetition in responses
+
+# First message - introduce yourself
+Please introduce yourself briefly
+
+# Second message - ask about available agents  
+What agents are available?
+
+# Third message - test if continuation works
+Tell me more about Patricia

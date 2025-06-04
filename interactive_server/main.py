@@ -433,18 +433,40 @@ async def send_user_message_handler(params, websocket=None):
             # Validate that we're not sending raw JSON
             if response['ai_response'] and isinstance(response['ai_response'], str):
                 content = response['ai_response'].strip()
-                if content.startswith('{') and 'analysis' in content and 'commentary' in content and 'final' in content:
-                    # This looks like raw structured JSON, log error
+                
+                # First check for broken/malformed JSON patterns
+                if '"final":' in content and not content.startswith('{'):
+                    # This is broken JSON - extract what we can
+                    logging.error(f"[send_user_message_handler] ERROR: Malformed JSON detected!")
+                    # Try to extract text before the JSON fragment
+                    json_start = content.find('",\n')
+                    if json_start > 0:
+                        response['ai_response'] = content[:json_start].strip('"')
+                        logging.info(f"[send_user_message_handler] Extracted text before JSON fragment")
+                    else:
+                        response['ai_response'] = ''
+                        logging.warning(f"[send_user_message_handler] Could not salvage malformed JSON")
+                
+                # Check if this is structured JSON (has analysis or commentary fields)
+                elif content.startswith('{') and ('analysis' in content or 'commentary' in content):
+                    # This looks like raw structured JSON
                     logging.error(f"[send_user_message_handler] ERROR: Raw JSON detected in ai_response!")
-                    # Try to extract just the final field
+                    # Try to extract just the final field if it exists
                     try:
                         import json
                         parsed = json.loads(content)
-                        if 'final' in parsed:
+                        if 'final' in parsed and parsed['final']:
                             response['ai_response'] = parsed['final']
                             logging.info(f"[send_user_message_handler] Extracted final field from JSON")
+                        else:
+                            # No final field - this is likely a tool call preparation
+                            # Don't send the raw JSON analysis/commentary to the user
+                            response['ai_response'] = ''
+                            logging.info(f"[send_user_message_handler] Suppressed JSON without final field")
                     except:
-                        pass
+                        # If we can't parse it, suppress it
+                        response['ai_response'] = ''
+                        logging.warning(f"[send_user_message_handler] Failed to parse JSON, suppressing raw content")
             response['tool_calls'] = result.get('tool_calls', [])
         
         logging.debug(f"[send_user_message_handler] Message sent successfully, returning response with AI result.")
