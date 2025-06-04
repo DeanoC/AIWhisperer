@@ -134,18 +134,20 @@ export class AIService {
       const params = notification.params || {};
       // Create a synthetic channel message for streaming content
       // This goes to the 'final' channel as the main response
+      // Mark with a special streaming flag to avoid conflicts with real channel messages
       const channelMessage: ChannelMessage = {
         type: 'channel_message',
         channel: ChannelType.FINAL,
         content: params.content,
         metadata: {
-          sequence: 1, // Use a placeholder sequence for streaming
+          sequence: -1, // Use -1 to indicate this is a streaming message, not a real channel message
           timestamp: new Date().toISOString(),
           agentId: params.agentId,
           sessionId: params.sessionId,
           toolCalls: [],
           continuationDepth: 0,
-          isPartial: params.isPartial ?? true
+          isPartial: params.isPartial ?? true,
+          isStreaming: true // Add flag to identify streaming messages
         }
       };
       console.log('[AIService] Processing streaming update as channel message:', channelMessage);

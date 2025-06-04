@@ -483,10 +483,11 @@ class StatelessInteractiveSession:
             chunk_buffer = []  # Buffer for accumulating chunks
             processed_length = 0  # Track how much content we've already processed
             structured_output_enabled = False  # Will be set based on kwargs
+            structured_response_started = False  # Track if we've started parsing structured JSON
             
             async def send_chunk(chunk: str):
                 """Send a chunk of AI response to the client"""
-                nonlocal processed_length
+                nonlocal processed_length, structured_response_started
                 try:
                     # Check if WebSocket is still connected
                     if self.websocket is None:
@@ -500,18 +501,44 @@ class StatelessInteractiveSession:
                     
                     # Only process new content that we haven't seen before
                     if len(accumulated_content) > processed_length:
-                        # Send raw streaming update directly without going through channel system
-                        # This avoids creating duplicate sequence numbers
-                        if accumulated_content.strip():
-                            # Check if this looks like markdown-wrapped JSON and we're expecting structured output
-                            display_content = accumulated_content
-                            if structured_output_enabled and accumulated_content.strip().startswith('```'):
-                                # Try to clean markdown wrapper for display
-                                import re
-                                cleaned = re.sub(r"^```[a-zA-Z]*\n?(.*?)(?:\n?```)?$", r"\1", accumulated_content.strip(), flags=re.DOTALL)
-                                if cleaned != accumulated_content.strip():
-                                    display_content = cleaned
-                            
+                        # For structured output, try to parse and extract the actual content
+                        display_content = accumulated_content
+                        
+                        if structured_output_enabled:
+                            # Check if we have enough content to parse JSON
+                            if accumulated_content.strip().startswith('{'):
+                                structured_response_started = True
+                                # Try to parse partial JSON to extract response field
+                                try:
+                                    # First try complete parse
+                                    parsed = json.loads(accumulated_content)
+                                    if isinstance(parsed, dict):
+                                        # Extract the appropriate field based on response type
+                                        if 'response' in parsed:
+                                            display_content = parsed['response']
+                                        elif 'final' in parsed:
+                                            display_content = parsed['final']
+                                        else:
+                                            # If no recognized field, show raw JSON for now
+                                            display_content = accumulated_content
+                                except json.JSONDecodeError:
+                                    # Try to extract partial content using regex
+                                    # Look for response field in partial JSON
+                                    response_match = re.search(r'"response"\s*:\s*"([^"]*)', accumulated_content)
+                                    if response_match:
+                                        # Unescape the JSON string
+                                        partial_content = response_match.group(1)
+                                        display_content = partial_content.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+                                    elif not structured_response_started:
+                                        # Haven't started JSON yet, might be markdown wrapped
+                                        if accumulated_content.strip().startswith('```'):
+                                            # Clean markdown wrapper
+                                            cleaned = re.sub(r"^```[a-zA-Z]*\n?(.*?)(?:\n?```)?$", r"\1", accumulated_content.strip(), flags=re.DOTALL)
+                                            if cleaned != accumulated_content.strip():
+                                                display_content = cleaned
+                        
+                        # Send streaming update only if we have displayable content
+                        if display_content.strip() and display_content != accumulated_content[:processed_length]:
                             await self.websocket.send_json({
                                 "jsonrpc": "2.0",
                                 "method": "StreamingUpdate",
@@ -524,7 +551,7 @@ class StatelessInteractiveSession:
                                 }
                             })
                             
-                            processed_length = len(accumulated_content)
+                        processed_length = len(accumulated_content)
                     
                     # Reduce debug spam - only log significant chunks
                     if len(accumulated_content) % 100 == 0:  # Log every 100 chars
@@ -581,8 +608,31 @@ class StatelessInteractiveSession:
                     'error': f'Unexpected result type: {type(result)}'
                 }
             
+            # If structured output was used, try to parse the response
+            if result.get('used_structured_output') and isinstance(result.get('response'), str):
+                try:
+                    parsed_response = json.loads(result['response'])
+                    if isinstance(parsed_response, dict):
+                        # Check for continuation response format
+                        if 'response' in parsed_response:
+                            result['response'] = parsed_response['response']
+                            if 'continuation' in parsed_response:
+                                result['continuation'] = parsed_response['continuation']
+                            if 'tool_calls' in parsed_response:
+                                result['tool_calls'] = parsed_response['tool_calls']
+                                if parsed_response['tool_calls']:
+                                    result['finish_reason'] = 'tool_calls'
+                            logger.info("Parsed structured output from initial response")
+                        # Check for channel response format
+                        elif all(key in parsed_response for key in ['analysis', 'commentary', 'final']):
+                            result['response'] = parsed_response['final']
+                            result['structured_channel_response'] = parsed_response
+                            logger.info("Parsed structured channel response from initial response")
+                except json.JSONDecodeError:
+                    logger.debug("Structured output is not valid JSON, using raw content")
+            
             # Process final message through channel integration to get proper final sequences
-            if result.get('response'):
+            if result.get('response') or result.get('used_structured_output'):
                 final_content = result.get('response', '')
                 
                 # Try to parse JSON response whether or not structured output was formally used
@@ -607,6 +657,11 @@ class StatelessInteractiveSession:
                                 # Also extract continuation info if present
                                 if 'continuation' in parsed_response:
                                     result['continuation'] = parsed_response['continuation']
+                                # Check for tool_calls in the JSON response
+                                if 'tool_calls' in parsed_response and parsed_response['tool_calls']:
+                                    result['tool_calls'] = parsed_response['tool_calls']
+                                    result['finish_reason'] = 'tool_calls'
+                                    logger.info(f"Extracted {len(parsed_response['tool_calls'])} tool calls from structured response")
                                 logger.debug("Parsed structured continuation response")
                     except json.JSONDecodeError:
                         logger.debug("Response looks like JSON but failed to parse, using raw content")

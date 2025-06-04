@@ -3,6 +3,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { ChatMessage, MessageSender } from './types/chat';
 import { Agent } from './types/agent';
 import { SessionStatus, MessageStatus } from './types/ai';
+import { ChannelType } from './types/channel';
 import './App.css';
 import './themes.css';
 import { MainLayout } from './components/MainLayout';
@@ -344,6 +345,45 @@ function App() {
     
     return unsubscribe;
   }, [aiService, agents, addSystemMessage]);
+
+  // Track if AI message has started for channel messages
+  const aiMessageStartedRef = useRef(false);
+
+  // Handle channel messages - convert to AI chunks
+  useEffect(() => {
+    if (!aiService) return;
+    
+    aiService.onChannelMessage((channelMessage) => {
+      console.log('[App] Received channel message:', channelMessage);
+      
+      // Only process FINAL channel messages
+      if (channelMessage.channel === 'final' || channelMessage.channel === ChannelType.FINAL) {
+        // Start AI message if not already started
+        if (!aiMessageStartedRef.current && !loading) {
+          startAIMessage();
+          aiMessageStartedRef.current = true;
+        }
+        
+        // Handle streaming messages
+        if (channelMessage.metadata.isStreaming || channelMessage.metadata.sequence === -1) {
+          // This is a streaming update
+          appendAIChunk({
+            content: channelMessage.content,
+            index: 0,
+            isFinal: false
+          });
+        } else if (!channelMessage.metadata.isPartial) {
+          // This is a final message
+          appendAIChunk({
+            content: channelMessage.content,
+            index: 0,
+            isFinal: true
+          });
+          aiMessageStartedRef.current = false; // Reset for next message
+        }
+      }
+    });
+  }, [aiService, appendAIChunk, startAIMessage, loading]);
 
   // Handle theme toggle
   const toggleTheme = useCallback(() => {
