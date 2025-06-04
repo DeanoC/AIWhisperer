@@ -450,7 +450,7 @@ async def send_user_message_handler(params, websocket=None):
                         json_obj_start = content.find('{')
                         if json_obj_start > 0:
                             response['ai_response'] = content[:json_obj_start].strip().strip('"\'')
-                            logging.info(f"[send_user_message_handler] Extracted text before '{' character")
+                            logging.info(f"[send_user_message_handler] Extracted text before '{{' character")
                         else:
                             response['ai_response'] = ''
                             logging.warning(f"[send_user_message_handler] Could not salvage malformed JSON")
