@@ -81,7 +81,7 @@ A JSON object containing:
 - installation_links: Links to install missing agents (if any)
 """
     
-    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Execute the validate external agent tool."""
         agents_param = arguments.get("agents", "all")
         
@@ -147,8 +147,13 @@ A JSON object containing:
             else:
                 response["recommendation"] = "All checked agents are available and ready to use"
             
-            return json.dumps(response, indent=2)
+            response["validated"] = True
+            return response
             
         except Exception as e:
             logger.error(f"Unexpected error in validate_external_agent: {e}", exc_info=True)
-            return f"Error: Unexpected error - {str(e)}"
+            return {
+                "error": f"Unexpected error - {str(e)}",
+                "validations": [],
+                "validated": False
+            }

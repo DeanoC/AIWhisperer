@@ -104,7 +104,7 @@ A JSON object containing:
 - next_steps: Suggested next actions
 """
     
-    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Execute the update task status tool."""
         task_id = arguments.get("task_id")
         status_str = arguments.get("status")
@@ -113,9 +113,17 @@ A JSON object containing:
         notes = arguments.get("notes")
         
         if not task_id:
-            return "Error: task_id is required"
+            return {
+                "error": "task_id is required",
+                "task_id": None,
+                "updated": False
+            }
         if not status_str:
-            return "Error: status is required"
+            return {
+                "error": "status is required",
+                "task_id": task_id,
+                "updated": False
+            }
         
         try:
             # Validate status
@@ -123,7 +131,12 @@ A JSON object containing:
                 status = TaskStatus(status_str)
             except ValueError:
                 valid_statuses = [s.value for s in TaskStatus]
-                return f"Error: Invalid status '{status_str}'. Valid statuses: {', '.join(valid_statuses)}"
+                return {
+                    "error": f"Invalid status '{status_str}'. Valid statuses: {', '.join(valid_statuses)}",
+                    "task_id": task_id,
+                    "valid_statuses": valid_statuses,
+                    "updated": False
+                }
             
             # Get or create task record
             if task_id not in self._task_store:
@@ -213,11 +226,16 @@ A JSON object containing:
             if next_steps:
                 response["next_steps"] = next_steps
             
-            return json.dumps(response, indent=2)
+            response["updated"] = True
+            return response
             
         except Exception as e:
             logger.error(f"Unexpected error in update_task_status: {e}", exc_info=True)
-            return f"Error: Unexpected error - {str(e)}"
+            return {
+                "error": f"Unexpected error - {str(e)}",
+                "task_id": task_id,
+                "updated": False
+            }
     
     def get_task_record(self, task_id: str) -> Optional[Dict[str, Any]]:
         """Get a task record by ID (for internal use)."""

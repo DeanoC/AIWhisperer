@@ -76,14 +76,20 @@ class AILoopInspectorTool(AITool):
             if not session:
                 return {
                     "success": False,
-                    "error": "No active session found"
+                    "error": "No active session found",
+                    "active_agents": 0,
+                    "models_by_agent": {},
+                    "current_agent": None
                 }
             
             # Access the AI loop manager
             if not hasattr(session, 'ai_loop_manager'):
                 return {
                     "success": False,
-                    "error": "Session does not have AI loop manager"
+                    "error": "Session does not have AI loop manager",
+                    "active_agents": 0,
+                    "models_by_agent": {},
+                    "current_agent": None
                 }
             
             ai_loop_manager = session.ai_loop_manager

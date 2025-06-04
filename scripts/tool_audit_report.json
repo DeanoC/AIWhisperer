@@ -1,13 +1,21 @@
 {
   "summary": {
     "total": 53,
-    "clean": 5,
-    "issues": 48
+    "clean": 6,
+    "issues": 47
   },
   "clean_tools": [
     {
       "file": "ai_whisperer/tools/base_tool.py",
       "classes": [],
+      "issues": [],
+      "clean": true
+    },
+    {
+      "file": "ai_whisperer/tools/check_mail_tool.py",
+      "classes": [
+        "CheckMailTool"
+      ],
       "issues": [],
       "clean": true
     },
@@ -75,18 +83,8 @@
         "AnalyzeLanguagesTool"
       ],
       "issues": [
-        "Formatted string return: f\"Error: Path '{path}' does not exist.\"...",
-        "Formatted string return: f'Error analyzing languages: {str(e)}'..."
-      ],
-      "clean": false
-    },
-    {
-      "file": "ai_whisperer/tools/check_mail_tool.py",
-      "classes": [
-        "CheckMailTool"
-      ],
-      "issues": [
-        "Plain string return: 'No messages found in your mailbox.'..."
+        "Formatted string return: {'error': f\"Path '{path}' does not exist.\", 'path': path, 'languages': {}}...",
+        "Formatted string return: {'error': f'Error analyzing languages: {str(e)}', 'path': path, 'languages': {}}..."
       ],
       "clean": false
     },
@@ -111,11 +109,8 @@
         "CreateRFCTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'title' is required.\"...",
-        "Plain string return: \"Error: 'summary' is required.\"...",
-        "Plain string return: \"Error: 'short_name' is required.\"...",
-        "Formatted string return: f\"RFC created successfully!\\n\\n**RFC ID**: {rfc_id}\\n**Title**: {title}\\n**Status**: in_progress\\n**...",
-        "Formatted string return: f'Error creating RFC: {str(e)}'..."
+        "String conversion: {'rfc_id': rfc_id, 'title': title, 'short_name': short_name, 'status': 'in_progress', 'filename': fi...",
+        "Formatted string return: {'error': f'Error creating RFC: {str(e)}', 'rfc_id': None, 'path': None}..."
       ],
       "clean": false
     },
@@ -177,15 +172,12 @@
         "FetchURLTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'url' is required.\"...",
-        "Formatted string return: f'Error: Only HTTP(S) URLs are supported.'...",
-        "Formatted string return: f'Error: Invalid URL format.'...",
-        "Formatted string return: f'Error: Request timed out after {self.REQUEST_TIMEOUT} seconds.'...",
-        "Formatted string return: f'Error fetching URL: {str(e)}'...",
-        "Formatted string return: f'Error processing content: {str(e)}'...",
-        "Formatted string return: f'Error: HTTP {response.status_code} - {response.reason}'...",
-        "Formatted string return: f'Error: Content too large ({int(content_length)} bytes)'...",
-        "Formatted string return: f'Error: Content too large (>{self.MAX_CONTENT_LENGTH} bytes)'..."
+        "Formatted string return: {'error': f'Request timed out after {self.REQUEST_TIMEOUT} seconds.', 'url': url, 'timeout': self.RE...",
+        "Formatted string return: {'error': f'Error fetching URL: {str(e)}', 'url': url, 'content': None}...",
+        "Formatted string return: {'error': f'Error processing content: {str(e)}', 'url': url, 'content': None}...",
+        "Formatted string return: {'error': f'HTTP {response.status_code} - {response.reason}', 'url': url, 'status_code': response.st...",
+        "Formatted string return: {'error': f'Content too large ({int(content_length)} bytes)', 'url': url, 'content_length': int(cont...",
+        "Formatted string return: {'error': f'Content too large (>{self.MAX_CONTENT_LENGTH} bytes)', 'url': url, 'size': size, 'max_al..."
       ],
       "clean": false
     },
@@ -208,7 +200,7 @@
       ],
       "issues": [
         "Plain string return: \"Error: 'feature' is required.\"...",
-        "Formatted string return: f'Error finding similar code: {str(e)}'..."
+        "Formatted string return: {'error': f'Error finding similar code: {str(e)}', 'feature': feature, 'results': []}..."
       ],
       "clean": false
     },
@@ -233,16 +225,17 @@
         "GetFileContentTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'path' argument is required.\"...",
-        "Formatted string return: f\"Error: File '{file_path_str}' does not exist.\"...",
-        "Formatted string return: f\"Error: Path '{file_path_str}' is not a file.\"...",
-        "Formatted string return: f\"Error: File '{file_path_str}' appears to be a binary file. Use appropriate tools for binary files....",
-        "Plain string return: '\\n'.join(metadata) + '\\n' + content...",
-        "Formatted string return: f\"Error: Unable to decode file '{file_path_str}'. The file may be binary or use a different encoding...",
-        "Formatted string return: f\"Error: Permission denied to read file '{file_path_str}'.\"...",
-        "Formatted string return: f\"Error reading file '{file_path_str}': {str(e)}\"...",
-        "Formatted string return: f'Error: start_line ({start_line}) exceeds total lines ({total_lines}).'...",
-        "Formatted string return: f'Error: Invalid line range. start_line ({start_line}) must be less than end_line ({end_line}).'..."
+        "Formatted string return: {'error': f\"File '{file_path_str}' does not exist.\", 'path': file_path_str, 'content': None, 'lines'...",
+        "Formatted string return: {'error': f\"Path '{file_path_str}' is not a file.\", 'path': file_path_str, 'content': None, 'lines':...",
+        "String conversion: {'path': file_path_str, 'absolute_path': str(abs_file_path), 'relative_path': rel_path, 'exists': Tr...",
+        "Formatted string return: {'error': f\"File '{file_path_str}' appears to be a binary file. Use appropriate tools for binary fil...",
+        "String conversion: {'path': file_path_str, 'absolute_path': str(abs_file_path), 'relative_path': rel_path, 'exists': Tr...",
+        "String conversion: {'path': file_path_str, 'absolute_path': str(abs_file_path), 'relative_path': rel_path, 'exists': Tr...",
+        "Formatted string return: {'error': f\"Unable to decode file '{file_path_str}'. The file may be binary or use a different encod...",
+        "Formatted string return: {'error': f\"Permission denied to read file '{file_path_str}'.\", 'path': file_path_str, 'content': No...",
+        "Formatted string return: {'error': f\"Error reading file '{file_path_str}': {str(e)}\", 'path': file_path_str, 'content': None,...",
+        "Formatted string return: {'error': f'start_line ({start_line}) exceeds total lines ({total_lines}).', 'path': file_path_str, ...",
+        "Formatted string return: {'error': f'Invalid line range. start_line ({start_line}) must be less than end_line ({end_line}).',..."
       ],
       "clean": false
     },
@@ -252,8 +245,8 @@
         "GetProjectStructureTool"
       ],
       "issues": [
-        "Formatted string return: f\"Error: Path '{path}' does not exist.\"...",
-        "Formatted string return: f'Error analyzing project structure: {str(e)}'..."
+        "Formatted string return: {'error': f\"Path '{path}' does not exist.\", 'path': path, 'structure': None}...",
+        "Formatted string return: {'error': f'Error analyzing project structure: {str(e)}', 'path': path, 'structure': None}..."
       ],
       "clean": false
     },
@@ -263,10 +256,11 @@
         "ListDirectoryTool"
       ],
       "issues": [
-        "Formatted string return: f\"Error: Path '{path}' does not exist.\"...",
-        "Formatted string return: f\"Error: Path '{path}' is not a directory.\"...",
-        "Formatted string return: f\"Error: Permission denied to read directory '{path}'.\"...",
-        "Formatted string return: f\"Error listing directory '{path}': {str(e)}\"..."
+        "Formatted string return: {'error': f\"Access denied. Path '{path}' is outside the workspace directory.\", 'path': path, 'entrie...",
+        "Formatted string return: {'error': f\"Path '{path}' does not exist.\", 'path': path, 'entries': []}...",
+        "Formatted string return: {'error': f\"Path '{path}' is not a directory.\", 'path': path, 'entries': []}...",
+        "Formatted string return: {'error': f\"Permission denied to read directory '{path}'.\", 'path': path, 'entries': []}...",
+        "Formatted string return: {'error': f'Error listing directory: {str(e)}', 'path': path, 'entries': []}..."
       ],
       "clean": false
     },
@@ -286,8 +280,7 @@
         "ListRFCsTool"
       ],
       "issues": [
-        "Formatted string return: f'No RFCs found with status filter: {status_filter}'...",
-        "Formatted string return: f'Error listing RFCs: {str(e)}'..."
+        "Formatted string return: {'error': f'Error listing RFCs: {str(e)}', 'rfcs': [], 'total_count': 0}..."
       ],
       "clean": false
     },
@@ -353,10 +346,8 @@
         "PreparePlanFromRFCTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'rfc_id' is required.\"...",
-        "Formatted string return: f'''RFC prepared for plan generation:\\n\\n**RFC Title**: {rfc_metadata.get('title', 'Unknown')}\\n**RF...",
-        "Formatted string return: f\"Error: RFC '{rfc_id}' not found.\"...",
-        "Formatted string return: f'Error preparing RFC: {str(e)}'..."
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found.\", 'rfc_id': rfc_id, 'prepared': False}...",
+        "Formatted string return: {'error': f'Error preparing RFC: {str(e)}', 'rfc_id': rfc_id, 'prepared': False}..."
       ],
       "clean": false
     },
@@ -397,10 +388,13 @@
         "ReadFileTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'path' argument is missing.\"...",
-        "Formatted string return: f\"Error: Permission denied to read file at '{file_path_str}'.\"...",
-        "Formatted string return: f'Error: {e}'...",
-        "Formatted string return: f\"Error reading file '{file_path_str}': {e}\"..."
+        "Formatted string return: {'error': f\"Access denied. File path '{file_path_str}' is outside the workspace directory.\", 'path':...",
+        "String conversion: {'path': file_path_str, 'absolute_path': str(abs_file_path), 'exists': True, 'size': stat.st_size, '...",
+        "Formatted string return: {'error': f\"File not found: '{file_path_str}'\", 'path': file_path_str, 'content': None, 'lines': []}...",
+        "Formatted string return: {'error': f\"Path is not a file: '{file_path_str}'\", 'path': file_path_str, 'content': None, 'lines':...",
+        "Formatted string return: {'error': f\"Permission denied to read file '{file_path_str}'.\", 'path': file_path_str, 'content': No...",
+        "Formatted string return: {'error': f\"File '{file_path_str}' is not a text file or has encoding issues.\", 'path': file_path_st...",
+        "Formatted string return: {'error': f'Error reading file: {str(e)}', 'path': file_path_str, 'content': None, 'lines': []}..."
       ],
       "clean": false
     },
@@ -421,9 +415,9 @@
         "ReadRFCTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'rfc_id' is required.\"...",
-        "Formatted string return: f\"Error: RFC '{rfc_id}' not found in any RFC folder (new, in_progress, archived).\"...",
-        "Formatted string return: f'Error reading RFC: {str(e)}'..."
+        "Formatted string return: {'rfc_id': rfc_id, 'found': True, 'location': f'.WHISPER/rfc/{folder}/{rfc_path.name}', 'absolute_pa...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found in any RFC folder (new, in_progress, archived).\", 'rfc_id': rfc...",
+        "Formatted string return: {'error': f'Error reading RFC: {str(e)}', 'rfc_id': rfc_id, 'content': None}..."
       ],
       "clean": false
     },
@@ -458,11 +452,10 @@
         "SaveGeneratedPlanTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'plan_name', 'plan_content', and 'rfc_id' are required.\"...",
-        "Formatted string return: f\"Plan saved successfully!\\n\\n**Plan Name**: {plan_name}\\n**Location**: .WHISPER/plans/in_progress/{...",
-        "Formatted string return: f\"Error: RFC '{rfc_id}' metadata not found.\"...",
-        "Formatted string return: f'Error: Generated plan failed validation: {error}'...",
-        "Formatted string return: f'Error saving plan: {str(e)}'..."
+        "Formatted string return: {'saved': True, 'plan_name': plan_name, 'plan_path': f'.WHISPER/plans/in_progress/{plan_name}/', 'ab...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' metadata not found.\", 'saved': False, 'plan_name': plan_name, 'rfc_id': r...",
+        "Formatted string return: {'error': f'Generated plan failed validation: {error}', 'saved': False, 'plan_name': plan_name, 'val...",
+        "Formatted string return: {'error': f'Error saving plan: {str(e)}', 'saved': False, 'plan_name': plan_name}..."
       ],
       "clean": false
     },
@@ -482,12 +475,10 @@
         "SearchFilesTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'pattern' argument is required.\"...",
-        "Formatted string return: f\"Error: Invalid search_type '{search_type}'. Must be 'name' or 'content'.\"...",
-        "Formatted string return: f\"Error: Search path '{search_path}' does not exist.\"...",
-        "Formatted string return: f\"Error: Search path '{search_path}' is not a directory.\"...",
-        "Formatted string return: f\"No files found matching pattern '{pattern}'.\"...",
-        "Formatted string return: f'Error searching files: {str(e)}'..."
+        "Formatted string return: {'error': f\"Invalid search_type '{search_type}'. Must be 'name' or 'content'.\", 'pattern': pattern, ...",
+        "Formatted string return: {'error': f\"Search path '{search_path}' does not exist.\", 'pattern': pattern, 'search_type': search_...",
+        "Formatted string return: {'error': f\"Search path '{search_path}' is not a directory.\", 'pattern': pattern, 'search_type': sea...",
+        "Formatted string return: {'error': f'Error searching files: {str(e)}', 'pattern': pattern, 'search_type': search_type, 'resul..."
       ],
       "clean": false
     },
@@ -497,11 +488,7 @@
         "SendMailTool"
       ],
       "issues": [
-        "Plain string return: 'Error: Subject is required for sending mail'...",
-        "Plain string return: 'Error: Body is required for sending mail'...",
-        "Formatted string return: f'Mail sent successfully to {to_agent} (ID: {message_id}). The message has been delivered to their m...",
-        "Formatted string return: f'Mail sent successfully to user (ID: {message_id})'...",
-        "Formatted string return: f'Error sending mail: {str(e)}'..."
+        "Formatted string return: {'error': f'Error sending mail: {str(e)}', 'message_id': None, 'to': to_agent if to_agent else 'user..."
       ],
       "clean": false
     },
@@ -609,8 +596,7 @@
         "WebSearchTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'query' is required.\"...",
-        "Formatted string return: f'Error performing web search: {str(e)}'..."
+        "Formatted string return: {'error': f'Error performing web search: {str(e)}', 'query': query, 'results': []}..."
       ],
       "clean": false
     },

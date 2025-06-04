@@ -396,7 +396,6 @@ Revolutionary architecture where each agent runs its own AI loop independently, 
 - Massive doc cleanup
 - PDF and image support
 - drag and drop in the frontend
-- AI loop per agent, multiple AI loop at the same time
 - Agent specific model and providers
 - Alice has a knowledge base about AIWhisperer, other topics?, other agents can to find info
 - Discoverable tool and sets. Start with descriptioons, agents can ask to use them and it inserted into there tool 

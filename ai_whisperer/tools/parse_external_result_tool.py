@@ -99,7 +99,7 @@ A JSON object containing:
 - agent_insights: Agent-specific observations
 """
     
-    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Execute the parse external result tool."""
         agent_name = arguments.get("agent")
         output = arguments.get("output", "")
@@ -107,16 +107,28 @@ A JSON object containing:
         task_id = arguments.get("task_id")
         
         if not agent_name:
-            return "Error: agent parameter is required"
+            return {
+                "error": "agent parameter is required",
+                "parsed": False
+            }
         if not output and not error:
-            return "Error: either output or error must be provided"
+            return {
+                "error": "either output or error must be provided",
+                "agent": agent_name,
+                "parsed": False
+            }
         
         try:
             # Get the adapter
             adapter = self._registry.get_adapter(agent_name.lower())
             if not adapter:
                 available = self._registry.list_adapters()
-                return f"Error: Unknown agent '{agent_name}'. Available agents: {', '.join(available)}"
+                return {
+                    "error": f"Unknown agent '{agent_name}'. Available agents: {', '.join(available)}",
+                    "agent": agent_name,
+                    "available_agents": available,
+                    "parsed": False
+                }
             
             # Parse the result
             result = adapter.parse_result(output, error)
@@ -193,8 +205,13 @@ A JSON object containing:
             if agent_insights:
                 parsed["agent_insights"] = agent_insights
             
-            return json.dumps(parsed, indent=2)
+            parsed["parsed"] = True
+            return parsed
             
         except Exception as e:
             logger.error(f"Unexpected error in parse_external_result: {e}", exc_info=True)
-            return f"Error: Unexpected error - {str(e)}"
+            return {
+                "error": f"Unexpected error - {str(e)}",
+                "agent": agent_name,
+                "parsed": False
+            }
