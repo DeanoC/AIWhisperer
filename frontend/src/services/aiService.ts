@@ -117,10 +117,21 @@ export class AIService {
     // Handle channel messages
     if (notification.method === 'ChannelMessageNotification') {
       const params = notification.params || {};
+      
+      // Check if this is a final channel with full JSON response
+      let content = params.content;
+      if (params.channel === 'final' && params.metadata?.responseFormat === 'json' && params.metadata?.fullResponse) {
+        // Extract the actual final content from the full response
+        const fullResponse = params.metadata.fullResponse;
+        if (fullResponse && typeof fullResponse === 'object' && 'final' in fullResponse) {
+          content = fullResponse.final;
+        }
+      }
+      
       const channelMessage: ChannelMessage = {
         type: 'channel_message',
         channel: params.channel,
-        content: params.content,
+        content: content,
         metadata: params.metadata
       };
       console.log('[AIService] Processing channel message:', channelMessage);
@@ -132,13 +143,33 @@ export class AIService {
     // Handle streaming updates - convert to channel messages for backward compatibility
     if (notification.method === 'StreamingUpdate') {
       const params = notification.params || {};
+      let content = params.content;
+      
+      // If format is JSON, try to parse and extract the 'final' field
+      if (params.format === 'json' && params.content) {
+        try {
+          // Try to parse the accumulated JSON
+          const parsed = JSON.parse(params.content);
+          if (parsed && typeof parsed === 'object' && 'final' in parsed) {
+            content = parsed.final;
+          }
+        } catch (e) {
+          // JSON is incomplete during streaming, use raw content
+          // Try to extract partial final content if visible
+          const finalMatch = params.content.match(/"final"\s*:\s*"([^"]*)/);
+          if (finalMatch && finalMatch[1]) {
+            content = finalMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+          }
+        }
+      }
+      
       // Create a synthetic channel message for streaming content
       // This goes to the 'final' channel as the main response
       // Mark with a special streaming flag to avoid conflicts with real channel messages
       const channelMessage: ChannelMessage = {
         type: 'channel_message',
         channel: ChannelType.FINAL,
-        content: params.content,
+        content: content,
         metadata: {
           sequence: -1, // Use -1 to indicate this is a streaming message, not a real channel message
           timestamp: new Date().toISOString(),
@@ -147,7 +178,8 @@ export class AIService {
           toolCalls: [],
           continuationDepth: 0,
           isPartial: params.isPartial ?? true,
-          isStreaming: true // Add flag to identify streaming messages
+          isStreaming: true, // Add flag to identify streaming messages
+          format: params.format // Pass format hint to frontend
         }
       };
       console.log('[AIService] Processing streaming update as channel message:', channelMessage);

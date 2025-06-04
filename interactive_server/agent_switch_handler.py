@@ -122,17 +122,11 @@ class AgentSwitchHandler:
             mail_notification = f"You have received mail from {from_agent}. Let me check your mailbox."
             logger.info(f"Notifying {to_agent} about new mail")
             
-            # Send notification and let agent check mail
-            check_result = await self.session.send_user_message(
-                mail_notification,
-                is_continuation=True  # This is part of the same flow
-            )
-            
-            # Give agent a chance to respond to the mail
-            response_prompt = "Please check your mail and respond if needed."
+            # Combine notification and response prompt into one message
+            combined_prompt = f"{mail_notification} Please check your mailbox and respond to any messages."
             response_result = await self.session.send_user_message(
-                response_prompt,
-                is_continuation=True
+                combined_prompt,
+                is_continuation=True  # This is part of the same flow
             )
             
             # Extract the response

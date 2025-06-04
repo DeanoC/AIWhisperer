@@ -130,7 +130,26 @@ class ConversationReplayClient:
                         params={"sessionId": session_id, "message": msg},
                         request_id=msg_id
                     )
-                    print(f"   [{message_count}/{total_messages}] ✅ Response received: {response}")
+                    # Extract just the AI response for display
+                    ai_response = response.get('ai_response', '')
+                    tool_calls = response.get('tool_calls', [])
+                    
+                    # Clean up JSON if present
+                    if ai_response and isinstance(ai_response, str):
+                        if ai_response.strip().startswith('{') and '"final"' in ai_response:
+                            try:
+                                import json
+                                parsed = json.loads(ai_response)
+                                if 'final' in parsed:
+                                    ai_response = parsed['final']
+                            except:
+                                pass
+                    
+                    # Show cleaned response
+                    if tool_calls:
+                        print(f"   [{message_count}/{total_messages}] ✅ Response: {ai_response} (+ {len(tool_calls)} tool calls)")
+                    else:
+                        print(f"   [{message_count}/{total_messages}] ✅ Response: {ai_response}")
                     
                     # Give agent time to process and send notifications
                     print(f"   [{message_count}/{total_messages}] ⏳ Waiting for agent to process...")
