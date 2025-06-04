@@ -27,21 +27,44 @@ from ai_whisperer.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# Precompiled regex patterns for analysis
+SEQUENTIAL_PATTERNS = [
+    re.compile(r'first.*then', re.IGNORECASE),
+    re.compile(r'step 1.*step 2', re.IGNORECASE),
+    re.compile(r'after.*next', re.IGNORECASE),
+    re.compile(r'followed by', re.IGNORECASE),
+    re.compile(r'and then', re.IGNORECASE),
+    re.compile(r'subsequently', re.IGNORECASE)
+]
+
+STEP_INDICATOR_PATTERN = re.compile(r'step \d+|first|then|next', re.IGNORECASE)
+TOOL_MENTION_PATTERN = re.compile(r'list|read|create|update|analyze|search|execute', re.IGNORECASE)
+
+# Precompiled regex patterns for continuation detection
+CONTINUATION_PATTERNS = [
+    re.compile(r'^\bcontinue\b(:?\s*)?', re.IGNORECASE),
+    re.compile(r'^\bplease continue\b', re.IGNORECASE),
+    re.compile(r'^\b(ok|yes)\b\s*$', re.IGNORECASE),
+    re.compile(r'^\b(go on|keep going|proceed)\b', re.IGNORECASE)
+]
+
 class PromptOptimizer:
     """Optimizes prompts based on model capabilities for better continuation"""
+    
+    MIN_WORD_COUNT_FOR_OPTIMIZATION = 10  # Minimum words before applying optimization
     
     def __init__(self):
         self.optimization_patterns = {
             'multi_tool': {
                 'replacements': [
-                    # Sequential to parallel
-                    (r'First (.+?), then (.+?)\.', r'Simultaneously \1 and \2.'),
-                    (r'Step 1: (.+?)\. Step 2: (.+?)\.', r'Complete both: \1 and \2.'),
-                    (r'After (.+?), (.+?)\.', r'Do \1 and \2 together.'),
-                    # Encourage batching
-                    (r'one by one', 'all at once'),
-                    (r'sequentially', 'in parallel'),
-                    (r'followed by', 'along with'),
+                    # Sequential to parallel (precompiled patterns with replacement strings)
+                    (re.compile(r'First (.+?), then (.+?)\.', re.IGNORECASE), r'Simultaneously \1 and \2.'),
+                    (re.compile(r'Step 1: (.+?)\. Step 2: (.+?)\.', re.IGNORECASE), r'Complete both: \1 and \2.'),
+                    (re.compile(r'After (.+?), (.+?)\.', re.IGNORECASE), r'Do \1 and \2 together.'),
+                    # Encourage batching (simple string replacements)
+                    ('one by one', 'all at once'),
+                    ('sequentially', 'in parallel'),
+                    ('followed by', 'along with'),
                 ],
                 'hints': [
                     "You can execute multiple tools in a single response.",
@@ -51,12 +74,13 @@ class PromptOptimizer:
             },
             'single_tool': {
                 'replacements': [
-                    # Parallel to sequential
-                    (r'Simultaneously (.+?) and (.+?)\.', r'First \1, then \2.'),
-                    (r'(.+?) and (.+?) together', r'Step 1: \1. Step 2: \2.'),
-                    (r'all at once', 'one at a time'),
-                    # Add step indicators
-                    (r'Do the following: (.+?)\.', r'Complete these steps: \1.'),
+                    # Parallel to sequential (precompiled patterns with replacement strings)
+                    (re.compile(r'Simultaneously (.+?) and (.+?)\.', re.IGNORECASE), r'First \1, then \2.'),
+                    (re.compile(r'(.+?) and (.+?) together', re.IGNORECASE), r'Step 1: \1. Step 2: \2.'),
+                    # Simple string replacements
+                    ('all at once', 'one at a time'),
+                    # Add step indicators (precompiled pattern)
+                    (re.compile(r'Do the following: (.+?)\.', re.IGNORECASE), r'Complete these steps: \1.'),
                 ],
                 'hints': [
                     "Complete each step before moving to the next.",
@@ -85,21 +109,14 @@ class PromptOptimizer:
             return prompt
         
         # Check if this is already a continuation message
-        continuation_patterns = [
-            r'^\bcontinue\b(:?\s*)?',
-            r'^\bplease continue\b',
-            r'^\b(ok|yes)\b\s*$',
-            r'^\b(go on|keep going|proceed)\b'
-        ]
-        
-        for pattern in continuation_patterns:
-            if re.match(pattern, prompt.strip(), re.IGNORECASE):
+        for pattern in CONTINUATION_PATTERNS:
+            if pattern.match(prompt.strip()):
                 logger.debug("Detected continuation pattern, skipping optimization")
                 return prompt
         
-        # Skip optimization for very short messages (under 10 words)
+        # Skip optimization for very short messages
         word_count = len(prompt.split())
-        if word_count < 10:
+        if word_count < self.MIN_WORD_COUNT_FOR_OPTIMIZATION:
             logger.debug(f"Skipping optimization for short message ({word_count} words)")
             return prompt
         
@@ -115,7 +132,12 @@ class PromptOptimizer:
         # Apply replacements
         patterns = self.optimization_patterns[strategy]
         for pattern, replacement in patterns['replacements']:
-            optimized_prompt = re.sub(pattern, replacement, optimized_prompt, flags=re.IGNORECASE)
+            if isinstance(pattern, re.Pattern):
+                # Use compiled regex pattern
+                optimized_prompt = pattern.sub(replacement, optimized_prompt)
+            else:
+                # Simple string replacement (case-insensitive)
+                optimized_prompt = optimized_prompt.replace(pattern, replacement)
         
         # Add hints based on agent type
         if agent_type:
@@ -171,23 +193,18 @@ class PromptOptimizer:
         
         # Check for sequential patterns in multi-tool models
         if capabilities.get('multi_tool'):
-            sequential_patterns = [
-                'first.*then', 'step 1.*step 2', 'after.*next',
-                'followed by', 'and then', 'subsequently'
-            ]
-            
-            for pattern in sequential_patterns:
-                if re.search(pattern, prompt, re.IGNORECASE):
+            for pattern in SEQUENTIAL_PATTERNS:
+                if pattern.search(prompt):
                     analysis['optimization_opportunities'].append({
                         'type': 'sequential_to_parallel',
-                        'pattern': pattern,
+                        'pattern': pattern.pattern,  # Get the pattern string for display
                         'suggestion': 'Consider rephrasing to encourage parallel execution'
                     })
                     analysis['estimated_improvement'] += 20
         
         # Check for missing step indicators in single-tool models
         elif not capabilities.get('multi_tool'):
-            if not re.search(r'step \d+|first|then|next', prompt, re.IGNORECASE):
+            if not STEP_INDICATOR_PATTERN.search(prompt):
                 analysis['optimization_opportunities'].append({
                     'type': 'missing_steps',
                     'suggestion': 'Add explicit step indicators for clarity'
@@ -195,7 +212,7 @@ class PromptOptimizer:
                 analysis['estimated_improvement'] += 15
         
         # Check for tool count hints
-        tool_mentions = len(re.findall(r'list|read|create|update|analyze|search|execute', prompt, re.IGNORECASE))
+        tool_mentions = len(TOOL_MENTION_PATTERN.findall(prompt))
         if tool_mentions > 3:
             if capabilities.get('multi_tool'):
                 analysis['optimization_opportunities'].append({
