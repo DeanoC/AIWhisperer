@@ -276,22 +276,23 @@ class StatelessInteractiveSession:
                             # Enable continuation feature for all agents
                             self.prompt_system.enable_feature('continuation_protocol')
                             
-                            # Check if model supports structured output and enable JSON format if so
+                            # Get model name for capability checking
                             model_name = None
                             if agent_info.ai_config and agent_info.ai_config.get("model"):
                                 model_name = agent_info.ai_config.get("model")
                             else:
                                 model_name = self.config.get("openrouter", {}).get("model")
                             
-                            if model_name:
-                                from ai_whisperer.model_capabilities import supports_structured_output
-                                if supports_structured_output(model_name):
-                                    self.prompt_system.enable_feature('json_output_format')
-                                    logger.info(f"Enabled JSON output format for {model_name}")
-                            
                             # Include tools for debugging agents like Debbie
                             include_tools = agent_id.lower() in ['d', 'debbie'] or 'debug' in agent_info.name.lower()
-                            prompt = self.prompt_system.get_formatted_prompt("agents", prompt_name, include_tools=include_tools)
+                            
+                            # Get formatted prompt with model name for structured output support
+                            prompt = self.prompt_system.get_formatted_prompt(
+                                "agents", 
+                                prompt_name, 
+                                include_tools=include_tools,
+                                model_name=model_name
+                            )
                             system_prompt = prompt
                             prompt_source = f"prompt_system:agents/{prompt_name}" + (" (with_tools)" if include_tools else "")
                             logger.info(f"✅ Successfully loaded prompt via PromptSystem for {agent_id} (tools included: {include_tools})")
@@ -481,6 +482,7 @@ class StatelessInteractiveSession:
             # Create streaming callback with proper channel support
             chunk_buffer = []  # Buffer for accumulating chunks
             processed_length = 0  # Track how much content we've already processed
+            structured_output_enabled = False  # Will be set based on kwargs
             
             async def send_chunk(chunk: str):
                 """Send a chunk of AI response to the client"""
@@ -501,12 +503,21 @@ class StatelessInteractiveSession:
                         # Send raw streaming update directly without going through channel system
                         # This avoids creating duplicate sequence numbers
                         if accumulated_content.strip():
+                            # Check if this looks like markdown-wrapped JSON and we're expecting structured output
+                            display_content = accumulated_content
+                            if structured_output_enabled and accumulated_content.strip().startswith('```'):
+                                # Try to clean markdown wrapper for display
+                                import re
+                                cleaned = re.sub(r"^```[a-zA-Z]*\n?(.*?)(?:\n?```)?$", r"\1", accumulated_content.strip(), flags=re.DOTALL)
+                                if cleaned != accumulated_content.strip():
+                                    display_content = cleaned
+                            
                             await self.websocket.send_json({
                                 "jsonrpc": "2.0",
                                 "method": "StreamingUpdate",
                                 "params": {
                                     "type": "streaming_chunk",
-                                    "content": accumulated_content,
+                                    "content": display_content,
                                     "sessionId": self.session_id,
                                     "agentId": self.active_agent,
                                     "isPartial": True
@@ -531,6 +542,12 @@ class StatelessInteractiveSession:
             if self._should_use_structured_output_for_plan(agent, message):
                 kwargs['response_format'] = self._get_plan_generation_schema()
                 logger.info("Enabling structured output for plan generation")
+                structured_output_enabled = True
+            # Check if we should use structured channel output
+            elif self._should_use_structured_channel_output(agent):
+                kwargs['response_format'] = self._get_channel_response_schema()
+                logger.info("Enabling structured output for channel responses")
+                structured_output_enabled = True
             # Otherwise, check if we should use structured continuation output
             elif self._should_use_structured_continuation(agent):
                 # Check if model has quirks about tools with structured output
@@ -544,9 +561,11 @@ class StatelessInteractiveSession:
                     else:
                         kwargs['response_format'] = self._get_continuation_schema()
                         logger.info("Enabling structured output for continuation protocol")
+                        structured_output_enabled = True
                 else:
                     kwargs['response_format'] = self._get_continuation_schema()
                     logger.info("Enabling structured output for continuation protocol")
+                    structured_output_enabled = True
             
             # Process message with streaming
             logger.debug(f"[send_user_message] Calling agent.process_message")
@@ -570,26 +589,46 @@ class StatelessInteractiveSession:
                 if result.get('used_structured_output') and isinstance(final_content, str):
                     try:
                         parsed_response = json.loads(final_content)
-                        if isinstance(parsed_response, dict) and 'response' in parsed_response:
-                            # Extract the actual response content
-                            final_content = parsed_response['response']
-                            # Update the result with parsed content
-                            result['response'] = final_content
-                            # Also extract continuation info if present
-                            if 'continuation' in parsed_response:
-                                result['continuation'] = parsed_response['continuation']
-                            logger.debug("Parsed structured output response successfully")
+                        if isinstance(parsed_response, dict):
+                            # Check if it's a channel response
+                            if all(key in parsed_response for key in ['analysis', 'commentary', 'final']):
+                                # This is a structured channel response
+                                # Use the 'final' field as the actual response
+                                final_content = parsed_response['final']
+                                result['response'] = final_content
+                                # The channel router will handle the full structured response
+                                result['structured_channel_response'] = parsed_response
+                                logger.debug("Parsed structured channel response")
+                            elif 'response' in parsed_response:
+                                # This is a continuation response
+                                final_content = parsed_response['response']
+                                result['response'] = final_content
+                                # Also extract continuation info if present
+                                if 'continuation' in parsed_response:
+                                    result['continuation'] = parsed_response['continuation']
+                                logger.debug("Parsed structured continuation response")
                     except json.JSONDecodeError:
                         logger.debug("Response is not JSON, using raw content")
                 
-                # Process the final response through channel integration with is_partial=False
-                # This ensures we get proper final sequence numbers
-                final_channel_messages = self.channel_integration.process_ai_response(
-                    self.session_id,
-                    final_content,
-                    agent_id=self.active_agent,
-                    is_partial=False  # This is the key - marks it as a final complete message
-                )
+                # Process the final response through channel integration
+                # If we have a structured channel response, pass the full JSON
+                if result.get('structured_channel_response'):
+                    # Pass the full structured response as JSON string
+                    final_channel_messages = self.channel_integration.process_ai_response(
+                        self.session_id,
+                        json.dumps(result['structured_channel_response']),
+                        agent_id=self.active_agent,
+                        is_partial=False,
+                        is_structured=True
+                    )
+                else:
+                    # Process normally
+                    final_channel_messages = self.channel_integration.process_ai_response(
+                        self.session_id,
+                        final_content,
+                        agent_id=self.active_agent,
+                        is_partial=False  # This is the key - marks it as a final complete message
+                    )
                 
                 # Send final channel messages with proper sequence numbers
                 for channel_msg in final_channel_messages:
@@ -1519,6 +1558,32 @@ class StatelessInteractiveSession:
             logger.error(f"Failed to load plan generation schema: {e}")
             return None
     
+    def _should_use_structured_channel_output(self, agent: Any) -> bool:
+        """
+        Determine if we should use structured output for channel responses.
+        
+        Args:
+            agent: The active agent
+            
+        Returns:
+            True if we should use structured channel output
+        """
+        # Check if the model supports structured output
+        from ai_whisperer.model_capabilities import supports_structured_output
+        if not hasattr(agent, 'config') or not agent.config.model_name:
+            return False
+            
+        if not supports_structured_output(agent.config.model_name):
+            return False
+            
+        # Check if channel system is enabled in prompt system
+        if self.prompt_system and 'channel_system' in self.prompt_system.get_enabled_features():
+            # We can use structured output for channels since tools don't produce channel output
+            # The no_tools_with_structured_output quirk doesn't apply here
+            return True
+            
+        return False
+    
     def _should_use_structured_continuation(self, agent: Any) -> bool:
         """
         Determine if we should use structured output for continuation protocol.
@@ -1540,6 +1605,36 @@ class StatelessInteractiveSession:
         # For now, enable for all agents with compatible models
         # We can make this configurable per agent later
         return True
+    
+    def _get_channel_response_schema(self) -> Dict[str, Any]:
+        """
+        Get the channel response schema for structured output.
+        
+        Returns:
+            The response_format dict for channel responses
+        """
+        # Load the channel response schema
+        from ai_whisperer.core.config import get_schema_path
+        try:
+            schema_path = get_schema_path("channel_response_schema")
+            with open(schema_path) as f:
+                schema = json.load(f)
+            
+            # Remove the $schema field if present
+            if "$schema" in schema:
+                del schema["$schema"]
+            
+            return {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "channel_response",
+                    "strict": False,
+                    "schema": schema
+                }
+            }
+        except Exception as e:
+            logger.error(f"Failed to load channel response schema: {e}")
+            return None
     
     def _get_continuation_schema(self) -> Dict[str, Any]:
         """

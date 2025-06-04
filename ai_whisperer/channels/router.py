@@ -19,12 +19,14 @@ class ChannelRouter:
     # Patterns for detecting channel markers in responses
     CHANNEL_PATTERNS = {
         ChannelType.ANALYSIS: re.compile(
+            r'\[ANALYSIS\](.*?)(?=\[COMMENTARY\]|\[FINAL\]|$)|'
             r'\[ANALYSIS\](.*?)\[/ANALYSIS\]|'
             r'<analysis>(.*?)</analysis>|'
             r'<thinking>(.*?)</thinking>',
             re.DOTALL | re.IGNORECASE
         ),
         ChannelType.COMMENTARY: re.compile(
+            r'\[COMMENTARY\](.*?)(?=\[FINAL\]|$)|'
             r'\[COMMENTARY\](.*?)\[/COMMENTARY\]|'
             r'<commentary>(.*?)</commentary>|'
             r'<tool_calls?>(.*?)</tool_calls?>|'
@@ -32,6 +34,7 @@ class ChannelRouter:
             re.DOTALL | re.IGNORECASE
         ),
         ChannelType.FINAL: re.compile(
+            r'\[FINAL\](.*?)(?=$)|'
             r'\[FINAL\](.*?)\[/FINAL\]|'
             r'<final>(.*?)</final>',
             re.DOTALL | re.IGNORECASE
@@ -58,7 +61,7 @@ class ChannelRouter:
         self._sequence_counter = 0
         self._streaming_sequences: Dict[ChannelType, int] = {}  # Track sequence numbers for streaming messages
     
-    def route_response(self, content: str, is_partial: bool = False) -> List[ChannelMessage]:
+    def route_response(self, content: str, is_partial: bool = False, is_structured: bool = False) -> List[ChannelMessage]:
         """
         Parse and route AI response content to appropriate channels.
         
@@ -77,6 +80,10 @@ class ChannelRouter:
         if not is_partial:
             logger.debug(f"Processing new complete response, clearing {len(self._streaming_sequences)} streaming sequences, current counter: {self._sequence_counter}")
             self._streaming_sequences.clear()
+        
+        # Check if this is a structured JSON response
+        if is_structured or self._is_json_response(content):
+            return self._route_structured_response(content, is_partial)
         
         # First, extract explicitly marked channel content
         for channel_type, pattern in self.CHANNEL_PATTERNS.items():
@@ -246,3 +253,68 @@ class ChannelRouter:
         }
         
         return hints
+    
+    def _is_json_response(self, content: str) -> bool:
+        """Check if the content appears to be a structured JSON response."""
+        content = content.strip()
+        if content.startswith('{') and content.endswith('}'):
+            try:
+                data = json.loads(content)
+                # Check if it has our expected channel fields
+                return all(field in data for field in ['analysis', 'commentary', 'final'])
+            except:
+                pass
+        return False
+    
+    def _route_structured_response(self, content: str, is_partial: bool) -> List[ChannelMessage]:
+        """Route a structured JSON response to channels."""
+        messages = []
+        
+        try:
+            data = json.loads(content.strip())
+            
+            # Extract channel content
+            if 'analysis' in data and data['analysis']:
+                messages.append(self._create_message(
+                    ChannelType.ANALYSIS,
+                    data['analysis'],
+                    is_partial=is_partial
+                ))
+            
+            if 'commentary' in data and data['commentary']:
+                # Check for tool calls in metadata
+                tool_calls = None
+                if 'metadata' in data and 'tool_calls' in data['metadata']:
+                    tool_calls = [json.dumps(tc) for tc in data['metadata']['tool_calls']]
+                
+                messages.append(self._create_message(
+                    ChannelType.COMMENTARY,
+                    data['commentary'],
+                    is_partial=is_partial,
+                    tool_calls=tool_calls
+                ))
+            
+            if 'final' in data and data['final']:
+                messages.append(self._create_message(
+                    ChannelType.FINAL,
+                    data['final'],
+                    is_partial=is_partial
+                ))
+            
+            # Handle continuation metadata
+            if 'metadata' in data and data['metadata'].get('continue', False):
+                # Add continuation info to analysis channel
+                continuation_msg = self._create_message(
+                    ChannelType.ANALYSIS,
+                    "CONTINUE: true",
+                    is_partial=is_partial,
+                    custom={"contains_continuation": True}
+                )
+                messages.append(continuation_msg)
+                
+        except json.JSONDecodeError:
+            # If JSON parsing fails, fall back to text parsing
+            logger.warning("Failed to parse structured response as JSON, falling back to text parsing")
+            return self.route_response(content, is_partial=is_partial, is_structured=False)
+        
+        return messages
