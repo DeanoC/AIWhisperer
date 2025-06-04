@@ -168,13 +168,6 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "structured_output": True,  # Supports via response_mime_type
         "quirks": {"no_tools_with_structured_output": True}
     },
-    "google/gemini-2.0-flash-exp": {
-        "multi_tool": False,  # Single tool per turn
-        "parallel_tools": False,
-        "max_tools_per_turn": 1,
-        "structured_output": True,  # Supports via response_mime_type
-        "quirks": {"no_tools_with_structured_output": True}
-    },
     "google/gemini-1.5-pro": {
         "multi_tool": False,  # Single tool per turn
         "parallel_tools": False,

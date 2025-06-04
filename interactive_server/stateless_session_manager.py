@@ -585,8 +585,9 @@ class StatelessInteractiveSession:
             if result.get('response'):
                 final_content = result.get('response', '')
                 
-                # If we're using structured output, parse the JSON response
-                if result.get('used_structured_output') and isinstance(final_content, str):
+                # Try to parse JSON response whether or not structured output was formally used
+                # Models might return JSON based on prompt instructions even without response_format
+                if isinstance(final_content, str) and final_content.strip().startswith('{'):
                     try:
                         parsed_response = json.loads(final_content)
                         if isinstance(parsed_response, dict):
@@ -598,7 +599,7 @@ class StatelessInteractiveSession:
                                 result['response'] = final_content
                                 # The channel router will handle the full structured response
                                 result['structured_channel_response'] = parsed_response
-                                logger.debug("Parsed structured channel response")
+                                logger.info("Parsed structured channel response (JSON in text)")
                             elif 'response' in parsed_response:
                                 # This is a continuation response
                                 final_content = parsed_response['response']
@@ -608,7 +609,7 @@ class StatelessInteractiveSession:
                                     result['continuation'] = parsed_response['continuation']
                                 logger.debug("Parsed structured continuation response")
                     except json.JSONDecodeError:
-                        logger.debug("Response is not JSON, using raw content")
+                        logger.debug("Response looks like JSON but failed to parse, using raw content")
                 
                 # Process the final response through channel integration
                 # If we have a structured channel response, pass the full JSON
@@ -1569,17 +1570,27 @@ class StatelessInteractiveSession:
             True if we should use structured channel output
         """
         # Check if the model supports structured output
-        from ai_whisperer.model_capabilities import supports_structured_output
+        from ai_whisperer.model_capabilities import supports_structured_output, has_quirk
         if not hasattr(agent, 'config') or not agent.config.model_name:
             return False
             
-        if not supports_structured_output(agent.config.model_name):
+        model_name = agent.config.model_name
+        
+        if not supports_structured_output(model_name):
             return False
+            
+        # Check if model has the no_tools_with_structured_output quirk
+        # If it does, we can't use structured output when tools are available
+        if has_quirk(model_name, "no_tools_with_structured_output"):
+            # Check if this agent has tools
+            agent_tools = agent._get_agent_tools() if hasattr(agent, '_get_agent_tools') else []
+            if agent_tools:
+                logger.info(f"Skipping structured channel output for {model_name} (quirk: no_tools_with_structured_output with {len(agent_tools)} tools)")
+                return False
             
         # Check if channel system is enabled in prompt system
         if self.prompt_system and 'channel_system' in self.prompt_system.get_enabled_features():
-            # We can use structured output for channels since tools don't produce channel output
-            # The no_tools_with_structured_output quirk doesn't apply here
+            logger.info(f"Enabling structured channel output for {model_name}")
             return True
             
         return False
