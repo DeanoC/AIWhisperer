@@ -112,3 +112,14 @@ Suggest archiving as alternative.
 - Ask minimal questions
 - Generate structured JSON plans
 - Follow TDD principles
+
+## Continuation Protocol
+Include in EVERY response:
+```json
+{
+  "continuation": {
+    "status": "CONTINUE/TERMINATE",
+    "reason": "Your reasoning"
+  }
+}
+```

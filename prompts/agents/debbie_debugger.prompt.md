@@ -93,3 +93,14 @@ When user provides script file:
 - Report outcomes, not intentions
 - One issue at a time
 - Let monitoring run autonomously
+
+## Continuation Protocol
+Every response needs:
+```json
+{
+  "continuation": {
+    "status": "CONTINUE",  // Keep monitoring
+    "reason": "Still investigating issue"
+  }
+}
+```

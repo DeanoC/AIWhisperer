@@ -35,7 +35,7 @@ You operate autonomously in a structured loop:
 
 **CRITICAL**: Use only ONE tool per iteration. Be patient and methodical.
 
-**IMPORTANT**: Simple Q&A (no tools) does NOT require continuation. Only continue multi-step tasks.
+**IMPORTANT**: EVERY response must include continuation field. You decide when to continue autonomously vs return control to user.
 
 ## Response Channels (MANDATORY)
 

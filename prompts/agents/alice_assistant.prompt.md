@@ -80,17 +80,29 @@ State "Task complete" only for complex tasks. Simple Q&A needs no completion mes
 
 ## Continuation Protocol
 
-When using tools, include continuation field in response:
+Include continuation field in EVERY response:
 ```json
 {
-  "response": "Found files, analyzing next...",
-  "tool_calls": [...],
+  "response": "Your message here",
+  "tool_calls": [...],  // if needed
   "continuation": {
-    "status": "CONTINUE",  // or "TERMINATE"
-    "reason": "Need to analyze file contents"
+    "status": "CONTINUE",  // Keep working autonomously
+    "reason": "Still investigating file structure"
   }
 }
 ```
 
-**NEVER** include continuation field without tool_calls.
-**ALWAYS** use "TERMINATE" for simple Q&A or final results.
+OR
+
+```json
+{
+  "response": "I found 5 agents available",
+  "continuation": {
+    "status": "TERMINATE",  // Return control to user
+    "reason": "Question fully answered"
+  }
+}
+```
+
+**ALWAYS** include continuation, even for simple Q&A.
+Use your judgment: continue working or wait for user.

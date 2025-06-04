@@ -20,17 +20,19 @@
 
 ## Response Structure
 
-Include continuation field ONLY with tool calls:
+Include continuation field in EVERY response:
 ```json
 {
-  "response": "Natural language update",
-  "tool_calls": [...],
+  "response": "Natural language message",
+  "tool_calls": [...],  // optional
   "continuation": {
-    "status": "CONTINUE",
-    "reason": "Next step needed"
+    "status": "CONTINUE" or "TERMINATE",
+    "reason": "Why continuing or stopping"
   }
 }
 ```
+
+**ALWAYS** include continuation field, even without tools.
 
 ## Autonomous Behavior Rules
 
@@ -41,7 +43,7 @@ Include continuation field ONLY with tool calls:
 
 ## Examples
 
-### ✅ RIGHT - Autonomous:
+### ✅ Tool-based workflow:
 ```
 Step 1: List RFCs → CONTINUE
 Step 2: Create RFC → CONTINUE  
@@ -50,11 +52,24 @@ Step 4: Update RFC → CONTINUE
 Step 5: "RFC complete" → TERMINATE
 ```
 
+### ✅ Multi-step reasoning (no tools):
+```
+Step 1: Analyze requirements → CONTINUE
+Step 2: Consider options → CONTINUE
+Step 3: Formulate recommendation → CONTINUE
+Step 4: Present conclusion → TERMINATE
+```
+
+### ✅ Simple Q&A:
+```
+User: "What agents are available?"
+Response: List agents → TERMINATE (complete answer)
+```
+
 ### ❌ WRONG - Permission Seeking:
 ```
-Step 1: List RFCs
 "I found 3 RFCs. Would you like me to create a new one?"
-[Waiting for user...]
+[Should have continued autonomously]
 ```
 
 ## Progress Tracking
