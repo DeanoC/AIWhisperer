@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""AIWhisperer MCP Server launcher."""
+
+import sys
+import os
+import logging
+
+# Suppress all logging to stdout when using stdio transport
+if "--transport" not in sys.argv or sys.argv[sys.argv.index("--transport") + 1] == "stdio":
+    # Disable most logging
+    logging.getLogger("ai_whisperer").setLevel(logging.CRITICAL)
+    # Redirect remaining logs to stderr
+    logging.basicConfig(
+        level=logging.CRITICAL,
+        format='%(message)s',
+        handlers=[logging.StreamHandler(sys.stderr)]
+    )
+
+from ai_whisperer.mcp.server.runner import main
+
+if __name__ == "__main__":
+    main()

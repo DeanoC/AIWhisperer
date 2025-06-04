@@ -134,7 +134,7 @@ class MCPToolRegistry:
         """Get all registered MCP tools."""
         mcp_tools = []
         for tool_name in self._registered_tool_names:
-            tool = self.tool_registry.get_tool_by_name(tool_name)
+            tool = self.tool_registry.get_tool(tool_name)
             if tool:
                 mcp_tools.append(tool)
         return mcp_tools
