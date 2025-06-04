@@ -1,0 +1,24 @@
+# Test configuration for GitHub MCP server
+
+# MCP configuration
+mcp:
+  client:
+    enabled: true
+    servers:
+      - name: github
+        transport: stdio
+        command: ["npx", "-y", "@modelcontextprotocol/server-github"]
+        env:
+          GITHUB_TOKEN: "${GITHUB_TOKEN}"  # Set this environment variable
+        timeout: 30.0
+        
+    # Agent permissions - allow all agents to use GitHub tools for testing
+    agent_permissions:
+      alice:
+        allowed_servers: ["github"]
+      eamonn:
+        allowed_servers: ["github"]
+      patricia:
+        allowed_servers: ["github"]
+      debbie:
+        allowed_servers: ["github"]

@@ -18,7 +18,7 @@ class MCPToolRegistry:
     """Registry for MCP tools from external servers."""
     
     def __init__(self, tool_registry: LazyToolRegistry = None):
-        self.tool_registry = tool_registry or LazyToolRegistry.get_instance()
+        self.tool_registry = tool_registry or LazyToolRegistry()
         self.connection_pool = MCPConnectionPool()
         self.registered_servers: Dict[str, Dict] = {}
         self._registered_tool_names: Set[str] = set()

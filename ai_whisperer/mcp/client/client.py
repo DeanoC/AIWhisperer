@@ -57,6 +57,11 @@ class MCPClient:
         try:
             # Send initialize request
             response = await self._send_request("initialize", {
+                "protocolVersion": "0.1.0",
+                "capabilities": {
+                    "roots": {"listChanged": False},
+                    "sampling": {}
+                },
                 "clientInfo": {
                     "name": "aiwhisperer",
                     "version": "1.0.0"
@@ -74,9 +79,9 @@ class MCPClient:
             self.initialized = True
             logger.info(f"Initialized MCP session with {self.server_info.name} v{self.server_info.version}")
             
-            # Cache available tools if supported
-            if self.server_info.capabilities.get("tools", False):
-                await self._cache_tools()
+            # Don't cache tools during initialization - some servers need time
+            # Tools will be cached on first access
+            logger.debug("Skipping tool caching during initialization")
                 
             # Cache available resources if supported
             if self.server_info.capabilities.get("resources", False):
@@ -107,6 +112,7 @@ class MCPClient:
         """Cache available tools from server."""
         try:
             response = await self._send_request("tools/list")
+            logger.debug(f"Tools list response: {response}")
             tools = response.get("tools", [])
             
             self.tools.clear()
@@ -122,7 +128,7 @@ class MCPClient:
             logger.info(f"Cached {len(self.tools)} tools from {self.config.name}")
             
         except Exception as e:
-            logger.error(f"Failed to cache tools: {e}")
+            logger.error(f"Failed to cache tools: {e}", exc_info=True)
             
     async def _cache_resources(self) -> None:
         """Cache available resources from server."""
@@ -149,6 +155,10 @@ class MCPClient:
         """List available tools."""
         if not self.initialized:
             raise MCPConnectionError("Client not initialized")
+            
+        # Cache tools on first access if not already cached
+        if not self.tools and "tools" in self.server_info.capabilities:
+            await self._cache_tools()
             
         return list(self.tools.values())
         
