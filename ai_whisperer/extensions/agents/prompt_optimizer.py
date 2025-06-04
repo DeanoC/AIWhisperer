@@ -66,7 +66,7 @@ class PromptOptimizer:
             }
         }
     
-    def optimize_prompt(self, prompt: str, model_name: str, agent_type: str = None) -> str:
+    def optimize_prompt(self, prompt: str, model_name: str, agent_type: str = None, is_continuation: bool = False) -> str:
         """
         Optimize a prompt for a specific model.
         
@@ -74,10 +74,40 @@ class PromptOptimizer:
             prompt: Original prompt text
             model_name: Target model name
             agent_type: Optional agent type for agent-specific optimizations
+            is_continuation: Whether this is a continuation message
             
         Returns:
             Optimized prompt
         """
+        # Skip optimization for continuation messages
+        if is_continuation:
+            logger.debug("Skipping optimization for continuation message")
+            return prompt
+        
+        # Check if this is already a continuation message
+        continuation_patterns = [
+            r'^continue:?\s*',
+            r'^please continue',
+            r'^continue\s+',
+            r'^\s*ok\s*$',
+            r'^\s*yes\s*$',
+            r'^\s*continue\s*$',
+            r'^go on',
+            r'^keep going',
+            r'^proceed'
+        ]
+        
+        for pattern in continuation_patterns:
+            if re.match(pattern, prompt.strip(), re.IGNORECASE):
+                logger.debug("Detected continuation pattern, skipping optimization")
+                return prompt
+        
+        # Skip optimization for very short messages (under 10 words)
+        word_count = len(prompt.split())
+        if word_count < 10:
+            logger.debug(f"Skipping optimization for short message ({word_count} words)")
+            return prompt
+        
         capabilities = get_model_capabilities(model_name)
         optimized_prompt = prompt
         
@@ -188,7 +218,7 @@ class PromptOptimizer:
         
         return analysis
 
-def optimize_user_message(message: str, model_name: str, agent_type: str = None) -> str:
+def optimize_user_message(message: str, model_name: str, agent_type: str = None, is_continuation: bool = False) -> str:
     """
     Convenience function to optimize a user message.
     
@@ -196,9 +226,10 @@ def optimize_user_message(message: str, model_name: str, agent_type: str = None)
         message: User's message
         model_name: Target model
         agent_type: Optional agent type
+        is_continuation: Whether this is a continuation message
         
     Returns:
         Optimized message
     """
     optimizer = PromptOptimizer()
-    return optimizer.optimize_prompt(message, model_name, agent_type)
+    return optimizer.optimize_prompt(message, model_name, agent_type, is_continuation)

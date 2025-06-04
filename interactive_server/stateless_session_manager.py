@@ -456,9 +456,9 @@ class StatelessInteractiveSession:
             model_name = agent.config.model_name if hasattr(agent.config, 'model_name') else \
                         self.config.get('openrouter', {}).get('model', '')
             
-            if model_name:
+            if model_name and not is_continuation:
                 from ai_whisperer.extensions.agents.prompt_optimizer import optimize_user_message
-                optimized_message = optimize_user_message(message, model_name, self.active_agent)
+                optimized_message = optimize_user_message(message, model_name, self.active_agent, is_continuation)
                 if optimized_message != message:
                     logger.debug(f"Optimized user message for {model_name}")
                     message = optimized_message
