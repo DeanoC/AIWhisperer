@@ -136,8 +136,9 @@ class PromptOptimizer:
                 # Use compiled regex pattern
                 optimized_prompt = pattern.sub(replacement, optimized_prompt)
             else:
-                # Simple string replacement (case-insensitive)
-                optimized_prompt = optimized_prompt.replace(pattern, replacement)
+                # Convert simple string pattern to regex for case-insensitive replacement
+                regex_pattern = re.compile(re.escape(pattern), re.IGNORECASE)
+                optimized_prompt = regex_pattern.sub(replacement, optimized_prompt)
         
         # Add hints based on agent type
         if agent_type:

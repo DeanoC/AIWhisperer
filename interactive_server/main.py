@@ -438,14 +438,22 @@ async def send_user_message_handler(params, websocket=None):
                 if '"final":' in content and not content.startswith('{'):
                     # This is broken JSON - extract what we can
                     logging.error(f"[send_user_message_handler] ERROR: Malformed JSON detected!")
-                    # Try to extract text before the JSON fragment
-                    json_start = content.find('",\n')
-                    if json_start > 0:
-                        response['ai_response'] = content[:json_start].strip('"')
+                    # Try to extract text before the JSON fragment using regex
+                    # Look for patterns where JSON starts (common patterns: '",\n{', '"\n{', '",{')
+                    match = re.search(r'^(.*?)["\']\s*[,]?\s*[\n]?\s*\{', content, re.DOTALL)
+                    if match:
+                        extracted_text = match.group(1).strip().strip('"\'')
+                        response['ai_response'] = extracted_text
                         logging.info(f"[send_user_message_handler] Extracted text before JSON fragment")
                     else:
-                        response['ai_response'] = ''
-                        logging.warning(f"[send_user_message_handler] Could not salvage malformed JSON")
+                        # Fallback: try to find where JSON object starts
+                        json_obj_start = content.find('{')
+                        if json_obj_start > 0:
+                            response['ai_response'] = content[:json_obj_start].strip().strip('"\'')
+                            logging.info(f"[send_user_message_handler] Extracted text before '{' character")
+                        else:
+                            response['ai_response'] = ''
+                            logging.warning(f"[send_user_message_handler] Could not salvage malformed JSON")
                 
                 # Check if this is structured JSON (has analysis or commentary fields)
                 elif content.startswith('{') and ('analysis' in content or 'commentary' in content):
