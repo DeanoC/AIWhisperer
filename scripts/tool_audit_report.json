@@ -1,0 +1,609 @@
+{
+  "summary": {
+    "total": 53,
+    "clean": 8,
+    "issues": 45
+  },
+  "clean_tools": [
+    {
+      "file": "ai_whisperer/tools/ai_loop_inspector_tool.py",
+      "classes": [
+        "AILoopInspectorTool"
+      ],
+      "issues": [],
+      "clean": true
+    },
+    {
+      "file": "ai_whisperer/tools/base_tool.py",
+      "classes": [],
+      "issues": [],
+      "clean": true
+    },
+    {
+      "file": "ai_whisperer/tools/check_mail_tool.py",
+      "classes": [
+        "CheckMailTool"
+      ],
+      "issues": [],
+      "clean": true
+    },
+    {
+      "file": "ai_whisperer/tools/conversation_command_tool.py",
+      "classes": [
+        "ConversationCommandTool"
+      ],
+      "issues": [],
+      "clean": true
+    },
+    {
+      "file": "ai_whisperer/tools/monitoring_control_tool.py",
+      "classes": [
+        "MonitoringControlTool"
+      ],
+      "issues": [],
+      "clean": true
+    },
+    {
+      "file": "ai_whisperer/tools/send_mail_with_switch_tool.py",
+      "classes": [
+        "SendMailWithSwitchTool"
+      ],
+      "issues": [],
+      "clean": true
+    },
+    {
+      "file": "ai_whisperer/tools/session_analysis_tool.py",
+      "classes": [
+        "SessionAnalysisTool"
+      ],
+      "issues": [],
+      "clean": true
+    },
+    {
+      "file": "ai_whisperer/tools/session_health_tool.py",
+      "classes": [
+        "SessionHealthTool"
+      ],
+      "issues": [],
+      "clean": true
+    }
+  ],
+  "problematic_tools": [
+    {
+      "file": "ai_whisperer/tools/analyze_dependencies_tool.py",
+      "classes": [
+        "AnalyzeDependenciesTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Invalid JSON format - {str(e)}', 'total_tasks': 0, 'analyzed': False}...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'total_tasks': 0, 'analyzed': False}...",
+        "Formatted string return: {'error': f'Circular dependency detected - {str(e)}', 'has_circular_dependencies': True, 'total_task..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/analyze_languages_tool.py",
+      "classes": [
+        "AnalyzeLanguagesTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"Path '{path}' does not exist.\", 'path': path, 'languages': {}}...",
+        "Formatted string return: {'error': f'Error analyzing languages: {str(e)}', 'path': path, 'languages': {}}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/create_plan_from_rfc_tool.py",
+      "classes": [
+        "CreatePlanFromRFCTool"
+      ],
+      "issues": [
+        "Formatted string return: {'created': True, 'plan_name': plan_name, 'plan_type': plan_type, 'source_rfc': rfc_metadata.get('rf...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found.\", 'rfc_id': rfc_id, 'created': False}...",
+        "Plain string return: ''.join(chunks)...",
+        "Formatted string return: {'error': f'Generated plan failed validation: {error}', 'rfc_id': rfc_metadata.get('rfc_id'), 'creat...",
+        "Formatted string return: {'error': f'Error creating plan from RFC: {str(e)}', 'rfc_id': rfc_id, 'created': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/create_rfc_tool.py",
+      "classes": [
+        "CreateRFCTool"
+      ],
+      "issues": [
+        "String conversion: {'rfc_id': rfc_id, 'title': title, 'short_name': short_name, 'status': 'in_progress', 'filename': fi...",
+        "Formatted string return: {'error': f'Error creating RFC: {str(e)}', 'rfc_id': None, 'path': None}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/decompose_plan_tool.py",
+      "classes": [
+        "DecomposePlanTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Invalid JSON format - {str(e)}', 'total_tasks': 0, 'decomposed': False}...",
+        "Formatted string return: {'error': f'Invalid plan - {str(e)}', 'total_tasks': 0, 'decomposed': False}...",
+        "Formatted string return: {'error': f'Failed to decompose plan - {str(e)}', 'total_tasks': 0, 'decomposed': False}...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'total_tasks': 0, 'decomposed': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/delete_plan_tool.py",
+      "classes": [
+        "DeletePlanTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Plan {plan_name} not found in any folder.', 'plan_name': plan_name, 'deleted': False}...",
+        "Formatted string return: {'error': f'Error deleting plan: {str(e)}', 'plan_name': plan_name, 'deleted': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/delete_rfc_tool.py",
+      "classes": [
+        "DeleteRFCTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'RFC {rfc_id} not found in any folder.', 'rfc_id': rfc_id, 'deleted': False}...",
+        "Formatted string return: {'error': f'Error deleting RFC: {str(e)}', 'rfc_id': rfc_id, 'deleted': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/execute_command_tool.py",
+      "classes": [
+        "ExecuteCommandTool"
+      ],
+      "issues": [
+        "Formatted string return: {'stdout': '', 'stderr': f'Error: Command not found: {command}', 'returncode': 127}...",
+        "Formatted string return: {'stdout': stdout_output, 'stderr': f'Error executing command: {e}\\n{stderr_output}', 'returncode': ..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/fetch_url_tool.py",
+      "classes": [
+        "FetchURLTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Request timed out after {self.REQUEST_TIMEOUT} seconds.', 'url': url, 'timeout': self.RE...",
+        "Formatted string return: {'error': f'Error fetching URL: {str(e)}', 'url': url, 'content': None}...",
+        "Formatted string return: {'error': f'Error processing content: {str(e)}', 'url': url, 'content': None}...",
+        "Formatted string return: {'error': f'HTTP {response.status_code} - {response.reason}', 'url': url, 'status_code': response.st...",
+        "Formatted string return: {'error': f'Content too large ({int(content_length)} bytes)', 'url': url, 'content_length': int(cont...",
+        "Formatted string return: {'error': f'Content too large (>{self.MAX_CONTENT_LENGTH} bytes)', 'url': url, 'size': size, 'max_al..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/find_pattern_tool.py",
+      "classes": [
+        "FindPatternTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Path not found: {path}', 'matches': [], 'total_matches': 0, 'files_searched': 0}...",
+        "String conversion: {'error': str(e), 'matches': [], 'total_matches': 0, 'files_searched': 0}...",
+        "Formatted string return: {'error': f'Invalid regex pattern: {e}', 'matches': [], 'total_matches': 0, 'files_searched': 0}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/find_similar_code_tool.py",
+      "classes": [
+        "FindSimilarCodeTool"
+      ],
+      "issues": [
+        "Plain string return: \"Error: 'feature' is required.\"...",
+        "Formatted string return: {'error': f'Error finding similar code: {str(e)}', 'feature': feature, 'results': []}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/format_for_external_agent_tool.py",
+      "classes": [
+        "FormatForExternalAgentTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"Unknown agent '{agent_name}'. Available agents: {', '.join(available)}\", 'agent': agent_...",
+        "Formatted string return: {'error': f'Invalid JSON format - {str(e)}', 'task_formatted': False}...",
+        "Formatted string return: {'error': f'External agent error - {str(e)}', 'agent': agent_name, 'task_formatted': False}...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'task_formatted': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/get_file_content_tool.py",
+      "classes": [
+        "GetFileContentTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"File '{file_path_str}' does not exist.\", 'path': file_path_str, 'content': None, 'lines'...",
+        "Formatted string return: {'error': f\"Path '{file_path_str}' is not a file.\", 'path': file_path_str, 'content': None, 'lines':...",
+        "String conversion: {'path': file_path_str, 'absolute_path': str(abs_file_path), 'relative_path': rel_path, 'exists': Tr...",
+        "Formatted string return: {'error': f\"File '{file_path_str}' appears to be a binary file. Use appropriate tools for binary fil...",
+        "String conversion: {'path': file_path_str, 'absolute_path': str(abs_file_path), 'relative_path': rel_path, 'exists': Tr...",
+        "String conversion: {'path': file_path_str, 'absolute_path': str(abs_file_path), 'relative_path': rel_path, 'exists': Tr...",
+        "Formatted string return: {'error': f\"Unable to decode file '{file_path_str}'. The file may be binary or use a different encod...",
+        "Formatted string return: {'error': f\"Permission denied to read file '{file_path_str}'.\", 'path': file_path_str, 'content': No...",
+        "Formatted string return: {'error': f\"Error reading file '{file_path_str}': {str(e)}\", 'path': file_path_str, 'content': None,...",
+        "Formatted string return: {'error': f'start_line ({start_line}) exceeds total lines ({total_lines}).', 'path': file_path_str, ...",
+        "Formatted string return: {'error': f'Invalid line range. start_line ({start_line}) must be less than end_line ({end_line}).',..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/get_project_structure_tool.py",
+      "classes": [
+        "GetProjectStructureTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"Path '{path}' does not exist.\", 'path': path, 'structure': None}...",
+        "Formatted string return: {'error': f'Error analyzing project structure: {str(e)}', 'path': path, 'structure': None}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/list_directory_tool.py",
+      "classes": [
+        "ListDirectoryTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"Access denied. Path '{path}' is outside the workspace directory.\", 'path': path, 'entrie...",
+        "Formatted string return: {'error': f\"Path '{path}' does not exist.\", 'path': path, 'entries': []}...",
+        "Formatted string return: {'error': f\"Path '{path}' is not a directory.\", 'path': path, 'entries': []}...",
+        "Formatted string return: {'error': f\"Permission denied to read directory '{path}'.\", 'path': path, 'entries': []}...",
+        "Formatted string return: {'error': f'Error listing directory: {str(e)}', 'path': path, 'entries': []}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/list_plans_tool.py",
+      "classes": [
+        "ListPlansTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Error listing plans: {str(e)}', 'plans': [], 'count': 0}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/list_rfcs_tool.py",
+      "classes": [
+        "ListRFCsTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Error listing RFCs: {str(e)}', 'rfcs': [], 'total_count': 0}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/message_injector_tool.py",
+      "classes": [
+        "MessageInjectorTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Session {session_id} not found or inactive'}...",
+        "String conversion: {'error': str(e), 'success': False}...",
+        "Formatted string return: {'error': f'Invalid injection type: {injection_type}'}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/move_plan_tool.py",
+      "classes": [
+        "MovePlanTool"
+      ],
+      "issues": [
+        "Formatted string return: {'moved': True, 'plan_name': plan_name, 'from_status': current_status, 'to_status': to_status, 'reas...",
+        "Formatted string return: {'error': f\"Plan '{plan_name}' not found.\", 'plan_name': plan_name, 'moved': False}...",
+        "Formatted string return: {'error': f\"Plan is already in '{to_status}' status.\", 'plan_name': plan_name, 'current_status': cur...",
+        "Formatted string return: {'error': f'Error moving plan: {str(e)}', 'plan_name': plan_name, 'moved': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/move_rfc_tool.py",
+      "classes": [
+        "MoveRFCTool"
+      ],
+      "issues": [
+        "Formatted string return: {'moved': True, 'rfc_id': rfc_id, 'previous_status': current_status, 'new_status': target_status, 'n...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found.\", 'rfc_id': rfc_id, 'moved': False}...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' is already in '{target_status}' status.\", 'rfc_id': rfc_id, 'current_stat...",
+        "Formatted string return: {'error': f\"Invalid transition from '{current_status}' to '{target_status}'.\", 'rfc_id': rfc_id, 'cu...",
+        "Formatted string return: {'error': f'Error moving RFC: {str(e)}', 'rfc_id': rfc_id, 'moved': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/parse_external_result_tool.py",
+      "classes": [
+        "ParseExternalResultTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"Unknown agent '{agent_name}'. Available agents: {', '.join(available)}\", 'agent': agent_...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'agent': agent_name, 'parsed': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/prepare_plan_from_rfc_tool.py",
+      "classes": [
+        "PreparePlanFromRFCTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found.\", 'rfc_id': rfc_id, 'prepared': False}...",
+        "Formatted string return: {'error': f'Error preparing RFC: {str(e)}', 'rfc_id': rfc_id, 'prepared': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/prompt_metrics_tool.py",
+      "classes": [
+        "PromptMetricsTool"
+      ],
+      "issues": [
+        "Formatted string return: {'success': False, 'error': f'Unknown action: {action}'}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/python_ast_json_tool.py",
+      "classes": [
+        "PythonASTJSONTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Unknown action: {action}'}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/python_executor_tool.py",
+      "classes": [
+        "PythonExecutorTool"
+      ],
+      "issues": [
+        "String conversion: {'error': str(e), 'success': False}...",
+        "Formatted string return: {'error': f'Unknown template: {use_template}'}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/read_file_tool.py",
+      "classes": [
+        "ReadFileTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"Access denied. File path '{file_path_str}' is outside the workspace directory.\", 'path':...",
+        "String conversion: {'path': file_path_str, 'absolute_path': str(abs_file_path), 'exists': True, 'size': stat.st_size, '...",
+        "Formatted string return: {'error': f\"File not found: '{file_path_str}'\", 'path': file_path_str, 'content': None, 'lines': []}...",
+        "Formatted string return: {'error': f\"Path is not a file: '{file_path_str}'\", 'path': file_path_str, 'content': None, 'lines':...",
+        "Formatted string return: {'error': f\"Permission denied to read file '{file_path_str}'.\", 'path': file_path_str, 'content': No...",
+        "Formatted string return: {'error': f\"File '{file_path_str}' is not a text file or has encoding issues.\", 'path': file_path_st...",
+        "Formatted string return: {'error': f'Error reading file: {str(e)}', 'path': file_path_str, 'content': None, 'lines': []}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/read_plan_tool.py",
+      "classes": [
+        "ReadPlanTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"Plan '{plan_name}' not found.\", 'plan_name': plan_name, 'found': False}...",
+        "Formatted string return: {'error': f'Error reading plan: {str(e)}', 'plan_name': plan_name, 'found': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/read_rfc_tool.py",
+      "classes": [
+        "ReadRFCTool"
+      ],
+      "issues": [
+        "Formatted string return: {'rfc_id': rfc_id, 'found': True, 'location': f'.WHISPER/rfc/{folder}/{rfc_path.name}', 'absolute_pa...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found in any RFC folder (new, in_progress, archived).\", 'rfc_id': rfc...",
+        "Formatted string return: {'error': f'Error reading RFC: {str(e)}', 'rfc_id': rfc_id, 'content': None}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/recommend_external_agent_tool.py",
+      "classes": [
+        "RecommendExternalAgentTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Invalid JSON format - {str(e)}', 'recommendations': [], 'analyzed': False}...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'recommendations': [], 'analyzed': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/reply_mail_tool.py",
+      "classes": [
+        "ReplyMailTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Message with ID {message_id} not found', 'sent': False, 'message_id': message_id}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/save_generated_plan_tool.py",
+      "classes": [
+        "SaveGeneratedPlanTool"
+      ],
+      "issues": [
+        "Formatted string return: {'saved': True, 'plan_name': plan_name, 'plan_path': f'.WHISPER/plans/in_progress/{plan_name}/', 'ab...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' metadata not found.\", 'saved': False, 'plan_name': plan_name, 'rfc_id': r...",
+        "Formatted string return: {'error': f'Generated plan failed validation: {error}', 'saved': False, 'plan_name': plan_name, 'val...",
+        "Formatted string return: {'error': f'Error saving plan: {str(e)}', 'saved': False, 'plan_name': plan_name}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/script_parser_tool.py",
+      "classes": [
+        "ScriptParserTool"
+      ],
+      "issues": [
+        "String conversion: {'success': False, 'error': str(e)}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/search_files_tool.py",
+      "classes": [
+        "SearchFilesTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f\"Invalid search_type '{search_type}'. Must be 'name' or 'content'.\", 'pattern': pattern, ...",
+        "Formatted string return: {'error': f\"Search path '{search_path}' does not exist.\", 'pattern': pattern, 'search_type': search_...",
+        "Formatted string return: {'error': f\"Search path '{search_path}' is not a directory.\", 'pattern': pattern, 'search_type': sea...",
+        "Formatted string return: {'error': f'Error searching files: {str(e)}', 'pattern': pattern, 'search_type': search_type, 'resul..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/send_mail_tool.py",
+      "classes": [
+        "SendMailTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Error sending mail: {str(e)}', 'message_id': None, 'to': to_agent if to_agent else 'user..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/session_inspector_tool.py",
+      "classes": [
+        "SessionInspectorTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Session {session_id} not found'}...",
+        "String conversion: {'error': str(e), 'success': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/switch_agent_tool.py",
+      "classes": [
+        "SwitchAgentTool"
+      ],
+      "issues": [
+        "String conversion: {'success': False, 'error': str(e)}...",
+        "Formatted string return: {'success': False, 'error': f'Unknown agent ID: {agent_id}'}...",
+        "Formatted string return: {'success': False, 'error': f'Failed to switch to {agent_name}: {str(e)}'}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/system_health_check_tool.py",
+      "classes": [
+        "SystemHealthCheckTool"
+      ],
+      "issues": [
+        "Formatted string return: self._format_error(f'No health check scripts found for category: {check_category}')...",
+        "Formatted string return: self._format_error(f'Health check error: {str(e)}')..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/update_plan_from_rfc_tool.py",
+      "classes": [
+        "UpdatePlanFromRFCTool"
+      ],
+      "issues": [
+        "Formatted string return: {'updated': True, 'plan_name': plan_name, 'rfc_changed': has_changed, 'force_update': force_update, ...",
+        "Formatted string return: {'error': f\"Plan '{plan_name}' not found.\", 'plan_name': plan_name, 'updated': False}...",
+        "Formatted string return: {'error': f'Error checking RFC: {error}', 'plan_name': plan_name, 'updated': False}...",
+        "Plain string return: ''.join(chunks)...",
+        "Formatted string return: {'error': f'Updated plan failed validation: {error}', 'plan_name': plan_name, 'updated': False, 'val...",
+        "Formatted string return: {'error': f'Error updating plan: {str(e)}', 'plan_name': plan_name, 'updated': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/update_rfc_tool.py",
+      "classes": [
+        "UpdateRFCTool"
+      ],
+      "issues": [
+        "Formatted string return: {'updated': True, 'rfc_id': rfc_id, 'section': section, 'action': 'appended' if append else 'replace...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found.\", 'rfc_id': rfc_id, 'updated': False}...",
+        "Formatted string return: {'error': f'Error updating RFC: {str(e)}', 'rfc_id': rfc_id, 'section': section, 'updated': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/update_task_status_tool.py",
+      "classes": [
+        "UpdateTaskStatusTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'task_id': task_id, 'updated': False}...",
+        "Formatted string return: {'error': f\"Invalid status '{status_str}'. Valid statuses: {', '.join(valid_statuses)}\", 'task_id': ..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/validate_external_agent_tool.py",
+      "classes": [
+        "ValidateExternalAgentTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'validations': [], 'validated': False}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/web_search_tool.py",
+      "classes": [
+        "WebSearchTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Error performing web search: {str(e)}', 'query': query, 'results': []}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/workspace_stats_tool.py",
+      "classes": [
+        "WorkspaceStatsTool"
+      ],
+      "issues": [
+        "Formatted string return: {'error': f'Path not found: {path}'}...",
+        "Formatted string return: {'error': f'Not a directory: {path}'}...",
+        "String conversion: {'error': str(e)}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/workspace_validator_tool.py",
+      "classes": [
+        "WorkspaceValidatorTool"
+      ],
+      "issues": [
+        "String conversion: {'error': str(e), 'success': False}...",
+        "Formatted string return: {'error': f'Invalid category: {cat}'}..."
+      ],
+      "clean": false
+    },
+    {
+      "file": "ai_whisperer/tools/write_file_tool.py",
+      "classes": [
+        "WriteFileTool"
+      ],
+      "issues": [
+        "Formatted string return: {'status': 'success', 'message': f'Content successfully written to {abs_file_path}', 'resolved_path'...",
+        "Formatted string return: {'status': 'error', 'message': f'Error writing to file {path}: {e}'}...",
+        "Formatted string return: {'status': 'error', 'message': f'Error writing to file {path}: {e}'}...",
+        "Formatted string return: {'status': 'error', 'message': f'An unexpected error occurred while writing to {path}: {type(e).__na..."
+      ],
+      "clean": false
+    }
+  ]
+}

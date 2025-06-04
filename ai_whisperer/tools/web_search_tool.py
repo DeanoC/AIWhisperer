@@ -265,14 +265,18 @@ class WebSearchTool(AITool):
             logger.error(f"Search error: {e}")
             return []
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute web search."""
         query = arguments.get('query')
         max_results = arguments.get('max_results', 5)
         focus = arguments.get('focus', 'general')
         
         if not query:
-            return "Error: 'query' is required."
+            return {
+                "error": "'query' is required.",
+                "query": None,
+                "results": []
+            }
         
         # Limit max results
         max_results = min(max_results, self.MAX_RESULTS)
@@ -296,36 +300,23 @@ class WebSearchTool(AITool):
                 self._save_to_cache(cache_key, results)
                 from_cache = False
             
-            # Build response
-            response = f"**Web Search Results for: '{query}'**\n"
-            if focus != 'general':
-                response += f"Focus: {focus}\n"
-            if from_cache:
-                response += f"*(Results from cache)*\n"
-            response += "\n"
+            # Limit to requested number
+            limited_results = results[:max_results] if results else []
             
-            if results:
-                # Limit to requested number
-                limited_results = results[:max_results]
-                
-                for i, result in enumerate(limited_results, 1):
-                    response += f"## {i}. {result['title']}\n"
-                    response += f"**URL**: {result['url']}\n"
-                    response += f"{result['snippet']}\n\n"
-                
-                response += "---\n\n"
-                response += "**Search Tips**:\n"
-                response += "- Use specific technical terms for better results\n"
-                response += "- Try different focus areas (documentation, tutorial, best_practices)\n"
-                response += "- Combine with `fetch_url` to get full content from promising results\n"
-            else:
-                response += "No results found. Try:\n"
-                response += "- Simplifying your query\n"
-                response += "- Using different keywords\n"
-                response += "- Checking your internet connection\n"
-            
-            return response
+            return {
+                "query": query,
+                "enhanced_query": enhanced_query if not from_cache else query,
+                "focus": focus,
+                "from_cache": from_cache,
+                "total_results": len(limited_results),
+                "max_results": max_results,
+                "results": limited_results
+            }
             
         except Exception as e:
             logger.error(f"Error executing web search: {e}")
-            return f"Error performing web search: {str(e)}"
+            return {
+                "error": f"Error performing web search: {str(e)}",
+                "query": query,
+                "results": []
+            }

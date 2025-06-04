@@ -277,7 +277,7 @@ class UpdateRFCTool(AITool):
             # No history section, add it
             return content + f"\n\n## Refinement History\n{entry}\n"
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute RFC update."""
         rfc_id = arguments.get('rfc_id')
         section = arguments.get('section')
@@ -286,17 +286,34 @@ class UpdateRFCTool(AITool):
         history_note = arguments.get('history_note')
         
         if not rfc_id:
-            return "Error: 'rfc_id' is required."
+            return {
+                "error": "'rfc_id' is required.",
+                "rfc_id": None,
+                "updated": False
+            }
         if not section:
-            return "Error: 'section' is required."
+            return {
+                "error": "'section' is required.",
+                "rfc_id": rfc_id,
+                "updated": False
+            }
         if not new_content:
-            return "Error: 'content' is required."
+            return {
+                "error": "'content' is required.",
+                "rfc_id": rfc_id,
+                "section": section,
+                "updated": False
+            }
         
         try:
             # Find RFC file
             rfc_path = self._find_rfc_file(rfc_id)
             if not rfc_path:
-                return f"Error: RFC '{rfc_id}' not found."
+                return {
+                    "error": f"RFC '{rfc_id}' not found.",
+                    "rfc_id": rfc_id,
+                    "updated": False
+                }
             
             # Read current content
             content = self._read_rfc_content(rfc_path)
@@ -336,18 +353,23 @@ class UpdateRFCTool(AITool):
             
             logger.info(f"Updated RFC {rfc_id} section '{section}'")
             
-            return f"""RFC updated successfully!
-
-**RFC ID**: {rfc_id}
-**Section**: {section.replace('_', ' ').title()}
-**Action**: {'Appended to' if append else 'Replaced'} content
-**Location**: {rfc_path.parent.name}/{rfc_id}.md
-
-The RFC has been updated. You can:
-1. Continue refining other sections
-2. Review the changes with `read_rfc`
-3. Move to 'in_progress' when ready"""
+            return {
+                "updated": True,
+                "rfc_id": rfc_id,
+                "section": section,
+                "action": "appended" if append else "replaced",
+                "location": f"{rfc_path.parent.name}/{rfc_path.name}",
+                "absolute_path": str(rfc_path),
+                "history_note": history_note,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "metadata_updated": True
+            }
             
         except Exception as e:
             logger.error(f"Error updating RFC {rfc_id}: {e}")
-            return f"Error updating RFC: {str(e)}"
+            return {
+                "error": f"Error updating RFC: {str(e)}",
+                "rfc_id": rfc_id,
+                "section": section,
+                "updated": False
+            }

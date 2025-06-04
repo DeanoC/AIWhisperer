@@ -77,7 +77,7 @@ Example usage:
 - Check last 5 messages: check_mail(unread_only=false, limit=5)
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, **kwargs) -> dict:
         """Execute the tool to check mail."""
         # Check if we're getting 'arguments' instead of kwargs
         if 'arguments' in kwargs and isinstance(kwargs['arguments'], dict):
@@ -108,22 +108,25 @@ Example usage:
             # get_all_mail returns all messages (read and unread)
             messages = mailbox.get_all_mail(agent_name, include_read=True, include_archived=False)
         
-        if not messages:
-            return "No messages found in your mailbox."
+        # Format messages for structured output
+        formatted_messages = []
+        for mail in messages[:limit]:
+            formatted_messages.append({
+                "message_id": mail.message_id,
+                "from": mail.from_agent or "User",
+                "to": mail.to_agent if mail.to_agent else agent_name,
+                "subject": mail.subject,
+                "body": mail.body,
+                "priority": mail.priority.value,
+                "status": mail.status.value,
+                "timestamp": mail.timestamp.isoformat() if hasattr(mail, 'timestamp') else None
+            })
         
-        # Format messages for display
-        result = f"You have {len(messages)} {'unread' if unread_only else ''} message(s):\n\n"
-        
-        for i, mail in enumerate(messages[:limit], 1):
-            # Use the status field instead of is_read
-            status = mail.status.value.upper()
-            result += f"{i}. [{status}] From: {mail.from_agent or 'User'}\n"
-            result += f"   Subject: {mail.subject}\n"
-            result += f"   Priority: {mail.priority.value}\n"
-            result += f"   Body: {mail.body[:100]}{'...' if len(mail.body) > 100 else ''}\n"
-            result += f"   ID: {mail.message_id}\n\n"
-        
-        if len(messages) > limit:
-            result += f"(Showing {limit} of {len(messages)} messages)"
-        
-        return result
+        return {
+            "messages": formatted_messages,
+            "count": len(messages),
+            "total_count": len(messages),
+            "limit": limit,
+            "unread_only": unread_only,
+            "truncated": len(messages) > limit
+        }

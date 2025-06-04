@@ -18,6 +18,7 @@ Related:
 
 """
 
+from typing import Dict, Any
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.extensions.mailbox.mailbox import Mail, MessagePriority, get_mailbox
 
@@ -87,7 +88,7 @@ Example usage:
 - Custom subject: reply_mail(message_id="msg123", body="...", subject="Updated: RFC Review")
 """
     
-    def execute(self, **kwargs) -> str:
+    def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute the tool to reply to mail."""
         # Extract parameters
         message_id = kwargs.get('message_id', '')
@@ -96,10 +97,18 @@ Example usage:
         priority_str = kwargs.get('priority', 'normal').lower()
         
         if not message_id:
-            return "Error: message_id is required to reply to a message"
+            return {
+                "error": "message_id is required to reply to a message",
+                "sent": False,
+                "message_id": None
+            }
         
         if not body:
-            return "Error: body is required for the reply"
+            return {
+                "error": "body is required for the reply",
+                "sent": False,
+                "message_id": message_id
+            }
         
         # Map priority string to enum
         priority_map = {
@@ -119,7 +128,11 @@ Example usage:
         # Get the original message to reply to
         original = mailbox.get_message(message_id)
         if not original:
-            return f"Error: Message with ID {message_id} not found"
+            return {
+                "error": f"Message with ID {message_id} not found",
+                "sent": False,
+                "message_id": message_id
+            }
         
         # Generate reply subject if not provided
         if not subject:
@@ -138,4 +151,13 @@ Example usage:
         # Send the reply using reply_to_mail to maintain threading
         reply_id = mailbox.reply_to_mail(message_id, mail)
         
-        return f"Reply sent successfully to {original.from_agent or 'User'} (ID: {reply_id})"
+        return {
+            "sent": True,
+            "reply_id": reply_id,
+            "original_message_id": message_id,
+            "to": original.from_agent or 'User',
+            "from": from_agent,
+            "subject": subject,
+            "priority": priority_str,
+            "thread_id": original.thread_id if hasattr(original, 'thread_id') else None
+        }

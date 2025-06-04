@@ -145,29 +145,47 @@ class MovePlanTool(AITool):
         except Exception as e:
             logger.error(f"Error updating RFC metadata: {e}")
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute plan move."""
         plan_name = arguments.get('plan_name')
         to_status = arguments.get('to_status')
         reason = arguments.get('reason', 'Status change requested')
         
         if not plan_name:
-            return "Error: 'plan_name' is required."
+            return {
+                "error": "'plan_name' is required.",
+                "plan_name": None,
+                "moved": False
+            }
         
         if not to_status:
-            return "Error: 'to_status' is required."
+            return {
+                "error": "'to_status' is required.",
+                "plan_name": plan_name,
+                "moved": False
+            }
         
         try:
             # Find current plan location
             result = self._find_plan(plan_name)
             if not result:
-                return f"Error: Plan '{plan_name}' not found."
+                return {
+                    "error": f"Plan '{plan_name}' not found.",
+                    "plan_name": plan_name,
+                    "moved": False
+                }
             
             current_path, current_status = result
             
             # Check if already in target status
             if current_status == to_status:
-                return f"Plan is already in '{to_status}' status."
+                return {
+                    "error": f"Plan is already in '{to_status}' status.",
+                    "plan_name": plan_name,
+                    "current_status": current_status,
+                    "target_status": to_status,
+                    "moved": False
+                }
             
             # Prepare target directory
             path_manager = PathManager.get_instance()
@@ -207,15 +225,22 @@ class MovePlanTool(AITool):
             
             logger.info(f"Moved plan {plan_name} from {current_status} to {to_status}")
             
-            return f"""Plan moved successfully!
-
-**Plan**: {plan_name}
-**From**: {current_status}
-**To**: {to_status}
-**Reason**: {reason}
-
-The plan has been moved to: .WHISPER/plans/{to_status}/{plan_name}"""
+            return {
+                "moved": True,
+                "plan_name": plan_name,
+                "from_status": current_status,
+                "to_status": to_status,
+                "reason": reason,
+                "new_location": f".WHISPER/plans/{to_status}/{plan_name}",
+                "absolute_path": str(target_dir),
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "rfc_metadata_updated": True
+            }
             
         except Exception as e:
             logger.error(f"Error moving plan: {e}")
-            return f"Error moving plan: {str(e)}"
+            return {
+                "error": f"Error moving plan: {str(e)}",
+                "plan_name": plan_name,
+                "moved": False
+            }

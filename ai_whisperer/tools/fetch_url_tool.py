@@ -250,14 +250,18 @@ class FetchURLTool(AITool):
         
         return code_blocks
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute URL fetching."""
         url = arguments.get('url')
         extract_mode = arguments.get('extract_mode', 'markdown')
         include_links = arguments.get('include_links', False)
         
         if not url:
-            return "Error: 'url' is required."
+            return {
+                "error": "'url' is required.",
+                "url": None,
+                "content": None
+            }
         
         # Validate URL
         try:
@@ -267,9 +271,17 @@ class FetchURLTool(AITool):
                 parsed = urlparse(url)
             
             if parsed.scheme not in ['http', 'https']:
-                return f"Error: Only HTTP(S) URLs are supported."
+                return {
+                    "error": "Only HTTP(S) URLs are supported.",
+                    "url": url,
+                    "content": None
+                }
         except:
-            return f"Error: Invalid URL format."
+            return {
+                "error": "Invalid URL format.",
+                "url": url,
+                "content": None
+            }
         
         try:
             # Check cache first
@@ -293,12 +305,23 @@ class FetchURLTool(AITool):
                 )
                 
                 if response.status_code != 200:
-                    return f"Error: HTTP {response.status_code} - {response.reason}"
+                    return {
+                        "error": f"HTTP {response.status_code} - {response.reason}",
+                        "url": url,
+                        "status_code": response.status_code,
+                        "content": None
+                    }
                 
                 # Check content length
                 content_length = response.headers.get('Content-Length')
                 if content_length and int(content_length) > self.MAX_CONTENT_LENGTH:
-                    return f"Error: Content too large ({int(content_length)} bytes)"
+                    return {
+                        "error": f"Content too large ({int(content_length)} bytes)",
+                        "url": url,
+                        "content_length": int(content_length),
+                        "max_allowed": self.MAX_CONTENT_LENGTH,
+                        "content": None
+                    }
                 
                 # Read content with size limit
                 content = ""
@@ -314,56 +337,68 @@ class FetchURLTool(AITool):
                         content += chunk
                         size += len(chunk)
                         if size > self.MAX_CONTENT_LENGTH:
-                            return f"Error: Content too large (>{self.MAX_CONTENT_LENGTH} bytes)"
+                            return {
+                                "error": f"Content too large (>{self.MAX_CONTENT_LENGTH} bytes)",
+                                "url": url,
+                                "size": size,
+                                "max_allowed": self.MAX_CONTENT_LENGTH,
+                                "content": None
+                            }
                 
                 # Save to cache
                 self._save_to_cache(cache_key, content)
                 from_cache = False
             
             # Extract content based on mode
-            response_text = f"**Fetched URL**: {url}\n"
-            if from_cache:
-                response_text += "*(Content from cache)*\n"
-            response_text += "\n"
+            extracted_content = None
+            truncated = False
             
             if extract_mode == 'markdown':
                 markdown_content = self._html_to_markdown(content, url, include_links)
-                response_text += "## Content (Markdown)\n\n"
-                response_text += markdown_content[:10000]  # Limit output
-                if len(markdown_content) > 10000:
-                    response_text += f"\n\n... (truncated, total length: {len(markdown_content)} chars)"
+                extracted_content = markdown_content[:10000]  # Limit output
+                truncated = len(markdown_content) > 10000
                 
             elif extract_mode == 'text':
                 # Simple text extraction
                 text_content = re.sub(r'<[^>]+>', '', content)
                 text_content = text_content.replace('&nbsp;', ' ').replace('&amp;', '&')
                 text_content = re.sub(r'\s+', ' ', text_content).strip()
-                response_text += "## Content (Text)\n\n"
-                response_text += text_content[:10000]
-                if len(text_content) > 10000:
-                    response_text += f"\n\n... (truncated, total length: {len(text_content)} chars)"
+                extracted_content = text_content[:10000]
+                truncated = len(text_content) > 10000
                 
             elif extract_mode == 'code_blocks':
                 code_blocks = self._extract_code_blocks(content)
-                response_text += f"## Code Blocks Found: {len(code_blocks)}\n\n"
-                
-                for i, block in enumerate(code_blocks[:20], 1):  # Limit to 20 blocks
-                    response_text += f"### Code Block {i} ({block['language']})\n"
-                    response_text += f"```{block['language']}\n"
-                    response_text += block['code'][:2000]  # Limit each block
-                    if len(block['code']) > 2000:
-                        response_text += "\n... (truncated)"
-                    response_text += "\n```\n\n"
-                
-                if len(code_blocks) > 20:
-                    response_text += f"... and {len(code_blocks) - 20} more code blocks\n"
+                # Return structured code blocks
+                extracted_content = code_blocks[:20]  # Limit to 20 blocks
+                truncated = len(code_blocks) > 20
             
-            return response_text
+            return {
+                "url": url,
+                "extract_mode": extract_mode,
+                "from_cache": from_cache,
+                "content": extracted_content,
+                "content_length": len(content),
+                "truncated": truncated,
+                "include_links": include_links
+            }
             
         except requests.Timeout:
-            return f"Error: Request timed out after {self.REQUEST_TIMEOUT} seconds."
+            return {
+                "error": f"Request timed out after {self.REQUEST_TIMEOUT} seconds.",
+                "url": url,
+                "timeout": self.REQUEST_TIMEOUT,
+                "content": None
+            }
         except requests.RequestException as e:
-            return f"Error fetching URL: {str(e)}"
+            return {
+                "error": f"Error fetching URL: {str(e)}",
+                "url": url,
+                "content": None
+            }
         except Exception as e:
             logger.error(f"Error fetching URL {url}: {e}")
-            return f"Error processing content: {str(e)}"
+            return {
+                "error": f"Error processing content: {str(e)}",
+                "url": url,
+                "content": None
+            }

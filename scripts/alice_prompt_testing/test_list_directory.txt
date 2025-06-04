@@ -1,0 +1,3 @@
+# Test list_directory tool with structured output
+
+List the contents of the scripts directory

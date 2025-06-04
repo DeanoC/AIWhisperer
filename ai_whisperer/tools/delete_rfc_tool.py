@@ -21,6 +21,7 @@ Dependencies:
 import os
 import json
 import logging
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
@@ -139,29 +140,40 @@ class DeleteRFCTool(AITool):
         
         return None
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute RFC deletion."""
         rfc_id = arguments.get('rfc_id')
         confirm_delete = arguments.get('confirm_delete', False)
         reason = arguments.get('reason', 'No reason provided')
         
         if not rfc_id:
-            return "Error: 'rfc_id' is required."
+            return {
+                "error": "'rfc_id' is required.",
+                "rfc_id": None,
+                "deleted": False
+            }
         
         if not confirm_delete:
-            return f"""Delete operation cancelled.
-
-To delete RFC {rfc_id}, you must:
-1. Get user confirmation
-2. Set confirm_delete=true
-
-This action is PERMANENT and cannot be undone."""
+            return {
+                "error": "Delete operation cancelled. Must set confirm_delete=true after user confirmation.",
+                "rfc_id": rfc_id,
+                "deleted": False,
+                "message": "This action is PERMANENT and cannot be undone.",
+                "requirements": [
+                    "Get user confirmation",
+                    "Set confirm_delete=true"
+                ]
+            }
         
         try:
             # Find the RFC
             rfc_path = self._find_rfc(rfc_id)
             if not rfc_path:
-                return f"Error: RFC {rfc_id} not found in any folder."
+                return {
+                    "error": f"RFC {rfc_id} not found in any folder.",
+                    "rfc_id": rfc_id,
+                    "deleted": False
+                }
             
             # Also find metadata file
             metadata_path = rfc_path.with_suffix('.json')
@@ -182,15 +194,21 @@ This action is PERMANENT and cannot be undone."""
             
             logger.info(f"Deleted RFC {rfc_id}: {reason}")
             
-            return f"""RFC deleted successfully!
-
-**RFC ID**: {rfc_id}
-**Status**: Was in '{folder_name}'
-**Files Deleted**: {', '.join(files_deleted)}
-**Reason**: {reason}
-
-This action is permanent and cannot be undone."""
+            return {
+                "deleted": True,
+                "rfc_id": rfc_id,
+                "previous_status": folder_name,
+                "files_deleted": files_deleted,
+                "file_count": len(files_deleted),
+                "reason": reason,
+                "message": "This action is permanent and cannot be undone.",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
             
         except Exception as e:
             logger.error(f"Error deleting RFC {rfc_id}: {e}")
-            return f"Error deleting RFC: {str(e)}"
+            return {
+                "error": f"Error deleting RFC: {str(e)}",
+                "rfc_id": rfc_id,
+                "deleted": False
+            }

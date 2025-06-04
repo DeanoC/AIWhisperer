@@ -95,16 +95,22 @@ A JSON object containing:
 - alternatives: Alternative agents if the target is unavailable
 """
     
-    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Execute the format for external agent tool."""
         task_json = arguments.get("task")
         agent_name = arguments.get("agent")
         include_instructions = arguments.get("include_instructions", True)
         
         if not task_json:
-            return "Error: task parameter is required"
+            return {
+                "error": "task parameter is required",
+                "task_formatted": False
+            }
         if not agent_name:
-            return "Error: agent parameter is required"
+            return {
+                "error": "agent parameter is required",
+                "task_formatted": False
+            }
         
         try:
             # Parse the task
@@ -130,7 +136,12 @@ A JSON object containing:
             adapter = self._registry.get_adapter(agent_name.lower())
             if not adapter:
                 available = self._registry.list_adapters()
-                return f"Error: Unknown agent '{agent_name}'. Available agents: {', '.join(available)}"
+                return {
+                    "error": f"Unknown agent '{agent_name}'. Available agents: {', '.join(available)}",
+                    "agent": agent_name,
+                    "available_agents": available,
+                    "task_formatted": False
+                }
             
             # Validate the environment
             is_valid, validation_msg = adapter.validate_environment()
@@ -169,14 +180,25 @@ A JSON object containing:
                 if alternative_agents:
                     result["alternatives"] = alternative_agents
             
-            return json.dumps(result, indent=2)
+            result["task_formatted"] = True
+            return result
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse task JSON: {e}")
-            return f"Error: Invalid JSON format - {str(e)}"
+            return {
+                "error": f"Invalid JSON format - {str(e)}",
+                "task_formatted": False
+            }
         except ExternalAgentError as e:
             logger.error(f"External agent error: {e}")
-            return f"Error: External agent error - {str(e)}"
+            return {
+                "error": f"External agent error - {str(e)}",
+                "agent": agent_name,
+                "task_formatted": False
+            }
         except Exception as e:
             logger.error(f"Unexpected error in format_for_external_agent: {e}", exc_info=True)
-            return f"Error: Unexpected error - {str(e)}"
+            return {
+                "error": f"Unexpected error - {str(e)}",
+                "task_formatted": False
+            }

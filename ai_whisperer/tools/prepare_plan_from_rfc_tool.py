@@ -180,7 +180,7 @@ class PreparePlanFromRFCTool(AITool):
 5. **Testing First**: Always start with test tasks before implementation
 """
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare RFC content for plan generation."""
         logger.info(f"prepare_plan_from_rfc called with arguments: {arguments}")
         rfc_id = arguments.get('rfc_id')
@@ -189,7 +189,11 @@ class PreparePlanFromRFCTool(AITool):
         
         if not rfc_id:
             logger.error(f"RFC ID validation failed. rfc_id value: '{rfc_id}', type: {type(rfc_id)}")
-            return "Error: 'rfc_id' is required."
+            return {
+                "error": "'rfc_id' is required.",
+                "rfc_id": None,
+                "prepared": False
+            }
         
         try:
             # Find RFC
@@ -197,7 +201,11 @@ class PreparePlanFromRFCTool(AITool):
             rfc_result = self._find_rfc(rfc_id)
             logger.info(f"_find_rfc returned: {rfc_result}")
             if not rfc_result:
-                return f"Error: RFC '{rfc_id}' not found."
+                return {
+                    "error": f"RFC '{rfc_id}' not found.",
+                    "rfc_id": rfc_id,
+                    "prepared": False
+                }
             
             rfc_path, rfc_metadata = rfc_result
             
@@ -232,62 +240,47 @@ class PreparePlanFromRFCTool(AITool):
                 "plan_type": plan_type
             }
             
-            # Return formatted information for the agent
-            return f"""RFC prepared for plan generation:
-
-**RFC Title**: {rfc_metadata.get('title', 'Unknown')}
-**RFC ID**: {rfc_metadata.get('rfc_id')}
-**Short Name**: {rfc_metadata.get('short_name')}
-**Plan Name**: {plan_name}
-**Plan Type**: {plan_type}
-
-## RFC Content
-
-{rfc_content}
-
-## Plan Generation Guidelines
-
-{guidelines}
-
-## Next Steps
-
-Generate a structured JSON plan based on the RFC content above. The plan should follow TDD methodology with clear Red-Green-Refactor phases.
-
-**STRUCTURED OUTPUT ENABLED**: If your model supports structured output, the system will automatically enforce the plan generation schema for you. Just generate the JSON plan content directly.
-
-**Plan Structure Required**:
-```json
-{{
-  "plan_type": "{plan_type}",
-  "title": "Your plan title here",
-  "description": "Brief description of what this plan accomplishes",
-  "agent_type": "planning",
-  "tdd_phases": {{
-    "red": ["test task 1", "test task 2"],
-    "green": ["implementation task 1", "implementation task 2"],
-    "refactor": ["improvement task 1", "improvement task 2"]
-  }},
-  "tasks": [
-    {{
-      "name": "Task name",
-      "description": "What this task does",
-      "agent_type": "test_generation|code_generation|file_edit|validation|documentation|analysis",
-      "dependencies": [],
-      "tdd_phase": "red|green|refactor",
-      "validation_criteria": ["criterion 1", "criterion 2"]
-    }}
-  ],
-  "validation_criteria": ["Overall success criterion 1", "Overall success criterion 2"]
-}}
-```
-
-After generating the plan, use the 'save_generated_plan' tool with these parameters:
-- plan_name: "{plan_name}"
-- plan_content: <your generated plan object>
-- rfc_id: "{rfc_metadata.get('rfc_id')}"
-- rfc_hash: "{rfc_hash}"
-"""
+            # Return structured information for the agent
+            return {
+                "prepared": True,
+                "rfc_id": rfc_metadata.get('rfc_id'),
+                "rfc_title": rfc_metadata.get('title', 'Unknown'),
+                "rfc_short_name": rfc_metadata.get('short_name'),
+                "rfc_content": rfc_content,
+                "rfc_metadata": rfc_metadata,
+                "rfc_hash": rfc_hash,
+                "plan_name": plan_name,
+                "plan_type": plan_type,
+                "guidelines": guidelines,
+                "save_metadata": save_metadata,
+                "plan_schema": {
+                    "plan_type": plan_type,
+                    "title": "<from RFC>",
+                    "description": "<from RFC>",
+                    "agent_type": "planning",
+                    "tdd_phases": {
+                        "red": ["<test tasks>"],
+                        "green": ["<implementation tasks>"],
+                        "refactor": ["<improvement tasks>"]
+                    },
+                    "tasks": [
+                        {
+                            "name": "<task name>",
+                            "description": "<task description>",
+                            "agent_type": "<type>",
+                            "dependencies": [],
+                            "tdd_phase": "<phase>",
+                            "validation_criteria": []
+                        }
+                    ],
+                    "validation_criteria": ["<criteria>"]
+                }
+            }
             
         except Exception as e:
             logger.error(f"Error preparing RFC for plan generation: {e}", exc_info=True)
-            return f"Error preparing RFC: {str(e)}"
+            return {
+                "error": f"Error preparing RFC: {str(e)}",
+                "rfc_id": rfc_id,
+                "prepared": False
+            }

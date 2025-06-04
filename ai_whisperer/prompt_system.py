@@ -175,7 +175,7 @@ class PromptResolver:
 
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from ai_whisperer.tools.tool_registry import ToolRegistry
 
@@ -286,7 +286,7 @@ class PromptSystem:
             raise
 
     def get_formatted_prompt(self, category: str, name: str, include_tools: bool = False, 
-                           include_shared: bool = True, **kwargs) -> str:
+                           include_shared: bool = True, model_name: Optional[str] = None, **kwargs) -> str:
         """
         Retrieves the processed and formatted content of a prompt, 
         including shared components and optionally tool instructions.
@@ -306,17 +306,37 @@ class PromptSystem:
             logger.info(f"Available shared components: {list(self._shared_components.keys())}")
             logger.info(f"Active debug options: {self._debug_options}")
             
-            # Add enabled shared components
-            for feature in sorted(self._enabled_features):  # Sort for consistent ordering
-                if feature in self._shared_components:
-                    logger.info(f"Adding shared component: {feature}")
-                    component_content = self._shared_components[feature]
-                    
-                    # Customize debug_options content based on active debug options
-                    if feature == 'debug_options' and self._debug_options:
-                        component_content = self._customize_debug_content(component_content)
-                    
-                    content_parts.append(f"\n\n## {feature.upper().replace('_', ' ')} INSTRUCTIONS\n{component_content}")
+            # Check if model supports structured output for channel system
+            if 'channel_system' in self._enabled_features and model_name:
+                from ai_whisperer.model_capabilities import supports_structured_output
+                
+                # Use structured output if model supports it
+                # The no_tools_with_structured_output quirk doesn't matter here because
+                # tools don't produce channel output - only the AI's response uses channels
+                if supports_structured_output(model_name):
+                    # Use structured channel system
+                    if 'channel_system_structured' in self._shared_components:
+                        logger.info(f"Using structured channel system for model {model_name}")
+                        content_parts.append(f"\n\n## CHANNEL SYSTEM INSTRUCTIONS\n{self._shared_components['channel_system_structured']}")
+                    else:
+                        # Fallback to regular channel system
+                        content_parts.append(f"\n\n## CHANNEL SYSTEM INSTRUCTIONS\n{self._shared_components['channel_system']}")
+                else:
+                    # Use regular channel system
+                    logger.info(f"Using regular channel system for model {model_name} (no structured output support)")
+                    content_parts.append(f"\n\n## CHANNEL SYSTEM INSTRUCTIONS\n{self._shared_components['channel_system']}")
+            else:
+                # Add other enabled shared components
+                for feature in sorted(self._enabled_features):  # Sort for consistent ordering
+                    if feature in self._shared_components:
+                        logger.info(f"Adding shared component: {feature}")
+                        component_content = self._shared_components[feature]
+                        
+                        # Customize debug_options content based on active debug options
+                        if feature == 'debug_options' and self._debug_options:
+                            component_content = self._customize_debug_content(component_content)
+                        
+                        content_parts.append(f"\n\n## {feature.upper().replace('_', ' ')} INSTRUCTIONS\n{component_content}")
         
         # Include tool instructions if requested and tool registry is available
         if include_tools and self._tool_registry:

@@ -1,0 +1,4 @@
+# Test Alice's ability to list available agents and their capabilities
+# This tests if Alice provides comprehensive agent information
+
+Can you tell me about all the available agents and what they can do?

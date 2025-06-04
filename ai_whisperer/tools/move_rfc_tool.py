@@ -173,26 +173,44 @@ class MoveRFCTool(AITool):
             # No history section, add it
             return content + f"\n\n## Refinement History\n{entry}\n"
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute RFC move."""
         rfc_id = arguments.get('rfc_id')
         target_status = arguments.get('target_status')
         reason = arguments.get('reason', '')
         
         if not rfc_id:
-            return "Error: 'rfc_id' is required."
+            return {
+                "error": "'rfc_id' is required.",
+                "rfc_id": None,
+                "moved": False
+            }
         if not target_status:
-            return "Error: 'target_status' is required."
+            return {
+                "error": "'target_status' is required.",
+                "rfc_id": rfc_id,
+                "moved": False
+            }
         
         try:
             # Find current RFC location
             current_path, current_status = self._find_rfc_file(rfc_id)
             if not current_path:
-                return f"Error: RFC '{rfc_id}' not found."
+                return {
+                    "error": f"RFC '{rfc_id}' not found.",
+                    "rfc_id": rfc_id,
+                    "moved": False
+                }
             
             # Check if already in target status
             if current_status == target_status:
-                return f"RFC '{rfc_id}' is already in '{target_status}' status."
+                return {
+                    "error": f"RFC '{rfc_id}' is already in '{target_status}' status.",
+                    "rfc_id": rfc_id,
+                    "current_status": current_status,
+                    "target_status": target_status,
+                    "moved": False
+                }
             
             # Validate status transition
             valid_transitions = {
@@ -202,7 +220,14 @@ class MoveRFCTool(AITool):
             }
             
             if target_status not in valid_transitions.get(current_status, []):
-                return f"Error: Invalid transition from '{current_status}' to '{target_status}'."
+                return {
+                    "error": f"Invalid transition from '{current_status}' to '{target_status}'.",
+                    "rfc_id": rfc_id,
+                    "current_status": current_status,
+                    "target_status": target_status,
+                    "valid_transitions": valid_transitions.get(current_status, []),
+                    "moved": False
+                }
             
             # Read RFC content
             with open(current_path, 'r', encoding='utf-8') as f:
@@ -272,16 +297,24 @@ class MoveRFCTool(AITool):
             
             transition_msg = messages.get((current_status, target_status), "Status transition complete.")
             
-            return f"""RFC moved successfully!
-
-**RFC ID**: {rfc_id}
-**Previous Status**: {current_status}
-**New Status**: {target_status}
-**New Location**: .WHISPER/rfc/{target_status}/{rfc_id}.md
-{f'**Reason**: {reason}' if reason else ''}
-
-{transition_msg}"""
+            return {
+                "moved": True,
+                "rfc_id": rfc_id,
+                "previous_status": current_status,
+                "new_status": target_status,
+                "new_location": f".WHISPER/rfc/{target_status}/{current_path.name}",
+                "absolute_path": str(target_path),
+                "reason": reason,
+                "transition_message": transition_msg,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "metadata_updated": metadata_path.exists(),
+                "status_history_updated": True
+            }
             
         except Exception as e:
             logger.error(f"Error moving RFC {rfc_id}: {e}")
-            return f"Error moving RFC: {str(e)}"
+            return {
+                "error": f"Error moving RFC: {str(e)}",
+                "rfc_id": rfc_id,
+                "moved": False
+            }

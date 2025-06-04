@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AIWhisperer Channel Response",
+  "description": "Structured response format for AI agents with channel support",
+  "type": "object",
+  "properties": {
+    "analysis": {
+      "type": "string",
+      "description": "Internal reasoning and task understanding (hidden from user)"
+    },
+    "commentary": {
+      "type": "string",
+      "description": "Technical details: tool names, parameters, raw outputs (visible to user)"
+    },
+    "final": {
+      "type": "string",
+      "description": "Direct user response in 4 lines or less (always visible)"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "continue": {
+          "type": "boolean",
+          "description": "Whether the agent needs to continue processing"
+        },
+        "tool_calls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string"
+              },
+              "parameters": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "Structured tool calls if any were made"
+        }
+      }
+    }
+  },
+  "required": ["analysis", "commentary", "final"],
+  "additionalProperties": false
+}

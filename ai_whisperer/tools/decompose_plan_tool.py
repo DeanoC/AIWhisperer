@@ -89,13 +89,17 @@ A JSON object containing:
 - tasks: Array of decomposed tasks with dependencies and metadata
 """
     
-    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Execute the decompose plan tool."""
         plan_content = arguments.get("plan_content")
         max_depth = arguments.get("max_depth", 3)
         
         if not plan_content:
-            return "Error: plan_content is required"
+            return {
+                "error": "plan_content is required",
+                "total_tasks": 0,
+                "decomposed": False
+            }
         
         try:
             # Parse the plan
@@ -128,17 +132,34 @@ A JSON object containing:
                 }
                 result["tasks"].append(task_info)
             
-            return json.dumps(result, indent=2)
+            result["decomposed"] = True
+            return result
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse plan JSON: {e}")
-            return f"Error: Invalid JSON format - {str(e)}"
+            return {
+                "error": f"Invalid JSON format - {str(e)}",
+                "total_tasks": 0,
+                "decomposed": False
+            }
         except InvalidPlanError as e:
             logger.error(f"Invalid plan: {e}")
-            return f"Error: Invalid plan - {str(e)}"
+            return {
+                "error": f"Invalid plan - {str(e)}",
+                "total_tasks": 0,
+                "decomposed": False
+            }
         except TaskDecompositionError as e:
             logger.error(f"Decomposition failed: {e}")
-            return f"Error: Failed to decompose plan - {str(e)}"
+            return {
+                "error": f"Failed to decompose plan - {str(e)}",
+                "total_tasks": 0,
+                "decomposed": False
+            }
         except Exception as e:
             logger.error(f"Unexpected error in decompose_plan: {e}", exc_info=True)
-            return f"Error: Unexpected error - {str(e)}"
+            return {
+                "error": f"Unexpected error - {str(e)}",
+                "total_tasks": 0,
+                "decomposed": False
+            }

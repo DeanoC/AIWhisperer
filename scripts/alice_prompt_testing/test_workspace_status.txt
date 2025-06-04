@@ -1,0 +1,4 @@
+# Test Alice's ability to check workspace status
+# This tests if Alice proactively uses tools to get current status
+
+What's the current status of my workspace?

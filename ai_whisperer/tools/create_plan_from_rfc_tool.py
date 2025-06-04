@@ -184,20 +184,28 @@ class CreatePlanFromRFCTool(AITool):
 ## Instructions
 Generate a structured JSON plan based on the above RFC content and the guidelines provided. Ensure the plan follows TDD methodology with proper Red-Green-Refactor cycles."""
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute plan creation from RFC."""
         rfc_id = arguments.get('rfc_id')
         plan_type = arguments.get('plan_type', 'initial')
         model_override = arguments.get('model')
         
         if not rfc_id:
-            return "Error: 'rfc_id' is required."
+            return {
+                "error": "'rfc_id' is required.",
+                "rfc_id": None,
+                "created": False
+            }
         
         try:
             # Find RFC
             rfc_result = self._find_rfc(rfc_id)
             if not rfc_result:
-                return f"Error: RFC '{rfc_id}' not found."
+                return {
+                    "error": f"RFC '{rfc_id}' not found.",
+                    "rfc_id": rfc_id,
+                    "created": False
+                }
             
             rfc_path, rfc_metadata = rfc_result
             
@@ -263,7 +271,12 @@ Generate a structured JSON plan based on the above RFC content and the guideline
             # Validate plan against schema
             valid, error = validate_against_schema(plan_data, "rfc_plan_schema.json")
             if not valid:
-                return f"Error: Generated plan failed validation: {error}"
+                return {
+                    "error": f"Generated plan failed validation: {error}",
+                    "rfc_id": rfc_metadata.get('rfc_id'),
+                    "created": False,
+                    "validation_error": error
+                }
             
             # Create plan directory
             plan_name = self._generate_plan_name(rfc_metadata)
@@ -306,21 +319,29 @@ Generate a structured JSON plan based on the above RFC content and the guideline
             
             logger.info(f"Created plan {plan_name} from RFC {rfc_id}")
             
-            return f"""Plan created successfully!
-
-**Plan Name**: {plan_name}
-**Type**: {plan_type}
-**Source RFC**: {rfc_metadata.get('rfc_id')}
-**Location**: .WHISPER/plans/in_progress/{plan_name}
-
-The plan has been created with {len(plan_data.get('tasks', []))} tasks following TDD principles.
-
-Next steps:
-1. Review the generated plan with 'read_plan'
-2. Execute tasks in order
-3. Update plan if RFC changes with 'update_plan_from_rfc'
-4. Archive when complete with 'move_plan'"""
+            return {
+                "created": True,
+                "plan_name": plan_name,
+                "plan_type": plan_type,
+                "source_rfc": rfc_metadata.get('rfc_id'),
+                "location": f".WHISPER/plans/in_progress/{plan_name}",
+                "absolute_path": str(plan_path),
+                "task_count": len(plan_data.get('tasks', [])),
+                "created_timestamp": now,
+                "source_rfc_hash": rfc_hash,
+                "model_used": model_override or "anthropic/claude-3-5-sonnet",
+                "next_steps": [
+                    "Review the generated plan with 'read_plan'",
+                    "Execute tasks in order",
+                    "Update plan if RFC changes with 'update_plan_from_rfc'",
+                    "Archive when complete with 'move_plan'"
+                ]
+            }
             
         except Exception as e:
             logger.error(f"Error creating plan from RFC: {e}")
-            return f"Error creating plan from RFC: {str(e)}"
+            return {
+                "error": f"Error creating plan from RFC: {str(e)}",
+                "rfc_id": rfc_id,
+                "created": False
+            }

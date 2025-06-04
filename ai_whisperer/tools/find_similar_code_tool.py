@@ -306,7 +306,7 @@ class FindSimilarCodeTool(AITool):
         
         return contexts
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute similar code search."""
         feature = arguments.get('feature')
         custom_patterns = arguments.get('custom_patterns', [])
@@ -375,77 +375,54 @@ class FindSimilarCodeTool(AITool):
             results.sort(key=lambda x: x['score'], reverse=True)
             results = results[:max_results]
             
-            # Build response
-            response = f"**Similar Code Search: '{feature}'**\n"
-            response += f"Searched patterns: {', '.join(patterns[:5])}"
-            if len(patterns) > 5:
-                response += f" and {len(patterns) - 5} more"
-            response += "\n\n"
+            # Format results for structured output
+            formatted_results = []
+            for result in results:
+                formatted_results.append({
+                    "path": str(result['path']),
+                    "score": result['score'],
+                    "language": result['language'],
+                    "pattern_counts": dict(result['pattern_counts']),
+                    "contexts": result['contexts']
+                })
+            
+            # Calculate summary statistics
+            language_distribution = defaultdict(int)
+            pattern_frequency = defaultdict(int)
             
             if results:
-                response += f"Found {len(results)} relevant files:\n\n"
-                
-                for i, result in enumerate(results, 1):
-                    response += f"## {i}. {result['path']} (Score: {result['score']})\n"
-                    response += f"Language: {result['language']}\n"
-                    
-                    # Show pattern match summary
-                    response += "Matches: "
-                    match_summary = []
-                    for pattern, count in sorted(result['pattern_counts'].items(), 
-                                               key=lambda x: x[1], reverse=True)[:3]:
-                        match_summary.append(f"`{pattern}` ({count})")
-                    response += ", ".join(match_summary)
-                    response += "\n\n"
-                    
-                    # Show example contexts
-                    if result['contexts']:
-                        response += "Example matches:\n"
-                        for ctx in result['contexts'][:2]:
-                            response += f"\n```{result['language'].lower()}\n"
-                            response += f"# Line {ctx['line']} (matched: '{ctx['match']}')\n"
-                            response += ctx['context']
-                            response += "\n```\n"
-                    
-                    response += "\n"
-            else:
-                response += f"No code similar to '{feature}' found in the codebase.\n\n"
-                response += "Suggestions:\n"
-                response += "- Try broader search terms\n"
-                response += "- Use custom patterns for specific code constructs\n"
-                response += "- Check if the feature might be named differently\n"
-            
-            # Add summary
-            if results:
-                response += "## Summary\n\n"
-                
-                # Language distribution
-                lang_counts = defaultdict(int)
                 for r in results:
-                    lang_counts[r['language']] += 1
-                
-                response += "**Languages**: "
-                response += ", ".join([f"{lang} ({count})" for lang, count in 
-                                     sorted(lang_counts.items(), key=lambda x: x[1], reverse=True)])
-                response += "\n\n"
-                
-                # Common patterns
-                all_patterns = defaultdict(int)
-                for r in results:
+                    language_distribution[r['language']] += 1
                     for pattern, count in r['pattern_counts'].items():
-                        all_patterns[pattern] += count
-                
-                top_patterns = sorted(all_patterns.items(), key=lambda x: x[1], reverse=True)[:5]
-                if top_patterns:
-                    response += "**Most common patterns**: "
-                    response += ", ".join([f"`{p}` ({c})" for p, c in top_patterns])
-                    response += "\n"
+                        pattern_frequency[pattern] += count
             
-            return response
+            # Get top patterns
+            top_patterns = [
+                {"pattern": pattern, "total_count": count}
+                for pattern, count in sorted(pattern_frequency.items(), 
+                                           key=lambda x: x[1], reverse=True)[:10]
+            ]
+            
+            return {
+                "feature": feature,
+                "patterns_searched": patterns,
+                "custom_patterns": custom_patterns,
+                "total_files_searched": len(list(workspace_path.rglob('*'))),
+                "results": formatted_results,
+                "result_count": len(results),
+                "max_results": max_results,
+                "language_distribution": dict(language_distribution),
+                "top_patterns": top_patterns,
+                "context_lines": context_lines
+            }
             
         except Exception as e:
             logger.error(f"Error finding similar code: {e}")
-            return f"Error finding similar code: {str(e)}"
+            return {
+                "error": f"Error finding similar code: {str(e)}",
+                "feature": feature,
+                "results": []
+            }
     
     def _detect_language(self, file_path: Path) -> str:
         """Detect programming language from file extension."""

@@ -53,7 +53,8 @@ class ChannelIntegration:
         session_id: str, 
         content: str,
         agent_id: Optional[str] = None,
-        is_partial: bool = False
+        is_partial: bool = False,
+        is_structured: bool = False
     ) -> List[Dict[str, Any]]:
         """
         Process an AI response and return channel messages.
@@ -62,7 +63,7 @@ class ChannelIntegration:
             List of channel message dictionaries ready for WebSocket
         """
         router = self.get_router(session_id, agent_id)
-        messages = router.route_response(content, is_partial)
+        messages = router.route_response(content, is_partial, is_structured)
         
         # Store messages
         for message in messages:

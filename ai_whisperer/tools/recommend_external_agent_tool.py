@@ -86,13 +86,17 @@ A JSON object containing:
 - best_choice: The top recommendation with confidence level
 """
     
-    def execute(self, arguments: Dict[str, Any], **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Execute the recommend external agent tool."""
         task_json = arguments.get("task")
         only_available = arguments.get("only_available", True)
         
         if not task_json:
-            return "Error: task parameter is required"
+            return {
+                "error": "task parameter is required",
+                "recommendations": [],
+                "analyzed": False
+            }
         
         try:
             # Parse the task
@@ -202,11 +206,20 @@ A JSON object containing:
                     "primary_reason": "No available agents found"
                 }
             
-            return json.dumps(response, indent=2)
+            response["analyzed"] = True
+            return response
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse task JSON: {e}")
-            return f"Error: Invalid JSON format - {str(e)}"
+            return {
+                "error": f"Invalid JSON format - {str(e)}",
+                "recommendations": [],
+                "analyzed": False
+            }
         except Exception as e:
             logger.error(f"Unexpected error in recommend_external_agent: {e}", exc_info=True)
-            return f"Error: Unexpected error - {str(e)}"
+            return {
+                "error": f"Unexpected error - {str(e)}",
+                "recommendations": [],
+                "analyzed": False
+            }

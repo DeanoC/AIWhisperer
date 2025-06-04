@@ -8,6 +8,13 @@ AIWhisperer is a Python CLI tool that uses AI models via OpenRouter to automate 
 
 **For detailed architecture and module information, see [CODE_MAP.md](CODE_MAP.md).**
 
+## CRITICAL: AI and Agent Testing Requirement
+
+**ALL AI and agent-related code must be covered by tests:**
+- Use the conversation replay mode for testing AI interactions
+- Any new functionality (including prompt changes) that involves AI or agents must pass AI conversation replay tests
+- Use Debbie to evaluate AI responses if complex evaluation is needed
+
 ## CRITICAL: Configuration Requirements
 
 **ALL real AI invocations require a config file with OpenRouter API key:**

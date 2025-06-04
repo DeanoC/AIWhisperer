@@ -28,6 +28,7 @@ Related:
 import asyncio
 import json
 import logging
+import re
 from typing import Dict, List, Any, Optional, Callable, AsyncIterator
 from ai_whisperer.services.execution.ai_config import AIConfig
 from ai_whisperer.services.ai.base import AIService
@@ -158,7 +159,7 @@ class StatelessAILoop:
                     response_format=response_format,
                     **params
                 )
-                return await self._process_stream(stream, on_stream_chunk)
+                return await self._process_stream(stream, on_stream_chunk, response_format)
             
             # Run with timeout if specified, with retry logic for empty responses
             max_retries = 3
@@ -248,20 +249,29 @@ class StatelessAILoop:
                         logger.error(f"   Empty response after {max_retries} retries")
                 
                 # If there were tool calls, we need to store the tool results too
-                if response_data.get('tool_calls') and response_data.get('response'):
-                    # Extract tool results from the response
-                    tool_results_text = response_data['response']
-                    for tool_call in response_data['tool_calls']:
-                        tool_name = tool_call.get('function', {}).get('name', 'unknown')
-                        # Store tool result message in OpenRouter format
-                        tool_message = {
-                            "role": "tool",
-                            "tool_call_id": tool_call.get('id'),
-                            "name": tool_name,
-                            "content": tool_results_text  # The actual tool execution results
-                        }
-                        context_provider.store_message(tool_message)
-                        logger.info(f"🔄 STORED TOOL RESULT for {tool_name} (ID: {tool_call.get('id')})")
+                if response_data.get('tool_calls') and response_data.get('tool_results'):
+                    # Store each tool result as a separate message
+                    tool_results = response_data['tool_results']
+                    for i, tool_call in enumerate(response_data['tool_calls']):
+                        if i < len(tool_results):
+                            tool_result = tool_results[i]
+                            tool_name = tool_call.get('function', {}).get('name', 'unknown')
+                            
+                            # Convert tool result to JSON string for the content field
+                            try:
+                                content = json.dumps(tool_result)
+                            except (TypeError, ValueError):
+                                content = str(tool_result)
+                            
+                            # Store tool result message in OpenRouter format
+                            tool_message = {
+                                "role": "tool",
+                                "tool_call_id": tool_call.get('id'),
+                                "name": tool_name,
+                                "content": content  # JSON string of the tool result
+                            }
+                            context_provider.store_message(tool_message)
+                            logger.info(f"🔄 STORED TOOL RESULT for {tool_name} (ID: {tool_call.get('id')})")
                 
         except asyncio.TimeoutError:
             error_msg = "AI service timeout: The AI did not respond in time."
@@ -336,7 +346,7 @@ class StatelessAILoop:
                     response_format=response_format,
                     **params
                 )
-                return await self._process_stream(stream, on_stream_chunk)
+                return await self._process_stream(stream, on_stream_chunk, response_format)
             
             # Run with timeout if specified
             if timeout:
@@ -393,7 +403,8 @@ class StatelessAILoop:
     async def _process_stream(
         self,
         stream: AsyncIterator,
-        on_stream_chunk: Optional[Callable[[str], Any]] = None
+        on_stream_chunk: Optional[Callable[[str], Any]] = None,
+        response_format: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Process the AI response stream.
@@ -401,6 +412,7 @@ class StatelessAILoop:
         Args:
             stream: The AI response stream
             on_stream_chunk: Optional callback for each chunk
+            response_format: Optional response format used for structured output
             
         Returns:
             Dict with response data
@@ -467,6 +479,7 @@ class StatelessAILoop:
                     logger.info(f"Accumulated {len(tool_calls)} tool calls")
             
             # Execute tool calls if present
+            tool_results_list = None
             if tool_calls:
                 logger.info(f"🔧 EXECUTING TOOLS: Found {len(tool_calls)} tool calls")
                 for i, tool_call in enumerate(tool_calls):
@@ -476,24 +489,29 @@ class StatelessAILoop:
                 tool_strategy = self._determine_tool_strategy(tool_calls)
                 logger.info(f"🔧 TOOL STRATEGY: {tool_strategy}")
                 
-                tool_results = await self._execute_tool_calls(tool_calls)
-                logger.info(f"🔧 TOOL EXECUTION COMPLETE: result_length={len(str(tool_results))}")
+                tool_results_list = await self._execute_tool_calls(tool_calls)
+                logger.info(f"🔧 TOOL EXECUTION COMPLETE: {len(tool_results_list)} results")
                 
-                full_response += tool_results
-                
-                # Stream the tool results if callback is provided
-                if on_stream_chunk and tool_results:
-                    logger.info(f"🔄 STREAMING TOOL RESULTS: length={len(str(tool_results))}")
-                    await on_stream_chunk(tool_results)
-                    logger.info(f"🔄 TOOL RESULTS STREAMED")
+                # Don't append tool results to the response - they'll be handled separately
+                # The AI will process them from the tool messages
                 
             logger.info(f"🔄 RETURNING RESULT: response_length={len(full_response)}, reasoning_length={len(full_reasoning)}, tool_calls={len(tool_calls) if tool_calls else 0}")
+            
+            # Apply postprocessing if we have a JSON response that might be wrapped in markdown
+            processed_response = full_response
+            if full_response and self._should_apply_postprocessing(full_response):
+                processed_response = self._postprocess_response(full_response)
+                if processed_response != full_response:
+                    logger.debug("Applied postprocessing to clean response")
+            
             return {
-                'response': full_response,
+                'response': processed_response,
                 'reasoning': full_reasoning if full_reasoning else None,
                 'finish_reason': finish_reason,
                 'tool_calls': tool_calls,
-                'error': None
+                'tool_results': tool_results_list,  # Return the raw tool results
+                'error': None,
+                'used_structured_output': response_format is not None  # Track if structured output was used
             }
             
         except Exception as e:
@@ -506,15 +524,15 @@ class StatelessAILoop:
                 'error': e
             }
     
-    async def _execute_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> str:
+    async def _execute_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> List[Any]:
         """
-        Execute tool calls and return formatted results.
+        Execute tool calls and return raw results.
         
         Args:
             tool_calls: List of tool call dictionaries
             
         Returns:
-            String containing formatted tool results
+            List of raw tool results (preserving their original structure)
         """
         tool_registry = get_tool_registry()
         results = []
@@ -531,7 +549,7 @@ class StatelessAILoop:
                 
                 if not tool_name:
                     logger.error(f"Tool call {tool_id} missing function name")
-                    results.append(f"\n\n🔧 Tool Error: Missing function name for tool call {tool_id}")
+                    results.append({"error": f"Missing function name for tool call {tool_id}"})
                     continue
                 
                 # Parse arguments
@@ -540,14 +558,14 @@ class StatelessAILoop:
                     logger.info(f"   Args: {tool_args}")
                 except json.JSONDecodeError as e:
                     logger.error(f"Failed to parse arguments for tool {tool_name}: {e}")
-                    results.append(f"\n\n🔧 Tool Error: Invalid arguments for {tool_name}: {e}")
+                    results.append({"error": f"Invalid arguments for {tool_name}: {str(e)}"})
                     continue
                 
                 # Get tool instance
                 tool_instance = tool_registry.get_tool_by_name(tool_name)
                 if not tool_instance:
                     logger.error(f"Tool {tool_name} not found in registry")
-                    results.append(f"\n\n🔧 Tool Error: Tool '{tool_name}' not found")
+                    results.append({"error": f"Tool '{tool_name}' not found"})
                     continue
                 
                 # Execute tool
@@ -588,15 +606,60 @@ class StatelessAILoop:
                 execution_time = asyncio.get_event_loop().time() - start_time
                 logger.info(f"   ✅ Tool {tool_name} completed in {execution_time:.3f}s")
                 
-                # Format result
-                formatted_result = f"\n\n🔧 **{tool_name}** executed:\n{str(tool_result)}"
-                results.append(formatted_result)
+                # Return the raw tool result - no formatting, no conversion
+                # The AI will receive exactly what the tool returned
+                results.append(tool_result)
                 
                 logger.info(f"Tool {tool_name} executed successfully")
                 
             except Exception as e:
                 logger.exception(f"Error executing tool call {tool_call}: {e}")
                 tool_name = tool_call.get('function', {}).get('name', 'unknown')
-                results.append(f"\n\n🔧 Tool Error: Failed to execute {tool_name}: {str(e)}")
+                results.append({"error": f"Failed to execute {tool_name}: {str(e)}"})
         
-        return "".join(results)
+        return results
+    
+    def _should_apply_postprocessing(self, response: str) -> bool:
+        """
+        Check if postprocessing should be applied to clean markdown wrappers.
+        
+        Args:
+            response: The AI response string
+            
+        Returns:
+            True if response appears to be JSON wrapped in markdown
+        """
+        if not response:
+            return False
+            
+        # Check if response starts with markdown code block
+        response_stripped = response.strip()
+        return response_stripped.startswith('```json') or response_stripped.startswith('```')
+    
+    def _postprocess_response(self, response: str) -> str:
+        """
+        Apply postprocessing to clean markdown wrappers from JSON responses.
+        
+        Args:
+            response: The AI response string
+            
+        Returns:
+            Cleaned response with markdown wrappers removed
+        """
+        try:
+            # Use the same regex pattern as clean_backtick_wrapper
+            cleaned = re.sub(r"^```[a-zA-Z]*\n?(.*)\n?```$", r"\1", response.strip(), flags=re.DOTALL)
+            
+            # Validate it's valid JSON after cleaning
+            try:
+                json.loads(cleaned)
+                logger.debug("Successfully cleaned markdown wrapper from JSON response")
+                return cleaned
+            except json.JSONDecodeError:
+                # If it's not valid JSON after cleaning, return original
+                logger.debug("Cleaned response is not valid JSON, returning original")
+                return response
+                
+        except Exception as e:
+            logger.error(f"Error in postprocessing response: {e}")
+            return response

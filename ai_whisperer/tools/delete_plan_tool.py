@@ -22,6 +22,7 @@ Dependencies:
 import json
 import logging
 import shutil
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
@@ -167,29 +168,40 @@ class DeletePlanTool(AITool):
         
         return None
     
-    def execute(self, arguments: Dict[str, Any]) -> str:
+    def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute plan deletion."""
         plan_name = arguments.get('plan_name')
         confirm_delete = arguments.get('confirm_delete', False)
         reason = arguments.get('reason', 'No reason provided')
         
         if not plan_name:
-            return "Error: 'plan_name' is required."
+            return {
+                "error": "'plan_name' is required.",
+                "plan_name": None,
+                "deleted": False
+            }
         
         if not confirm_delete:
-            return f"""Delete operation cancelled.
-
-To delete plan {plan_name}, you must:
-1. Get user confirmation
-2. Set confirm_delete=true
-
-This action is PERMANENT and cannot be undone."""
+            return {
+                "error": "Delete operation cancelled. Must set confirm_delete=true after user confirmation.",
+                "plan_name": plan_name,
+                "deleted": False,
+                "message": "This action is PERMANENT and cannot be undone.",
+                "requirements": [
+                    "Get user confirmation",
+                    "Set confirm_delete=true"
+                ]
+            }
         
         try:
             # Find the plan
             plan_dir = self._find_plan(plan_name)
             if not plan_dir:
-                return f"Error: Plan {plan_name} not found in any folder."
+                return {
+                    "error": f"Plan {plan_name} not found in any folder.",
+                    "plan_name": plan_name,
+                    "deleted": False
+                }
             
             # Store some info before deletion
             folder_name = plan_dir.parent.name
@@ -212,20 +224,22 @@ This action is PERMANENT and cannot be undone."""
             
             logger.info(f"Deleted plan {plan_name}: {reason}")
             
-            result = f"""Plan deleted successfully!
-
-**Plan Name**: {plan_name}
-**Status**: Was in '{folder_name}'
-**Files Deleted**: {len(files_found)} files in directory
-**Reason**: {reason}"""
-
-            if updated_rfc:
-                result += f"\n**RFC Updated**: Removed reference from {updated_rfc}"
-            
-            result += "\n\nThis action is permanent and cannot be undone."
-            
-            return result
+            return {
+                "deleted": True,
+                "plan_name": plan_name,
+                "previous_status": folder_name,
+                "files_deleted": files_found,
+                "file_count": len(files_found),
+                "reason": reason,
+                "rfc_updated": updated_rfc,
+                "message": "This action is permanent and cannot be undone.",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
             
         except Exception as e:
             logger.error(f"Error deleting plan {plan_name}: {e}")
-            return f"Error deleting plan: {str(e)}"
+            return {
+                "error": f"Error deleting plan: {str(e)}",
+                "plan_name": plan_name,
+                "deleted": False
+            }

@@ -1,31 +1,19 @@
-"""
-Module: ai_whisperer/tools/read_file_tool.py
-Purpose: AI tool implementation for read file
+"""Read File Tool - Reads file contents with structured output."""
 
-This module implements an AI-usable tool that extends the AITool
-base class. It provides structured input/output handling and
-integrates with the OpenRouter API for AI model interactions.
-
-Key Components:
-- ReadFileTool: Class implementation
-
-Usage:
-    tool = ReadFileTool()
-    result = await tool.execute(**parameters)
-
-Related:
-- See docs/archive/refactor_tracking/REFACTOR_CODE_MAP_SUMMARY.md
-
-"""
-
-from typing import Dict, Any, Optional, List
+import logging
 from pathlib import Path
+from typing import Dict, Any, List, Optional
 
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.utils.path import PathManager
 from ai_whisperer.core.exceptions import FileRestrictionError
 
+logger = logging.getLogger(__name__)
+
+
 class ReadFileTool(AITool):
+    """Tool for reading file contents with structured output."""
+
     @property
     def name(self) -> str:
         return 'read_file'
@@ -67,13 +55,21 @@ class ReadFileTool(AITool):
 
     def get_ai_prompt_instructions(self) -> str:
         return """
-        Use the `read_file` tool to read the content of a file within the workspace directory.
-        Provide the file path as the `path` parameter.
-        Optionally, provide `start_line` and `end_line` to read a specific range of lines.
-        Ensure the file path is within the workspace directory.
+        Use the 'read_file' tool to read the content of text files in the workspace.
+        Parameters:
+        - path (string, required): File path relative to workspace root
+        - start_line (integer, optional): Starting line number (1-based)
+        - end_line (integer, optional): Ending line number (1-based, inclusive)
+        
+        Returns structured data with file content and metadata.
+        Example usage:
+        <tool_code>
+        read_file(path='README.md', start_line=1, end_line=50)
+        </tool_code>
         """
 
-    def execute(self, arguments: Dict[str, Any] = None, **kwargs) -> str:
+    def execute(self, arguments: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
+        """Execute file reading and return structured data."""
         # Handle both arguments dict and kwargs patterns
         if arguments is None:
             arguments = {}
@@ -88,47 +84,124 @@ class ReadFileTool(AITool):
         end_line = arguments.get('end_line')
 
         if not file_path_str:
-            return "Error: 'path' argument is missing."
+            return {
+                "error": "'path' argument is missing.",
+                "path": None,
+                "content": None,
+                "lines": []
+            }
 
         path_manager = PathManager.get_instance()
-        abs_file_path = Path(file_path_str).resolve()
+        
+        # Handle both absolute and relative paths
+        file_path = Path(file_path_str)
+        if file_path.is_absolute():
+            abs_file_path = file_path
+        else:
+            abs_file_path = Path(path_manager.workspace_path) / file_path
+        
+        abs_file_path = abs_file_path.resolve()
 
         # Validate if the file path is within the workspace
         if not path_manager.is_path_within_workspace(abs_file_path):
-            raise FileRestrictionError(f"Access denied. File path '{file_path_str}' is outside the workspace directory.")
+            return {
+                "error": f"Access denied. File path '{file_path_str}' is outside the workspace directory.",
+                "path": file_path_str,
+                "content": None,
+                "lines": []
+            }
 
         try:
+            # Check if file exists
+            if not abs_file_path.exists():
+                return {
+                    "error": f"File not found: '{file_path_str}'",
+                    "path": file_path_str,
+                    "content": None,
+                    "lines": []
+                }
+            
+            # Check if it's a file
+            if not abs_file_path.is_file():
+                return {
+                    "error": f"Path is not a file: '{file_path_str}'",
+                    "path": file_path_str,
+                    "content": None,
+                    "lines": []
+                }
+            
+            # Read the file
             with open(abs_file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
 
+            # Get file info
+            stat = abs_file_path.stat()
+            total_lines = len(lines)
+            
             # Adjust for 0-based indexing
             start_index = start_line - 1 if start_line is not None and start_line > 0 else 0
-            end_index = end_line if end_line is not None and end_line > 0 else len(lines)
+            end_index = end_line if end_line is not None and end_line > 0 else total_lines
 
             # Ensure indices are within bounds
             start_index = max(0, start_index)
-            end_index = min(len(lines), end_index)
+            end_index = min(total_lines, end_index)
 
-            # Read specific lines if start_line or end_line are provided
+            # Get the requested lines
             if start_line is not None or end_line is not None:
-                 content_lines = lines[start_index:end_index]
+                content_lines = lines[start_index:end_index]
+                actual_start = start_index + 1
+                actual_end = end_index
             else:
-                 content_lines = lines # Read all lines if no range is specified
+                content_lines = lines
+                actual_start = 1
+                actual_end = total_lines
 
-            # Format output with line numbers
-            formatted_content = ""
+            # Format lines with line numbers
+            formatted_lines = []
             for i, line in enumerate(content_lines):
-                original_line_number = start_index + i + 1
-                formatted_content += f"{original_line_number} | {line}"
+                line_number = start_index + i + 1
+                formatted_lines.append({
+                    "line_number": line_number,
+                    "content": line.rstrip('\n')  # Remove trailing newline
+                })
 
-            return formatted_content.strip()
+            # Also provide raw content for convenience
+            raw_content = ''.join(content_lines)
 
-        except FileNotFoundError:
-            # Re-raise FileNotFoundError so the test can catch it
-            raise
+            return {
+                "path": file_path_str,
+                "absolute_path": str(abs_file_path),
+                "exists": True,
+                "size": stat.st_size,
+                "total_lines": total_lines,
+                "range": {
+                    "start": actual_start,
+                    "end": actual_end,
+                    "lines_read": len(content_lines)
+                },
+                "content": raw_content,
+                "lines": formatted_lines
+            }
+
         except PermissionError:
-            return f"Error: Permission denied to read file at '{file_path_str}'."
-        except FileRestrictionError as e:
-            return f"Error: {e}"
+            return {
+                "error": f"Permission denied to read file '{file_path_str}'.",
+                "path": file_path_str,
+                "content": None,
+                "lines": []
+            }
+        except UnicodeDecodeError:
+            return {
+                "error": f"File '{file_path_str}' is not a text file or has encoding issues.",
+                "path": file_path_str,
+                "content": None,
+                "lines": []
+            }
         except Exception as e:
-            return f"Error reading file '{file_path_str}': {e}"
+            logger.error(f"Error reading file '{file_path_str}': {e}")
+            return {
+                "error": f"Error reading file: {str(e)}",
+                "path": file_path_str,
+                "content": None,
+                "lines": []
+            }

@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Continuation Protocol Schema",
+  "description": "Schema for AI agent continuation decisions",
+  "required": ["response", "continuation"],
+  "properties": {
+    "response": {
+      "type": "string",
+      "description": "The natural language response to the user"
+    },
+    "tool_calls": {
+      "type": "array",
+      "description": "Optional array of tool calls",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["function"] },
+          "function": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "arguments": { "type": "string" }
+            },
+            "required": ["name", "arguments"]
+          }
+        },
+        "required": ["id", "type", "function"]
+      }
+    },
+    "continuation": {
+      "type": "object",
+      "description": "Continuation decision",
+      "required": ["status", "reason"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["CONTINUE", "TERMINATE"],
+          "description": "Whether to continue processing or terminate"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Brief explanation of the continuation decision"
+        },
+        "progress": {
+          "type": "object",
+          "description": "Optional progress tracking",
+          "properties": {
+            "current_step": { "type": "integer" },
+            "total_steps": { "type": "integer" },
+            "completion_percentage": { "type": "number" },
+            "steps_completed": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "steps_remaining": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "next_action": {
+          "type": "object",
+          "description": "Optional next action hint",
+          "properties": {
+            "type": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

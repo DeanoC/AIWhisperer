@@ -1,0 +1,4 @@
+# Test Alice's ability to help with high-level code exploration
+# This tests if Alice uses tools to understand code structure
+
+I want to understand how the agent system works in this codebase. Can you give me an overview of the architecture?
