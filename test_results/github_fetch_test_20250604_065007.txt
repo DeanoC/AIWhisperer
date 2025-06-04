@@ -1,0 +1,857 @@
+=== STDOUT ===
+
+📁 Log files:
+   Server log: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_20250604_064939.log
+   Debug log:  /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_20250604_064939.log
+   Test log:   /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_20250604_064939.log
+
+🎬 Replaying conversation from: scripts/test_github_fetch.txt
+⏱️  Timeout: 1 seconds
+🎬 Starting conversation replay...
+   💬 Conversation: scripts/test_github_fetch.txt
+   📁 Working directory: /home/deano/projects/AIWhisperer
+   🧪 Dry run: False
+   📖 Loading conversation...
+   ✅ Conversation loaded: 3 messages
+   🚀 Starting conversation replay server...
+🚀 Starting conversation replay server...
+   📡 Attempting to start server on port 20486
+   🔧 Starting subprocess with Python: /home/deano/projects/AIWhisperer/.venv/bin/python
+   🔧 Port: 20486
+   🔧 Command: /home/deano/projects/AIWhisperer/.venv/bin/python -m interactive_server.main --host=127.0.0.1 --port=20486 --config=config/main.yaml
+   🔧 Environment AIWHISPERER_REPLAY_PORT: 20486
+   🔧 Working directory: /home/deano/projects/AIWhisperer
+   🔧 Subprocess started with PID: 21772
+   ⏳ Waiting for server to be ready on port 20486...
+   ✅ Server is ready on port 20486
+   ✅ Conversation replay server started successfully on port 20486
+   📁 Server logs: logs/aiwhisperer_server_replay_20486.log
+   🌐 Server URL: http://127.0.0.1:20486
+
+📁 Log files for port 20486:
+   Server log: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_batch_20250604_064941_port20486.log
+   Debug log:  /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_batch_20250604_064941_port20486.log
+   Test log:   /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_batch_20250604_064941_port20486.log
+
+   🔌 Connecting to WebSocket: ws://localhost:20486/ws
+   ⏳ Connecting to WebSocket (attempt 1/3)...
+   ✅ WebSocket connected successfully
+   🎭 Starting AI session...
+   🔔 Agent notification: agent.created
+   📊 Data: {'agent_id': 'a', 'active': True}
+   🔔 Agent notification: agent.switched
+   📊 Data: {'from': 'a', 'to': 'a'}
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is asking for a self-introduction. I need to
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is asking for a self-introduction. I need to state my name and my core function within AIWhisperer. This is a direct answer and does not require tool usage.
+
+[COMMENTARY]
+No tools
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is asking for a self-introduction. I need to state my name and my core function within AIWhisperer. This is a direct answer and does not require tool usage.
+
+[COMMENTARY]
+No tools are needed for this request.
+
+[FINAL]
+I am Alice, AIWhisperer's primary assistant. I help users navigate and utilize the AIWhisperer system efficiently.
+
+   🔔 Agent notification: ChannelMessageNotification
+   📝 Content: [ANALYSIS]
+The user is asking for a self-introduction. I need to state my name and my core function within AIWhisperer. This is a direct answer and does not require tool usage.
+
+[COMMENTARY]
+No tools are needed for this request.
+
+[FINAL]
+I am Alice, AIWhisperer's primary assistant. I help users navigate and utilize the AIWhisperer system efficiently.
+   ✅ Session started: c84d979a-3ce6-46e3-95e4-7c8fca678758
+   🎬 Replaying 3 messages...
+   [1/3] 📤 Sending: can you list my public github repos?
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.
+
+[COMMENTARY]
+No specific tool can fulfill this request directly without more information from the user.
+
+[FINAL]
+I cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.
+   🔔 Agent notification: ChannelMessageNotification
+   📝 Content: [ANALYSIS]
+The user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.
+
+[COMMENTARY]
+No specific tool can fulfill this request directly without more information from the user.
+
+[FINAL]
+I cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.
+   [1/3] ✅ Response received: {'messageId': '910e5782-6ab2-4c7d-8d9e-3ed554ea7672', 'status': 0, 'ai_response': "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.\n\n[COMMENTARY]\nNo specific tool can fulfill this request directly without more information from the user.\n\n[FINAL]\nI cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.", 'tool_calls': []}
+   [1/3] ⏳ Waiting for agent to process...
+   [2/3] 📤 Sending: you could use fetch_url to get my github page
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is suggesting `fetch_url` to access
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.
+
+[COMMENTARY]
+I cannot use `fetch_url` without a specific URL.
+
+[FINAL]
+I can use `fetch_url`, but I need your GitHub page
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.
+
+[COMMENTARY]
+I cannot use `fetch_url` without a specific URL.
+
+[FINAL]
+I can use `fetch_url`, but I need your GitHub page URL. Please provide it.
+   🔔 Agent notification: ChannelMessageNotification
+   📝 Content: [ANALYSIS]
+The user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.
+
+[COMMENTARY]
+I cannot use `fetch_url` without a specific URL.
+
+[FINAL]
+I can use `fetch_url`, but I need your GitHub page URL. Please provide it.
+   [2/3] ✅ Response received: {'messageId': '48768009-a1b5-46ed-8f79-a4e81cf03698', 'status': 0, 'ai_response': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page URL. Please provide it.", 'tool_calls': []}
+   [2/3] ⏳ Waiting for agent to process...
+   [3/3] 📤 Sending: DeanoC
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user provided a potential GitHub username. I need to construct the full GitHub profile URL
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username
+   🔔 Agent notification: StreamingUpdate
+   📝 Content: [ANALYSIS]
+The user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.
+
+[COMMENTARY]
+
+   🔔 Agent notification: ChannelMessageNotification
+   📝 Content: [ANALYSIS]
+The user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.
+
+[COMMENTARY]
+   [3/3] ✅ Response received: {'messageId': 'ed5e370f-35bd-4f63-b229-bb79c1ccde8b', 'status': 0, 'ai_response': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.\n\n[COMMENTARY]\n', 'tool_calls': [{'id': 'tool_0_fetch_url', 'type': 'function', 'function': {'name': 'fetch_url', 'arguments': '{"url":"https://github.com/DeanoC"}'}}]}
+   [3/3] ⏳ Waiting for agent to process...
+   ✅ Session stopped: c84d979a-3ce6-46e3-95e4-7c8fca678758 - {'status': 2}
+✅ Conversation replay completed successfully!
+   🧹 Cleaning up...
+   🔌 Closing WebSocket connection...
+🛑 Stopping conversation replay server on port 20486
+   ✅ Conversation replay server stopped successfully
+✅ Cleanup completed
+✅ Conversation replay completed successfully!
+
+
+=== STDERR ===
+2025-06-04 06:49:39,373 21771 MainThread aiwhisperer.server - INFO - Server logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_20250604_064939.log
+2025-06-04 06:49:39,373 21771 MainThread aiwhisperer.test - INFO - Test logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_20250604_064939.log
+2025-06-04 06:49:39,373 21771 MainThread root - INFO - Debug logging configured. Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_20250604_064939.log
+2025-06-04 06:49:39,375 21771 MainThread ai_whisperer.core.config - DEBUG - API key loaded from environment: sk-or-v1-3... (length: 73)
+2025-06-04 06:49:39,375 21771 MainThread ai_whisperer.core.config - INFO - Loading configuration in legacy mode from: config/main.yaml
+2025-06-04 06:49:39,377 21771 MainThread ai_whisperer.core.config - DEBUG - API key already in config: sk-or-v1-3... (length: 73)
+2025-06-04 06:49:39,378 21771 MainThread ai_whisperer.core.config - INFO - Successfully loaded legacy configuration from: config/main.yaml
+2025-06-04 06:49:39,381 21771 MainThread asyncio - DEBUG - Using selector: EpollSelector
+2025-06-04 06:49:39,394 21771 MainThread ai_whisperer.extensions.conversation_replay.conversation_processor - INFO - Loading conversation from: scripts/test_github_fetch.txt
+2025-06-04 06:49:39,394 21771 MainThread ai_whisperer.extensions.conversation_replay.conversation_processor - DEBUG - Line 1: Added message 'can you list my public github repos?'
+2025-06-04 06:49:39,394 21771 MainThread ai_whisperer.extensions.conversation_replay.conversation_processor - DEBUG - Line 2: Added message 'you could use fetch_url to get my github page'
+2025-06-04 06:49:39,394 21771 MainThread ai_whisperer.extensions.conversation_replay.conversation_processor - DEBUG - Line 3: Added message 'DeanoC'
+2025-06-04 06:49:39,394 21771 MainThread ai_whisperer.extensions.conversation_replay.conversation_processor - INFO - Loaded 3 messages from conversation
+2025-06-04 06:49:39,433 21772 MainThread aiwhisperer.server - INFO - Server logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_batch_20250604_064939_port20486.log
+2025-06-04 06:49:39,433 21772 MainThread aiwhisperer.test - INFO - Test logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_batch_20250604_064939_port20486.log
+2025-06-04 06:49:39,433 21772 MainThread root - INFO - Debug logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_batch_20250604_064939_port20486.log
+2025-06-04 06:49:39,433 21772 MainThread interactive_server.main - INFO - Starting AIWhisperer interactive server...
+2025-06-04 06:49:39,433 21772 MainThread interactive_server.main - INFO - Python executable: /home/deano/projects/AIWhisperer/.venv/bin/python
+2025-06-04 06:49:39,433 21772 MainThread interactive_server.main - INFO - Project root: /home/deano/projects/AIWhisperer
+2025-06-04 06:49:39,433 21772 MainThread interactive_server.main - INFO - Port for logging: 20486
+2025-06-04 06:49:39,758 21772 MainThread ai_whisperer.core.config - DEBUG - API key loaded from environment: sk-or-v1-3... (length: 73)
+2025-06-04 06:49:39,758 21772 MainThread ai_whisperer.core.config - INFO - Loading configuration in legacy mode from: config/main.yaml
+2025-06-04 06:49:39,759 21772 MainThread ai_whisperer.core.config - DEBUG - API key already in config: sk-or-v1-3... (length: 73)
+2025-06-04 06:49:39,759 21772 MainThread ai_whisperer.core.config - INFO - Successfully loaded legacy configuration from: config/main.yaml
+2025-06-04 06:49:39,759 21772 MainThread root - INFO - PathManager initialized successfully
+2025-06-04 06:49:39,760 21772 MainThread root - INFO -   - app_path: /home/deano/projects/AIWhisperer/ai_whisperer
+2025-06-04 06:49:39,760 21772 MainThread root - INFO -   - prompt_path: /home/deano/projects/AIWhisperer
+2025-06-04 06:49:39,760 21772 MainThread root - INFO -   - workspace_path: /home/deano/projects/AIWhisperer
+2025-06-04 06:49:39,760 21772 MainThread root - INFO -   - project_path: /home/deano/projects/AIWhisperer
+2025-06-04 06:49:39,760 21772 MainThread root - INFO -   - Found 5 agent prompts in /home/deano/projects/AIWhisperer/prompts/agents
+2025-06-04 06:49:39,760 21772 MainThread root - INFO -   - ✓ Debbie's prompt file found
+2025-06-04 06:49:39,765 21772 MainThread root - INFO - AgentRegistry initialized with prompts_dir: /home/deano/projects/AIWhisperer/prompts/agents
+2025-06-04 06:49:39,765 21772 MainThread root - INFO - Available agents: ['P', 'A', 'T', 'D', 'E']
+2025-06-04 06:49:39,766 21772 MainThread interactive_server.services.project_manager - ERROR - Failed to load UI settings: Expecting value: line 1 column 1 (char 0)
+2025-06-04 06:49:39,766 21772 MainThread root - INFO - ProjectManager initialized successfully
+2025-06-04 06:49:39,766 21772 MainThread root - INFO - WorkspaceHandler initialized successfully
+2025-06-04 06:49:39,772 21772 MainThread ai_whisperer.tools.tool_set - INFO - Loaded 20 tool sets from /home/deano/projects/AIWhisperer/ai_whisperer/tools/tool_sets.yaml
+2025-06-04 06:49:39,773 21772 MainThread ai_whisperer.tools.tool_registry - INFO - Initialized lazy tool registry
+2025-06-04 06:49:39,773 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: mailbox_protocol
+2025-06-04 06:49:39,774 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: tool_guidelines
+2025-06-04 06:49:39,774 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: core
+2025-06-04 06:49:39,775 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: continuation_protocol
+2025-06-04 06:49:39,775 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: output_format
+2025-06-04 06:49:39,775 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: README
+2025-06-04 06:49:39,776 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: channel_system
+2025-06-04 06:49:39,776 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: debug_options
+2025-06-04 06:49:39,776 21772 MainThread ai_whisperer.prompt_system - INFO - Enabled feature: continuation_protocol
+2025-06-04 06:49:39,776 21772 MainThread ai_whisperer.prompt_system - INFO - Enabled feature: channel_system
+2025-06-04 06:49:39,777 21772 MainThread root - INFO - PromptSystem initialized successfully with tool registry
+2025-06-04 06:49:39,777 21772 MainThread root - INFO - Enabled features: {'continuation_protocol', 'channel_system', 'core'}
+2025-06-04 06:49:39,779 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_file
+2025-06-04 06:49:39,780 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: write_file
+2025-06-04 06:49:39,780 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: execute_command
+2025-06-04 06:49:39,780 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_directory
+2025-06-04 06:49:39,780 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: search_files
+2025-06-04 06:49:39,780 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: get_file_content
+2025-06-04 06:49:39,781 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: find_pattern
+2025-06-04 06:49:39,782 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: workspace_stats
+2025-06-04 06:49:39,802 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: create_rfc
+2025-06-04 06:49:39,803 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_rfc
+2025-06-04 06:49:39,803 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_rfcs
+2025-06-04 06:49:39,803 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: update_rfc
+2025-06-04 06:49:39,803 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: move_rfc
+2025-06-04 06:49:39,803 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: delete_rfc
+2025-06-04 06:49:39,805 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: analyze_languages
+2025-06-04 06:49:39,805 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: find_similar_code
+2025-06-04 06:49:39,805 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: get_project_structure
+2025-06-04 06:49:39,806 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: web_search
+2025-06-04 06:49:39,806 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: fetch_url
+2025-06-04 06:49:39,810 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: prepare_plan_from_rfc
+2025-06-04 06:49:39,810 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: save_generated_plan
+2025-06-04 06:49:39,810 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_plans
+2025-06-04 06:49:39,810 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_plan
+2025-06-04 06:49:39,810 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: update_plan_from_rfc
+2025-06-04 06:49:39,811 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: move_plan
+2025-06-04 06:49:39,811 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: delete_plan
+2025-06-04 06:49:39,820 21772 MainThread interactive_server.stateless_session_manager - WARNING - Some debugging/batch tools not available: No module named 'ai_whisperer.tools.batch_command_tool'
+2025-06-04 06:49:39,820 21772 MainThread interactive_server.stateless_session_manager - INFO - Registered 26 tools with ToolRegistry
+2025-06-04 06:49:39,821 21772 MainThread interactive_server.stateless_session_manager - INFO - Loaded 2 persisted sessions
+2025-06-04 06:49:39,821 21772 MainThread interactive_server.main - INFO - StatelessSessionManager initialized successfully
+2025-06-04 06:49:39,821 21772 MainThread root - INFO - Adding workspace methods to handlers: ['workspace.getTree', 'workspace.listDirectory', 'workspace.searchFiles', 'workspace.getFileContent', 'workspace.clearCache', 'workspace.writeFile']
+<frozen runpy>:128: RuntimeWarning: 'interactive_server.main' found in sys.modules after import of package 'interactive_server', but prior to execution of 'interactive_server.main'; this may result in unpredictable behaviour
+2025-06-04 06:49:39,823 21772 MainThread aiwhisperer.server - INFO - Server logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_batch_20250604_064939_port20486.log
+2025-06-04 06:49:39,823 21772 MainThread aiwhisperer.test - INFO - Test logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_batch_20250604_064939_port20486.log
+2025-06-04 06:49:39,823 21772 MainThread root - INFO - Debug logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_batch_20250604_064939_port20486.log
+2025-06-04 06:49:39,823 21772 MainThread __main__ - INFO - Starting AIWhisperer interactive server...
+2025-06-04 06:49:39,823 21772 MainThread __main__ - INFO - Python executable: /home/deano/projects/AIWhisperer/.venv/bin/python
+2025-06-04 06:49:39,824 21772 MainThread __main__ - INFO - Project root: /home/deano/projects/AIWhisperer
+2025-06-04 06:49:39,824 21772 MainThread __main__ - INFO - Port for logging: 20486
+2025-06-04 06:49:39,824 21772 MainThread ai_whisperer.core.config - DEBUG - API key loaded from environment: sk-or-v1-3... (length: 73)
+2025-06-04 06:49:39,824 21772 MainThread ai_whisperer.core.config - INFO - Loading configuration in legacy mode from: config/main.yaml
+2025-06-04 06:49:39,825 21772 MainThread ai_whisperer.core.config - DEBUG - API key already in config: sk-or-v1-3... (length: 73)
+2025-06-04 06:49:39,825 21772 MainThread ai_whisperer.core.config - INFO - Successfully loaded legacy configuration from: config/main.yaml
+2025-06-04 06:49:39,826 21772 MainThread root - INFO - PathManager initialized successfully
+2025-06-04 06:49:39,826 21772 MainThread root - INFO -   - app_path: /home/deano/projects/AIWhisperer/ai_whisperer
+2025-06-04 06:49:39,826 21772 MainThread root - INFO -   - prompt_path: /home/deano/projects/AIWhisperer
+2025-06-04 06:49:39,826 21772 MainThread root - INFO -   - workspace_path: /home/deano/projects/AIWhisperer
+2025-06-04 06:49:39,826 21772 MainThread root - INFO -   - project_path: /home/deano/projects/AIWhisperer
+2025-06-04 06:49:39,826 21772 MainThread root - INFO -   - Found 5 agent prompts in /home/deano/projects/AIWhisperer/prompts/agents
+2025-06-04 06:49:39,826 21772 MainThread root - INFO -   - ✓ Debbie's prompt file found
+2025-06-04 06:49:39,831 21772 MainThread root - INFO - AgentRegistry initialized with prompts_dir: /home/deano/projects/AIWhisperer/prompts/agents
+2025-06-04 06:49:39,832 21772 MainThread root - INFO - Available agents: ['P', 'A', 'T', 'D', 'E']
+2025-06-04 06:49:39,832 21772 MainThread interactive_server.services.project_manager - ERROR - Failed to load UI settings: Expecting value: line 1 column 1 (char 0)
+2025-06-04 06:49:39,832 21772 MainThread root - INFO - ProjectManager initialized successfully
+2025-06-04 06:49:39,832 21772 MainThread root - INFO - WorkspaceHandler initialized successfully
+2025-06-04 06:49:39,832 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: mailbox_protocol
+2025-06-04 06:49:39,832 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: tool_guidelines
+2025-06-04 06:49:39,833 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: core
+2025-06-04 06:49:39,833 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: continuation_protocol
+2025-06-04 06:49:39,833 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: output_format
+2025-06-04 06:49:39,833 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: README
+2025-06-04 06:49:39,833 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: channel_system
+2025-06-04 06:49:39,833 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded shared component: debug_options
+2025-06-04 06:49:39,833 21772 MainThread ai_whisperer.prompt_system - INFO - Enabled feature: continuation_protocol
+2025-06-04 06:49:39,834 21772 MainThread ai_whisperer.prompt_system - INFO - Enabled feature: channel_system
+2025-06-04 06:49:39,834 21772 MainThread root - INFO - PromptSystem initialized successfully with tool registry
+2025-06-04 06:49:39,834 21772 MainThread root - INFO - Enabled features: {'continuation_protocol', 'channel_system', 'core'}
+2025-06-04 06:49:39,834 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_file
+2025-06-04 06:49:39,834 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: write_file
+2025-06-04 06:49:39,834 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: execute_command
+2025-06-04 06:49:39,834 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_directory
+2025-06-04 06:49:39,834 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: search_files
+2025-06-04 06:49:39,834 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: get_file_content
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: find_pattern
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: workspace_stats
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: create_rfc
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_rfc
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_rfcs
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: update_rfc
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: move_rfc
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: delete_rfc
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: analyze_languages
+2025-06-04 06:49:39,835 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: find_similar_code
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: get_project_structure
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: web_search
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: fetch_url
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: prepare_plan_from_rfc
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: save_generated_plan
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_plans
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_plan
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: update_plan_from_rfc
+2025-06-04 06:49:39,836 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: move_plan
+2025-06-04 06:49:39,837 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: delete_plan
+2025-06-04 06:49:39,837 21772 MainThread interactive_server.stateless_session_manager - WARNING - Some debugging/batch tools not available: No module named 'ai_whisperer.tools.batch_command_tool'
+2025-06-04 06:49:39,837 21772 MainThread interactive_server.stateless_session_manager - INFO - Registered 26 tools with ToolRegistry
+2025-06-04 06:49:39,837 21772 MainThread interactive_server.stateless_session_manager - INFO - Loaded 2 persisted sessions
+2025-06-04 06:49:39,837 21772 MainThread __main__ - INFO - StatelessSessionManager initialized successfully
+2025-06-04 06:49:39,837 21772 MainThread root - INFO - Adding workspace methods to handlers: ['workspace.getTree', 'workspace.listDirectory', 'workspace.searchFiles', 'workspace.getFileContent', 'workspace.clearCache', 'workspace.writeFile']
+2025-06-04 06:49:39,867 21772 MainThread __main__ - INFO - Starting server on 127.0.0.1:20486 with Debbie monitoring: False
+2025-06-04 06:49:39,869 21772 MainThread asyncio - DEBUG - Using selector: EpollSelector
+INFO:     Started server process [21772]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:20486 (Press CTRL+C to quit)
+2025-06-04 06:49:41,917 21771 MainThread aiwhisperer.server - INFO - Server logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_server_batch_20250604_064941_port20486.log
+2025-06-04 06:49:41,918 21771 MainThread aiwhisperer.test - INFO - Test logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_test_batch_20250604_064941_port20486.log
+2025-06-04 06:49:41,918 21771 MainThread root - INFO - Debug logging configured (batch mode port 20486). Log file: /home/deano/projects/AIWhisperer/logs/aiwhisperer_debug_batch_20250604_064941_port20486.log
+2025-06-04 06:49:41,918 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Connecting to WebSocket at ws://localhost:20486/ws
+2025-06-04 06:49:41,928 21771 MainThread websockets.client - DEBUG - = connection is CONNECTING
+2025-06-04 06:49:41,929 21771 MainThread websockets.client - DEBUG - > GET /ws HTTP/1.1
+2025-06-04 06:49:41,929 21771 MainThread websockets.client - DEBUG - > Host: localhost:20486
+2025-06-04 06:49:41,929 21771 MainThread websockets.client - DEBUG - > Upgrade: websocket
+2025-06-04 06:49:41,929 21771 MainThread websockets.client - DEBUG - > Connection: Upgrade
+2025-06-04 06:49:41,929 21771 MainThread websockets.client - DEBUG - > Sec-WebSocket-Key: jCNJsvwrNeDymFbn852V4A==
+2025-06-04 06:49:41,929 21771 MainThread websockets.client - DEBUG - > Sec-WebSocket-Version: 13
+2025-06-04 06:49:41,929 21771 MainThread websockets.client - DEBUG - > Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+2025-06-04 06:49:41,930 21771 MainThread websockets.client - DEBUG - > User-Agent: Python/3.12 websockets/15.0.1
+INFO:     ('127.0.0.1', 33288) - "WebSocket /ws" [accepted]
+2025-06-04 06:49:41,931 21772 MainThread root - DEBUG - [websocket_endpoint] WebSocket accepted.
+2025-06-04 06:49:41,931 21772 MainThread root - DEBUG - [websocket_endpoint] Waiting for message...
+INFO:     connection open
+2025-06-04 06:49:41,932 21771 MainThread websockets.client - DEBUG - < HTTP/1.1 101 Switching Protocols
+2025-06-04 06:49:41,932 21771 MainThread websockets.client - DEBUG - < Upgrade: websocket
+2025-06-04 06:49:41,933 21771 MainThread websockets.client - DEBUG - < Connection: Upgrade
+2025-06-04 06:49:41,933 21771 MainThread websockets.client - DEBUG - < Sec-WebSocket-Accept: BdHbTxpG/jew7B7GDTBphBLFvBE=
+2025-06-04 06:49:41,933 21771 MainThread websockets.client - DEBUG - < Sec-WebSocket-Extensions: permessage-deflate
+2025-06-04 06:49:41,933 21771 MainThread websockets.client - DEBUG - < date: Wed, 04 Jun 2025 06:49:40 GMT
+2025-06-04 06:49:41,933 21771 MainThread websockets.client - DEBUG - < server: uvicorn
+2025-06-04 06:49:41,933 21771 MainThread websockets.client - DEBUG - = connection is OPEN
+2025-06-04 06:49:41,933 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - WebSocket connection established
+2025-06-04 06:49:41,934 21771 MainThread websockets.client - DEBUG - > TEXT '{"jsonrpc": "2.0", "id": 1, "method": "startSes...": {"language": "en"}}}' [133 bytes]
+2025-06-04 06:49:41,934 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - DEBUG - Sent request: startSession (id=1)
+2025-06-04 06:49:41,934 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Waiting for response to request 1 (method: startSession)
+2025-06-04 06:49:41,934 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Received message: {"jsonrpc": "2.0", "id": 1, "method": "startSession", "params": {"userId": "conversation_user", "sessionParams": {"language": "en"}}}
+2025-06-04 06:49:41,934 21772 MainThread ai_whisperer.services.agents.ai_loop_manager - INFO - AILoopManager initialized
+2025-06-04 06:49:41,934 21772 MainThread interactive_server.stateless_session_manager - DEBUG - No observer provided for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_file
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: write_file
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: execute_command
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_directory
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: search_files
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: get_file_content
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registration - DEBUG - Registered file operation tools
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: find_pattern
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: workspace_stats
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registration - DEBUG - Registered analysis tools
+2025-06-04 06:49:41,936 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: create_rfc
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_rfc
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_rfcs
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: update_rfc
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: move_rfc
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: delete_rfc
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registration - DEBUG - Registered RFC tools
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: prepare_plan_from_rfc
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: save_generated_plan
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: list_plans
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: read_plan
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: update_plan_from_rfc
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: move_plan
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: delete_plan
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registration - DEBUG - Registered plan tools
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: analyze_languages
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: find_similar_code
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: get_project_structure
+2025-06-04 06:49:41,937 21772 MainThread ai_whisperer.tools.tool_registration - DEBUG - Registered codebase tools
+2025-06-04 06:49:41,938 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: web_search
+2025-06-04 06:49:41,938 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: fetch_url
+2025-06-04 06:49:41,938 21772 MainThread ai_whisperer.tools.tool_registration - DEBUG - Registered web tools
+2025-06-04 06:49:41,939 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: session_health
+2025-06-04 06:49:41,939 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: session_analysis
+2025-06-04 06:49:41,939 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: monitoring_control
+2025-06-04 06:49:41,939 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: session_inspector
+2025-06-04 06:49:41,939 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: message_injector
+2025-06-04 06:49:41,939 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: workspace_validator
+2025-06-04 06:49:41,940 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: python_executor
+2025-06-04 06:49:41,940 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: script_parser
+2025-06-04 06:49:41,940 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: conversation_command
+2025-06-04 06:49:41,940 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: system_health_check
+2025-06-04 06:49:41,940 21772 MainThread ai_whisperer.tools.tool_registration - DEBUG - Registered debugging tools
+2025-06-04 06:49:41,940 21772 MainThread ai_whisperer.tools.tool_registration - WARNING - Mailbox tools not available: No module named 'ai_whisperer.agents.mailbox_tools'
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: decompose_plan
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: analyze_dependencies
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: format_for_external_agent
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: update_task_status
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: validate_external_agent
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: recommend_external_agent
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: parse_external_result
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registration - DEBUG - Registered Agent E tools
+2025-06-04 06:49:41,947 21772 MainThread ai_whisperer.tools.tool_registration - INFO - Registered 43 tools
+2025-06-04 06:49:41,951 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: send_mail
+2025-06-04 06:49:41,951 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: check_mail
+2025-06-04 06:49:41,951 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: reply_mail
+2025-06-04 06:49:41,951 21772 MainThread ai_whisperer.tools.tool_registry - DEBUG - Registered tool: switch_agent
+2025-06-04 06:49:41,951 21772 MainThread interactive_server.stateless_session_manager - INFO - Registered all tools for interactive session including mailbox and agent switching tools
+2025-06-04 06:49:41,951 21772 MainThread interactive_server.stateless_session_manager - INFO - Created session c84d979a-3ce6-46e3-95e4-7c8fca678758 for WebSocket connection with project: None
+2025-06-04 06:49:41,952 21772 MainThread interactive_server.stateless_session_manager - INFO - Saved 1 sessions to sessions.json
+2025-06-04 06:49:41,952 21772 MainThread interactive_server.stateless_session_manager - INFO - switch_agent called with agent_id: a
+2025-06-04 06:49:41,952 21772 MainThread interactive_server.stateless_session_manager - INFO - Acquired lock for switch_agent
+2025-06-04 06:49:41,952 21772 MainThread interactive_server.stateless_session_manager - INFO - Agent a not in session, checking registry
+2025-06-04 06:49:41,952 21772 MainThread interactive_server.stateless_session_manager - INFO - Found agent info: Alice the AI Assistant
+2025-06-04 06:49:41,952 21772 MainThread interactive_server.stateless_session_manager - INFO - Attempting to load prompt file: alice_assistant.prompt.md
+2025-06-04 06:49:41,952 21772 MainThread interactive_server.stateless_session_manager - INFO - Trying to load prompt via PromptSystem with tools: agents/alice_assistant
+2025-06-04 06:49:41,952 21772 MainThread ai_whisperer.prompt_system - INFO - Enabled feature: continuation_protocol
+2025-06-04 06:49:41,952 21772 MainThread ai_whisperer.prompt_system - INFO - get_formatted_prompt called: category=agents, name=alice_assistant, include_tools=False, include_shared=True
+2025-06-04 06:49:41,952 21772 MainThread ai_whisperer.prompt_system - INFO - resolve_prompt_path called: category=agents, name=alice_assistant
+2025-06-04 06:49:41,952 21772 MainThread ai_whisperer.prompt_system - DEBUG - ❌ Custom path not found: /home/deano/projects/AIWhisperer/prompts/custom/agents/alice_assistant.prompt.md
+2025-06-04 06:49:41,952 21772 MainThread ai_whisperer.prompt_system - INFO - ✅ Found prompt at project category path: /home/deano/projects/AIWhisperer/prompts/agents/alice_assistant.prompt.md
+2025-06-04 06:49:41,953 21772 MainThread ai_whisperer.prompt_system - INFO - Resolved prompt path: /home/deano/projects/AIWhisperer/prompts/agents/alice_assistant.prompt.md
+2025-06-04 06:49:41,953 21772 MainThread ai_whisperer.prompt_system - INFO - Loaded prompt content length: 2703, first 100 chars: # Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi
+2025-06-04 06:49:41,953 21772 MainThread ai_whisperer.prompt_system - INFO - Including shared components. Enabled features: {'continuation_protocol', 'channel_system', 'core'}
+2025-06-04 06:49:41,953 21772 MainThread ai_whisperer.prompt_system - INFO - Available shared components: ['mailbox_protocol', 'tool_guidelines', 'core', 'continuation_protocol', 'output_format', 'README', 'channel_system', 'debug_options']
+2025-06-04 06:49:41,953 21772 MainThread ai_whisperer.prompt_system - INFO - Active debug options: set()
+2025-06-04 06:49:41,953 21772 MainThread ai_whisperer.prompt_system - INFO - Adding shared component: channel_system
+2025-06-04 06:49:41,953 21772 MainThread ai_whisperer.prompt_system - INFO - Adding shared component: continuation_protocol
+2025-06-04 06:49:41,953 21772 MainThread ai_whisperer.prompt_system - INFO - Adding shared component: core
+2025-06-04 06:49:41,953 21772 MainThread interactive_server.stateless_session_manager - INFO - ✅ Successfully loaded prompt via PromptSystem for a (tools included: False)
+2025-06-04 06:49:41,953 21772 MainThread interactive_server.stateless_session_manager - INFO - 📝 Agent a (Alice the AI Assistant) prompt loaded from: prompt_system:agents/alice_assistant
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - INFO - About to create agent with prompt: # Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructions in core.md.
+
+## Mission
+Guide users efficiently through AIWhisperer, working independently to re...
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - INFO - Created AgentContext for a with system prompt length: 11115
+2025-06-04 06:49:41,954 21772 MainThread ai_whisperer.services.agents.ai_loop_manager - INFO - Creating new AI loop for agent a
+2025-06-04 06:49:41,954 21772 MainThread ai_whisperer.services.agents.ai_loop_manager - INFO - Using agent-specific config: model=google/gemini-2.5-flash-preview-05-20:thinking, provider=openrouter
+2025-06-04 06:49:41,954 21772 MainThread ai_whisperer.services.execution.ai_loop_factory - INFO - Created AI loop with model=google/gemini-2.5-flash-preview-05-20:thinking, provider=openrouter, temperature=0.7
+2025-06-04 06:49:41,954 21772 MainThread ai_whisperer.services.agents.stateless - INFO - Initialized continuation strategy for agent: a
+2025-06-04 06:49:41,954 21772 MainThread ai_whisperer.services.agents.stateless - INFO - Created stateless agent: a
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - INFO - Created StatelessAgent for a
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - INFO - Created agent 'a' from registry with system prompt
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - INFO - Set active agent to: a
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - INFO - Sending agent.switched notification
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - INFO - Switched active agent from 'a' to 'a' in session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - INFO - Requesting introduction from agent 'a'
+2025-06-04 06:49:41,954 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"agent.created","para...id":"a","active":true}}' [82 bytes]
+2025-06-04 06:49:41,954 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Processing message for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:49:41,955 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation strategy for new conversation
+2025-06-04 06:49:41,955 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'agent.created', 'params': {'agent_id': 'a', 'active': True}}
+2025-06-04 06:49:41,955 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"agent.switched","par...:{"from":"a","to":"a"}}' [74 bytes]
+2025-06-04 06:49:41,955 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'agent.switched', 'params': {'from': 'a', 'to': 'a'}}
+2025-06-04 06:49:41,956 21772 MainThread ai_whisperer.extensions.agents.prompt_optimizer - DEBUG - Optimized prompt for google/gemini-2.5-flash-preview-05-20:thinking (multi_tool strategy)
+2025-06-04 06:49:41,956 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Optimized user message for google/gemini-2.5-flash-preview-05-20:thinking
+2025-06-04 06:49:41,956 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Calling agent.process_message
+2025-06-04 06:49:41,956 21772 MainThread ai_whisperer.services.agents.stateless - INFO - Agent a: Using 21 filtered tools
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Retrieving messages
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt exists: True
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt type: <class 'str'>
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt length: 11115
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt preview: # Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi...
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total messages: 1
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Stored messages: 0
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: First message role: system
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 RETRIEVED MESSAGES COUNT: 1
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 0: role=system content=# Alice - Autonomous Assistant
+
+You are Alice, AIW...
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - Processing with 1 messages, first message role: system
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 SENDING TO AI: 2 messages
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[0] role=system content=# Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi...
+2025-06-04 06:49:41,957 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[1] role=user content=Please introduce yourself briefly, mentioning your name and what you help with.
+
+You can execute mul...
+2025-06-04 06:49:41,958 21772 Thread-1 (run_sync) ai_whisperer.services.ai.openrouter - DEBUG - Starting OpenRouter stream for model: google/gemini-2.5-flash-preview-05-20:thinking
+2025-06-04 06:49:41,960 21772 Thread-1 (run_sync) urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): openrouter.ai:443
+2025-06-04 06:49:43,833 21772 Thread-1 (run_sync) urllib3.connectionpool - DEBUG - https://openrouter.ai:443 "POST /api/v1/chat/completions HTTP/1.1" 200 None
+2025-06-04 06:49:44,906 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [240 bytes]
+2025-06-04 06:49:44,906 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': '[ANALYSIS]\nThe user is asking for a self-introduction. I need to', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:49:44,956 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [378 bytes]
+2025-06-04 06:49:44,956 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': '[ANALYSIS]\nThe user is asking for a self-introduction. I need to state my name and my core function within AIWhisperer. This is a direct answer and does not require tool usage.\n\n[COMMENTARY]\nNo tools', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:49:44,973 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [536 bytes]
+2025-06-04 06:49:44,974 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': "[ANALYSIS]\nThe user is asking for a self-introduction. I need to state my name and my core function within AIWhisperer. This is a direct answer and does not require tool usage.\n\n[COMMENTARY]\nNo tools are needed for this request.\n\n[FINAL]\nI am Alice, AIWhisperer's primary assistant. I help users navigate and utilize the AIWhisperer system efficiently.\n", 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:49:44,988 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 STREAM FINISHED: finish_reason=stop, response_length=353, reasoning_length=0
+2025-06-04 06:49:44,988 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 SENDING FINAL CHUNK: length=0
+2025-06-04 06:49:44,988 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 RETURNING RESULT: response_length=353, reasoning_length=0, tool_calls=0
+2025-06-04 06:49:44,988 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - ✅ ATOMIC: Storing user message and assistant response
+2025-06-04 06:49:44,989 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 1
+2025-06-04 06:49:44,989 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 2
+2025-06-04 06:49:44,989 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Agent processing completed
+2025-06-04 06:49:44,989 21772 MainThread ai_whisperer.channels.integration - DEBUG - Created new session-wide router for c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:49:44,989 21772 MainThread ai_whisperer.channels.router - DEBUG - Processing new complete response, clearing 0 streaming sequences, current counter: 0
+2025-06-04 06:49:44,989 21772 MainThread ai_whisperer.channels.router - DEBUG - Created new sequence 1 for channel final (non-streaming)
+2025-06-04 06:49:44,989 21772 MainThread ai_whisperer.channels.storage - DEBUG - Added final message to session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:49:44,989 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Result type: <class 'dict'>, value: {'response': "[ANALYSIS]\nThe user is asking for a self-introduction. I need to state my name and my core function within AIWhisperer. This is a direct answer and does not require tool usage.\n\n[COMMENTARY]\nNo tools are needed for this request.\n\n[FINAL]\nI am Alice, AIWhisperer's primary assistant. I help users navigate and utilize the AIWhisperer system efficiently.\n", 'finish_reason': 'stop'}
+2025-06-04 06:49:44,989 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation depth to 0
+2025-06-04 06:49:44,989 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation strategy
+2025-06-04 06:49:44,989 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"ChannelMessageNotifi...ll,"isPartial":false}}}' [679 bytes]
+2025-06-04 06:49:44,990 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CHECKING CONTINUATION: result has 0 tool calls
+2025-06-04 06:49:44,990 21772 MainThread ai_whisperer.extensions.agents.continuation_strategy - INFO - No explicit continuation signal found, defaulting to TERMINATE
+2025-06-04 06:49:44,990 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CONTINUATION STRATEGY DECISION: False
+2025-06-04 06:49:44,990 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CONTINUATION DECISION: False
+2025-06-04 06:49:44,990 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'ChannelMessageNotification', 'params': {'type': 'channel_message', 'channel': 'final', 'content': "[ANALYSIS]\nThe user is asking for a self-introduction. I need to state my name and my core function within AIWhisperer. This is a direct answer and does not require tool usage.\n\n[COMMENTARY]\nNo tools are needed for this request.\n\n[FINAL]\nI am Alice, AIWhisperer's primary assistant. I help users navigate and utilize the AIWhisperer system efficiently.", 'metadata': {'sequence': 1, 'timestamp': '2025-06-04T06:49:44.989622+00:00', 'agentId': 'a', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'toolCalls': None, 'continuationDepth': None, 'isPartial': False}}}
+2025-06-04 06:49:44,990 21772 MainThread interactive_server.stateless_session_manager - INFO - Agent 'a' introduced itself
+2025-06-04 06:49:44,990 21772 MainThread interactive_server.stateless_session_manager - INFO - Started session c84d979a-3ce6-46e3-95e4-7c8fca678758 with Alice agent
+2025-06-04 06:49:44,990 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Generated response: {'jsonrpc': '2.0', 'id': 1, 'result': {'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'status': 1}}
+2025-06-04 06:49:44,990 21772 MainThread root - DEBUG - [websocket_endpoint] Sending response: {"jsonrpc": "2.0", "id": 1, "result": {"sessionId": "c84d979a-3ce6-46e3-95e4-7c8fca678758", "status": 1}}
+2025-06-04 06:49:44,990 21772 MainThread root - DEBUG - [websocket_endpoint] Response sent successfully
+2025-06-04 06:49:44,990 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc": "2.0", "id": 1, "result": {"session...a678758", "status": 1}}' [105 bytes]
+2025-06-04 06:49:44,990 21772 MainThread root - DEBUG - [websocket_endpoint] Waiting for message...
+2025-06-04 06:49:44,990 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response with id 1: {'jsonrpc': '2.0', 'id': 1, 'result': {'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'status': 1}}
+2025-06-04 06:49:44,990 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Setting result for request 1
+2025-06-04 06:49:44,990 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response for request 1: {'jsonrpc': '2.0', 'id': 1, 'result': {'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'status': 1}}
+2025-06-04 06:49:44,990 21771 MainThread ai_whisperer.extensions.conversation_replay.conversation_processor - DEBUG - Returning message 1/3: 'can you list my public github repos?'
+2025-06-04 06:49:44,990 21771 MainThread websockets.client - DEBUG - > TEXT '{"jsonrpc": "2.0", "id": 2, "method": "sendUser...public github repos?"}}' [172 bytes]
+2025-06-04 06:49:44,991 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - DEBUG - Sent request: sendUserMessage (id=2)
+2025-06-04 06:49:44,991 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Waiting for response to request 2 (method: sendUserMessage)
+2025-06-04 06:49:44,991 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Received message: {"jsonrpc": "2.0", "id": 2, "method": "sendUserMessage", "params": {"sessionId": "c84d979a-3ce6-46e3-95e4-7c8fca678758", "message": "can you list my public github repos?"}}
+2025-06-04 06:49:44,991 21772 MainThread root - ERROR - [send_user_message_handler] ENTRY: params={'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'message': 'can you list my public github repos?'}
+2025-06-04 06:49:44,991 21772 MainThread root - INFO - [send_user_message_handler] Found session: c84d979a-3ce6-46e3-95e4-7c8fca678758, active agent: a
+2025-06-04 06:49:44,991 21772 MainThread root - DEBUG - [send_user_message_handler] Calling session.send_user_message: can you list my public github repos?
+2025-06-04 06:49:44,991 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Processing message for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:49:44,991 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation strategy for new conversation
+2025-06-04 06:49:44,991 21772 MainThread ai_whisperer.extensions.agents.prompt_optimizer - DEBUG - Optimized prompt for google/gemini-2.5-flash-preview-05-20:thinking (multi_tool strategy)
+2025-06-04 06:49:44,991 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Optimized user message for google/gemini-2.5-flash-preview-05-20:thinking
+2025-06-04 06:49:44,991 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Calling agent.process_message
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.agents.stateless - INFO - Agent a: Using 21 filtered tools
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Retrieving messages
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt exists: True
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt type: <class 'str'>
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt length: 11115
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt preview: # Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi...
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total messages: 3
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Stored messages: 2
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: First message role: system
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 RETRIEVED MESSAGES COUNT: 3
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 0: role=system content=# Alice - Autonomous Assistant
+
+You are Alice, AIW...
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 1: role=user content=Please introduce yourself briefly, mentioning your...
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 2: role=assistant content=[ANALYSIS]
+The user is asking for a self-introduct...
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - Processing with 3 messages, first message role: system
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 SENDING TO AI: 4 messages
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[0] role=system content=# Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi...
+2025-06-04 06:49:44,992 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[1] role=user content=Please introduce yourself briefly, mentioning your name and what you help with.
+
+You can execute mul...
+2025-06-04 06:49:44,993 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[2] role=assistant content=[ANALYSIS]
+The user is asking for a self-introduction. I need to state my name and my core function ...
+2025-06-04 06:49:44,993 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[3] role=user content=can you list my public github repos?
+
+You can execute multiple tools in a single response.
+2025-06-04 06:49:44,993 21772 Thread-2 (run_sync) ai_whisperer.services.ai.openrouter - DEBUG - Starting OpenRouter stream for model: google/gemini-2.5-flash-preview-05-20:thinking
+2025-06-04 06:49:44,994 21772 Thread-2 (run_sync) urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): openrouter.ai:443
+2025-06-04 06:49:46,659 21772 Thread-2 (run_sync) urllib3.connectionpool - DEBUG - https://openrouter.ai:443 "POST /api/v1/chat/completions HTTP/1.1" 200 None
+2025-06-04 06:49:56,232 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [445 bytes]
+2025-06-04 06:49:56,232 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to", 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:49:56,258 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [695 bytes]
+2025-06-04 06:49:56,259 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.\n\n[COMMENTARY]\nNo specific tool can fulfill this request directly without more information from the user.\n\n[FINAL]\nI cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.", 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:49:56,291 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 STREAM FINISHED: finish_reason=stop, response_length=513, reasoning_length=0
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 SENDING FINAL CHUNK: length=0
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 RETURNING RESULT: response_length=513, reasoning_length=0, tool_calls=0
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - ✅ ATOMIC: Storing user message and assistant response
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 3
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 4
+2025-06-04 06:49:56,292 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Agent processing completed
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.channels.integration - DEBUG - Reusing session-wide router for c84d979a-3ce6-46e3-95e4-7c8fca678758, current sequence: 1
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.channels.router - DEBUG - Processing new complete response, clearing 0 streaming sequences, current counter: 1
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.channels.router - DEBUG - Created new sequence 2 for channel final (non-streaming)
+2025-06-04 06:49:56,292 21772 MainThread ai_whisperer.channels.storage - DEBUG - Added final message to session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:49:56,292 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Result type: <class 'dict'>, value: {'response': "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.\n\n[COMMENTARY]\nNo specific tool can fulfill this request directly without more information from the user.\n\n[FINAL]\nI cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.", 'finish_reason': 'stop'}
+2025-06-04 06:49:56,292 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation depth to 0
+2025-06-04 06:49:56,293 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation strategy
+2025-06-04 06:49:56,293 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CHECKING CONTINUATION: result has 0 tool calls
+2025-06-04 06:49:56,293 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"ChannelMessageNotifi...ll,"isPartial":false}}}' [840 bytes]
+2025-06-04 06:49:56,293 21772 MainThread ai_whisperer.extensions.agents.continuation_strategy - INFO - No explicit continuation signal found, defaulting to TERMINATE
+2025-06-04 06:49:56,293 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CONTINUATION STRATEGY DECISION: False
+2025-06-04 06:49:56,293 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CONTINUATION DECISION: False
+2025-06-04 06:49:56,293 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'ChannelMessageNotification', 'params': {'type': 'channel_message', 'channel': 'final', 'content': "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.\n\n[COMMENTARY]\nNo specific tool can fulfill this request directly without more information from the user.\n\n[FINAL]\nI cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.", 'metadata': {'sequence': 2, 'timestamp': '2025-06-04T06:49:56.292676+00:00', 'agentId': 'a', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'toolCalls': None, 'continuationDepth': None, 'isPartial': False}}}
+2025-06-04 06:49:56,293 21772 MainThread root - DEBUG - [send_user_message_handler] Message sent successfully, returning response with AI result.
+2025-06-04 06:49:56,293 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Generated response: {'jsonrpc': '2.0', 'id': 2, 'result': {'messageId': '910e5782-6ab2-4c7d-8d9e-3ed554ea7672', 'status': 0, 'ai_response': "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.\n\n[COMMENTARY]\nNo specific tool can fulfill this request directly without more information from the user.\n\n[FINAL]\nI cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.", 'tool_calls': []}}
+2025-06-04 06:49:56,293 21772 MainThread root - DEBUG - [websocket_endpoint] Sending response: {"jsonrpc": "2.0", "id": 2, "result": {"messageId": "910e5782-6ab2-4c7d-8d9e-3ed554ea7672", "status": 0, "ai_response": "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.\n\n[COMMENTARY]\nNo specific tool can fulfill this request directly without more information from the user.\n\n[FINAL]\nI cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.", "tool_calls": []}}
+2025-06-04 06:49:56,293 21772 MainThread root - DEBUG - [websocket_endpoint] Response sent successfully
+2025-06-04 06:49:56,293 21772 MainThread root - DEBUG - [websocket_endpoint] Waiting for message...
+2025-06-04 06:49:56,293 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc": "2.0", "id": 2, "result": {"message...e.", "tool_calls": []}}' [662 bytes]
+2025-06-04 06:49:56,293 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response with id 2: {'jsonrpc': '2.0', 'id': 2, 'result': {'messageId': '910e5782-6ab2-4c7d-8d9e-3ed554ea7672', 'status': 0, 'ai_response': "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.\n\n[COMMENTARY]\nNo specific tool can fulfill this request directly without more information from the user.\n\n[FINAL]\nI cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.", 'tool_calls': []}}
+2025-06-04 06:49:56,294 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Setting result for request 2
+2025-06-04 06:49:56,294 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response for request 2: {'jsonrpc': '2.0', 'id': 2, 'result': {'messageId': '910e5782-6ab2-4c7d-8d9e-3ed554ea7672', 'status': 0, 'ai_response': "[ANALYSIS]\nThe user is asking to list their public GitHub repositories. My available tools do not provide direct access to external platforms like GitHub to retrieve user-specific account information. I lack the necessary authentication or the user's GitHub username to query such data.\n\n[COMMENTARY]\nNo specific tool can fulfill this request directly without more information from the user.\n\n[FINAL]\nI cannot directly list your public GitHub repositories. I do not have access to your GitHub account or username.", 'tool_calls': []}}
+2025-06-04 06:49:58,297 21771 MainThread ai_whisperer.extensions.conversation_replay.conversation_processor - DEBUG - Returning message 2/3: 'you could use fetch_url to get my github page'
+2025-06-04 06:49:58,298 21771 MainThread websockets.client - DEBUG - > TEXT '{"jsonrpc": "2.0", "id": 3, "method": "sendUser...o get my github page"}}' [181 bytes]
+2025-06-04 06:49:58,298 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - DEBUG - Sent request: sendUserMessage (id=3)
+2025-06-04 06:49:58,298 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Waiting for response to request 3 (method: sendUserMessage)
+2025-06-04 06:49:58,298 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Received message: {"jsonrpc": "2.0", "id": 3, "method": "sendUserMessage", "params": {"sessionId": "c84d979a-3ce6-46e3-95e4-7c8fca678758", "message": "you could use fetch_url to get my github page"}}
+2025-06-04 06:49:58,299 21772 MainThread root - ERROR - [send_user_message_handler] ENTRY: params={'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'message': 'you could use fetch_url to get my github page'}
+2025-06-04 06:49:58,299 21772 MainThread root - INFO - [send_user_message_handler] Found session: c84d979a-3ce6-46e3-95e4-7c8fca678758, active agent: a
+2025-06-04 06:49:58,299 21772 MainThread root - DEBUG - [send_user_message_handler] Calling session.send_user_message: you could use fetch_url to get my github page
+2025-06-04 06:49:58,299 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Processing message for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:49:58,299 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation strategy for new conversation
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.extensions.agents.prompt_optimizer - DEBUG - Optimized prompt for google/gemini-2.5-flash-preview-05-20:thinking (multi_tool strategy)
+2025-06-04 06:49:58,299 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Optimized user message for google/gemini-2.5-flash-preview-05-20:thinking
+2025-06-04 06:49:58,299 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Calling agent.process_message
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.services.agents.stateless - INFO - Agent a: Using 21 filtered tools
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Retrieving messages
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt exists: True
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt type: <class 'str'>
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt length: 11115
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt preview: # Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi...
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total messages: 5
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Stored messages: 4
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: First message role: system
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 RETRIEVED MESSAGES COUNT: 5
+2025-06-04 06:49:58,299 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 0: role=system content=# Alice - Autonomous Assistant
+
+You are Alice, AIW...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 1: role=user content=Please introduce yourself briefly, mentioning your...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 2: role=assistant content=[ANALYSIS]
+The user is asking for a self-introduct...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 3: role=user content=can you list my public github repos?
+
+You can exec...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 4: role=assistant content=[ANALYSIS]
+The user is asking to list their public...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - Processing with 5 messages, first message role: system
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 SENDING TO AI: 6 messages
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[0] role=system content=# Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[1] role=user content=Please introduce yourself briefly, mentioning your name and what you help with.
+
+You can execute mul...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[2] role=assistant content=[ANALYSIS]
+The user is asking for a self-introduction. I need to state my name and my core function ...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[3] role=user content=can you list my public github repos?
+
+You can execute multiple tools in a single response.
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[4] role=assistant content=[ANALYSIS]
+The user is asking to list their public GitHub repositories. My available tools do not pr...
+2025-06-04 06:49:58,300 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[5] role=user content=you could use fetch_url to get my github page
+
+You can execute multiple tools in a single response.
+2025-06-04 06:49:58,300 21772 Thread-3 (run_sync) ai_whisperer.services.ai.openrouter - DEBUG - Starting OpenRouter stream for model: google/gemini-2.5-flash-preview-05-20:thinking
+2025-06-04 06:49:58,301 21772 Thread-3 (run_sync) urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): openrouter.ai:443
+2025-06-04 06:50:00,180 21772 Thread-3 (run_sync) urllib3.connectionpool - DEBUG - https://openrouter.ai:443 "POST /api/v1/chat/completions HTTP/1.1" 200 None
+2025-06-04 06:50:01,123 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [231 bytes]
+2025-06-04 06:50:01,123 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': '[ANALYSIS]\nThe user is suggesting `fetch_url` to access', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:50:01,151 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [380 bytes]
+2025-06-04 06:50:01,151 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide", 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:50:01,180 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [546 bytes]
+2025-06-04 06:50:01,181 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page", 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:50:01,211 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [570 bytes]
+2025-06-04 06:50:01,211 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page URL. Please provide it.", 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:50:01,225 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 STREAM FINISHED: finish_reason=stop, response_length=388, reasoning_length=0
+2025-06-04 06:50:01,225 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 SENDING FINAL CHUNK: length=0
+2025-06-04 06:50:01,225 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 RETURNING RESULT: response_length=388, reasoning_length=0, tool_calls=0
+2025-06-04 06:50:01,226 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - ✅ ATOMIC: Storing user message and assistant response
+2025-06-04 06:50:01,226 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 5
+2025-06-04 06:50:01,226 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 6
+2025-06-04 06:50:01,226 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Agent processing completed
+2025-06-04 06:50:01,226 21772 MainThread ai_whisperer.channels.integration - DEBUG - Reusing session-wide router for c84d979a-3ce6-46e3-95e4-7c8fca678758, current sequence: 2
+2025-06-04 06:50:01,226 21772 MainThread ai_whisperer.channels.router - DEBUG - Processing new complete response, clearing 0 streaming sequences, current counter: 2
+2025-06-04 06:50:01,226 21772 MainThread ai_whisperer.channels.router - DEBUG - Created new sequence 3 for channel final (non-streaming)
+2025-06-04 06:50:01,226 21772 MainThread ai_whisperer.channels.storage - DEBUG - Added final message to session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:01,226 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Result type: <class 'dict'>, value: {'response': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page URL. Please provide it.", 'finish_reason': 'stop'}
+2025-06-04 06:50:01,226 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation depth to 0
+2025-06-04 06:50:01,226 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"ChannelMessageNotifi...ll,"isPartial":false}}}' [715 bytes]
+2025-06-04 06:50:01,226 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation strategy
+2025-06-04 06:50:01,226 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CHECKING CONTINUATION: result has 0 tool calls
+2025-06-04 06:50:01,226 21772 MainThread ai_whisperer.extensions.agents.continuation_strategy - INFO - No explicit continuation signal found, defaulting to TERMINATE
+2025-06-04 06:50:01,226 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'ChannelMessageNotification', 'params': {'type': 'channel_message', 'channel': 'final', 'content': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page URL. Please provide it.", 'metadata': {'sequence': 3, 'timestamp': '2025-06-04T06:50:01.226456+00:00', 'agentId': 'a', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'toolCalls': None, 'continuationDepth': None, 'isPartial': False}}}
+2025-06-04 06:50:01,226 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CONTINUATION STRATEGY DECISION: False
+2025-06-04 06:50:01,226 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CONTINUATION DECISION: False
+2025-06-04 06:50:01,227 21772 MainThread root - DEBUG - [send_user_message_handler] Message sent successfully, returning response with AI result.
+2025-06-04 06:50:01,227 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Generated response: {'jsonrpc': '2.0', 'id': 3, 'result': {'messageId': '48768009-a1b5-46ed-8f79-a4e81cf03698', 'status': 0, 'ai_response': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page URL. Please provide it.", 'tool_calls': []}}
+2025-06-04 06:50:01,227 21772 MainThread root - DEBUG - [websocket_endpoint] Sending response: {"jsonrpc": "2.0", "id": 3, "result": {"messageId": "48768009-a1b5-46ed-8f79-a4e81cf03698", "status": 0, "ai_response": "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page URL. Please provide it.", "tool_calls": []}}
+2025-06-04 06:50:01,227 21772 MainThread root - DEBUG - [websocket_endpoint] Response sent successfully
+2025-06-04 06:50:01,227 21772 MainThread root - DEBUG - [websocket_endpoint] Waiting for message...
+2025-06-04 06:50:01,227 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc": "2.0", "id": 3, "result": {"message...t.", "tool_calls": []}}' [537 bytes]
+2025-06-04 06:50:01,227 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response with id 3: {'jsonrpc': '2.0', 'id': 3, 'result': {'messageId': '48768009-a1b5-46ed-8f79-a4e81cf03698', 'status': 0, 'ai_response': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page URL. Please provide it.", 'tool_calls': []}}
+2025-06-04 06:50:01,227 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Setting result for request 3
+2025-06-04 06:50:01,227 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response for request 3: {'jsonrpc': '2.0', 'id': 3, 'result': {'messageId': '48768009-a1b5-46ed-8f79-a4e81cf03698', 'status': 0, 'ai_response': "[ANALYSIS]\nThe user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can retrieve content from a URL, I cannot infer the user's specific GitHub page URL. I need the user to provide their GitHub URL to use `fetch_url`.\n\n[COMMENTARY]\nI cannot use `fetch_url` without a specific URL.\n\n[FINAL]\nI can use `fetch_url`, but I need your GitHub page URL. Please provide it.", 'tool_calls': []}}
+2025-06-04 06:50:01,933 21771 MainThread websockets.client - DEBUG - < PING d3 dc d2 bc [binary, 4 bytes]
+2025-06-04 06:50:01,933 21771 MainThread websockets.client - DEBUG - > PONG d3 dc d2 bc [binary, 4 bytes]
+2025-06-04 06:50:01,934 21771 MainThread websockets.client - DEBUG - > PING 0e a5 44 21 [binary, 4 bytes]
+2025-06-04 06:50:01,935 21771 MainThread websockets.client - DEBUG - % sent keepalive ping
+2025-06-04 06:50:01,935 21771 MainThread websockets.client - DEBUG - < PONG 0e a5 44 21 [binary, 4 bytes]
+2025-06-04 06:50:01,935 21771 MainThread websockets.client - DEBUG - % received keepalive pong
+2025-06-04 06:50:03,241 21771 MainThread ai_whisperer.extensions.conversation_replay.conversation_processor - DEBUG - Returning message 3/3: 'DeanoC'
+2025-06-04 06:50:03,241 21771 MainThread websockets.client - DEBUG - > TEXT '{"jsonrpc": "2.0", "id": 4, "method": "sendUser..., "message": "DeanoC"}}' [142 bytes]
+2025-06-04 06:50:03,241 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - DEBUG - Sent request: sendUserMessage (id=4)
+2025-06-04 06:50:03,241 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Waiting for response to request 4 (method: sendUserMessage)
+2025-06-04 06:50:03,242 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Received message: {"jsonrpc": "2.0", "id": 4, "method": "sendUserMessage", "params": {"sessionId": "c84d979a-3ce6-46e3-95e4-7c8fca678758", "message": "DeanoC"}}
+2025-06-04 06:50:03,242 21772 MainThread root - ERROR - [send_user_message_handler] ENTRY: params={'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'message': 'DeanoC'}
+2025-06-04 06:50:03,242 21772 MainThread root - INFO - [send_user_message_handler] Found session: c84d979a-3ce6-46e3-95e4-7c8fca678758, active agent: a
+2025-06-04 06:50:03,242 21772 MainThread root - DEBUG - [send_user_message_handler] Calling session.send_user_message: DeanoC
+2025-06-04 06:50:03,242 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Processing message for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:03,242 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Reset continuation strategy for new conversation
+2025-06-04 06:50:03,242 21772 MainThread ai_whisperer.extensions.agents.prompt_optimizer - DEBUG - Optimized prompt for google/gemini-2.5-flash-preview-05-20:thinking (multi_tool strategy)
+2025-06-04 06:50:03,242 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Optimized user message for google/gemini-2.5-flash-preview-05-20:thinking
+2025-06-04 06:50:03,242 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Calling agent.process_message
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.agents.stateless - INFO - Agent a: Using 21 filtered tools
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Retrieving messages
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt exists: True
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt type: <class 'str'>
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt length: 11115
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: System prompt preview: # Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi...
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total messages: 7
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Stored messages: 6
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: First message role: system
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 RETRIEVED MESSAGES COUNT: 7
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 0: role=system content=# Alice - Autonomous Assistant
+
+You are Alice, AIW...
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 1: role=user content=Please introduce yourself briefly, mentioning your...
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 2: role=assistant content=[ANALYSIS]
+The user is asking for a self-introduct...
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 3: role=user content=can you list my public github repos?
+
+You can exec...
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 4: role=assistant content=[ANALYSIS]
+The user is asking to list their public...
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 5: role=user content=you could use fetch_url to get my github page
+
+You...
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🔍 MESSAGE 6: role=assistant content=[ANALYSIS]
+The user is suggesting `fetch_url` to a...
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - Processing with 7 messages, first message role: system
+2025-06-04 06:50:03,243 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 SENDING TO AI: 8 messages
+2025-06-04 06:50:03,244 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[0] role=system content=# Alice - Autonomous Assistant
+
+You are Alice, AIWhisperer's primary assistant. Follow ALL instructi...
+2025-06-04 06:50:03,244 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[1] role=user content=Please introduce yourself briefly, mentioning your name and what you help with.
+
+You can execute mul...
+2025-06-04 06:50:03,244 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[2] role=assistant content=[ANALYSIS]
+The user is asking for a self-introduction. I need to state my name and my core function ...
+2025-06-04 06:50:03,244 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[3] role=user content=can you list my public github repos?
+
+You can execute multiple tools in a single response.
+2025-06-04 06:50:03,244 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[4] role=assistant content=[ANALYSIS]
+The user is asking to list their public GitHub repositories. My available tools do not pr...
+2025-06-04 06:50:03,244 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[5] role=user content=you could use fetch_url to get my github page
+
+You can execute multiple tools in a single response.
+2025-06-04 06:50:03,244 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[6] role=assistant content=[ANALYSIS]
+The user is suggesting `fetch_url` to access their GitHub page. While `fetch_url` can ret...
+2025-06-04 06:50:03,244 21772 MainThread ai_whisperer.services.execution.ai_loop - DEBUG - 🚨 MSG[7] role=user content=DeanoC
+
+You can execute multiple tools in a single response.
+2025-06-04 06:50:03,244 21772 Thread-4 (run_sync) ai_whisperer.services.ai.openrouter - DEBUG - Starting OpenRouter stream for model: google/gemini-2.5-flash-preview-05-20:thinking
+2025-06-04 06:50:03,245 21772 Thread-4 (run_sync) urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): openrouter.ai:443
+2025-06-04 06:50:03,699 21772 Thread-4 (run_sync) urllib3.connectionpool - DEBUG - https://openrouter.ai:443 "POST /api/v1/chat/completions HTTP/1.1" 200 None
+2025-06-04 06:50:04,533 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [281 bytes]
+2025-06-04 06:50:04,534 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:50:04,565 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [409 bytes]
+2025-06-04 06:50:04,565 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:50:04,643 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"StreamingUpdate","pa...:"a","isPartial":true}}' [478 bytes]
+2025-06-04 06:50:04,643 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'StreamingUpdate', 'params': {'type': 'streaming_chunk', 'content': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.\n\n[COMMENTARY]\n', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'agentId': 'a', 'isPartial': True}}
+2025-06-04 06:50:04,685 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 STREAM FINISHED: finish_reason=tool_calls, response_length=299, reasoning_length=0
+2025-06-04 06:50:04,686 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 SENDING FINAL CHUNK: length=0
+2025-06-04 06:50:04,686 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - Accumulated 1 tool calls
+2025-06-04 06:50:04,686 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔧 EXECUTING TOOLS: Found 1 tool calls
+2025-06-04 06:50:04,686 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO -    Tool 1: fetch_url
+2025-06-04 06:50:04,686 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔧 TOOL STRATEGY: MULTI_TOOL_MODEL_SINGLE_CALL (google/gemini-2.5-flash-preview-05-20:thinking)
+2025-06-04 06:50:04,686 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔧 EXECUTING TOOL 1/1: fetch_url (ID: tool_0_fetch_url)
+2025-06-04 06:50:04,686 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO -    Args: {'url': 'https://github.com/DeanoC'}
+2025-06-04 06:50:04,686 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO -    🔄 Starting execution...
+2025-06-04 06:50:04,686 21772 MainThread urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): github.com:443
+2025-06-04 06:50:05,083 21772 MainThread urllib3.connectionpool - DEBUG - https://github.com:443 "GET /DeanoC HTTP/1.1" 200 None
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO -    ✅ Tool fetch_url completed in 0.495s
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - Tool fetch_url executed successfully
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔧 TOOL EXECUTION COMPLETE: 1 results
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 RETURNING RESULT: response_length=299, reasoning_length=0, tool_calls=1
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - ✅ ATOMIC: Storing user message and assistant response
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 7
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 8
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.context.agent_context - INFO - 🔍 CONTEXT TRACE [a]: Total stored messages now: 9
+2025-06-04 06:50:05,181 21772 MainThread ai_whisperer.services.execution.ai_loop - INFO - 🔄 STORED TOOL RESULT for fetch_url (ID: tool_0_fetch_url)
+2025-06-04 06:50:05,181 21772 MainThread interactive_server.stateless_session_manager - DEBUG - [send_user_message] Agent processing completed
+2025-06-04 06:50:05,182 21772 MainThread ai_whisperer.channels.integration - DEBUG - Reusing session-wide router for c84d979a-3ce6-46e3-95e4-7c8fca678758, current sequence: 3
+2025-06-04 06:50:05,182 21772 MainThread ai_whisperer.channels.router - DEBUG - Processing new complete response, clearing 0 streaming sequences, current counter: 3
+2025-06-04 06:50:05,182 21772 MainThread ai_whisperer.channels.router - DEBUG - Created new sequence 4 for channel final (non-streaming)
+2025-06-04 06:50:05,182 21772 MainThread ai_whisperer.channels.storage - DEBUG - Added final message to session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:05,182 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Result type: <class 'dict'>, value: {'response': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.\n\n[COMMENTARY]\n', 'tool_calls': [{'id': 'tool_0_fetch_url', 'type': 'function', 'function': {'name': 'fetch_url', 'arguments': '{"url":"https://github.com/DeanoC"}'}}], 'finish_reason': 'tool_calls'}
+2025-06-04 06:50:05,182 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CHECKING CONTINUATION: result has 1 tool calls
+2025-06-04 06:50:05,182 21772 MainThread interactive_server.stateless_session_manager - DEBUG - Multi-tool model google/gemini-2.5-flash-preview-05-20:thinking used only 1 tool - consider prompt optimization
+2025-06-04 06:50:05,182 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc":"2.0","method":"ChannelMessageNotifi...ll,"isPartial":false}}}' [621 bytes]
+2025-06-04 06:50:05,182 21772 MainThread ai_whisperer.extensions.agents.continuation_strategy - INFO - No explicit continuation signal found, defaulting to TERMINATE
+2025-06-04 06:50:05,182 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CONTINUATION STRATEGY DECISION: False
+2025-06-04 06:50:05,182 21772 MainThread interactive_server.stateless_session_manager - INFO - 🔄 CONTINUATION DECISION: False
+2025-06-04 06:50:05,182 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received notification: {'jsonrpc': '2.0', 'method': 'ChannelMessageNotification', 'params': {'type': 'channel_message', 'channel': 'final', 'content': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.\n\n[COMMENTARY]', 'metadata': {'sequence': 4, 'timestamp': '2025-06-04T06:50:05.182233+00:00', 'agentId': 'a', 'sessionId': 'c84d979a-3ce6-46e3-95e4-7c8fca678758', 'toolCalls': None, 'continuationDepth': None, 'isPartial': False}}}
+2025-06-04 06:50:05,182 21772 MainThread root - DEBUG - [send_user_message_handler] Message sent successfully, returning response with AI result.
+2025-06-04 06:50:05,182 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Generated response: {'jsonrpc': '2.0', 'id': 4, 'result': {'messageId': 'ed5e370f-35bd-4f63-b229-bb79c1ccde8b', 'status': 0, 'ai_response': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.\n\n[COMMENTARY]\n', 'tool_calls': [{'id': 'tool_0_fetch_url', 'type': 'function', 'function': {'name': 'fetch_url', 'arguments': '{"url":"https://github.com/DeanoC"}'}}]}}
+2025-06-04 06:50:05,183 21772 MainThread root - DEBUG - [websocket_endpoint] Sending response: {"jsonrpc": "2.0", "id": 4, "result": {"messageId": "ed5e370f-35bd-4f63-b229-bb79c1ccde8b", "status": 0, "ai_response": "[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.\n\n[COMMENTARY]\n", "tool_calls": [{"id": "tool_0_fetch_url", "type": "function", "function": {"name": "fetch_url", "arguments": "{\"url\":\"https://github.com/DeanoC\"}"}}]}}
+2025-06-04 06:50:05,183 21772 MainThread root - DEBUG - [websocket_endpoint] Response sent successfully
+2025-06-04 06:50:05,183 21772 MainThread root - DEBUG - [websocket_endpoint] Waiting for message...
+2025-06-04 06:50:05,183 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc": "2.0", "id": 4, "result": {"message...ub.com/DeanoC\\"}"}}]}}' [582 bytes]
+2025-06-04 06:50:05,183 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response with id 4: {'jsonrpc': '2.0', 'id': 4, 'result': {'messageId': 'ed5e370f-35bd-4f63-b229-bb79c1ccde8b', 'status': 0, 'ai_response': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.\n\n[COMMENTARY]\n', 'tool_calls': [{'id': 'tool_0_fetch_url', 'type': 'function', 'function': {'name': 'fetch_url', 'arguments': '{"url":"https://github.com/DeanoC"}'}}]}}
+2025-06-04 06:50:05,183 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Setting result for request 4
+2025-06-04 06:50:05,183 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response for request 4: {'jsonrpc': '2.0', 'id': 4, 'result': {'messageId': 'ed5e370f-35bd-4f63-b229-bb79c1ccde8b', 'status': 0, 'ai_response': '[ANALYSIS]\nThe user provided a potential GitHub username. I need to construct the full GitHub profile URL using this username and then use `fetch_url` to try and retrieve the content of that page. I will assume `DeanoC` is a username and construct the URL `https://github.com/DeanoC`.\n\n[COMMENTARY]\n', 'tool_calls': [{'id': 'tool_0_fetch_url', 'type': 'function', 'function': {'name': 'fetch_url', 'arguments': '{"url":"https://github.com/DeanoC"}'}}]}}
+2025-06-04 06:50:07,207 21771 MainThread websockets.client - DEBUG - > TEXT '{"jsonrpc": "2.0", "id": 5, "method": "stopSess...e3-95e4-7c8fca678758"}}' [117 bytes]
+2025-06-04 06:50:07,207 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - DEBUG - Sent request: stopSession (id=5)
+2025-06-04 06:50:07,207 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Waiting for response to request 5 (method: stopSession)
+2025-06-04 06:50:07,207 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Received message: {"jsonrpc": "2.0", "id": 5, "method": "stopSession", "params": {"sessionId": "c84d979a-3ce6-46e3-95e4-7c8fca678758"}}
+2025-06-04 06:50:07,207 21772 MainThread interactive_server.stateless_session_manager - INFO - Stopped session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:07,208 21772 MainThread interactive_server.stateless_session_manager - ERROR - Failed to send notification to client: Object of type SessionStatusNotification is not JSON serializable
+2025-06-04 06:50:07,208 21772 MainThread interactive_server.stateless_session_manager - INFO - Cleaning up session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:07,208 21772 MainThread interactive_server.stateless_session_manager - INFO - Stopped session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:07,208 21772 MainThread ai_whisperer.services.agents.ai_loop_manager - INFO - Removed AI loop for agent a
+2025-06-04 06:50:07,208 21772 MainThread ai_whisperer.services.agents.ai_loop_manager - INFO - AILoopManager cleaned up
+2025-06-04 06:50:07,208 21772 MainThread ai_whisperer.channels.storage - INFO - Cleared storage for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:07,208 21772 MainThread ai_whisperer.channels.integration - INFO - Cleared all channel data for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:07,208 21772 MainThread interactive_server.stateless_session_manager - INFO - Cleared channel data for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:07,209 21772 MainThread interactive_server.stateless_session_manager - DEBUG - No observer to stop for session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:07,209 21772 MainThread interactive_server.stateless_session_manager - INFO - Session c84d979a-3ce6-46e3-95e4-7c8fca678758 cleaned up
+2025-06-04 06:50:07,209 21772 MainThread interactive_server.stateless_session_manager - INFO - Cleaned up session c84d979a-3ce6-46e3-95e4-7c8fca678758
+2025-06-04 06:50:07,209 21772 MainThread interactive_server.stateless_session_manager - INFO - Saved 0 sessions to sessions.json
+2025-06-04 06:50:07,209 21772 MainThread root - ERROR - [websocket_endpoint] CRITICAL: Generated response: {'jsonrpc': '2.0', 'id': 5, 'result': {'status': 2}}
+2025-06-04 06:50:07,209 21772 MainThread root - DEBUG - [websocket_endpoint] Sending response: {"jsonrpc": "2.0", "id": 5, "result": {"status": 2}}
+2025-06-04 06:50:07,209 21772 MainThread root - DEBUG - [websocket_endpoint] Response sent successfully
+2025-06-04 06:50:07,209 21772 MainThread root - DEBUG - [websocket_endpoint] Waiting for message...
+2025-06-04 06:50:07,210 21771 MainThread websockets.client - DEBUG - < TEXT '{"jsonrpc": "2.0", "id": 5, "result": {"status": 2}}' [52 bytes]
+2025-06-04 06:50:07,210 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response with id 5: {'jsonrpc': '2.0', 'id': 5, 'result': {'status': 2}}
+2025-06-04 06:50:07,210 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Setting result for request 5
+2025-06-04 06:50:07,210 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - Received response for request 5: {'jsonrpc': '2.0', 'id': 5, 'result': {'status': 2}}
+2025-06-04 06:50:07,210 21771 MainThread websockets.client - DEBUG - > CLOSE 1000 (OK) [2 bytes]
+2025-06-04 06:50:07,210 21771 MainThread websockets.client - DEBUG - = connection is CLOSING
+2025-06-04 06:50:07,211 21771 MainThread websockets.client - DEBUG - < CLOSE 1000 (OK) [2 bytes]
+2025-06-04 06:50:07,211 21771 MainThread websockets.client - DEBUG - < EOF
+2025-06-04 06:50:07,211 21771 MainThread websockets.client - DEBUG - > EOF
+2025-06-04 06:50:07,211 21771 MainThread websockets.client - DEBUG - = connection is CLOSED
+2025-06-04 06:50:07,211 21771 MainThread websockets.client - DEBUG - x half-closing TCP connection
+2025-06-04 06:50:07,211 21771 MainThread ai_whisperer.extensions.conversation_replay.websocket_client - INFO - WebSocket connection closed
+2025-06-04 06:50:07,211 21772 MainThread root - ERROR - [websocket_endpoint] WebSocket error: (1000, '')
+2025-06-04 06:50:07,211 21772 MainThread root - DEBUG - [websocket_endpoint] WebSocket endpoint exiting, closing websocket.
+INFO:     connection closed
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [21772]

@@ -32,6 +32,114 @@ from ai_whisperer.channels.integration import get_channel_integration
 logger = logging.getLogger(__name__)
 
 
+def clean_malformed_json(response: str) -> str:
+    """
+    Clean up malformed JSON responses that may contain multiple JSON objects concatenated.
+    
+    Args:
+        response: The potentially malformed JSON response
+        
+    Returns:
+        A cleaned up JSON string or the original response if not JSON
+    """
+    if not response.strip().startswith('{'):
+        return response
+    
+    # Try to find the first complete JSON object
+    brace_count = 0
+    first_json_end = -1
+    
+    for i, char in enumerate(response):
+        if char == '{':
+            brace_count += 1
+        elif char == '}':
+            brace_count -= 1
+            if brace_count == 0:
+                first_json_end = i
+                break
+    
+    if first_json_end > 0:
+        # Extract just the first JSON object
+        first_json = response[:first_json_end + 1]
+        try:
+            # Validate it's proper JSON
+            json.loads(first_json)
+            return first_json
+        except json.JSONDecodeError:
+            pass
+    
+    # If we can't extract clean JSON, return original
+    return response
+
+
+def normalize_response_to_json(response: str, is_structured: bool = False) -> Dict[str, Any]:
+    """
+    Normalize any AI response to a consistent JSON structure.
+    
+    Args:
+        response: The AI response (could be JSON or plain text)
+        is_structured: Whether the response is already structured JSON
+        
+    Returns:
+        Dictionary with analysis/commentary/final structure
+    """
+    # Clean up potentially malformed JSON first
+    if isinstance(response, str) and response.strip().startswith('{'):
+        response = clean_malformed_json(response)
+    
+    # If already valid JSON with expected structure, return as-is
+    if is_structured or (isinstance(response, str) and response.strip().startswith('{')):
+        try:
+            data = json.loads(response)
+            if isinstance(data, dict) and all(key in data for key in ['analysis', 'commentary', 'final']):
+                return data
+        except json.JSONDecodeError:
+            pass
+    
+    # Check for marker-based format
+    if '[FINAL]' in response or '[ANALYSIS]' in response or '[COMMENTARY]' in response:
+        analysis = ""
+        commentary = ""
+        final = ""
+        
+        # Extract sections using regex
+        analysis_match = re.search(r'\[ANALYSIS\](.*?)(?=\[COMMENTARY\]|\[FINAL\]|$)', response, re.DOTALL)
+        if analysis_match:
+            analysis = analysis_match.group(1).strip()
+            
+        commentary_match = re.search(r'\[COMMENTARY\](.*?)(?=\[FINAL\]|$)', response, re.DOTALL)
+        if commentary_match:
+            commentary = commentary_match.group(1).strip()
+            
+        final_match = re.search(r'\[FINAL\](.*?)(?=$)', response, re.DOTALL)
+        if final_match:
+            final = final_match.group(1).strip()
+        else:
+            # If no FINAL marker but has other markers, remaining content is final
+            # Remove all marked sections to get remaining content
+            remaining = response
+            if analysis_match:
+                remaining = remaining.replace(analysis_match.group(0), '')
+            if commentary_match:
+                remaining = remaining.replace(commentary_match.group(0), '')
+            remaining = remaining.strip()
+            if remaining:
+                final = remaining
+                
+        return {
+            "analysis": analysis,
+            "commentary": commentary,
+            "final": final
+        }
+    
+    # Plain text response - everything goes to 'final'
+    return {
+        "analysis": "",
+        "commentary": "",
+        "final": response
+    }
+
+
 class StatelessInteractiveSession:
     """
     Interactive session using StatelessAgent architecture.
@@ -456,9 +564,9 @@ class StatelessInteractiveSession:
             model_name = agent.config.model_name if hasattr(agent.config, 'model_name') else \
                         self.config.get('openrouter', {}).get('model', '')
             
-            if model_name:
+            if model_name and not is_continuation:
                 from ai_whisperer.extensions.agents.prompt_optimizer import optimize_user_message
-                optimized_message = optimize_user_message(message, model_name, self.active_agent)
+                optimized_message = optimize_user_message(message, model_name, self.active_agent, is_continuation)
                 if optimized_message != message:
                     logger.debug(f"Optimized user message for {model_name}")
                     message = optimized_message
@@ -479,52 +587,142 @@ class StatelessInteractiveSession:
             
             # Note: Don't reset streaming sequences - let router handle sequence numbering naturally
             
-            # Create streaming callback with proper channel support
+            # Create streaming callback - parse structured JSON before sending
             chunk_buffer = []  # Buffer for accumulating chunks
-            processed_length = 0  # Track how much content we've already processed
-            structured_output_enabled = False  # Will be set based on kwargs
+            is_json_format = False  # Track if we detect JSON format
+            last_display_content = ""  # Track last sent content to avoid duplicates
+            detected_structured = False  # Track if we've detected structured output format
             
             async def send_chunk(chunk: str):
                 """Send a chunk of AI response to the client"""
-                nonlocal processed_length
+                nonlocal is_json_format, last_display_content, detected_structured
                 try:
                     # Check if WebSocket is still connected
                     if self.websocket is None:
                         logger.warning(f"WebSocket disconnected for session {self.session_id}, skipping chunk")
                         return
                     
-                    # Accumulate chunks for display but don't create channel messages during streaming
-                    # We'll only send the final complete message through the channel system
+                    # Accumulate chunks
                     chunk_buffer.append(chunk)
                     accumulated_content = ''.join(chunk_buffer)
                     
-                    # Only process new content that we haven't seen before
-                    if len(accumulated_content) > processed_length:
-                        # Send raw streaming update directly without going through channel system
-                        # This avoids creating duplicate sequence numbers
-                        if accumulated_content.strip():
-                            # Check if this looks like markdown-wrapped JSON and we're expecting structured output
-                            display_content = accumulated_content
-                            if structured_output_enabled and accumulated_content.strip().startswith('```'):
-                                # Try to clean markdown wrapper for display
+                    # Try to detect format from accumulated content
+                    if not is_json_format and accumulated_content.strip():
+                        is_json_format = accumulated_content.strip().startswith('{')
+                    
+                    # Check if this response contains tool calls - if so, don't stream (backend-only operation)
+                    contains_tool_calls = (
+                        '"tool_calls"' in accumulated_content or 
+                        '"function_calls"' in accumulated_content
+                    )
+                    
+                    if contains_tool_calls:
+                        # Tool calls are backend-only - don't stream to frontend
+                        logger.debug("Suppressing streaming for tool call response")
+                        return
+                    
+                    # Parse structured content if it looks like JSON
+                    if is_json_format or detected_structured:
+                        content_stripped = accumulated_content.strip()
+                        
+                        # Check if this looks like our structured format
+                        if not detected_structured and ('"analysis"' in content_stripped or '"commentary"' in content_stripped or '"final"' in content_stripped):
+                            detected_structured = True
+                            logger.debug("Detected structured output format")
+                        
+                        if detected_structured:
+                            # CRITICAL: If we have analysis/commentary but NO final field, this is likely
+                            # a response that's building up to tool calls. Don't stream it.
+                            if '"final"' not in content_stripped:
+                                logger.debug("Suppressing structured content without final field (likely tool call preparation)")
+                                return
+                            
+                            try:
+                                # For partial responses, try to fix incomplete JSON
+                                open_braces = content_stripped.count('{')
+                                close_braces = content_stripped.count('}')
+                                if open_braces > close_braces:
+                                    test_content = content_stripped + '}' * (open_braces - close_braces)
+                                else:
+                                    test_content = content_stripped
+                                
+                                # Try to parse
+                                data = json.loads(test_content)
+                                
+                                # Check if it has our expected structure
+                                if 'analysis' in data or 'commentary' in data or 'final' in data:
+                                    # This is structured output - extract only the final content
+                                    display_content = data.get('final', '')
+                                    
+                                    # Only send if we have new content to display
+                                    if display_content and display_content != last_display_content:
+                                        await self.websocket.send_json({
+                                            "jsonrpc": "2.0",
+                                            "method": "StreamingUpdate",
+                                            "params": {
+                                                "type": "streaming_chunk",
+                                                "content": display_content,  # Send only the 'final' field
+                                                "sessionId": self.session_id,
+                                                "agentId": self.active_agent,
+                                                "isPartial": True,
+                                                "format": "text",  # Always text for display
+                                                "isStructured": True,  # Flag that this came from structured output
+                                                "metadata": {
+                                                    "analysis": data.get('analysis', ''),
+                                                    "commentary": data.get('commentary', '')
+                                                }
+                                            }
+                                        })
+                                        last_display_content = display_content
+                                    return
+                            except json.JSONDecodeError:
+                                # For incomplete JSON during streaming, try to extract partial final field
                                 import re
-                                cleaned = re.sub(r"^```[a-zA-Z]*\n?(.*?)(?:\n?```)?$", r"\1", accumulated_content.strip(), flags=re.DOTALL)
-                                if cleaned != accumulated_content.strip():
-                                    display_content = cleaned
-                            
-                            await self.websocket.send_json({
-                                "jsonrpc": "2.0",
-                                "method": "StreamingUpdate",
-                                "params": {
-                                    "type": "streaming_chunk",
-                                    "content": display_content,
-                                    "sessionId": self.session_id,
-                                    "agentId": self.active_agent,
-                                    "isPartial": True
-                                }
-                            })
-                            
-                            processed_length = len(accumulated_content)
+                                final_match = re.search(r'"final"\s*:\s*"([^"]*)', content_stripped)
+                                if final_match:
+                                    display_content = final_match.group(1)
+                                    # Unescape JSON string
+                                    display_content = display_content.replace('\\n', '\n').replace('\\"', '"')
+                                    if display_content and display_content != last_display_content:
+                                        await self.websocket.send_json({
+                                            "jsonrpc": "2.0",
+                                            "method": "StreamingUpdate",
+                                            "params": {
+                                                "type": "streaming_chunk",
+                                                "content": display_content,
+                                                "sessionId": self.session_id,
+                                                "agentId": self.active_agent,
+                                                "isPartial": True,
+                                                "format": "text",
+                                                "isStructured": True
+                                            }
+                                        })
+                                        last_display_content = display_content
+                                    return
+                                else:
+                                    # If we can't extract final yet, don't send anything
+                                    return
+                    
+                    # IMPORTANT: If we detected JSON format but haven't processed it above,
+                    # don't send raw JSON chunks to avoid exposing internal structure
+                    if is_json_format:
+                        logger.debug("Suppressing raw JSON chunk to prevent wrapper exposure")
+                        return
+                    
+                    # For non-structured content, send as-is
+                    await self.websocket.send_json({
+                        "jsonrpc": "2.0",
+                        "method": "StreamingUpdate",
+                        "params": {
+                            "type": "streaming_chunk",
+                            "content": accumulated_content,  # Send full accumulated content
+                            "sessionId": self.session_id,
+                            "agentId": self.active_agent,
+                            "isPartial": True,
+                            "format": "text",
+                            "rawContent": True
+                        }
+                    })
                     
                     # Reduce debug spam - only log significant chunks
                     if len(accumulated_content) % 100 == 0:  # Log every 100 chars
@@ -542,12 +740,10 @@ class StatelessInteractiveSession:
             if self._should_use_structured_output_for_plan(agent, message):
                 kwargs['response_format'] = self._get_plan_generation_schema()
                 logger.info("Enabling structured output for plan generation")
-                structured_output_enabled = True
             # Check if we should use structured channel output
             elif self._should_use_structured_channel_output(agent):
                 kwargs['response_format'] = self._get_channel_response_schema()
                 logger.info("Enabling structured output for channel responses")
-                structured_output_enabled = True
             # Otherwise, check if we should use structured continuation output
             elif self._should_use_structured_continuation(agent):
                 # Check if model has quirks about tools with structured output
@@ -561,11 +757,9 @@ class StatelessInteractiveSession:
                     else:
                         kwargs['response_format'] = self._get_continuation_schema()
                         logger.info("Enabling structured output for continuation protocol")
-                        structured_output_enabled = True
                 else:
                     kwargs['response_format'] = self._get_continuation_schema()
                     logger.info("Enabling structured output for continuation protocol")
-                    structured_output_enabled = True
             
             # Process message with streaming
             logger.debug(f"[send_user_message] Calling agent.process_message")
@@ -581,60 +775,104 @@ class StatelessInteractiveSession:
                     'error': f'Unexpected result type: {type(result)}'
                 }
             
+            # Mark if structured output was used so frontend knows to parse JSON
+            if result.get('used_structured_output'):
+                result['_structured_output'] = True
+            
             # Process final message through channel integration to get proper final sequences
-            if result.get('response'):
+            if result.get('response') or result.get('used_structured_output'):
                 final_content = result.get('response', '')
+                
+                # CRITICAL: Check if this is partial JSON that shouldn't be displayed
+                if isinstance(final_content, str) and final_content.strip():
+                    content_stripped = final_content.strip()
+                    # Check for partial JSON patterns that indicate tool preparation
+                    if (content_stripped.startswith('{') and 
+                        '"analysis"' in content_stripped and 
+                        '"commentary"' in content_stripped and
+                        '"final"' not in content_stripped):
+                        # This is partial JSON without a final field - likely tool preparation
+                        logger.info("Detected partial JSON without final field - suppressing channel output")
+                        # Skip channel processing entirely for this response
+                        final_content = ''
                 
                 # Try to parse JSON response whether or not structured output was formally used
                 # Models might return JSON based on prompt instructions even without response_format
+                normalized_response = None
                 if isinstance(final_content, str) and final_content.strip().startswith('{'):
                     try:
                         parsed_response = json.loads(final_content)
                         if isinstance(parsed_response, dict):
                             # Check if it's a channel response
                             if all(key in parsed_response for key in ['analysis', 'commentary', 'final']):
-                                # This is a structured channel response
-                                # Use the 'final' field as the actual response
-                                final_content = parsed_response['final']
-                                result['response'] = final_content
-                                # The channel router will handle the full structured response
-                                result['structured_channel_response'] = parsed_response
-                                logger.info("Parsed structured channel response (JSON in text)")
+                                # This is already a structured channel response
+                                normalized_response = parsed_response
+                                logger.info("Response is already in structured channel format")
                             elif 'response' in parsed_response:
-                                # This is a continuation response
-                                final_content = parsed_response['response']
-                                result['response'] = final_content
+                                # This is a continuation response - normalize it
+                                normalized_response = normalize_response_to_json(parsed_response['response'])
                                 # Also extract continuation info if present
                                 if 'continuation' in parsed_response:
                                     result['continuation'] = parsed_response['continuation']
-                                logger.debug("Parsed structured continuation response")
+                                # Check for tool_calls in the JSON response
+                                if 'tool_calls' in parsed_response and parsed_response['tool_calls']:
+                                    result['tool_calls'] = parsed_response['tool_calls']
+                                    result['finish_reason'] = 'tool_calls'
+                                    logger.info(f"Extracted {len(parsed_response['tool_calls'])} tool calls from structured response")
+                                logger.debug("Normalized continuation response to JSON format")
                     except json.JSONDecodeError:
-                        logger.debug("Response looks like JSON but failed to parse, using raw content")
+                        logger.debug("Response looks like JSON but failed to parse, will normalize as text")
                 
-                # Process the final response through channel integration
-                # If we have a structured channel response, pass the full JSON
-                if result.get('structured_channel_response'):
-                    # Pass the full structured response as JSON string
+                # If not already normalized, normalize the response
+                if normalized_response is None:
+                    normalized_response = normalize_response_to_json(final_content)
+                    logger.debug("Normalized text response to JSON format")
+                
+                # Send response through channel integration
+                # For structured responses, only send the final content to avoid JSON exposure
+                if isinstance(normalized_response, dict):
+                    # Extract display content - use final field if available, otherwise empty
+                    display_content = normalized_response.get('final', '')
+                    
+                    # If there's no final field but there are tool calls coming, suppress the display
+                    if not display_content and result.get('tool_calls'):
+                        logger.debug("Suppressing channel message for tool call preparation (no final field)")
+                        final_channel_messages = []  # Don't send anything to channels
+                    else:
+                        # Process through channel integration as plain text
+                        final_channel_messages = self.channel_integration.process_ai_response(
+                            self.session_id,
+                            display_content,
+                            agent_id=self.active_agent,
+                            is_partial=False,
+                            is_structured=False  # Plain text content
+                        )
+                        
+                        # Enhance metadata with structured response data
+                        for msg in final_channel_messages:
+                            if msg.get('channel') == 'final' and 'metadata' in msg:
+                                msg['metadata']['structuredResponse'] = normalized_response
+                                msg['metadata']['analysis'] = normalized_response.get('analysis', '')
+                                msg['metadata']['commentary'] = normalized_response.get('commentary', '')
+                else:
+                    # For plain text responses, send as-is
                     final_channel_messages = self.channel_integration.process_ai_response(
                         self.session_id,
-                        json.dumps(result['structured_channel_response']),
+                        str(normalized_response) if not isinstance(normalized_response, str) else normalized_response,
                         agent_id=self.active_agent,
                         is_partial=False,
-                        is_structured=True
-                    )
-                else:
-                    # Process normally
-                    final_channel_messages = self.channel_integration.process_ai_response(
-                        self.session_id,
-                        final_content,
-                        agent_id=self.active_agent,
-                        is_partial=False  # This is the key - marks it as a final complete message
+                        is_structured=False
                     )
                 
                 # Send final channel messages with proper sequence numbers
                 for channel_msg in final_channel_messages:
                     if self.websocket is not None:
                         try:
+                            # Add response format info to the channel message
+                            if channel_msg.get('channel') == 'final':
+                                channel_msg['metadata']['responseFormat'] = 'json'
+                                channel_msg['metadata']['fullResponse'] = normalized_response
+                            
                             await self.websocket.send_json({
                                 "jsonrpc": "2.0",
                                 "method": "ChannelMessageNotification",
@@ -723,6 +961,36 @@ class StatelessInteractiveSession:
                             logger.debug("Parsed structured output response from tool processing")
                     except json.JSONDecodeError:
                         logger.debug("Tool response is not JSON, using raw content")
+                
+                # Normalize the tool response through channel integration
+                if tool_response_result.get('response'):
+                    normalized_tool_response = normalize_response_to_json(tool_response_result['response'])
+                    tool_channel_messages = self.channel_integration.process_ai_response(
+                        self.session_id,
+                        json.dumps(normalized_tool_response),
+                        agent_id=self.active_agent,
+                        is_partial=False,
+                        is_structured=True
+                    )
+                    
+                    # Send tool response channel messages
+                    for channel_msg in tool_channel_messages:
+                        if self.websocket is not None:
+                            try:
+                                # Add response format info
+                                if channel_msg.get('channel') == 'final':
+                                    channel_msg['metadata']['responseFormat'] = 'json'
+                                    channel_msg['metadata']['fullResponse'] = normalized_tool_response
+                                
+                                await self.websocket.send_json({
+                                    "jsonrpc": "2.0",
+                                    "method": "ChannelMessageNotification",
+                                    "params": channel_msg
+                                })
+                            except Exception as e:
+                                logger.error(f"Error sending tool response channel message: {e}")
+                                if "closed" in str(e).lower():
+                                    self.websocket = None
                 
                 # Store the final AI response
                 if tool_response_result.get('response') and not tool_response_result.get('error'):

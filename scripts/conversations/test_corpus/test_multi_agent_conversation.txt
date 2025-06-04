@@ -1,0 +1,4 @@
+# Test agent switching and continuation
+@ask Patricia to create an RFC for a new feature
+The feature should be a command history system
+@ask Alice to summarize the RFC

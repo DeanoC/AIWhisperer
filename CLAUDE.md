@@ -15,6 +15,17 @@ AIWhisperer is a Python CLI tool that uses AI models via OpenRouter to automate 
 - Any new functionality (including prompt changes) that involves AI or agents must pass AI conversation replay tests
 - Use Debbie to evaluate AI responses if complex evaluation is needed
 
+**Before fixing conversation issues:**
+1. Create a test conversation file that reproduces the issue
+2. Run conversation replay to verify the issue exists
+3. Implement the fix
+4. Run conversation replay again to verify the fix works
+5. Add the test to the regression suite in `tests/integration/conversation_replay/`
+
+**Test corpus location:** `scripts/conversations/test_corpus/`
+- Contains standard test conversations for common issues
+- Run individual tests: `python -m ai_whisperer.interfaces.cli.main --config config/main.yaml replay scripts/conversations/test_corpus/test_<issue_name>.txt`
+
 ## CRITICAL: Configuration Requirements
 
 **ALL real AI invocations require a config file with OpenRouter API key:**

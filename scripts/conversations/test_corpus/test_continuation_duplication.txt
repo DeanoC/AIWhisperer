@@ -1,0 +1,4 @@
+# Test for duplicate continuation prompts
+Create a detailed plan for building a web scraper
+ok
+continue

@@ -37,12 +37,12 @@ export function useChannels(aiService?: AIService): UseChannelsResult {
     const handleChannelMessage = (message: ChannelMessage) => {
       console.log('[useChannels] Received channel message:', message);
       
-      // Special handling for streaming updates (sequence 1 with isPartial=true)
-      if (message.metadata.isPartial && message.metadata.sequence === 1) {
+      // Special handling for streaming updates (marked with isStreaming flag or sequence -1)
+      if (message.metadata.isStreaming || (message.metadata.isPartial && message.metadata.sequence === -1)) {
         // This is a streaming update - find and update the most recent streaming message for this channel/agent
         setChannelMessages(prev => {
           const existingIndex = prev.findIndex(
-            m => m.metadata.isPartial && 
+            m => (m.metadata.isStreaming || m.metadata.sequence === -1) && 
                  m.metadata.agentId === message.metadata.agentId &&
                  m.channel === message.channel
           );
@@ -87,7 +87,7 @@ export function useChannels(aiService?: AIService): UseChannelsResult {
           // If no exact sequence match, look for streaming message to replace
           if (existingIndex === -1) {
             existingIndex = prev.findIndex(
-              m => m.metadata.isPartial && 
+              m => (m.metadata.isStreaming || m.metadata.sequence === -1) && 
                    m.metadata.agentId === message.metadata.agentId &&
                    m.channel === message.channel
             );

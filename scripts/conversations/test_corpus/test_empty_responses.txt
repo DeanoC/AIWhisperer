@@ -1,0 +1,5 @@
+# Test for empty AI responses
+What is 2+2?
+ok
+yes
+continue

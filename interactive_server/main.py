@@ -65,6 +65,7 @@ import json
 import inspect
 import asyncio
 import uuid
+import re
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from ai_whisperer.core.config import load_config
@@ -429,6 +430,51 @@ async def send_user_message_handler(params, websocket=None):
         # Add the AI response to the result
         if result and isinstance(result, dict):
             response['ai_response'] = result.get('response', '')
+            # Validate that we're not sending raw JSON
+            if response['ai_response'] and isinstance(response['ai_response'], str):
+                content = response['ai_response'].strip()
+                
+                # First check for broken/malformed JSON patterns
+                if '"final":' in content and not content.startswith('{'):
+                    # This is broken JSON - extract what we can
+                    logging.error(f"[send_user_message_handler] ERROR: Malformed JSON detected!")
+                    # Try to extract text before the JSON fragment using regex
+                    # Look for patterns where JSON starts (common patterns: '",\n{', '"\n{', '",{')
+                    match = re.search(r'^(.*?)["\']\s*[,]?\s*[\n]?\s*\{', content, re.DOTALL)
+                    if match:
+                        extracted_text = match.group(1).strip().strip('"\'')
+                        response['ai_response'] = extracted_text
+                        logging.info(f"[send_user_message_handler] Extracted text before JSON fragment")
+                    else:
+                        # Fallback: try to find where JSON object starts
+                        json_obj_start = content.find('{')
+                        if json_obj_start > 0:
+                            response['ai_response'] = content[:json_obj_start].strip().strip('"\'')
+                            logging.info(f"[send_user_message_handler] Extracted text before '{{' character")
+                        else:
+                            response['ai_response'] = ''
+                            logging.warning(f"[send_user_message_handler] Could not salvage malformed JSON")
+                
+                # Check if this is structured JSON (has analysis or commentary fields)
+                elif content.startswith('{') and ('analysis' in content or 'commentary' in content):
+                    # This looks like raw structured JSON
+                    logging.error(f"[send_user_message_handler] ERROR: Raw JSON detected in ai_response!")
+                    # Try to extract just the final field if it exists
+                    try:
+                        import json
+                        parsed = json.loads(content)
+                        if 'final' in parsed and parsed['final']:
+                            response['ai_response'] = parsed['final']
+                            logging.info(f"[send_user_message_handler] Extracted final field from JSON")
+                        else:
+                            # No final field - this is likely a tool call preparation
+                            # Don't send the raw JSON analysis/commentary to the user
+                            response['ai_response'] = ''
+                            logging.info(f"[send_user_message_handler] Suppressed JSON without final field")
+                    except:
+                        # If we can't parse it, suppress it
+                        response['ai_response'] = ''
+                        logging.warning(f"[send_user_message_handler] Failed to parse JSON, suppressing raw content")
             response['tool_calls'] = result.get('tool_calls', [])
         
         logging.debug(f"[send_user_message_handler] Message sent successfully, returning response with AI result.")
@@ -780,6 +826,54 @@ async def handle_websocket_message(websocket, data):
             # Other notifications - do nothing
             return None
 
+def validate_ai_response(response_data):
+    """
+    Validate and clean AI response data to ensure no raw JSON structures are sent to users.
+    
+    This function checks if the AI response contains raw JSON with analysis/commentary/final fields
+    and extracts just the 'final' field content if found.
+    
+    Args:
+        response_data: The response data dictionary that may contain an 'ai_response' field
+    
+    Returns:
+        The cleaned response data
+    """
+    if not isinstance(response_data, dict):
+        return response_data
+        
+    # Check if there's an ai_response field to validate
+    if 'ai_response' in response_data and isinstance(response_data['ai_response'], str):
+        content = response_data['ai_response'].strip()
+        
+        # Check if it looks like raw JSON with channel structure
+        if content.startswith('{'):
+            try:
+                parsed = json.loads(content)
+                if isinstance(parsed, dict):
+                    # Check for channel response format (analysis/commentary/final)
+                    if all(key in parsed for key in ['analysis', 'commentary', 'final']):
+                        # Extract just the final field
+                        response_data['ai_response'] = parsed['final']
+                        logger.info("[validate_ai_response] Extracted 'final' field from channel JSON structure")
+                    # Check for continuation response format
+                    elif 'response' in parsed:
+                        # Extract the response field
+                        response_data['ai_response'] = parsed['response']
+                        logger.info("[validate_ai_response] Extracted 'response' field from continuation JSON structure")
+            except json.JSONDecodeError:
+                # Not valid JSON, leave as is
+                pass
+            except Exception as e:
+                logger.error(f"[validate_ai_response] Unexpected error during validation: {e}")
+    
+    # Also check the 'result' field if it contains response data
+    if 'result' in response_data and isinstance(response_data['result'], dict):
+        response_data['result'] = validate_ai_response(response_data['result'])
+    
+    return response_data
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -804,7 +898,9 @@ async def websocket_endpoint(websocket: WebSocket):
             logging.error(f"[websocket_endpoint] CRITICAL: Generated response: {response}")
             
             if response:  # Only send response for requests (not notifications)
-                response_text = json.dumps(response)
+                # Validate the response before sending to ensure no raw JSON structures
+                validated_response = validate_ai_response(response)
+                response_text = json.dumps(validated_response)
                 logging.debug(f"[websocket_endpoint] Sending response: {response_text}")
                 await websocket.send_text(response_text)
                 logging.debug("[websocket_endpoint] Response sent successfully")

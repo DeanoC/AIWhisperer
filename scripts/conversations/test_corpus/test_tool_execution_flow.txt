@@ -1,0 +1,3 @@
+# Test tool execution with structured output
+Search for Python files containing 'async def'
+Now read the first file you found

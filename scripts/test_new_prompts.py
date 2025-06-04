@@ -347,6 +347,7 @@ class PromptTestRunner:
                     if violations:
                         print(f"    - Violations: {violations}")
         
+        results_file = self.results_dir / f"prompt_test_results_{timestamp}.json"
         print(f"\nFull results saved to: {results_file}")
         print(f"Report saved to: {report_file}")
 

@@ -224,7 +224,19 @@ class StatelessAILoop:
                     
                     # Handle content and reasoning
                     if response_data.get('response'):
-                        assistant_message['content'] = response_data['response']
+                        # Clean the response before storing to prevent JSON leakage
+                        content = response_data['response']
+                        if isinstance(content, str) and content.strip().startswith('{'):
+                            # This might be structured JSON - check if it has analysis/commentary without final
+                            if '"analysis"' in content and '"commentary"' in content and '"final"' not in content:
+                                # This is partial JSON without user-facing content - don't store it
+                                logger.warning("Suppressing partial JSON from being stored in context")
+                                assistant_message['content'] = "[Processing...]"
+                            else:
+                                # Store as-is
+                                assistant_message['content'] = content
+                        else:
+                            assistant_message['content'] = content
                     elif response_data.get('reasoning'):
                         # If we only have reasoning, use it as content for now
                         assistant_message['content'] = response_data['reasoning']

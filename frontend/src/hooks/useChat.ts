@@ -46,7 +46,9 @@ export function useChat(options?: ChatOptions) {
     if (finalized.current) return; // Prevent double-finalizing
     console.log('[useChat.appendAIChunk] called with:', chunk);
     setCurrentAIMessage((prev) => {
-      const next = prev + (chunk.content || '');
+      // For streaming updates, replace the content instead of appending
+      // This prevents duplication when JSON is being built incrementally
+      const next = chunk.content || '';
       if (chunk.isFinal) {
         if (next.trim()) {
           const msg: ChatMessage = {
