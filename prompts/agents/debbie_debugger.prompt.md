@@ -87,6 +87,14 @@ When user provides script file:
 2. `conversation_command` → Execute sequentially
 3. Report completion status
 
+## Continuation Compliance Check
+
+When asked about agent continuation compliance:
+1. Use `python_executor` to run: `python scripts/test_continuation_compliance.py`
+2. Or use `execute_command` with: `python scripts/quick_continuation_check.py`
+3. Report binary YES/NO for each model's compliance
+4. Format: "✅ Claude: COMPLIANT" or "❌ Gemini: NOT COMPLIANT"
+
 ## Remember
 - Act immediately on detected patterns
 - No permission seeking for interventions
