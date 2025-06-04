@@ -12,6 +12,8 @@ Capabilities:
 Known Quirks:
 - no_tools_with_structured_output: Model cannot use structured output when tools are enabled
   (e.g., Gemini models return "Function calling with response mime type: 'application/json' is unsupported")
+- structured_output_hidden: Model supports structured output but reports it doesn't in capability tests
+  (e.g., Anthropic Claude 3.5+ models support it via OpenRouter despite reporting otherwise)
 """
 
 import logging
@@ -23,16 +25,16 @@ logger = logging.getLogger(__name__)
 MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
     # OpenAI models
     "openai/gpt-4": {
-        "multi_tool": True,
-        "parallel_tools": True,
-        "max_tools_per_turn": 10,
+        "multi_tool": False,  # Testing shows it only supports single tool per turn
+        "parallel_tools": False,
+        "max_tools_per_turn": 1,
         "structured_output": False,  # Original GPT-4 doesn't support structured outputs
         "quirks": {}
     },
     "openai/gpt-4-turbo": {
         "multi_tool": True,
         "parallel_tools": True,
-        "max_tools_per_turn": 10,
+        "max_tools_per_turn": 10,  # Can likely do more, but tested with 2
         "structured_output": False,  # GPT-4 Turbo doesn't support structured outputs
         "quirks": {}
     },
@@ -57,40 +59,54 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "structured_output": False,  # GPT-3.5 doesn't support structured outputs
         "quirks": {}
     },
+    "openai/gpt-4.1": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": True,
+        "quirks": {}
+    },
+    "openai/gpt-4.1-mini": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": True,
+        "quirks": {}
+    },
     
     # Anthropic models (Claude)
     "anthropic/claude-3-opus": {
         "multi_tool": True,
         "parallel_tools": True,
         "max_tools_per_turn": 10,
-        "structured_output": False,  # Claude 3 doesn't support OpenAI-style structured outputs
-        "quirks": {}
+        "structured_output": True,  # Supports via OpenRouter despite reporting otherwise
+        "quirks": {"structured_output_hidden": True}
     },
     "anthropic/claude-3-sonnet": {
-        "multi_tool": True,
-        "parallel_tools": True,
-        "max_tools_per_turn": 10,
-        "structured_output": False,
+        "multi_tool": False,  # Testing shows it only supports single tool per turn
+        "parallel_tools": False,
+        "max_tools_per_turn": 1,
+        "structured_output": True,  # Testing shows it does support structured output via OpenRouter
         "quirks": {}
     },
     "anthropic/claude-3-5-sonnet": {
         "multi_tool": True,
         "parallel_tools": True,
         "max_tools_per_turn": 10,
-        "structured_output": False,
+        "structured_output": True,  # Testing shows it does support structured output via OpenRouter
         "quirks": {}
     },
     "anthropic/claude-3-5-sonnet-latest": {
         "multi_tool": True,
         "parallel_tools": True,
         "max_tools_per_turn": 10,
-        "structured_output": False,
-        "quirks": {}
+        "structured_output": True,  # Supports via OpenRouter despite reporting otherwise
+        "quirks": {"structured_output_hidden": True}
     },
     "anthropic/claude-3-haiku": {
-        "multi_tool": True,
-        "parallel_tools": True,
-        "max_tools_per_turn": 10,
+        "multi_tool": False,  # Testing shows it only supports single tool per turn
+        "parallel_tools": False,
+        "max_tools_per_turn": 1,
         "structured_output": False,
         "quirks": {}
     },
@@ -98,36 +114,36 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "multi_tool": True,
         "parallel_tools": True,
         "max_tools_per_turn": 10,
-        "structured_output": False,
-        "quirks": {}
+        "structured_output": True,  # Supports via OpenRouter despite reporting otherwise
+        "quirks": {"structured_output_hidden": True}
     },
     "anthropic/claude-3-5-haiku-latest": {
         "multi_tool": True,
         "parallel_tools": True,
         "max_tools_per_turn": 10,
-        "structured_output": False,
-        "quirks": {}
-    },
-    "anthropic/claude-3-haiku": {
-        "multi_tool": True,
-        "parallel_tools": True,
-        "max_tools_per_turn": 10,
-        "structured_output": False,
-        "quirks": {}
+        "structured_output": True,  # Supports via OpenRouter despite reporting otherwise
+        "quirks": {"structured_output_hidden": True}
     },
     "anthropic/claude-3.5-sonnet": {
         "multi_tool": False,  # Claude 3.5 Sonnet is single-tool per turn
         "parallel_tools": False,
         "max_tools_per_turn": 1,
-        "structured_output": False,
-        "quirks": {}
+        "structured_output": True,  # Supports via OpenRouter despite reporting otherwise
+        "quirks": {"structured_output_hidden": True}
     },
     "anthropic/claude-sonnet-4": {
         "multi_tool": True,  # Claude 4 Sonnet supports multiple tools per turn
         "parallel_tools": True,
         "max_tools_per_turn": 10,
-        "structured_output": False,
-        "quirks": {}
+        "structured_output": True,  # Supports via OpenRouter despite reporting otherwise
+        "quirks": {"structured_output_hidden": True}
+    },
+    "anthropic/claude-4-opus": {
+        "multi_tool": True,  # Claude 4 Opus should support multiple tools per turn
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
+        "structured_output": True,  # Supports via OpenRouter despite reporting otherwise
+        "quirks": {"structured_output_hidden": True}
     },
     "anthropic/claude-2.1": {
         "multi_tool": True,
@@ -135,6 +151,13 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "max_tools_per_turn": 5,
         "structured_output": False,
         "quirks": {}
+    },
+    "anthropic/claude-3.7-sonnet": {
+        "multi_tool": False,  # Testing shows it only supports single tool per turn
+        "parallel_tools": False,
+        "max_tools_per_turn": 1,
+        "structured_output": True,  # Supports via OpenRouter despite reporting otherwise
+        "quirks": {"structured_output_hidden": True}
     },
     
     # Google models
@@ -180,13 +203,55 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "structured_output": True,  # Supports via response_mime_type
         "quirks": {"no_tools_with_structured_output": True}
     },
+    "google/gemini-2.5-flash-preview-04-17": {
+        "multi_tool": True,  # Gemini 2.5 supports multiple tools per turn
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": True,  # Supports via response_mime_type
+        "quirks": {"no_tools_with_structured_output": True}
+    },
+    "google/gemini-2.5-flash-preview-05-20": {
+        "multi_tool": True,  # Gemini 2.5 supports multiple tools per turn
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": True,  # Supports via response_mime_type
+        "quirks": {"no_tools_with_structured_output": True}
+    },
+    "google/gemini-2.5-pro-preview": {
+        "multi_tool": True,  # Gemini 2.5 supports multiple tools per turn
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": True,  # Supports via response_mime_type
+        "quirks": {"no_tools_with_structured_output": True}
+    },
+    "google/gemini-flash-1.5": {
+        "multi_tool": False,  # Testing shows no tool support
+        "parallel_tools": False,
+        "max_tools_per_turn": 0,
+        "structured_output": True,
+        "quirks": {}
+    },
+    "google/gemini-flash-1.5-8b": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": True,  # Supports via response_mime_type
+        "quirks": {"no_tools_with_structured_output": True}
+    },
     
     # Meta models
     "meta-llama/llama-3-70b-instruct": {
-        "multi_tool": False,
+        "multi_tool": True,  # Testing shows it does support multiple tools
+        "parallel_tools": True,
+        "max_tools_per_turn": 10,
+        "structured_output": False,
+        "quirks": {}
+    },
+    "meta-llama/llama-3.3-70b-instruct": {
+        "multi_tool": False,  # Testing shows single tool only
         "parallel_tools": False,
         "max_tools_per_turn": 1,
-        "structured_output": False,
+        "structured_output": True,
         "quirks": {}
     },
     
@@ -203,6 +268,38 @@ MODEL_CAPABILITIES: Dict[str, Dict[str, Any]] = {
         "parallel_tools": False,
         "max_tools_per_turn": 1,
         "structured_output": True,
+        "quirks": {}
+    },
+    
+    # Mistral models
+    "mistralai/mistral-7b-instruct": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": False,
+        "quirks": {}
+    },
+    "mistralai/mistral-nemo": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": True,
+        "quirks": {}
+    },
+    "mistralai/mixtral-8x7b-instruct": {
+        "multi_tool": False,  # No tool support in testing
+        "parallel_tools": False,
+        "max_tools_per_turn": 0,
+        "structured_output": True,
+        "quirks": {}
+    },
+    
+    # DeepSeek models
+    "deepseek/deepseek-chat-v3-0324": {
+        "multi_tool": True,
+        "parallel_tools": True,
+        "max_tools_per_turn": 2,  # Tested with 2
+        "structured_output": False,
         "quirks": {}
     },
     

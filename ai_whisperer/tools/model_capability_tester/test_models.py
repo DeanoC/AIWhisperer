@@ -145,9 +145,21 @@ class ModelCapabilityTester:
             else:
                 print("  ✅ Tools work with structured output")
         
-        # Test 6: Reasoning tokens (for models that support it)
+        # Test 6: Structured output hidden quirk (for Anthropic models)
+        if "anthropic/claude" in model_id and not structured_result["success"]:
+            print("Test 6: Checking for hidden structured output support...")
+            hidden_structured_result = self._test_hidden_structured_output(model_id)
+            capabilities["test_results"]["hidden_structured_output"] = hidden_structured_result
+            if hidden_structured_result["success"]:
+                capabilities["structured_output"] = True
+                capabilities["quirks"]["structured_output_hidden"] = True
+                print("  ⚠️  Quirk detected: Model supports structured output but reports it doesn't")
+            else:
+                print("  ❌ No hidden structured output support")
+        
+        # Test 7: Reasoning tokens (for models that support it)
         if "thinking" in model_id or "reasoning" in model_id:
-            print("Test 6: Reasoning tokens...")
+            print("Test 7: Reasoning tokens...")
             reasoning_result = self._test_reasoning_tokens(model_id)
             capabilities["test_results"]["reasoning"] = reasoning_result
             if reasoning_result["success"]:
@@ -371,6 +383,63 @@ class ModelCapabilityTester:
             if "mime type" in str(error_msg).lower() or "application/json" in str(error_msg):
                 return {"success": False, "error": "Function calling with JSON response format unsupported"}
             return {"success": False, "error": error_msg}
+    
+    def _test_hidden_structured_output(self, model_id: str) -> Dict[str, Any]:
+        """Test if Anthropic models actually support structured output despite reporting otherwise"""
+        # Try a different approach - use JSON mode instead of json_schema
+        payload = {
+            "model": model_id,
+            "messages": [
+                {"role": "system", "content": "You must respond with valid JSON only."},
+                {"role": "user", "content": "Return a JSON object with 'name' set to 'Alice' and 'age' set to 30."}
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0,
+            "max_tokens": 100
+        }
+        
+        success, response = self._make_request(payload)
+        if success:
+            content = response['choices'][0]['message']['content']
+            try:
+                parsed = json.loads(content)
+                if "name" in parsed and "age" in parsed:
+                    # Also try with json_schema format but different parameters
+                    schema_payload = {
+                        "model": model_id,
+                        "messages": [
+                            {"role": "user", "content": "Return JSON with name='Bob' and age=25"}
+                        ],
+                        "response_format": {
+                            "type": "json_schema",
+                            "json_schema": {
+                                "name": "person_info",
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "age": {"type": "integer"}
+                                    },
+                                    "required": ["name", "age"],
+                                    "additionalProperties": False
+                                }
+                            }
+                        },
+                        "temperature": 0,
+                        "max_tokens": 100
+                    }
+                    
+                    schema_success, schema_response = self._make_request(schema_payload)
+                    if schema_success:
+                        return {"success": True, "method": "json_schema"}
+                    else:
+                        return {"success": True, "method": "json_object"}
+                else:
+                    return {"success": False, "error": "Response doesn't match expected structure"}
+            except json.JSONDecodeError:
+                return {"success": False, "error": "Response is not valid JSON"}
+        else:
+            return {"success": False, "error": response.get("error", "Unknown error")}
     
     def _test_reasoning_tokens(self, model_id: str) -> Dict[str, Any]:
         """Test reasoning token support"""
