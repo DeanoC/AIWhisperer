@@ -136,9 +136,9 @@ class TestToolExecutionFlow:
                 messages = test_session.agents['test'].context.retrieve_messages()
                 user_messages = [m for m in messages if m.get('role') == 'user']
                 
-                # Should only have the introduction and the actual request
-                assert len(user_messages) == 2
-                assert user_messages[-1]['content'] == "Can you show me the readme from https://github.com/test/repo"
+                # Should only have the actual request (no automatic introduction anymore)
+                assert len(user_messages) == 1
+                assert user_messages[0]['content'] == "Can you show me the readme from https://github.com/test/repo"
                 
                 # Verify tool message was stored
                 tool_messages = [m for m in messages if m.get('role') == 'tool']
