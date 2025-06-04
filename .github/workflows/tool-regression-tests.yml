@@ -1,0 +1,52 @@
+name: Tool Regression Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ai_whisperer/tools/**'
+      - 'ai_whisperer/services/execution/**'
+      - 'interactive_server/**'
+      - 'scripts/conversations/test_*.txt'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ai_whisperer/tools/**'
+      - 'ai_whisperer/services/execution/**'
+      - 'interactive_server/**'
+
+jobs:
+  tool-regression:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Setup test config
+      run: |
+        cp config.yaml.example config.yaml
+        # Use a test API key for CI
+        echo "OPENROUTER_API_KEY=test-key-ci" >> $GITHUB_ENV
+    
+    - name: Run tool regression tests
+      run: |
+        python scripts/run_tool_regression_tests.py
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+    
+    - name: Upload test results
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: tool-regression-results
+        path: test_results/

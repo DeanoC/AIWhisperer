@@ -1,0 +1,11 @@
+# Test streaming JSON display issue
+# This tests the issue where JSON wrappers are shown and AI doesn't continue
+
+# First message - introduce yourself
+Please introduce yourself briefly
+
+# Second message - test GitHub fetch that triggers JSON response
+Can you summarize the readme from the github user DeanoC and project AIWhisperer?
+
+# Third message - simple continuation
+ok

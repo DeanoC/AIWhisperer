@@ -1,0 +1,4 @@
+# Test for JSON wrapper being displayed
+Please introduce yourself briefly
+Can you summarize the readme from the github user DeanoC and project AIWhisperer?
+ok
