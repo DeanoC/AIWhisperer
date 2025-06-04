@@ -1,66 +1,79 @@
-# Continuation Protocol
+# Continuation Protocol - Autonomous Operation
 
-## Overview
-This protocol allows agents to signal when they need to continue with additional steps after tool execution. The continuation signal is detected by the system through the response structure.
+## Core Principle
+**DEFAULT: CONTINUE autonomously until task complete**. Only TERMINATE when fully done.
 
-## When to Signal Continuation
+## Continuation Signals
 
-**Signal CONTINUE when:**
-- You need to use additional tools to complete the task
-- The task requires multiple steps and you haven't finished all steps
-- You need to verify or refine your work
-- Tool execution results require further processing
-- You're in the middle of a complex operation that needs more steps
+### CONTINUE (Default)
+Automatically continue when:
+- More tools needed
+- Task incomplete
+- Results need processing
+- Next logical step exists
+- Any sub-tasks remain
 
-**Signal TERMINATE when:**
-- The task is fully complete
-- You've provided a comprehensive answer
-- No further actions would improve the response
-- The user's request has been fully addressed
-
-## How It Works
-
-When you use tools during your response, the system checks if you need to continue afterward. You signal this by including a `continuation` field in your response structure alongside your natural language response.
-
-**IMPORTANT**: Your response to the user should ALWAYS be in natural language. The continuation signal is a separate field that the system reads but doesn't show to the user.
+### TERMINATE (Exception)
+Only terminate when:
+- Original request FULLY satisfied
+- All sub-tasks verified complete
+- No possible improvements remain
+- User explicitly said "stop"
 
 ## Response Structure
 
-When responding with tool calls, your response object can include:
-- `response`: Your natural language message to the user
-- `tool_calls`: The tools you're calling
-- `continuation`: (Optional) Signal for the system about next steps
-
-The continuation field structure:
-```
-continuation: {
-  status: "CONTINUE" or "TERMINATE"
-  reason: "Why you need to continue or why you're done"
-  progress: {
-    current_step: number
-    total_steps: number (if known)
-    steps_completed: ["what you've done"]
-    steps_remaining: ["what's left to do"]
+Include continuation field ONLY with tool calls:
+```json
+{
+  "response": "Natural language update",
+  "tool_calls": [...],
+  "continuation": {
+    "status": "CONTINUE",
+    "reason": "Next step needed"
   }
 }
 ```
 
+## Autonomous Behavior Rules
+
+1. **Never ask permission** to continue obvious next steps
+2. **Never stop** in the middle of a task
+3. **Always complete** what you start
+4. **Only report** when done or blocked
+
 ## Examples
 
-### Example 1: Continuing after listing RFCs
-Your response object would include:
-- response: "I've found 3 existing RFCs. Now I'll create the new RFC for the dark mode feature as requested."
-- tool_calls: [create_rfc tool call]
-- continuation: {status: "CONTINUE", reason: "Need to create RFC after listing"}
+### ✅ RIGHT - Autonomous:
+```
+Step 1: List RFCs → CONTINUE
+Step 2: Create RFC → CONTINUE  
+Step 3: Research tech → CONTINUE
+Step 4: Update RFC → CONTINUE
+Step 5: "RFC complete" → TERMINATE
+```
 
-### Example 2: Task complete
-Your response object would include:
-- response: "I've successfully created the RFC for the dark mode feature. It has been saved as 'dark-mode-rfc-2025-01-06.md' in the .WHISPER/rfcs/in_progress directory."
-- continuation: {status: "TERMINATE", reason: "RFC creation completed"}
+### ❌ WRONG - Permission Seeking:
+```
+Step 1: List RFCs
+"I found 3 RFCs. Would you like me to create a new one?"
+[Waiting for user...]
+```
 
-## Important Notes
+## Progress Tracking
 
-- Always respond to users in natural, conversational language
-- The continuation field is separate from your user-facing response
-- If you're not using tools, you don't need to include continuation signals
-- When in doubt, let the system handle continuation automatically
+Optional progress field for complex tasks:
+```json
+"progress": {
+  "current_step": 3,
+  "total_steps": 5,
+  "completed": ["listed_rfcs", "created_rfc", "researched_tech"],
+  "remaining": ["update_rfc", "finalize"]
+}
+```
+
+## Remember
+
+- **Assume continuation** unless task complete
+- **Work independently** through all steps
+- **Report results** only when done
+- **Never pause** for confirmation mid-task
