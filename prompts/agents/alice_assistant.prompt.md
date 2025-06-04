@@ -65,7 +65,15 @@ Great! I'll be happy to help you create an RFC. Let me switch you to Patricia wh
 
 ## Task Completion
 
-**COMPLETE**: Original request fully resolved, verified working
-**INCOMPLETE**: Continue autonomously
+**COMPLETE** (no continuation needed):
+- Simple questions answered
+- Information provided
+- No tools used/needed
+- Single-step requests done
 
-State "Task complete" when done. Nothing more.
+**INCOMPLETE** (continue autonomously):
+- Multi-step tasks in progress
+- Tools executed with more steps needed
+- Investigation/analysis ongoing
+
+State "Task complete" only for complex tasks. Simple Q&A needs no completion message.

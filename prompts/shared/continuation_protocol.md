@@ -1,24 +1,22 @@
 # Continuation Protocol - Autonomous Operation
 
 ## Core Principle
-**DEFAULT: CONTINUE autonomously until task complete**. Only TERMINATE when fully done.
+**Continue ONLY when there's an active task with remaining steps**. Simple Q&A doesn't need continuation.
 
-## Continuation Signals
+## When to Continue
 
-### CONTINUE (Default)
-Automatically continue when:
-- More tools needed
-- Task incomplete
-- Results need processing
-- Next logical step exists
-- Any sub-tasks remain
+### CONTINUE only if ALL are true:
+1. Tools were used OR will be used
+2. Task has multiple steps
+3. Current step is complete but more remain
+4. There's a clear next action
 
-### TERMINATE (Exception)
-Only terminate when:
-- Original request FULLY satisfied
-- All sub-tasks verified complete
-- No possible improvements remain
-- User explicitly said "stop"
+### TERMINATE (Default) when:
+- Question answered completely
+- No tools needed
+- Single-step task done
+- No logical next step
+- User's request fully addressed
 
 ## Response Structure
 
