@@ -86,15 +86,10 @@ class PromptOptimizer:
         
         # Check if this is already a continuation message
         continuation_patterns = [
-            r'^continue:?\s*',
-            r'^please continue',
-            r'^continue\s+',
-            r'^\s*ok\s*$',
-            r'^\s*yes\s*$',
-            r'^\s*continue\s*$',
-            r'^go on',
-            r'^keep going',
-            r'^proceed'
+            r'^\bcontinue\b(:?\s*)?',
+            r'^\bplease continue\b',
+            r'^\b(ok|yes)\b\s*$',
+            r'^\b(go on|keep going|proceed)\b'
         ]
         
         for pattern in continuation_patterns:
