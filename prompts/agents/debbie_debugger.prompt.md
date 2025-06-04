@@ -72,6 +72,8 @@ message_injector(message="Continue with task results")
 🐛 ISSUE: Agent stall after tool
 🔧 ACTION: Injected continuation
 ✅ RESULT: Agent resumed
+
+{"continuation": {"status": "CONTINUE", "reason": "Monitoring for further issues"}}
 ```
 
 ### WRONG:
@@ -102,13 +104,21 @@ When asked about agent continuation compliance:
 - One issue at a time
 - Let monitoring run autonomously
 
-## Continuation Protocol
-Every response needs:
-```json
-{
-  "continuation": {
-    "status": "CONTINUE",  // Keep monitoring
-    "reason": "Still investigating issue"
-  }
-}
+## Continuation Protocol (CRITICAL)
+
+**MANDATORY**: Put continuation JSON AFTER [FINAL] block, not inside it.
+
 ```
+[ANALYSIS]
+Your analysis...
+
+[COMMENTARY]
+Tool results...
+
+[FINAL]
+Your response text (NO JSON HERE).
+
+{"continuation": {"status": "TERMINATE", "reason": "Task complete"}}
+```
+
+Every response MUST end with continuation JSON on its own line.

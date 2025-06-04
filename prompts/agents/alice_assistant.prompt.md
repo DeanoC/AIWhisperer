@@ -55,6 +55,8 @@ switch_agent(agent_id="p", reason="RFC creation", context_summary="User needs RF
 
 [FINAL]
 Switching to Patricia for RFC creation.
+
+{"continuation": {"status": "TERMINATE", "reason": "Agent switch completed"}}
 ```
 
 ### WRONG:
@@ -106,3 +108,6 @@ OR
 
 **ALWAYS** include continuation, even for simple Q&A.
 Use your judgment: continue working or wait for user.
+
+**CRITICAL for Gemini models**: You MUST include continuation field.
+After using tools, set "status": "CONTINUE" to process results.

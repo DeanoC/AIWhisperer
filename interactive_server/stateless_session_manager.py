@@ -511,11 +511,17 @@ class StatelessInteractiveSession:
                     if "closed" in str(e).lower():
                         self.websocket = None
             
-            # Check if we should use structured output for plan generation
+            # Check if we should use structured output
             kwargs = {}
+            
+            # First check for plan generation
             if self._should_use_structured_output_for_plan(agent, message):
                 kwargs['response_format'] = self._get_plan_generation_schema()
                 logger.info("Enabling structured output for plan generation")
+            # Otherwise, check if we should use structured continuation output
+            elif self._should_use_structured_continuation(agent):
+                kwargs['response_format'] = self._get_continuation_schema()
+                logger.info("Enabling structured output for continuation protocol")
             
             # Process message with streaming
             logger.debug(f"[send_user_message] Calling agent.process_message")
@@ -596,84 +602,70 @@ class StatelessInteractiveSession:
                         result['response'] = additional_response
                     logger.info("Agent switch completed, appended response")
             
-            # Check if continuation is needed (like old delegate system)
-            try:
-                logger.info(f"🔄 CHECKING CONTINUATION: result has {len(result.get('tool_calls', []))} tool calls")
-                should_continue = await self._should_continue_after_tools(result, message)
-                logger.info(f"🔄 CONTINUATION DECISION: {should_continue}")
-            except Exception as e:
-                logger.error(f"Error in _should_continue_after_tools: {e}", exc_info=True)
-                should_continue = False
-            
-            if should_continue:
-                # Extract tool names for context-aware continuation
-                tool_calls = result.get('tool_calls', [])
-                tool_names = [tc.get('function', {}).get('name', '') for tc in tool_calls]
-                # Get max depth for this agent
-                agent_max_depth = self._max_continuation_depth  # Default
-                if self.active_agent and self.active_agent in self.agents:
-                    agent = self.agents[self.active_agent]
-                    if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
-                        # Use agent's configured max iterations
-                        agent_max_depth = agent.continuation_strategy.max_iterations
+            # If the AI called tools, we need another round to get the final response
+            # This follows the standard OpenAI/Claude tool calling pattern
+            if result.get('finish_reason') == 'tool_calls' and result.get('tool_calls') and not is_continuation:
+                logger.info(f"🔧 TOOL CALLS COMPLETED: {len(result['tool_calls'])} tools were executed")
+                logger.info("🔧 Making another AI call to process tool results...")
                 
-                # Check continuation depth to prevent infinite loops
-                if self._continuation_depth >= agent_max_depth:
-                    logger.warning(f"Hit max continuation depth ({agent_max_depth}) for agent {self.active_agent}, stopping continuation")
-                    # Reset for next interaction
-                    self._continuation_depth = 0
-                else:
-                    # Increment continuation depth
-                    self._continuation_depth += 1
-                    logger.info(f"Auto-continuing after tool execution for agent {self.active_agent} (depth: {self._continuation_depth})")
-                    
-                    # Give a brief pause to let UI update
-                    await asyncio.sleep(0.5)
-                    
-                    # Get continuation message from agent
-                    continuation_msg = "Please continue with the next step."
-                    if self.active_agent and self.active_agent in self.agents:
-                        agent = self.agents[self.active_agent]
-                        
-                        # Check if agent has continuation strategy for progress tracking
-                        if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
-                            # Get progress information
-                            progress = agent.continuation_strategy.get_progress(agent.context._context)
-                            
-                            # Send progress notification using the new method
-                            await self._send_progress_notification(progress, tool_names)
-                            
-                            # Use continuation strategy's message
-                            continuation_msg = agent.continuation_strategy.get_continuation_message(tool_names, message)
-                        elif hasattr(agent, 'get_continuation_message'):
-                            # Fallback to old method
-                            continuation_msg = agent.get_continuation_message(tool_names, message)
-                    
-                    logger.info(f"🔄 SENDING CONTINUATION MESSAGE: {continuation_msg}")
-                    logger.debug(f"🔄 BEFORE CONTINUATION - Agent context has {len(self.agents[self.active_agent].context._messages)} messages")
-                    continuation_result = await self.send_user_message(continuation_msg, is_continuation=True)
-                    logger.debug(f"🔄 AFTER CONTINUATION - Agent context has {len(self.agents[self.active_agent].context._messages)} messages")
-                    
-                    # Ensure continuation_result is also a dict
-                    if not isinstance(continuation_result, dict):
-                        logger.warning(f"Unexpected continuation result type: {type(continuation_result)}")
-                        continuation_result = {'response': str(continuation_result) if continuation_result else None}
-                    
-                    # Merge results for the original caller
-                    if isinstance(result, dict) and isinstance(continuation_result, dict):
-                        # Append continuation response
-                        if result.get('response') and continuation_result.get('response'):
-                            result['response'] += "\n\n" + continuation_result['response']
-                        # Merge tool calls
-                        if continuation_result.get('tool_calls'):
-                            if result.get('tool_calls'):
-                                result['tool_calls'].extend(continuation_result['tool_calls'])
-                            else:
-                                result['tool_calls'] = continuation_result['tool_calls']
+                # The tool results are already stored as tool messages by the AI loop
+                # We need another AI call but without adding a new user message
+                # This follows the standard OpenAI/Claude pattern
+                
+                # Store the AI's response that included the tool calls
+                # This is important for the conversation history
+                if 'response' in result:
+                    # Temporarily store just the assistant message
+                    # The tool results are already stored
+                    pass
+                
+                # Now call the AI to process the tool results
+                # We use process_messages to avoid adding a user message
+                messages = agent.context.retrieve_messages()
+                tool_response_result = await agent.ai_loop.process_messages(
+                    messages=messages,
+                    on_stream_chunk=send_chunk,
+                    tools=agent._get_agent_tools(),
+                    **kwargs
+                )
+                
+                # Store the final AI response
+                if tool_response_result.get('response') and not tool_response_result.get('error'):
+                    final_assistant_msg = {
+                        "role": "assistant",
+                        "content": tool_response_result['response']
+                    }
+                    agent.context.store_message(final_assistant_msg)
+                    logger.info("🔧 Stored final AI response after tool processing")
+                
+                # Ensure tool_response_result is a dict
+                if not isinstance(tool_response_result, dict):
+                    logger.warning(f"Unexpected tool response type: {type(tool_response_result)}")
+                    tool_response_result = {'response': str(tool_response_result) if tool_response_result else None}
+                
+                # Combine the results - keep the tool calls from first result, response from second
+                combined_result = {
+                    'response': tool_response_result.get('response'),
+                    'tool_calls': result.get('tool_calls'),  # Keep original tool calls
+                    'finish_reason': tool_response_result.get('finish_reason', 'stop'),
+                    'error': tool_response_result.get('error')
+                }
+                result = combined_result
+                logger.info("🔧 Tool results processed and final response generated")
+            
+            # Check if the AI wants to continue (using general continuation protocol)
+            # This is separate from tool handling - it's about multi-step tasks
+            if self.active_agent and self.active_agent in self.agents:
+                agent = self.agents[self.active_agent]
+                if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
+                    should_continue = agent.continuation_strategy.should_continue(result, message)
+                    if should_continue:
+                        logger.info("🔄 AI signaled continuation needed")
+                        # TODO: Handle continuation logic here if needed
+                        # This is for multi-step reasoning, not tool results
             
             # Reset continuation depth if we're done with continuations
-            if not is_continuation and self._continuation_depth > 0:
-                logger.debug(f"Resetting continuation depth from {self._continuation_depth} to 0")
+            if not is_continuation:
                 self._continuation_depth = 0
             
             # Notify observer that message processing completed
@@ -907,86 +899,6 @@ class StatelessInteractiveSession:
             logger.error(f"Failed to send progress notification: {e}")
             # Don't fail the continuation on notification error
     
-    async def _should_continue_after_tools(self, result: Any, original_message: str) -> bool:
-        """
-        Determine if we should automatically continue after tool execution.
-        Uses the agent's ContinuationStrategy if available.
-        
-        Args:
-            result: The result from agent.process_message
-            original_message: The original user message
-            
-        Returns:
-            True if continuation is needed, False otherwise
-        """
-        # Get model name from active agent or config
-        model_name = None
-        if self.active_agent and self.active_agent in self.agents:
-            agent = self.agents[self.active_agent]
-            model_name = agent.config.model_name
-        
-        if not model_name:
-            # Fallback to config
-            model_name = self.config.get('openrouter', {}).get('model', 'google/gemini-2.5-flash-preview')
-        
-        # Apply model-specific optimizations first
-        if isinstance(result, dict):
-            result = self._apply_model_optimization(result, model_name)
-        
-        # Check if agent has continuation strategy FIRST
-        # This allows agents to explicitly signal continuation even on single-tool models
-        if self.active_agent and self.active_agent in self.agents:
-            agent = self.agents[self.active_agent]
-            if hasattr(agent, 'continuation_strategy') and agent.continuation_strategy:
-                # Use the new ContinuationStrategy
-                should_continue = agent.continuation_strategy.should_continue(result, original_message)
-                logger.info(f"🔄 CONTINUATION STRATEGY DECISION: {should_continue}")
-                return should_continue
-        
-        # Fallback: Only continue if we have a dict result with tool calls
-        if not isinstance(result, dict) or not result.get('tool_calls'):
-            return False
-        
-        # Check if model supports multi-tool
-        from ai_whisperer.model_capabilities import supports_multi_tool
-        
-        model_supports_multi_tool = supports_multi_tool(model_name)
-        logger.info(f"🔄 MODEL CAPABILITY CHECK: {model_name} multi-tool support: {model_supports_multi_tool}")
-        
-        if not model_supports_multi_tool:
-            # Single-tool models should NOT continue after using their one tool (unless using continuation strategy)
-            logger.info(f"🔄 SINGLE-TOOL MODEL: {model_name} - no continuation after tool use (no continuation strategy)")
-            return False
-        
-        # Single-tool model continuation logic
-        tool_calls = result.get('tool_calls', [])
-        if not tool_calls:
-            return False
-        
-        # Get the tool that was called
-        tool_names = [tc.get('function', {}).get('name', '') for tc in tool_calls]
-        
-        # Check if agent has custom continuation logic (old method)
-        if self.active_agent and self.active_agent in self.agents:
-            agent = self.agents[self.active_agent]
-            if hasattr(agent, 'should_continue_after_tools'):
-                return agent.should_continue_after_tools(result, original_message)
-        
-        # Get the AI's response text from the result
-        response_text = result.get('response', '').lower() if result.get('response') else ''
-        
-        continuation_phrases = [
-            'let me', 'now i', "i'll", 'next', 'then i',
-            'following that', 'after that'
-        ]
-        
-        # If the AI's response suggests it plans to do more
-        if response_text and any(phrase in response_text for phrase in continuation_phrases):
-            # But it only did one tool call, it probably needs continuation
-            if len(tool_calls) == 1:
-                return True
-        
-        return False
     
     def _apply_model_optimization(self, response: Dict[str, Any], model_name: str) -> Dict[str, Any]:
         """Apply model-specific optimizations to improve continuation behavior"""
@@ -1490,6 +1402,61 @@ class StatelessInteractiveSession:
             }
         except Exception as e:
             logger.error(f"Failed to load plan generation schema: {e}")
+            return None
+    
+    def _should_use_structured_continuation(self, agent: Any) -> bool:
+        """
+        Determine if we should use structured output for continuation protocol.
+        
+        Args:
+            agent: The active agent
+            
+        Returns:
+            True if we should use structured continuation output
+        """
+        # Check if the model supports structured output
+        from ai_whisperer.model_capabilities import supports_structured_output
+        if not hasattr(agent, 'config') or not agent.config.model_name:
+            return False
+            
+        if not supports_structured_output(agent.config.model_name):
+            return False
+            
+        # For now, enable for all agents with compatible models
+        # We can make this configurable per agent later
+        return True
+    
+    def _get_continuation_schema(self) -> Dict[str, Any]:
+        """
+        Get the continuation protocol schema for structured output.
+        
+        Returns:
+            The response_format dict for continuation protocol
+        """
+        import json
+        from pathlib import Path
+        
+        # Load the continuation schema
+        schema_path = Path("config/schemas/continuation_schema.json")
+        
+        try:
+            with open(schema_path, 'r') as f:
+                continuation_schema = json.load(f)
+            
+            # Remove the $schema field if present
+            if "$schema" in continuation_schema:
+                del continuation_schema["$schema"]
+            
+            return {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "continuation_protocol",
+                    "strict": True,  # Use strict for simple schemas
+                    "schema": continuation_schema
+                }
+            }
+        except Exception as e:
+            logger.error(f"Failed to load continuation schema: {e}")
             return None
 
 
