@@ -45,9 +45,9 @@ class TestRFCNaming:
             'short_name': 'dark-mode'
         })
         
-        assert "RFC created successfully!" in result
-        assert "dark-mode-" in result  # Should contain the short name
-        assert "RFC-" in result  # Should still have RFC ID
+        assert result.get("rfc_id") is not None
+        assert "dark-mode-" in result.get("filename", "")  # Should contain the short name
+        assert "RFC-" in result.get("rfc_id", "")  # Should still have RFC ID
         
         # Check file was created with correct name
         rfc_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "in_progress"
@@ -74,7 +74,7 @@ class TestRFCNaming:
         })
         
         # Should still work but clean the name
-        assert "RFC created successfully!" in result
+        assert result.get("rfc_id") is not None
         
         # Check the cleaned filename
         rfc_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "in_progress"
@@ -93,22 +93,22 @@ class TestRFCNaming:
         
         # Extract filename from result
         import re
-        filename_match = re.search(r'api-auth-[\d-]+\.md', create_result)
-        assert filename_match
-        filename = filename_match.group()
+        assert isinstance(create_result, dict) and "filename" in create_result
+        filename = create_result["filename"]
+        
         
         # Test reading by filename
         read_tool = ReadRFCTool()
         
         # Should work with full filename
         result = read_tool.execute({'rfc_id': filename})
-        assert "API Authentication" in result
-        assert "not found" not in result.lower()
+        assert result.get("found") is True
+        assert "API Authentication" in result.get("content", {}).get("content", "")
         
         # Should work without .md extension
         result = read_tool.execute({'rfc_id': filename[:-3]})
-        assert "API Authentication" in result
-        assert "not found" not in result.lower()
+        assert result.get("found") is True
+        assert "API Authentication" in result.get("content", {}).get("content", "")
     
     def test_read_rfc_by_rfc_id(self, temp_workspace):
         """Test reading RFC by RFC ID from metadata."""
@@ -121,16 +121,14 @@ class TestRFCNaming:
         })
         
         # Extract RFC ID from result
-        import re
-        rfc_id_match = re.search(r'RFC-\d{4}-\d{2}-\d{2}-\d{4}', create_result)
-        assert rfc_id_match
-        rfc_id = rfc_id_match.group()
+        assert isinstance(create_result, dict) and "rfc_id" in create_result
+        rfc_id = create_result["rfc_id"]
         
         # Test reading by RFC ID
         read_tool = ReadRFCTool()
         result = read_tool.execute({'rfc_id': rfc_id})
-        assert "User Profiles" in result
-        assert "not found" not in result.lower()
+        assert result.get("found") is True
+        assert "User Profiles" in result.get("content", {}).get("content", "")
     
     def test_move_rfc_preserves_filename(self, temp_workspace):
         """Test that moving RFC doesn't create double extensions."""
@@ -144,9 +142,9 @@ class TestRFCNaming:
         
         # Extract filename
         import re
-        filename_match = re.search(r'batch-processing-[\d-]+\.md', create_result)
-        assert filename_match
-        filename = filename_match.group()
+        assert isinstance(create_result, dict) and "filename" in create_result
+        filename = create_result["filename"]
+        
         
         # Move to archived
         move_tool = MoveRFCTool()
@@ -156,7 +154,7 @@ class TestRFCNaming:
             'reason': 'Testing move'
         })
         
-        assert "moved successfully" in move_result.lower()
+        assert move_result.get("moved")
         
         # Check no double extensions in archived
         archived_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "archived"
@@ -179,9 +177,9 @@ class TestRFCNaming:
         
         # Extract filename
         import re
-        filename_match = re.search(r'test-delete-[\d-]+\.md', create_result)
-        assert filename_match
-        filename = filename_match.group()
+        assert isinstance(create_result, dict) and "filename" in create_result
+        filename = create_result["filename"]
+        
         
         # Delete with confirmation
         delete_tool = DeleteRFCTool()
@@ -191,8 +189,10 @@ class TestRFCNaming:
             'reason': 'Testing deletion'
         })
         
-        assert "deleted successfully" in result.lower()
-        assert filename in result
+        assert result.get("deleted")
+        # Check that the filename appears in at least one of the deleted files
+        files_deleted = result.get("files_deleted", [])
+        assert any(filename in f for f in files_deleted)
         
         # Verify files are gone
         rfc_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "in_progress"
@@ -220,10 +220,18 @@ class TestRFCNaming:
         list_tool = ListRFCsTool()
         result = list_tool.execute({})
         
-        assert "feature-one-" in result
-        assert "feature-two-" in result
-        assert ".md" in result  # Should show full filename
-        assert "RFC-" in result  # Should still show RFC IDs
+        assert isinstance(result, dict) and "rfcs" in result
+        rfcs = result["rfcs"]
+        assert len(rfcs) >= 2
+        
+        # Check that filenames are included
+        filenames = [rfc.get("filename", "") for rfc in rfcs]
+        assert any("feature-one-" in fn for fn in filenames)
+        assert any("feature-two-" in fn for fn in filenames)
+        
+        # Check RFC IDs are included
+        rfc_ids = [rfc.get("rfc_id", "") for rfc in rfcs]
+        assert any("RFC-" in id for id in rfc_ids)
     
     def test_no_extension_accumulation(self, temp_workspace):
         """Test that operations don't accumulate extensions."""
@@ -237,9 +245,9 @@ class TestRFCNaming:
         
         # Extract filename
         import re
-        filename_match = re.search(r'ext-test-[\d-]+\.md', create_result)
-        assert filename_match
-        filename = filename_match.group()
+        assert isinstance(create_result, dict) and "filename" in create_result
+        filename = create_result["filename"]
+        
         
         # Multiple operations that could cause extension issues
         move_tool = MoveRFCTool()
@@ -289,7 +297,7 @@ class TestRFCNaming:
                 'short_name': input_name
             })
             
-            assert "RFC created successfully!" in result
+            assert result.get("rfc_id") is not None
             
             # Check cleaned filename
             rfc_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "in_progress"

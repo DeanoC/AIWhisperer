@@ -247,7 +247,7 @@ class TestServerManagerStartSubprocess:
         
         # Check environment variable was set
         env_arg = call_args[1]['env']
-        assert env_arg['AIWHISPERER_BATCH_PORT'] == '8080'
+        assert env_arg['AIWHISPERER_REPLAY_PORT'] == '8080'
         
         assert manager.process == mock_process
     

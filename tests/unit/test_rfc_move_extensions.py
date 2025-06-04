@@ -58,7 +58,7 @@ class TestMoveRFCExtensions:
             'target_status': 'archived'
         })
         
-        assert "moved successfully" in result.lower()
+        assert result.get("moved")
         
         # Check archived folder
         archived_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "archived"
@@ -100,7 +100,7 @@ class TestMoveRFCExtensions:
             'target_status': 'archived'
         })
         
-        assert "moved successfully" in result.lower()
+        assert result.get("moved")
         
         # Check archived folder
         archived_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "archived"
@@ -226,7 +226,7 @@ class TestMoveRFCExtensions:
                 'rfc_id': dot_files[0].name,
                 'target_status': 'archived'
             })
-            assert "moved successfully" in result.lower()
+            assert result.get("moved")
         
         # Test 2: Very long filename
         create_tool.execute({
@@ -241,7 +241,7 @@ class TestMoveRFCExtensions:
                 'rfc_id': long_files[0].name,
                 'target_status': 'archived'
             })
-            assert "moved successfully" in result.lower()
+            assert result.get("moved")
         
         # Verify no extension issues in archived
         archived_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "archived"

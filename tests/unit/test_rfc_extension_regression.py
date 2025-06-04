@@ -47,10 +47,9 @@ class TestRFCExtensionRegression:
         })
         
         # Get the filename from result
-        import re
-        filename_match = re.search(r'chat-icons-\d{4}-\d{2}-\d{2}\.md', result)
-        assert filename_match, f"Could not find filename in result: {result}"
-        filename = filename_match.group()
+        assert isinstance(result, dict), f"Expected dict result, got {type(result)}"
+        assert 'filename' in result, f"No filename in result: {result}"
+        filename = result['filename']
         
         # Move using the FULL filename (including .md)
         move_tool = MoveRFCTool()
@@ -59,7 +58,8 @@ class TestRFCExtensionRegression:
             'target_status': 'archived'
         })
         
-        assert "moved successfully" in move_result.lower(), f"Move failed: {move_result}"
+        assert isinstance(move_result, dict), f"Expected dict result, got {type(move_result)}"
+        assert move_result.get('moved'), f"Move failed: {move_result}"
         
         # Check archived folder - should NOT have .md.md file
         archived_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "archived"
@@ -107,7 +107,8 @@ class TestRFCExtensionRegression:
         })
         
         # Should successfully delete despite extension issues
-        assert "deleted successfully" in result.lower() or "not found" not in result.lower()
+        assert isinstance(result, dict), f"Expected dict result, got {type(result)}"
+        assert result.get('deleted') or 'error' not in result
     
     def test_create_move_delete_workflow(self, temp_workspace):
         """Full workflow test to ensure no extension issues."""
@@ -123,17 +124,16 @@ class TestRFCExtensionRegression:
         })
         
         # Extract filename
-        import re
-        filename_match = re.search(r'workflow-test-\d{4}-\d{2}-\d{2}\.md', create_result)
-        assert filename_match
-        filename = filename_match.group()
+        assert isinstance(create_result, dict), f"Expected dict result, got {type(create_result)}"
+        assert 'filename' in create_result, f"No filename in result: {create_result}"
+        filename = create_result['filename']
         
         # Step 2: Move to archived (using full filename)
         move_result = move_tool.execute({
             'rfc_id': filename,
             'target_status': 'archived'
         })
-        assert "moved successfully" in move_result.lower()
+        assert move_result.get('moved')
         
         # Verify no double extensions
         archived_path = Path(temp_workspace) / ".WHISPER" / "rfc" / "archived"
@@ -146,7 +146,7 @@ class TestRFCExtensionRegression:
             'confirm_delete': True,
             'reason': 'Workflow test cleanup'
         })
-        assert "deleted successfully" in delete_result.lower()
+        assert delete_result.get('deleted')
         
         # Verify deletion
         assert not (archived_path / filename).exists()
