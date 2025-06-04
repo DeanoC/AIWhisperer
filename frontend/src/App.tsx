@@ -357,7 +357,7 @@ function App() {
       console.log('[App] Received channel message:', channelMessage);
       
       // Only process FINAL channel messages
-      if (channelMessage.channel === 'final' || channelMessage.channel === ChannelType.FINAL) {
+      if (channelMessage.channel === ChannelType.FINAL) {
         // Start AI message if not already started
         if (!aiMessageStartedRef.current && !loading) {
           startAIMessage();
