@@ -1,189 +1,101 @@
 # Tool Conversion Pattern - Structured Data Returns
 
 ## Overview
-Tools need to be converted from returning formatted strings to returning structured dictionaries. This improves AI interpretability and fixes verbosity issues.
+All tools should return structured data (dictionaries) instead of plain strings. This improves AI parsing and reduces verbosity in agent responses.
 
-## Pattern for Clean Tools
+## Conversion Pattern
 
-### 1. Success Returns
-Instead of:
-```python
-return f"Successfully created {item_name} at {path}"
-```
-
-Use:
-```python
-return {
-    "success": True,
-    "item_name": item_name,
-    "path": path,
-    "message": "Item created successfully"  # Optional human-readable message
-}
-```
-
-### 2. Error Returns
-Instead of:
-```python
-return f"Error: {error_message}"
-# or
-return f"Error creating item: {str(e)}"
-```
-
-Use:
-```python
-return {
-    "error": error_message,  # or "error": str(e)
-    "success": False,  # Optional but recommended
-    "item_name": item_name,  # Include relevant context
-    "operation": "create"  # What failed
-}
-```
-
-### 3. List/Collection Returns
-Instead of:
-```python
-result = f"Found {len(items)} items:\n"
-for item in items:
-    result += f"- {item.name}: {item.description}\n"
-return result
-```
-
-Use:
-```python
-return {
-    "items": [
-        {
-            "name": item.name,
-            "description": item.description,
-            # ... other fields
-        }
-        for item in items
-    ],
-    "count": len(items),
-    "total_count": total_count,  # If different from returned count
-    "truncated": len(items) < total_count  # If results were limited
-}
-```
-
-### 4. Status/Info Returns
-Instead of:
-```python
-return f"Status: {status}\nDetails: {details}"
-```
-
-Use:
-```python
-return {
-    "status": status,
-    "details": details,
-    "timestamp": datetime.now().isoformat(),
-    # ... other relevant fields
-}
-```
-
-## Common Patterns to Fix
-
-### 1. String Concatenation
-Look for:
-- `result = "..."` followed by `result += "..."`
-- `f"..."` formatted strings being returned
-- `"".join(...)` being returned
-- Multi-line string building
-
-### 2. Error Handling
-Look for:
-- `return f"Error: ..."`
-- `return "Error: " + ...`
-- Plain string error returns
-
-### 3. Success Messages
-Look for:
-- `return f"Successfully ..."`
-- `return "Operation completed..."`
-- Any formatted success message
-
-### 4. JSON Dumps for Display
-Look for:
-- `json.dumps(data, indent=2)` being returned as string
-- Should return the data structure directly
-
-## Example Conversion
-
-### Before:
+### Before (Plain String Returns)
 ```python
 def execute(self, arguments: Dict[str, Any]) -> str:
-    plan_name = arguments.get('plan_name')
-    if not plan_name:
-        return "Error: 'plan_name' is required."
+    if not arguments.get('required_field'):
+        return "Error: 'required_field' is required."
     
-    try:
-        # ... operation logic ...
-        if not found:
-            return f"Error: Plan '{plan_name}' not found."
-        
-        # ... more logic ...
-        return f"Plan moved successfully!\n\nPlan: {plan_name}\nFrom: {old_status}\nTo: {new_status}"
-        
-    except Exception as e:
-        return f"Error moving plan: {str(e)}"
+    # ... processing ...
+    
+    return f"Success! Created {item_name} at {location}."
 ```
 
-### After:
+### After (Structured Data Returns)
 ```python
 def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-    plan_name = arguments.get('plan_name')
-    if not plan_name:
+    if not arguments.get('required_field'):
         return {
-            "error": "'plan_name' is required.",
-            "plan_name": None,
-            "moved": False
+            "error": "'required_field' is required.",
+            "success": False,
+            # Include relevant context fields even in error cases
+            "item_name": None,
+            "created": False
         }
     
-    try:
-        # ... operation logic ...
-        if not found:
-            return {
-                "error": f"Plan '{plan_name}' not found.",
-                "plan_name": plan_name,
-                "moved": False
-            }
-        
-        # ... more logic ...
-        return {
-            "moved": True,
-            "plan_name": plan_name,
-            "previous_status": old_status,
-            "new_status": new_status,
-            "message": "Plan moved successfully",
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except Exception as e:
-        return {
-            "error": f"Error moving plan: {str(e)}",
-            "plan_name": plan_name,
-            "moved": False
-        }
+    # ... processing ...
+    
+    return {
+        "success": True,
+        "created": True,
+        "item_name": item_name,
+        "location": location,
+        "timestamp": datetime.now().isoformat(),
+        # Include helpful metadata
+        "next_steps": ["Review the item", "Update if needed"]
+    }
 ```
 
 ## Key Principles
 
-1. **Consistency**: Always return dictionaries, even for errors
-2. **Context**: Include relevant context fields even in error cases
-3. **Structure**: Use nested structures for complex data
-4. **Completeness**: Include all relevant information
-5. **Machine-Readable**: Prioritize structured data over formatted text
-6. **Human-Friendly**: Can include optional `message` fields for human readability
+1. **Always Return Dictionaries** - Never return plain strings
+2. **Consistent Structure** - Include relevant fields even in error cases
+3. **Error Handling** - Errors are `{"error": "message", ...}` with context
+4. **Success Indicators** - Boolean flags like `created`, `deleted`, `updated`
+5. **Rich Metadata** - Include timestamps, counts, IDs, and other useful info
+6. **Next Steps** - Optionally include suggested actions for the user
 
-## Tools Needing Conversion (Phase 8+)
+## Common Patterns
 
-Based on the audit report, the following tools need conversion:
-- delete_plan_tool.py
-- format_for_external_agent_tool.py
-- parse_external_result_tool.py
-- recommend_external_agent_tool.py
-- send_mail_with_switch_tool.py
-- update_task_status_tool.py
-- validate_external_agent_tool.py
+### Error Returns
+```python
+return {
+    "error": "Specific error message",
+    "success": False,
+    "operation": "what_was_attempted",
+    # Include any partial results or context
+}
+```
 
-Plus any other tools that still return formatted strings instead of structured data.
+### Success Returns
+```python
+return {
+    "success": True,
+    "operation_completed": True,  # e.g., created, deleted, updated
+    "result_data": {...},
+    "metadata": {
+        "timestamp": "...",
+        "affected_items": 5,
+        "duration_ms": 123
+    },
+    "recommendations": ["Next action 1", "Next action 2"]
+}
+```
+
+### Listing/Query Returns
+```python
+return {
+    "items": [...],
+    "total_count": 42,
+    "filtered_count": 10,
+    "query_params": {...},
+    "has_more": False
+}
+```
+
+## Benefits
+
+1. **Reduced AI Verbosity** - AI doesn't need to reformat or explain tool results
+2. **Better Error Handling** - Structured errors are easier to parse and act on
+3. **Consistent Interface** - All tools follow the same pattern
+4. **Machine Readable** - Other tools can easily consume the output
+5. **Self-Documenting** - Field names describe the data
+
+## Tools Already Converted
+
+See `scripts/tool_audit_report.json` for the current status of all tools.

@@ -1,10 +1,18 @@
 {
   "summary": {
     "total": 53,
-    "clean": 6,
-    "issues": 47
+    "clean": 8,
+    "issues": 45
   },
   "clean_tools": [
+    {
+      "file": "ai_whisperer/tools/ai_loop_inspector_tool.py",
+      "classes": [
+        "AILoopInspectorTool"
+      ],
+      "issues": [],
+      "clean": true
+    },
     {
       "file": "ai_whisperer/tools/base_tool.py",
       "classes": [],
@@ -36,6 +44,14 @@
       "clean": true
     },
     {
+      "file": "ai_whisperer/tools/send_mail_with_switch_tool.py",
+      "classes": [
+        "SendMailWithSwitchTool"
+      ],
+      "issues": [],
+      "clean": true
+    },
+    {
       "file": "ai_whisperer/tools/session_analysis_tool.py",
       "classes": [
         "SessionAnalysisTool"
@@ -54,26 +70,14 @@
   ],
   "problematic_tools": [
     {
-      "file": "ai_whisperer/tools/ai_loop_inspector_tool.py",
-      "classes": [
-        "AILoopInspectorTool"
-      ],
-      "issues": [
-        "String conversion: {'success': False, 'error': str(e)}..."
-      ],
-      "clean": false
-    },
-    {
       "file": "ai_whisperer/tools/analyze_dependencies_tool.py",
       "classes": [
         "AnalyzeDependenciesTool"
       ],
       "issues": [
-        "Plain string return: 'Error: tasks parameter is required'...",
-        "Formatted string return: f'Error: Invalid JSON format - {str(e)}'...",
-        "Formatted string return: f'Error: Unexpected error - {str(e)}'...",
-        "Plain string return: \"Error: Each task must have an 'id' or 'task_id' field\"...",
-        "Formatted string return: f'Error: Circular dependency detected - {str(e)}'..."
+        "Formatted string return: {'error': f'Invalid JSON format - {str(e)}', 'total_tasks': 0, 'analyzed': False}...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'total_tasks': 0, 'analyzed': False}...",
+        "Formatted string return: {'error': f'Circular dependency detected - {str(e)}', 'has_circular_dependencies': True, 'total_task..."
       ],
       "clean": false
     },
@@ -94,12 +98,11 @@
         "CreatePlanFromRFCTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'rfc_id' is required.\"...",
-        "Formatted string return: f\"Plan created successfully!\\n\\n**Plan Name**: {plan_name}\\n**Type**: {plan_type}\\n**Source RFC**: {...",
-        "Formatted string return: f\"Error: RFC '{rfc_id}' not found.\"...",
+        "Formatted string return: {'created': True, 'plan_name': plan_name, 'plan_type': plan_type, 'source_rfc': rfc_metadata.get('rf...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found.\", 'rfc_id': rfc_id, 'created': False}...",
         "Plain string return: ''.join(chunks)...",
-        "Formatted string return: f'Error: Generated plan failed validation: {error}'...",
-        "Formatted string return: f'Error creating plan from RFC: {str(e)}'..."
+        "Formatted string return: {'error': f'Generated plan failed validation: {error}', 'rfc_id': rfc_metadata.get('rfc_id'), 'creat...",
+        "Formatted string return: {'error': f'Error creating plan from RFC: {str(e)}', 'rfc_id': rfc_id, 'created': False}..."
       ],
       "clean": false
     },
@@ -120,11 +123,10 @@
         "DecomposePlanTool"
       ],
       "issues": [
-        "Plain string return: 'Error: plan_content is required'...",
-        "Formatted string return: f'Error: Invalid JSON format - {str(e)}'...",
-        "Formatted string return: f'Error: Invalid plan - {str(e)}'...",
-        "Formatted string return: f'Error: Failed to decompose plan - {str(e)}'...",
-        "Formatted string return: f'Error: Unexpected error - {str(e)}'..."
+        "Formatted string return: {'error': f'Invalid JSON format - {str(e)}', 'total_tasks': 0, 'decomposed': False}...",
+        "Formatted string return: {'error': f'Invalid plan - {str(e)}', 'total_tasks': 0, 'decomposed': False}...",
+        "Formatted string return: {'error': f'Failed to decompose plan - {str(e)}', 'total_tasks': 0, 'decomposed': False}...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'total_tasks': 0, 'decomposed': False}..."
       ],
       "clean": false
     },
@@ -134,10 +136,8 @@
         "DeletePlanTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'plan_name' is required.\"...",
-        "Formatted string return: f'Delete operation cancelled.\\n\\nTo delete plan {plan_name}, you must:\\n1. Get user confirmation\\n2....",
-        "Formatted string return: f'Error: Plan {plan_name} not found in any folder.'...",
-        "Formatted string return: f'Error deleting plan: {str(e)}'..."
+        "Formatted string return: {'error': f'Plan {plan_name} not found in any folder.', 'plan_name': plan_name, 'deleted': False}...",
+        "Formatted string return: {'error': f'Error deleting plan: {str(e)}', 'plan_name': plan_name, 'deleted': False}..."
       ],
       "clean": false
     },
@@ -147,11 +147,8 @@
         "DeleteRFCTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'rfc_id' is required.\"...",
-        "Formatted string return: f'Delete operation cancelled.\\n\\nTo delete RFC {rfc_id}, you must:\\n1. Get user confirmation\\n2. Set...",
-        "Formatted string return: f\"RFC deleted successfully!\\n\\n**RFC ID**: {rfc_id}\\n**Status**: Was in '{folder_name}'\\n**Files Del...",
-        "Formatted string return: f'Error: RFC {rfc_id} not found in any folder.'...",
-        "Formatted string return: f'Error deleting RFC: {str(e)}'..."
+        "Formatted string return: {'error': f'RFC {rfc_id} not found in any folder.', 'rfc_id': rfc_id, 'deleted': False}...",
+        "Formatted string return: {'error': f'Error deleting RFC: {str(e)}', 'rfc_id': rfc_id, 'deleted': False}..."
       ],
       "clean": false
     },
@@ -210,12 +207,10 @@
         "FormatForExternalAgentTool"
       ],
       "issues": [
-        "Plain string return: 'Error: task parameter is required'...",
-        "Plain string return: 'Error: agent parameter is required'...",
-        "Formatted string return: f\"Error: Unknown agent '{agent_name}'. Available agents: {', '.join(available)}\"...",
-        "Formatted string return: f'Error: Invalid JSON format - {str(e)}'...",
-        "Formatted string return: f'Error: External agent error - {str(e)}'...",
-        "Formatted string return: f'Error: Unexpected error - {str(e)}'..."
+        "Formatted string return: {'error': f\"Unknown agent '{agent_name}'. Available agents: {', '.join(available)}\", 'agent': agent_...",
+        "Formatted string return: {'error': f'Invalid JSON format - {str(e)}', 'task_formatted': False}...",
+        "Formatted string return: {'error': f'External agent error - {str(e)}', 'agent': agent_name, 'task_formatted': False}...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'task_formatted': False}..."
       ],
       "clean": false
     },
@@ -270,7 +265,7 @@
         "ListPlansTool"
       ],
       "issues": [
-        "Formatted string return: json.dumps(error_response) if output_format == 'json' else f'Error listing plans: {str(e)}'..."
+        "Formatted string return: {'error': f'Error listing plans: {str(e)}', 'plans': [], 'count': 0}..."
       ],
       "clean": false
     },
@@ -302,12 +297,10 @@
         "MovePlanTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'plan_name' is required.\"...",
-        "Plain string return: \"Error: 'to_status' is required.\"...",
-        "Formatted string return: f'Plan moved successfully!\\n\\n**Plan**: {plan_name}\\n**From**: {current_status}\\n**To**: {to_status}...",
-        "Formatted string return: f\"Error: Plan '{plan_name}' not found.\"...",
-        "Formatted string return: f\"Plan is already in '{to_status}' status.\"...",
-        "Formatted string return: f'Error moving plan: {str(e)}'..."
+        "Formatted string return: {'moved': True, 'plan_name': plan_name, 'from_status': current_status, 'to_status': to_status, 'reas...",
+        "Formatted string return: {'error': f\"Plan '{plan_name}' not found.\", 'plan_name': plan_name, 'moved': False}...",
+        "Formatted string return: {'error': f\"Plan is already in '{to_status}' status.\", 'plan_name': plan_name, 'current_status': cur...",
+        "Formatted string return: {'error': f'Error moving plan: {str(e)}', 'plan_name': plan_name, 'moved': False}..."
       ],
       "clean": false
     },
@@ -317,13 +310,11 @@
         "MoveRFCTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'rfc_id' is required.\"...",
-        "Plain string return: \"Error: 'target_status' is required.\"...",
-        "Formatted string return: f'RFC moved successfully!\\n\\n**RFC ID**: {rfc_id}\\n**Previous Status**: {current_status}\\n**New Stat...",
-        "Formatted string return: f\"Error: RFC '{rfc_id}' not found.\"...",
-        "Formatted string return: f\"RFC '{rfc_id}' is already in '{target_status}' status.\"...",
-        "Formatted string return: f\"Error: Invalid transition from '{current_status}' to '{target_status}'.\"...",
-        "Formatted string return: f'Error moving RFC: {str(e)}'..."
+        "Formatted string return: {'moved': True, 'rfc_id': rfc_id, 'previous_status': current_status, 'new_status': target_status, 'n...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found.\", 'rfc_id': rfc_id, 'moved': False}...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' is already in '{target_status}' status.\", 'rfc_id': rfc_id, 'current_stat...",
+        "Formatted string return: {'error': f\"Invalid transition from '{current_status}' to '{target_status}'.\", 'rfc_id': rfc_id, 'cu...",
+        "Formatted string return: {'error': f'Error moving RFC: {str(e)}', 'rfc_id': rfc_id, 'moved': False}..."
       ],
       "clean": false
     },
@@ -333,10 +324,8 @@
         "ParseExternalResultTool"
       ],
       "issues": [
-        "Plain string return: 'Error: agent parameter is required'...",
-        "Plain string return: 'Error: either output or error must be provided'...",
-        "Formatted string return: f\"Error: Unknown agent '{agent_name}'. Available agents: {', '.join(available)}\"...",
-        "Formatted string return: f'Error: Unexpected error - {str(e)}'..."
+        "Formatted string return: {'error': f\"Unknown agent '{agent_name}'. Available agents: {', '.join(available)}\", 'agent': agent_...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'agent': agent_name, 'parsed': False}..."
       ],
       "clean": false
     },
@@ -404,8 +393,8 @@
         "ReadPlanTool"
       ],
       "issues": [
-        "Formatted string return: json.dumps(error_response) if output_format == 'json' else f\"Error: Plan '{plan_name}' not found.\"...",
-        "Formatted string return: json.dumps(error_response) if output_format == 'json' else f'Error reading plan: {str(e)}'..."
+        "Formatted string return: {'error': f\"Plan '{plan_name}' not found.\", 'plan_name': plan_name, 'found': False}...",
+        "Formatted string return: {'error': f'Error reading plan: {str(e)}', 'plan_name': plan_name, 'found': False}..."
       ],
       "clean": false
     },
@@ -427,9 +416,8 @@
         "RecommendExternalAgentTool"
       ],
       "issues": [
-        "Plain string return: 'Error: task parameter is required'...",
-        "Formatted string return: f'Error: Invalid JSON format - {str(e)}'...",
-        "Formatted string return: f'Error: Unexpected error - {str(e)}'..."
+        "Formatted string return: {'error': f'Invalid JSON format - {str(e)}', 'recommendations': [], 'analyzed': False}...",
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'recommendations': [], 'analyzed': False}..."
       ],
       "clean": false
     },
@@ -439,10 +427,7 @@
         "ReplyMailTool"
       ],
       "issues": [
-        "Formatted string return: f'Reply sent successfully to {original.from_agent or 'User'} (ID: {reply_id})'...",
-        "Plain string return: 'Error: message_id is required to reply to a message'...",
-        "Plain string return: 'Error: body is required for the reply'...",
-        "Formatted string return: f'Error: Message with ID {message_id} not found'..."
+        "Formatted string return: {'error': f'Message with ID {message_id} not found', 'sent': False, 'message_id': message_id}..."
       ],
       "clean": false
     },
@@ -493,16 +478,6 @@
       "clean": false
     },
     {
-      "file": "ai_whisperer/tools/send_mail_with_switch_tool.py",
-      "classes": [
-        "SendMailWithSwitchTool"
-      ],
-      "issues": [
-        "Formatted string return: f'{result_str}\\n[Agent switch required: {current_agent} -> {to_agent}]'..."
-      ],
-      "clean": false
-    },
-    {
       "file": "ai_whisperer/tools/session_inspector_tool.py",
       "classes": [
         "SessionInspectorTool"
@@ -542,13 +517,12 @@
         "UpdatePlanFromRFCTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'plan_name' is required.\"...",
-        "Formatted string return: f\"Error: Plan '{plan_name}' not found.\"...",
-        "Formatted string return: f'Error checking RFC: {error}'...",
-        "Plain string return: 'Plan is already up to date with the RFC.'...",
+        "Formatted string return: {'updated': True, 'plan_name': plan_name, 'rfc_changed': has_changed, 'force_update': force_update, ...",
+        "Formatted string return: {'error': f\"Plan '{plan_name}' not found.\", 'plan_name': plan_name, 'updated': False}...",
+        "Formatted string return: {'error': f'Error checking RFC: {error}', 'plan_name': plan_name, 'updated': False}...",
         "Plain string return: ''.join(chunks)...",
-        "Formatted string return: f'Error: Updated plan failed validation: {error}'...",
-        "Formatted string return: f'Error updating plan: {str(e)}'..."
+        "Formatted string return: {'error': f'Updated plan failed validation: {error}', 'plan_name': plan_name, 'updated': False, 'val...",
+        "Formatted string return: {'error': f'Error updating plan: {str(e)}', 'plan_name': plan_name, 'updated': False}..."
       ],
       "clean": false
     },
@@ -558,12 +532,9 @@
         "UpdateRFCTool"
       ],
       "issues": [
-        "Plain string return: \"Error: 'rfc_id' is required.\"...",
-        "Plain string return: \"Error: 'section' is required.\"...",
-        "Plain string return: \"Error: 'content' is required.\"...",
-        "Formatted string return: f\"RFC updated successfully!\\n\\n**RFC ID**: {rfc_id}\\n**Section**: {section.replace('_', ' ').title()...",
-        "Formatted string return: f\"Error: RFC '{rfc_id}' not found.\"...",
-        "Formatted string return: f'Error updating RFC: {str(e)}'..."
+        "Formatted string return: {'updated': True, 'rfc_id': rfc_id, 'section': section, 'action': 'appended' if append else 'replace...",
+        "Formatted string return: {'error': f\"RFC '{rfc_id}' not found.\", 'rfc_id': rfc_id, 'updated': False}...",
+        "Formatted string return: {'error': f'Error updating RFC: {str(e)}', 'rfc_id': rfc_id, 'section': section, 'updated': False}..."
       ],
       "clean": false
     },
@@ -573,10 +544,8 @@
         "UpdateTaskStatusTool"
       ],
       "issues": [
-        "Plain string return: 'Error: task_id is required'...",
-        "Plain string return: 'Error: status is required'...",
-        "Formatted string return: f'Error: Unexpected error - {str(e)}'...",
-        "Formatted string return: f\"Error: Invalid status '{status_str}'. Valid statuses: {', '.join(valid_statuses)}\"..."
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'task_id': task_id, 'updated': False}...",
+        "Formatted string return: {'error': f\"Invalid status '{status_str}'. Valid statuses: {', '.join(valid_statuses)}\", 'task_id': ..."
       ],
       "clean": false
     },
@@ -586,7 +555,7 @@
         "ValidateExternalAgentTool"
       ],
       "issues": [
-        "Formatted string return: f'Error: Unexpected error - {str(e)}'..."
+        "Formatted string return: {'error': f'Unexpected error - {str(e)}', 'validations': [], 'validated': False}..."
       ],
       "clean": false
     },
