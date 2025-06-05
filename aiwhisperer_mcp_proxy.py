@@ -35,17 +35,21 @@ def main():
     """Start the AIWhisperer MCP proxy."""
     logger.info("Starting AIWhisperer MCP Proxy...")
     
-    # Create a proxy to the AIWhisperer MCP server
-    # FastMCP handles all the complex SSE event forwarding automatically
+    # For now, create a standard proxy
+    # TODO: In the future, we'll create a custom proxy that filters tools
+    # based on Claude settings. For now, we rely on Claude CLI to filter
+    # the tools it shows based on the server name.
     proxy = FastMCP.as_proxy(
         "http://localhost:8002/sse",  # AIWhisperer MCP server endpoint
         name="aiwhisperer-aggregator",  # Name shown in Claude CLI
         port=3002
     )
     
+    # Log info about Claude tool filtering
     logger.info("Proxy started on http://localhost:3002/sse")
     logger.info("Forwarding to AIWhisperer MCP server at http://localhost:8002/sse")
     logger.info("Configure Claude CLI to use: http://localhost:3002/sse")
+    logger.info("Note: Claude tool filtering will be applied by Claude CLI based on server name")
     
     # Run the proxy with SSE transport for Claude Desktop compatibility
     proxy.run(transport="sse")

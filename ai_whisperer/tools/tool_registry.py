@@ -42,6 +42,35 @@ class LazyToolRegistry:
     
     def _init_tool_specs(self):
         """Initialize tool specifications for lazy loading."""
+        # Claude tools (core tools for hybrid-hybrid system)
+        self._tool_specs.update({
+            "claude_mailbox": {
+                "module": "ai_whisperer.tools.claude.claude_mailbox_tool",
+                "class": "ClaudeMailboxTool",
+                "category": "claude"
+            },
+            "claude_check_mail": {
+                "module": "ai_whisperer.tools.claude.claude_check_mail_tool",
+                "class": "ClaudeCheckMailTool",
+                "category": "claude"
+            },
+            "claude_user_message": {
+                "module": "ai_whisperer.tools.claude.claude_user_message_tool",
+                "class": "ClaudeUserMessageTool",
+                "category": "claude"
+            },
+            "claude_enable_all_tools": {
+                "module": "ai_whisperer.tools.claude.claude_enable_all_tools_tool",
+                "class": "ClaudeEnableAllToolsTool",
+                "category": "claude"
+            },
+            "claude_set_toolset": {
+                "module": "ai_whisperer.tools.claude.claude_set_toolset_tool",
+                "class": "ClaudeSetToolsetTool",
+                "category": "claude"
+            }
+        })
+        
         # File operation tools
         self._tool_specs.update({
             "read_file": {
