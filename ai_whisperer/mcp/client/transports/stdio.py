@@ -26,6 +26,7 @@ class StdioTransport(MCPTransportBase):
         self._read_task: Optional[asyncio.Task] = None
         self._pending_requests: Dict[Any, asyncio.Future] = {}
         self._next_id = 1
+        self._closing = False
         
     async def connect(self) -> None:
         """Start subprocess and establish stdio communication."""
