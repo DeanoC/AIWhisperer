@@ -23,6 +23,11 @@ parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "co
                    help="Configuration file path")
 parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
 parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
+parser.add_argument("--mcp", action="store_true", help="Start MCP server alongside interactive server")
+parser.add_argument("--mcp-port", type=int, default=3001, help="Port for MCP server (default: 3001)")
+parser.add_argument("--mcp-transport", choices=["websocket", "sse"], default="websocket",
+                   help="MCP transport type (default: websocket)")
+parser.add_argument("--mcp-tools", nargs="+", help="Tools to expose via MCP")
 
 # Only parse args if running as main
 if __name__ == "__main__":
@@ -82,6 +87,7 @@ from ai_whisperer.utils.path import PathManager
 from pathlib import Path
 from .handlers.project_handlers import init_project_handlers, PROJECT_HANDLERS
 from .handlers.workspace_handler import WorkspaceHandler
+from .mcp_integration import MCP_HANDLERS
 
 # Agent registry will be initialized later after PathManager
 agent_registry = None
@@ -285,6 +291,10 @@ try:
             debbie_monitor = False
             monitor_level = "passive"
             config = os.environ.get("AIWHISPERER_CONFIG", "config/main.yaml")
+            mcp = False
+            mcp_port = 3001
+            mcp_transport = "websocket"
+            mcp_tools = None
         
         cli_args, app_config, debbie_observer = initialize_server(DefaultArgs())
 except Exception as e:
@@ -296,6 +306,10 @@ except Exception as e:
         debbie_monitor = False
         monitor_level = "passive"
         config = "config/main.yaml"
+        mcp = False
+        mcp_port = 3001
+        mcp_transport = "websocket"
+        mcp_tools = None
     cli_args = DefaultArgs()
 
 # Initialize PathManager
@@ -710,6 +724,8 @@ HANDLERS = {
     # Plan management handlers
     "plan.list": __import__("interactive_server.handlers.plan_handler").handlers.plan_handler.list_plans_handler,
     "plan.read": __import__("interactive_server.handlers.plan_handler").handlers.plan_handler.read_plan_handler,
+    # MCP server handlers
+    **MCP_HANDLERS,
 }
 
 # Add workspace handlers if available
@@ -940,8 +956,40 @@ async def websocket_endpoint(websocket: WebSocket):
             logging.error(f"[websocket_endpoint] Exception during websocket.close(): {close_exc}")
 
 
+async def start_mcp_if_requested(cli_args):
+    """Start MCP server if requested via command line."""
+    if cli_args.mcp:
+        logger.info("Starting MCP server as requested...")
+        from .mcp_integration import get_mcp_manager
+        
+        mcp_config = {
+            "transport": cli_args.mcp_transport,
+            "port": cli_args.mcp_port,
+            "exposed_tools": cli_args.mcp_tools or [
+                "read_file", "write_file", "list_directory",
+                "search_files", "execute_command"
+            ],
+            "workspace": Path.cwd(),
+            "enable_metrics": True,
+            "log_level": "INFO"
+        }
+        
+        manager = get_mcp_manager()
+        result = await manager.start_mcp_server(mcp_config)
+        
+        if result["success"]:
+            logger.info(f"MCP server started: {result['message']}")
+            logger.info(f"MCP server URL: {result['server_url']}")
+        else:
+            logger.error(f"Failed to start MCP server: {result['message']}")
+
+
 if __name__ == "__main__":
     import uvicorn
     # CLI args are already parsed in the initialization above
     logger.info(f"Starting server on {cli_args.host}:{cli_args.port} with Debbie monitoring: {cli_args.debbie_monitor}")
+    
+    # Start MCP server if requested
+    asyncio.run(start_mcp_if_requested(cli_args))
+    
     uvicorn.run(app, host=cli_args.host, port=cli_args.port)

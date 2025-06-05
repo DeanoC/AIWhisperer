@@ -46,6 +46,21 @@ aiwhisperer-mcp --help
 python -m ai_whisperer.mcp.server.runner --help
 ```
 
+### Running with Interactive Server
+
+AIWhisperer can run the MCP server alongside the main interactive server, allowing you to use both the web interface and MCP capabilities simultaneously:
+
+```bash
+# Start both servers together
+python -m interactive_server.main --mcp --mcp-port 3001
+
+# With custom tools
+python -m interactive_server.main --mcp --mcp-tools read_file write_file search_files
+
+# Or use the convenience script
+./start_with_mcp.sh
+```
+
 ## Quick Start
 
 ### 1. Basic Server Start
@@ -800,6 +815,71 @@ async def monitor_mcp_server(url):
             print(f"Slow requests: {metrics['slow_requests']}")
             
         await asyncio.sleep(30)
+```
+
+## Controlling MCP via Web Interface
+
+When running AIWhisperer's interactive server, you can control the MCP server through the web interface or programmatically via WebSocket:
+
+### Starting MCP Server
+
+Send a JSON-RPC request to start the MCP server:
+
+```javascript
+// Connect to AIWhisperer interactive server
+const ws = new WebSocket('ws://localhost:8000/ws');
+
+// Start MCP server
+ws.send(JSON.stringify({
+  jsonrpc: "2.0",
+  method: "mcp.start",
+  params: {
+    transport: "websocket",
+    port: 3001,
+    exposed_tools: ["read_file", "write_file", "search_files"],
+    workspace: "/path/to/project"
+  },
+  id: 1
+}));
+```
+
+### Checking MCP Status
+
+```javascript
+// Check if MCP server is running
+ws.send(JSON.stringify({
+  jsonrpc: "2.0",
+  method: "mcp.status",
+  params: {},
+  id: 2
+}));
+
+// Response:
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "running": true,
+    "transport": "websocket",
+    "port": 3001,
+    "server_url": "ws://localhost:3001/mcp",
+    "exposed_tools": ["read_file", "write_file", "search_files"],
+    "health": "healthy",
+    "uptime": "0:05:23"
+  }
+}
+```
+
+### Stopping MCP Server
+
+```javascript
+// Stop MCP server
+ws.send(JSON.stringify({
+  jsonrpc: "2.0",
+  method: "mcp.stop",
+  params: {},
+  id: 3
+}));
 ```
 
 ## Advanced Usage

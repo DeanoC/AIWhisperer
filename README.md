@@ -63,12 +63,20 @@ python -m ai_whisperer.cli --config config.yaml batch scripts/script_name.json
 AIWhisperer can run as an MCP server, allowing Claude Desktop and other MCP clients to use its tools:
 
 ```bash
-# Basic usage
+# Standalone MCP server
 aiwhisperer-mcp --workspace /path/to/project
 
 # With specific tools
 aiwhisperer-mcp --expose-tool read_file --expose-tool search_files --workspace /path/to/project
+
+# Run alongside interactive server
+python -m interactive_server.main --mcp --mcp-port 3001
+
+# Or use the convenience script
+./start_with_mcp.sh
 ```
+
+The MCP server can also be controlled via the web interface when running the interactive server.
 
 See [docs/CLAUDE_DESKTOP_INTEGRATION.md](docs/CLAUDE_DESKTOP_INTEGRATION.md) for setup instructions.
 
