@@ -230,16 +230,29 @@ class TestToolHandler:
     @pytest.mark.asyncio
     async def test_call_tool_not_available(self, handler, mock_registry):
         """Test calling tool that doesn't exist in registry."""
-        # Clear cache first
-        handler._tool_cache.clear()
-        mock_registry.get_tool.return_value = None
+        # Use a fresh tool name that's in exposed_tools but not in registry
+        fresh_tool_name = "tool_that_does_not_exist"
+        handler.exposed_tools.add(fresh_tool_name)
+        
+        # Make sure registry returns None for this tool
+        original_get_tool = mock_registry.get_tool.side_effect or mock_registry.get_tool.return_value
+        
+        def get_tool_with_none(name):
+            if name == fresh_tool_name:
+                return None
+            # Call original for other tools
+            if callable(original_get_tool):
+                return original_get_tool(name)
+            return original_get_tool
+            
+        mock_registry.get_tool.side_effect = get_tool_with_none
         
         params = {
-            "name": "tool1",
+            "name": fresh_tool_name,
             "arguments": {}
         }
         
-        with pytest.raises(ValueError, match="Tool 'tool1' not available"):
+        with pytest.raises(ValueError, match=f"Tool '{fresh_tool_name}' not available"):
             await handler.call_tool(params)
             
     @pytest.mark.asyncio

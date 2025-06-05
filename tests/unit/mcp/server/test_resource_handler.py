@@ -163,14 +163,8 @@ class TestResourceHandler:
         """Test writing binary resource."""
         import base64
         
-        # Add permission for output
-        output_dir = Path(temp_workspace, "output")
-        output_dir.mkdir()
-        
-        # Add write permission for output directory
-        handler.permissions.append(
-            ResourcePermission(pattern="output/**/*", operations=["read", "write"])
-        )
+        # Output directory already exists from temp_workspace fixture
+        # and permissions are already in config
         
         params = {
             "uri": "file://output/data.bin",
@@ -249,11 +243,15 @@ class TestResourceHandler:
         assert handler._has_permission("src/main.py", "read") is True
         assert handler._has_permission("test.py", "write") is False
         
-        # Markdown files have read and write permission
+        # Markdown files have read permission only
         assert handler._has_permission("README.md", "read") is True
-        assert handler._has_permission("README.md", "write") is True
+        assert handler._has_permission("README.md", "write") is False
         assert handler._has_permission("docs/guide.md", "read") is True
-        assert handler._has_permission("docs/guide.md", "write") is True
+        assert handler._has_permission("docs/guide.md", "write") is False
+        
+        # Config.json has read and write permission
+        assert handler._has_permission("config.json", "read") is True
+        assert handler._has_permission("config.json", "write") is True
         
         # No permission for other files
         assert handler._has_permission("secret.txt", "read") is False

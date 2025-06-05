@@ -374,7 +374,24 @@ class TestMCPServerIntegration:
                 "id": 2
             }
             
-            response = await self._send_request(proc, request)
+            # For notifications, server might not send a response
+            # So we send a regular request and verify we get its response
+            try:
+                response_line = await asyncio.wait_for(proc.stdout.readline(), timeout=0.5)
+                if response_line:
+                    # If we got a response to the notification, it should not have an id
+                    notif_response = json.loads(response_line.decode())
+                    assert "id" not in notif_response
+            except asyncio.TimeoutError:
+                # No response to notification is valid
+                pass
+            
+            # Now send the regular request
+            proc.stdin.write((json.dumps(request) + '\n').encode())
+            await proc.stdin.drain()
+            
+            response_line = await asyncio.wait_for(proc.stdout.readline(), timeout=5.0)
+            response = json.loads(response_line.decode())
             
             # Should get response to request, not notification
             assert response["id"] == 2
