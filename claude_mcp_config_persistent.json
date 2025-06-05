@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "aiwhisperer": {
+      "command": "/home/deano/projects/AIWhisperer/aiwhisperer-mcp-persistent",
+      "args": [
+        "--config", "config/mcp_minimal.yaml",
+        "--transport", "stdio",
+        "--log-level", "DEBUG"
+      ],
+      "cwd": "/home/deano/projects/AIWhisperer"
+    }
+  }
+}

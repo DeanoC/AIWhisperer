@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "aiwhisperer": {
+      "transport": "sse",
+      "sseUrl": "http://localhost:3002/mcp/sse",
+      "requestUrl": "http://localhost:3002/mcp/request"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+#!/bin/bash
+# Launch the persistent MCP proxy for AIWhisperer
+
+# Change to the project directory
+cd "$(dirname "$0")"
+
+# Activate the virtual environment if it exists
+if [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
+fi
+
+# Run the persistent proxy
+exec python -m ai_whisperer.mcp.client.persistent_proxy "$@"
