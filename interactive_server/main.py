@@ -88,9 +88,12 @@ from pathlib import Path
 from .handlers.project_handlers import init_project_handlers, PROJECT_HANDLERS
 from .handlers.workspace_handler import WorkspaceHandler
 from .mcp_integration import MCP_HANDLERS
+from .async_agent_endpoints import AsyncAgentEndpoints
 
 # Agent registry will be initialized later after PathManager
 agent_registry = None
+# Async agent endpoints will be initialized with session manager
+async_agent_endpoints = None
 # === Agent/Session JSON-RPC Handlers ===
 async def agent_list_handler(params, websocket=None):
     if not agent_registry:
@@ -399,6 +402,13 @@ except Exception as e:
     session_manager = StatelessSessionManager(app_config, None, None, observer=debbie_observer)
     logger.info("Created basic StatelessSessionManager without agent registry")
 
+# Initialize async agent endpoints
+try:
+    async_agent_endpoints = AsyncAgentEndpoints(session_manager)
+    logger.info("AsyncAgentEndpoints initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize AsyncAgentEndpoints: {e}")
+    async_agent_endpoints = None
 
 # Handler functions
 async def start_session_handler(params, websocket=None):
@@ -523,6 +533,11 @@ async def stop_session_handler(params, websocket=None):
                 reason="Session stopped"
             )
             await session.send_notification("SessionStatusNotification", notification)
+            
+            # Clean up async agents if any
+            if async_agent_endpoints:
+                await async_agent_endpoints.cleanup_session(model.sessionId)
+            
             await session_manager.cleanup_session(model.sessionId)
     except Exception:
         pass  # Ignore all errors for idempotency
@@ -727,6 +742,21 @@ HANDLERS = {
     # MCP server handlers
     **MCP_HANDLERS,
 }
+
+# Add async agent handlers if available
+if async_agent_endpoints:
+    ASYNC_HANDLERS = {
+        "async.createAgent": async_agent_endpoints.create_async_agent,
+        "async.startAgent": async_agent_endpoints.start_agent,
+        "async.stopAgent": async_agent_endpoints.stop_agent,
+        "async.sleepAgent": async_agent_endpoints.sleep_agent,
+        "async.wakeAgent": async_agent_endpoints.wake_agent,
+        "async.sendTask": async_agent_endpoints.send_task_to_agent,
+        "async.getAgentStates": async_agent_endpoints.get_agent_states,
+        "async.broadcastEvent": async_agent_endpoints.broadcast_event,
+    }
+    HANDLERS.update(ASYNC_HANDLERS)
+    logger.info("Added async agent handlers to JSON-RPC handlers")
 
 # Add workspace handlers if available
 if workspace_handler:
