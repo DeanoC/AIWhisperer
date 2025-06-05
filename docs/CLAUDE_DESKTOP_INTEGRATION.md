@@ -66,9 +66,36 @@ Edit the Claude Desktop configuration file to add AIWhisperer:
 
 ## Step 3: Tool Selection Guide
 
-Choose which AIWhisperer tools to expose based on your needs:
+Choose which AIWhisperer tools to expose based on your needs.
 
-### Basic File Operations
+**Why Agent Communication Tools?** 
+Most AI systems (including Claude) already have excellent file operation capabilities. AIWhisperer's unique value lies in its multi-agent system where specialized agents (Alice, Patricia, Tessa, etc.) can collaborate on complex tasks. By exposing the mailbox and agent tools, you enable Claude to:
+- Delegate specialized tasks to the right AIWhisperer agent
+- Participate in multi-agent workflows
+- Access AIWhisperer's unique planning and RFC systems
+- Leverage specialized code analysis tools
+
+### Agent Communication Focus (Recommended)
+```json
+"args": [
+  "--expose-tool", "check_mail",
+  "--expose-tool", "send_mail",
+  "--expose-tool", "switch_agent",
+  "--expose-tool", "create_rfc",
+  "--expose-tool", "python_ast_json",
+  "--workspace", "/path/to/project"
+]
+```
+
+### Using Pre-configured Profiles
+```json
+"args": [
+  "--config", "/path/to/AIWhisperer/config/mcp_agent_focused.yaml",
+  "--workspace", "/path/to/project"
+]
+```
+
+### Basic File Operations (If Needed)
 ```json
 "args": [
   "--expose-tool", "read_file",

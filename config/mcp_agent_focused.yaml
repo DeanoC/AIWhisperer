@@ -1,0 +1,60 @@
+# MCP Server Configuration - Agent-Focused Tools
+# This configuration exposes AIWhisperer's unique agent communication
+# and coordination tools, avoiding generic file operations that most
+# AI systems already have.
+
+mcp:
+  server:
+    transport: stdio
+    server_name: "aiwhisperer-agents"
+    server_version: "1.0.0"
+    
+    # Expose only AIWhisperer-specific tools that enable
+    # external AI to interact with our agent system
+    exposed_tools:
+      # Mailbox - Core agent communication
+      - check_mail           # Check messages in mailbox
+      - send_mail           # Send messages to agents
+      - reply_mail          # Reply to messages
+      - send_mail_with_switch  # Send mail and switch agents
+      
+      # Agent Management
+      - switch_agent        # Switch between agents
+      
+      # Planning and RFC Tools (unique to AIWhisperer)
+      - create_rfc          # Create RFC documents
+      - read_rfc            # Read RFC documents
+      - update_rfc          # Update RFC documents
+      - list_rfcs           # List all RFCs
+      - create_plan_from_rfc  # Convert RFC to plan
+      - read_plan           # Read plan documents
+      - list_plans          # List all plans
+      
+      # Advanced Analysis (AIWhisperer-specific)
+      - python_ast_json     # Parse Python to AST JSON
+      - analyze_dependencies # Analyze project dependencies
+      - find_similar_code   # Find similar code patterns
+      - workspace_stats     # Get workspace statistics
+      
+      # External Agent Integration
+      - format_for_external_agent  # Format tasks for external agents
+      - parse_external_result      # Parse external agent results
+      - recommend_external_agent   # Recommend external agents
+      
+      # Session and Monitoring
+      - session_inspector   # Inspect session state
+      - session_health      # Check session health
+      - prompt_metrics      # Get prompt usage metrics
+    
+    # Resource permissions - read-only by default
+    resource_permissions:
+      - pattern: "**/*.py"
+        operations: ["read"]
+      - pattern: "**/*.md"
+        operations: ["read"]
+      - pattern: "rfcs/**/*"
+        operations: ["read", "write"]
+      - pattern: "plans/**/*"
+        operations: ["read", "write"]
+      - pattern: "output/**/*"
+        operations: ["read", "write"]

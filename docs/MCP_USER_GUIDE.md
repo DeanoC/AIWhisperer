@@ -134,11 +134,129 @@ Use the configuration file:
 aiwhisperer-mcp --config mcp-server.yaml
 ```
 
+## Tool Selection Strategy
+
+### Why Selective Tool Exposure?
+
+Most AI systems already have their own file operations, making AIWhisperer's generic file tools redundant. Instead, focus on exposing AIWhisperer's unique capabilities:
+
+1. **Agent Communication** - Mailbox system for inter-agent messaging
+2. **Planning Tools** - RFC and plan generation unique to AIWhisperer
+3. **Code Analysis** - Advanced AST parsing and analysis
+4. **Session Management** - Multi-agent session coordination
+
+### Recommended Configurations
+
+#### Agent-Focused Configuration
+```bash
+# Use the agent-focused configuration
+aiwhisperer-mcp --config config/mcp_agent_focused.yaml
+
+# Or specify key tools manually
+aiwhisperer-mcp \
+  --expose-tool check_mail \
+  --expose-tool send_mail \
+  --expose-tool switch_agent \
+  --expose-tool create_rfc \
+  --expose-tool python_ast_json
+```
+
+#### Minimal Configuration
+```bash
+# Absolute minimum for agent interaction
+aiwhisperer-mcp --config config/mcp_minimal.yaml
+```
+
 ## Available Tools
 
-AIWhisperer exposes various tools through MCP. Here are the most commonly used ones:
+AIWhisperer exposes various tools through MCP. Here are the categories and most useful tools:
 
-### File Operations
+### Agent Communication Tools (Unique to AIWhisperer)
+
+#### check_mail
+Check messages in the agent's mailbox.
+
+**Parameters:**
+- `sender` (string, optional): Filter by sender agent
+- `status` (string, optional): Filter by status ("unread", "read", "all")
+
+**Example:**
+```json
+{
+  "name": "check_mail",
+  "arguments": {
+    "status": "unread"
+  }
+}
+```
+
+#### send_mail
+Send a message to another agent or user.
+
+**Parameters:**
+- `to` (string, required): Recipient agent name
+- `subject` (string, required): Message subject
+- `body` (string, required): Message content
+- `priority` (string, optional): Message priority ("high", "normal", "low")
+
+**Example:**
+```json
+{
+  "name": "send_mail",
+  "arguments": {
+    "to": "alice",
+    "subject": "Code Review Request",
+    "body": "Please review the authentication module changes.",
+    "priority": "high"
+  }
+}
+```
+
+#### switch_agent
+Switch the active agent in the current session.
+
+**Parameters:**
+- `agent_name` (string, required): Name of agent to switch to
+- `reason` (string, optional): Reason for switching
+
+**Example:**
+```json
+{
+  "name": "switch_agent",
+  "arguments": {
+    "agent_name": "patricia",
+    "reason": "Need planning expertise for RFC creation"
+  }
+}
+```
+
+### Planning and RFC Tools
+
+#### create_rfc
+Create a Request for Comments document.
+
+**Parameters:**
+- `title` (string, required): RFC title
+- `content` (string, required): RFC content in Markdown
+- `tags` (array, optional): Tags for categorization
+
+#### create_plan_from_rfc
+Convert an RFC into an executable plan.
+
+**Parameters:**
+- `rfc_path` (string, required): Path to RFC file
+- `output_path` (string, optional): Where to save the plan
+
+### Code Analysis Tools
+
+#### python_ast_json
+Parse Python code into AST JSON format.
+
+**Parameters:**
+- `source_code` (string): Python source code to parse
+- `file_path` (string): Path to Python file (alternative to source_code)
+
+### File Operations (Standard)
 
 #### read_file
 Read contents of a file within the workspace.
