@@ -1,0 +1,4 @@
+# Test 3: Sequential requests
+# Alice should handle both requests in order
+What is your role?
+Please use the list_directory tool to show the contents of /home/deano/projects/AIWhisperer

@@ -1,0 +1,3 @@
+# Test Alice using check_mail tool
+# Alice should successfully use the check_mail tool
+Please use the check_mail tool to check your mailbox

@@ -1,0 +1,2 @@
+Please switch to Debbie
+Please use the list_directory tool to list the contents of /home/deano/projects/AIWhisperer and tell me what you find

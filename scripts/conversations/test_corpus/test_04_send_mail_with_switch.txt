@@ -1,0 +1,5 @@
+# Test 4: Basic send_mail_with_switch
+# Alice sends mail to Debbie asking about her role
+# Debbie should activate, check mail, respond about her role
+# Control returns to Alice who reports back
+Please use send_mail_with_switch to send a message to Debbie with subject 'Role Query' and body 'What is your role?'

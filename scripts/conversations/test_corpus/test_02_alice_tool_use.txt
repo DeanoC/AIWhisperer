@@ -1,0 +1,3 @@
+# Test 2: Basic tool usage
+# Alice should use list_directory tool and show results
+Please use the list_directory tool to show the contents of /home/deano/projects/AIWhisperer

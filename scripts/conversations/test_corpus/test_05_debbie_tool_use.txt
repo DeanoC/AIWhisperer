@@ -1,0 +1,4 @@
+# Test 5: Debbie using tools via mail
+# Alice sends mail asking Debbie to use a tool
+# Debbie should check mail, use the tool, and respond with results
+Please use send_mail_with_switch to send a message to Debbie with subject 'Directory Request' and body 'Please use the list_directory tool to list /home/deano/projects/AIWhisperer and tell me what you find'

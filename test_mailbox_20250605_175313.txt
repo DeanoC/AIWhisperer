@@ -1,0 +1,7 @@
+/switch-agent a
+Who are you?
+Use send_mail_with_switch to send to Debbie with subject 'System Health Check' and body 'Please check the system health.'
+/inspect-agent d
+/switch-agent a
+What was Debbie's response?
+/exit

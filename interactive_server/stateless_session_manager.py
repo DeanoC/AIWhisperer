@@ -328,7 +328,7 @@ class StatelessInteractiveSession:
     async def start_ai_session(self, system_prompt: str = None) -> str:
         """
         Start the AI session by creating a default agent.
-        Uses Alice (agent 'a') as the default if available.
+        Uses Alice (agent 'a') as the default if available, unless overridden by AIWHISPERER_DEFAULT_AGENT env var.
         """
         if self.is_started:
             raise RuntimeError(f"Session {self.session_id} is already started")
@@ -336,15 +336,26 @@ class StatelessInteractiveSession:
         try:
             self.is_started = True
             
-            # Try to use Alice as default agent
-            if self.agent_registry and self.agent_registry.get_agent("A"):
+            # Check for default agent override in environment
+            import os
+            default_agent_id = os.environ.get('AIWHISPERER_DEFAULT_AGENT', 'a').lower()
+            default_agent_name = {
+                'a': 'Alice',
+                'd': 'Debbie', 
+                'p': 'Patricia',
+                't': 'Tessa',
+                'e': 'Eamonn'
+            }.get(default_agent_id, 'Unknown')
+            
+            # Try to use specified default agent
+            if self.agent_registry and self.agent_registry.get_agent(default_agent_id.upper()):
                 try:
-                    # Switch to Alice - this will create the agent from registry
-                    await self.switch_agent("a")
-                    logger.info(f"Started session {self.session_id} with Alice agent")
+                    # Switch to default agent - this will create the agent from registry
+                    await self.switch_agent(default_agent_id)
+                    logger.info(f"Started session {self.session_id} with {default_agent_name} agent (id: {default_agent_id})")
                     return self.session_id
                 except Exception as e:
-                    logger.error(f"Failed to create Alice agent: {e}, falling back to default")
+                    logger.error(f"Failed to create {default_agent_name} agent: {e}, falling back to generic default")
                     # Fall through to create default agent
             
             # Fallback to generic default agent
