@@ -337,13 +337,83 @@ List available prompt templates.
 {
   "jsonrpc": "2.0",
   "result": {
-    "prompts": []
+    "prompts": [
+      {
+        "name": "alice_assistant",
+        "description": "You are Alice, AIWhisperer's primary assistant. Follow ALL instructions in core.md.",
+        "category": "agent",
+        "arguments": [
+          {
+            "name": "task",
+            "description": "The task or question to process",
+            "required": true
+          },
+          {
+            "name": "context",
+            "description": "Additional context for the prompt",
+            "required": false
+          }
+        ]
+      }
+    ]
   },
   "id": 8
 }
 ```
 
-*Note: Prompt support is planned for future releases.*
+**Filter by Category:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "prompts/list",
+  "params": {
+    "category": "agent"
+  },
+  "id": 9
+}
+```
+
+### prompts/get
+
+Get a specific prompt template with optional argument substitution.
+
+**Request:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "prompts/get",
+  "params": {
+    "name": "alice_assistant",
+    "arguments": {
+      "task": "Write a Python function",
+      "context": "The function should calculate fibonacci numbers"
+    }
+  },
+  "id": 10
+}
+```
+
+**Response:**
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "name": "alice_assistant",
+    "description": "You are Alice, AIWhisperer's primary assistant.",
+    "category": "agent",
+    "content": "# Alice - AI Assistant\n\nYou are Alice...\n\nYour task is: Write a Python function\nContext: The function should calculate fibonacci numbers",
+    "arguments": [
+      {
+        "name": "task",
+        "description": "The task or question to process",
+        "required": true
+      }
+    ],
+    "raw_content": "# Alice - AI Assistant\n\nYou are Alice...\n\nYour task is: {{task}}\nContext: {{context}}"
+  },
+  "id": 10
+}
+```
 
 ## Tool Schemas
 

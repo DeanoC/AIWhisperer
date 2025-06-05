@@ -10,6 +10,7 @@ from .config import MCPServerConfig, TransportType
 from .protocol import MCPProtocol
 from .handlers.tools import ToolHandler
 from .handlers.resources import ResourceHandler
+from .handlers.prompts import PromptHandler
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class MCPServer(MCPProtocol):
         # Initialize handlers
         self.tool_handler = ToolHandler(self.tool_registry, config)
         self.resource_handler = ResourceHandler(self.path_manager, config)
+        self.prompt_handler = PromptHandler(config)
         
         # Server state
         self.initialized = False
@@ -150,18 +152,12 @@ class MCPServer(MCPProtocol):
         if not self.initialized:
             raise RuntimeError("Server not initialized")
             
-        # For now, return empty list
-        # TODO: Implement prompt templates
-        return {"prompts": []}
+        prompts = await self.prompt_handler.list_prompts(params)
+        return {"prompts": prompts}
         
     async def handle_prompts_get(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle prompts/get request."""
         if not self.initialized:
             raise RuntimeError("Server not initialized")
             
-        name = params.get("name")
-        if not name:
-            raise ValueError("Missing required field: name")
-            
-        # TODO: Implement prompt retrieval
-        raise ValueError(f"Prompt '{name}' not found")
+        return await self.prompt_handler.get_prompt(params)
