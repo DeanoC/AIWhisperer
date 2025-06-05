@@ -1,0 +1,3 @@
+Alice, please use send_mail_with_switch to ask Debbie to check the session health
+
+Great! What did Debbie say?

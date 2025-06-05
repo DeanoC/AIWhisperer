@@ -15,7 +15,7 @@ from enum import Enum
 
 from ai_whisperer.services.agents.stateless import StatelessAgent
 from ai_whisperer.services.agents.factory import AgentFactory
-from ai_whisperer.services.execution.ai_loop import AILoop
+from ai_whisperer.services.execution.ai_loop import StatelessAILoop
 from ai_whisperer.extensions.mailbox.mailbox import get_mailbox, Mail, MessagePriority
 from ai_whisperer.context.agent_context import AgentContext
 
@@ -36,7 +36,7 @@ class AgentSession:
     """Represents an independent agent session."""
     agent_id: str
     agent: StatelessAgent
-    ai_loop: AILoop
+    ai_loop: StatelessAILoop
     state: AgentState = AgentState.IDLE
     task_queue: asyncio.Queue = field(default_factory=asyncio.Queue)
     current_task: Optional[Dict[str, Any]] = None

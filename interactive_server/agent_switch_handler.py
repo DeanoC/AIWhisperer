@@ -54,7 +54,7 @@ class AgentSwitchHandler:
                     args = json.loads(args_str)
                     to_agent = args.get('to_agent', '').strip()
                     
-                    if to_agent and "successfully" in tool_results:
+                    if to_agent and ("sent" in tool_results or "send_mail_with_switch" in tool_results):
                         # This is successful agent-to-agent communication
                         logger.info(f"Detected successful mail sent to agent: {to_agent}")
                         

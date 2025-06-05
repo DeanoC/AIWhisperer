@@ -85,6 +85,19 @@ python -m ai_whisperer.interfaces.cli.main --config config/main.yaml replay conv
 python -m ai_whisperer.main list-models --config config/main.yaml
 ```
 
+### Testing Async Agents
+```bash
+# Test synchronous mail switching
+python test_sync_mail_tool.py
+
+# Demo async agent functionality
+python test_async_agents_demo.py
+
+# Test synchronous agent communication
+/switch-agent e
+Use send_mail_with_switch to communicate with Debbie synchronously
+```
+
 ## Key Architectural Principles
 
 ### Agent System
@@ -92,6 +105,15 @@ python -m ai_whisperer.main list-models --config config/main.yaml
 - Tools are registered in ToolRegistry and made available to AI
 - Agent behavior controlled through system prompts
 - AI makes autonomous decisions about tool usage
+
+### Async Multi-Agent Architecture (NEW)
+- **Synchronous Communication**: Use `send_mail_with_switch` for immediate agent-to-agent responses
+- **Asynchronous Communication**: Multiple agents with independent AI loops running in parallel
+- **Agent States**: IDLE, ACTIVE, SLEEPING, WAITING, STOPPED
+- **Sleep/Wake Patterns**: Agents can sleep on timers or wake on specific events
+- **Task Queues**: Each agent has its own task queue for asynchronous processing
+- **Event Broadcasting**: Agents can broadcast and respond to system events
+- **WebSocket API**: Full API for creating, managing, and monitoring async agents
 
 ### Test-Driven Development
 1. Write tests first (RED)
@@ -110,6 +132,8 @@ python -m ai_whisperer.main list-models --config config/main.yaml
 - **Configuration**: `config/`
 - **Tool definitions**: `ai_whisperer/tools/`
 - **Test organization**: See `pytest.ini` for test markers
+- **Async agents documentation**: `docs/ASYNC_AGENTS_USER_GUIDE.md`
+- **Async agents RFC**: `output/rfc_async_agents.md`
 
 ## Security and Best Practices
 
@@ -121,10 +145,11 @@ python -m ai_whisperer.main list-models --config config/main.yaml
 
 ## Current Development Focus
 
-- Stateless architecture refinement
-- Agent system enhancements  
-- Interactive mode improvements
-- Performance optimization for WebSocket streaming
+- Async multi-agent architecture (feature/async-agents branch)
+- Synchronous and asynchronous agent communication patterns
+- Independent AI loops for parallel agent execution
+- Sleep/wake and event-based agent coordination
+- WebSocket API for async agent management
 - RFC-to-Plan conversion with structured output support
 
 ## VM Configuration Memories

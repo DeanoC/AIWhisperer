@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 from fastapi import WebSocket
 
 from ai_whisperer.services.agents.async_session_manager import AsyncAgentSessionManager, AgentState
-from .message_models import ErrorCode
+# from .message_models import ErrorCode  # Not available yet
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class AsyncAgentEndpoints:
             
             if not session_id or not agent_id:
                 return {
-                    "error": ErrorCode.INVALID_PARAMS,
+                    "error": "INVALID_PARAMS",
                     "message": "sessionId and agentId are required"
                 }
                 
@@ -81,7 +81,7 @@ class AsyncAgentEndpoints:
         except Exception as e:
             logger.error(f"Error creating async agent: {e}")
             return {
-                "error": ErrorCode.INTERNAL_ERROR,
+                "error": "INTERNAL_ERROR",
                 "message": str(e)
             }
             
@@ -95,7 +95,7 @@ class AsyncAgentEndpoints:
             
             if agent_id not in manager.sessions:
                 return {
-                    "error": ErrorCode.INVALID_PARAMS,
+                    "error": "INVALID_PARAMS",
                     "message": f"Agent {agent_id} not found"
                 }
                 
@@ -116,7 +116,7 @@ class AsyncAgentEndpoints:
         except Exception as e:
             logger.error(f"Error starting agent: {e}")
             return {
-                "error": ErrorCode.INTERNAL_ERROR,
+                "error": "INTERNAL_ERROR",
                 "message": str(e)
             }
             
@@ -130,7 +130,7 @@ class AsyncAgentEndpoints:
             
             if agent_id not in manager.sessions:
                 return {
-                    "error": ErrorCode.INVALID_PARAMS,
+                    "error": "INVALID_PARAMS",
                     "message": f"Agent {agent_id} not found"
                 }
                 
@@ -149,7 +149,7 @@ class AsyncAgentEndpoints:
         except Exception as e:
             logger.error(f"Error stopping agent: {e}")
             return {
-                "error": ErrorCode.INTERNAL_ERROR,
+                "error": "INTERNAL_ERROR",
                 "message": str(e)
             }
             
@@ -180,7 +180,7 @@ class AsyncAgentEndpoints:
         except Exception as e:
             logger.error(f"Error sleeping agent: {e}")
             return {
-                "error": ErrorCode.INTERNAL_ERROR,
+                "error": "INTERNAL_ERROR",
                 "message": str(e)
             }
             
@@ -205,7 +205,7 @@ class AsyncAgentEndpoints:
         except Exception as e:
             logger.error(f"Error waking agent: {e}")
             return {
-                "error": ErrorCode.INTERNAL_ERROR,
+                "error": "INTERNAL_ERROR",
                 "message": str(e)
             }
             
@@ -218,7 +218,7 @@ class AsyncAgentEndpoints:
             
             if not prompt:
                 return {
-                    "error": ErrorCode.INVALID_PARAMS,
+                    "error": "INVALID_PARAMS",
                     "message": "prompt is required"
                 }
                 
@@ -236,7 +236,7 @@ class AsyncAgentEndpoints:
         except Exception as e:
             logger.error(f"Error sending task: {e}")
             return {
-                "error": ErrorCode.INTERNAL_ERROR,
+                "error": "INTERNAL_ERROR",
                 "message": str(e)
             }
             
@@ -257,7 +257,7 @@ class AsyncAgentEndpoints:
         except Exception as e:
             logger.error(f"Error getting agent states: {e}")
             return {
-                "error": ErrorCode.INTERNAL_ERROR,
+                "error": "INTERNAL_ERROR",
                 "message": str(e)
             }
             
@@ -270,7 +270,7 @@ class AsyncAgentEndpoints:
             
             if not event:
                 return {
-                    "error": ErrorCode.INVALID_PARAMS,
+                    "error": "INVALID_PARAMS",
                     "message": "event is required"
                 }
                 
@@ -287,7 +287,7 @@ class AsyncAgentEndpoints:
         except Exception as e:
             logger.error(f"Error broadcasting event: {e}")
             return {
-                "error": ErrorCode.INTERNAL_ERROR,
+                "error": "INTERNAL_ERROR",
                 "message": str(e)
             }
             
