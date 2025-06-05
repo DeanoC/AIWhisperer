@@ -231,7 +231,11 @@ class TestMCPServer:
         result = await server.handle_prompts_list({})
         
         assert "prompts" in result
-        assert result["prompts"] == []  # Currently returns empty list
+        # Should return actual prompts loaded from the prompts directory
+        assert isinstance(result["prompts"], list)
+        # Verify we get some agent prompts
+        agent_prompts = [p for p in result["prompts"] if p.get("category") == "agent"]
+        assert len(agent_prompts) > 0
         
     @pytest.mark.asyncio
     async def test_handle_prompts_get(self, server):

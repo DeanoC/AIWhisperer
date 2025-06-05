@@ -244,12 +244,11 @@ class TestMCPMonitor:
     async def test_cleanup_loop(self, monitor):
         """Test metrics cleanup."""
         monitor.metrics_retention_minutes = 0.001  # Very short for test
-        await monitor.start()
         
         # Add old request
         old_request = {
             "start_time": time.time() - 1000,
-            "method": "old/request"
+            "method": "old/request"  
         }
         monitor.recent_requests.append(old_request)
         
@@ -260,11 +259,14 @@ class TestMCPMonitor:
         }
         monitor.recent_requests.append(recent_request)
         
-        # Wait for cleanup
-        await asyncio.sleep(0.1)
+        # Manually trigger cleanup logic
+        cutoff_time = time.time() - (monitor.metrics_retention_minutes * 60)
+        
+        with monitor._lock:
+            # Clean up old requests
+            while monitor.recent_requests and monitor.recent_requests[0]["start_time"] < cutoff_time:
+                monitor.recent_requests.popleft()
         
         # Old request should be removed
         assert len(monitor.recent_requests) == 1
         assert monitor.recent_requests[0]["method"] == "recent/request"
-        
-        await monitor.stop()

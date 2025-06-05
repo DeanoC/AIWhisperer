@@ -88,11 +88,17 @@ class TestToolHandler:
         tools = await handler.list_tools({})
         
         assert len(tools) == 3
-        assert tools[0]["name"] == "tool1"
-        assert tools[0]["description"] == "Test tool 1"
-        assert "inputSchema" in tools[0]
-        assert tools[0]["inputSchema"]["type"] == "object"
-        assert "test_param" in tools[0]["inputSchema"]["properties"]
+        
+        # Find tool1 in the list (order not guaranteed)
+        tool1 = next(t for t in tools if t["name"] == "tool1")
+        assert tool1["description"] == "Test tool 1"
+        assert "inputSchema" in tool1
+        assert tool1["inputSchema"]["type"] == "object"
+        assert "test_param" in tool1["inputSchema"]["properties"]
+        
+        # Verify all tools are present
+        tool_names = {t["name"] for t in tools}
+        assert tool_names == {"tool1", "tool2", "tool3"}
         
     @pytest.mark.asyncio
     async def test_list_tools_with_missing_tool(self, handler, mock_registry):
@@ -177,7 +183,8 @@ class TestToolHandler:
         assert result["content"][0]["type"] == "text"
         content = json.loads(result["content"][0]["text"])
         assert content["result"] == "sync tool1"
-        assert "test_param" in content["params"]
+        assert "arguments" in content["params"]
+        assert "test_param" in content["params"]["arguments"]
         
     @pytest.mark.asyncio
     async def test_call_tool_async(self, handler):
@@ -219,6 +226,8 @@ class TestToolHandler:
     @pytest.mark.asyncio
     async def test_call_tool_not_available(self, handler, mock_registry):
         """Test calling tool that doesn't exist in registry."""
+        # Clear cache first
+        handler._tool_cache.clear()
         mock_registry.get_tool.return_value = None
         
         params = {
@@ -259,10 +268,12 @@ class TestToolHandler:
         
         content = json.loads(result["content"][0]["text"])
         # Check that context was added
-        assert "_agent_id" in content["params"]
-        assert content["params"]["_agent_id"] == "mcp_client"
-        assert "_from_agent" in content["params"]
-        assert "_session_id" in content["params"]
+        assert "arguments" in content["params"]
+        args = content["params"]["arguments"]
+        assert "_agent_id" in args
+        assert args["_agent_id"] == "mcp_client"
+        assert "_from_agent" in args
+        assert "_session_id" in args
         
     @pytest.mark.asyncio
     async def test_call_tool_with_monitoring(self, mock_registry, config):
