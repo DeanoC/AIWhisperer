@@ -60,12 +60,20 @@ class FastMCPServer:
         async def tool_func(**kwargs) -> str:
             """Wrapper for AIWhisperer tools."""
             try:
+                # Handle MCP kwargs wrapper - MCP passes parameters as kwargs={'actual': 'params'}
+                if len(kwargs) == 1 and 'kwargs' in kwargs and isinstance(kwargs['kwargs'], dict):
+                    # Unwrap the MCP kwargs structure
+                    kwargs = kwargs['kwargs']
+                
                 # Create a minimal context for the tool
                 context = type('Context', (), {
                     'user_message_level': 'info',
                     'workspace_path': getattr(self.config, 'workspace_path', '.'),
                     'output_path': Path(getattr(self.config, 'workspace_path', '.')) / 'output'
                 })()
+                
+                # Add context to kwargs for tools that need it
+                kwargs['_context'] = context
                 
                 # Call the tool (tools expect kwargs, not context as first param)
                 # Handle both sync and async tools
