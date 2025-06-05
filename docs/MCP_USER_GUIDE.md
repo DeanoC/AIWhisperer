@@ -489,11 +489,14 @@ mcp:
 
 ### Server-Sent Events (SSE) Transport
 
-One-way server-to-client communication with HTTP POST for requests.
+One-way server-to-client communication with HTTP POST for requests. **Recommended for Windows/WSL setups.**
 
 ```bash
 # Start with SSE transport
 aiwhisperer-mcp --transport sse --port 3001
+
+# For Windows/WSL setup (bind to all interfaces)
+aiwhisperer-mcp --config config/mcp_sse_windows.yaml
 ```
 
 **Features:**
@@ -501,11 +504,15 @@ aiwhisperer-mcp --transport sse --port 3001
 - Built-in CORS support
 - Automatic reconnection in browsers
 - Works through proxies and firewalls
+- **Ideal for Windows/WSL communication**
 
 **Endpoints:**
 - `/mcp/sse` - SSE event stream
 - `/mcp/request` - HTTP POST for requests
 - `/mcp/health` - Health check
+
+**Windows/WSL Setup:**
+See [CLAUDE_DESKTOP_WINDOWS_WSL.md](CLAUDE_DESKTOP_WINDOWS_WSL.md) for detailed instructions on connecting Claude Desktop on Windows to AIWhisperer in WSL.
 
 **Client Example:**
 ```javascript

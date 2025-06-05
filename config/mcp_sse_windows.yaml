@@ -1,0 +1,64 @@
+# MCP Server configuration for Claude Desktop on Windows connecting to WSL
+# Uses SSE transport for cross-boundary communication
+
+mcp:
+  server:
+    transport: sse
+    host: "0.0.0.0"  # Listen on all interfaces to be accessible from Windows
+    port: 3001
+    server_name: "aiwhisperer-wsl"
+    server_version: "1.0.0"
+    
+    # SSE-specific settings
+    sse_heartbeat_interval: 30
+    sse_max_connections: 10
+    sse_cors_origins:
+      - "*"  # Allow connections from any origin (Claude Desktop)
+    
+    # Tools to expose - customize based on your needs
+    exposed_tools:
+      # File operations
+      - read_file
+      - write_file
+      - list_directory
+      - search_files
+      - get_file_content
+      
+      # Code execution
+      - execute_command
+      - python_executor
+      
+      # AIWhisperer-specific tools
+      - check_mail
+      - send_mail
+      - switch_agent
+      - create_rfc
+      - python_ast_json
+      
+    # Resource permissions
+    resource_permissions:
+      - pattern: "**/*.py"
+        operations: ["read", "write"]
+      - pattern: "**/*.md"
+        operations: ["read", "write"]
+      - pattern: "**/*.json"
+        operations: ["read", "write"]
+      - pattern: "**/*.yaml"
+        operations: ["read", "write"]
+      - pattern: "**/*.yml"
+        operations: ["read", "write"]
+      - pattern: "output/**/*"
+        operations: ["read", "write"]
+      # Exclude sensitive files
+      - pattern: ".env*"
+        operations: []
+      - pattern: "**/*.key"
+        operations: []
+      - pattern: "**/*.pem"
+        operations: []
+    
+    # Monitoring and logging
+    enable_metrics: true
+    enable_audit_log: false  # Set to true if you want audit logging
+    log_level: "INFO"
+    slow_request_threshold_ms: 5000
