@@ -176,15 +176,15 @@ class TestMCPMonitor:
     def test_sanitize_params(self, monitor):
         """Test parameter sanitization."""
         params = {
-            "username": "john",
-            "password": "secret123",
-            "api_key": "xyz789",
+            "username": "test_user",
+            "password": "test_password_do_not_use",
+            "api_key": "test_api_key_fake",
             "data": "normal data"
         }
         
         sanitized = monitor._sanitize_params(params)
         
-        assert sanitized["username"] == "john"
+        assert sanitized["username"] == "test_user"
         assert sanitized["password"] == "[REDACTED]"
         assert sanitized["api_key"] == "[REDACTED]"
         assert sanitized["data"] == "normal data"
