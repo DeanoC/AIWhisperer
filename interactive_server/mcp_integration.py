@@ -33,7 +33,9 @@ class MCPServerManager:
             port = config.get("port", 8002)  # Different from main server
             exposed_tools = config.get("exposed_tools", [
                 "read_file", "write_file", "list_directory", 
-                "search_files", "execute_command"
+                "search_files", "execute_command", "python_executor",
+                "claude_mailbox", "claude_check_mail", "claude_user_message",
+                "claude_enable_all_tools", "claude_set_toolset"
             ])
             workspace = config.get("workspace", Path.cwd())
             

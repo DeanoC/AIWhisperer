@@ -967,7 +967,9 @@ async def start_mcp_if_requested(cli_args):
             "port": cli_args.mcp_server_port,
             "exposed_tools": cli_args.mcp_server_tools or [
                 "read_file", "write_file", "list_directory",
-                "search_files", "execute_command"
+                "search_files", "execute_command", "python_executor",
+                "claude_mailbox", "claude_check_mail", "claude_user_message",
+                "claude_enable_all_tools", "claude_set_toolset"
             ],
             "workspace": Path.cwd(),
             "enable_metrics": True,

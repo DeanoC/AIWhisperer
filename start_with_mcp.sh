@@ -16,4 +16,5 @@ python -m interactive_server.main \
     --mcp_server_enable \
     --mcp_server_port 8002 \
     --mcp_server_transport sse \
-    --mcp_server_tools read_file write_file list_directory search_files execute_command python_executor "$@"
+    --mcp_server_tools read_file write_file list_directory search_files execute_command python_executor \
+        claude_mailbox claude_check_mail claude_user_message claude_enable_all_tools claude_set_toolset "$@"
