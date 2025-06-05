@@ -5,7 +5,7 @@ mcp:
   server:
     transport: sse
     host: "0.0.0.0"  # Listen on all interfaces to be accessible from Windows
-    port: 3001
+    port: 3001  # Avoid conflict with frontend on port 3000
     server_name: "aiwhisperer-wsl"
     server_version: "1.0.0"
     

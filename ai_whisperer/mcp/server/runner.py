@@ -63,7 +63,7 @@ class MCPServerRunner:
         if transport:
             config.transport = TransportType(transport)
             
-        if port and config.transport == TransportType.WEBSOCKET:
+        if port and config.transport in [TransportType.WEBSOCKET, TransportType.SSE]:
             config.port = port
             
         if exposed_tools:
