@@ -28,6 +28,7 @@ from .message_models import AIMessageChunkNotification, ContinuationProgressNoti
 from .debbie_observer import get_observer
 from .agent_switch_handler import AgentSwitchHandler
 from ai_whisperer.channels.integration import get_channel_integration
+from ai_whisperer.core.agent_logger import get_agent_logger
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +209,9 @@ class StatelessInteractiveSession:
         # Initialize channel integration
         self.channel_integration = get_channel_integration()
         
+        # Initialize agent logger
+        self.agent_logger = get_agent_logger()
+        
         # Register tools for interactive sessions
         self._register_tools()
     
@@ -294,6 +298,15 @@ class StatelessInteractiveSession:
         
         # Store agent
         self.agents[agent_id] = agent
+        
+        # Initialize agent logger for this agent
+        agent_name = config.name if config else f"Agent {agent_id}"
+        self.agent_logger.get_agent_logger(agent_id, agent_name)
+        self.agent_logger.log_agent_action(agent_id, "Agent Created", {
+            "model": config.model_name if config else "unknown",
+            "session_id": self.session_id,
+            "agent_name": agent_name
+        })
         
         # Set as active if first agent
         if self.active_agent is None:
@@ -497,6 +510,10 @@ class StatelessInteractiveSession:
                 "from": old_agent,
                 "to": agent_id
             })
+            
+            # Log the agent switch
+            if old_agent:
+                self.agent_logger.log_agent_switch(old_agent, agent_id, "Agent switch requested")
             
             # Notify observer about agent switch
             if old_agent and self.observer:
@@ -895,6 +912,23 @@ class StatelessInteractiveSession:
                 logger.warning(f"Unexpected result type from agent.process_message: {type(result)}")
                 # Convert to dict format if needed
                 result = {'response': str(result) if result else None}
+            
+            # Log AI response to agent's log
+            if result.get('response'):
+                self.agent_logger.log_agent_message(self.active_agent, "ai_response", result['response'], {
+                    "finish_reason": result.get('finish_reason'),
+                    "tool_calls": len(result.get('tool_calls', [])) if result.get('tool_calls') else 0,
+                    "used_structured_output": result.get('used_structured_output', False)
+                })
+            
+            # Log tool calls if any
+            if result.get('tool_calls'):
+                for tool_call in result['tool_calls']:
+                    tool_name = tool_call.get('function', {}).get('name', 'unknown')
+                    tool_args = tool_call.get('function', {}).get('arguments', '{}')
+                    self.agent_logger.log_agent_message(self.active_agent, "tool_call", 
+                                                      f"{tool_name}({tool_args})", 
+                                                      {"tool_id": tool_call.get('id')})
             
             # Reset continuation depth if this is not a continuation and we got a non-tool response
             if not is_continuation and (not result.get('tool_calls') or result.get('error')):

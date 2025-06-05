@@ -7,6 +7,7 @@ import logging
 import asyncio
 from typing import Dict, Any, Optional, Tuple
 from ai_whisperer.extensions.mailbox.mailbox import get_mailbox
+from ai_whisperer.core.agent_logger import get_agent_logger
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class AgentSwitchHandler:
         self.session = session
         self.switch_stack = []  # Stack to track nested switches
         self.max_switch_depth = 5  # Maximum depth to prevent infinite loops
+        self.agent_logger = get_agent_logger()
         
     async def handle_tool_results(self, tool_calls: list, tool_results: str) -> Tuple[bool, Optional[str]]:
         """
@@ -58,6 +60,13 @@ class AgentSwitchHandler:
                     if to_agent and ("sent" in tool_results or "send_mail_with_switch" in tool_results):
                         # This is successful agent-to-agent communication
                         logger.info(f"Detected successful mail sent to agent: {to_agent}")
+                        
+                        # Log the mail send event
+                        self.agent_logger.log_agent_action(
+                            self.session.active_agent,
+                            f"Sent mail to {to_agent} with switch request",
+                            {"subject": args.get('subject'), "tool": tool_name}
+                        )
                         
                         # Perform synchronous agent switch
                         additional_response = await self._perform_agent_switch(
@@ -120,7 +129,13 @@ class AgentSwitchHandler:
             # Check for circular mail (max depth exceeded)
             if len(self.switch_stack) >= self.max_switch_depth:
                 logger.error(f"Maximum switch depth ({self.max_switch_depth}) exceeded - possible circular mail")
-                return f"\n\n[Error: Maximum agent switch depth exceeded - possible circular mail scenario. Switch stack: {' -> '.join([s['agent'] for s in self.switch_stack])} -> {from_agent}]"
+                error_msg = f"Maximum agent switch depth exceeded - possible circular mail scenario. Switch stack: {' -> '.join([s['agent'] for s in self.switch_stack])} -> {from_agent}"
+                self.agent_logger.log_agent_action(from_agent, "Circular mail detected", {
+                    "error": error_msg,
+                    "switch_depth": len(self.switch_stack),
+                    "switch_stack": [s['agent'] for s in self.switch_stack]
+                })
+                return f"\n\n[Error: {error_msg}]"
             
             # Check for immediate circular reference (agent sending to itself)
             if target_agent_id == from_agent:
