@@ -73,11 +73,16 @@ class SSEServerTransport:
         logger.info(f"Starting MCP SSE server on {self.host}:{self.port}")
         
         # Create aiohttp app
-        self.app = web.Application()
+        middlewares = []
         
         # Add CORS middleware if needed
         if self.cors_origins:
-            self.app.middlewares.append(self._cors_middleware)
+            @web.middleware
+            async def cors_middleware(request, handler):
+                return await self._cors_middleware(request, handler)
+            middlewares.append(cors_middleware)
+            
+        self.app = web.Application(middlewares=middlewares)
             
         # Add routes
         self.app.router.add_get('/mcp/sse', self._handle_sse)
@@ -112,7 +117,6 @@ class SSEServerTransport:
             
         logger.info("SSE transport stopped")
         
-    @web.middleware
     async def _cors_middleware(self, request, handler):
         """CORS middleware for cross-origin requests."""
         # Handle preflight

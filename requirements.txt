@@ -22,5 +22,8 @@ fastapi
 uvicorn
 httpx
 
+# MCP server dependencies
+aiohttp>=3.12.0  # For MCP WebSocket and SSE transports
+
 # Code quality tools
 flake8>=7.0,<8.0  # Linting for Python code quality

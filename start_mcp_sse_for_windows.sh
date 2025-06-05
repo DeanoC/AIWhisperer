@@ -16,13 +16,13 @@ echo "Windows can also access via: http://$WSL_IP:3001/mcp/sse"
 echo ""
 
 # Option 1: Standalone MCP server with SSE
-echo "Option 1: Starting standalone MCP server..."
-python -m ai_whisperer.mcp.server.runner --config config/mcp_sse_windows.yaml
+#echo "Option 1: Starting standalone MCP server..."
+#python -m ai_whisperer.mcp.server.runner --config config/mcp_sse_windows.yaml
 
 # Option 2: With interactive server (uncomment to use)
-# echo "Option 2: Starting interactive server with MCP..."
-# python -m interactive_server.main \
-#     --mcp \
-#     --mcp-transport sse \
-#     --mcp-port 3001 \
-#     --mcp-tools read_file write_file list_directory search_files execute_command python_executor
+echo "Option 2: Starting interactive server with MCP..."
+python -m interactive_server.main \
+    --mcp \
+    --mcp-transport sse \
+    --mcp-port 3001 \
+    --mcp-tools read_file write_file list_directory search_files execute_command python_executor
