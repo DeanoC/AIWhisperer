@@ -436,7 +436,7 @@ aiwhisperer-mcp --transport stdio
 
 ### WebSocket Transport
 
-For network-based access and web applications.
+Basic WebSocket implementation for network access.
 
 ```bash
 # Start with WebSocket transport
@@ -453,7 +453,83 @@ aiwhisperer-mcp --transport websocket --port 3001
 - Remote development environments
 - Multi-user scenarios
 
-**Note:** Requires `aiohttp` package: `pip install aiohttp`
+### Enhanced WebSocket Transport
+
+Production-ready WebSocket with advanced features.
+
+```bash
+# Start with enhanced WebSocket transport
+aiwhisperer-mcp --transport websocket_enhanced --port 3001
+```
+
+**Features:**
+- Connection health monitoring with heartbeat/ping-pong
+- Automatic reconnection support
+- Request timeout handling
+- Message queuing for reliability
+- Connection limits and statistics
+- Graceful shutdown handling
+
+**Configuration:**
+```yaml
+mcp:
+  server:
+    transport: websocket_enhanced
+    ws_max_connections: 100
+    ws_heartbeat_interval: 30.0
+    ws_heartbeat_timeout: 60.0
+    ws_request_timeout: 300.0
+    ws_enable_compression: true
+```
+
+### Server-Sent Events (SSE) Transport
+
+One-way server-to-client communication with HTTP POST for requests.
+
+```bash
+# Start with SSE transport
+aiwhisperer-mcp --transport sse --port 3001
+```
+
+**Features:**
+- Simpler than WebSocket for one-way communication
+- Built-in CORS support
+- Automatic reconnection in browsers
+- Works through proxies and firewalls
+
+**Endpoints:**
+- `/mcp/sse` - SSE event stream
+- `/mcp/request` - HTTP POST for requests
+- `/mcp/health` - Health check
+
+**Client Example:**
+```javascript
+// Connect to SSE
+const eventSource = new EventSource('http://localhost:3001/mcp/sse');
+let connectionId;
+
+eventSource.addEventListener('connection', (e) => {
+  const data = JSON.parse(e.data);
+  connectionId = data.connectionId;
+});
+
+// Send request via POST
+fetch('http://localhost:3001/mcp/request', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Connection-Id': connectionId
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    method: 'tools/list',
+    params: {},
+    id: 1
+  })
+});
+```
+
+**Note:** All network transports require `aiohttp` package: `pip install aiohttp`
 
 ## Security
 

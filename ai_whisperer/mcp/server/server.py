@@ -56,6 +56,29 @@ class MCPServer(MCPProtocol):
         elif self.config.transport == TransportType.WEBSOCKET:
             from .transports.websocket import WebSocketServerTransport
             self.transport = WebSocketServerTransport(self, self.config.host, self.config.port)
+        elif self.config.transport == TransportType.WEBSOCKET_ENHANCED:
+            from .transports.websocket_enhanced import WebSocketEnhancedTransport
+            self.transport = WebSocketEnhancedTransport(
+                self,
+                self.config.host,
+                self.config.port,
+                max_connections=self.config.ws_max_connections,
+                heartbeat_interval=self.config.ws_heartbeat_interval,
+                heartbeat_timeout=self.config.ws_heartbeat_timeout,
+                request_timeout=self.config.ws_request_timeout,
+                max_queue_size=self.config.ws_max_queue_size,
+                enable_compression=self.config.ws_enable_compression
+            )
+        elif self.config.transport == TransportType.SSE:
+            from .transports.sse import SSEServerTransport
+            self.transport = SSEServerTransport(
+                self,
+                self.config.host,
+                self.config.port,
+                heartbeat_interval=self.config.sse_heartbeat_interval,
+                max_connections=self.config.sse_max_connections,
+                cors_origins=set(self.config.sse_cors_origins) if self.config.sse_cors_origins else None
+            )
         else:
             raise ValueError(f"Unknown transport: {self.config.transport}")
             

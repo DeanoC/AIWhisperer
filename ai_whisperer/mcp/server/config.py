@@ -9,6 +9,8 @@ class TransportType(str, Enum):
     """Supported transport types for MCP server."""
     STDIO = "stdio"
     WEBSOCKET = "websocket"
+    WEBSOCKET_ENHANCED = "websocket_enhanced"
+    SSE = "sse"
 
 
 @dataclass
@@ -25,6 +27,19 @@ class MCPServerConfig:
     transport: TransportType = TransportType.STDIO
     host: str = "localhost"
     port: int = 3000
+    
+    # WebSocket settings
+    ws_max_connections: int = 100
+    ws_heartbeat_interval: float = 30.0
+    ws_heartbeat_timeout: float = 60.0
+    ws_request_timeout: float = 300.0
+    ws_max_queue_size: int = 1000
+    ws_enable_compression: bool = True
+    
+    # SSE settings
+    sse_heartbeat_interval: float = 30.0
+    sse_max_connections: int = 100
+    sse_cors_origins: Optional[List[str]] = None
     
     # Tool exposure settings
     exposed_tools: List[str] = field(default_factory=lambda: [

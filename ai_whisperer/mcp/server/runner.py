@@ -122,7 +122,7 @@ def main():
     )
     parser.add_argument(
         '--transport',
-        choices=['stdio', 'websocket'],
+        choices=['stdio', 'websocket', 'websocket_enhanced', 'sse'],
         default='stdio',
         help='Transport type (default: stdio)'
     )
