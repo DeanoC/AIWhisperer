@@ -131,4 +131,48 @@ python -m ai_whisperer.main list-models --config config/main.yaml
 
 - This is Claude's VM. You may install any tool that would be useful
 
+## Claude CLI Tool Access (Hybrid-Hybrid System)
+
+When working through MCP proxy, Claude has access to a carefully managed set of tools:
+
+### Core Tools (Always Available)
+- **claude_mailbox**: Send messages to AIWhisperer agents (especially Debbie for complex tasks)
+- **claude_check_mail**: Check for responses from agents
+- **claude_user_message**: Send messages as if typed in UI (supports markdown, @files, /commands)
+- **claude_enable_all_tools**: Emergency access to all tools when needed
+- **claude_set_toolset**: Manage your custom tool collection
+
+### Current Available Tools (via proxy)
+When connected through `aiwhisperer-aggregator` proxy, standard tools available include:
+- **list_directory**: Browse file system
+- **read_file**: Read file contents
+- **write_file**: Write/update files
+- **search_files**: Search for files by pattern or content
+- **execute_command**: Run shell commands
+- **python_executor**: Execute Python code for analysis
+
+### Workflow Examples
+
+**Normal operation (delegate to Debbie):**
+```
+claude_mailbox(to_agent="Debbie", subject="Task Request", body="Please run the test suite and report results")
+claude_check_mail()
+```
+
+**Emergency access (when Debbie is broken):**
+```
+claude_enable_all_tools(enable=true, reason="Debbie not responding, need to debug")
+# Fix the issue with direct access to all tools
+claude_enable_all_tools(enable=false, reason="Recovery complete")
+```
+
+**Build custom toolset:**
+```
+claude_set_toolset(action="list")  # See current tools
+claude_set_toolset(action="add", tools=["analyze_dependencies", "create_rfc"])
+```
+
+### Note on Tool Availability
+The Claude tools are registered in the tool registry but may not be exposed through the current FastMCP proxy implementation. Use the standard tools (list_directory, read_file, etc.) for now while the Claude-specific tool filtering is being refined.
+
 For detailed implementation guidance, architecture details, and module documentation, see [CODE_MAP.md](CODE_MAP.md).
