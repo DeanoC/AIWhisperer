@@ -1,0 +1,7 @@
+Can you ask Debbie to analyze our workspace for me? Send her a message via mailbox.
+
+Thanks! Now can you check if Debbie has responded yet?
+
+Please ask Debbie to run the workspace_stats tool and send you the results.
+
+Check your mailbox again - has Debbie completed the task?
