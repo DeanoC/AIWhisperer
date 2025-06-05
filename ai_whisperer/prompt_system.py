@@ -343,6 +343,10 @@ class PromptSystem:
         
         # Include tool instructions if requested and tool registry is available
         if include_tools and self._tool_registry:
+            # First add tool calling format instructions
+            if 'tool_calling_format' in self._shared_components:
+                content_parts.append("\n\n## TOOL CALLING FORMAT\n" + self._shared_components['tool_calling_format'])
+            
             tool_instructions = self._tool_registry.get_all_ai_prompt_instructions()
             if tool_instructions:
                 content_parts.append("\n\n## AVAILABLE TOOLS\n" + tool_instructions)

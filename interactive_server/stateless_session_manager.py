@@ -405,6 +405,9 @@ class StatelessInteractiveSession:
                             # Enable mailbox debug mode for Debbie
                             if agent_id.lower() in ['d', 'debbie']:
                                 logger.info(f"Enabling force_mailbox_tool debug mode for Debbie")
+                                # First enable the debug_options feature
+                                self.prompt_system.enable_feature('debug_options')
+                                # Then enable the specific debug option
                                 self.prompt_system.enable_debug_option('force_mailbox_tool')
                             
                             # Get model name for capability checking
@@ -431,6 +434,9 @@ class StatelessInteractiveSession:
                             # Clear debug options after loading prompt to avoid affecting other agents
                             if agent_id.lower() in ['d', 'debbie']:
                                 self.prompt_system.disable_debug_option('force_mailbox_tool')
+                                # Also disable the debug_options feature if no other debug options are active
+                                if not self.prompt_system.get_debug_options():
+                                    self.prompt_system.disable_feature('debug_options')
                         except Exception as e1:
                             logger.warning(f"⚠️ PromptSystem failed: {e1}, trying direct file read")
                             # Try direct file read as fallback
