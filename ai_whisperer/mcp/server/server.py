@@ -55,10 +55,7 @@ class MCPServer(MCPProtocol):
             self.transport = StdioServerTransport(self)
         elif self.config.transport == TransportType.WEBSOCKET:
             from .transports.websocket import WebSocketServerTransport
-            self.transport = WebSocketServerTransport(self, self.config.host, self.config.port)
-        elif self.config.transport == TransportType.WEBSOCKET_ENHANCED:
-            from .transports.websocket_enhanced import WebSocketEnhancedTransport
-            self.transport = WebSocketEnhancedTransport(
+            self.transport = WebSocketServerTransport(
                 self,
                 self.config.host,
                 self.config.port,

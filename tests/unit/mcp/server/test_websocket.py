@@ -1,4 +1,4 @@
-"""Tests for enhanced WebSocket transport."""
+"""Tests for WebSocket transport."""
 
 import pytest
 import asyncio
@@ -9,14 +9,14 @@ from datetime import datetime, timedelta
 # Skip if aiohttp not available
 aiohttp = pytest.importorskip("aiohttp")
 
-from ai_whisperer.mcp.server.transports.websocket_enhanced import (
-    WebSocketEnhancedTransport, ConnectionInfo
+from ai_whisperer.mcp.server.transports.websocket import (
+    WebSocketServerTransport, ConnectionInfo
 )
 from ai_whisperer.mcp.server.config import MCPServerConfig
 
 
-class TestWebSocketEnhancedTransport:
-    """Tests for enhanced WebSocket transport."""
+class TestWebSocketTransport:
+    """Tests for WebSocket transport."""
     
     @pytest.fixture
     def mock_server(self):
@@ -33,7 +33,7 @@ class TestWebSocketEnhancedTransport:
     @pytest.fixture
     def transport(self, mock_server):
         """Create transport instance."""
-        return WebSocketEnhancedTransport(
+        return WebSocketServerTransport(
             mock_server,
             "localhost",
             8080,

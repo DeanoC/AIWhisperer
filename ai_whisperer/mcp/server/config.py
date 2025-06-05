@@ -9,7 +9,6 @@ class TransportType(str, Enum):
     """Supported transport types for MCP server."""
     STDIO = "stdio"
     WEBSOCKET = "websocket"
-    WEBSOCKET_ENHANCED = "websocket_enhanced"
     SSE = "sse"
 
 

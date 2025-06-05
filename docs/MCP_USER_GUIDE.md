@@ -436,45 +436,35 @@ aiwhisperer-mcp --transport stdio
 
 ### WebSocket Transport
 
-Basic WebSocket implementation for network access.
+Production-ready WebSocket implementation for network access.
 
 ```bash
 # Start with WebSocket transport
 aiwhisperer-mcp --transport websocket --port 3001
 ```
 
-**Advantages:**
+**Features:**
 - Network accessible
 - Multiple concurrent connections
 - Real-time bidirectional communication
+- Connection health monitoring with heartbeat/ping-pong
+- Request timeout handling
+- Message queuing for reliability
+- Connection limits and statistics
+- Graceful shutdown handling
+- Compression support
 
 **Use Cases:**
 - Web-based AI assistants
 - Remote development environments
 - Multi-user scenarios
-
-### Enhanced WebSocket Transport
-
-Production-ready WebSocket with advanced features.
-
-```bash
-# Start with enhanced WebSocket transport
-aiwhisperer-mcp --transport websocket_enhanced --port 3001
-```
-
-**Features:**
-- Connection health monitoring with heartbeat/ping-pong
-- Automatic reconnection support
-- Request timeout handling
-- Message queuing for reliability
-- Connection limits and statistics
-- Graceful shutdown handling
+- Production deployments
 
 **Configuration:**
 ```yaml
 mcp:
   server:
-    transport: websocket_enhanced
+    transport: websocket
     ws_max_connections: 100
     ws_heartbeat_interval: 30.0
     ws_heartbeat_timeout: 60.0
