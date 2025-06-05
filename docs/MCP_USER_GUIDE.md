@@ -432,7 +432,7 @@ Resources are identified by file URIs:
 
 ### STDIO Transport (Default)
 
-Best for CLI integration and subprocess communication.
+Best for CLI integration and subprocess communication. **Currently the only transport supported by Claude Desktop.**
 
 ```bash
 # Start with stdio transport
@@ -443,9 +443,15 @@ aiwhisperer-mcp --transport stdio
 - Simple setup
 - No network exposure
 - Works with subprocess-based clients
+- Native support in Claude Desktop
+
+**Limitations:**
+- Cannot work across system boundaries (e.g., Windows to WSL)
+- Requires direct process spawning
+- No remote access capability
 
 **Use Cases:**
-- Claude Desktop integration
+- Claude Desktop integration (same OS only)
 - CLI-based MCP clients
 - Secure local operations
 
@@ -489,13 +495,13 @@ mcp:
 
 ### Server-Sent Events (SSE) Transport
 
-One-way server-to-client communication with HTTP POST for requests. **Recommended for Windows/WSL setups.**
+One-way server-to-client communication with HTTP POST for requests. **Ready for future network-based MCP clients.**
 
 ```bash
 # Start with SSE transport
 aiwhisperer-mcp --transport sse --port 3001
 
-# For Windows/WSL setup (bind to all interfaces)
+# For network access (bind to all interfaces)
 aiwhisperer-mcp --config config/mcp_sse_windows.yaml
 ```
 
@@ -504,15 +510,14 @@ aiwhisperer-mcp --config config/mcp_sse_windows.yaml
 - Built-in CORS support
 - Automatic reconnection in browsers
 - Works through proxies and firewalls
-- **Ideal for Windows/WSL communication**
+- Cross-platform network communication
 
 **Endpoints:**
 - `/mcp/sse` - SSE event stream
 - `/mcp/request` - HTTP POST for requests
 - `/mcp/health` - Health check
 
-**Windows/WSL Setup:**
-See [CLAUDE_DESKTOP_WINDOWS_WSL.md](CLAUDE_DESKTOP_WINDOWS_WSL.md) for detailed instructions on connecting Claude Desktop on Windows to AIWhisperer in WSL.
+**Note:** SSE transport is fully implemented and tested but not yet supported by Claude Desktop. It's available for other MCP clients or future Claude Desktop versions.
 
 **Client Example:**
 ```javascript

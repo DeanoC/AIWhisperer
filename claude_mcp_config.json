@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "aiwhisperer": {
+      "command": "python",
+      "args": [
+        "-m", "ai_whisperer.mcp.server.runner",
+        "--config", "config/mcp_minimal.yaml"
+      ],
+      "cwd": "/home/deano/projects/AIWhisperer"
+    }
+  }
+}

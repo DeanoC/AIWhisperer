@@ -17,7 +17,7 @@ Before you begin, ensure you have:
    pip install -e .
    ```
 
-**Windows Users with WSL**: If you're running Claude Desktop on Windows and AIWhisperer in WSL, see [CLAUDE_DESKTOP_WINDOWS_WSL.md](CLAUDE_DESKTOP_WINDOWS_WSL.md) for specific setup instructions using SSE transport.
+**Windows Users with WSL**: Claude Desktop currently only supports stdio transport, which cannot connect across the Windows/WSL boundary. See [CLAUDE_DESKTOP_WINDOWS_WSL.md](CLAUDE_DESKTOP_WINDOWS_WSL.md) for workarounds and alternatives.
 
 ## Step 1: Locate Claude Desktop Configuration
 

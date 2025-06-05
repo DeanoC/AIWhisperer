@@ -3,28 +3,17 @@
 
 echo "Starting AIWhisperer interactive server with MCP server..."
 echo "Interactive server will run on port 8000"
-echo "MCP server will run on port 3001 (WebSocket)"
+echo "MCP server mounted at /mcp (SSE via FastMCP)"
 echo ""
-echo "To connect Claude Desktop to the MCP server, add this to your claude_desktop_config.json:"
-echo '
-{
-  "mcpServers": {
-    "aiwhisperer-live": {
-      "command": "python",
-      "args": [
-        "-c",
-        "import websocket; ws = websocket.WebSocket(); ws.connect(\"ws://localhost:3001/mcp\"); # ... handle MCP protocol"
-      ]
-    }
-  }
-}
-'
+echo "The MCP server will be accessible at:"
+echo "  SSE endpoint: http://localhost:8000/mcp/sse"
 echo ""
 echo "Starting servers..."
 
-# Start the interactive server with MCP enabled
+# Start the interactive server with MCP enabled using SSE transport
 python -m interactive_server.main \
-    --mcp \
-    --mcp-port 3001 \
-    --mcp-transport websocket \
-    --mcp-tools read_file write_file list_directory search_files execute_command python_executor
+    --config config/main.yaml \
+    --mcp_server_enable \
+    --mcp_server_port 8002 \
+    --mcp_server_transport sse \
+    --mcp_server_tools read_file write_file list_directory search_files execute_command python_executor "$@"

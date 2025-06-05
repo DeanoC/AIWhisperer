@@ -23,11 +23,11 @@ parser.add_argument("--config", default=os.environ.get("AIWHISPERER_CONFIG", "co
                    help="Configuration file path")
 parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
 parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
-parser.add_argument("--mcp", action="store_true", help="Start MCP server alongside interactive server")
-parser.add_argument("--mcp-port", type=int, default=3001, help="Port for MCP server (default: 3001)")
-parser.add_argument("--mcp-transport", choices=["websocket", "sse"], default="websocket",
-                   help="MCP transport type (default: websocket)")
-parser.add_argument("--mcp-tools", nargs="+", help="Tools to expose via MCP")
+parser.add_argument("--mcp_server_enable", action="store_true", help="Start MCP server alongside interactive server")
+parser.add_argument("--mcp_server_port", type=int, default=8002, help="Port for MCP server (default: 8002)")
+parser.add_argument("--mcp_server_transport", choices=["websocket", "sse"], default="sse",
+                   help="MCP transport type (default: sse)")
+parser.add_argument("--mcp_server_tools", nargs="+", help="Tools to expose via MCP")
 
 # Only parse args if running as main
 if __name__ == "__main__":
@@ -958,14 +958,14 @@ async def websocket_endpoint(websocket: WebSocket):
 
 async def start_mcp_if_requested(cli_args):
     """Start MCP server if requested via command line."""
-    if cli_args.mcp:
+    if cli_args.mcp_server_enable:
         logger.info("Starting MCP server as requested...")
         from .mcp_integration import get_mcp_manager
         
         mcp_config = {
-            "transport": cli_args.mcp_transport,
-            "port": cli_args.mcp_port,
-            "exposed_tools": cli_args.mcp_tools or [
+            "transport": cli_args.mcp_server_transport,
+            "port": cli_args.mcp_server_port,
+            "exposed_tools": cli_args.mcp_server_tools or [
                 "read_file", "write_file", "list_directory",
                 "search_files", "execute_command"
             ],
@@ -989,7 +989,7 @@ async def start_mcp_if_requested(cli_args):
 async def startup_event():
     """Handle startup tasks."""
     # Start MCP server if requested
-    if cli_args.mcp:
+    if cli_args.mcp_server_enable:
         await start_mcp_if_requested(cli_args)
         
 

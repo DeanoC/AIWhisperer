@@ -18,7 +18,6 @@ echo ""
 # Option 1: Standalone MCP server with SSE
 #echo "Option 1: Starting standalone MCP server..."
 #python -m ai_whisperer.mcp.server.runner --config config/mcp_sse_windows.yaml
-
 # Option 2: With interactive server (uncomment to use)
 echo "Option 2: Starting interactive server with MCP..."
 python -m interactive_server.main \

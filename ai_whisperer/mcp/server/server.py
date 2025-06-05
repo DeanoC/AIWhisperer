@@ -99,15 +99,8 @@ class MCPServer(MCPProtocol):
                 enable_compression=self.config.ws_enable_compression
             )
         elif self.config.transport == TransportType.SSE:
-            from .transports.sse import SSEServerTransport
-            self.transport = SSEServerTransport(
-                self,
-                self.config.host,
-                self.config.port,
-                heartbeat_interval=self.config.sse_heartbeat_interval,
-                max_connections=self.config.sse_max_connections,
-                cors_origins=set(self.config.sse_cors_origins) if self.config.sse_cors_origins else None
-            )
+            # SSE transport removed - use FastMCP instead
+            raise NotImplementedError("SSE transport is handled by FastMCP. Use ai_whisperer.mcp.server.fastmcp_runner instead.")
         else:
             raise ValueError(f"Unknown transport: {self.config.transport}")
             

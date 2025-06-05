@@ -5,8 +5,8 @@ import logging
 from typing import Optional, Dict, Any
 from pathlib import Path
 
-from ai_whisperer.mcp.server.runner import MCPServerRunner
-from ai_whisperer.mcp.server.config import TransportType
+from ai_whisperer.mcp.server.fastmcp_runner import FastMCPServer
+from ai_whisperer.mcp.server.config import MCPServerConfig, TransportType
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class MCPServerManager:
     """Manages MCP server lifecycle within interactive server."""
     
     def __init__(self):
-        self.runner: Optional[MCPServerRunner] = None
+        self.server: Optional[FastMCPServer] = None
         self.server_task: Optional[asyncio.Task] = None
         self.is_running = False
         
@@ -29,38 +29,37 @@ class MCPServerManager:
             
         try:
             # Extract configuration
-            transport = config.get("transport", "websocket")
-            port = config.get("port", 3001)  # Different from main server
+            transport = config.get("transport", "sse")
+            port = config.get("port", 8002)  # Different from main server
             exposed_tools = config.get("exposed_tools", [
                 "read_file", "write_file", "list_directory", 
                 "search_files", "execute_command"
             ])
             workspace = config.get("workspace", Path.cwd())
             
-            # Create runner with configuration
-            self.runner = MCPServerRunner(
-                transport=transport,
-                port=port,
-                exposed_tools=exposed_tools,
-                workspace=str(workspace),
-                enable_metrics=config.get("enable_metrics", True),
-                log_level=config.get("log_level", "INFO")
-            )
+            # Create FastMCP server configuration
+            mcp_config = MCPServerConfig()
+            mcp_config.transport = TransportType(transport)
+            mcp_config.port = port
+            mcp_config.exposed_tools = exposed_tools
+            mcp_config.workspace_path = str(workspace)
+            mcp_config.server_name = "aiwhisperer-interactive"
             
-            # Start server in background task
-            self.server_task = asyncio.create_task(self._run_server())
+            # Create FastMCP server
+            self.server = FastMCPServer(mcp_config)
+            
+            # Initialize tools
+            await self.server.initialize()
+            
+            # Start FastMCP server in background on its own port
+            self.server_task = asyncio.create_task(self._run_fastmcp_server())
             self.is_running = True
             
             # Give server a moment to start
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(1.0)
             
-            # Construct server URL based on transport
-            if transport == "websocket":
-                server_url = f"ws://localhost:{port}/mcp"
-            elif transport == "sse":
-                server_url = f"http://localhost:{port}/mcp/sse"
-            else:
-                server_url = "stdio"
+            # FastMCP runs on its own port
+            server_url = f"http://localhost:{port}/sse"
                 
             return {
                 "success": True,
@@ -79,18 +78,24 @@ class MCPServerManager:
                 "message": f"Failed to start MCP server: {str(e)}"
             }
             
-    async def _run_server(self):
-        """Run the MCP server."""
+    async def _run_fastmcp_server(self):
+        """Run the FastMCP server."""
         try:
-            logger.info("Starting MCP server runner...")
-            await self.runner.run()
+            logger.info("Starting FastMCP server...")
+            # FastMCP run is synchronous, so we run it in a thread
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self._run_fastmcp_sync)
         except asyncio.CancelledError:
-            logger.info("MCP server task cancelled")
+            logger.info("FastMCP server task cancelled")
         except Exception as e:
-            logger.error(f"MCP server error: {e}", exc_info=True)
+            logger.error(f"FastMCP server error: {e}", exc_info=True)
         finally:
-            logger.info("MCP server runner finished")
+            logger.info("FastMCP server finished")
             self.is_running = False
+            
+    def _run_fastmcp_sync(self):
+        """Run FastMCP synchronously."""
+        self.server.mcp.run(transport="sse")
             
     async def stop_mcp_server(self) -> Dict[str, Any]:
         """Stop the running MCP server."""
@@ -109,12 +114,10 @@ class MCPServerManager:
                 except asyncio.CancelledError:
                     pass
                     
-            # Stop the server
-            if self.runner and self.runner.server:
-                await self.runner.server.stop()
+            # FastMCP will stop when task is cancelled
                 
             self.is_running = False
-            self.runner = None
+            self.server = None
             self.server_task = None
             
             return {

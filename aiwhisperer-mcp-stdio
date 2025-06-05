@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""Direct stdio MCP server runner for AIWhisperer."""
+
+import sys
+import os
+
+# Add project root to path
+project_root = os.path.dirname(os.path.abspath(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# Run the MCP server in stdio mode
+from ai_whisperer.mcp.server.runner import main
+
+if __name__ == "__main__":
+    # Force stdio transport
+    sys.argv.extend(["--transport", "stdio"])
+    main()

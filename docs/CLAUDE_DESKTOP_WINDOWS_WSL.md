@@ -1,15 +1,54 @@
 # Claude Desktop + AIWhisperer on Windows/WSL
 
-This guide explains how to connect Claude Desktop on Windows to AIWhisperer running in WSL using the SSE (Server-Sent Events) transport.
+**Important Note**: Claude Desktop currently only supports stdio transport, which cannot work across the Windows/WSL boundary. This guide documents the technical possibilities and workarounds.
 
-## Why SSE for Windows/WSL?
+## The Challenge
 
 When Claude Desktop runs on Windows and AIWhisperer runs in WSL:
-- **stdio transport won't work** - Can't pipe across the Windows/WSL boundary
-- **WebSocket can work** - But requires additional setup
-- **SSE is ideal** - HTTP-based, simpler setup, works reliably across boundaries
+- **stdio transport won't work** - Can't pipe stdin/stdout across the Windows/WSL boundary
+- **SSE transport** - Not currently supported by Claude Desktop
+- **WebSocket transport** - Not currently supported by Claude Desktop
 
-## Setup Instructions
+## Workaround Options
+
+### Option 1: Run AIWhisperer on Windows (Recommended)
+
+The most straightforward solution is to install Python and AIWhisperer directly on Windows:
+
+1. Install Python on Windows (not WSL)
+2. Install AIWhisperer:
+   ```powershell
+   pip install ai-whisperer
+   ```
+3. Configure Claude Desktop normally with stdio transport
+
+### Option 2: WSL2 with Windows Terminal Integration
+
+If you must use WSL, you can try using `wsl.exe` as a bridge:
+
+```json
+{
+  "mcpServers": {
+    "aiwhisperer-wsl": {
+      "command": "wsl",
+      "args": [
+        "-e",
+        "bash",
+        "-c",
+        "cd /home/user/projects/AIWhisperer && python -m ai_whisperer.mcp.server.runner"
+      ]
+    }
+  }
+}
+```
+
+**Note**: This may have issues with path resolution and file access.
+
+### Option 3: Wait for Network Transport Support
+
+The SSE and WebSocket transports are fully implemented in AIWhisperer and work well. Once Claude Desktop adds support for network transports, you can use the configuration below.
+
+## Future Setup (When Network Transports are Supported)
 
 ### 1. Start AIWhisperer MCP Server in WSL
 
