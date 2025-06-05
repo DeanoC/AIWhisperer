@@ -76,6 +76,27 @@ python -m interactive_server.main --mcp --mcp-port 3001
 ./start_with_mcp.sh
 ```
 
+### Development Mode with MCP Proxy
+
+For development, use the MCP proxy to maintain Claude CLI connections during AIWhisperer restarts:
+
+```bash
+# 1. Start AIWhisperer with MCP server
+python -m interactive_server.main --config config/main.yaml --mcp_server_enable --mcp_server_port 8002 --mcp_server_transport sse
+
+# 2. Start the MCP proxy (in another terminal)
+./start_mcp_proxy.sh
+
+# 3. Configure Claude CLI to connect to the proxy:
+#    http://localhost:3002/sse
+```
+
+**Benefits:**
+- ✅ Claude CLI stays connected during AIWhisperer restarts
+- ✅ Automatic reconnection when AIWhisperer comes back online  
+- ✅ Seamless development workflow without session interruption
+- ✅ All MCP tools work transparently through the proxy
+
 The MCP server can also be controlled via the web interface when running the interactive server.
 
 See [docs/CLAUDE_DESKTOP_INTEGRATION.md](docs/CLAUDE_DESKTOP_INTEGRATION.md) for setup instructions.

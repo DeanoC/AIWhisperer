@@ -62,8 +62,13 @@ class FastMCPServer:
                     'output_path': Path(getattr(self.config, 'workspace_path', '.')) / 'output'
                 })()
                 
-                # Call the tool
-                result = await tool.execute(context, **kwargs)
+                # Call the tool (tools expect kwargs, not context as first param)
+                # Handle both sync and async tools
+                import inspect
+                if inspect.iscoroutinefunction(tool.execute):
+                    result = await tool.execute(**kwargs)
+                else:
+                    result = tool.execute(**kwargs)
                 
                 # Convert result to string
                 if isinstance(result, dict):

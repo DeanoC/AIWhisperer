@@ -1,5 +1,6 @@
 websockets
 pip>=23.0
+fastmcp>=2.6.0  # For MCP proxy development mode
 
 PyYAML>=5.4
 requests-mock
