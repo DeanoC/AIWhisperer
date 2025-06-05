@@ -23,9 +23,17 @@ class MCPServerRunner:
         transport: Optional[str] = None,
         port: Optional[int] = None,
         exposed_tools: Optional[List[str]] = None,
-        workspace: Optional[str] = None
+        workspace: Optional[str] = None,
+        log_level: Optional[str] = None,
+        log_file: Optional[str] = None,
+        audit_log: Optional[str] = None,
+        enable_metrics: bool = True,
+        slow_request_threshold: Optional[float] = None
     ):
-        self.config = self._load_config(config_path, transport, port, exposed_tools, workspace)
+        self.config = self._load_config(
+            config_path, transport, port, exposed_tools, workspace,
+            log_level, log_file, audit_log, enable_metrics, slow_request_threshold
+        )
         self.server = None
         
     def _load_config(
@@ -34,7 +42,12 @@ class MCPServerRunner:
         transport: Optional[str],
         port: Optional[int],
         exposed_tools: Optional[List[str]],
-        workspace: Optional[str]
+        workspace: Optional[str],
+        log_level: Optional[str],
+        log_file: Optional[str],
+        audit_log: Optional[str],
+        enable_metrics: bool,
+        slow_request_threshold: Optional[float]
     ) -> MCPServerConfig:
         """Load MCP server configuration."""
         if config_path:
@@ -64,6 +77,20 @@ class MCPServerRunner:
                 'workspace_path': workspace,
                 'output_path': Path(workspace) / 'output'
             })
+        
+        # Override monitoring options
+        if log_level:
+            config.log_level = log_level
+        if log_file:
+            config.log_file = log_file
+            config.enable_json_logging = True
+        if audit_log:
+            config.audit_log_file = audit_log
+            config.enable_audit_log = True
+        if not enable_metrics:
+            config.enable_metrics = False
+        if slow_request_threshold:
+            config.slow_request_threshold_ms = slow_request_threshold
             
         return config
         
@@ -143,6 +170,33 @@ def main():
         help='Workspace directory to expose as resources'
     )
     
+    # Monitoring options
+    parser.add_argument(
+        '--log-level',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        default='INFO',
+        help='Logging level (default: INFO)'
+    )
+    parser.add_argument(
+        '--log-file',
+        help='Path to log file (JSON format)'
+    )
+    parser.add_argument(
+        '--audit-log',
+        help='Path to audit log file'
+    )
+    parser.add_argument(
+        '--no-metrics',
+        action='store_true',
+        help='Disable metrics collection'
+    )
+    parser.add_argument(
+        '--slow-request-threshold',
+        type=float,
+        default=5000.0,
+        help='Threshold for slow request detection in milliseconds (default: 5000)'
+    )
+    
     args = parser.parse_args()
     
     # Create and run server
@@ -151,7 +205,12 @@ def main():
         transport=args.transport,
         port=args.port,
         exposed_tools=args.tools,
-        workspace=args.workspace
+        workspace=args.workspace,
+        log_level=args.log_level,
+        log_file=args.log_file,
+        audit_log=args.audit_log,
+        enable_metrics=not args.no_metrics,
+        slow_request_threshold=args.slow_request_threshold
     )
     
     runner.run_sync()

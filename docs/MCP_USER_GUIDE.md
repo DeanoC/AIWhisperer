@@ -692,6 +692,116 @@ aiwhisperer-mcp \
   --workspace ~/projects/web-app
 ```
 
+## Monitoring and Logging
+
+AIWhisperer's MCP server includes comprehensive monitoring and logging capabilities for production deployments.
+
+### Metrics Collection
+
+The server automatically tracks:
+- Request counts and latencies
+- Error rates and types
+- Tool execution times
+- Transport-specific metrics (connections, messages, bytes)
+- Slow request detection
+
+Access metrics via MCP:
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "monitoring/metrics",
+  "params": {},
+  "id": 1
+}
+```
+
+### Health Checks
+
+Get server health status:
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "monitoring/health",
+  "params": {},
+  "id": 1
+}
+```
+
+Response includes:
+- Overall health status (healthy/degraded/unhealthy)
+- Uptime information
+- Error rates
+- Active connections
+- Average latency
+
+### Structured Logging
+
+Enable JSON logging for production:
+```yaml
+mcp:
+  server:
+    log_level: INFO
+    log_file: /var/log/aiwhisperer/mcp.json
+    enable_json_logging: true
+```
+
+Log entries include:
+- Structured JSON format
+- Request tracking with IDs
+- Duration measurements
+- Error details with stack traces
+- Transport events
+
+### Audit Logging
+
+Track all MCP operations:
+```yaml
+mcp:
+  server:
+    enable_audit_log: true
+    audit_log_file: /var/log/aiwhisperer/mcp-audit.json
+```
+
+Audit logs capture:
+- All requests with parameters (sensitive data redacted)
+- User/connection information
+- Execution results
+- Timing information
+
+### Performance Monitoring
+
+Configure slow request detection:
+```yaml
+mcp:
+  server:
+    slow_request_threshold_ms: 5000
+    metrics_retention_minutes: 60
+```
+
+### Monitoring Dashboard Example
+
+```python
+import asyncio
+import json
+
+async def monitor_mcp_server(url):
+    """Monitor MCP server health."""
+    while True:
+        # Get health status
+        health = await mcp_request("monitoring/health", {})
+        print(f"Status: {health['status']}")
+        print(f"Uptime: {health['uptime']}")
+        print(f"Error Rate: {health['metrics']['error_rate']}")
+        
+        # Get detailed metrics
+        if health['status'] != 'healthy':
+            metrics = await mcp_request("monitoring/metrics", {})
+            print(f"Recent errors: {metrics['recent_errors']}")
+            print(f"Slow requests: {metrics['slow_requests']}")
+            
+        await asyncio.sleep(30)
+```
+
 ## Advanced Usage
 
 ### Custom Tool Sets

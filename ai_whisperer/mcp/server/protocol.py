@@ -55,6 +55,8 @@ class MCPProtocol:
             "prompts/list": self.handle_prompts_list,
             "prompts/get": self.handle_prompts_get,
             "ping": self.handle_ping,
+            "monitoring/metrics": self.handle_monitoring_metrics,
+            "monitoring/health": self.handle_monitoring_health,
         }
         
     async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
@@ -157,3 +159,11 @@ class MCPProtocol:
     async def handle_ping(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle ping request."""
         return {"pong": True}
+        
+    async def handle_monitoring_metrics(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle monitoring/metrics request."""
+        raise NotImplementedError
+        
+    async def handle_monitoring_health(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle monitoring/health request."""
+        raise NotImplementedError

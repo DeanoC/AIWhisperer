@@ -65,6 +65,19 @@ class MCPServerConfig:
     server_name: str = "aiwhisperer-mcp"
     server_version: str = "1.0.0"
     
+    # Monitoring and logging settings
+    enable_metrics: bool = True
+    enable_audit_log: bool = True
+    metrics_retention_minutes: int = 60
+    slow_request_threshold_ms: float = 5000.0
+    max_recent_errors: int = 100
+    
+    # Logging settings
+    log_level: str = "INFO"
+    log_file: Optional[str] = None
+    enable_json_logging: bool = False
+    audit_log_file: Optional[str] = None
+    
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MCPServerConfig":
         """Create config from dictionary."""
@@ -86,5 +99,27 @@ class MCPServerConfig:
             config.require_auth = data["require_auth"]
         if "auth_token" in data:
             config.auth_token = data["auth_token"]
+        
+        # Monitoring settings
+        if "enable_metrics" in data:
+            config.enable_metrics = data["enable_metrics"]
+        if "enable_audit_log" in data:
+            config.enable_audit_log = data["enable_audit_log"]
+        if "metrics_retention_minutes" in data:
+            config.metrics_retention_minutes = data["metrics_retention_minutes"]
+        if "slow_request_threshold_ms" in data:
+            config.slow_request_threshold_ms = data["slow_request_threshold_ms"]
+        if "max_recent_errors" in data:
+            config.max_recent_errors = data["max_recent_errors"]
+            
+        # Logging settings
+        if "log_level" in data:
+            config.log_level = data["log_level"]
+        if "log_file" in data:
+            config.log_file = data["log_file"]
+        if "enable_json_logging" in data:
+            config.enable_json_logging = data["enable_json_logging"]
+        if "audit_log_file" in data:
+            config.audit_log_file = data["audit_log_file"]
             
         return config

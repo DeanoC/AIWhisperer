@@ -7,7 +7,7 @@ import time
 import uuid
 from typing import Set, Dict, Any, Optional, List
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 try:
     import aiohttp
@@ -164,7 +164,7 @@ class WebSocketServerTransport:
             id=conn_id,
             ws=ws,
             remote=request.headers.get('X-Forwarded-For', request.remote),
-            connected_at=datetime.utcnow()
+            connected_at=datetime.now(timezone.utc)
         )
         self.connections[conn_id] = conn_info
         
@@ -180,16 +180,35 @@ class WebSocketServerTransport:
                 }
             })
             
+            # Update monitoring
+            if hasattr(self.server, 'monitor'):
+                self.server.monitor.update_transport_metrics(
+                    "websocket", "connection_opened"
+                )
+                
             # Handle messages
             async for msg in ws:
                 if self._shutdown:
                     break
                     
                 if msg.type == aiohttp.WSMsgType.TEXT:
+                    # Update monitoring
+                    if hasattr(self.server, 'monitor'):
+                        self.server.monitor.update_transport_metrics(
+                            "websocket", "message_received"
+                        )
+                        self.server.monitor.update_transport_metrics(
+                            "websocket", "bytes_received", len(msg.data)
+                        )
+                        
+                    # Set context for monitoring
+                    self.server._current_transport = "websocket"
+                    self.server._current_connection_id = conn_id
+                    
                     asyncio.create_task(self._handle_message(conn_info, msg.data))
                     
                 elif msg.type == aiohttp.WSMsgType.PONG:
-                    conn_info.last_pong = datetime.utcnow()
+                    conn_info.last_pong = datetime.now(timezone.utc)
                     logger.debug(f"Received pong from {conn_id}")
                     
                 elif msg.type == aiohttp.WSMsgType.ERROR:
@@ -200,6 +219,12 @@ class WebSocketServerTransport:
             logger.error(f"Error in WebSocket handler for {conn_id}: {e}", exc_info=True)
             
         finally:
+            # Update monitoring
+            if hasattr(self.server, 'monitor'):
+                self.server.monitor.update_transport_metrics(
+                    "websocket", "connection_closed"
+                )
+                
             await self._close_connection(conn_info, "Connection closed")
             
         return ws
@@ -328,7 +353,7 @@ class WebSocketServerTransport:
                     try:
                         # Check if connection is alive
                         if conn_info.last_ping:
-                            time_since_ping = (datetime.utcnow() - conn_info.last_ping).total_seconds()
+                            time_since_ping = (datetime.now(timezone.utc) - conn_info.last_ping).total_seconds()
                             if time_since_ping > self.heartbeat_timeout:
                                 logger.warning(f"Connection {conn_info.id} timed out")
                                 await self._close_connection(conn_info, "Heartbeat timeout")
@@ -337,7 +362,7 @@ class WebSocketServerTransport:
                         # Send ping
                         if not conn_info.ws.closed:
                             await conn_info.ws.ping()
-                            conn_info.last_ping = datetime.utcnow()
+                            conn_info.last_ping = datetime.now(timezone.utc)
                             
                     except Exception as e:
                         logger.error(f"Error in heartbeat for {conn_info.id}: {e}")
@@ -349,7 +374,7 @@ class WebSocketServerTransport:
                 
     def get_connection_stats(self) -> Dict[str, Any]:
         """Get connection statistics."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         stats = {
             "total_connections": len(self.connections),
             "connections": []

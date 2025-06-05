@@ -2,6 +2,7 @@
 
 import json
 import logging
+import time
 from typing import Dict, Any, List, Optional
 import asyncio
 
@@ -15,11 +16,12 @@ logger = logging.getLogger(__name__)
 class ToolHandler:
     """Handles MCP tool-related requests."""
     
-    def __init__(self, tool_registry: LazyToolRegistry, config: MCPServerConfig):
+    def __init__(self, tool_registry: LazyToolRegistry, config: MCPServerConfig, monitor=None):
         self.tool_registry = tool_registry
         self.config = config
         self.exposed_tools = set(config.exposed_tools)
         self._tool_cache: Dict[str, AITool] = {}
+        self.monitor = monitor
         
     async def list_tools(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
         """List available tools in MCP format."""
@@ -98,6 +100,9 @@ class ToolHandler:
             "_session_id": params.get("sessionId", "mcp_session"),
         }
         
+        # Track execution time
+        start_time = time.time()
+        
         # Execute tool
         try:
             # Merge context with arguments
@@ -117,12 +122,29 @@ class ToolHandler:
                     result = tool.execute(arguments=enriched_args)
                 except TypeError:
                     result = tool.execute(**enriched_args)
+            
+            # Track successful execution if monitor is available
+            if self.monitor:
+                self.monitor.track_tool_execution(
+                    tool_name=tool_name,
+                    start_time=start_time,
+                    success=True
+                )
                     
             # Format result for MCP
             return self._format_tool_result(result)
             
         except Exception as e:
             logger.error(f"Tool execution failed for '{tool_name}': {e}", exc_info=True)
+            
+            # Track failed execution if monitor is available
+            if self.monitor:
+                self.monitor.track_tool_execution(
+                    tool_name=tool_name,
+                    start_time=start_time,
+                    success=False,
+                    error=str(e)
+                )
             
             # Return error in MCP format
             return {

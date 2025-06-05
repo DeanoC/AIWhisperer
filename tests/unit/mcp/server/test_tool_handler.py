@@ -80,7 +80,7 @@ class TestToolHandler:
     @pytest.fixture
     def handler(self, mock_registry, config):
         """Create test handler."""
-        return ToolHandler(mock_registry, config)
+        return ToolHandler(mock_registry, config, monitor=None)
         
     @pytest.mark.asyncio
     async def test_list_tools(self, handler):
@@ -263,6 +263,59 @@ class TestToolHandler:
         assert content["params"]["_agent_id"] == "mcp_client"
         assert "_from_agent" in content["params"]
         assert "_session_id" in content["params"]
+        
+    @pytest.mark.asyncio
+    async def test_call_tool_with_monitoring(self, mock_registry, config):
+        """Test tool execution with monitoring enabled."""
+        # Create mock monitor
+        mock_monitor = Mock()
+        mock_monitor.track_tool_execution = Mock()
+        
+        # Create handler with monitor
+        handler = ToolHandler(mock_registry, config, monitor=mock_monitor)
+        
+        # Execute tool successfully
+        params = {
+            "name": "tool1",
+            "arguments": {"test_param": "value"}
+        }
+        
+        result = await handler.call_tool(params)
+        
+        # Verify monitoring was called
+        mock_monitor.track_tool_execution.assert_called_once()
+        call_args = mock_monitor.track_tool_execution.call_args[1]
+        assert call_args["tool_name"] == "tool1"
+        assert call_args["success"] is True
+        assert "start_time" in call_args
+        
+    @pytest.mark.asyncio
+    async def test_call_tool_error_with_monitoring(self, mock_registry, config):
+        """Test tool execution error with monitoring."""
+        # Create mock monitor
+        mock_monitor = Mock()
+        mock_monitor.track_tool_execution = Mock()
+        
+        # Create handler with monitor
+        handler = ToolHandler(mock_registry, config, monitor=mock_monitor)
+        
+        # Make tool fail
+        tool = handler._get_tool("tool1")
+        tool.execute = Mock(side_effect=RuntimeError("Test error"))
+        
+        params = {
+            "name": "tool1",
+            "arguments": {"test_param": "value"}
+        }
+        
+        result = await handler.call_tool(params)
+        
+        # Verify error monitoring was called
+        mock_monitor.track_tool_execution.assert_called_once()
+        call_args = mock_monitor.track_tool_execution.call_args[1]
+        assert call_args["tool_name"] == "tool1"
+        assert call_args["success"] is False
+        assert call_args["error"] == "Test error"
         
     def test_format_tool_result_dict(self, handler):
         """Test formatting dict result."""

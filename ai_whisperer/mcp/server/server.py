@@ -1,6 +1,7 @@
 """MCP server implementation."""
 
 import logging
+import time
 from typing import Dict, Any, List, Optional
 
 from ...tools.tool_registry_lazy import LazyToolRegistry
@@ -11,6 +12,8 @@ from .protocol import MCPProtocol
 from .handlers.tools import ToolHandler
 from .handlers.resources import ResourceHandler
 from .handlers.prompts import PromptHandler
+from .monitoring import MCPMonitor
+from .logging import setup_mcp_logging, MCPLogger
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +37,30 @@ class MCPServer(MCPProtocol):
                 'output_path': os.path.join(workspace, 'output')
             })
         
-        # Initialize handlers
-        self.tool_handler = ToolHandler(self.tool_registry, config)
+        # Initialize monitoring and logging
+        self.monitor = MCPMonitor(
+            server_name=config.server_name,
+            enable_metrics=config.enable_metrics,
+            enable_audit_log=config.enable_audit_log,
+            metrics_retention_minutes=config.metrics_retention_minutes,
+            slow_request_threshold_ms=config.slow_request_threshold_ms,
+            max_recent_errors=config.max_recent_errors,
+            audit_log_file=config.audit_log_file
+        )
+        
+        # Initialize handlers with monitor
+        self.tool_handler = ToolHandler(self.tool_registry, config, self.monitor)
         self.resource_handler = ResourceHandler(self.path_manager, config)
         self.prompt_handler = PromptHandler(config)
+        
+        # Setup structured logging
+        self.mcp_logger = setup_mcp_logging(
+            server_name=config.server_name,
+            transport=config.transport.value,
+            log_level=config.log_level,
+            log_file=config.log_file,
+            enable_json=config.enable_json_logging
+        )
         
         # Server state
         self.initialized = False
@@ -45,9 +68,18 @@ class MCPServer(MCPProtocol):
         
     async def start(self):
         """Start the MCP server."""
+        # Start monitoring
+        await self.monitor.start()
+        
         # Only log for non-stdio transports
         if self.config.transport != TransportType.STDIO:
             logger.info(f"Starting MCP server with transport: {self.config.transport}")
+            self.mcp_logger.log_transport(
+                logging.INFO,
+                f"Starting MCP server",
+                transport=self.config.transport.value,
+                event="server_start"
+            )
         
         # Create transport based on config
         if self.config.transport == TransportType.STDIO:
@@ -83,8 +115,60 @@ class MCPServer(MCPProtocol):
         
     async def stop(self):
         """Stop the MCP server."""
+        # Stop transport
         if hasattr(self, 'transport'):
             await self.transport.stop()
+            
+        # Stop monitoring
+        await self.monitor.stop()
+        
+        if self.config.transport != TransportType.STDIO:
+            self.mcp_logger.log_transport(
+                logging.INFO,
+                "MCP server stopped",
+                transport=self.config.transport.value,
+                event="server_stop"
+            )
+            
+    async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle incoming request with monitoring."""
+        method = request.get("method", "unknown")
+        params = request.get("params", {})
+        
+        # Get transport info from context if available
+        transport = getattr(self, '_current_transport', None)
+        connection_id = getattr(self, '_current_connection_id', None)
+        
+        # Track request with monitoring
+        async with self.monitor.track_request(
+            method=method,
+            params=params,
+            transport=transport,
+            connection_id=connection_id
+        ) as metrics:
+            # Call parent's handle_request
+            response = await super().handle_request(request)
+            
+            # Log request completion
+            if "error" not in response:
+                self.mcp_logger.log_request(
+                    logging.INFO,
+                    f"Request completed: {method}",
+                    method=method,
+                    request_id=request.get("id"),
+                    duration_ms=metrics.duration_ms
+                )
+            else:
+                self.mcp_logger.log_request(
+                    logging.ERROR,
+                    f"Request failed: {method}",
+                    method=method,
+                    request_id=request.get("id"),
+                    duration_ms=metrics.duration_ms,
+                    error=response["error"]
+                )
+                
+            return response
             
     # Protocol handler implementations
     
@@ -181,3 +265,14 @@ class MCPServer(MCPProtocol):
             raise RuntimeError("Server not initialized")
             
         return await self.prompt_handler.get_prompt(params)
+        
+    async def handle_monitoring_metrics(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle monitoring/metrics request."""
+        if not self.initialized:
+            raise RuntimeError("Server not initialized")
+            
+        return self.monitor.get_metrics()
+        
+    async def handle_monitoring_health(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle monitoring/health request."""
+        return self.monitor.get_health()
