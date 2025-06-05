@@ -82,12 +82,14 @@ class MCPServerManager:
     async def _run_server(self):
         """Run the MCP server."""
         try:
+            logger.info("Starting MCP server runner...")
             await self.runner.run()
         except asyncio.CancelledError:
             logger.info("MCP server task cancelled")
         except Exception as e:
-            logger.error(f"MCP server error: {e}")
+            logger.error(f"MCP server error: {e}", exc_info=True)
         finally:
+            logger.info("MCP server runner finished")
             self.is_running = False
             
     async def stop_mcp_server(self) -> Dict[str, Any]:

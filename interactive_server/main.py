@@ -980,16 +980,28 @@ async def start_mcp_if_requested(cli_args):
         if result["success"]:
             logger.info(f"MCP server started: {result['message']}")
             logger.info(f"MCP server URL: {result['server_url']}")
+            # Important: Keep the manager reference alive
+            app.state.mcp_manager = manager
         else:
             logger.error(f"Failed to start MCP server: {result['message']}")
+
+
+async def startup_event():
+    """Handle startup tasks."""
+    # Start MCP server if requested
+    if cli_args.mcp:
+        await start_mcp_if_requested(cli_args)
+        
+
+@app.on_event("startup")
+async def on_startup():
+    """FastAPI startup event."""
+    await startup_event()
 
 
 if __name__ == "__main__":
     import uvicorn
     # CLI args are already parsed in the initialization above
     logger.info(f"Starting server on {cli_args.host}:{cli_args.port} with Debbie monitoring: {cli_args.debbie_monitor}")
-    
-    # Start MCP server if requested
-    asyncio.run(start_mcp_if_requested(cli_args))
     
     uvicorn.run(app, host=cli_args.host, port=cli_args.port)
