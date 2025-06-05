@@ -159,13 +159,49 @@ class ResourceHandler:
         """Check if operation is allowed on file path."""
         # Convert to Path for consistent handling
         path = Path(file_path)
+        path_str = str(path)
         
         # Check each permission rule
         for perm in self.permissions:
-            # Use fnmatch for glob pattern matching
-            if fnmatch.fnmatch(str(path), perm.pattern):
-                if operation in perm.operations:
-                    return True
+            # Handle ** glob pattern specially
+            pattern = perm.pattern
+            if "**" in pattern:
+                # Convert ** to match any path depth
+                # e.g., "output/**/*" should match "output/data.bin" and "output/sub/data.bin"
+                if pattern.startswith("**/"):
+                    # Pattern like "**/*.py" - match anywhere
+                    suffix_pattern = pattern[3:]  # Remove "*/"
+                    if fnmatch.fnmatch(path_str, suffix_pattern) or fnmatch.fnmatch(path.name, suffix_pattern):
+                        if operation in perm.operations:
+                            return True
+                elif "/**/" in pattern:
+                    # Pattern like "output/**/*.py"
+                    parts = pattern.split("/**/")
+                    prefix = parts[0]
+                    suffix = parts[1]
+                    if path_str.startswith(prefix + "/"):
+                        # Check if the remaining path matches the suffix
+                        remaining = path_str[len(prefix)+1:]
+                        if fnmatch.fnmatch(remaining, suffix):
+                            if operation in perm.operations:
+                                return True
+                elif pattern.endswith("/**/*"):
+                    # Pattern like "output/**/*" - match everything under output
+                    prefix = pattern[:-5]  # Remove "/**/*"
+                    if path_str == prefix or path_str.startswith(prefix + "/"):
+                        if operation in perm.operations:
+                            return True
+                elif pattern.endswith("/**"):
+                    # Pattern like "output/**"
+                    prefix = pattern[:-3]  # Remove "/**"
+                    if path_str == prefix or path_str.startswith(prefix + "/"):
+                        if operation in perm.operations:
+                            return True
+            else:
+                # Regular fnmatch for patterns without **
+                if fnmatch.fnmatch(path_str, pattern):
+                    if operation in perm.operations:
+                        return True
                     
         # Default deny
         return False
