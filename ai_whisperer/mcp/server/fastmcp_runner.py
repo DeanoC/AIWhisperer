@@ -39,14 +39,19 @@ class FastMCPServer:
         # Initialize tool registry
         self.tool_registry = ToolRegistry()
         
-        # Register exposed tools
-        for tool_name in self.config.exposed_tools:
-            try:
-                tool = self.tool_registry.get_tool(tool_name)
-                await self._register_tool(tool_name, tool)
-                logger.info(f"Registered tool: {tool_name}")
-            except Exception as e:
-                logger.warning(f"Tool '{tool_name}' not found in registry: {e}")
+        # Check if we should apply Claude tool filtering
+        if self.config.server_name == "aiwhisperer-aggregator":
+            # This is the Claude proxy - apply tool filtering
+            await self._register_claude_tools()
+        else:
+            # Normal registration for direct MCP servers
+            for tool_name in self.config.exposed_tools:
+                try:
+                    tool = self.tool_registry.get_tool(tool_name)
+                    await self._register_tool(tool_name, tool)
+                    logger.info(f"Registered tool: {tool_name}")
+                except Exception as e:
+                    logger.warning(f"Tool '{tool_name}' not found in registry: {e}")
                 
     async def _register_tool(self, tool_name: str, tool):
         """Register a tool with FastMCP."""
@@ -88,7 +93,51 @@ class FastMCPServer:
         
         # Register with FastMCP using the decorator
         self.mcp.tool(description=getattr(tool, 'description', f"Tool: {tool_name}"))(tool_func)
-        
+    
+    async def _register_claude_tools(self):
+        """Register tools for Claude CLI based on settings."""
+        try:
+            from ...tools.claude.claude_tool_manager import get_claude_tool_manager
+            
+            manager = get_claude_tool_manager()
+            
+            # Get all available tools
+            all_tools = {}
+            for tool_name in self.tool_registry.list_tools():
+                try:
+                    all_tools[tool_name] = self.tool_registry.get_tool(tool_name)
+                except Exception as e:
+                    logger.warning(f"Could not load tool {tool_name}: {e}")
+            
+            # Filter tools for Claude
+            claude_tools = manager.filter_tools_for_claude(all_tools)
+            
+            # Register filtered tools
+            for tool_name, tool in claude_tools.items():
+                try:
+                    await self._register_tool(tool_name, tool)
+                    logger.info(f"Registered Claude tool: {tool_name}")
+                except Exception as e:
+                    logger.warning(f"Failed to register Claude tool '{tool_name}': {e}")
+            
+            # Log summary
+            enabled_tools = manager.get_enabled_tools()
+            if enabled_tools is None:
+                logger.info("Claude has access to ALL tools (emergency mode)")
+            else:
+                logger.info(f"Claude has access to {len(claude_tools)} tools: {list(claude_tools.keys())}")
+                
+        except Exception as e:
+            logger.error(f"Error registering Claude tools: {e}", exc_info=True)
+            # Fall back to default tools on error
+            default_tools = ["read_file", "write_file", "list_directory", "search_files", "execute_command"]
+            for tool_name in default_tools:
+                try:
+                    tool = self.tool_registry.get_tool(tool_name)
+                    await self._register_tool(tool_name, tool)
+                    logger.info(f"Registered fallback tool: {tool_name}")
+                except Exception as e2:
+                    logger.warning(f"Failed to register fallback tool '{tool_name}': {e2}")
 
 
 def main():
