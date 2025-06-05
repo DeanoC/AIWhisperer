@@ -41,7 +41,7 @@ class AgentSwitchHandler:
         for tool_call in tool_calls:
             tool_name = tool_call.get('function', {}).get('name')
             
-            if tool_name == 'send_mail':
+            if tool_name in ['send_mail', 'send_mail_with_switch']:
                 # Check if the send_mail was successful by looking at the tool results
                 if "Error" in tool_results or "failed" in tool_results.lower():
                     logger.info(f"send_mail failed, not triggering agent switch")

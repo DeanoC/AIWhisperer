@@ -17,6 +17,16 @@ logger = logging.getLogger(__name__)
 class SendMailWithSwitchTool(SendMailTool):
     """Enhanced send mail tool that triggers agent switching for synchronous communication."""
     
+    @property
+    def name(self) -> str:
+        """Return the tool name."""
+        return "send_mail_with_switch"
+    
+    @property
+    def description(self) -> str:
+        """Return the tool description."""
+        return "Send a message to another agent and wait for their response (synchronous communication)"
+    
     def __init__(self):
         super().__init__()
         self._session_manager = None

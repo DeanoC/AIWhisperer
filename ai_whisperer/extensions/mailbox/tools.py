@@ -29,6 +29,7 @@ from typing import List
 
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.tools.send_mail_tool import SendMailTool
+from ai_whisperer.tools.send_mail_with_switch_tool import SendMailWithSwitchTool
 from ai_whisperer.tools.check_mail_tool import CheckMailTool
 from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
 from ai_whisperer.tools.tool_registry import get_tool_registry
@@ -40,6 +41,7 @@ def get_mailbox_tools() -> List[AITool]:
     """Get all mailbox communication tools"""
     return [
         SendMailTool(),
+        SendMailWithSwitchTool(),
         CheckMailTool(),
         ReplyMailTool()
     ]
@@ -56,5 +58,5 @@ def register_mailbox_tools() -> None:
 
 def is_mailbox_tool(tool_name: str) -> bool:
     """Check if a tool name is a mailbox tool"""
-    mailbox_tool_names = {'send_mail', 'check_mail', 'reply_mail'}
+    mailbox_tool_names = {'send_mail', 'send_mail_with_switch', 'check_mail', 'reply_mail'}
     return tool_name in mailbox_tool_names
