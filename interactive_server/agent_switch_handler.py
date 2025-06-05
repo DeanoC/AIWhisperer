@@ -22,6 +22,7 @@ class AgentSwitchHandler:
         """
         self.session = session
         self.switch_stack = []  # Stack to track nested switches
+        self.max_switch_depth = 5  # Maximum depth to prevent infinite loops
         
     async def handle_tool_results(self, tool_calls: list, tool_results: str) -> Tuple[bool, Optional[str]]:
         """
@@ -87,33 +88,56 @@ class AgentSwitchHandler:
         try:
             logger.info(f"Starting synchronous agent switch: {from_agent} -> {to_agent}")
             
-            # Save current agent state
+            # Use the agent registry to resolve the agent name to ID
+            try:
+                # Get the agent registry from the session
+                agent_registry = self.session.agent_registry if hasattr(self.session, 'agent_registry') else None
+                
+                if agent_registry:
+                    # Use the registry's name resolution
+                    target_agent_id = agent_registry.resolve_agent_name_to_id(to_agent)
+                else:
+                    # Fallback to basic mapping if registry not available
+                    logger.warning("Agent registry not available, using fallback mapping")
+                    agent_name_map = {
+                        'alice': 'a',
+                        'patricia': 'p',
+                        'tessa': 't',
+                        'debbie': 'd',
+                        'eamonn': 'e'
+                    }
+                    to_agent_lower = to_agent.lower()
+                    first_word = to_agent_lower.split()[0] if ' ' in to_agent_lower else to_agent_lower
+                    target_agent_id = agent_name_map.get(first_word, to_agent_lower)
+                    
+                    if not target_agent_id:
+                        raise ValueError(f"Unknown agent: {to_agent}")
+                        
+            except ValueError as e:
+                logger.error(f"Failed to resolve agent name: {e}")
+                return f"\n\n[Error: {str(e)}]"
+            
+            # Check for circular mail (max depth exceeded)
+            if len(self.switch_stack) >= self.max_switch_depth:
+                logger.error(f"Maximum switch depth ({self.max_switch_depth}) exceeded - possible circular mail")
+                return f"\n\n[Error: Maximum agent switch depth exceeded - possible circular mail scenario. Switch stack: {' -> '.join([s['agent'] for s in self.switch_stack])} -> {from_agent}]"
+            
+            # Check for immediate circular reference (agent sending to itself)
+            if target_agent_id == from_agent:
+                logger.warning(f"Agent {from_agent} attempting to send mail to itself (target: {to_agent})")
+                return f"\n\n[Warning: Agent cannot send mail to itself]"
+                
+            # Check if target agent ID is already in the switch stack
+            agent_ids_in_stack = [s['agent'] for s in self.switch_stack]
+            if target_agent_id in agent_ids_in_stack:
+                logger.warning(f"Circular mail detected: {target_agent_id} is already in the switch stack")
+                return f"\n\n[Warning: Circular mail detected - {to_agent} (ID: {target_agent_id}) is already processing mail in this chain: {' -> '.join(agent_ids_in_stack)} -> {from_agent}]"
+            
+            # Save current agent state after all checks pass
             self.switch_stack.append({
                 'agent': from_agent,
                 'context_snapshot': await self._get_context_snapshot(from_agent)
             })
-            
-            # Map common agent names to their IDs
-            agent_name_map = {
-                'alice': 'a',
-                'patricia': 'p',
-                'patricia the planner': 'p',
-                'tessa': 't',
-                'tessa the tester': 't',
-                'debbie': 'd',
-                'debbie the debugger': 'd',
-                'eamonn': 'e',
-                'eamonn the executioner': 'e'
-            }
-            
-            # Get the target agent ID - try exact match first, then first word
-            to_agent_lower = to_agent.lower()
-            target_agent_id = agent_name_map.get(to_agent_lower)
-            
-            if not target_agent_id:
-                # Try just the first word
-                first_word = to_agent_lower.split()[0] if ' ' in to_agent_lower else to_agent_lower
-                target_agent_id = agent_name_map.get(first_word, to_agent_lower)
             
             # Switch to target agent
             await self.session.switch_agent(target_agent_id)

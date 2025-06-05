@@ -55,6 +55,7 @@ class AgentRegistry:
     def __init__(self, prompts_dir: Path):
         self.prompts_dir = prompts_dir
         self._agents: Dict[str, Agent] = {}
+        self._agent_name_to_id_map: Dict[str, str] = {}  # Maps various names/aliases to agent IDs
         self._load_default_agents()
 
     def _load_default_agents(self):
@@ -112,6 +113,8 @@ class AgentRegistry:
                 )
             }
         self._agents = agents
+        # Build name to ID mapping after loading agents
+        self._build_name_mapping()
 
     def get_agent(self, agent_id: str) -> Optional[Agent]:
         """Get agent by ID"""
@@ -120,3 +123,80 @@ class AgentRegistry:
     def list_agents(self) -> List[Agent]:
         """List all available agents"""
         return list(self._agents.values())
+    
+    def _build_name_mapping(self):
+        """Build mapping from various agent names/aliases to agent IDs"""
+        self._agent_name_to_id_map.clear()
+        
+        for agent_id, agent in self._agents.items():
+            # Map the agent ID itself (both upper and lower case)
+            self._agent_name_to_id_map[agent_id.lower()] = agent_id.lower()
+            self._agent_name_to_id_map[agent_id.upper()] = agent_id.lower()
+            
+            # Map the full agent name
+            full_name_lower = agent.name.lower()
+            self._agent_name_to_id_map[full_name_lower] = agent_id.lower()
+            
+            # Map just the first name (e.g., "patricia" from "Patricia the Planner")
+            first_name = full_name_lower.split()[0]
+            self._agent_name_to_id_map[first_name] = agent_id.lower()
+            
+            # Map the role (e.g., "planner")
+            if agent.role:
+                self._agent_name_to_id_map[agent.role.lower()] = agent_id.lower()
+            
+            # Map common variations
+            self._agent_name_to_id_map[f"agent {agent_id.lower()}"] = agent_id.lower()
+            self._agent_name_to_id_map[f"agent {first_name}"] = agent_id.lower()
+    
+    def resolve_agent_name_to_id(self, name: str) -> str:
+        """
+        Resolve an agent name/alias to its canonical agent ID.
+        
+        Args:
+            name: Agent name, alias, or ID
+            
+        Returns:
+            Canonical agent ID (lowercase single letter)
+            
+        Raises:
+            ValueError: If the agent name cannot be resolved
+        """
+        if not name:
+            raise ValueError("Agent name cannot be empty")
+        
+        # Normalize the name
+        name_lower = name.lower().strip()
+        
+        # Check if it's already in our mapping
+        if name_lower in self._agent_name_to_id_map:
+            return self._agent_name_to_id_map[name_lower]
+        
+        # Try without "the" (e.g., "debbie the debugger" -> "debbie debugger")
+        name_without_the = name_lower.replace(" the ", " ")
+        if name_without_the in self._agent_name_to_id_map:
+            return self._agent_name_to_id_map[name_without_the]
+        
+        # Try just the first word
+        first_word = name_lower.split()[0] if ' ' in name_lower else name_lower
+        if first_word in self._agent_name_to_id_map:
+            return self._agent_name_to_id_map[first_word]
+        
+        # If no match found, raise an error
+        available_agents = ", ".join(sorted(set(self._agent_name_to_id_map.values())))
+        raise ValueError(f"Unknown agent: '{name}'. Available agents: {available_agents}")
+    
+    def get_canonical_to_id_map(self) -> Dict[str, str]:
+        """
+        Get a mapping from canonical agent names to agent IDs.
+        This is useful for compatibility with mailbox system.
+        
+        Returns:
+            Dict mapping canonical names (e.g., 'alice', 'patricia') to agent IDs ('a', 'p')
+        """
+        canonical_map = {}
+        for agent_id, agent in self._agents.items():
+            # Use the first name as the canonical name
+            first_name = agent.name.lower().split()[0]
+            canonical_map[first_name] = agent_id.lower()
+        return canonical_map

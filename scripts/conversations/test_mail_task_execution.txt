@@ -1,0 +1,7 @@
+Alice, please use send_mail_with_switch to ask Debbie to run the session_health tool and report back with the results.
+
+What were the results from Debbie?
+
+Now please ask Eamonn to list all Python files in the tools directory using send_mail_with_switch.
+
+What files did Eamonn find?
