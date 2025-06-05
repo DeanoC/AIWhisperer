@@ -58,18 +58,17 @@ class TestStdioServerTransport:
         """Test stopping transport."""
         transport._running = True
         
-        # Create a proper async task mock
-        mock_task = AsyncMock()
-        mock_task.cancel = Mock()
-        # Make it raise CancelledError when awaited
-        mock_task.side_effect = asyncio.CancelledError()
-        
-        transport._read_task = mock_task
+        # Create a real task that we can cancel
+        async def dummy_task():
+            await asyncio.sleep(10)
+            
+        real_task = asyncio.create_task(dummy_task())
+        transport._read_task = real_task
         
         await transport.stop()
         
         assert transport._running is False
-        mock_task.cancel.assert_called_once()
+        assert real_task.cancelled()
         
     @pytest.mark.asyncio
     async def test_read_loop_valid_request(self, transport, mock_server):

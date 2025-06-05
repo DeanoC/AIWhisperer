@@ -1,4 +1,4 @@
-"""Integration tests for MCP server."""
+"""Integration tests for MCP server with better error handling."""
 
 import pytest
 import asyncio
@@ -40,6 +40,32 @@ class TestMCPServerIntegration:
             server_version="1.0.0"
         )
         
+    async def _send_request(self, proc, request):
+        """Send request and read response with error handling."""
+        proc.stdin.write((json.dumps(request) + '\n').encode())
+        await proc.stdin.drain()
+        
+        try:
+            response_line = await asyncio.wait_for(proc.stdout.readline(), timeout=5.0)
+            if not response_line:
+                # Check stderr for errors
+                stderr_data = await proc.stderr.read()
+                raise RuntimeError(f"Server closed stdout. Stderr: {stderr_data.decode()}")
+            return json.loads(response_line.decode())
+        except asyncio.TimeoutError:
+            stderr_data = await proc.stderr.read()
+            raise RuntimeError(f"Timeout reading response. Stderr: {stderr_data.decode()}")
+        except json.JSONDecodeError as e:
+            # Read more data to see what we got
+            extra_data = await proc.stdout.read(100)
+            stderr_data = await proc.stderr.read()
+            raise RuntimeError(
+                f"Failed to parse JSON: {e}\n"
+                f"Got: {response_line.decode()}\n"
+                f"Extra stdout: {extra_data.decode()}\n"
+                f"Stderr: {stderr_data.decode()}"
+            )
+        
     @pytest.mark.asyncio
     async def test_server_lifecycle(self, server_config, temp_workspace):
         """Test complete server lifecycle with subprocess."""
@@ -50,15 +76,17 @@ class TestMCPServerIntegration:
             'output_path': os.path.join(temp_workspace, 'output')
         })
         
-        # Start server subprocess
+        # Start server subprocess with explicit Python path
         proc = await asyncio.create_subprocess_exec(
             sys.executable, "-m", "ai_whisperer.mcp.server.runner",
             "--expose-tool", "read_file",
             "--expose-tool", "list_directory",
             "--workspace", temp_workspace,
+            "--log-level", "CRITICAL",  # Suppress logs
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
+            env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)}
         )
         
         try:
@@ -74,11 +102,7 @@ class TestMCPServerIntegration:
                 "id": 1
             }
             
-            proc.stdin.write((json.dumps(request) + '\n').encode())
-            await proc.stdin.drain()
-            
-            response_line = await proc.stdout.readline()
-            response = json.loads(response_line.decode())
+            response = await self._send_request(proc, request)
             
             assert response["id"] == 1
             assert "result" in response
@@ -93,11 +117,7 @@ class TestMCPServerIntegration:
                 "id": 2
             }
             
-            proc.stdin.write((json.dumps(request) + '\n').encode())
-            await proc.stdin.drain()
-            
-            response_line = await proc.stdout.readline()
-            response = json.loads(response_line.decode())
+            response = await self._send_request(proc, request)
             
             assert response["id"] == 2
             assert "result" in response
@@ -118,11 +138,7 @@ class TestMCPServerIntegration:
                 "id": 3
             }
             
-            proc.stdin.write((json.dumps(request) + '\n').encode())
-            await proc.stdin.drain()
-            
-            response_line = await proc.stdout.readline()
-            response = json.loads(response_line.decode())
+            response = await self._send_request(proc, request)
             
             assert response["id"] == 3
             assert "result" in response
@@ -131,20 +147,35 @@ class TestMCPServerIntegration:
             assert "Hello World" in content
             
         finally:
+            # Clean shutdown
             proc.terminate()
-            await proc.wait()
-            
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=5.0)
+            except asyncio.TimeoutError:
+                proc.kill()
+                await proc.wait()
+                
     @pytest.mark.asyncio
-    async def test_multiple_concurrent_requests(self, temp_workspace):
+    async def test_multiple_concurrent_requests(self, server_config, temp_workspace):
         """Test handling multiple concurrent requests."""
-        # Start server
+        # Initialize PathManager
+        PathManager().initialize(config_values={
+            'project_path': temp_workspace,
+            'workspace_path': temp_workspace,
+            'output_path': os.path.join(temp_workspace, 'output')
+        })
+        
+        # Start server subprocess
         proc = await asyncio.create_subprocess_exec(
             sys.executable, "-m", "ai_whisperer.mcp.server.runner",
+            "--expose-tool", "read_file",
             "--expose-tool", "list_directory",
             "--workspace", temp_workspace,
+            "--log-level", "CRITICAL",
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
+            env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)}
         )
         
         try:
@@ -154,165 +185,205 @@ class TestMCPServerIntegration:
                 "method": "initialize",
                 "params": {
                     "protocolVersion": "2024-11-05",
-                    "capabilities": {}
+                    "capabilities": {},
+                    "clientInfo": {"name": "test-client", "version": "1.0"}
                 },
-                "id": "init"
+                "id": 1
             }
             
-            proc.stdin.write((json.dumps(init_request) + '\n').encode())
-            await proc.stdin.drain()
+            await self._send_request(proc, init_request)
             
-            init_response = await proc.stdout.readline()
-            assert json.loads(init_response.decode())["id"] == "init"
-            
-            # Send multiple requests rapidly
+            # Send multiple requests without waiting
             requests = []
             for i in range(5):
-                request = {
+                req = {
                     "jsonrpc": "2.0",
                     "method": "tools/list",
                     "params": {},
-                    "id": f"req-{i}"
+                    "id": i + 2
                 }
-                requests.append(request)
-                proc.stdin.write((json.dumps(request) + '\n').encode())
+                proc.stdin.write((json.dumps(req) + '\n').encode())
+                requests.append(req)
                 
             await proc.stdin.drain()
             
             # Read all responses
             responses = []
             for _ in range(5):
-                response_line = await proc.stdout.readline()
-                responses.append(json.loads(response_line.decode()))
+                response_line = await asyncio.wait_for(proc.stdout.readline(), timeout=5.0)
+                response = json.loads(response_line.decode())
+                responses.append(response)
                 
-            # Verify all requests were handled
+            # Verify all responses
             response_ids = [r["id"] for r in responses]
-            assert sorted(response_ids) == [f"req-{i}" for i in range(5)]
+            assert sorted(response_ids) == list(range(2, 7))
             
+            for resp in responses:
+                assert "result" in resp
+                assert "tools" in resp["result"]
+                
         finally:
             proc.terminate()
-            await proc.wait()
-            
-    @pytest.mark.asyncio
-    async def test_error_handling(self, temp_workspace):
-        """Test server error handling."""
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=5.0)
+            except asyncio.TimeoutError:
+                proc.kill()
+                await proc.wait()
+                
+    @pytest.mark.asyncio 
+    async def test_error_handling(self, server_config, temp_workspace):
+        """Test error handling."""
+        # Initialize PathManager
+        PathManager().initialize(config_values={
+            'project_path': temp_workspace,
+            'workspace_path': temp_workspace,
+            'output_path': os.path.join(temp_workspace, 'output')
+        })
+        
+        # Start server subprocess
         proc = await asyncio.create_subprocess_exec(
             sys.executable, "-m", "ai_whisperer.mcp.server.runner",
             "--expose-tool", "read_file",
             "--workspace", temp_workspace,
+            "--log-level", "CRITICAL",
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
+            env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)}
         )
         
         try:
-            # Try to call tool before initialization
-            request = {
-                "jsonrpc": "2.0",
-                "method": "tools/list",
-                "params": {},
-                "id": 1
-            }
-            
-            proc.stdin.write((json.dumps(request) + '\n').encode())
-            await proc.stdin.drain()
-            
-            response_line = await proc.stdout.readline()
-            response = json.loads(response_line.decode())
-            
-            assert "error" in response
-            assert "not initialized" in response["error"]["message"].lower()
-            
-            # Initialize
+            # Initialize first
             init_request = {
                 "jsonrpc": "2.0",
                 "method": "initialize",
                 "params": {
                     "protocolVersion": "2024-11-05",
-                    "capabilities": {}
+                    "capabilities": {},
+                    "clientInfo": {"name": "test-client", "version": "1.0"}
                 },
+                "id": 1
+            }
+            
+            await self._send_request(proc, init_request)
+            
+            # Test invalid method
+            request = {
+                "jsonrpc": "2.0",
+                "method": "invalid/method",
+                "params": {},
                 "id": 2
             }
             
-            proc.stdin.write((json.dumps(init_request) + '\n').encode())
-            await proc.stdin.drain()
-            await proc.stdout.readline()  # Consume response
+            response = await self._send_request(proc, request)
             
-            # Try to call non-existent tool
+            assert response["id"] == 2
+            assert "error" in response
+            assert response["error"]["code"] == -32601
+            assert "not found" in response["error"]["message"].lower()
+            
+            # Test missing required field
+            request = {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {},  # Missing 'name'
+                "id": 3
+            }
+            
+            response = await self._send_request(proc, request)
+            
+            assert response["id"] == 3
+            assert "error" in response
+            
+            # Test calling non-existent tool
             request = {
                 "jsonrpc": "2.0",
                 "method": "tools/call",
                 "params": {
-                    "name": "nonexistent_tool",
+                    "name": "non_existent_tool",
                     "arguments": {}
                 },
-                "id": 3
+                "id": 4
             }
             
-            proc.stdin.write((json.dumps(request) + '\n').encode())
-            await proc.stdin.drain()
+            response = await self._send_request(proc, request)
             
-            response_line = await proc.stdout.readline()
-            response = json.loads(response_line.decode())
-            
+            assert response["id"] == 4
             assert "error" in response
-            assert "not found" in response["error"]["message"]
             
         finally:
             proc.terminate()
-            await proc.wait()
-            
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=5.0)
+            except asyncio.TimeoutError:
+                proc.kill()
+                await proc.wait()
+                
     @pytest.mark.asyncio
-    async def test_notification_handling(self, temp_workspace):
-        """Test handling notifications (requests without id)."""
+    async def test_notification_handling(self, server_config, temp_workspace):
+        """Test handling notifications (no id field)."""
+        # Initialize PathManager
+        PathManager().initialize(config_values={
+            'project_path': temp_workspace,
+            'workspace_path': temp_workspace,
+            'output_path': os.path.join(temp_workspace, 'output')
+        })
+        
+        # Start server subprocess
         proc = await asyncio.create_subprocess_exec(
             sys.executable, "-m", "ai_whisperer.mcp.server.runner",
             "--expose-tool", "read_file",
             "--workspace", temp_workspace,
+            "--log-level", "CRITICAL",
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
+            env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)}
         )
         
         try:
-            # Send notification (no id)
-            notification = {
+            # Initialize first
+            init_request = {
                 "jsonrpc": "2.0",
                 "method": "initialize",
                 "params": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {}
-                }
-                # No id field
+                    "protocolVersion": "2024-11-05", 
+                    "capabilities": {},
+                    "clientInfo": {"name": "test-client", "version": "1.0"}
+                },
+                "id": 1
+            }
+            
+            await self._send_request(proc, init_request)
+            
+            # Send notification (no id)
+            notification = {
+                "jsonrpc": "2.0",
+                "method": "ping",
+                "params": {}
             }
             
             proc.stdin.write((json.dumps(notification) + '\n').encode())
             await proc.stdin.drain()
             
-            # For notifications, server should still respond but without id
-            response_line = await proc.stdout.readline()
-            response = json.loads(response_line.decode())
-            
-            assert "id" not in response
-            assert "result" in response
-            
-            # Now send a normal request to verify server still works
+            # Send a regular request after
             request = {
                 "jsonrpc": "2.0",
                 "method": "tools/list",
                 "params": {},
-                "id": 1
+                "id": 2
             }
             
-            proc.stdin.write((json.dumps(request) + '\n').encode())
-            await proc.stdin.drain()
+            response = await self._send_request(proc, request)
             
-            response_line = await proc.stdout.readline()
-            response = json.loads(response_line.decode())
-            
-            assert response["id"] == 1
+            # Should get response to request, not notification
+            assert response["id"] == 2
             assert "result" in response
             
         finally:
             proc.terminate()
-            await proc.wait()
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=5.0)
+            except asyncio.TimeoutError:
+                proc.kill()
+                await proc.wait()

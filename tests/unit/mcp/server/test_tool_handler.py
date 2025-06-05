@@ -103,6 +103,9 @@ class TestToolHandler:
     @pytest.mark.asyncio
     async def test_list_tools_with_missing_tool(self, handler, mock_registry):
         """Test listing when a tool is not found."""
+        # Clear cache from previous tests
+        handler._tool_cache.clear()
+        
         # Create tools
         tools = {
             "tool1": MockTool("tool1", "Test tool 1"),
@@ -121,8 +124,9 @@ class TestToolHandler:
         
         # Should only return 2 tools
         assert len(tools) == 2
-        assert tools[0]["name"] == "tool1"
-        assert tools[1]["name"] == "tool3"
+        # Order is not guaranteed from set iteration
+        tool_names = {t["name"] for t in tools}
+        assert tool_names == {"tool1", "tool3"}
         
     @pytest.mark.asyncio
     async def test_list_tools_with_error(self, handler, mock_registry):
