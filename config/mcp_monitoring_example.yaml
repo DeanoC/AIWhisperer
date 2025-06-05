@@ -1,0 +1,45 @@
+# MCP Server Configuration with Monitoring
+mcp:
+  server:
+    # Transport configuration
+    transport: websocket
+    host: localhost
+    port: 3001
+    
+    # Tool exposure
+    exposed_tools:
+      - read_file
+      - write_file
+      - list_directory
+      - search_files
+      - execute_command
+      - python_executor
+      - check_mail
+      - send_mail
+      - switch_agent
+    
+    # Resource permissions
+    resource_permissions:
+      - pattern: "**/*.py"
+        operations: ["read"]
+      - pattern: "**/*.md"
+        operations: ["read", "write"]
+      - pattern: "output/**/*"
+        operations: ["read", "write"]
+    
+    # Monitoring configuration
+    enable_metrics: true
+    enable_audit_log: true
+    metrics_retention_minutes: 120  # Keep metrics for 2 hours
+    slow_request_threshold_ms: 3000  # Requests slower than 3s are logged
+    max_recent_errors: 200  # Keep last 200 errors
+    
+    # Logging configuration
+    log_level: INFO
+    log_file: /var/log/aiwhisperer/mcp-server.json
+    enable_json_logging: true
+    audit_log_file: /var/log/aiwhisperer/mcp-audit.json
+    
+    # Server identification
+    server_name: "aiwhisperer-production"
+    server_version: "1.0.0"

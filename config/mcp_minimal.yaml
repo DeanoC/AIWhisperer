@@ -1,0 +1,31 @@
+# MCP Server Configuration - Minimal
+# This configuration exposes only the most essential tools,
+# focusing on AIWhisperer's unique capabilities.
+
+mcp:
+  server:
+    transport: stdio
+    server_name: "aiwhisperer-minimal"
+    server_version: "1.0.0"
+    
+    # Minimal tool set focusing on agent communication
+    exposed_tools:
+      # Core Agent Communication
+      - check_mail
+      - send_mail
+      - switch_agent
+      
+      # Essential Planning
+      - create_rfc
+      - read_rfc
+      - create_plan_from_rfc
+      
+      # Unique Analysis
+      - python_ast_json
+      
+    # Very restrictive permissions
+    resource_permissions:
+      - pattern: "rfcs/**/*.md"
+        operations: ["read", "write"]
+      - pattern: "plans/**/*.json"
+        operations: ["read", "write"]

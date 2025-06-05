@@ -1,0 +1,61 @@
+# MCP Client Configuration
+# This file configures external MCP servers that AIWhisperer agents can use
+
+mcp:
+  client:
+    # Enable or disable MCP client functionality
+    enabled: false  # Set to true to enable
+    
+    # List of MCP servers to connect to
+    servers:
+      # Example: File system tools
+      - name: filesystem
+        transport: stdio
+        command: ["mcp-server-filesystem", "--root", "/tmp/safe"]
+        timeout: 30.0
+        
+      # Example: GitHub integration
+      - name: github
+        transport: stdio
+        command: ["npx", "-y", "@modelcontextprotocol/server-github"]
+        env:
+          GITHUB_TOKEN: "${GITHUB_TOKEN}"  # Will be expanded from environment
+          
+      # Example: Web search tools
+      - name: websearch
+        transport: stdio
+        command: ["mcp-server-websearch"]
+        
+      # Example: Future WebSocket server
+      # - name: remote-tools
+      #   transport: websocket
+      #   url: "ws://localhost:3002/mcp"
+      #   timeout: 60.0
+        
+    # Agent-specific permissions
+    # Controls which agents can access which MCP servers
+    agent_permissions:
+      # Alice can only use filesystem tools
+      alice:
+        allowed_servers:
+          - filesystem
+          
+      # Eamonn can use all tools
+      eamonn:
+        allowed_servers:
+          - filesystem
+          - github
+          - websearch
+          
+      # Patricia can use filesystem and GitHub
+      patricia:
+        allowed_servers:
+          - filesystem
+          - github
+          
+      # Debbie (debugger) gets all tools for testing
+      debbie:
+        allowed_servers:
+          - filesystem
+          - github
+          - websearch

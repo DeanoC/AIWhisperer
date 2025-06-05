@@ -381,9 +381,25 @@ Revolutionary architecture where each agent runs its own AI loop independently, 
 - Error handling across agent boundaries
 - Debugging multi-agent interactions
 
+## MCP (Model Context Protocol) Enhancements
+
+### Connection Pooling for MCP Client
+- Implement connection pooling for improved performance
+  - Reuse connections for multiple requests
+  - Configurable pool size limits
+  - Connection health checking and automatic recovery
+  - Load balancing across multiple MCP servers
+  - Connection timeout and retry strategies
+  - Metrics for pool utilization and performance
+- Benefits:
+  - Reduced connection overhead
+  - Better resource utilization
+  - Improved response times for frequent requests
+  - Support for high-concurrency scenarios
+
 ## Random unstructured ideas
-- MCP server
-- MCP client
+- MCP server ✅ (Implemented)
+- MCP client ✅ (Implemented Phase 1)
 - Alice to get a new project setup feature (can talk to agent P by mail for ideas on languages etc.)
 - Agent C - Colin the Coder specialist coder. To coding tasks in Agent E plans
 - Agent M - Mary the Memory. Reasonable for context manager + compact + per agent & project memory storage
@@ -429,5 +445,5 @@ Prehaps we always open 2 chats at start, a private one with Alice The Assistant 
 
 ---
 
-*Last Updated: 2025-06-02*
+*Last Updated: 2025-06-05*
 

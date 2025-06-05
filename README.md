@@ -11,6 +11,7 @@ AI Whisperer is a AI development tool that takes requirements and implements the
 * **Requirements Processing**: Converts Markdown requirements into structured JSON task plans
 * **Real-time Collaboration**: WebSocket-based communication for instant AI responses
 * **OpenRouter Integration**: Access to multiple AI models through a unified API
+* **MCP Server**: Expose AIWhisperer tools to Claude Desktop and other MCP clients
 * **Test-Driven Development**: Built with TDD methodology using pytest
 
 ## Quick Start
@@ -57,6 +58,20 @@ AI Whisperer is a AI development tool that takes requirements and implements the
 python -m ai_whisperer.cli --config config.yaml batch scripts/script_name.json
 ```
 
+## MCP Server (Claude Desktop Integration)
+
+AIWhisperer can run as an MCP server, allowing Claude Desktop and other MCP clients to use its tools:
+
+```bash
+# Basic usage
+aiwhisperer-mcp --workspace /path/to/project
+
+# With specific tools
+aiwhisperer-mcp --expose-tool read_file --expose-tool search_files --workspace /path/to/project
+```
+
+See [docs/CLAUDE_DESKTOP_INTEGRATION.md](docs/CLAUDE_DESKTOP_INTEGRATION.md) for setup instructions.
+
 ## Agent System
 
 - **Alice the Assistant** - General development support and guidance
@@ -72,6 +87,8 @@ For development setup, testing, and architecture details, see:
 - **[CODE_MAP.md](CODE_MAP.md)** - Complete codebase structure and module documentation
 - **[docs/QUICK_START.md](docs/QUICK_START.md)** - Detailed getting started guide
 - **[docs/BATCH_MODE_USAGE_FOR_AI.md](docs/BATCH_MODE_USAGE_FOR_AI.md)** - Batch processing guide
+- **[docs/MCP_USER_GUIDE.md](docs/MCP_USER_GUIDE.md)** - MCP server user guide
+- **[docs/MCP_API_REFERENCE.md](docs/MCP_API_REFERENCE.md)** - MCP API technical reference
 
 ### Quick Development Commands
 
