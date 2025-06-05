@@ -54,9 +54,9 @@ agents:
     icon: "🐛"
     tool_sets: ["debugging_tools", "conversation_tools", "monitoring_tools", "filesystem", "command", "analysis", "mailbox_tools"]
     allow_tools: ["ai_loop_inspector"]  # Allow the new inspection tool
-    # Debbie uses Gemini 2.5 Flash for debugging with massive context window
+    # Debbie uses Claude 4 Sonnet for better tool usage and protocol following
     ai_config:
-      model: "google/gemini-2.5-flash-preview"  # 1M token context for debugging
+      model: "anthropic/claude-sonnet-4"  # Claude 4 Sonnet for reliable tool usage
       provider: "openrouter"
       generation_params:
         temperature: 0.5  # Lower temperature for more predictable debugging

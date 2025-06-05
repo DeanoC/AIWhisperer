@@ -183,6 +183,24 @@ class AgentLogger:
             logger.debug(f"[{i}] {role}: {content}")
         
         logger.info("=== END CONTEXT ===")
+    
+    def log_system_prompt(self, agent_id: str, system_prompt: str):
+        """
+        Log the formatted system prompt for an agent.
+        
+        Args:
+            agent_id: The agent's ID
+            system_prompt: The formatted system prompt
+        """
+        logger = self.get_agent_logger(agent_id)
+        logger.info("=== SYSTEM PROMPT ===")
+        
+        # Log the full prompt but split by lines for readability
+        lines = system_prompt.split('\n')
+        for line in lines:
+            logger.info(line)
+        
+        logger.info("=== END SYSTEM PROMPT ===")
 
 # Global instance
 _agent_logger = None

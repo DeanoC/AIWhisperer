@@ -308,6 +308,9 @@ class StatelessInteractiveSession:
             "agent_name": agent_name
         })
         
+        # Log the system prompt for debugging
+        self.agent_logger.log_system_prompt(agent_id, system_prompt)
+        
         # Set as active if first agent
         if self.active_agent is None:
             self.active_agent = agent_id
@@ -399,6 +402,11 @@ class StatelessInteractiveSession:
                             # Enable continuation feature for all agents
                             self.prompt_system.enable_feature('continuation_protocol')
                             
+                            # Enable mailbox debug mode for Debbie
+                            if agent_id.lower() in ['d', 'debbie']:
+                                logger.info(f"Enabling force_mailbox_tool debug mode for Debbie")
+                                self.prompt_system.enable_debug_option('force_mailbox_tool')
+                            
                             # Get model name for capability checking
                             model_name = None
                             if agent_info.ai_config and agent_info.ai_config.get("model"):
@@ -419,6 +427,10 @@ class StatelessInteractiveSession:
                             system_prompt = prompt
                             prompt_source = f"prompt_system:agents/{prompt_name}" + (" (with_tools)" if include_tools else "")
                             logger.info(f"✅ Successfully loaded prompt via PromptSystem for {agent_id} (tools included: {include_tools})")
+                            
+                            # Clear debug options after loading prompt to avoid affecting other agents
+                            if agent_id.lower() in ['d', 'debbie']:
+                                self.prompt_system.disable_debug_option('force_mailbox_tool')
                         except Exception as e1:
                             logger.warning(f"⚠️ PromptSystem failed: {e1}, trying direct file read")
                             # Try direct file read as fallback

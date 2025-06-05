@@ -249,7 +249,8 @@ class PromptSystem:
         return self._debug_options.copy()
     
     def set_debug_mode(self, single_tool: bool = False, verbose_progress: bool = False, 
-                       force_sequential: bool = False, explicit_continuation: bool = False):
+                       force_sequential: bool = False, explicit_continuation: bool = False,
+                       force_mailbox_tool: bool = False):
         """Convenience method to set multiple debug options at once"""
         # Clear existing debug options
         self._debug_options.clear()
@@ -263,6 +264,8 @@ class PromptSystem:
             self._debug_options.add('force_sequential')
         if explicit_continuation:
             self._debug_options.add('explicit_continuation')
+        if force_mailbox_tool:
+            self._debug_options.add('force_mailbox_tool')
         
         # Update debug_options feature
         if self._debug_options:
@@ -438,6 +441,7 @@ class PromptSystem:
             'Verbose Progress Reporting': 'verbose_progress',
             'Force Sequential Processing': 'force_sequential',
             'No Optimization': 'single_tool',  # Also applies to single_tool mode
+            'Force Mailbox Tool Usage': 'force_mailbox_tool',
         }
         
         required_option = section_map.get(section_name)

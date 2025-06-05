@@ -157,14 +157,16 @@ class AgentSwitchHandler:
             # Switch to target agent
             await self.session.switch_agent(target_agent_id)
             
-            # Notify target agent about mail
-            mail_notification = f"You have received mail from {from_agent}. Let me check your mailbox."
-            logger.info(f"Notifying {to_agent} about new mail")
+            # Create a clear prompt for the target agent
+            # This follows the mailbox protocol in their prompts
+            mail_prompt = (
+                f"You have been activated via agent switch from {from_agent}. "
+                f"Use the check_mail() tool to check your mailbox and process any requests."
+            )
+            logger.info(f"Notifying {to_agent} about new mail with prompt: {mail_prompt}")
             
-            # Combine notification and response prompt into one message
-            combined_prompt = f"{mail_notification} Please check your mailbox and respond to any messages."
             response_result = await self.session.send_user_message(
-                combined_prompt,
+                mail_prompt,
                 is_continuation=True  # This is part of the same flow
             )
             
@@ -172,15 +174,28 @@ class AgentSwitchHandler:
             target_response = None
             if isinstance(response_result, dict):
                 target_response = response_result.get('response', '')
+                logger.info(f"Target agent {to_agent} response received: {target_response[:100]}...")
+                
+                # Log the response in the agent's log
+                self.agent_logger.log_agent_action(
+                    target_agent_id,
+                    "Processed mail and responded",
+                    {"response_length": len(target_response) if target_response else 0}
+                )
+            else:
+                logger.warning(f"Unexpected response type from {to_agent}: {type(response_result)}")
                 
             # Switch back to original agent
             await self._restore_agent_context()
             
+            # Log the switch back
+            self.agent_logger.log_agent_switch(target_agent_id, from_agent, "Returning control after mail processing")
+            
             # Format the response for the original agent
             if target_response:
-                return f"\n\n[{to_agent} processed the mail and responded]"
+                return f"\n\n[{to_agent} processed the mail and responded: {target_response}]"
             else:
-                return f"\n\n[Mail sent to {to_agent}]"
+                return f"\n\n[Mail sent to {to_agent} - no response received]"
                 
         except Exception as e:
             logger.error(f"Error during agent switch: {e}")
