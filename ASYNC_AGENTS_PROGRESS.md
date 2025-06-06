@@ -68,8 +68,8 @@
 
 ## Recently Discovered: Async Implementation Already Present!
 
-### 6. Async Agent Architecture (IMPLEMENTED)
-- ✅ `AsyncAgentSessionManager` - Manages multiple concurrent agent sessions
+### 6. Async Agent Architecture (REFACTORED)
+- ✅ `AsyncAgentSessionManager` - Refactored to align with current architecture
 - ✅ Background agent processors - Each agent runs its own loop
 - ✅ Mailbox integration - Agents check mailbox automatically
 - ✅ Sleep/wake functionality - Timer and event-based wake
@@ -82,9 +82,18 @@
 - `async.stopAgent` - Stop an agent
 - `async.sleepAgent` - Put agent to sleep with wake conditions
 - `async.wakeAgent` - Wake a sleeping agent
-- `async.sendTask` - Send direct task to agent
+- `async.sendTask` - Send direct task to agent (corrected from sendTaskToAgent)
 - `async.getAgentStates` - Get states of all agents
 - `async.broadcastEvent` - Broadcast event to listening agents
+
+### Phase 1 Refactoring Complete:
+- Created `AsyncAgentSessionManager V2` using current patterns:
+  - StatelessAgent as base agent type
+  - AILoopManager for AI loop creation
+  - PromptSystem for prompt loading
+  - AgentRegistry for agent configuration
+- Fixed 6 initialization issues during implementation
+- Verified agent lifecycle: create, process tasks, stop
 
 ## Next Steps
 
@@ -127,12 +136,20 @@
 - Sleep/wake functionality
 - WebSocket API endpoints
 
-### 🔄 Phase 3: Integration & Testing - IN PROGRESS
+### ✅ Phase 3: Async Agent Refactoring - COMPLETE (Phase 1)
 - ✅ Fixed async endpoint parameter issues
 - ✅ Created comprehensive test suite in `tests/integration/async_agents/`
 - ✅ Created test plan document with sync/async test scenarios
-- 🔄 Need to restart server to load async handlers
-- 🔄 Run test suite to verify functionality
+- ✅ Refactored AsyncAgentSessionManager to align with current architecture
+- ✅ Fixed all initialization errors (6 different issues resolved)
+- ✅ Verified async agent creation, task processing, and lifecycle
+- ✅ Phase 1 complete: Agent creation patterns aligned
+
+### 🔄 Phase 4: Full Integration - IN PROGRESS
+- 🔄 Phase 2: Integrate channel response system
+- 🔄 Phase 3: Enhanced sleep/wake patterns
+- 🔄 Phase 4: State persistence
+- 🔄 Phase 5: Testing & documentation
 - 🔄 Document usage patterns
 
 ## Architecture Notes

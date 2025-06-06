@@ -35,7 +35,7 @@ class AsyncAgentEndpoints:
         
         logger.info("Registered async agent endpoints")
         
-    async def _get_or_create_manager(self, session_id: str) -> AsyncAgentSessionManager:
+    async def _get_or_create_manager(self, session_id: str, websocket=None) -> AsyncAgentSessionManager:
         """Get or create async manager for a session."""
         if session_id not in self.async_managers:
             # Get config from session
@@ -51,8 +51,26 @@ class AsyncAgentEndpoints:
             else:
                 from ai_whisperer.services.agents.async_session_manager import AsyncAgentSessionManager
             
-            # Create manager
-            manager = AsyncAgentSessionManager(config)
+            # Create notification callback
+            async def notification_callback(method: str, params: Dict[str, Any]):
+                """Send WebSocket notifications."""
+                # Get the current WebSocket for this session
+                ws = websocket or (session.websocket if hasattr(session, 'websocket') else None)
+                if ws:
+                    try:
+                        await ws.send_json({
+                            "jsonrpc": "2.0",
+                            "method": method,
+                            "params": {
+                                **params,
+                                "sessionId": session_id
+                            }
+                        })
+                    except Exception as e:
+                        logger.error(f"Failed to send notification: {e}")
+            
+            # Create manager with callback
+            manager = AsyncAgentSessionManager(config, notification_callback)
             await manager.start()
             self.async_managers[session_id] = manager
             
@@ -72,7 +90,7 @@ class AsyncAgentEndpoints:
                 }
                 
             # Get or create manager
-            manager = await self._get_or_create_manager(session_id)
+            manager = await self._get_or_create_manager(session_id, websocket)
             
             # Create agent session
             agent_session = await manager.create_agent_session(agent_id, auto_start)

@@ -53,12 +53,15 @@ class AsyncAgentSession:
 class AsyncAgentSessionManager:
     """Manages multiple agent sessions running independently - Refactored version."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], notification_callback=None):
         self.config = config
         self.sessions: Dict[str, AsyncAgentSession] = {}
         self._background_tasks: Set[asyncio.Task] = set()
         self._running = False
         self._event_queue: asyncio.Queue = asyncio.Queue()
+        
+        # Notification callback for WebSocket events
+        self._notification_callback = notification_callback
         
         # Initialize core components matching StatelessSessionManager pattern
         self._init_core_components()
@@ -265,24 +268,46 @@ class AsyncAgentSessionManager:
         
         try:
             prompt = task.get("prompt", "")
+            task_id = task.get("id", f"task_{datetime.now().timestamp()}")
+            
+            # Send task started notification
+            await self._send_notification("async.task.started", {
+                "agent_id": session.agent_id,
+                "task_id": task_id,
+                "task_type": task.get("type", "user"),
+                "prompt": prompt[:100] + "..." if len(prompt) > 100 else prompt
+            })
             
             # Create task context
             task_context = {
-                "task_id": task.get("id"),
+                "task_id": task_id,
                 "task_type": task.get("type"),
                 "from_agent": task.get("context", {}).get("from_agent"),
                 "priority": task.get("context", {}).get("priority")
             }
             
             # Update agent context
-            session.context.update(task_context)
+            if hasattr(session.context, 'update'):
+                session.context.update(task_context)
+            else:
+                # AgentContext doesn't have update method, set attributes directly
+                for key, value in task_context.items():
+                    if value is not None:
+                        setattr(session.context, key, value)
             
-            # Process through AI loop (using sync for now, will make async)
-            result = await asyncio.get_event_loop().run_in_executor(
-                None,
-                session.agent.process_message,
-                prompt
-            )
+            # Process through AI loop (already async)
+            result = await session.agent.process_message(prompt)
+            
+            # Parse result to extract channel responses
+            channel_response = self._extract_channel_response(result)
+            
+            # Send task completed notification with channel response
+            await self._send_notification("async.task.completed", {
+                "agent_id": session.agent_id,
+                "task_id": task_id,
+                "result": channel_response,
+                "raw_result": result  # Include raw result for debugging
+            })
             
             # Handle continuation if needed
             if isinstance(result, dict) and result.get("metadata", {}).get("continue"):
@@ -290,10 +315,16 @@ class AsyncAgentSessionManager:
                 await session.task_queue.put({
                     "prompt": "Continue with the current task",
                     "context": {
-                        "parent_task": task.get("id"),
+                        "parent_task": task_id,
                         "continuation": True
                     },
                     "type": "continuation"
+                })
+                
+                await self._send_notification("async.task.continuation", {
+                    "agent_id": session.agent_id,
+                    "task_id": task_id,
+                    "parent_task": task_id
                 })
                 
             # Emit completion event
@@ -306,6 +337,14 @@ class AsyncAgentSessionManager:
         except Exception as e:
             logger.error(f"Error processing task for agent {session.agent_id}: {e}")
             session.error_count += 1
+            
+            # Send error notification
+            await self._send_notification("async.task.error", {
+                "agent_id": session.agent_id,
+                "task_id": task.get("id"),
+                "error": str(e),
+                "error_count": session.error_count
+            })
             
             await self._emit_event("task_error", {
                 "agent_id": session.agent_id,
@@ -495,3 +534,47 @@ class AsyncAgentSessionManager:
                 continue
             except Exception as e:
                 logger.error(f"Error processing event: {e}")
+    
+    async def _send_notification(self, method: str, params: Dict[str, Any]):
+        """Send a notification via the callback if available."""
+        if self._notification_callback:
+            try:
+                await self._notification_callback(method, params)
+            except Exception as e:
+                logger.error(f"Error sending notification {method}: {e}")
+        else:
+            # Log notification for debugging
+            logger.debug(f"Notification (no callback): {method} - {params}")
+    
+    def _extract_channel_response(self, result: Any) -> Dict[str, Any]:
+        """Extract channel response from AI result."""
+        if not isinstance(result, dict):
+            # Convert string result to channel format
+            return {
+                "analysis": "",
+                "commentary": "",
+                "final": str(result)
+            }
+        
+        # Check if already in channel format
+        if all(key in result for key in ['analysis', 'commentary', 'final']):
+            return {
+                "analysis": result.get("analysis", ""),
+                "commentary": result.get("commentary", ""),
+                "final": result.get("final", "")
+            }
+        
+        # Extract from other formats
+        if "response" in result:
+            return {
+                "analysis": "",
+                "commentary": "",
+                "final": result["response"]
+            }
+        
+        # Default format
+        return {
+            "analysis": "",
+            "commentary": "",
+            "final": str(result)
+        }
