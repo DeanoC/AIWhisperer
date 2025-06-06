@@ -325,6 +325,40 @@ class LazyToolRegistry:
                 "class": "PromptMetricsTool",
                 "category": "analysis"
             },
+            
+            # Mailbox communication tools
+            "send_mail": {
+                "module": "ai_whisperer.tools.send_mail_tool",
+                "class": "SendMailTool",
+                "category": "communication"
+            },
+            "check_mail": {
+                "module": "ai_whisperer.tools.check_mail_tool",
+                "class": "CheckMailTool",
+                "category": "communication"
+            },
+            "reply_mail": {
+                "module": "ai_whisperer.tools.reply_mail_tool",
+                "class": "ReplyMailTool",
+                "category": "communication"
+            },
+            "send_mail_with_switch": {
+                "module": "ai_whisperer.tools.send_mail_with_switch_tool",
+                "class": "SendMailWithSwitchTool",
+                "category": "communication"
+            },
+            
+            # Async agent sleep/wake tools
+            "agent_sleep": {
+                "module": "ai_whisperer.tools.agent_sleep_tool",
+                "class": "AgentSleepTool",
+                "category": "async_agents"
+            },
+            "agent_wake": {
+                "module": "ai_whisperer.tools.agent_wake_tool",
+                "class": "AgentWakeTool",
+                "category": "async_agents"
+            },
         })
     
     def set_path_manager(self, path_manager):

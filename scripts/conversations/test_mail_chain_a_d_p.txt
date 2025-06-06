@@ -1,0 +1,7 @@
+Alice, please use send_mail_with_switch to ask Debbie to analyze our test coverage. Ask her to be specific about which areas need more tests.
+
+What did Debbie find? 
+
+Based on Debbie's analysis, can you ask Patricia to create an RFC for improving our test coverage? Use send_mail_with_switch so we get Patricia's immediate input.
+
+Excellent! What did Patricia propose in her RFC?

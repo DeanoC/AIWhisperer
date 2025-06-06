@@ -1,0 +1,7 @@
+Hi Debbie, I need your help debugging something. Can you check if you have any messages in your mailbox?
+
+Debbie, can you analyze the current workspace and tell me about the project structure?
+
+Now can you search for all test files and count them? Look for files matching the pattern *test*.py
+
+Can you check the session health and tell me if everything is running smoothly?

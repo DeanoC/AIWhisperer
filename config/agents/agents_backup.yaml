@@ -1,0 +1,5 @@
+# Backup of original continuation_config for Debbie
+    continuation_config:
+      require_explicit_signal: true  # Use structured continuation protocol
+      max_iterations: 8
+      timeout: 600

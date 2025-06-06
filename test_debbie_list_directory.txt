@@ -1,0 +1,3 @@
+/switch-agent a
+Use send_mail_with_switch to send a message to Debbie with subject 'Simple Test' and body 'Please use the list_directory tool to list the contents of /home/deano/projects/AIWhisperer and report back what you find.'
+/exit

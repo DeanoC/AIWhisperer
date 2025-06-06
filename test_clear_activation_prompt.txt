@@ -1,0 +1,1 @@
+Use send_mail_with_switch to send a message to agent 'd' with subject 'Math' and body 'Answer this: What is 5+5?'

@@ -1,0 +1,1 @@
+Use the send_mail_with_switch tool to send a message to Debbie with subject 'Tool Test' and body 'Please use the list_directory tool to list the contents of /home/deano/projects/AIWhisperer and include the results in your response.'

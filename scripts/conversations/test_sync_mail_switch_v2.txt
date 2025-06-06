@@ -1,0 +1,5 @@
+Hi Alice! I need you to coordinate with Debbie to analyze our project. Can you use send_mail_with_switch to ask her for a workspace analysis?
+
+Thanks! What did Debbie say about the workspace?
+
+Now can you ask Patricia using send_mail_with_switch to create a simple RFC outline for our async agents feature?

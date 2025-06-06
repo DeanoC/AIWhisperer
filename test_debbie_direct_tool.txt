@@ -1,0 +1,1 @@
+Please use the list_directory tool to show the contents of the current directory.

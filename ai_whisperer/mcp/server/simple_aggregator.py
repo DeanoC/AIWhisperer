@@ -286,8 +286,6 @@ async def startup():
 
 async def monitor_upstream():
     """Background task to monitor and reconnect to upstream."""
-    global upstream_available
-    
     while True:
         try:
             if not upstream_available:

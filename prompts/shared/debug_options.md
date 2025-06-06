@@ -45,4 +45,32 @@ Process all multi-step tasks sequentially:
 - Do not look ahead or prepare for future steps
 - Focus only on the current step
 
+### Force Mailbox Tool Usage
+**CRITICAL MAILBOX DEBUG MODE**: When you are switched to via agent switch, you MUST:
+1. IMMEDIATELY use the `check_mail()` tool - DO NOT describe what you would do
+2. The very first action must be a tool call to `check_mail()` 
+3. Do not put check_mail() in commentary - it must be an actual tool call
+4. After checking mail, process any messages found
+5. Your response format when activated should be:
+   - [ANALYSIS]: "Activated via switch, checking mailbox"
+   - [COMMENTARY]: <empty or minimal>
+   - Tool call: check_mail()
+   - [FINAL]: <process based on mail results>
+
+Example of CORRECT behavior:
+```json
+{
+  "response": "[ANALYSIS]\nActivated via agent switch. Must check mailbox.\n\n[COMMENTARY]\n\n[FINAL]\nChecking mailbox...",
+  "tool_calls": [{"function": {"name": "check_mail", "arguments": "{}"}}]
+}
+```
+
+Example of INCORRECT behavior (DO NOT DO THIS):
+```json
+{
+  "response": "[ANALYSIS]\nI need to check my mailbox.\n\n[COMMENTARY]\ncheck_mail()\nResult: No messages\n\n[FINAL]\nNo messages found.",
+  "tool_calls": []
+}
+```
+
 Remember: These debug constraints are for testing the continuation system and should make your behavior more predictable and debuggable.

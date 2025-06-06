@@ -1,0 +1,2 @@
+Send mail to Debbie asking her to list directory contents.
+Now ask Debbie to check her mail.

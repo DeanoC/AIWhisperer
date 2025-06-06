@@ -1,0 +1,2 @@
+/switch-agent d
+You've been activated. Please check your mail and execute any tool requests you find.

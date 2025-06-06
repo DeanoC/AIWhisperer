@@ -1,0 +1,5 @@
+Hi Alice! I need you to coordinate with Debbie to analyze our project. Can you send her a message asking for a workspace analysis?
+
+Thanks! Has Debbie responded yet?
+
+Great work! Now can you ask Patricia to create an RFC for improving our testing infrastructure?

@@ -28,6 +28,7 @@ from .message_models import AIMessageChunkNotification, ContinuationProgressNoti
 from .debbie_observer import get_observer
 from .agent_switch_handler import AgentSwitchHandler
 from ai_whisperer.channels.integration import get_channel_integration
+from ai_whisperer.core.agent_logger import get_agent_logger
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +209,9 @@ class StatelessInteractiveSession:
         # Initialize channel integration
         self.channel_integration = get_channel_integration()
         
+        # Initialize agent logger
+        self.agent_logger = get_agent_logger()
+        
         # Register tools for interactive sessions
         self._register_tools()
     
@@ -223,18 +227,24 @@ class StatelessInteractiveSession:
         # Register all tools
         register_all_tools(path_manager)
         
-        # Also register mailbox tools explicitly in case they're not in register_all_tools
+        # Also register mailbox and async agent tools explicitly 
         from ai_whisperer.tools.tool_registry import get_tool_registry
         from ai_whisperer.tools.send_mail_tool import SendMailTool
+        from ai_whisperer.tools.send_mail_with_switch_tool import SendMailWithSwitchTool
         from ai_whisperer.tools.check_mail_tool import CheckMailTool
         from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
         from ai_whisperer.tools.switch_agent_tool import SwitchAgentTool
+        from ai_whisperer.tools.agent_sleep_tool import AgentSleepTool
+        from ai_whisperer.tools.agent_wake_tool import AgentWakeTool
         
         tool_registry = get_tool_registry()
         tool_registry.register_tool(SendMailTool())
+        tool_registry.register_tool(SendMailWithSwitchTool())
         tool_registry.register_tool(CheckMailTool())
         tool_registry.register_tool(ReplyMailTool())
         tool_registry.register_tool(SwitchAgentTool())
+        tool_registry.register_tool(AgentSleepTool())
+        tool_registry.register_tool(AgentWakeTool())
         
         logger.info("Registered all tools for interactive session including mailbox and agent switching tools")
     
@@ -293,6 +303,18 @@ class StatelessInteractiveSession:
         # Store agent
         self.agents[agent_id] = agent
         
+        # Initialize agent logger for this agent
+        agent_name = config.name if config else f"Agent {agent_id}"
+        self.agent_logger.get_agent_logger(agent_id, agent_name)
+        self.agent_logger.log_agent_action(agent_id, "Agent Created", {
+            "model": config.model_name if config else "unknown",
+            "session_id": self.session_id,
+            "agent_name": agent_name
+        })
+        
+        # Log the system prompt for debugging
+        self.agent_logger.log_system_prompt(agent_id, system_prompt)
+        
         # Set as active if first agent
         if self.active_agent is None:
             self.active_agent = agent_id
@@ -310,7 +332,7 @@ class StatelessInteractiveSession:
     async def start_ai_session(self, system_prompt: str = None) -> str:
         """
         Start the AI session by creating a default agent.
-        Uses Alice (agent 'a') as the default if available.
+        Uses Alice (agent 'a') as the default if available, unless overridden by AIWHISPERER_DEFAULT_AGENT env var.
         """
         if self.is_started:
             raise RuntimeError(f"Session {self.session_id} is already started")
@@ -318,15 +340,26 @@ class StatelessInteractiveSession:
         try:
             self.is_started = True
             
-            # Try to use Alice as default agent
-            if self.agent_registry and self.agent_registry.get_agent("A"):
+            # Check for default agent override in environment
+            import os
+            default_agent_id = os.environ.get('AIWHISPERER_DEFAULT_AGENT', 'a').lower()
+            default_agent_name = {
+                'a': 'Alice',
+                'd': 'Debbie', 
+                'p': 'Patricia',
+                't': 'Tessa',
+                'e': 'Eamonn'
+            }.get(default_agent_id, 'Unknown')
+            
+            # Try to use specified default agent
+            if self.agent_registry and self.agent_registry.get_agent(default_agent_id.upper()):
                 try:
-                    # Switch to Alice - this will create the agent from registry
-                    await self.switch_agent("a")
-                    logger.info(f"Started session {self.session_id} with Alice agent")
+                    # Switch to default agent - this will create the agent from registry
+                    await self.switch_agent(default_agent_id)
+                    logger.info(f"Started session {self.session_id} with {default_agent_name} agent (id: {default_agent_id})")
                     return self.session_id
                 except Exception as e:
-                    logger.error(f"Failed to create Alice agent: {e}, falling back to default")
+                    logger.error(f"Failed to create {default_agent_name} agent: {e}, falling back to generic default")
                     # Fall through to create default agent
             
             # Fallback to generic default agent
@@ -384,6 +417,14 @@ class StatelessInteractiveSession:
                             # Enable continuation feature for all agents
                             self.prompt_system.enable_feature('continuation_protocol')
                             
+                            # Enable mailbox debug mode for Debbie
+                            if agent_id.lower() in ['d', 'debbie']:
+                                logger.info(f"Enabling force_mailbox_tool debug mode for Debbie")
+                                # First enable the debug_options feature
+                                self.prompt_system.enable_feature('debug_options')
+                                # Then enable the specific debug option
+                                self.prompt_system.enable_debug_option('force_mailbox_tool')
+                            
                             # Get model name for capability checking
                             model_name = None
                             if agent_info.ai_config and agent_info.ai_config.get("model"):
@@ -404,6 +445,13 @@ class StatelessInteractiveSession:
                             system_prompt = prompt
                             prompt_source = f"prompt_system:agents/{prompt_name}" + (" (with_tools)" if include_tools else "")
                             logger.info(f"✅ Successfully loaded prompt via PromptSystem for {agent_id} (tools included: {include_tools})")
+                            
+                            # Clear debug options after loading prompt to avoid affecting other agents
+                            if agent_id.lower() in ['d', 'debbie']:
+                                self.prompt_system.disable_debug_option('force_mailbox_tool')
+                                # Also disable the debug_options feature if no other debug options are active
+                                if not self.prompt_system.get_debug_options():
+                                    self.prompt_system.disable_feature('debug_options')
                         except Exception as e1:
                             logger.warning(f"⚠️ PromptSystem failed: {e1}, trying direct file read")
                             # Try direct file read as fallback
@@ -495,6 +543,10 @@ class StatelessInteractiveSession:
                 "from": old_agent,
                 "to": agent_id
             })
+            
+            # Log the agent switch
+            if old_agent:
+                self.agent_logger.log_agent_switch(old_agent, agent_id, "Agent switch requested")
             
             # Notify observer about agent switch
             if old_agent and self.observer:
@@ -894,6 +946,23 @@ class StatelessInteractiveSession:
                 # Convert to dict format if needed
                 result = {'response': str(result) if result else None}
             
+            # Log AI response to agent's log
+            if result.get('response'):
+                self.agent_logger.log_agent_message(self.active_agent, "ai_response", result['response'], {
+                    "finish_reason": result.get('finish_reason'),
+                    "tool_calls": len(result.get('tool_calls', [])) if result.get('tool_calls') else 0,
+                    "used_structured_output": result.get('used_structured_output', False)
+                })
+            
+            # Log tool calls if any
+            if result.get('tool_calls'):
+                for tool_call in result['tool_calls']:
+                    tool_name = tool_call.get('function', {}).get('name', 'unknown')
+                    tool_args = tool_call.get('function', {}).get('arguments', '{}')
+                    self.agent_logger.log_agent_message(self.active_agent, "tool_call", 
+                                                      f"{tool_name}({tool_args})", 
+                                                      {"tool_id": tool_call.get('id')})
+            
             # Reset continuation depth if this is not a continuation and we got a non-tool response
             if not is_continuation and (not result.get('tool_calls') or result.get('error')):
                 self._continuation_depth = 0
@@ -923,7 +992,7 @@ class StatelessInteractiveSession:
             
             # If the AI called tools, we need another round to get the final response
             # This follows the standard OpenAI/Claude tool calling pattern
-            if result.get('finish_reason') == 'tool_calls' and result.get('tool_calls') and not is_continuation:
+            if result.get('finish_reason') == 'tool_calls' and result.get('tool_calls'):
                 logger.info(f"🔧 TOOL CALLS COMPLETED: {len(result['tool_calls'])} tools were executed")
                 logger.info("🔧 Making another AI call to process tool results...")
                 
@@ -1126,9 +1195,14 @@ class StatelessInteractiveSession:
             # Send a simple introduction request using the full streaming pipeline
             introduction_prompt = "Please introduce yourself briefly, mentioning your name and what you help with."
             
+            # TEMPORARILY DISABLED: Introduction is a UI feature, not needed for core functionality
+            # TODO: Re-enable when UI properly handles agent introductions
+            logger.info(f"Skipping agent introduction for '{self.active_agent}' (temporarily disabled)")
+            return
+            
             # Use the normal send_user_message pipeline but mark as internal
-            logger.info(f"Requesting introduction from agent '{self.active_agent}'")
-            await self.send_user_message(introduction_prompt, is_continuation=False)
+            # logger.info(f"Requesting introduction from agent '{self.active_agent}'")
+            # await self.send_user_message(introduction_prompt, is_continuation=False)
             
             # Mark as introduced
             self.introduced_agents.add(self.active_agent)

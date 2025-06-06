@@ -1,0 +1,1 @@
+Use the send_mail tool to send a message to Debbie with subject 'Tool Request' and body 'Please use the list_directory tool to show the contents of the current directory.'

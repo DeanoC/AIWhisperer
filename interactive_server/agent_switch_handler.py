@@ -7,6 +7,7 @@ import logging
 import asyncio
 from typing import Dict, Any, Optional, Tuple
 from ai_whisperer.extensions.mailbox.mailbox import get_mailbox
+from ai_whisperer.core.agent_logger import get_agent_logger
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ class AgentSwitchHandler:
         """
         self.session = session
         self.switch_stack = []  # Stack to track nested switches
+        self.max_switch_depth = 5  # Maximum depth to prevent infinite loops
+        self.agent_logger = get_agent_logger()
         
     async def handle_tool_results(self, tool_calls: list, tool_results: str) -> Tuple[bool, Optional[str]]:
         """
@@ -41,7 +44,7 @@ class AgentSwitchHandler:
         for tool_call in tool_calls:
             tool_name = tool_call.get('function', {}).get('name')
             
-            if tool_name == 'send_mail':
+            if tool_name in ['send_mail', 'send_mail_with_switch']:
                 # Check if the send_mail was successful by looking at the tool results
                 if "Error" in tool_results or "failed" in tool_results.lower():
                     logger.info(f"send_mail failed, not triggering agent switch")
@@ -54,9 +57,16 @@ class AgentSwitchHandler:
                     args = json.loads(args_str)
                     to_agent = args.get('to_agent', '').strip()
                     
-                    if to_agent and "successfully" in tool_results:
+                    if to_agent and ("sent" in tool_results or "send_mail_with_switch" in tool_results):
                         # This is successful agent-to-agent communication
                         logger.info(f"Detected successful mail sent to agent: {to_agent}")
+                        
+                        # Log the mail send event
+                        self.agent_logger.log_agent_action(
+                            self.session.active_agent,
+                            f"Sent mail to {to_agent} with switch request",
+                            {"subject": args.get('subject'), "tool": tool_name}
+                        )
                         
                         # Perform synchronous agent switch
                         additional_response = await self._perform_agent_switch(
@@ -87,61 +97,105 @@ class AgentSwitchHandler:
         try:
             logger.info(f"Starting synchronous agent switch: {from_agent} -> {to_agent}")
             
-            # Save current agent state
+            # Use the agent registry to resolve the agent name to ID
+            try:
+                # Get the agent registry from the session
+                agent_registry = self.session.agent_registry if hasattr(self.session, 'agent_registry') else None
+                
+                if agent_registry:
+                    # Use the registry's name resolution
+                    target_agent_id = agent_registry.resolve_agent_name_to_id(to_agent)
+                else:
+                    # Fallback to basic mapping if registry not available
+                    logger.warning("Agent registry not available, using fallback mapping")
+                    agent_name_map = {
+                        'alice': 'a',
+                        'patricia': 'p',
+                        'tessa': 't',
+                        'debbie': 'd',
+                        'eamonn': 'e'
+                    }
+                    to_agent_lower = to_agent.lower()
+                    first_word = to_agent_lower.split()[0] if ' ' in to_agent_lower else to_agent_lower
+                    target_agent_id = agent_name_map.get(first_word, to_agent_lower)
+                    
+                    if not target_agent_id:
+                        raise ValueError(f"Unknown agent: {to_agent}")
+                        
+            except ValueError as e:
+                logger.error(f"Failed to resolve agent name: {e}")
+                return f"\n\n[Error: {str(e)}]"
+            
+            # Check for circular mail (max depth exceeded)
+            if len(self.switch_stack) >= self.max_switch_depth:
+                logger.error(f"Maximum switch depth ({self.max_switch_depth}) exceeded - possible circular mail")
+                error_msg = f"Maximum agent switch depth exceeded - possible circular mail scenario. Switch stack: {' -> '.join([s['agent'] for s in self.switch_stack])} -> {from_agent}"
+                self.agent_logger.log_agent_action(from_agent, "Circular mail detected", {
+                    "error": error_msg,
+                    "switch_depth": len(self.switch_stack),
+                    "switch_stack": [s['agent'] for s in self.switch_stack]
+                })
+                return f"\n\n[Error: {error_msg}]"
+            
+            # Check for immediate circular reference (agent sending to itself)
+            if target_agent_id == from_agent:
+                logger.warning(f"Agent {from_agent} attempting to send mail to itself (target: {to_agent})")
+                return f"\n\n[Warning: Agent cannot send mail to itself]"
+                
+            # Check if target agent ID is already in the switch stack
+            agent_ids_in_stack = [s['agent'] for s in self.switch_stack]
+            if target_agent_id in agent_ids_in_stack:
+                logger.warning(f"Circular mail detected: {target_agent_id} is already in the switch stack")
+                return f"\n\n[Warning: Circular mail detected - {to_agent} (ID: {target_agent_id}) is already processing mail in this chain: {' -> '.join(agent_ids_in_stack)} -> {from_agent}]"
+            
+            # Save current agent state after all checks pass
             self.switch_stack.append({
                 'agent': from_agent,
                 'context_snapshot': await self._get_context_snapshot(from_agent)
             })
             
-            # Map common agent names to their IDs
-            agent_name_map = {
-                'alice': 'a',
-                'patricia': 'p',
-                'patricia the planner': 'p',
-                'tessa': 't',
-                'tessa the tester': 't',
-                'debbie': 'd',
-                'debbie the debugger': 'd',
-                'eamonn': 'e',
-                'eamonn the executioner': 'e'
-            }
-            
-            # Get the target agent ID - try exact match first, then first word
-            to_agent_lower = to_agent.lower()
-            target_agent_id = agent_name_map.get(to_agent_lower)
-            
-            if not target_agent_id:
-                # Try just the first word
-                first_word = to_agent_lower.split()[0] if ' ' in to_agent_lower else to_agent_lower
-                target_agent_id = agent_name_map.get(first_word, to_agent_lower)
-            
             # Switch to target agent
             await self.session.switch_agent(target_agent_id)
             
-            # Notify target agent about mail
-            mail_notification = f"You have received mail from {from_agent}. Let me check your mailbox."
-            logger.info(f"Notifying {to_agent} about new mail")
+            # Create a clear prompt for the target agent
+            # This follows the mailbox protocol in their prompts
+            mail_prompt = (
+                f"You have been activated via agent switch from {from_agent}. "
+                f"Use the check_mail() tool to check your mailbox and process any requests."
+            )
+            logger.info(f"Notifying {to_agent} about new mail with prompt: {mail_prompt}")
             
-            # Combine notification and response prompt into one message
-            combined_prompt = f"{mail_notification} Please check your mailbox and respond to any messages."
             response_result = await self.session.send_user_message(
-                combined_prompt,
-                is_continuation=True  # This is part of the same flow
+                mail_prompt,
+                is_continuation=True  # This is part of the same flow (now works with tools!)
             )
             
             # Extract the response
             target_response = None
             if isinstance(response_result, dict):
                 target_response = response_result.get('response', '')
+                logger.info(f"Target agent {to_agent} response received: {target_response[:100]}...")
+                
+                # Log the response in the agent's log
+                self.agent_logger.log_agent_action(
+                    target_agent_id,
+                    "Processed mail and responded",
+                    {"response_length": len(target_response) if target_response else 0}
+                )
+            else:
+                logger.warning(f"Unexpected response type from {to_agent}: {type(response_result)}")
                 
             # Switch back to original agent
             await self._restore_agent_context()
             
+            # Log the switch back
+            self.agent_logger.log_agent_switch(target_agent_id, from_agent, "Returning control after mail processing")
+            
             # Format the response for the original agent
             if target_response:
-                return f"\n\n[{to_agent} processed the mail and responded]"
+                return f"\n\n[{to_agent} processed the mail and responded: {target_response}]"
             else:
-                return f"\n\n[Mail sent to {to_agent}]"
+                return f"\n\n[Mail sent to {to_agent} - no response received]"
                 
         except Exception as e:
             logger.error(f"Error during agent switch: {e}")

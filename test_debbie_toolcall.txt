@@ -1,0 +1,4 @@
+/switch-agent d
+Who are you?
+Please use the check_mail() tool to check your mailbox
+/exit

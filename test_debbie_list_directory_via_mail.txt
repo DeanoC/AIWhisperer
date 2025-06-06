@@ -1,0 +1,4 @@
+# Test: Debbie list_directory via send_mail_with_switch
+# Alice sends mail to Debbie asking her to list the contents of the current directory
+# Debbie should receive the mail and execute the list_directory tool
+Please use send_mail_with_switch to send a message to Debbie with subject 'Directory Listing Request' and body 'Please use the list_directory tool to show me the contents of the current directory.'

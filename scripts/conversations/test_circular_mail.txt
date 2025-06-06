@@ -1,0 +1,7 @@
+Alice, please use send_mail_with_switch to ask Debbie to check if Patricia is available.
+
+What did Debbie say?
+
+Now ask Debbie to use send_mail_with_switch to check with Patricia directly.
+
+What happened?

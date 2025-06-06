@@ -106,18 +106,53 @@ class AILoopManager:
     
     def _create_config_from_dict(self, config_dict: Dict[str, Any]) -> AILoopConfig:
         """Create AILoopConfig from a configuration dictionary."""
-        openrouter_config = config_dict.get("openrouter", {})
-        params = openrouter_config.get("params", {})
+        # Handle two config formats:
+        # 1. Agent ai_config format: {model: ..., provider: ..., generation_params: {...}}
+        # 2. Main config format: {openrouter: {model: ..., params: {...}}}
         
-        return AILoopConfig(
-            model=openrouter_config.get("model", "openai/gpt-3.5-turbo"),
-            provider="openrouter",  # Default for now
-            temperature=params.get("temperature", 0.7),
-            max_tokens=params.get("max_tokens", 4000),
-            max_reasoning_tokens=params.get("max_reasoning_tokens"),
-            api_key=openrouter_config.get("api_key"),
-            generation_params=params
-        )
+        if "model" in config_dict and "provider" in config_dict:
+            # Agent ai_config format
+            generation_params = config_dict.get("generation_params", {})
+            
+            # Get API key from various sources
+            api_key = config_dict.get("api_key")
+            if not api_key:
+                # Try environment variable
+                import os
+                api_key = os.environ.get("OPENROUTER_API_KEY")
+            if not api_key:
+                # Try main config openrouter section
+                api_key = self._default_config.get("openrouter", {}).get("api_key")
+                
+            return AILoopConfig(
+                model=config_dict["model"],
+                provider=config_dict["provider"],
+                temperature=generation_params.get("temperature", 0.7),
+                max_tokens=generation_params.get("max_tokens", 4000),
+                max_reasoning_tokens=generation_params.get("max_reasoning_tokens"),
+                api_key=api_key,
+                generation_params=generation_params
+            )
+        else:
+            # Main config format
+            openrouter_config = config_dict.get("openrouter", {})
+            params = openrouter_config.get("params", {})
+            
+            # Get API key from various sources for main config format too
+            api_key = openrouter_config.get("api_key")
+            if not api_key:
+                import os
+                api_key = os.environ.get("OPENROUTER_API_KEY")
+                
+            return AILoopConfig(
+                model=openrouter_config.get("model", "openai/gpt-3.5-turbo"),
+                provider="openrouter",  # Default for now
+                temperature=params.get("temperature", 0.7),
+                max_tokens=params.get("max_tokens", 4000),
+                max_reasoning_tokens=params.get("max_reasoning_tokens"),
+                api_key=api_key,
+                generation_params=params
+            )
     
     def remove_ai_loop(self, agent_id: str) -> bool:
         """

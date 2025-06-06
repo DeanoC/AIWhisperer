@@ -1,0 +1,1 @@
+Use send_mail_with_switch to send a message to agent 'd' with subject 'Debug Test' and body 'Please use the list_directory tool.'

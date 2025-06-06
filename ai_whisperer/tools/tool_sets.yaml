@@ -40,6 +40,23 @@ base_sets:
       - code_execution
       - utility
 
+  # Core agent communication tools (foundational for all agents)
+  core_agent_communication:
+    description: "Essential communication and coordination tools for all agents"
+    tools:
+      - send_mail
+      - check_mail
+      - reply_mail
+      - agent_sleep
+      - agent_wake
+    tags:
+      - communication
+      - messaging
+      - mailbox
+      - async_agents
+      - sleep_wake
+      - agent_management
+
 # Agent-specific tool sets
 agent_sets:
   # Default tool set for analysis agents
@@ -47,6 +64,7 @@ agent_sets:
     description: "Tools for code analysis and exploration"
     inherits:
       - readonly_filesystem
+      - core_agent_communication
     # Additional tools specific to analysts
     tools: []
     # Additional tags
@@ -57,6 +75,7 @@ agent_sets:
     description: "Tools for project planning and requirements analysis"
     inherits:
       - readonly_filesystem
+      - core_agent_communication
     tools: []
     tags: []
   
@@ -65,6 +84,7 @@ agent_sets:
     description: "Tools for RFC creation and refinement"
     inherits:
       - readonly_filesystem
+      - core_agent_communication
     tools:
       - create_rfc
       - read_rfc
@@ -97,6 +117,7 @@ agent_sets:
     inherits:
       - readonly_filesystem
       - code_execution
+      - core_agent_communication
     tools: []
     tags: []
 
@@ -107,6 +128,7 @@ agent_sets:
       - readonly_filesystem
       - write_filesystem
       - code_execution
+      - core_agent_communication
     tools: []
     tags: []
 
@@ -116,6 +138,7 @@ agent_sets:
     inherits:
       - readonly_filesystem
       - write_filesystem
+      - core_agent_communication
     # Might want to restrict to only markdown/text files
     tools: []
     tags: []
@@ -214,17 +237,6 @@ specialized_sets:
       - decomposition
       - analysis
   
-  # Mailbox communication tools
-  mailbox_tools:
-    description: "Universal mailbox system for agent communication"
-    tools:
-      - send_mail
-      - check_mail
-      - reply_mail
-    tags:
-      - communication
-      - messaging
-      - mailbox
   
   # External agent integration tools
   external_agent_tools:
@@ -244,6 +256,7 @@ specialized_sets:
     inherits:
       - readonly_filesystem
       - code_execution
+      - core_agent_communication
     tools:
       - analyze_languages
       - get_project_structure

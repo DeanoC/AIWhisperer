@@ -1,0 +1,1 @@
+First, send yourself a mail with send_mail tool to your own address (d) with subject 'Self Test' and body 'RESPOND TO THIS: What is 2+2?'. Then check your mail and RESPOND to the question in the mail.

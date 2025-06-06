@@ -1,0 +1,6 @@
+Who are you?
+Please use the list_directory tool to list the contents of /home/deano/projects/AIWhisperer
+/switch-agent d
+Who are you?
+Please use the list_directory tool to list the contents of /home/deano/projects/AIWhisperer
+/exit
