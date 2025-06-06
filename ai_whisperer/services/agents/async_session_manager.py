@@ -65,30 +65,51 @@ class AsyncAgentSessionManager:
         if agent_id in self.sessions:
             raise ValueError(f"Agent session '{agent_id}' already exists")
             
-        # Create agent through factory
-        agent_factory = AgentFactory()
-        agent_config = agent_factory.get_agent_config(agent_id)
+        # Get agent configuration from registry
+        from ai_whisperer.services.agents.registry import AgentRegistry
+        from ai_whisperer.utils.path import PathManager
         
-        if not agent_config:
+        path_manager = PathManager.get_instance()
+        prompts_dir = path_manager.project_path / 'prompts' / 'agents'
+        registry = AgentRegistry(prompts_dir)
+        
+        agent_info = registry.get_agent(agent_id)
+        if not agent_info:
             raise ValueError(f"No configuration found for agent '{agent_id}'")
             
+        # Load agent's prompt
+        from ai_whisperer.prompt_system import PromptSystem
+        prompt_system = PromptSystem(prompts_dir)
+        system_prompt = prompt_system.load_agent_prompt(agent_info.prompt_file.replace('.prompt.md', ''))
+        
         # Create context and AI loop
         context = AgentContext(
             agent_id=agent_id,
-            system_prompt=agent_config.system_prompt
+            system_prompt=system_prompt
         )
         
         # Create AI loop for this agent
-        from ai_whisperer.services.agents.ai_loop_manager import AILoopManager
-        ai_loop_manager = AILoopManager()
-        ai_loop = ai_loop_manager.get_or_create_ai_loop(
-            agent_id=agent_id,
-            agent_config=agent_config,
-            fallback_config=self.config
+        from ai_whisperer.services.execution.ai_loop_factory import AILoopFactory
+        from ai_whisperer.services.ai.openrouter import OpenRouterService
+        
+        # Use agent's AI config or fallback to default
+        ai_config = agent_info.ai_config or self.config.get('ai_service', {})
+        
+        # Create AI service
+        ai_service = OpenRouterService(ai_config)
+        
+        # Create AI loop
+        ai_loop = AILoopFactory.create_ai_loop(
+            ai_service=ai_service,
+            config=self.config
         )
         
-        # Create agent
-        agent = StatelessAgent(agent_config, context, ai_loop)
+        # Create agent using StatelessAgent
+        agent = StatelessAgent(
+            agent_id=agent_id,
+            system_prompt=system_prompt,
+            agent_registry=registry
+        )
         
         # Create session
         session = AgentSession(

@@ -118,8 +118,14 @@ async def demo_async_agents():
                 "autoStart": True
             })
             
+            print(f"DEBUG: Response: {create_resp}")
+            
             if "error" in create_resp:
-                print(f"❌ Error: {create_resp['error']['message']}")
+                error_msg = create_resp.get('error', {})
+                if isinstance(error_msg, dict):
+                    print(f"❌ Error: {error_msg.get('message', error_msg)}")
+                else:
+                    print(f"❌ Error: {error_msg}")
                 print("\n⚠️  Async agent methods not available.")
                 print("Please restart the server to enable async functionality.")
                 return
