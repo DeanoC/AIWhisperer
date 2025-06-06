@@ -18,6 +18,7 @@ from ai_whisperer.context.agent_context import AgentContext
 from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
 from ai_whisperer.tools.tool_registry import get_tool_registry
 from ai_whisperer.utils.path import PathManager
+from ai_whisperer.services.agents.state_persistence import StatePersistenceManager
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,11 @@ class AsyncAgentSessionManager:
         # AI loop manager
         self.ai_loop_manager = AILoopManager()
         
-        logger.info("Initialized async agent session manager with current architecture")
+        # State persistence manager
+        state_dir = self.path_manager.output_path / 'state'
+        self.state_manager = StatePersistenceManager(state_dir)
+        
+        logger.info("Initialized async agent session manager with current architecture and state persistence")
         
     async def start(self):
         """Start the async agent session manager."""
@@ -606,3 +611,165 @@ class AsyncAgentSessionManager:
             "commentary": "",
             "final": str(result)
         }
+    
+    # === STATE PERSISTENCE METHODS ===
+    
+    def _session_to_state_dict(self, session: AsyncAgentSession) -> Dict[str, Any]:
+        """Convert AsyncAgentSession to serializable dictionary."""
+        # Extract task queue items (convert to list for serialization)
+        pending_tasks = []
+        try:
+            # Get tasks from queue without blocking
+            while not session.task_queue.empty():
+                task = session.task_queue.get_nowait()
+                pending_tasks.append(task)
+                # Put it back in the queue
+                session.task_queue.put_nowait(task)
+        except asyncio.QueueEmpty:
+            pass
+        
+        return {
+            "agent_id": session.agent_id,
+            "agent_name": getattr(session.agent, 'name', session.agent_id),
+            "status": session.state.value,
+            "created_at": session.created_at.isoformat(),
+            "last_active": session.last_active.isoformat(),
+            "configuration": {
+                "model": getattr(session.ai_loop.config, 'model_id', 'unknown'),
+                "provider": getattr(session.ai_loop.config, 'provider', 'openrouter'),
+                "generation_params": getattr(session.agent.config, 'generation_params', {})
+            },
+            "context": {
+                "system_prompt": session.agent.config.system_prompt,
+                "conversation_history": getattr(session.context, 'conversation_history', []),
+                "working_memory": getattr(session.context, 'metadata', {})
+            },
+            "tool_sets": getattr(session.agent.config, 'tool_sets', []),
+            "sleep_state": {
+                "is_sleeping": session.state == AgentState.SLEEPING,
+                "sleep_until": session.sleep_until.isoformat() if session.sleep_until else None,
+                "wake_events": list(session.wake_events)
+            },
+            "task_queue": {
+                "pending_tasks": pending_tasks,
+                "current_task": session.current_task
+            },
+            "metadata": {
+                "error_count": session.error_count,
+                "custom_metadata": session.metadata
+            }
+        }
+    
+    async def save_session_state(self, agent_id: str) -> bool:
+        """Save agent session state to persistence layer."""
+        session = self.sessions.get(agent_id)
+        if not session:
+            logger.warning(f"Cannot save state for non-existent agent: {agent_id}")
+            return False
+        
+        try:
+            # Convert session to serializable dict
+            state_dict = self._session_to_state_dict(session)
+            
+            # Save agent state
+            agent_success = self.state_manager.save_agent_state(agent_id, state_dict)
+            
+            # Save task queue state separately
+            task_queue_state = state_dict["task_queue"]
+            task_queue_state["agent_id"] = agent_id
+            task_success = self.state_manager.save_task_queue_state(agent_id, task_queue_state)
+            
+            # Save sleep state separately
+            sleep_state = state_dict["sleep_state"]
+            sleep_state["agent_id"] = agent_id
+            sleep_success = self.state_manager.save_sleep_state(agent_id, sleep_state)
+            
+            success = agent_success and task_success and sleep_success
+            if success:
+                logger.info(f"Successfully saved state for agent {agent_id}")
+            else:
+                logger.error(f"Failed to save complete state for agent {agent_id}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error saving state for agent {agent_id}: {e}")
+            return False
+    
+    async def save_all_session_states(self) -> int:
+        """Save state for all active sessions."""
+        saved_count = 0
+        for agent_id in list(self.sessions.keys()):
+            if await self.save_session_state(agent_id):
+                saved_count += 1
+        
+        logger.info(f"Saved state for {saved_count}/{len(self.sessions)} agents")
+        return saved_count
+    
+    async def restore_session_state(self, agent_id: str) -> bool:
+        """Restore agent session from persistence layer."""
+        try:
+            # Load agent state
+            agent_state = self.state_manager.load_agent_state(agent_id)
+            if not agent_state:
+                logger.debug(f"No persisted state found for agent {agent_id}")
+                return False
+            
+            # Create agent session from saved state
+            session = await self.create_agent_session(agent_id, auto_start=False)
+            
+            # Restore session properties
+            session.state = AgentState(agent_state.get("status", "idle"))
+            session.last_active = datetime.fromisoformat(agent_state.get("last_active", datetime.now().isoformat()))
+            session.error_count = agent_state.get("metadata", {}).get("error_count", 0)
+            session.metadata = agent_state.get("metadata", {}).get("custom_metadata", {})
+            
+            # Restore sleep state
+            sleep_state = self.state_manager.load_sleep_state(agent_id)
+            if sleep_state and sleep_state.get("is_sleeping"):
+                session.state = AgentState.SLEEPING
+                if sleep_state.get("sleep_until"):
+                    session.sleep_until = datetime.fromisoformat(sleep_state["sleep_until"])
+                session.wake_events = set(sleep_state.get("wake_events", []))
+            
+            # Restore task queue
+            task_queue_state = self.state_manager.load_task_queue_state(agent_id)
+            if task_queue_state:
+                # Add pending tasks back to queue
+                for task in task_queue_state.get("pending_tasks", []):
+                    await session.task_queue.put(task)
+                session.current_task = task_queue_state.get("current_task")
+            
+            logger.info(f"Successfully restored state for agent {agent_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error restoring state for agent {agent_id}: {e}")
+            return False
+    
+    async def restore_all_session_states(self) -> int:
+        """Restore all persisted agent sessions."""
+        try:
+            persisted_agents = self.state_manager.list_persisted_agents()
+            restored_count = 0
+            
+            for agent_id in persisted_agents:
+                if await self.restore_session_state(agent_id):
+                    restored_count += 1
+            
+            logger.info(f"Restored {restored_count}/{len(persisted_agents)} persisted agents")
+            return restored_count
+            
+        except Exception as e:
+            logger.error(f"Error restoring session states: {e}")
+            return 0
+    
+    async def cleanup_old_states(self, max_age_hours: int = 24) -> int:
+        """Clean up old persisted state files."""
+        try:
+            cleanup_count = self.state_manager.cleanup_old_states(max_age_hours)
+            logger.info(f"Cleaned up {cleanup_count} old state files")
+            return cleanup_count
+        except Exception as e:
+            logger.error(f"Error cleaning up old states: {e}")
+            return 0
