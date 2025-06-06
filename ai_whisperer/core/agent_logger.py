@@ -5,6 +5,7 @@ Each agent gets its own log file to track their context and actions.
 
 import logging
 import os
+import re
 from datetime import datetime
 from typing import Dict, Optional
 from pathlib import Path
@@ -56,7 +57,10 @@ class AgentLogger:
         # Create log file name
         if agent_name:
             # Clean the agent name for filename
-            clean_name = agent_name.lower().replace(' ', '_').replace('the', '')
+            # Use word boundaries to only remove standalone 'the'
+            clean_name = re.sub(r'\bthe\b', '', agent_name.lower())
+            # Replace spaces with underscores and remove extra underscores
+            clean_name = re.sub(r'[^a-z0-9]+', '_', clean_name).strip('_')
             filename = f"agent_{agent_id}_{clean_name}_{self.session_timestamp}.log"
         else:
             filename = f"agent_{agent_id}_{self.session_timestamp}.log"
