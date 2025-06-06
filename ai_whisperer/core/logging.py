@@ -201,6 +201,13 @@ def setup_basic_logging(port=None):
         logging.getLogger('aiwhisperer.test').info(f"Test logging configured{batch_mode_info}. Log file: {os.path.abspath(test_log_path)}")
         logging.getLogger().info(f"Debug logging configured{batch_mode_info}. Log file: {os.path.abspath(debug_log_path)}")
         
+        # Suppress noisy loggers
+        logging.getLogger('websocket.client').setLevel(logging.WARNING)
+        logging.getLogger('websockets').setLevel(logging.WARNING)
+        logging.getLogger('websockets.client').setLevel(logging.WARNING)
+        logging.getLogger('websockets.protocol').setLevel(logging.WARNING)
+        logging.getLogger('websockets.server').setLevel(logging.WARNING)
+        
         # Print to console for easy access
         if batch_port:
             print(f"\n📁 Log files for port {batch_port}:")
