@@ -101,13 +101,13 @@ class AsyncAgentSessionManager:
         
         # Create AI loop for this agent
         from ai_whisperer.services.execution.ai_loop_factory import AILoopFactory
-        from ai_whisperer.services.ai.openrouter import OpenRouterService
+        from ai_whisperer.services.ai.openrouter import OpenRouterAIService
         
         # Use agent's AI config or fallback to default
         ai_config = agent_info.ai_config or self.config.get('ai_service', {})
         
         # Create AI service
-        ai_service = OpenRouterService(ai_config)
+        ai_service = OpenRouterAIService(ai_config)
         
         # Create AI loop
         ai_loop = AILoopFactory.create_ai_loop(
