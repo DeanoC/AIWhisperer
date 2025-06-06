@@ -397,6 +397,163 @@ Revolutionary architecture where each agent runs its own AI loop independently, 
   - Improved response times for frequent requests
   - Support for high-concurrency scenarios
 
+## Async Agent Workflows - Completed Examples (2025-06-06)
+
+### Implemented Workflows Using TDD
+We've successfully implemented two comprehensive workflow examples demonstrating the async agent architecture:
+
+#### 1. Bug Investigation Workflow ✅
+- **Purpose**: Collaborative bug hunting with multiple agents
+- **Features**:
+  - Automatic bug severity classification based on keywords
+  - Urgency-based agent wake patterns (critical bugs wake agents immediately)
+  - Multi-agent collaboration (Debbie leads, Alice analyzes, Patricia designs fixes)
+  - Root cause analysis and systemic issue detection
+  - Security-aware fix generation
+  - Batch investigation support for multiple bugs
+  - Error recovery with confidence levels
+- **Agents Used**: Debbie (Lead), Alice (Analysis), Patricia (Architecture), Eamonn (Implementation), Tessa (Testing)
+- **Real-world Use Case**: Production bug triage and resolution
+
+#### 2. Documentation Generation Workflow ✅
+- **Purpose**: Intelligent multi-agent documentation creation
+- **Features**:
+  - Multiple documentation types (API, Tutorial, Migration, Comprehensive)
+  - Multi-format output generation (Markdown, HTML, PDF, Docstrings)
+  - Collaborative review process with iterations
+  - Style guide enforcement (Google, NumPy, Sphinx)
+  - Outdated documentation detection
+  - Batch documentation for multiple targets
+  - Tutorial generation with exercises
+  - Migration guide with breaking change analysis
+- **Agents Used**: Alice (Analysis), Patricia (Writing), Debbie (Debugging), Eamonn (Examples), Tessa (Review)
+- **Real-world Use Case**: Maintaining up-to-date project documentation
+
+### Future Workflow Ideas
+
+#### 3. Continuous Monitoring Workflow
+- **Purpose**: Background agents monitoring system health
+- **Features**:
+  - Periodic health checks with configurable intervals
+  - Alert escalation based on severity
+  - Trend analysis and anomaly detection
+  - Auto-remediation for known issues
+  - Integration with external monitoring tools
+  - Dashboard generation for metrics
+- **Agents**: New monitoring-focused agents, Debbie for issue investigation
+- **Use Case**: Production system monitoring and alerting
+
+#### 4. Code Review Workflow
+- **Purpose**: Automated PR review and feedback
+- **Features**:
+  - Multi-agent code analysis
+  - Style guide compliance checking
+  - Security vulnerability detection
+  - Performance impact analysis
+  - Test coverage verification
+  - Automated review comments generation
+- **Agents**: Alice (Analysis), Tessa (Testing), new security-focused agent
+- **Use Case**: Automated first-pass code review
+
+#### 5. Release Management Workflow
+- **Purpose**: Coordinate software releases
+- **Features**:
+  - Changelog generation from commits
+  - Dependency update checking
+  - Breaking change detection
+  - Release notes drafting
+  - Cross-platform build coordination
+  - Deployment verification
+- **Agents**: Patricia (Documentation), Eamonn (Execution), new deployment agent
+- **Use Case**: Automated release process
+
+#### 6. Learning and Training Workflow
+- **Purpose**: Create personalized learning paths
+- **Features**:
+  - Skill assessment and gap analysis
+  - Personalized tutorial generation
+  - Progress tracking and adaptation
+  - Exercise generation with solutions
+  - Peer learning coordination
+  - Knowledge retention testing
+- **Agents**: Eamonn (Examples), Patricia (Content), new pedagogy agent
+- **Use Case**: Developer onboarding and training
+
+### Frontend Enhancements for Async Workflows
+
+#### Workflow Visualization
+- **Live Agent Status Dashboard**
+  - Real-time agent state visualization (IDLE, ACTIVE, SLEEPING, WAITING)
+  - Agent task queues and progress bars
+  - Wake/sleep event timeline
+  - Resource usage per agent
+  
+- **Workflow Designer UI**
+  - Drag-and-drop workflow creation
+  - Agent role assignment interface
+  - Configuration templates
+  - Visual workflow execution tracking
+  
+- **Inter-Agent Communication View**
+  - Mailbox message flow visualization
+  - Agent collaboration graph
+  - Message priority indicators
+  - Communication patterns analysis
+
+#### Enhanced User Controls
+- **Workflow Management**
+  - Start/stop/pause workflow execution
+  - Agent wake/sleep manual controls
+  - Priority adjustment for running tasks
+  - Workflow history and replay
+  
+- **Real-time Monitoring**
+  - Live log streaming per agent
+  - Performance metrics dashboard
+  - Error and warning notifications
+  - Agent health indicators
+
+#### Interactive Features
+- **Dynamic Agent Interaction**
+  - Direct messaging to specific agents
+  - Agent recommendation system
+  - Task delegation interface
+  - Collaborative workspace view
+  
+- **Workflow Templates**
+  - Pre-built workflow templates
+  - Custom workflow saving
+  - Workflow sharing and import
+  - Community workflow marketplace
+
+### Technical Enhancements for Workflows
+
+#### Performance Optimizations
+- **Resource Management**
+  - Dynamic agent pooling
+  - Adaptive sleep/wake scheduling
+  - Memory-aware task distribution
+  - GPU acceleration for AI operations
+  
+- **Scalability Features**
+  - Distributed agent execution
+  - Workflow checkpointing
+  - Partial workflow recovery
+  - Load balancing across agents
+
+#### Advanced Capabilities
+- **Machine Learning Integration**
+  - Workflow optimization based on historical data
+  - Predictive task duration estimation
+  - Anomaly detection in workflows
+  - Auto-tuning of agent parameters
+  
+- **External Integrations**
+  - Webhook support for workflow triggers
+  - API endpoints for workflow management
+  - Third-party tool integration
+  - Event-driven workflow activation
+
 ## Random unstructured ideas
 - MCP server ✅ (Implemented)
 - MCP client ✅ (Implemented Phase 1)
