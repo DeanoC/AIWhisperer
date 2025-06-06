@@ -139,11 +139,31 @@ class AsyncAgentSessionManager:
             fallback_config=agent_info.ai_config or self.config  # Use ai_config dict as fallback
         )
         
-        # Create stateless agent
-        agent = StatelessAgent(
-            agent_id=agent_id,
+        # Create a proper AgentConfig for StatelessAgent
+        from ai_whisperer.services.agents.config import AgentConfig
+        
+        # Extract generation params from ai_config if available
+        generation_params = {}
+        if agent_info.ai_config:
+            generation_params = agent_info.ai_config.get('generation_params', {})
+        
+        # Create agent config with required fields
+        agent_config = AgentConfig(
+            name=agent_id,
+            description=agent_info.description,
             system_prompt=system_prompt,
-            agent_registry=self.agent_registry
+            model_name=ai_loop.config.model_id,
+            provider="openrouter",
+            generation_params=generation_params,
+            api_settings={}
+        )
+        
+        # Create stateless agent with correct signature
+        agent = StatelessAgent(
+            config=agent_config,
+            context=context,
+            ai_loop=ai_loop,
+            agent_registry_info=agent_info
         )
         
         # Initialize agent with AI loop

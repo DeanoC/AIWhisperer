@@ -91,7 +91,46 @@ Need to add `from datetime import timedelta` - noted in implementation guide
 - Agent ai_config format: {model: ..., provider: ..., generation_params: {...}}
 - Main config format: {openrouter: {model: ..., params: {...}}}
 
-### Issue 3: Missing API Key
+### Issue 3: Missing API Key (FIXED)
 - Error: "Missing required configuration key: 'api_key' not found in AIConfig"
 - The AI service creation expects api_key in the config
 - Need to pass it from the main config or environment
+- Fixed by adding API key resolution from multiple sources in AILoopManager
+
+### Issue 4: StatelessAgent Initialization Error (FIXED)
+- Error: "StatelessAgent.__init__() got an unexpected keyword argument 'agent_id'"
+- StatelessAgent expects (config, context, ai_loop, agent_registry_info)
+- Fixed by:
+  1. Importing proper AgentConfig class
+  2. Creating valid AgentConfig with all required fields
+  3. Using correct constructor signature
+
+## Current Work: Testing Async Agent Creation
+
+With all initialization errors fixed, now testing the async agent creation:
+1. Server is running and accepting connections
+2. AsyncAgentSessionManager V2 is properly initialized
+3. Need to test creating an async agent successfully
+
+### Issue 5: Agent generation_params AttributeError (FIXED)
+- Error: "'Agent' object has no attribute 'generation_params'"
+- This suggests the agent_info object from registry doesn't have generation_params
+- Need to check what attributes are available on the agent registry info
+- Fixed by using agent_info.ai_config.get('generation_params', {})
+
+### Issue 6: AgentConfig missing description (FIXED)
+- Error: "AgentConfig.__init__() missing 1 required positional argument: 'description'"
+- AgentConfig requires description field
+- Fixed by adding agent_info.description
+
+## Summary of Phase 1 Progress
+
+Successfully fixed all initialization errors in AsyncAgentSessionManager V2:
+1. ✅ Fixed websocket parameter mismatch in endpoints
+2. ✅ Fixed generation_params AttributeError by handling both config formats
+3. ✅ Fixed missing API key by adding resolution from multiple sources
+4. ✅ Fixed StatelessAgent initialization with proper AgentConfig
+5. ✅ Fixed missing generation_params by using ai_config
+6. ✅ Fixed missing description in AgentConfig
+
+Ready to test async agent creation!

@@ -1,113 +1,158 @@
-#!/usr/bin/env python3
-"""Test the refactored async agent implementation."""
+#!/usr/bin/env python
+"""Test async agent creation with the refactored implementation."""
 
 import asyncio
-import websocket
 import json
+import websockets
 import time
 
-def send_request(ws, method, params):
-    """Send a JSON-RPC request and get response."""
-    request = {
-        "jsonrpc": "2.0",
-        "method": method,
-        "params": params,
-        "id": str(time.time())
-    }
-    
-    print(f"\nSending: {method}")
-    print(f"Params: {json.dumps(params, indent=2)}")
-    
-    ws.send(json.dumps(request))
-    
-    # Keep reading until we get the actual response (not a notification)
-    while True:
-        msg = json.loads(ws.recv())
-        print(f"Received: {json.dumps(msg, indent=2)}")
-        
-        # Check if this is our response (has matching id)
-        if "id" in msg and msg["id"] == request["id"]:
-            return msg
-        else:
-            print("(Notification, waiting for response...)")
 
-def main():
-    """Test async agent creation and basic functionality."""
-    # Connect to WebSocket
-    ws = websocket.create_connection("ws://localhost:8000/ws")
+async def receive_response(websocket, request_id):
+    """Receive response, handling notifications."""
+    while True:
+        response = await websocket.recv()
+        result = json.loads(response)
+        
+        # Skip notifications
+        if "method" in result and not result.get("id"):
+            print(f"[Notification] {result['method']}: {result.get('params', {})}")
+            continue
+            
+        # Check if this is our response
+        if result.get("id") == request_id:
+            return result
+            
+        print(f"[Unexpected response] {result}")
+
+
+async def test_async_agent():
+    """Test creating and managing async agents."""
     
-    try:
-        # 1. Start a session
-        print("=== Starting Session ===")
-        response = send_request(ws, "startSession", {
-            "userId": "test-user",
-            "sessionParams": {
-                "model": "google/gemini-2.5-flash-preview-05-20:thinking"
-            }
-        })
+    uri = "ws://localhost:8000/ws"
+    
+    async with websockets.connect(uri) as websocket:
+        # Start session
+        session_msg = {
+            "jsonrpc": "2.0",
+            "method": "startSession",
+            "params": {
+                "userId": "test-user",
+                "sessionParams": {"model": "google/gemini-2.5-flash-preview-05-20:thinking"}
+            },
+            "id": str(time.time())
+        }
         
-        if "error" in response:
-            print(f"Error starting session: {response['error']}")
+        request_id = session_msg["id"]
+        await websocket.send(json.dumps(session_msg))
+        result = await receive_response(websocket, request_id)
+        
+        if "error" in result:
+            print("Error starting session:", result["error"])
             return
             
-        session_id = response["result"]["sessionId"]
-        print(f"\nSession ID: {session_id}")
-        
-        # 2. Create async agent
-        print("\n=== Creating Async Agent ===")
-        response = send_request(ws, "async.createAgent", {
-            "sessionId": session_id,
-            "agentId": "d",
-            "autoStart": False  # Don't start background processor yet
-        })
-        
-        if "error" in response:
-            print(f"Error creating agent: {response['error']}")
+        session_id = result.get("result", {}).get("sessionId")
+        if not session_id:
+            print("No session ID in response")
             return
-            
-        # 3. Get agent states
-        print("\n=== Getting Agent States ===")
-        response = send_request(ws, "async.getAgentStates", {
-            "sessionId": session_id
-        })
+        print("✅ Session started:", session_id)
         
-        # 4. Send a task to the agent
-        print("\n=== Sending Task to Agent ===")
-        response = send_request(ws, "async.sendTask", {
-            "sessionId": session_id,
-            "agentId": "d",
-            "prompt": "Hello! Can you confirm you're running as an async agent?",
-            "context": {"test": True}
-        })
+        # Test 1: Create an async agent
+        create_msg = {
+            "jsonrpc": "2.0",
+            "method": "async.createAgent",
+            "params": {
+                "sessionId": session_id,
+                "agentId": "d",
+                "autoStart": True
+            },
+            "id": str(time.time())
+        }
         
-        # 5. Start the agent processor
-        print("\n=== Starting Agent Processor ===")
-        response = send_request(ws, "async.startAgent", {
-            "sessionId": session_id,
-            "agentId": "d"
-        })
+        request_id = create_msg["id"]
+        await websocket.send(json.dumps(create_msg))
+        result = await receive_response(websocket, request_id)
+        
+        if "error" in result:
+            print("❌ Error creating agent:", result["error"])
+            print("   Message:", result.get("message", "No message"))
+            return
+        else:
+            print("✅ Async agent created:", result)
+        
+        # Test 2: Get agent states
+        get_states_msg = {
+            "jsonrpc": "2.0",
+            "method": "async.getAgentStates",
+            "params": {
+                "sessionId": session_id
+            },
+            "id": str(time.time())
+        }
+        
+        request_id = get_states_msg["id"]
+        await websocket.send(json.dumps(get_states_msg))
+        result = await receive_response(websocket, request_id)
+        
+        if "error" in result:
+            print("❌ Error getting states:", result["error"])
+        else:
+            print("✅ Agent states:", json.dumps(result["result"], indent=2))
+        
+        # Test 3: Send a task to the agent
+        send_task_msg = {
+            "jsonrpc": "2.0",
+            "method": "async.sendTaskToAgent",
+            "params": {
+                "sessionId": session_id,
+                "agentId": "d",
+                "prompt": "What tools do you have access to?",
+                "context": {"test": True}
+            },
+            "id": str(time.time())
+        }
+        
+        request_id = send_task_msg["id"]
+        await websocket.send(json.dumps(send_task_msg))
+        result = await receive_response(websocket, request_id)
+        
+        if "error" in result:
+            print("❌ Error sending task:", result["error"])
+        else:
+            print("✅ Task sent successfully:", result)
         
         # Wait a bit for processing
-        print("\nWaiting for agent to process task...")
-        time.sleep(3)
+        await asyncio.sleep(3)
         
-        # 6. Check agent states again
-        print("\n=== Final Agent States ===")
-        response = send_request(ws, "async.getAgentStates", {
-            "sessionId": session_id
-        })
+        # Check agent states again
+        request_id = get_states_msg["id"]
+        await websocket.send(json.dumps(get_states_msg))
+        result = await receive_response(websocket, request_id)
         
-        # 7. Stop the agent
-        print("\n=== Stopping Agent ===")
-        response = send_request(ws, "async.stopAgent", {
-            "sessionId": session_id,
-            "agentId": "d"
-        })
+        if "error" not in result:
+            print("✅ Agent states after task:", json.dumps(result["result"], indent=2))
         
-        print("\n=== Test Complete ===")
+        # Test 4: Stop the agent
+        stop_msg = {
+            "jsonrpc": "2.0",
+            "method": "async.stopAgent",
+            "params": {
+                "sessionId": session_id,
+                "agentId": "d"
+            },
+            "id": str(time.time())
+        }
         
-    finally:
-        ws.close()
+        request_id = stop_msg["id"]
+        await websocket.send(json.dumps(stop_msg))
+        result = await receive_response(websocket, request_id)
+        
+        if "error" in result:
+            print("❌ Error stopping agent:", result["error"])
+        else:
+            print("✅ Agent stopped successfully")
+        
+        print("\n✨ All tests completed!")
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(test_async_agent())
