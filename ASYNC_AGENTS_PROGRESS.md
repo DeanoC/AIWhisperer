@@ -46,17 +46,43 @@
 - ⚠️ `send_mail_with_switch` tool needs explicit registration in some contexts
 - ⚠️ Tool may not be available to all agents by default
 
+## Recently Discovered: Async Implementation Already Present!
+
+### 6. Async Agent Architecture (IMPLEMENTED)
+- ✅ `AsyncAgentSessionManager` - Manages multiple concurrent agent sessions
+- ✅ Background agent processors - Each agent runs its own loop
+- ✅ Mailbox integration - Agents check mailbox automatically
+- ✅ Sleep/wake functionality - Timer and event-based wake
+- ✅ Task queues per agent - Independent task processing
+- ✅ WebSocket endpoints - Full API for async agent management
+
+### Available WebSocket Methods:
+- `async.createAgent` - Create new async agent session
+- `async.startAgent` - Start agent's background processor
+- `async.stopAgent` - Stop an agent
+- `async.sleepAgent` - Put agent to sleep with wake conditions
+- `async.wakeAgent` - Wake a sleeping agent
+- `async.sendTask` - Send direct task to agent
+- `async.getAgentStates` - Get states of all agents
+- `async.broadcastEvent` - Broadcast event to listening agents
+
 ## Next Steps
 
-### 1. Complete Async Agent Implementation
-- Implement true async background agent execution
-- Create agent session manager for parallel AI loops
-- Add WebSocket notifications for async agent updates
+### 1. Test Async Agent Implementation
+- Create test scenarios for multi-agent workflows
+- Test sleep/wake functionality
+- Verify mailbox-based coordination
+- Test resource limits and cleanup
 
-### 3. Testing & Documentation
-- Create comprehensive test suite for agent switching
-- Test circular mail prevention thoroughly
-- Document the async agents feature for users
+### 2. Integration Testing
+- Test async agents with synchronous mail switching
+- Verify both patterns work together
+- Test complex multi-agent workflows
+
+### 3. Documentation
+- Document async agent API
+- Create usage examples
+- Update user guide with async patterns
 
 ## Test Files Created
 - `scripts/conversations/test_send_mail_with_switch_simple.txt`
@@ -65,6 +91,26 @@
 - `scripts/conversations/test_mail_task_execution.txt`
 - `scripts/conversations/test_send_mail_with_switch_direct.txt`
 - `scripts/conversations/test_multi_agent_chain.txt`
+
+## Implementation Status Summary
+
+### ✅ Phase 1: Synchronous Mailbox - COMPLETE
+- Synchronous mail switching via `send_mail_with_switch`
+- Agent switch handler for context management
+- Mailbox system for communication
+- All tests passing
+
+### ✅ Phase 2: Async Agent Architecture - COMPLETE
+- `AsyncAgentSessionManager` implemented
+- Independent AI loops per agent
+- Task queues and state management
+- Sleep/wake functionality
+- WebSocket API endpoints
+
+### 🔄 Phase 3: Integration & Testing - IN PROGRESS
+- Need to restart server to load async handlers
+- Create comprehensive test suite
+- Document usage patterns
 
 ## Architecture Notes
 
