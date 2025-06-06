@@ -134,6 +134,9 @@ class AsyncAgentSessionManager:
             system_prompt=system_prompt
         )
         
+        # Inject async session manager reference for tools
+        context.async_session_manager = self
+        
         # Get or create AI loop through manager
         # Note: agent_info.ai_config is a dict, not an AgentConfig object
         ai_loop = self.ai_loop_manager.get_or_create_ai_loop(
@@ -271,6 +274,7 @@ class AsyncAgentSessionManager:
             task_id = task.get("id", f"task_{datetime.now().timestamp()}")
             
             # Send task started notification
+            logger.info(f"About to send task.started notification for task {task_id}")
             await self._send_notification("async.task.started", {
                 "agent_id": session.agent_id,
                 "task_id": task_id,
@@ -362,13 +366,21 @@ class AsyncAgentSessionManager:
                 logger.info(f"Agent {session.agent_id} has {len(messages)} new messages")
                 
             for message in messages:
-                # High priority mail wakes sleeping agents
+                # Wake sleeping agents based on their wake events and message priority
                 if session.state == AgentState.SLEEPING:
-                    if message.priority == MessagePriority.HIGH:
-                        await self.wake_agent(
-                            session.agent_id,
-                            f"High priority mail from {message.from_agent}"
-                        )
+                    should_wake = False
+                    wake_reason = None
+                    
+                    # Check if agent should wake based on configured wake events
+                    if "mail_received" in session.wake_events:
+                        should_wake = True
+                        wake_reason = f"Mail received from {message.from_agent}"
+                    elif "high_priority_mail" in session.wake_events and message.priority == MessagePriority.HIGH:
+                        should_wake = True
+                        wake_reason = f"High priority mail from {message.from_agent}"
+                    
+                    if should_wake:
+                        await self.wake_agent(session.agent_id, wake_reason)
                         
                 # Queue mail as task
                 await session.task_queue.put({
@@ -386,7 +398,7 @@ class AsyncAgentSessionManager:
             logger.error(f"Error checking mail for agent {session.agent_id}: {e}")
             
     async def _handle_sleep_state(self, session: AsyncAgentSession):
-        """Handle agent sleep state."""
+        """Handle agent sleep state with optimized monitoring."""
         # Check if it's time to wake up
         if session.sleep_until and datetime.now() >= session.sleep_until:
             session.state = AgentState.IDLE
@@ -398,8 +410,21 @@ class AsyncAgentSessionManager:
                 "reason": "scheduled"
             })
         else:
-            # Still sleeping
-            await asyncio.sleep(1)
+            # Still sleeping - check mail less frequently and sleep longer
+            # Check mail every 10 seconds when sleeping (vs 5 seconds when active)
+            await self._check_mail_async(session)
+            
+            # Sleep for longer periods when sleeping to reduce CPU usage
+            # Calculate sleep time based on remaining sleep duration
+            if session.sleep_until:
+                time_remaining = (session.sleep_until - datetime.now()).total_seconds()
+                # Sleep for up to 5 seconds, but not longer than remaining time
+                sleep_duration = min(5.0, max(1.0, time_remaining))
+            else:
+                # Indefinite sleep - check every 5 seconds
+                sleep_duration = 5.0
+                
+            await asyncio.sleep(sleep_duration)
             
     async def sleep_agent(self, agent_id: str, duration_seconds: Optional[int] = None,
                          wake_events: Optional[Set[str]] = None):
@@ -537,14 +562,17 @@ class AsyncAgentSessionManager:
     
     async def _send_notification(self, method: str, params: Dict[str, Any]):
         """Send a notification via the callback if available."""
+        logger.info(f"Attempting to send notification: {method}")
         if self._notification_callback:
             try:
+                logger.info(f"Calling notification callback for {method}")
                 await self._notification_callback(method, params)
+                logger.info(f"Successfully sent notification: {method}")
             except Exception as e:
                 logger.error(f"Error sending notification {method}: {e}")
         else:
             # Log notification for debugging
-            logger.debug(f"Notification (no callback): {method} - {params}")
+            logger.warning(f"No notification callback available for: {method} - {params}")
     
     def _extract_channel_response(self, result: Any) -> Dict[str, Any]:
         """Extract channel response from AI result."""

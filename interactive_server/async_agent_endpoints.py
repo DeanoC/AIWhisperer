@@ -55,7 +55,7 @@ class AsyncAgentEndpoints:
             async def notification_callback(method: str, params: Dict[str, Any]):
                 """Send WebSocket notifications."""
                 # Get the current WebSocket for this session
-                ws = websocket or (session.websocket if hasattr(session, 'websocket') else None)
+                ws = websocket
                 if ws:
                     try:
                         await ws.send_json({

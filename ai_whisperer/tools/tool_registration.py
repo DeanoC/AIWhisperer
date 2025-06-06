@@ -70,6 +70,9 @@ def register_all_tools(path_manager: Optional[PathManager] = None) -> None:
     # Register mailbox communication tools
     _register_mailbox_tools(tool_registry)
     
+    # Register async agent sleep/wake tools
+    _register_async_agent_tools(tool_registry)
+    
     # Register Agent E task decomposition tools
     _register_agent_e_tools(tool_registry)
     
@@ -205,13 +208,37 @@ def _register_debugging_tools(tool_registry) -> None:
 def _register_mailbox_tools(tool_registry) -> None:
     """Register mailbox communication tools."""
     try:
-        from ..agents.mailbox_tools import register_mailbox_tools
-        register_mailbox_tools()
+        from .send_mail_tool import SendMailTool
+        from .check_mail_tool import CheckMailTool
+        from .reply_mail_tool import ReplyMailTool
+        from .send_mail_with_switch_tool import SendMailWithSwitchTool
+        
+        tool_registry.register_tool(SendMailTool())
+        tool_registry.register_tool(CheckMailTool())
+        tool_registry.register_tool(ReplyMailTool())
+        tool_registry.register_tool(SendMailWithSwitchTool())
+        
         logger.debug("Registered mailbox tools")
     except ImportError as e:
         logger.warning(f"Mailbox tools not available: {e}")
     except Exception as e:
         logger.error(f"Failed to register mailbox tools: {e}")
+
+
+def _register_async_agent_tools(tool_registry) -> None:
+    """Register async agent sleep/wake tools."""
+    try:
+        from .agent_sleep_tool import AgentSleepTool
+        from .agent_wake_tool import AgentWakeTool
+        
+        tool_registry.register_tool(AgentSleepTool())
+        tool_registry.register_tool(AgentWakeTool())
+        
+        logger.debug("Registered async agent tools")
+    except ImportError as e:
+        logger.warning(f"Async agent tools not available: {e}")
+    except Exception as e:
+        logger.error(f"Failed to register async agent tools: {e}")
 
 
 def _register_agent_e_tools(tool_registry) -> None:

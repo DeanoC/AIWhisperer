@@ -227,13 +227,15 @@ class StatelessInteractiveSession:
         # Register all tools
         register_all_tools(path_manager)
         
-        # Also register mailbox tools explicitly in case they're not in register_all_tools
+        # Also register mailbox and async agent tools explicitly 
         from ai_whisperer.tools.tool_registry import get_tool_registry
         from ai_whisperer.tools.send_mail_tool import SendMailTool
         from ai_whisperer.tools.send_mail_with_switch_tool import SendMailWithSwitchTool
         from ai_whisperer.tools.check_mail_tool import CheckMailTool
         from ai_whisperer.tools.reply_mail_tool import ReplyMailTool
         from ai_whisperer.tools.switch_agent_tool import SwitchAgentTool
+        from ai_whisperer.tools.agent_sleep_tool import AgentSleepTool
+        from ai_whisperer.tools.agent_wake_tool import AgentWakeTool
         
         tool_registry = get_tool_registry()
         tool_registry.register_tool(SendMailTool())
@@ -241,6 +243,8 @@ class StatelessInteractiveSession:
         tool_registry.register_tool(CheckMailTool())
         tool_registry.register_tool(ReplyMailTool())
         tool_registry.register_tool(SwitchAgentTool())
+        tool_registry.register_tool(AgentSleepTool())
+        tool_registry.register_tool(AgentWakeTool())
         
         logger.info("Registered all tools for interactive session including mailbox and agent switching tools")
     
