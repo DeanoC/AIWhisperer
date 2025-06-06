@@ -1,0 +1,1 @@
+Use send_mail_with_switch to send this to Debbie: 'CIRCULAR_TEST: Please forward this exact message to Patricia using send_mail_with_switch, and ask her to forward it back to Alice using send_mail_with_switch.'
