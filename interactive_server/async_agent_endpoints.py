@@ -52,7 +52,7 @@ class AsyncAgentEndpoints:
             
         return self.async_managers[session_id]
         
-    async def create_async_agent(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_async_agent(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Create a new async agent session."""
         try:
             session_id = params.get("sessionId")
@@ -85,7 +85,7 @@ class AsyncAgentEndpoints:
                 "message": str(e)
             }
             
-    async def start_agent(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def start_agent(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Start an agent's background processor."""
         try:
             session_id = params.get("sessionId")
@@ -120,7 +120,7 @@ class AsyncAgentEndpoints:
                 "message": str(e)
             }
             
-    async def stop_agent(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def stop_agent(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Stop an agent."""
         try:
             session_id = params.get("sessionId")
@@ -153,7 +153,7 @@ class AsyncAgentEndpoints:
                 "message": str(e)
             }
             
-    async def sleep_agent(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def sleep_agent(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Put an agent to sleep."""
         try:
             session_id = params.get("sessionId")
@@ -184,7 +184,7 @@ class AsyncAgentEndpoints:
                 "message": str(e)
             }
             
-    async def wake_agent(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def wake_agent(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Wake a sleeping agent."""
         try:
             session_id = params.get("sessionId")
@@ -209,7 +209,7 @@ class AsyncAgentEndpoints:
                 "message": str(e)
             }
             
-    async def send_task_to_agent(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def send_task_to_agent(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Send a task directly to an agent."""
         try:
             session_id = params.get("sessionId")
@@ -240,7 +240,7 @@ class AsyncAgentEndpoints:
                 "message": str(e)
             }
             
-    async def get_agent_states(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def get_agent_states(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Get states of all agents in a session."""
         try:
             session_id = params.get("sessionId")
@@ -261,7 +261,7 @@ class AsyncAgentEndpoints:
                 "message": str(e)
             }
             
-    async def broadcast_event(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def broadcast_event(self, params: Dict[str, Any], websocket=None) -> Dict[str, Any]:
         """Broadcast an event to agents."""
         try:
             session_id = params.get("sessionId")
