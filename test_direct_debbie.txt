@@ -1,0 +1,1 @@
+You are Debbie. First, use the send_mail tool to send yourself a test message with subject 'Self Test' and body 'list_directory requested'. Then check your mail and report what you find.

@@ -167,7 +167,7 @@ class AgentSwitchHandler:
             
             response_result = await self.session.send_user_message(
                 mail_prompt,
-                is_continuation=True  # This is part of the same flow
+                is_continuation=True  # This is part of the same flow (now works with tools!)
             )
             
             # Extract the response

@@ -148,11 +148,24 @@ class OpenRouterAIService(AIService):
                 "X-Title": self.app_name,
             }
             
-            # Only log payload details if explicitly requested via environment variable
+            # Log key details about the API call
+            logger.info(f"[OPENROUTER] Starting stream for model: {payload.get('model')}")
+            logger.info(f"[OPENROUTER] Message count: {len(payload.get('messages', []))}")
+            logger.info(f"[OPENROUTER] Has tools: {bool(payload.get('tools'))}")
+            logger.info(f"[OPENROUTER] Tool count: {len(payload.get('tools', []))}")
+            
+            # Log last message role and preview
+            messages = payload.get('messages', [])
+            if messages:
+                last_msg = messages[-1]
+                logger.info(f"[OPENROUTER] Last message role: {last_msg.get('role')}")
+                content = last_msg.get('content', '')
+                preview = content[:100] + '...' if len(content) > 100 else content
+                logger.info(f"[OPENROUTER] Last message preview: {preview}")
+                
+            # Only log full payload if explicitly requested
             if logger.isEnabledFor(logging.DEBUG) and os.getenv('AIWHISPERER_DEBUG_OPENROUTER'):
-                logger.debug(f"Streaming payload: {json.dumps(payload, indent=2)}")
-            else:
-                logger.debug(f"Starting OpenRouter stream for model: {payload.get('model')}")
+                logger.debug(f"Full streaming payload: {json.dumps(payload, indent=2)}")
             
             try:
                 response = requests.post(API_URL, headers=headers, json=payload, stream=True, timeout=60)

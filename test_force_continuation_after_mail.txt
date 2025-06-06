@@ -1,0 +1,1 @@
+Use send_mail_with_switch to send a message to agent 'd' with subject 'Test Continuation' and body 'Please answer: What is 10 divided by 2?'

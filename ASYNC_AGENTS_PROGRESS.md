@@ -32,25 +32,23 @@
 - ✅ Integrated with session manager and switch handler
 - ✅ Helps debug complex multi-agent interactions
 
+## Recently Fixed Issues
+
+### 1. Agent Mail Processing (FIXED)
+- ✅ Fixed the core issue preventing tool execution during continuations
+- ✅ Removed `is_continuation` restriction that was blocking tool calls
+- ✅ Agents now properly process mail content and execute requested tools
+- ✅ Verified with multiple test cases including tool requests via mail
+
 ## Known Issues
 
-### 1. Agent Mail Processing
-- ❌ Debbie doesn't automatically check mailbox when switched to
-- ❌ Agents receive switch notification but don't process mail content
-- ❌ Need to update agent prompts to include mailbox checking protocol
-
-### 2. Tool Registration
+### 1. Tool Registration
 - ⚠️ `send_mail_with_switch` tool needs explicit registration in some contexts
 - ⚠️ Tool may not be available to all agents by default
 
 ## Next Steps
 
-### 1. Fix Agent Mail Processing
-- Update Debbie's prompt to automatically check mailbox on switch
-- Ensure all agents follow mailbox protocol when activated
-- Test multi-hop mail chains (A → D → P → D → A)
-
-### 2. Complete Async Agent Implementation
+### 1. Complete Async Agent Implementation
 - Implement true async background agent execution
 - Create agent session manager for parallel AI loops
 - Add WebSocket notifications for async agent updates
@@ -74,8 +72,15 @@ The synchronous mail switching works as follows:
 1. Agent A calls `send_mail_with_switch(to_agent="B", ...)`
 2. Tool returns success with `agent_switch_required: True`
 3. `AgentSwitchHandler` detects this and switches to Agent B
-4. Agent B should check mailbox and process the request
+4. Agent B checks mailbox and processes the request (now working correctly)
 5. System switches back to Agent A with the response
+
+### Mail Processing Fix Details
+The original implementation had `is_continuation=True` in agent_switch_handler.py which prevented tool execution during agent switches. This was due to a design flaw where continuations were assumed to not need tools. The fix involved:
+1. Changing to `is_continuation=False` in agent_switch_handler.py (line 171)
+2. Removing the `not is_continuation` check in stateless_session_manager.py (line 991)
+
+This allows the full OpenRouter tool calling flow (API call → tool execution → second API call) to work correctly during agent switches.
 
 The agent logging provides visibility into:
 - When agents are created and with what configuration

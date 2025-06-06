@@ -21,8 +21,11 @@ Related:
 """
 
 import json
+import logging
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.extensions.mailbox.mailbox import Mail, MessagePriority, get_mailbox
+
+logger = logging.getLogger(__name__)
 
 class SendMailTool(AITool):
     """Tool for sending mail messages to agents or users."""
@@ -139,6 +142,10 @@ Example usage:
                      kwargs.get('_agent_id') or actual_args.get('_from_agent') or 
                      actual_args.get('_agent_name') or actual_args.get('_agent_id') or 'Unknown')
         
+        logger.info(f"[SEND_MAIL] Preparing to send mail: from={from_agent}, to={to_agent}, subject='{subject}'")
+        logger.debug(f"[SEND_MAIL] Body: '{body}'")
+        logger.debug(f"[SEND_MAIL] Priority: {priority_str} -> {priority}")
+        
         # Create mail object
         mail = Mail(
             from_agent=from_agent,
@@ -148,9 +155,13 @@ Example usage:
             priority=priority
         )
         
+        logger.info(f"[SEND_MAIL] Mail object created: {mail.message_id}")
+        
         try:
             # Send the mail
+            logger.info(f"[SEND_MAIL] Calling mailbox.send_mail...")
             message_id = mailbox.send_mail(mail)
+            logger.info(f"[SEND_MAIL] Mail sent successfully with ID: {message_id}")
             
             # Return structured result
             return {

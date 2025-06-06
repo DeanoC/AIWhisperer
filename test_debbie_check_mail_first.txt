@@ -1,0 +1,4 @@
+# Test: Direct switch to Debbie and check mail
+# Switch to Debbie and ask her to check her mail
+/switch-agent d
+Please check your mail using the check_mail tool

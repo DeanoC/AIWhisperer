@@ -45,50 +45,25 @@ agents:
     
   d:
     name: "Debbie the Debugger"
-    role: "debugging_assistant, conversation_replayer"
-    description: "Intelligent debugging companion and conversation replay processor for AIWhisperer"
-    tool_tags: ["debugging", "monitoring", "testing", "analysis", "filesystem", "command", "conversation"]
+    role: "debugging_assistant" 
+    description: "Debugging specialist for system issues and monitoring"
+    tool_tags: ["filesystem", "command", "analysis", "agent_switching"]
     prompt_file: "debbie_debugger.prompt.md"
-    context_sources: ["session_history", "error_logs", "performance_metrics", "workspace_structure", "conversation_files"]
+    context_sources: ["conversation_history", "workspace_structure"]
     color: "#DC2626"
     icon: "🐛"
-    tool_sets: ["debugging_tools", "conversation_tools", "monitoring_tools", "filesystem", "command", "analysis", "mailbox_tools"]
-    allow_tools: ["ai_loop_inspector"]  # Allow the new inspection tool
-    # Debbie uses Claude 4 Sonnet for better tool usage and protocol following
+    tool_sets: ["general_assistant", "agent_switching", "mailbox_tools"]
+    # Use latest GPT-4 for Debbie
     ai_config:
-      model: "anthropic/claude-sonnet-4"  # Claude 4 Sonnet for reliable tool usage
+      model: "openai/gpt-4o"  # Latest GPT-4 model
       provider: "openrouter"
       generation_params:
-        temperature: 0.5  # Lower temperature for more predictable debugging
-        max_tokens: 8000  # Much larger context for debugging analysis
-    capabilities:
-      - session_monitoring
-      - error_detection
-      - performance_analysis
-      - automated_recovery
-      - script_execution
-      - conversation_replay
-      - multi_format_parsing
-      - automated_user_simulation
+        temperature: 0.5
+        max_tokens: 4096
     continuation_config:
-      require_explicit_signal: true
-      max_iterations: 10
+      require_explicit_signal: false  # Allow automatic continuation after tool calls
+      max_iterations: 8
       timeout: 600
-    configuration:
-      monitoring:
-        continuation_timeout: 30  # seconds
-        memory_threshold: 512    # MB
-        response_time_alert: 10  # seconds
-      intervention:
-        auto_continue: true
-        max_retries: 3
-        recovery_strategies: ["prompt", "restart", "escalate"]
-      conversation:
-        supported_formats: ["json", "yaml", "txt"]
-        max_file_size: 1048576  # 1MB
-        execution_timeout: 3600   # 1 hour
-        auto_continue: true
-        error_handling: "continue_on_error"
   
   e:
     name: "Eamonn the Executioner"

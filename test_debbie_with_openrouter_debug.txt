@@ -1,0 +1,1 @@
+Please use send_mail_with_switch to send a message to Debbie with subject 'Directory Listing Request' and body 'Please use the list_directory tool to show me the contents of the current directory.'

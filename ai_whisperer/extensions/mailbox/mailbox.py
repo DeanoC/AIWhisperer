@@ -167,23 +167,35 @@ class MailboxSystem:
         Raises:
             ValueError: If the agent name cannot be resolved
         """
+        logger.debug(f"[MAILBOX] _resolve_agent_name called with: '{name}'")
+        
         if not name:
+            logger.debug(f"[MAILBOX] Empty name resolved to 'user'")
             return 'user'  # Empty means user - this is intentional
             
         # Convert to lowercase for matching
         name_lower = name.lower().strip()
+        logger.debug(f"[MAILBOX] Normalized name: '{name_lower}'")
+        
+        # Log available aliases
+        logger.debug(f"[MAILBOX] Available aliases: {list(self._agent_aliases.keys())}")
         
         # Try direct lookup
         if name_lower in self._agent_aliases:
-            return self._agent_aliases[name_lower]
+            resolved = self._agent_aliases[name_lower]
+            logger.debug(f"[MAILBOX] Direct match found: '{name_lower}' -> '{resolved}'")
+            return resolved
         
         # Try without "agent " prefix
         if name_lower.startswith('agent '):
             without_prefix = name_lower[6:]
             if without_prefix in self._agent_aliases:
-                return self._agent_aliases[without_prefix]
+                resolved = self._agent_aliases[without_prefix]
+                logger.debug(f"[MAILBOX] Match found after removing 'agent ' prefix: '{without_prefix}' -> '{resolved}'")
+                return resolved
         
         # If no match found, raise an error instead of using unknown name
+        logger.error(f"[MAILBOX] Failed to resolve agent name: '{name}'")
         raise ValueError(f"Unknown recipient: '{name}'. Valid recipients are: alice, patricia, tessa, debbie, eamonn, user")
     
     def send_mail(self, mail: Mail) -> str:
@@ -198,28 +210,43 @@ class MailboxSystem:
         Raises:
             ValueError: If recipient cannot be resolved
         """
+        logger.info(f"[MAILBOX] send_mail called: from={mail.from_agent}, to={mail.to_agent}, subject='{mail.subject}'")
+        logger.debug(f"[MAILBOX] Mail body: '{mail.body}'")
+        logger.debug(f"[MAILBOX] Mail ID: {mail.message_id}")
+        
         # Resolve recipient alias to canonical name
         try:
             recipient = self._resolve_agent_name(mail.to_agent or "user")
+            logger.info(f"[MAILBOX] Resolved recipient '{mail.to_agent}' -> '{recipient}'")
         except ValueError as e:
-            logger.error(f"Failed to send mail: {e}")
+            logger.error(f"[MAILBOX] Failed to send mail: {e}")
             raise
         
         # Update the mail object with canonical name
         mail.to_agent = recipient if recipient != "user" else ""
         
+        # Check inbox state before adding
+        inbox_size_before = len(self._inboxes[recipient])
+        logger.info(f"[MAILBOX] Recipient '{recipient}' inbox size before send: {inbox_size_before}")
+        
         # Add to recipient's inbox
         self._inboxes[recipient].append(mail)
+        
+        # Check inbox state after adding
+        inbox_size_after = len(self._inboxes[recipient])
+        logger.info(f"[MAILBOX] Recipient '{recipient}' inbox size after send: {inbox_size_after}")
         
         # Update unread count
         if mail.status == MessageStatus.UNREAD:
             self._unread_counts[recipient] += 1
+            logger.info(f"[MAILBOX] Updated unread count for '{recipient}': {self._unread_counts[recipient]}")
         
         # Log the message
-        logger.info(f"Mail sent from {mail.from_agent or 'user'} to {recipient}: {mail.subject}")
+        logger.info(f"[MAILBOX] Mail sent successfully from {mail.from_agent or 'user'} to {recipient}: {mail.subject}")
         
         # Trigger notification if handler registered
         if recipient in self._notification_handlers:
+            logger.info(f"[MAILBOX] Triggering notification handler for '{recipient}'")
             handler = self._notification_handlers[recipient]
             handler(mail)
         
@@ -237,24 +264,36 @@ class MailboxSystem:
         Raises:
             ValueError: If agent name cannot be resolved
         """
+        logger.info(f"[MAILBOX] check_mail called for agent: '{agent_name}'")
+        
         # Resolve agent alias to canonical name
         try:
             recipient = self._resolve_agent_name(agent_name or "user")
+            logger.info(f"[MAILBOX] Resolved agent name '{agent_name}' -> '{recipient}'")
         except ValueError as e:
-            logger.error(f"Failed to check mail: {e}")
+            logger.error(f"[MAILBOX] Failed to check mail: {e}")
             raise
             
         inbox = self._inboxes[recipient]
+        logger.info(f"[MAILBOX] Inbox for '{recipient}' has {len(inbox)} total messages")
         
         # Get unread messages
         unread = [mail for mail in inbox if mail.status == MessageStatus.UNREAD]
+        logger.info(f"[MAILBOX] Found {len(unread)} unread messages for '{recipient}'")
+        
+        # Log details of unread messages
+        for idx, mail in enumerate(unread):
+            logger.info(f"[MAILBOX] Unread message {idx}: id={mail.message_id}, from={mail.from_agent}, subject='{mail.subject}'")
+            logger.debug(f"[MAILBOX] Unread message {idx} body: '{mail.body}'")
         
         # Mark as read
         for mail in unread:
             mail.status = MessageStatus.READ
+            logger.debug(f"[MAILBOX] Marked message {mail.message_id} as READ")
         
         # Update unread count
         self._unread_counts[recipient] = 0
+        logger.info(f"[MAILBOX] Reset unread count for '{recipient}' to 0")
         
         return unread
     

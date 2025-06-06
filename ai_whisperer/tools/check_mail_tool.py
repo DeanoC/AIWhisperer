@@ -18,8 +18,11 @@ Related:
 
 """
 
+import logging
 from ai_whisperer.tools.base_tool import AITool
 from ai_whisperer.extensions.mailbox.mailbox import get_mailbox, MessageStatus
+
+logger = logging.getLogger(__name__)
 
 class CheckMailTool(AITool):
     """Tool for checking mail messages in the mailbox."""
@@ -97,20 +100,30 @@ Example usage:
                      kwargs.get('_agent_id') or actual_args.get('_from_agent') or 
                      actual_args.get('_agent_name') or actual_args.get('_agent_id') or '')
         
+        logger.info(f"[CHECK_MAIL] Agent '{agent_name}' checking mail: unread_only={unread_only}, limit={limit}")
+        logger.debug(f"[CHECK_MAIL] Full kwargs: {kwargs}")
+        
         # Get the mailbox instance
         mailbox = get_mailbox()
+        logger.info(f"[CHECK_MAIL] Got mailbox instance")
         
         # Get messages based on unread_only parameter
         if unread_only:
             # check_mail returns only unread messages and marks them as read
+            logger.info(f"[CHECK_MAIL] Calling mailbox.check_mail('{agent_name}')...")
             messages = mailbox.check_mail(agent_name)
+            logger.info(f"[CHECK_MAIL] Found {len(messages)} unread messages for agent '{agent_name}'")
         else:
             # get_all_mail returns all messages (read and unread)
+            logger.info(f"[CHECK_MAIL] Calling mailbox.get_all_mail('{agent_name}', include_read=True)...")
             messages = mailbox.get_all_mail(agent_name, include_read=True, include_archived=False)
+            logger.info(f"[CHECK_MAIL] Found {len(messages)} total messages for agent '{agent_name}'")
         
         # Format messages for structured output
         formatted_messages = []
-        for mail in messages[:limit]:
+        for idx, mail in enumerate(messages[:limit]):
+            logger.info(f"[CHECK_MAIL] Message {idx}: id={mail.message_id}, from={mail.from_agent}, to={mail.to_agent}, subject='{mail.subject}'")
+            logger.debug(f"[CHECK_MAIL] Message {idx} body: '{mail.body}'")
             formatted_messages.append({
                 "message_id": mail.message_id,
                 "from": mail.from_agent or "User",
@@ -122,7 +135,7 @@ Example usage:
                 "timestamp": mail.timestamp.isoformat() if hasattr(mail, 'timestamp') else None
             })
         
-        return {
+        result = {
             "messages": formatted_messages,
             "count": len(messages),
             "total_count": len(messages),
@@ -130,3 +143,7 @@ Example usage:
             "unread_only": unread_only,
             "truncated": len(messages) > limit
         }
+        
+        logger.info(f"[CHECK_MAIL] Returning {len(formatted_messages)} messages to agent '{agent_name}'")
+        logger.info(f"[CHECK_MAIL] Full result being returned: {result}")
+        return result

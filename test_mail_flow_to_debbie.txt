@@ -1,0 +1,1 @@
+Use the send_mail tool to send a message to agent 'debbie' with subject 'Test' and body 'Please use the list_directory tool to show files in the current directory.'.

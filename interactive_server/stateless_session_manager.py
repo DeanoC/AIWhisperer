@@ -988,7 +988,7 @@ class StatelessInteractiveSession:
             
             # If the AI called tools, we need another round to get the final response
             # This follows the standard OpenAI/Claude tool calling pattern
-            if result.get('finish_reason') == 'tool_calls' and result.get('tool_calls') and not is_continuation:
+            if result.get('finish_reason') == 'tool_calls' and result.get('tool_calls'):
                 logger.info(f"🔧 TOOL CALLS COMPLETED: {len(result['tool_calls'])} tools were executed")
                 logger.info("🔧 Making another AI call to process tool results...")
                 
@@ -1191,9 +1191,14 @@ class StatelessInteractiveSession:
             # Send a simple introduction request using the full streaming pipeline
             introduction_prompt = "Please introduce yourself briefly, mentioning your name and what you help with."
             
+            # TEMPORARILY DISABLED: Introduction is a UI feature, not needed for core functionality
+            # TODO: Re-enable when UI properly handles agent introductions
+            logger.info(f"Skipping agent introduction for '{self.active_agent}' (temporarily disabled)")
+            return
+            
             # Use the normal send_user_message pipeline but mark as internal
-            logger.info(f"Requesting introduction from agent '{self.active_agent}'")
-            await self.send_user_message(introduction_prompt, is_continuation=False)
+            # logger.info(f"Requesting introduction from agent '{self.active_agent}'")
+            # await self.send_user_message(introduction_prompt, is_continuation=False)
             
             # Mark as introduced
             self.introduced_agents.add(self.active_agent)

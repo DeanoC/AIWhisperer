@@ -1,0 +1,1 @@
+Use send_mail_with_switch to send a message to agent 'd' with subject 'Trace Test' and body 'Please answer: What is 3 + 3?'
