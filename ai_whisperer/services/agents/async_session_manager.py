@@ -78,9 +78,20 @@ class AsyncAgentSessionManager:
             raise ValueError(f"No configuration found for agent '{agent_id}'")
             
         # Load agent's prompt
-        from ai_whisperer.prompt_system import PromptSystem
-        prompt_system = PromptSystem(prompts_dir)
-        system_prompt = prompt_system.load_agent_prompt(agent_info.prompt_file.replace('.prompt.md', ''))
+        from ai_whisperer.prompt_system import PromptSystem, PromptConfiguration
+        from ai_whisperer.tools.tool_registry import get_tool_registry
+        
+        prompt_config = PromptConfiguration(self.config)
+        tool_registry = get_tool_registry()
+        prompt_system = PromptSystem(prompt_config, tool_registry)
+        
+        agent_name = agent_info.prompt_file.replace('.prompt.md', '')
+        system_prompt = prompt_system.get_formatted_prompt(
+            category='agents',
+            name=agent_name,
+            include_tools=False,
+            include_shared=True
+        )
         
         # Create context and AI loop
         context = AgentContext(

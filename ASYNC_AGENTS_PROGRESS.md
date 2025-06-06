@@ -50,11 +50,21 @@
 - ✅ Reduces log spam from DEBUG level websocket messages
 - ✅ Configured in core logging setup
 
+### 4. AsyncAgentSessionManager Configuration (FIXED)
+- ✅ Fixed to use AgentRegistry instead of non-existent AgentFactory method
+- ✅ Properly loads agent prompts using PromptSystem
+- ✅ Creates AI loops using AILoopFactory
+- ✅ Fixed StatelessAgent initialization with correct parameters
+
 ## Known Issues
 
 ### 1. Tool Registration
 - ⚠️ `send_mail_with_switch` tool needs explicit registration in some contexts
 - ⚠️ Tool may not be available to all agents by default
+
+### 2. Server Restart Required
+- ⚠️ Server needs to be restarted to pick up async agent fixes
+- ⚠️ See ASYNC_AGENTS_SERVER_RESTART_NEEDED.md for details
 
 ## Recently Discovered: Async Implementation Already Present!
 
