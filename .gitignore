@@ -138,3 +138,7 @@ logs/
 # Configuration files
 config/development/local.yaml
 config_backup_*/
+
+# Private planning documents
+REPO_SPLIT_PLAN.md
+MINDSWARM_TRANSITION.md
