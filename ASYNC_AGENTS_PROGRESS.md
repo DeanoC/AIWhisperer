@@ -40,6 +40,16 @@
 - ✅ Agents now properly process mail content and execute requested tools
 - ✅ Verified with multiple test cases including tool requests via mail
 
+### 2. Async Agent Endpoint Parameter Issue (FIXED)
+- ✅ Fixed parameter mismatch in AsyncAgentEndpoints methods
+- ✅ All async endpoint methods now accept `websocket=None` parameter
+- ✅ Matches WebSocket handler signature requirements
+
+### 3. WebSocket Client DEBUG Logging (FIXED)
+- ✅ Added logging suppression for websocket.client and related loggers
+- ✅ Reduces log spam from DEBUG level websocket messages
+- ✅ Configured in core logging setup
+
 ## Known Issues
 
 ### 1. Tool Registration
@@ -108,9 +118,12 @@
 - WebSocket API endpoints
 
 ### 🔄 Phase 3: Integration & Testing - IN PROGRESS
-- Need to restart server to load async handlers
-- Create comprehensive test suite
-- Document usage patterns
+- ✅ Fixed async endpoint parameter issues
+- ✅ Created comprehensive test suite in `tests/integration/async_agents/`
+- ✅ Created test plan document with sync/async test scenarios
+- 🔄 Need to restart server to load async handlers
+- 🔄 Run test suite to verify functionality
+- 🔄 Document usage patterns
 
 ## Architecture Notes
 
