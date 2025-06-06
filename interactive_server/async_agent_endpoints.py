@@ -45,6 +45,12 @@ class AsyncAgentEndpoints:
                 
             config = session.config if hasattr(session, 'config') else {}
             
+            # Use new refactored manager if feature flag is set
+            if config.get("use_refactored_async_agents", True):
+                from ai_whisperer.services.agents.async_session_manager_v2 import AsyncAgentSessionManager
+            else:
+                from ai_whisperer.services.agents.async_session_manager import AsyncAgentSessionManager
+            
             # Create manager
             manager = AsyncAgentSessionManager(config)
             await manager.start()

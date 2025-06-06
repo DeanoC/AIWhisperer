@@ -14,3 +14,12 @@ workspace_ignore_patterns:
 - .idea
 - .vscode
 - project_dev/done
+
+# Enable refactored async agents
+use_refactored_async_agents: true
+
+# Async agent configuration
+async_agents:
+  max_concurrent_agents: 10
+  max_tasks_per_agent: 100
+  default_check_mail_interval: 30
